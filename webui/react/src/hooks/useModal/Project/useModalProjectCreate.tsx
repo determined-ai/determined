@@ -9,6 +9,8 @@ import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import handleError from 'utils/error';
 
+const FORM_ID = 'new-project-form';
+
 interface FormInputs {
   description?: string;
   projectName: string;
@@ -25,11 +27,11 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
 
   const modalContent = useMemo(() => {
     return (
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item
           label="Project Name"
           name="projectName"
-          rules={[{ message: 'Name is required ', required: true }]}>
+          rules={[{ message: 'Name is required', required: true }]}>
           <Input maxLength={80} />
         </Form.Item>
         <Form.Item label="Description" name="description">
@@ -73,11 +75,12 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
     }
   }, [form, workspaceId]);
 
-  const getModalProps = useCallback((): ModalFuncProps => {
+  const getModalProps = useMemo((): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
+      okButtonProps: { form: FORM_ID, htmlType: 'submit' },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',
@@ -86,7 +89,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
+      openOrUpdate({ ...getModalProps, ...initialModalProps });
     },
     [getModalProps, openOrUpdate],
   );
@@ -96,7 +99,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps());
+    if (modalRef.current) openOrUpdate(getModalProps);
   }, [getModalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };

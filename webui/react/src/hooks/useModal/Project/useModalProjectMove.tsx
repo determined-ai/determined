@@ -1,6 +1,5 @@
-import { notification, Select, Typography } from 'antd';
+import { Form, notification, Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
@@ -18,13 +17,19 @@ import css from './useModalProjectMove.module.scss';
 
 const { Option } = Select;
 
+const FORM_ID = 'move-project-form';
+
+interface FormInputs {
+  destinationWorkspaceId: number;
+}
+
 interface Props {
   onClose?: () => void;
   project: Project;
 }
 
 const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
-  const [destinationWorkspaceId, setDestinationWorkspaceId] = useState<number>();
+  const [form] = Form.useForm<FormInputs>();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const { canMoveProjectsTo } = usePermissions();
 
@@ -55,50 +60,39 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
     if (modalRef.current) fetchWorkspaces();
   }, [fetchWorkspaces, modalRef]);
 
-  const handleWorkspaceSelect = useCallback(
-    (selectedWorkspaceId: SelectValue) => {
-      if (typeof selectedWorkspaceId !== 'number') return;
-      const workspace = workspaces.find((w) => w.id === selectedWorkspaceId);
-      if (!workspace) return;
-      const disabled = workspace.archived || workspace.id === project.workspaceId;
-      if (disabled) return;
-      setDestinationWorkspaceId((prev) => (disabled ? prev : (selectedWorkspaceId as number)));
-    },
-    [workspaces, project.workspaceId],
-  );
-
   const modalContent = useMemo(() => {
     return (
-      <div className={css.base}>
-        <label className={css.label} htmlFor="workspace">
-          Workspace
-        </label>
-        <Select
-          id="workspace"
-          placeholder="Select a destination workspace."
-          showSearch={false}
-          style={{ width: '100%' }}
-          value={destinationWorkspaceId}
-          onSelect={handleWorkspaceSelect}>
-          {workspaces.map((workspace) => {
-            const disabled = workspace.archived || workspace.id === project.workspaceId;
-            return (
-              <Option disabled={disabled} key={workspace.id} value={workspace.id}>
-                <div className={disabled ? css.workspaceOptionDisabled : ''}>
-                  <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
-                  {workspace.archived && <Icon name="archive" />}
-                  {workspace.id === project.workspaceId && <Icon name="checkmark" />}
-                </div>
-              </Option>
-            );
-          })}
-        </Select>
-      </div>
+      <Form autoComplete="off" className={css.base} form={form} id={FORM_ID} layout="vertical">
+        <Form.Item
+          label="Workspace"
+          name="destinationWorkspaceId"
+          rules={[{ message: 'Workspace is required', required: true }]}>
+          <Select
+            placeholder="Select a destination workspace."
+            showSearch={false}
+            style={{ width: '100%' }}>
+            {workspaces.map((workspace) => {
+              const disabled = workspace.archived || workspace.id === project.workspaceId;
+              return (
+                <Option disabled={disabled} key={workspace.id} value={workspace.id}>
+                  <div className={disabled ? css.workspaceOptionDisabled : ''}>
+                    <Typography.Text ellipsis={true}>{workspace.name}</Typography.Text>
+                    {workspace.archived && <Icon name="archive" />}
+                    {workspace.id === project.workspaceId && <Icon name="checkmark" />}
+                  </div>
+                </Option>
+              );
+            })}
+          </Select>
+        </Form.Item>
+      </Form>
     );
-  }, [handleWorkspaceSelect, workspaces, project.workspaceId, destinationWorkspaceId]);
+  }, [form, workspaces, project.workspaceId]);
 
   const handleOk = useCallback(async () => {
-    if (!destinationWorkspaceId) return;
+    const values = await form.validateFields();
+    const destinationWorkspaceId = values.destinationWorkspaceId;
+
     try {
       await moveProject({ destinationWorkspaceId, projectId: project.id });
       const destinationWorkspaceName: string =
@@ -124,28 +118,24 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [destinationWorkspaceId, project.id, project.name, workspaces]);
+  }, [form, project.id, project.name, workspaces]);
 
-  const getModalProps = useCallback(
-    (destinationWorkspaceId?: number): ModalFuncProps => {
-      return {
-        closable: true,
-        content: modalContent,
-        icon: null,
-        okButtonProps: { disabled: !destinationWorkspaceId },
-        okText: 'Move Project',
-        onOk: handleOk,
-        title: 'Move Project',
-      };
-    },
-    [handleOk, modalContent],
-  );
+  const getModalProps = useMemo((): ModalFuncProps => {
+    return {
+      closable: true,
+      content: modalContent,
+      icon: null,
+      okButtonProps: { form: FORM_ID, htmlType: 'submit' },
+      okText: 'Move Project',
+      onOk: handleOk,
+      title: 'Move Project',
+    };
+  }, [handleOk, modalContent]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
-      setDestinationWorkspaceId(undefined);
       fetchWorkspaces();
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
+      openOrUpdate({ ...getModalProps, ...initialModalProps });
     },
     [fetchWorkspaces, getModalProps, openOrUpdate],
   );
@@ -155,8 +145,8 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps(destinationWorkspaceId));
-  }, [destinationWorkspaceId, getModalProps, modalRef, openOrUpdate]);
+    if (modalRef.current) openOrUpdate(getModalProps);
+  }, [getModalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };
