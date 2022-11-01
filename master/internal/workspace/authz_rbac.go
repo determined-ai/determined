@@ -32,9 +32,9 @@ type WorkspaceAuthZRBAC struct{}
 // FilterWorkspaceProjects filters a set of projects based on which workspaces a user has view
 // permissions on.
 func (r *WorkspaceAuthZRBAC) FilterWorkspaceProjects(
-	curUser model.User, projects []*projectv1.Project,
+	ctx context.Context, curUser model.User, projects []*projectv1.Project,
 ) ([]*projectv1.Project, error) {
-	workspaceIDs, err := workspacesUserHasPermissionOn(context.TODO(), curUser.ID,
+	workspaceIDs, err := workspacesUserHasPermissionOn(ctx, curUser.ID,
 		workspaceIDsFromProjects(projects), rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrorLookup.Error())
@@ -52,11 +52,11 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaceProjects(
 
 // FilterWorkspaces filters workspaces based on which ones the user has view permissions on.
 func (r *WorkspaceAuthZRBAC) FilterWorkspaces(
-	curUser model.User, workspaces []*workspacev1.Workspace,
+	ctx context.Context, curUser model.User, workspaces []*workspacev1.Workspace,
 ) ([]*workspacev1.Workspace, error) {
 	workspaceIDs := idsFromWorkspaces(workspaces)
 
-	ids, err := workspacesUserHasPermissionOn(context.TODO(), curUser.ID, workspaceIDs,
+	ids, err := workspacesUserHasPermissionOn(ctx, curUser.ID, workspaceIDs,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 	if err != nil {
 		return nil, errors.Wrap(err, ErrorLookup.Error())
@@ -77,9 +77,9 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaces(
 
 // CanGetWorkspace determines whether a user can view a workspace.
 func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
-	curUser model.User, workspace *workspacev1.Workspace,
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) (canGetWorkspace bool, serverError error) {
-	can, err := hasPermissionOnWorkspace(context.TODO(), curUser.ID, workspace,
+	can, err := hasPermissionOnWorkspace(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 	if err != nil {
 		return false, err
@@ -89,76 +89,81 @@ func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 }
 
 // CanCreateWorkspace determines whether a user can create workspaces.
-func (r *WorkspaceAuthZRBAC) CanCreateWorkspace(curUser model.User) error {
-	return denyAccessWithoutPermission(curUser.ID, nil,
+func (r *WorkspaceAuthZRBAC) CanCreateWorkspace(ctx context.Context, curUser model.User) error {
+	return denyAccessWithoutPermission(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
 }
 
 // CanSetWorkspacesName determines whether a user can set a workspace's name.
-func (r *WorkspaceAuthZRBAC) CanSetWorkspacesName(curUser model.User,
-	workspace *workspacev1.Workspace,
+func (r *WorkspaceAuthZRBAC) CanSetWorkspacesName(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(curUser.ID, workspace,
+	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
 // CanDeleteWorkspace determines whether a user can delete a workspace.
-func (r *WorkspaceAuthZRBAC) CanDeleteWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace,
+func (r *WorkspaceAuthZRBAC) CanDeleteWorkspace(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(curUser.ID, workspace,
+	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_WORKSPACE)
 }
 
 // CanArchiveWorkspace determines whether a user can archive a workspace.
-func (r *WorkspaceAuthZRBAC) CanArchiveWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace,
+func (r *WorkspaceAuthZRBAC) CanArchiveWorkspace(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(curUser.ID, workspace,
+	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
 // CanUnarchiveWorkspace determines whether a user can unarchive a workspace.
-func (r *WorkspaceAuthZRBAC) CanUnarchiveWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace,
+func (r *WorkspaceAuthZRBAC) CanUnarchiveWorkspace(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(curUser.ID, workspace,
+	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
 
 // CanPinWorkspace determines whether a user can pin a workspace.
-func (r *WorkspaceAuthZRBAC) CanPinWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace,
+func (r *WorkspaceAuthZRBAC) CanPinWorkspace(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
 	return nil
 }
 
 // CanUnpinWorkspace determines whether a user can unpin a workspace.
-func (r *WorkspaceAuthZRBAC) CanUnpinWorkspace(curUser model.User,
-	workspace *workspacev1.Workspace,
+func (r *WorkspaceAuthZRBAC) CanUnpinWorkspace(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
 	return nil
 }
 
 // CanCreateWorkspaceWithAgentUserGroup determines whether a user can set agent
 // uid/gid on a new workspace.
-func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithAgentUserGroup(curUser model.User) error {
-	return denyAccessWithoutPermission(curUser.ID, nil,
+func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithAgentUserGroup(
+	ctx context.Context, curUser model.User,
+) error {
+	return denyAccessWithoutPermission(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
 }
 
 // CanSetWorkspacesAgentUserGroup determines whether a user can set agent uid/gid.
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesAgentUserGroup(
-	curUser model.User, workspace *workspacev1.Workspace,
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	return denyAccessWithoutPermission(curUser.ID, workspace,
+	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
 }
 
-func denyAccessWithoutPermission(uid model.UserID, workspace *workspacev1.Workspace,
+func denyAccessWithoutPermission(
+	ctx context.Context,
+	uid model.UserID,
+	workspace *workspacev1.Workspace,
 	permID rbacv1.PermissionType,
 ) error {
-	allowed, err := hasPermissionOnWorkspace(context.TODO(), uid, workspace, permID)
+	allowed, err := hasPermissionOnWorkspace(ctx, uid, workspace, permID)
 	if err != nil {
 		return errors.Wrap(err, ErrorLookup.Error())
 	}

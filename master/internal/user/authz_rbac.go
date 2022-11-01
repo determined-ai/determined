@@ -14,21 +14,21 @@ import (
 // UserAuthZRBAC is the RBAC implementation of user authorization.
 type UserAuthZRBAC struct{}
 
-func canAdministrateUser(curUserID model.UserID) error {
-	return db.DoesPermissionMatch(context.TODO(), curUserID, nil,
+func canAdministrateUser(ctx context.Context, curUserID model.UserID) error {
+	return db.DoesPermissionMatch(ctx, curUserID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 }
 
 // CanGetUser always returns true.
 func (a *UserAuthZRBAC) CanGetUser(
-	curUser, targetUser model.User,
+	ctx context.Context, curUser, targetUser model.User,
 ) (canGetUser bool, serverError error) {
 	return true, nil
 }
 
 // FilterUserList always returns the input user list and does not filtering.
 func (a *UserAuthZRBAC) FilterUserList(
-	curUser model.User, users []model.FullUser,
+	ctx context.Context, curUser model.User, users []model.FullUser,
 ) ([]model.FullUser, error) {
 	return users, nil
 }
@@ -36,17 +36,17 @@ func (a *UserAuthZRBAC) FilterUserList(
 // CanCreateUser returns an error if the user does not have admin permissions or
 // does not have permission to update groups.
 func (a *UserAuthZRBAC) CanCreateUser(
-	curUser, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
+	ctx context.Context, curUser, userToAdd model.User, agentUserGroup *model.AgentUserGroup,
 ) error {
-	return db.DoesPermissionMatch(context.TODO(), curUser.ID, nil,
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 }
 
 // CanSetUsersPassword returns an error if the user is not the target user and does not have admin
 // permissions when trying to set another user's password.
-func (a *UserAuthZRBAC) CanSetUsersPassword(curUser, targetUser model.User) error {
-	ctx := context.TODO()
-
+func (a *UserAuthZRBAC) CanSetUsersPassword(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
 	err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 	if err != nil && curUser.ID != targetUser.ID {
@@ -56,35 +56,41 @@ func (a *UserAuthZRBAC) CanSetUsersPassword(curUser, targetUser model.User) erro
 }
 
 // CanSetUsersActive returns an error if the user does not have admin permissions.
-func (a *UserAuthZRBAC) CanSetUsersActive(curUser, targetUser model.User, toActiveVal bool) error {
-	return canAdministrateUser(curUser.ID)
+func (a *UserAuthZRBAC) CanSetUsersActive(
+	ctx context.Context, curUser, targetUser model.User, toActiveVal bool,
+) error {
+	return canAdministrateUser(ctx, curUser.ID)
 }
 
 // CanSetUsersAdmin returns an error if the user does not have admin permissions.
-func (a *UserAuthZRBAC) CanSetUsersAdmin(curUser, targetUser model.User, toAdminVal bool) error {
-	return canAdministrateUser(curUser.ID)
+func (a *UserAuthZRBAC) CanSetUsersAdmin(
+	ctx context.Context, curUser, targetUser model.User, toAdminVal bool,
+) error {
+	return canAdministrateUser(ctx, curUser.ID)
 }
 
 // CanSetUsersAgentUserGroup returns an error if the user does not have admin permissions.
 func (a *UserAuthZRBAC) CanSetUsersAgentUserGroup(
-	curUser, targetUser model.User, agentUserGroup model.AgentUserGroup,
+	ctx context.Context, curUser, targetUser model.User, agentUserGroup model.AgentUserGroup,
 ) error {
-	return canAdministrateUser(curUser.ID)
+	return canAdministrateUser(ctx, curUser.ID)
 }
 
 // CanSetUsersUsername returns an error if the user does not have admin permissions.
-func (a *UserAuthZRBAC) CanSetUsersUsername(curUser, targetUser model.User) error {
-	return canAdministrateUser(curUser.ID)
+func (a *UserAuthZRBAC) CanSetUsersUsername(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	return canAdministrateUser(ctx, curUser.ID)
 }
 
 // CanSetUsersDisplayName returns an error if the user is not an admin and does not have admin
 // permissions when trying to set another user's display name.
-func (a *UserAuthZRBAC) CanSetUsersDisplayName(curUser, targetUser model.User) error {
+func (a *UserAuthZRBAC) CanSetUsersDisplayName(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
 	if curUser == targetUser {
 		return nil
 	}
-
-	ctx := context.TODO()
 
 	err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
@@ -95,41 +101,43 @@ func (a *UserAuthZRBAC) CanSetUsersDisplayName(curUser, targetUser model.User) e
 }
 
 // CanGetUsersImage always returns nil.
-func (a *UserAuthZRBAC) CanGetUsersImage(curUser, targetUser model.User) error {
+func (a *UserAuthZRBAC) CanGetUsersImage(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
 	return nil
 }
 
 // CanGetUsersOwnSettings always returns nil.
-func (a *UserAuthZRBAC) CanGetUsersOwnSettings(curUser model.User) error {
+func (a *UserAuthZRBAC) CanGetUsersOwnSettings(ctx context.Context, curUser model.User) error {
 	return nil
 }
 
 // CanCreateUsersOwnSetting always returns nil.
 func (a *UserAuthZRBAC) CanCreateUsersOwnSetting(
-	curUser model.User, setting model.UserWebSetting,
+	ctx context.Context, curUser model.User, setting model.UserWebSetting,
 ) error {
 	return nil
 }
 
 // CanResetUsersOwnSettings always returns nil.
-func (a *UserAuthZRBAC) CanResetUsersOwnSettings(curUser model.User) error {
+func (a *UserAuthZRBAC) CanResetUsersOwnSettings(ctx context.Context, curUser model.User) error {
 	return nil
 }
 
 // CanGetActiveTasksCount returns an error if a user can't administrate users.
-func (a *UserAuthZRBAC) CanGetActiveTasksCount(curUser model.User) error {
-	return db.DoesPermissionMatch(context.TODO(), curUser.ID, nil,
+func (a *UserAuthZRBAC) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 }
 
 // CanAccessNTSCTask returns false if a user can't administrate users and it is not their task.
 func (a *UserAuthZRBAC) CanAccessNTSCTask(
-	curUser model.User, ownerID model.UserID,
+	ctx context.Context, curUser model.User, ownerID model.UserID,
 ) (bool, error) {
 	if curUser.ID == ownerID {
 		return true, nil
 	}
-	if err := db.DoesPermissionMatch(context.TODO(), curUser.ID, nil,
+	if err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER); err != nil {
 		if _, ok := err.(authz.PermissionDeniedError); ok {
 			return false, nil
