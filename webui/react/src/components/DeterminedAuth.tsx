@@ -12,7 +12,7 @@ import { isLoginFailure } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
-import { Storage } from 'shared/utils/storage';
+import { StorageManager } from 'shared/utils/storage';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -26,7 +26,7 @@ interface FromValues {
   username?: string;
 }
 
-const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localStorage });
+const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {

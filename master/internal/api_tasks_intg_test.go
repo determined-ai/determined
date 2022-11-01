@@ -22,7 +22,7 @@ func errTaskNotFound(id string) error {
 
 func TestTasksCountAuthZ(t *testing.T) {
 	api, authZUser, curUser, ctx := setupUserAuthzTest(t)
-	authZUser.On("CanGetActiveTasksCount", curUser).Return(fmt.Errorf("deny"))
+	authZUser.On("CanGetActiveTasksCount", mock.Anything, curUser).Return(fmt.Errorf("deny"))
 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
 }
@@ -65,18 +65,21 @@ func TestTaskAuthZ(t *testing.T) {
 		require.ErrorIs(t, curCase.IDToReqCall("-999"), errTaskNotFound("-999"))
 
 		// Can't view allocation's experiment gives same error.
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, nil).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), errTaskNotFound(taskID))
 
 		// Experiment view error is returned unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), expectedErr)
 
 		// Action func error returns err in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-		authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(true, nil).Once()
+		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(taskID), expectedErr)
 	}

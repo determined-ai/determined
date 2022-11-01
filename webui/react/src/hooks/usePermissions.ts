@@ -54,7 +54,6 @@ interface PermissionsHook {
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canEditWebhooks: boolean;
-  canGetPermissions: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
@@ -114,7 +113,6 @@ const usePermissions = (): PermissionsHook => {
       canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
         canDeleteWorkspace(rbacOpts, args.workspace),
       canEditWebhooks: canEditWebhooks(rbacOpts),
-      canGetPermissions: canGetPermissions(rbacOpts),
       canModifyExperiment: (args: WorkspacePermissionsArgs) =>
         canModifyExperiment(rbacOpts, args.workspace),
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
@@ -157,21 +155,22 @@ const relevantPermissions = (
   workspaceId?: number,
 ): Set<V1PermissionType> => {
   if (!userAssignments || !userRoles) {
-    // console.error('missing UserAssignment or UserRole');
     return new Set<V1PermissionType>();
   }
   const relevantAssigned = userAssignments
     .filter(
-      (a) => a.isGlobal || (workspaceId && a.workspaces && a.workspaces.includes(workspaceId)),
+      (a) =>
+        a.scopeCluster ||
+        (workspaceId &&
+          a.workspaces &&
+          Array.from(Object.values(a.workspaces)).includes(workspaceId)),
     )
     .map((a) => a.roleId);
   let permissions = Array<Permission>();
   userRoles
     .filter((r) => relevantAssigned.includes(r.id))
     .forEach((r) => {
-      // TODO: is it possible a role is assigned to this workspace,
-      // but not all of its permissions?
-      permissions = permissions.concat(r.permissions.filter((p) => p.isGlobal || workspaceId));
+      permissions = permissions.concat(r.permissions);
     });
   return new Set<V1PermissionType>(permissions.map((p) => p.id));
 };
@@ -303,17 +302,6 @@ const canViewExperimentArtifacts = (
     !!workspace &&
     (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWEXPERIMENTARTIFACTS))
   );
-};
-
-// User actions
-const canGetPermissions = ({
-  rbacAllPermission,
-  rbacEnabled,
-  userAssignments,
-  userRoles,
-}: RbacOptsProps): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles);
-  return rbacAllPermission || (rbacEnabled && permitted.has(V1PermissionType.ASSIGNROLES));
 };
 
 // Model and ModelVersion actions
@@ -489,11 +477,8 @@ const canAssignRoles = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     rbacAllPermission ||
-    (!!workspace &&
-      !!user &&
-      (rbacEnabled
-        ? permitted.has(V1PermissionType.ASSIGNROLES)
-        : user.isAdmin || user.id === workspace.userId))
+    (!!user && !!workspace && user.id === workspace.userId) ||
+    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ASSIGNROLES) : user.isAdmin))
   );
 };
 

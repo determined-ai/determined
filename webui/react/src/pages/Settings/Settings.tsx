@@ -50,6 +50,7 @@ const SettingsContent: React.FC = () => {
 
   return (
     <Tabs
+      activeKey={tab}
       className="no-padding"
       defaultActiveKey={tabKey}
       destroyInactiveTabPane
@@ -57,7 +58,7 @@ const SettingsContent: React.FC = () => {
       <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
         <SettingsAccount />
       </TabPane>
-      {rbacEnabled && canViewUsers && (
+      {canViewUsers && (
         <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
           <UserManagement />
         </TabPane>

@@ -1,10 +1,10 @@
-import { MemoryStore, Storage } from './storage';
+import { MemoryStore, StorageManager } from './storage';
 
 const testKey = 'testKey';
 const anotherTestKey = 'anotherTestKey';
 
 describe('MemoryStore', () => {
-  const testStorage = new Storage({ store: new MemoryStore() });
+  const testStorage = new StorageManager({ store: new MemoryStore() });
 
   beforeEach(() => {
     testStorage.clear();

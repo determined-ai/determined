@@ -1,6 +1,8 @@
 package experiment
 
 import (
+	"context"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -12,7 +14,9 @@ import (
 type ExperimentAuthZ interface {
 	// GET /api/v1/experiments/:exp_id
 	// GET /tasks
-	CanGetExperiment(curUser model.User, e *model.Experiment) (canGetExp bool, serverError error)
+	CanGetExperiment(
+		ctx context.Context, curUser model.User, e *model.Experiment,
+	) (canGetExp bool, serverError error)
 
 	// GET /api/v1/experiments/:exp_id/file_tree
 	// POST /api/v1/experiments/{experimentId}/file
@@ -41,25 +45,25 @@ type ExperimentAuthZ interface {
 	// GET /api/v1/trials/:trial_id/logs/fields
 	// GET /trials/:trial_id
 	// GET /trials/:trial_id/metrics
-	CanGetExperimentArtifacts(curUser model.User, e *model.Experiment) error
+	CanGetExperimentArtifacts(ctx context.Context, curUser model.User, e *model.Experiment) error
 
 	// DELETE /api/v1/experiments/:exp_id
-	CanDeleteExperiment(curUser model.User, e *model.Experiment) error
+	CanDeleteExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error
 
 	// GET /api/v1/experiments
 	// "proj" being nil indicates getting experiments from all projects.
 	FilterExperimentsQuery(
-		curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+		ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
 	) (*bun.SelectQuery, error)
 
 	// GET /api/v1/experiments/labels
 	// "proj" being nil indicates searching across all projects.
 	FilterExperimentLabelsQuery(
-		curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+		ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
 	) (*bun.SelectQuery, error)
 
 	// POST /api/v1/preview-hp-search
-	CanPreviewHPSearch(curUser model.User) error
+	CanPreviewHPSearch(ctx context.Context, curUser model.User) error
 
 	// POST /api/v1/experiments/:exp_id/activate
 	// POST /api/v1/experiments
@@ -78,26 +82,36 @@ type ExperimentAuthZ interface {
 	// POST /api/v1/allocations/:allocation_id/all_gather
 	// POST /api/v1/allocations/:allocation_id/proxy_address
 	// POST /api/v1/allocations/:allocation_id/waiting
-	CanEditExperiment(curUser model.User, e *model.Experiment) error
+	CanEditExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error
 
 	// POST /api/v1/experiments/:exp_id/archive
 	// POST /api/v1/experiments/:exp_id/unarchive
 	// PATCH /api/v1/experiments/:exp_id/
-	CanEditExperimentsMetadata(curUser model.User, e *model.Experiment) error
+	CanEditExperimentsMetadata(ctx context.Context, curUser model.User, e *model.Experiment) error
 
 	// POST /api/v1/experiments
-	CanCreateExperiment(curUser model.User, proj *projectv1.Project, e *model.Experiment) error
-	CanForkFromExperiment(curUser model.User, e *model.Experiment) error
+	CanCreateExperiment(
+		ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
+	) error
+	CanForkFromExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error
 
 	// PATCH /experiments/:exp_id
-	CanSetExperimentsMaxSlots(curUser model.User, e *model.Experiment, slots int) error
-	CanSetExperimentsWeight(curUser model.User, e *model.Experiment, weight float64) error
-	CanSetExperimentsPriority(curUser model.User, e *model.Experiment, priority int) error
-	CanSetExperimentsCheckpointGCPolicy(curUser model.User, e *model.Experiment) error
+	CanSetExperimentsMaxSlots(
+		ctx context.Context, curUser model.User, e *model.Experiment, slots int,
+	) error
+	CanSetExperimentsWeight(
+		ctx context.Context, curUser model.User, e *model.Experiment, weight float64,
+	) error
+	CanSetExperimentsPriority(
+		ctx context.Context, curUser model.User, e *model.Experiment, priority int,
+	) error
+	CanSetExperimentsCheckpointGCPolicy(
+		ctx context.Context, curUser model.User, e *model.Experiment,
+	) error
 
 	// GET /api/v1/experiments/:exp_id/searcher_events
 	// POST /api/v1/experiments/:exp_id/searcher_operations
-	CanRunCustomSearch(curUser model.User, e *model.Experiment) error
+	CanRunCustomSearch(ctx context.Context, curUser model.User, e *model.Experiment) error
 }
 
 // AuthZProvider is the authz registry for experiments.

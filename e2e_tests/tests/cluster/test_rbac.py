@@ -86,7 +86,7 @@ def test_rbac_permission_assignment() -> None:
             a for a in json_out["assignments"] if a["roleId"] == creator[0]["roleId"]
         ]
         assert creator_assignment[0]["scopeWorkspaceIds"] == []
-        assert creator_assignment[0]["isGlobal"]
+        assert creator_assignment[0]["scopeCluster"]
 
         viewer = [role for role in json_out["roles"] if role["name"] == "Viewer"]
         assert len(viewer) == 1
@@ -94,7 +94,7 @@ def test_rbac_permission_assignment() -> None:
             a for a in json_out["assignments"] if a["roleId"] == viewer[0]["roleId"]
         ]
         assert viewer_assignment[0]["scopeWorkspaceIds"] == [1]
-        assert not viewer_assignment[0]["isGlobal"]
+        assert not viewer_assignment[0]["scopeCluster"]
 
         editor = [role for role in json_out["roles"] if role["name"] == "Editor"]
         assert len(editor) == 1
@@ -102,7 +102,7 @@ def test_rbac_permission_assignment() -> None:
             a for a in json_out["assignments"] if a["roleId"] == editor[0]["roleId"]
         ]
         assert editor_assignment[0]["scopeWorkspaceIds"] == [1]
-        assert editor_assignment[0]["isGlobal"]
+        assert editor_assignment[0]["scopeCluster"]
 
     # Remove from the group.
     with logged_in_user(ADMIN_CREDENTIALS):
@@ -304,7 +304,9 @@ def test_rbac_list_roles() -> None:
         )["roles"]
         for all_role in all_roles:
             exluded_role = [r for r in exluded_global_roles if r["roleId"] == all_role["roleId"]]
-            has_global_role = any([p for p in all_role["permissions"] if p["isGlobal"]])
+            has_global_role = any(
+                [p for p in all_role["permissions"] if not p["scopeTypeMask"]["workspace"]]
+            )
             if len(exluded_role) == 0:
                 # Didn't find our role in exluded role. Needs to have a global only permission.
                 assert has_global_role
@@ -411,7 +413,7 @@ def test_rbac_list_roles() -> None:
         assert json_out["roles"][0]["name"] == "Editor"
         assert json_out["assignments"][0]["roleId"] == json_out["roles"][0]["roleId"]
         assert json_out["assignments"][0]["scopeWorkspaceIds"] == [1]
-        assert json_out["assignments"][0]["isGlobal"]
+        assert json_out["assignments"][0]["scopeCluster"]
 
 
 @pytest.mark.e2e_cpu

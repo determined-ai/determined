@@ -17,7 +17,6 @@ const FeatureTest: React.FC = () => {
     <ul>
       <li>{feature.isOn('trials_comparison' as ValidFeature) && 'trials_comparison'}</li>
       <li>{feature.isOn('unexist_feature' as ValidFeature) && 'unexist_feature'}</li>
-      <li>{feature.isOn('webhooks' as ValidFeature) && 'webhooks'}</li>
     </ul>
   );
 };
@@ -38,9 +37,5 @@ describe('useFeature', () => {
   it('unexist_feature feature is not on', () => {
     setup();
     expect(screen.queryByText('unexist_feature')).not.toBeInTheDocument();
-  });
-  it('webhooks feature is on', () => {
-    setup();
-    expect(screen.queryByText('webhooks')).toBeInTheDocument();
   });
 });

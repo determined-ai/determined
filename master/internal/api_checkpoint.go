@@ -38,7 +38,10 @@ func errCheckpointsNotFound(ids []string) error {
 }
 
 func (m *Master) canDoActionOnCheckpoint(
-	curUser model.User, id string, action func(model.User, *model.Experiment) error,
+	ctx context.Context,
+	curUser model.User,
+	id string,
+	action func(context.Context, model.User, *model.Experiment) error,
 ) error {
 	uuid, err := uuid.Parse(id)
 	if err != nil {
@@ -59,12 +62,12 @@ func (m *Master) canDoActionOnCheckpoint(
 		return err
 	}
 
-	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
+	if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
 		return err
 	} else if !ok {
 		return errCheckpointNotFound(id)
 	}
-	if err := action(curUser, exp); err != nil {
+	if err := action(ctx, curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	return nil
@@ -77,7 +80,7 @@ func (a *apiServer) GetCheckpoint(
 	if err != nil {
 		return nil, err
 	}
-	if err = a.m.canDoActionOnCheckpoint(*curUser, req.CheckpointUuid,
+	if err = a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -164,14 +167,14 @@ func (a *apiServer) DeleteCheckpoints(
 			return nil, err
 		}
 		var ok bool
-		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
 			return nil, err
 		} else if !ok {
 			notFoundCheckpoints = append(notFoundCheckpoints,
 				strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ",")...)
 			continue
 		}
-		if err = expauth.AuthZProvider.Get().CanEditExperiment(*curUser, exp); err != nil {
+		if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
@@ -209,7 +212,7 @@ func (a *apiServer) PostCheckpointMetadata(
 	if err != nil {
 		return nil, err
 	}
-	if err = a.m.canDoActionOnCheckpoint(*curUser, req.Checkpoint.Uuid,
+	if err = a.m.canDoActionOnCheckpoint(ctx, *curUser, req.Checkpoint.Uuid,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}

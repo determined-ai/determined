@@ -223,6 +223,22 @@ For an introduction to using the training API, please see the Training APIs sect
       -  Omniglot
       -  :download:`protonet_omniglot_pytorch.tgz </examples/protonet_omniglot_pytorch.tgz>`
 
+***********
+ Diffusion
+***********
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  det_logos
+      -  :download:`textual_inversion_stable_diffusion.tgz
+         </examples/textual_inversion_stable_diffusion.tgz>`
+
 ****************************************
  Generative Adversarial Networks (GANs)
 ****************************************

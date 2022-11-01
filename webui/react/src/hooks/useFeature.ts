@@ -9,8 +9,8 @@ export type ValidFeature =
   | 'mock_workspace_members'
   | 'mock_permissions_read'
   | 'trials_comparison'
-  | 'mock_permissions_all'
-  | 'webhooks';
+  | 'mock_permissions_all';
+
 const queryParams = queryString.parse(window.location.search);
 
 interface FeatureHook {

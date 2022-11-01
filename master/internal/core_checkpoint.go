@@ -159,7 +159,7 @@ func (m *Master) getCheckpoint(c echo.Context) error {
 	}
 
 	curUser := c.(*detContext.DetContext).MustGetUser()
-	if err := m.canDoActionOnCheckpoint(curUser, args.CheckpointUUID,
+	if err := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		s, ok := status.FromError(err)
 		if !ok {

@@ -27,24 +27,24 @@ const initUI: StateUI = {
   theme: {} as Theme,
 };
 
-enum StoreActionUI {
-  HideUIChrome = 'HideUIChrome',
-  HideUISpinner = 'HideUISpinner',
-  SetMode = 'SetMode',
-  SetPageVisibility = 'SetPageVisibility',
-  SetTheme = 'SetTheme',
-  ShowUIChrome = 'ShowUIChrome',
-  ShowUISpinner = 'ShowUISpinner',
-}
+const StoreActionUI = {
+  HideUIChrome: 'HideUIChrome',
+  HideUISpinner: 'HideUISpinner',
+  SetMode: 'SetMode',
+  SetPageVisibility: 'SetPageVisibility',
+  SetTheme: 'SetTheme',
+  ShowUIChrome: 'ShowUIChrome',
+  ShowUISpinner: 'ShowUISpinner',
+} as const;
 
 type ActionUI =
-  | { type: StoreActionUI.HideUIChrome }
-  | { type: StoreActionUI.HideUISpinner }
-  | { type: StoreActionUI.SetMode; value: Mode }
-  | { type: StoreActionUI.SetPageVisibility; value: boolean }
-  | { type: StoreActionUI.SetTheme; value: { darkLight: DarkLight; theme: Theme } }
-  | { type: StoreActionUI.ShowUIChrome }
-  | { type: StoreActionUI.ShowUISpinner };
+  | { type: typeof StoreActionUI.HideUIChrome }
+  | { type: typeof StoreActionUI.HideUISpinner }
+  | { type: typeof StoreActionUI.SetMode; value: Mode }
+  | { type: typeof StoreActionUI.SetPageVisibility; value: boolean }
+  | { type: typeof StoreActionUI.SetTheme; value: { darkLight: DarkLight; theme: Theme } }
+  | { type: typeof StoreActionUI.ShowUIChrome }
+  | { type: typeof StoreActionUI.ShowUISpinner };
 
 class UIActions {
   constructor(private dispatch: Dispatch<ActionUI>) {}

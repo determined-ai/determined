@@ -102,7 +102,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.19.6-dev0
+    Default: 0.19.7-dev0
 
   DBPassword:
     Type: String

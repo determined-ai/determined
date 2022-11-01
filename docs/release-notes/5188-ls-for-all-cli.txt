@@ -1,5 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  CLI: Add the `ls` abbreviation for `list` to all applicable CLI commands.

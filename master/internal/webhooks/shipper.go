@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
@@ -216,16 +217,20 @@ func generateWebhookRequest(
 	if err != nil {
 		return nil, fmt.Errorf("failed creating webhook request: %w", err)
 	}
-
-	signedPayload := generateSignedPayload(req, t)
+	key := []byte(conf.GetMasterConfig().Webhooks.SigningKey)
+	signedPayload := generateSignedPayload(req, t, key)
 	req.Header.Add("X-Determined-AI-Signature-Timestamp", fmt.Sprintf("%v", t))
 	req.Header.Add("X-Determined-AI-Signature", signedPayload)
 	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
 	return req, nil
 }
 
-func generateSignedPayload(req *http.Request, t int64) string {
-	key := []byte(conf.GetMasterConfig().Webhooks.SigningKey)
-	message := []byte(fmt.Sprintf(`%v,%v`, t, req.Body))
-	return hex.EncodeToString(hmac.New(sha256.New, key).Sum(message))
+func generateSignedPayload(req *http.Request, t int64, key []byte) string {
+	body := req.GetBody
+	bodyCopy, _ := body()
+	buf, _ := ioutil.ReadAll(bodyCopy)
+	message := []byte(fmt.Sprintf(`%v,%s`, t, buf))
+	mac := hmac.New(sha256.New, key)
+	mac.Write(message)
+	return hex.EncodeToString(mac.Sum(nil))
 }

@@ -1,0 +1,54 @@
+# A grid search over multiple prompts and pipeline settings.
+
+# Due to tensorboard limitations, one should keep batch_size * max_length <= 10 in order for all
+# generated images to be easily viewable in tensorboard.  Scanning over generator seeds is the
+# easiest way to get more samples while also diversifying the results.
+name: detsd_generate
+entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
+searcher:
+  name: grid
+  metric: none
+  max_length: 5 # Number of times the generation pipeline is called, per-worker.
+resources:
+  slots_per_trial: 2 # Also equal to the number of unique initial seeds which will be used.
+  max_slots: 4
+max_restarts: 1
+environment:
+    environment_variables:
+        - HF_AUTH_TOKEN=YOUR_HF_AUTH_TOKEN_HERE
+hyperparameters:
+    batch_size: 2
+    main_process_generator_seed:
+      type: int
+      minval: 14748367
+      maxval: 214748367
+      count: 2
+    save_freq: 5
+    pipeline: # The `device` arg is handled by the generate_on_cluster method; do not specify.
+        learned_embeddings_filename: learned_embeddings_dict.pt
+        scheduler_name: pndm
+        beta_start: 0.00085
+        beta_end: 0.012
+        beta_schedule: scaled_linear
+        other_scheduler_kwargs: {}
+        pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
+        use_fp16: True
+        disable_progress_bar: True
+    uuids: [] # Checkpoint UUIDs to load from the Determined Master.
+    local_checkpoint_paths: # Relative paths to concept embedding pickle files.
+      - learned_embeddings_dict_demo.pt
+    call_kwargs:
+      prompt:
+        type: categorical
+        vals:
+          - a Van Gogh painting of a det-logo-demo with thick strokes, masterful composition
+          - a watercolor painting on textured paper of a det-logo-demo using soft strokes, pastel colors, incredible composition, masterpiece-demo with soft strokes, masterful composition
+          - Beautiful tarot illustration of a det-logo-demo, in the style of james jean and victo ngai, mystical colors, trending on artstation
+          - Futuristic det-logo-demo in a desert, painting, octane render, 4 k, anime sky, warm colors
+      num_inference_steps: 50
+      guidance_scale:
+        type: double
+        minval: 2
+        maxval: 6
+        count: 3
+

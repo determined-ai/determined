@@ -16,13 +16,42 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
+func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
+	if w.CheckpointStorageConfig == nil {
+		return nil
+	}
+
+	// Convert to expconf.
+	bytes, err := w.CheckpointStorageConfig.MarshalJSON()
+	if err != nil {
+		return err
+	}
+	var checkpointStorageConfig expconf.CheckpointStorageConfig
+	if err = (&checkpointStorageConfig).UnmarshalJSON(bytes); err != nil {
+		return err
+	}
+
+	// Convert back to proto.Struct with .Printable() called.
+	bytes, err = checkpointStorageConfig.Printable().MarshalJSON()
+	if err != nil {
+		return err
+	}
+	if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (a *apiServer) GetWorkspaceByID(
-	id int32, curUser model.User, rejectImmutable bool,
+	ctx context.Context, id int32, curUser model.User, rejectImmutable bool,
 ) (*workspacev1.Workspace, error) {
 	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", id)
 	w := &workspacev1.Workspace{}
@@ -33,10 +62,14 @@ func (a *apiServer) GetWorkspaceByID(
 		return nil, errors.Wrapf(err, "error fetching workspace (%d) from database", id)
 	}
 
-	if ok, err := workspace.AuthZProvider.Get().CanGetWorkspace(curUser, w); err != nil {
+	if ok, err := workspace.AuthZProvider.Get().CanGetWorkspace(ctx, curUser, w); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, notFoundErr
+	}
+
+	if err := maskStorageConfigSecrets(w); err != nil {
+		return nil, err
 	}
 
 	if rejectImmutable && w.Immutable {
@@ -48,20 +81,21 @@ func (a *apiServer) GetWorkspaceByID(
 	return w, nil
 }
 
-func (a *apiServer) getWorkspaceAndCheckCanDoActions(ctx context.Context, workspaceID int32,
-	rejectImmutable bool, canDoActions ...func(model.User, *workspacev1.Workspace) error,
+func (a *apiServer) getWorkspaceAndCheckCanDoActions(
+	ctx context.Context, workspaceID int32, rejectImmutable bool,
+	canDoActions ...func(context.Context, model.User, *workspacev1.Workspace) error,
 ) (*workspacev1.Workspace, model.User, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, model.User{}, err
 	}
-	w, err := a.GetWorkspaceByID(workspaceID, *curUser, rejectImmutable)
+	w, err := a.GetWorkspaceByID(ctx, workspaceID, *curUser, rejectImmutable)
 	if err != nil {
 		return nil, model.User{}, err
 	}
 
 	for _, canDoAction := range canDoActions {
-		if err = canDoAction(*curUser, w); err != nil {
+		if err = canDoAction(ctx, *curUser, w); err != nil {
 			return nil, model.User{}, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
@@ -76,7 +110,7 @@ func (a *apiServer) GetWorkspace(
 		return nil, err
 	}
 
-	w, err := a.GetWorkspaceByID(req.Id, *curUser, false)
+	w, err := a.GetWorkspaceByID(ctx, req.Id, *curUser, false)
 	return &apiv1.GetWorkspaceResponse{Workspace: w}, err
 }
 
@@ -88,7 +122,7 @@ func (a *apiServer) GetWorkspaceProjects(
 		return nil, err
 	}
 	if req.Id != 0 {
-		if _, err = a.GetWorkspaceByID(req.Id, *curUser, false); err != nil {
+		if _, err = a.GetWorkspaceByID(ctx, req.Id, *curUser, false); err != nil {
 			return nil, err
 		}
 	}
@@ -142,7 +176,7 @@ func (a *apiServer) GetWorkspaceProjects(
 	}
 
 	resp.Projects, err = workspace.AuthZProvider.Get().
-		FilterWorkspaceProjects(*curUser, resp.Projects)
+		FilterWorkspaceProjects(ctx, *curUser, resp.Projects)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +242,7 @@ func (a *apiServer) GetWorkspaces(
 	}
 
 	resp.Workspaces, err = workspace.AuthZProvider.Get().
-		FilterWorkspaces(*curUser, resp.Workspaces)
+		FilterWorkspaces(ctx, *curUser, resp.Workspaces)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +257,7 @@ func (a *apiServer) PostWorkspace(
 	if err != nil {
 		return nil, err
 	}
-	if err = workspace.AuthZProvider.Get().CanCreateWorkspace(*curUser); err != nil {
+	if err = workspace.AuthZProvider.Get().CanCreateWorkspace(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -237,8 +271,14 @@ func (a *apiServer) PostWorkspace(
 	}
 
 	if req.AgentUserGroup != nil {
-		err = workspace.AuthZProvider.Get().CanCreateWorkspaceWithAgentUserGroup(*curUser)
+		err = workspace.AuthZProvider.Get().CanCreateWorkspaceWithAgentUserGroup(ctx, *curUser)
 		if err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
+	if req.CheckpointStorageConfig != nil && len(req.CheckpointStorageConfig.Fields) > 0 {
+		if err = workspace.AuthZProvider.Get().
+			CanCreateWorkspaceWithCheckpointStorageConfig(ctx, *curUser); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
@@ -262,6 +302,22 @@ func (a *apiServer) PostWorkspace(
 		w.AgentGroup = req.AgentUserGroup.AgentGroup
 	}
 
+	if req.CheckpointStorageConfig != nil && len(req.CheckpointStorageConfig.Fields) > 0 {
+		var bytes []byte
+		bytes, err = req.CheckpointStorageConfig.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		var sc expconf.CheckpointStorageConfig
+		w.CheckpointStorageConfig = &sc
+		if err = w.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+			return nil, err
+		}
+		if err = schemas.IsComplete(w.CheckpointStorageConfig); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
+	}
+
 	_, err = tx.NewInsert().Model(w).Exec(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error creating workspace %s in database", req.Name)
@@ -281,7 +337,10 @@ func (a *apiServer) PostWorkspace(
 		return nil, errors.Wrap(err, "could not commit create workspace transcation")
 	}
 
-	protoWorkspace := w.ToProto()
+	protoWorkspace, err := w.ToProto()
+	if err != nil {
+		return nil, err
+	}
 	protoWorkspace.Username = curUser.Username
 	protoWorkspace.Pinned = true
 	return &apiv1.PostWorkspaceResponse{Workspace: protoWorkspace}, nil
@@ -300,7 +359,7 @@ func (a *apiServer) PatchWorkspace(
 
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
 		if err = workspace.AuthZProvider.Get().
-			CanSetWorkspacesName(currUser, currWorkspace); err != nil {
+			CanSetWorkspacesName(ctx, currUser, currWorkspace); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
@@ -312,7 +371,7 @@ func (a *apiServer) PatchWorkspace(
 
 	if req.Workspace.AgentUserGroup != nil {
 		if err = workspace.AuthZProvider.Get().
-			CanSetWorkspacesAgentUserGroup(currUser, currWorkspace); err != nil {
+			CanSetWorkspacesAgentUserGroup(ctx, currUser, currWorkspace); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
@@ -324,6 +383,30 @@ func (a *apiServer) PatchWorkspace(
 		updatedWorkspace.AgentGroup = updateAug.AgentGroup
 
 		insertColumns = append(insertColumns, "uid", "user_", "gid", "group_")
+	}
+
+	if req.Workspace.CheckpointStorageConfig != nil {
+		if err = workspace.AuthZProvider.Get().
+			CanSetWorkspacesCheckpointStorageConfig(ctx, currUser, currWorkspace); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
+		}
+
+		if len(req.Workspace.CheckpointStorageConfig.Fields) > 0 {
+			var bytes []byte
+			bytes, err = req.Workspace.CheckpointStorageConfig.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+			var sc expconf.CheckpointStorageConfig
+			updatedWorkspace.CheckpointStorageConfig = &sc
+			if err = updatedWorkspace.CheckpointStorageConfig.UnmarshalJSON(bytes); err != nil {
+				return nil, err
+			}
+			if err = schemas.IsComplete(updatedWorkspace.CheckpointStorageConfig); err != nil {
+				return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			}
+		}
+		insertColumns = append(insertColumns, "checkpoint_storage_config")
 	}
 
 	if len(insertColumns) == 0 {
@@ -339,7 +422,7 @@ func (a *apiServer) PatchWorkspace(
 	}
 
 	// TODO(ilia): Avoid second refetch.
-	finalWorkspace, err := a.GetWorkspaceByID(currWorkspace.Id, currUser, false)
+	finalWorkspace, err := a.GetWorkspaceByID(ctx, currWorkspace.Id, currUser, false)
 	return &apiv1.PatchWorkspaceResponse{Workspace: finalWorkspace},
 		errors.Wrapf(err, "error refetching updated workspace (%d) from db", currWorkspace.Id)
 }

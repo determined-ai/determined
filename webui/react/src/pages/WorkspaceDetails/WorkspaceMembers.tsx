@@ -88,9 +88,9 @@ const WorkspaceMembers: React.FC<Props> = ({
   rolesAssignableToScope,
   workspace,
 }: Props) => {
-  const { canUpdateRoles } = usePermissions();
+  const { canAssignRoles } = usePermissions();
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
-  const userCanAssignRoles = canUpdateRoles({ workspace });
+  const userCanAssignRoles = canAssignRoles({ workspace });
 
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 

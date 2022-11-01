@@ -4,6 +4,7 @@ html {
   .ant-breadcrumb {
     align-items: center;
     display: flex;
+    word-break: break-word;
 
     li:last-child {
       /* stylelint-disable no-descending-specificity */

@@ -33,7 +33,6 @@ const JupyterRenderer = lazy(() => import('./IpynbRenderer'));
 const { DirectoryTree } = Tree;
 
 import css from './CodeViewer.module.scss';
-import { IpynbInterface } from './IpynbRenderer';
 
 import './index.scss';
 
@@ -548,7 +547,7 @@ const CodeViewer: React.FC<Props> = ({
             />
           ) : (
             <Suspense fallback={<Spinner tip="Loading ipynb viewer..." />}>
-              <JupyterRenderer file={JSON.parse(activeFile?.text || '') as IpynbInterface} />
+              <JupyterRenderer file={activeFile?.text || ''} />
             </Suspense>
           )}
         </Spinner>

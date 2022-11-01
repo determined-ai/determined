@@ -3,6 +3,7 @@
 package webhooks
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -32,6 +34,29 @@ func TestShipper(t *testing.T) {
 	pgDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
+
+	t.Run("payload signature generation should work", func(t *testing.T) {
+		ts := int64(1666890081)
+		url := "http://localhost:8080"
+		name := expconf.Name{RawString: ptrs.Ptr("test-name")}
+		e := ExperimentPayload{
+			ID:            1,
+			State:         "COMPLETED",
+			Name:          name,
+			Duration:      1,
+			ResourcePool:  "default",
+			SlotsPerTrial: 1,
+			WorkspaceName: "workspace",
+			ProjectName:   "project",
+		}
+		b, _ := json.Marshal(e)
+		req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(b))
+		key := []byte("testsigningkey")
+		signedPayload := generateSignedPayload(req, ts, key)
+
+		require.Equal(t, signedPayload,
+			"899cc042278415da7d91605ffefe81376d64a4d842aa5663cd614f497f88910f")
+	})
 
 	t.Log("setup test webhook receiver")
 	received := make(chan EventPayload, 100)

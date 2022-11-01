@@ -8,9 +8,9 @@ port your existing code to the Determined environment:
 +---------------------------------+--------------------------------------------------------------+
 | Topic                           | Documentation Content                                        |
 +=================================+==============================================================+
-| :doc:`pytorch-mnist-tutorial`   | Based on the `PyTorch MNIST example <pytorch-mnist>`__, this |
-|                                 | tutorial shows you how to port a simple image classification |
-|                                 | model for the MNIST dataset.                                 |
+| :doc:`pytorch-mnist-tutorial`   | Based on the `PyTorch MNIST example`_, this tutorial shows   |
+|                                 | you how to port a simple image classification model for the  |
+|                                 | MNIST dataset.                                               |
 +---------------------------------+--------------------------------------------------------------+
 | :doc:`pytorch-porting-tutorial` | The PyTorch porting tutorial provides helpful hints to       |
 |                                 | successfully integrate PyTorch code with the Determined      |
@@ -20,7 +20,7 @@ port your existing code to the Determined environment:
 |                                 | port a ``tf.keras`` model to Determined.                     |
 +---------------------------------+--------------------------------------------------------------+
 
-.. _pytorch-mnist: https://github.com/PyTorch/examples/blob/master/mnist/main.py
+.. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
 
 .. toctree::
    :hidden:
