@@ -150,6 +150,6 @@ describe('CodeViewer', () => {
 
     await act(() => user.click(button));
 
-    await waitFor(() => expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py'));
+    waitFor(() => expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py'));
   });
 });
