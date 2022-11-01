@@ -157,6 +157,23 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesAgentUserGroup(
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
 }
 
+// CanSetWorkspacesCheckpointStorageConfig determines if a user can set checkpoint storage access.
+func (r *WorkspaceAuthZRBAC) CanSetWorkspacesCheckpointStorageConfig(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+) error {
+	return denyAccessWithoutPermission(ctx, curUser.ID, workspace,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG)
+}
+
+// CanCreateWorkspaceWithCheckpointStorageConfig determines if a user can set
+// checkpoint storage access on a new workspace.
+func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithCheckpointStorageConfig(
+	ctx context.Context, curUser model.User,
+) error {
+	return denyAccessWithoutPermission(ctx, curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
+}
+
 func denyAccessWithoutPermission(
 	ctx context.Context,
 	uid model.UserID,
