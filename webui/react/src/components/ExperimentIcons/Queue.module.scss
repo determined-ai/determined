@@ -1,54 +1,52 @@
 .base {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 24px;
-    height: 24px;
+  align-items: center;
+  display: flex;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
 }
-
-.spinner{
-    position: relative;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--theme-breath-button-overlay);
-
-    -webkit-animation: pulse 1.75s infinite ease-in-out;
-    animation: pulse 1.75s infinite ease-in-out;
+.spinner {
+  -webkit-animation: pulse 1.75s infinite ease-in-out;
+  animation: pulse 1.75s infinite ease-in-out;
+  background: var(--theme-breath-button-overlay);
+  border-radius: 50%;
+  height: 20px;
+  position: relative;
+  width: 20px;
 }
 
 @keyframes pulse {
-    0%,100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(0.75);
-    }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.75);
+  }
 }
 
-.inner_spinner:before,
-.inner_spinner:after {
-    content: '';
-    display: block;
-    position: absolute;
-    margin: 4px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--theme-breath-button);
-
-    -webkit-animation: pulse-spinner 1.75s infinite ease-in-out;
-    animation: pulse-spinner 1.75s infinite ease-in-out;
-
+.inner_spinner::before,
+.inner_spinner::after {
+  -webkit-animation: pulse-spinner 1.75s infinite ease-in-out;
+  animation: pulse-spinner 1.75s infinite ease-in-out;
+  background: var(--theme-breath-button);
+  border-radius: 50%;
+  content: '';
+  display: block;
+  height: 12px;
+  margin: 4px;
+  position: absolute;
+  width: 12px;
 }
 
 /* Animation */
 
 @keyframes pulse-spinner {
-    0%, 100% {
-        transform: scale(0);
-    }
-    50%{
-        transform: scale(1);
-    }
+  0%,
+  100% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1);
+  }
 }
