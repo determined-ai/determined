@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -75,6 +76,13 @@ func (a *apiServer) CheckParentWorkspaceUnarchived(project *projectv1.Project) e
 func (a *apiServer) GetProject(
 	ctx context.Context, req *apiv1.GetProjectRequest,
 ) (*apiv1.GetProjectResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
+		"method": "get",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -87,6 +95,13 @@ func (a *apiServer) GetProject(
 func (a *apiServer) PostProject(
 	ctx context.Context, req *apiv1.PostProjectRequest,
 ) (*apiv1.PostProjectResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/projects", req.WorkspaceId),
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -110,6 +125,13 @@ func (a *apiServer) PostProject(
 func (a *apiServer) AddProjectNote(
 	ctx context.Context, req *apiv1.AddProjectNoteRequest,
 ) (*apiv1.AddProjectNoteResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d/notes", req.ProjectId),
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	p, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId,
 		project.AuthZProvider.Get().CanSetProjectNotes)
 	if err != nil {
@@ -131,6 +153,13 @@ func (a *apiServer) AddProjectNote(
 func (a *apiServer) PutProjectNotes(
 	ctx context.Context, req *apiv1.PutProjectNotesRequest,
 ) (*apiv1.PutProjectNotesResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d/notes", req.ProjectId),
+		"method": "put",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	_, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId,
 		project.AuthZProvider.Get().CanSetProjectNotes)
 	if err != nil {
@@ -146,6 +175,13 @@ func (a *apiServer) PutProjectNotes(
 func (a *apiServer) PatchProject(
 	ctx context.Context, req *apiv1.PatchProjectRequest,
 ) (*apiv1.PatchProjectResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
+		"method": "patch",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	currProject, currUser, err := a.getProjectAndCheckCanDoActions(ctx, req.Id)
 	if err != nil {
 		return nil, err
@@ -229,6 +265,13 @@ func (a *apiServer) DeleteProject(
 	ctx context.Context, req *apiv1.DeleteProjectRequest) (*apiv1.DeleteProjectResponse,
 	error,
 ) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
+		"method": "delete",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	_, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
 		project.AuthZProvider.Get().CanDeleteProject)
 	if err != nil {
@@ -263,6 +306,13 @@ func (a *apiServer) MoveProject(
 	ctx context.Context, req *apiv1.MoveProjectRequest) (*apiv1.MoveProjectResponse,
 	error,
 ) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d/move", req.ProjectId),
+		"method": "get",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -301,6 +351,14 @@ func (a *apiServer) ArchiveProject(
 	ctx context.Context, req *apiv1.ArchiveProjectRequest) (*apiv1.ArchiveProjectResponse,
 	error,
 ) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d/archive", req.Id),
+		"method": "post",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
+
 	p, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
 		project.AuthZProvider.Get().CanArchiveProject)
 	if err != nil {
@@ -326,6 +384,13 @@ func (a *apiServer) UnarchiveProject(
 	ctx context.Context, req *apiv1.UnarchiveProjectRequest) (*apiv1.UnarchiveProjectResponse,
 	error,
 ) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/projects/%d/unarchive", req.Id),
+		"method": "get",
+		"body": req.String(),
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	p, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
 		project.AuthZProvider.Get().CanUnarchiveProject)
 	if err != nil {
