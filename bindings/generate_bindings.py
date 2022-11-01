@@ -21,7 +21,7 @@ class TypeAnno:
     def load(self, val: Code) -> Code:
         raise NotImplementedError(type(self))
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         raise NotImplementedError(type(self))
 
     def isnone(self) -> bool:
@@ -42,7 +42,7 @@ class TypeAnno:
 
         Defaults to the normal dump(), but can be overridden.
         """
-        return self.dump(val)
+        return self.dump(val, omit_unset="True")
 
 
 class TypeDef:
@@ -59,7 +59,7 @@ class NoParse:
     def load(self, val: Code) -> Code:
         return val
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         return val
 
 
@@ -98,7 +98,7 @@ class Float(TypeAnno):
     def load(self, val: Code) -> Code:
         return f"float({val})"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         return f"dump_float({val})"
 
 
@@ -175,14 +175,14 @@ class Ref(TypeAnno):
         )
         return self.defn.load(val)
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         assert self.linked, "link step must be completed before generating code!"
         assert self.defn, "it doesn't make sense to dump an empty class"
         assert isinstance(self.defn, (Enum, Class)), (
             self.name,
             type(self.defn).__name__,
         )
-        return self.defn.dump(val)
+        return self.defn.dump(val, omit_unset)
 
 
 class Dict(TypeAnno):
@@ -206,10 +206,11 @@ class Dict(TypeAnno):
             return val
         return f"{{k: {self.values.load('v')} for k, v in {val}.items()}}"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         if not self.need_parse():
             return val
-        return f"{{k: {self.values.dump('v')} for k, v in {val}.items()}}"
+        each = self.values.dump("v", omit_unset)
+        return f"{{k: {each} for k, v in {val}.items()}}"
 
 
 class Sequence(TypeAnno):
@@ -233,10 +234,11 @@ class Sequence(TypeAnno):
             return val
         return f"[{self.items.load('x')} for x in {val}]"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         if not self.need_parse():
             return val
-        return f"[{self.items.dump('x')} for x in {val}]"
+        each = self.items.dump("x", omit_unset)
+        return f"[{each} for x in {val}]"
 
 
 class Parameter:
@@ -272,63 +274,95 @@ class Parameter:
         else:
             typestr = f'"typing.Optional[{self.type.annotation(prequoted=True)}]"'
             default = " = None"
-        default = "" if self.required else " = None"
         return f"    {self.name}: {typestr}{default},"
 
-    def dump(self) -> Code:
-        return self.type.dump(self.name)
+    def gen_init_param(self) -> Code:
+        if self.required:
+            typestr = self.type.annotation()
+            default = ""
+        else:
+            typestr = f'"typing.Union[{self.type.annotation(prequoted=True)}, None, Unset]"'
+            default = " = _unset"
+        return f"    {self.name}: {typestr}{default},"
+
+    def dump(self, omit_unset: Code) -> Code:
+        return self.type.dump(self.name, omit_unset)
 
 
 class Class(TypeDef):
     def __init__(self, name: str, params: typing.Dict[str, Parameter]):
         self.name = name
-        # self.members = members
         self.params = params
 
     def load(self, val: Code) -> Code:
         return f"{self.name}.from_json({val})"
 
-    def dump(self, val: Code) -> Code:
-        return f"{val}.to_json()"
+    def dump(self, val: Code, omit_unset: Code) -> Code:
+        return f"{val}.to_json({omit_unset})"
 
     def gen_def(self) -> Code:
+        required = sorted(p for p in self.params if self.params[p].required)
+        optional = sorted(p for p in self.params if not self.params[p].required)
         out = [f"class {self.name}:"]
+        for k in optional:
+            v = self.params[k]
+            out += [f'    {k}: "typing.Optional[{v.type.annotation(prequoted=True)}]" = None']
+        out += [""]
         out += ["    def __init__("]
         out += ["        self,"]
         out += ["        *,"]
-        required = sorted(p for p in self.params if self.params[p].required)
-        optional = sorted(p for p in self.params if not self.params[p].required)
-        for name in required + optional:
-            out += ["    " + self.params[name].gen_function_param()]
+        for k in required + optional:
+            v = self.params[k]
+            out += ["    " + v.gen_init_param()]
         out += ["    ):"]
-        out += [f"        self.{k} = {k}" for k in self.params]
+        for k in required:
+            out += [f"        self.{k} = {k}"]
+        for k in optional:
+            out += [f"        if not isinstance({k}, Unset):"]
+            out += [f"            self.{k} = {k}"]
         out += [""]
         out += ["    @classmethod"]
         out += [f'    def from_json(cls, obj: Json) -> "{self.name}":']
-        out += ["        return cls("]
-        for k, v in self.params.items():
+        out += ['        kwargs: "typing.Dict[str, typing.Any]" = {']
+        for k in required:
+            v = self.params[k]
             if v.type.need_parse():
                 parsed = v.type.load(f'obj["{k}"]')
-                if not v.required:
-                    parsed = parsed + f' if obj.get("{k}", None) is not None else None'
-            elif v.required:
-                parsed = f'obj["{k}"]'
             else:
-                parsed = f'obj.get("{k}", None)'
-            out.append(f"""            {k}={parsed},""")
-        out += ["        )"]
-        out += [""]
-        out += ["    def to_json(self) -> typing.Any:"]
-        out += ["        return {"]
-        for k, v in self.params.items():
+                parsed = f'obj["{k}"]'
+            out += [f'            "{k}": {parsed},']
+        out += ["        }"]
+        for k in optional:
+            v = self.params[k]
             if v.type.need_parse():
-                parsed = v.type.dump(f"self.{k}")
+                parsed = v.type.load(f'obj["{k}"]')
+                parsed = parsed + f' if obj["{k}"] is not None else None'
+            else:
+                parsed = f'obj["{k}"]'
+            out += [f'        if "{k}" in obj:']
+            out += [f'            kwargs["{k}"] = {parsed}']
+        out += ["        return cls(**kwargs)"]
+        out += [""]
+        out += ['    def to_json(self, omit_unset: bool = False) -> typing.Any:']
+        out += ['        out: "typing.Dict[str, typing.Any]" = {']
+        for k in required:
+            v = self.params[k]
+            if v.type.need_parse():
+                parsed = v.type.dump(f"self.{k}", "omit_unset")
             else:
                 parsed = f"self.{k}"
-            if not v.required:
-                parsed = parsed + f" if self.{k} is not None else None"
             out.append(f'            "{k}": {parsed},')
         out += ["        }"]
+        for k in optional:
+            v = self.params[k]
+            if v.type.need_parse():
+                parsed = v.type.dump(f"self.{k}", "omit_unset")
+                parsed = f"None if self.{k} is None else {parsed}"
+            else:
+                parsed = f"self.{k}"
+            out += [f'        if not omit_unset or "{k}" in vars(self):']
+            out += [f'            out["{k}"] = {parsed}']
+        out += ["        return out"]
 
         return "\n".join(out)
 
@@ -341,7 +375,7 @@ class Enum(TypeDef):
     def load(self, val: Code) -> Code:
         return f"{self.name}({val})"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         return f"{val}.value"
 
     def gen_def(self) -> Code:
@@ -433,7 +467,9 @@ class Function:
             out += ["    _params = None"]
 
         if "body" in self.params:
-            bodystr = self.params["body"].dump()
+            # It is important that request bodies omit unset values so that PATCH request bodies
+            # do not include extraneous None values.
+            bodystr = self.params["body"].dump("True")
         else:
             bodystr = "None"
         out += ["    _resp = session._do_request("]
@@ -704,7 +740,7 @@ def gen_paginated(defs: TypeDefs) -> typing.List[str]:
 
 def pybindings(swagger: dict) -> str:
     prefix = """
-# The contents of this file are programmatically generated.
+# Code generated by generate_bindings.py. DO NOT EDIT.
 import enum
 import json
 import math
@@ -719,15 +755,12 @@ if typing.TYPE_CHECKING:
 Json = typing.Any
 
 
-Request = typing.Callable[
-    [
-        str,  # method
-        str,  # path
-        typing.Optional[typing.Dict[str, typing.Any]],  # params
-        typing.Any,  # json body
-    ],
-    requests.Response,
-]
+# Unset is a type to distinguish between things not set and things set to None.
+class Unset:
+    pass
+
+
+_unset = Unset()
 
 
 def dump_float(val: typing.Any) -> typing.Any:
