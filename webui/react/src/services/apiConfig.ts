@@ -1622,3 +1622,7 @@ export const updateJobQueue: DetApi<
   postProcess: identity,
   request: (params: Api.V1UpdateJobQueueRequest) => detApi.Internal.updateJobQueue(params),
 };
+
+export const downloadCheckpoint = (uuid: string): Api.FetchArgs => {
+  return detApi.Checkpoint.getCheckpoint_1(uuid);
+};

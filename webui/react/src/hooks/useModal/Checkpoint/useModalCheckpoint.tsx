@@ -1,15 +1,17 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, ModalFuncProps } from 'antd';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
+import { downloadCheckpoint } from 'services/apiConfig';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { formatDatetime } from 'shared/utils/datetime';
+import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointStorageType,
@@ -17,6 +19,7 @@ import {
   CoreApiGenericCheckpoint,
   ExperimentConfig,
 } from 'types';
+import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
 
 import css from './useModalCheckpoint.module.scss';
@@ -87,6 +90,8 @@ const useModalCheckpoint = ({
 
   const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [onClose]);
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const handleDelete = useCallback(() => {
     if (!checkpoint.uuid) return;
     readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
@@ -147,6 +152,37 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
+        {checkpoint.uuid && config.checkpointStorage?.type === CheckpointStorageType.S3 && (
+          <Button
+            disabled={isDownloading}
+            onClick={() => {
+              setIsDownloading(true);
+              const info = downloadCheckpoint(checkpoint.uuid || '');
+              const url =
+                window.location.host === 'localhost:3000'
+                  ? 'http://latest-master.determined.ai:8080' + info.url
+                  : info.url;
+              fetch(url, { headers: { ...info.options.headers, Accept: 'application/zip' } })
+                .then((res) => res.blob())
+                .then((blob) => {
+                  if (blob.size < 1000) {
+                    // consistent with an error message (usually Access Denied)
+                    setIsDownloading(false);
+                    handleError(null, {
+                      publicSubject: 'Unable to download checkpoint.',
+                      silent: false,
+                      type: ErrorType.Api,
+                    });
+                    return;
+                  }
+                  const file = window.URL.createObjectURL(blob);
+                  window.location.assign(file);
+                  setIsDownloading(false);
+                });
+            }}>
+            Download
+          </Button>
+        )}
         {searcherMetric &&
           renderRow(
             'Validation Metric',
@@ -178,7 +214,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
           )}
       </div>
     );
-  }, [checkpoint, config, props.searcherValidation, onClickDelete]);
+  }, [checkpoint, config, props.searcherValidation, onClickDelete, isDownloading]);
 
   const modalProps: ModalFuncProps = useMemo(
     () => ({
