@@ -1687,7 +1687,7 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
-      - skip-if-webui-only
+      # - skip-if-webui-only # we'd like to skip this git is not already installed.
       - run: python --version
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
