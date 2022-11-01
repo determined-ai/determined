@@ -2,17 +2,17 @@ import { Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 
 import { runStateToLabel } from 'constants/states';
+import cancle_dark from 'shared/assets/images/cancle-dark.svg';
+import cancle_light from 'shared/assets/images/cancle-light.svg';
+import complete from 'shared/assets/images/complete.svg';
+import error from 'shared/assets/images/error.svg';
+import pause_dark from 'shared/assets/images/pause-dark.svg';
+import pause_light from 'shared/assets/images/pause-light.svg';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { RunState } from 'types';
 
 import Active from './Active';
-import cancle_dark from './cancle-dark.svg';
-import cancle_light from './cancle-light.svg';
-import complete from './complete.svg';
-import error from './error.svg';
-import pause_dark from './pause-dark.svg';
-import pause_light from './pause-light.svg';
 import Queue from './Queue';
 import Spinner from './Spinner';
 
