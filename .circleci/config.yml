@@ -123,6 +123,10 @@ commands:
             fi
       - run: git fetch upstream
       - run:
+          name: TEMP assume this is a web only change # to test out the pr
+          command: circleci-agent step halt
+
+      - run:
           name: check for webui-only changes  # must be run after skip-if-docs-only
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
