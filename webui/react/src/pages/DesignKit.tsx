@@ -1,5 +1,5 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Select, Space } from 'antd';
+import { Alert, Button, Card, Checkbox, Space } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -35,6 +35,11 @@ const DesignKit: React.FC = () => {
           <li>
             <Link reloadDocument to="#dropdowns_anchor">
               Dropdowns
+            </Link>
+          </li>
+          <li>
+            <Link reloadDocument to="#checkboxes_anchor">
+              Checkboxes
             </Link>
           </li>
         </ul>
@@ -264,7 +269,6 @@ const DesignKit: React.FC = () => {
             </ul>
             <hr />
             <strong>Dropdown menu items</strong>
-            <Select.Option value="Option">Option</Select.Option>
             <strong>Guiding principles</strong>
             <ul>
               <li>Needs to be same width as dropdown box</li>
@@ -278,6 +282,7 @@ const DesignKit: React.FC = () => {
               <li className={css.warning}>Colors do not meet accessibility guidelines</li>
             </ul>
             <strong>Menu items with checkmark</strong>
+            <p>Not implemented</p>
             <strong>Guiding principles</strong>
             <ul>
               <li>Needs to be same width as dropdown box</li>
@@ -301,12 +306,14 @@ const DesignKit: React.FC = () => {
             </ul>
             <hr />
             <strong>Categories with checkmarks</strong>
+            <p>Not implemented</p>
             <strong>Guiding principles</strong>
             <ul>
               <li>The padding of the children is preserved and aligns nicely.</li>
             </ul>
             <hr />
             <strong>Categories with checkmarks and icons</strong>
+            <p>Not implemented</p>
             <strong>Guiding principles</strong>
             <ul>
               <li>The padding of the children is preserved and aligns nicely.</li>
@@ -317,7 +324,7 @@ const DesignKit: React.FC = () => {
             <ul>
               <li>
                 When selecting the parent category is possible, it selects all the children below
-                it.{' '}
+                it.
               </li>
               <li>Behavior of the checkboxes is consistent with the checkbox component.</li>
               <li>Parent categories cannot have icons (at this point)</li>
@@ -326,6 +333,75 @@ const DesignKit: React.FC = () => {
                 selected” (and NOT a list of all the selections made)
               </li>
             </ul>
+          </Card>
+        </section>
+        <section>
+          <h3 id="checkboxes_anchor">Checkboxes</h3>
+          <ReviewAlert />
+          <Card>
+            Check boxes (Checkbox) give people a way to select one or more items from a group, or
+            switch between two mutually exclusive options (checked or unchecked, on or off).
+          </Card>
+          <Card title="Design audit">
+            <strong>
+              This component is currently under review and will receive updates to address:
+            </strong>
+            <ul>
+              <li>Font inconsistency</li>
+              <li>Internal padding inconsistencies</li>
+              <li>Button states do not meet accessibility requirements.</li>
+            </ul>
+          </Card>
+          <Card title="Best practices">
+            <strong>Layout</strong>
+            <ul>
+              <li>
+                Use a single check box when there&apos;s only one selection to make or choice to
+                confirm. Selecting a blank check box selects it. Selecting it again clears the check
+                box.
+              </li>
+              <li>
+                Use multiple check boxes when one or more options can be selected from a group.
+                Unlike radio buttons, selecting one check box will not clear another check box.
+              </li>
+            </ul>
+            <strong>Content</strong>
+            <ul>
+              <li>
+                Separate two groups of check boxes with headings rather than positioning them one
+                after the other.
+              </li>
+              <li>Use sentence-style capitalization—only capitalize the first word.</li>
+              <li>
+                Don&apos;t use end punctuation (unless the check box label absolutely requires
+                multiple sentences).
+              </li>
+              <li>Use a sentence fragment for the label, rather than a full sentence.</li>
+              <li>
+                Make it easy for people to understand what will happen if they select or clear a
+                check box.
+              </li>
+            </ul>
+          </Card>
+          <Card title="Usage">
+            <strong>Basic checkboxes</strong>
+            <Checkbox>This is a basic checkbox.</Checkbox>
+            <strong>Guiding principles</strong>
+            <ul>
+              <li>8px right margin from the checkbox.</li>
+              <li>5px vertical margins above and below the checkbox</li>
+              <li>5px padding for mandatory and info icons</li>
+              <li>One style of checkboxes throughout the experience.</li>
+            </ul>
+            <strong>Variations</strong>
+            <Checkbox checked>Checked checkbox</Checkbox>
+            <Checkbox checked={false}>Unchecked checkbox</Checkbox>
+            <Checkbox checked disabled>
+              Disabled checked checkbox
+            </Checkbox>
+            <p>Mandatory checkbox - not implemented.</p>
+            <p>Mandatory checkbox with info sign - not implemented.</p>
+            <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
           </Card>
         </section>
       </main>
