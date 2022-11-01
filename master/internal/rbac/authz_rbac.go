@@ -122,7 +122,7 @@ func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 	workspaceID *int32,
 ) error {
 	return db.DoesPermissionMatch(ctx, curUser.ID, workspaceID,
-		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 }
 
 // CanGetWorkspaceMembership checks if a user can get membership on a workspace.
