@@ -44,6 +44,7 @@ def test_launch_layer_exit(collect_trial_profiles: Callable[[int], None]) -> Non
     config = conf.set_entrypoint(
         config, "python3 -m nonexistent_launch_module model_def:CIFARTrial"
     )
+    config["max_restarts"] = 0
 
     experiment_id = exp.run_failure_test_with_temp_config(
         config, conf.cv_examples_path("cifar10_pytorch")
