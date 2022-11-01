@@ -1,6 +1,7 @@
 from typing import List
 
 import pytest
+import torch
 
 from determined.common.api.bindings import determinedexperimentv1State
 from tests import config as conf
@@ -14,7 +15,9 @@ def run_failure_test_multiple(config_file: str, model_def_file: str, errors: Lis
         config_file,
         model_def_file,
     )
-    exp.wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_ERROR)
+    exp.wait_for_experiment_state(
+        experiment_id, determinedexperimentv1State.STATE_ERROR, max_wait_secs=600
+    )
     trials = exp.experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
@@ -55,16 +58,17 @@ def test_docker_image() -> None:
     )
 
 
-# @pytest.mark.e2e_slurm
-# TEST DISABLED (FOUNDENG-304) -- we are not getting the expected error message
-# and instead the job is going to PartitionNodeLimit state waiting for 100 nodes
-# to become available.
-def DISABLED_node_not_available() -> None:
+# Without GPUs, this test may hang and eventually gets a timeout instead of the quick
+# failure that is intended.  This is the current behavior on mosaic, so for now skip without GPUs.
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="no gpu available")
+@pytest.mark.e2e_slurm
+def test_node_not_available() -> None:
     # Creates an experiment with a configuration that cannot be satisfied.
     # Verifies that the error message includes the SBATCH options of the failed submission.
     # Only casablanca displays the SBATCH options. Horizon does not upon failure
     # The line: "SBATCH options:" is not present on horizon's output
     error1 = "Batch job submission failed: Requested node configuration is not available"
+    # When doing CPU scheduling, on some Slurm systems you may get a different error
     error2 = "CPU count per node can not be satisfied"
     errors = [error1, error2]
     run_failure_test_multiple(
