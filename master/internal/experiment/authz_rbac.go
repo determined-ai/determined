@@ -26,10 +26,8 @@ func getWorkspaceFromExperiment(ctx context.Context, e *model.Experiment,
 
 // CanGetExperiment checks if a user has permission to view an experiment.
 func (a *ExperimentAuthZRBAC) CanGetExperiment(
-	curUser model.User, e *model.Experiment,
+	ctx context.Context, curUser model.User, e *model.Experiment,
 ) (canGetExp bool, serverError error) {
-	ctx := context.Background()
-
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return false, err
@@ -47,9 +45,8 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 
 // CanGetExperimentArtifacts checks if a user has permission to view experiment artifacts.
 func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
-	curUser model.User, e *model.Experiment,
+	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
-	ctx := context.Background()
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -60,9 +57,9 @@ func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
 }
 
 // CanDeleteExperiment checks if a user has permission to delete an experiment.
-func (a *ExperimentAuthZRBAC) CanDeleteExperiment(curUser model.User, e *model.Experiment) error {
-	ctx := context.Background()
-
+func (a *ExperimentAuthZRBAC) CanDeleteExperiment(
+	ctx context.Context, curUser model.User, e *model.Experiment,
+) error {
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -74,9 +71,8 @@ func (a *ExperimentAuthZRBAC) CanDeleteExperiment(curUser model.User, e *model.E
 
 // FilterExperimentsQuery filters a query for what experiments a user can view.
 func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
-	curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
 ) (*bun.SelectQuery, error) {
-	ctx := context.Background()
 	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
 	if err != nil {
 		return query, err
@@ -111,13 +107,13 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 
 // FilterExperimentLabelsQuery filters a query for what experiment metadata a user can view.
 func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
-	curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
 ) (*bun.SelectQuery, error) {
 	if proj != nil {
 		// if proj is not nil, there is already a filter in place
 		return query, nil
 	}
-	ctx := context.Background()
+
 	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
 	if err != nil {
 		return query, err
@@ -158,15 +154,16 @@ func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
 }
 
 // CanPreviewHPSearch always returns a nil error.
-func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(curUser model.User) error {
+func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(ctx context.Context, curUser model.User) error {
 	// TODO: does this require any specific permission if you already have the config?
 	// Maybe permission to submit the experiment?
 	return nil
 }
 
 // CanEditExperiment checks if a user can edit an experiment.
-func (a *ExperimentAuthZRBAC) CanEditExperiment(curUser model.User, e *model.Experiment) error {
-	ctx := context.Background()
+func (a *ExperimentAuthZRBAC) CanEditExperiment(
+	ctx context.Context, curUser model.User, e *model.Experiment,
+) error {
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -178,10 +175,8 @@ func (a *ExperimentAuthZRBAC) CanEditExperiment(curUser model.User, e *model.Exp
 
 // CanEditExperimentsMetadata checks if a user can edit an experiment's metadata.
 func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
-	curUser model.User, e *model.Experiment,
+	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
-	ctx := context.Background()
-
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -193,10 +188,8 @@ func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 
 // CanCreateExperiment checks if a user can create an experiment.
 func (a *ExperimentAuthZRBAC) CanCreateExperiment(
-	curUser model.User, proj *projectv1.Project, e *model.Experiment,
+	ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
 ) error {
-	ctx := context.Background()
-
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -208,10 +201,8 @@ func (a *ExperimentAuthZRBAC) CanCreateExperiment(
 
 // CanForkFromExperiment checks if a user can create an experiment.
 func (a *ExperimentAuthZRBAC) CanForkFromExperiment(
-	curUser model.User, e *model.Experiment,
+	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
-	ctx := context.Background()
-
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -223,37 +214,37 @@ func (a *ExperimentAuthZRBAC) CanForkFromExperiment(
 
 // CanSetExperimentsMaxSlots checks if a user can update an experiment's max slots.
 func (a *ExperimentAuthZRBAC) CanSetExperimentsMaxSlots(
-	curUser model.User, e *model.Experiment, slots int,
+	ctx context.Context, curUser model.User, e *model.Experiment, slots int,
 ) error {
-	return a.CanEditExperiment(curUser, e)
+	return a.CanEditExperiment(ctx, curUser, e)
 }
 
 // CanSetExperimentsWeight checks if a user can update an experiment's weight.
 func (a *ExperimentAuthZRBAC) CanSetExperimentsWeight(
-	curUser model.User, e *model.Experiment, weight float64,
+	ctx context.Context, curUser model.User, e *model.Experiment, weight float64,
 ) error {
-	return a.CanEditExperiment(curUser, e)
+	return a.CanEditExperiment(ctx, curUser, e)
 }
 
 // CanSetExperimentsPriority checks if a user can update an experiment's priority.
 func (a *ExperimentAuthZRBAC) CanSetExperimentsPriority(
-	curUser model.User, e *model.Experiment, priority int,
+	ctx context.Context, curUser model.User, e *model.Experiment, priority int,
 ) error {
-	return a.CanEditExperiment(curUser, e)
+	return a.CanEditExperiment(ctx, curUser, e)
 }
 
 // CanSetExperimentsCheckpointGCPolicy checks if a user can update the checkpoint gc policy.
 func (a *ExperimentAuthZRBAC) CanSetExperimentsCheckpointGCPolicy(
-	curUser model.User, e *model.Experiment,
+	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
-	return a.CanEditExperiment(curUser, e)
+	return a.CanEditExperiment(ctx, curUser, e)
 }
 
 // CanRunCustomSearch checks if a user has permission to run customer search.
 func (a *ExperimentAuthZRBAC) CanRunCustomSearch(
-	curUser model.User, e *model.Experiment,
+	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
-	return a.CanEditExperiment(curUser, e) // TODO verify with custom search project.
+	return a.CanEditExperiment(ctx, curUser, e) // TODO verify with custom search project.
 }
 
 func init() {
