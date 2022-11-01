@@ -51,7 +51,7 @@ def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
     w = bindings.get_GetWorkspaces(sess, name=name).workspaces
     if len(w) == 0:
         raise errors.EmptyResultException(f'Did not find a workspace with name "{name}".')
-    return w[0]
+    return bindings.get_GetWorkspace(sess, id=w[0].id).workspace
 
 
 @authentication.required
