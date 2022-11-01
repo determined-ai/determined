@@ -946,12 +946,12 @@ def test_change_displayname(clean_auth: None) -> None:
     assert current_user is not None and current_user.id
 
     # Rename user using display name
-    patch_user = bindings.v1PatchUser(displayName="renamed")
+    patch_user = bindings.v1PatchUser(displayName="renamed display-name")
     bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
-    assert modded_user.displayName == "renamed"
+    assert modded_user.displayName == "renamed display-name"
 
     # Avoid display name of 'admin'
     patch_user.displayName = "Admin"

@@ -26,7 +26,7 @@ const determinedName = "determined"
 
 var (
 	errUserNotFound = status.Error(codes.NotFound, "user not found")
-	latinText       = regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
+	latinText       = regexp.MustCompile("[^[:graph:]\\s]")
 )
 
 func clearUsername(targetUser model.User, name string, minLength int) (*string, error) {
@@ -215,8 +215,18 @@ func (a *apiServer) PostUser(
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
 	}
+	clearedUsername, err := clearUsername(*userToAdd, userToAdd.Username, 2)
+	if err != nil {
+		return nil, err
+	}
+	userToAdd.Username = *clearedUsername
+
 	if req.User.DisplayName != "" {
-		userToAdd.DisplayName = null.StringFrom(req.User.DisplayName)
+		clearedDisplayName, err := clearUsername(*userToAdd, req.User.DisplayName, 0)
+		if err != nil {
+			return nil, err
+		}
+		userToAdd.DisplayName = null.StringFrom(*clearedDisplayName)
 	}
 
 	var agentUserGroup *model.AgentUserGroup
