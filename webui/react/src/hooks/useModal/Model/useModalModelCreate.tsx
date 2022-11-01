@@ -15,6 +15,8 @@ import handleError from 'utils/error';
 
 import css from './useModalModelCreate.module.scss';
 
+const FORM_ID = 'create-model-form';
+
 interface Props {
   onClose?: (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => void;
 }
@@ -157,7 +159,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
 
       // We always render the form regardless of mode to provide a reference to it.
       return (
-        <Form autoComplete="off" form={form} layout="vertical">
+        <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
           <p className={css.directions}>
             Create a registered model to organize important checkpoints.
           </p>
@@ -215,6 +217,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
         content: getModalContent(state),
         icon: null,
         maskClosable: true,
+        okButtonProps: { form: FORM_ID, htmlType: 'submit' },
         okText: 'Create Model',
         onOk: () => handleOk(state),
         title: 'Create Model',
