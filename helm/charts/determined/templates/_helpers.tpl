@@ -48,17 +48,20 @@ spec:
       {{- if or (eq .Values.resources.gpuType "A100_NVLINK") (eq .Values.resources.gpuType "A100_NVLINK_80GB") }}
         rdma/ib: '1'
       {{- end }}
-  {{- if gt (len .Values.mounts) 0 }}
     volumeMounts:
+      - mountPath: /dev/shm
+        name: dshm
       {{- range .Values.mounts }}
       - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
         mountPath: {{ .name }}
       {{- end }}
   volumes:
+    - name: dshm
+      emptyDir:
+        medium: Memory
     {{- range .Values.mounts }}
     - name: {{ regexReplaceAll "[_]" .pvc "-" | lower }}
       persistentVolumeClaim:
         claimName: {{ .pvc }}
     {{- end }}
-  {{- end -}}
 {{- end -}}
