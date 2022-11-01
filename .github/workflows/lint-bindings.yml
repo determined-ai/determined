@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - '*.md'
       - 'docs/*'
+      - 'webui/*'
   push:
     branches:
       - 'main'
