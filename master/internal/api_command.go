@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -166,6 +168,12 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 func (a *apiServer) GetCommands(
 	ctx context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
+	fields := log.Fields{
+		"endpoint": "/api/v1/commands",
+		"method": "get",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -197,6 +205,13 @@ func (a *apiServer) GetCommands(
 func (a *apiServer) GetCommand(
 	ctx context.Context, req *apiv1.GetCommandRequest,
 ) (resp *apiv1.GetCommandResponse, err error) {
+	fields := audit.ExtractLogFields(ctx)
+	if len(fields) == 0 {
+		fields["endpoint"] = fmt.Sprintf("/api/v1/commands/%s", req.CommandId)
+		fields["method"] = "get"
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -219,6 +234,12 @@ func (a *apiServer) GetCommand(
 func (a *apiServer) KillCommand(
 	ctx context.Context, req *apiv1.KillCommandRequest,
 ) (resp *apiv1.KillCommandResponse, err error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/commands/%s/kill", req.CommandId),
+		"method": "post",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
 		return nil, err
 	}
@@ -229,6 +250,12 @@ func (a *apiServer) KillCommand(
 func (a *apiServer) SetCommandPriority(
 	ctx context.Context, req *apiv1.SetCommandPriorityRequest,
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/commands/%s/set_priority", req.CommandId),
+		"method": "post",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
 		return nil, err
 	}
