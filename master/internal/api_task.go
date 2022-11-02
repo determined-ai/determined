@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,6 +20,12 @@ import (
 func (a *apiServer) GetTask(
 	ctx context.Context, req *apiv1.GetTaskRequest,
 ) (resp *apiv1.GetTaskResponse, err error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/tasks/%s", req.TaskId),
+		"method": "get",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
