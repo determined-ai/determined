@@ -35,7 +35,7 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
           initialValue={workspace.name}
           label="Workspace Name"
           name="workspaceName"
-          rules={[{ message: 'Workspace name is required ', required: true }]}>
+          rules={[{ message: 'Workspace name is required', required: true }]}>
           <Input maxLength={80} />
         </Form.Item>
       </Form>

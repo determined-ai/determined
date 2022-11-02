@@ -34,7 +34,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
           initialValue={project.name}
           label="Project Name"
           name="projectName"
-          rules={[{ message: 'Name is required ', required: true }]}>
+          rules={[{ message: 'Project name is required', required: true }]}>
           <Input maxLength={80} />
         </Form.Item>
         <Form.Item initialValue={project.description} label="Description" name="description">
