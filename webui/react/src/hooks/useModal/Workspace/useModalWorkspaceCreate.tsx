@@ -21,6 +21,7 @@ interface Props {
 
 const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
+  const workspaceName = Form.useWatch('workspaceName', form);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
@@ -71,12 +72,12 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { form: FORM_ID, htmlType: 'submit' },
+      okButtonProps: { disabled: !workspaceName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Create Workspace',
       onOk: handleOk,
       title: 'New Workspace',
     };
-  }, [handleOk, modalContent]);
+  }, [handleOk, modalContent, workspaceName]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {

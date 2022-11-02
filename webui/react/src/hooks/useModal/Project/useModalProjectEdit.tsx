@@ -24,6 +24,7 @@ interface Props {
 
 const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
+  const projectName = Form.useWatch('projectName', form);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHooks } = useModal({ onClose });
 
@@ -67,12 +68,12 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { form: FORM_ID, htmlType: 'submit' },
+      okButtonProps: { disabled: !projectName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Save Changes',
       onOk: handleOk,
       title: 'Edit Project',
     };
-  }, [handleOk, modalContent]);
+  }, [handleOk, modalContent, projectName]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {

@@ -23,6 +23,7 @@ interface Props {
 
 const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
+  const workspaceName = Form.useWatch('workspaceName', form);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
@@ -64,12 +65,12 @@ const useModalWorkspaceEdit = ({ onClose, workspace }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { form: FORM_ID, htmlType: 'submit' },
+      okButtonProps: { disabled: !workspaceName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Save changes',
       onOk: handleOk,
       title: 'Edit Workspace',
     };
-  }, [handleOk, modalContent]);
+  }, [handleOk, modalContent, workspaceName]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {

@@ -57,6 +57,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
   const [form] = Form.useForm<FormInputs>();
+  const modelName = Form.useWatch('modelName', form);
 
   const handleOnClose = useCallback(
     (reason?: ModalCloseReason) => {
@@ -217,13 +218,13 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
         content: getModalContent(state),
         icon: null,
         maskClosable: true,
-        okButtonProps: { form: FORM_ID, htmlType: 'submit' },
+        okButtonProps: { disabled: !modelName, form: FORM_ID, htmlType: 'submit' },
         okText: 'Create Model',
         onOk: () => handleOk(state),
         title: 'Create Model',
       };
     },
-    [getModalContent, handleOk],
+    [getModalContent, handleOk, modelName],
   );
 
   /**

@@ -24,6 +24,7 @@ interface Props {
 const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
+  const projectName = Form.useWatch('projectName', form);
 
   const modalContent = useMemo(() => {
     return (
@@ -80,12 +81,12 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
       closable: true,
       content: modalContent,
       icon: null,
-      okButtonProps: { form: FORM_ID, htmlType: 'submit' },
+      okButtonProps: { disabled: !projectName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',
     };
-  }, [handleOk, modalContent]);
+  }, [handleOk, modalContent, projectName]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
