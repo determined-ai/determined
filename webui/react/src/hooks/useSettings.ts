@@ -7,7 +7,7 @@ import { useStore } from 'contexts/Store';
 import { updateUserSetting } from 'services/api';
 import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
-import { isEqual } from 'shared/utils/data';
+import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -290,7 +290,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     async (updates: Settings, shouldPush = false) => {
       if (!settings || shouldSkipUpdates) return;
 
-      const newSettings = { ...settings, ...updates };
+      const newSettings = Object.assign(clone(settings), updates);
 
       if (isEqual(newSettings, settings)) return;
 
