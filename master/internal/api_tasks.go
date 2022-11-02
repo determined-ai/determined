@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -163,6 +164,12 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 func (a *apiServer) AllocationReady(
 	ctx context.Context, req *apiv1.AllocationReadyRequest,
 ) (*apiv1.AllocationReadyResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/ready", req.AllocationId),
+		"method": "post",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -184,6 +191,12 @@ func (a *apiServer) AllocationReady(
 func (a *apiServer) AllocationWaiting(
 	ctx context.Context, req *apiv1.AllocationWaitingRequest,
 ) (*apiv1.AllocationWaitingResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/waiting", req.AllocationId),
+		"method": "post",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -205,6 +218,12 @@ func (a *apiServer) AllocationWaiting(
 func (a *apiServer) AllocationAllGather(
 	ctx context.Context, req *apiv1.AllocationAllGatherRequest,
 ) (*apiv1.AllocationAllGatherResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/all_gather", req.AllocationId),
+		"method": "post",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
@@ -249,6 +268,12 @@ func (a *apiServer) AllocationAllGather(
 func (a *apiServer) PostAllocationProxyAddress(
 	ctx context.Context, req *apiv1.PostAllocationProxyAddressRequest,
 ) (*apiv1.PostAllocationProxyAddressResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/proxy_address", req.AllocationId),
+		"method": "post",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
@@ -275,6 +300,12 @@ func (a *apiServer) PostAllocationProxyAddress(
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/tasks/%s/logs", req.TaskId),
+		"method": "get",
+	}
+	ctx := context.WithValue(resp.Context(), "logFields", fields)
+
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 		grpcutil.ValidateFollow(req.Limit, req.Follow),
@@ -282,7 +313,7 @@ func (a *apiServer) TaskLogs(
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(resp.Context())
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	res := make(chan api.BatchResult, taskLogsChanBuffer)
@@ -302,6 +333,12 @@ func (a *apiServer) TaskLogs(
 func (a *apiServer) GetActiveTasksCount(
 	ctx context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
+	fields := log.Fields{
+		"endpoint": "/api/v1/tasks/count",
+		"method": "get",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -478,12 +515,18 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 func (a *apiServer) TaskLogsFields(
 	req *apiv1.TaskLogsFieldsRequest, resp apiv1.Determined_TaskLogsFieldsServer,
 ) error {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/tasks/%s/logs/fields", req.TaskId),
+		"method": "get",
+	}
+
 	taskID := model.TaskID(req.TaskId)
 
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			if err := a.canDoActionsOnTask(resp.Context(), taskID,
+			ctx := context.WithValue(resp.Context(), "logFields", fields)
+			if err := a.canDoActionsOnTask(ctx, taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
