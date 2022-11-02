@@ -2,8 +2,8 @@ import { Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 
 import { runStateToLabel } from 'constants/states';
-import cancle_dark from 'shared/assets/images/cancle-dark.svg';
-import cancle_light from 'shared/assets/images/cancle-light.svg';
+import cancel_dark from 'shared/assets/images/cancel-dark.svg';
+import cancel_light from 'shared/assets/images/cancel-light.svg';
 import complete from 'shared/assets/images/complete.svg';
 import error from 'shared/assets/images/error.svg';
 import pause_dark from 'shared/assets/images/pause-dark.svg';
@@ -45,7 +45,7 @@ const ExperimentIcons: React.FC<Props> = ({ state }) => {
       case RunState.Unspecified:
         return <Active />;
       default:
-        return <img src={isDark ? cancle_dark : cancle_light} />;
+        return <img src={isDark ? cancel_dark : cancel_light} />;
     }
   }, [state, isDark]);
   return (

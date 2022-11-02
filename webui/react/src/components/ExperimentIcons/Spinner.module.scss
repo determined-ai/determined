@@ -21,7 +21,7 @@ $axes: X Y Z;
 
 .spinner {
   $size: 18px;
-  animation-duration: 1s;
+  animation-duration: 0.75s;
   animation-iteration-count: infinite;
   animation-name: rotateZ;
   animation-timing-function: linear;
