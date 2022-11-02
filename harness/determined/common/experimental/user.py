@@ -79,11 +79,12 @@ class User:
         return resp
 
     def change_password(
-        self, new_password: str, is_hashed: Optional[bool] = False
+        self, new_password: str
     ) -> bindings.v1PatchUserResponse:
+        new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password)
         patch_user_req = bindings.v1PatchUserRequest(
-            userId=self.user_id, user=patch_user, isHashed=is_hashed
+            userId=self.user_id, user=patch_user, isHashed=True
         )
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp

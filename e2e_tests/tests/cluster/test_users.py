@@ -12,6 +12,7 @@ import uuid
 from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
 
 import appdirs
+from torch import randint
 import pexpect
 import pytest
 from pexpect import spawn
@@ -328,14 +329,14 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     newPasswordSdk = get_random_string()
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
-    assert user.change_password(new_password=newPasswordSdk, is_hashed=False)
+    assert user.change_password(new_password=newPasswordSdk)
     assert log_in_user(authentication.Credentials(creds.username, newPasswordSdk)) == 0
 
 
 @pytest.mark.e2e_cpu
 def test_change_username(clean_auth: None, login_admin: None):
     creds = create_test_user()
-    new_username = "renameusername"
+    new_username = "renameuser4"
     print("new username")
     print(creds.username)
     print(new_username)
@@ -347,7 +348,7 @@ def test_change_username(clean_auth: None, login_admin: None):
     assert log_in_user(authentication.Credentials(new_username, "")) == 0
 
     # Test SDK
-    new_username = "renameusername2"
+    new_username = "renameuser5"
     user.rename(new_username)
     user = det_obj.get_user_by_name(user_name=new_username)
     assert user.username == new_username

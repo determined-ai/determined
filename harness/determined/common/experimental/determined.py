@@ -62,135 +62,55 @@ class Determined:
         # a REST API call against the master.
         auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
         self._session = api.Session(master, user, auth, cert)
+    
+    def _from_bindings(self, raw: bindings.v1User):
+        if raw.agentUserGroup is not None: 
+            return user.User(
+                user_id=raw.id,
+                username=raw.username,
+                admin=raw.admin,
+                session=self._session,
+                active=raw.active,
+                display_name=raw.displayName,
+                agent_uid=raw.agentUserGroup.agentUid,
+                agent_gid=raw.agentUserGroup.agentGid,
+                agent_user=raw.agentUserGroup.agentUser,
+                agent_group=raw.agentUserGroup.agentGroup,
+            )
+        else:
+            return user.User(
+                user_id=raw.id,
+                username=raw.username,
+                admin=raw.admin,
+                session=self._session,
+                active=raw.active,
+                display_name=raw.displayName,
+            )
 
     def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
         create_user = bindings.v1User(username=username, admin=admin, active=True)
-        req = bindings.v1PostUserRequest(password=password, user=create_user)
+        req =  api.salt_and_hash(password)
+        req = bindings.v1PostUserRequest(password=password, user=create_user,isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
-        if resp.user.agentUserGroup is not None:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-                agent_uid=resp.user.agentUserGroup.agentUid,
-                agent_gid=resp.user.agentUserGroup.agentGid,
-                agent_user=resp.user.agentUserGroup.agentUser,
-                agent_group=resp.user.agentUserGroup.agentGroup,
-            )
-        else:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-            )
+        return self._from_bindings(resp.user)
 
     def get_user_by_id(self, user_id: int) -> user.User:
         resp = bindings.get_GetUser(session=self._session, userId=user_id)
-        if resp.user.agentUserGroup is not None:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-                agent_uid=resp.user.agentUserGroup.agentUid,
-                agent_gid=resp.user.agentUserGroup.agentGid,
-                agent_user=resp.user.agentUserGroup.agentUser,
-                agent_group=resp.user.agentUserGroup.agentGroup,
-            )
-        else:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-            )
+        return self._from_bindings(resp.user)
 
     def get_user_by_name(self, user_name: str) -> user.User:
         resp = bindings.get_GetUserByUsername(session=self._session, username=user_name)
-        if resp.user.agentUserGroup is not None:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-                agent_uid=resp.user.agentUserGroup.agentUid,
-                agent_gid=resp.user.agentUserGroup.agentGid,
-                agent_user=resp.user.agentUserGroup.agentUser,
-                agent_group=resp.user.agentUserGroup.agentGroup,
-            )
-        else:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-            )
+        return self._from_bindings(resp.user)
 
     def whoami(self) -> user.User:
         resp = bindings.get_GetMe(self._session)
-        if resp.user.agentUserGroup is not None:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-                agent_uid=resp.user.agentUserGroup.agentUid,
-                agent_gid=resp.user.agentUserGroup.agentGid,
-                agent_user=resp.user.agentUserGroup.agentUser,
-                agent_group=resp.user.agentUserGroup.agentGroup,
-            )
-        else:
-            return user.User(
-                user_id=resp.user.id,
-                username=resp.user.username,
-                admin=resp.user.admin,
-                session=self._session,
-                active=resp.user.active,
-                display_name=resp.user.displayName,
-            )
+        return self._from_bindings(resp.user)
 
     def list_users(self) -> Sequence[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
         users = []
         for user_b in users_bindings:
-            if user_b.agentUserGroup is not None:
-                user_obj = user.User(
-                    user_id=user_b.id,
-                    username=user_b.username,
-                    admin=user_b.admin,
-                    session=self._session,
-                    active=user_b.active,
-                    display_name=user_b.displayName,
-                    agent_uid=user_b.agentUserGroup.agentUid,
-                    agent_gid=user_b.agentUserGroup.agentGid,
-                    agent_user=user_b.agentUserGroup.agentUser,
-                    agent_group=user_b.agentUserGroup.agentGroup,
-                )
-            else:
-                user_obj = user.User(
-                    user_id=user_b.id,
-                    username=user_b.username,
-                    admin=user_b.admin,
-                    session=self._session,
-                    active=user_b.active,
-                    display_name=user_b.displayName,
-                )
+            user_obj = self._from_bindings(user_b)
             users.append(user_obj)
         return users
 

@@ -43,12 +43,10 @@ def log_in_user(parsed_args: Namespace) -> None:
         username = parsed_args.username
 
     message = "Password for user '{}': ".format(username)
-
-    # In order to not send clear-text passwords, we hash the password.
-    password = api.salt_and_hash(getpass.getpass(message))
-
+    password = getpass.getpass(message)
+    
     token_store = authentication.TokenStore(parsed_args.master)
-    token = authentication.do_login(parsed_args.master, username, password, isHashed=True)
+    token = authentication.do_login(parsed_args.master, username, password)
     token_store.set_token(username, token)
     token_store.set_active(username)
 
@@ -99,17 +97,15 @@ def change_password(parsed_args: Namespace) -> None:
     if password != check_password:
         print(colored("Passwords do not match", "red"))
         return
-
-    # Hash the password to avoid sending it in cleartext.
-    password = api.salt_and_hash(password)
+    
     user_obj = client.get_user_by_name(username)
-    user_obj.change_password(new_password=password, is_hashed=True)
+    user_obj.change_password(new_password=password)
 
     # If the target user's password isn't being changed by another user, reauthenticate after
     # password change so that the user doesn't have to do so manually.
     if parsed_args.target_user is None:
         token_store = authentication.TokenStore(parsed_args.master)
-        token = authentication.do_login(parsed_args.master, username, password, isHashed=True)
+        token = authentication.do_login(parsed_args.master, username, password)
         token_store.set_token(username, token)
         token_store.set_active(username)
 

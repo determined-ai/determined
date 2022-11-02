@@ -92,7 +92,6 @@ class Authentication:
         if token is None and not try_reauth:
             raise api.errors.UnauthenticatedException(username=session_user)
 
-        isHashedPassword = False # set it to true when it's hashed. 
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
         if fallback_to_default:
             password = constants.DEFAULT_DETERMINED_PASSWORD
@@ -102,12 +101,8 @@ class Authentication:
         if password is None:
             password = getpass.getpass("Password for user '{}': ".format(session_user))
 
-        if password:
-            isHashedPassword = True
-            password = api.salt_and_hash(password)
-
         try:
-            token = do_login(self.master_address, session_user, password, cert, isHashed=isHashedPassword)
+            token = do_login(self.master_address, session_user, password, cert)
         except api.errors.ForbiddenException:
             if fallback_to_default:
                 raise api.errors.UnauthenticatedException(username=session_user)
@@ -146,10 +141,10 @@ def do_login(
     username: str,
     password: str,
     cert: Optional[certs.Cert] = None,
-    isHashed: Optional[bool] = False,
 ) -> str:
+    password = api.salt_and_hash(password) 
     unauth_session = api.Session(user=username, master=master_address, auth=None, cert=cert)
-    login = bindings.v1LoginRequest(username=username, password=password, isHashed=isHashed)
+    login = bindings.v1LoginRequest(username=username, password=password, isHashed=True)
     r = bindings.post_Login(session=unauth_session, body=login)
     token = r.token
 
