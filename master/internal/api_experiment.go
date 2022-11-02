@@ -984,7 +984,7 @@ func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
 	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/unarchive", req.ExperimentId),
+		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/unarchive", req.Id),
 		"method": "post",
 		"body": req.String(),
 	}

@@ -438,7 +438,7 @@ func (a *apiServer) GetTrialCheckpoints(
 	ctx context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
 	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/checkpoints", req.TrialId),
+		"endpoint": fmt.Sprintf("/api/v1/trials/%d/checkpoints", req.Id),
 		"method": "get",
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
@@ -909,7 +909,7 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	fetch := func(_ api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			ctx := context.WithValue(resp.Context(), "logFields", fields)
-			if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx
+			if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx,
 				int(req.TrialId),
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
