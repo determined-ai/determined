@@ -44,5 +44,5 @@ class TorchWriter(tensorboard.MetricWriter):
         self.writer.add_scalar(name, value, step)
 
     def reset(self) -> None:
-        if "flush" in dir(self.writer):
-            self.writer.flush()
+        # flush AND close the writer so that the next attempt to write will create a new file
+        self.writer.close()
