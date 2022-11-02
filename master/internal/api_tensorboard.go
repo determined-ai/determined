@@ -73,8 +73,10 @@ func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
 	fields := audit.ExtractLogFields(ctx)
-	fields["endpoint"] = "/api/v1/tensorboards"
-	fields["method"] = "get"
+	if len(fields) == 0 {
+		fields["endpoint"] = "/api/v1/tensorboards"
+		fields["method"] = "get"
+	}
 
 	ctx = context.WithValue(ctx, "logFields", fields)
 
