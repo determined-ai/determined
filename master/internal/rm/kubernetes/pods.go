@@ -3,9 +3,12 @@
 package kubernetes
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -56,6 +59,7 @@ type pods struct {
 	slotType                 device.Type
 	slotResourceRequests     PodSlotResourceRequests
 	fluentConfig             FluentConfig
+	credsDir                 string
 
 	clientSet        *k8sClient.Clientset
 	masterIP         string
@@ -105,6 +109,9 @@ func Initialize(
 	slotType device.Type,
 	slotResourceRequests PodSlotResourceRequests,
 	fluentConfig FluentConfig,
+	credsDir string,
+	masterIP string,
+	masterPort int32,
 ) *actor.Ref {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -128,6 +135,9 @@ func Initialize(
 		slotType:                     slotType,
 		slotResourceRequests:         slotResourceRequests,
 		fluentConfig:                 fluentConfig,
+		credsDir:                     credsDir,
+		masterIP:                     masterIP,
+		masterPort:                   masterPort,
 		currentNodes:                 make(map[string]*k8sV1.Node),
 		nodeToSystemResourceRequests: make(map[string]int64),
 	})
@@ -232,8 +242,49 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func readClientConfig(credsDir string) (*rest.Config, error) {
+	if credsDir == "" {
+		// The default in-cluster case.  Internally, k8s.io/client-go/rest is going to look for
+		// environment variables:
+		//   - KUBERNETES_SERVICE_HOST
+		//   - KUBERNETES_SERVICE_PORT
+		// and it expects to find files:
+		//   - /var/run/secrets/kubernetes.io/serviceaccount/token
+		//   - /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+		return rest.InClusterConfig()
+	}
+
+	// A special case for rapid determined+k8s development: build a rest.Config from a specially
+	// packed directory with the same information.  Our tools/scripts/fetch-k8s-creds.sh script can
+	// create such a directory, with server, token, and ca.crt files.
+
+	//nolint:gosec // Yes, we intend to read from this file specified in the config.
+	server, err := ioutil.ReadFile(filepath.Join(credsDir, "server"))
+	if err != nil {
+		return nil, err
+	}
+
+	server = bytes.Trim(server, " \t\r\n")
+
+	tokenFile := filepath.Join(credsDir, "token")
+	//nolint:gosec // Yes, we intend to read from this file specified in the config.
+	token, err := ioutil.ReadFile(tokenFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return &rest.Config{
+		Host:            string(server),
+		BearerToken:     string(token),
+		BearerTokenFile: tokenFile,
+		TLSClientConfig: rest.TLSClientConfig{
+			CAFile: filepath.Join(credsDir, "ca.crt"),
+		},
+	}, nil
+}
+
 func (p *pods) startClientSet(ctx *actor.Context) error {
-	config, err := rest.InClusterConfig()
+	config, err := readClientConfig(p.credsDir)
 	if err != nil {
 		return errors.Wrap(err, "error building kubernetes config")
 	}
@@ -251,6 +302,10 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 }
 
 func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
+	if p.masterIP != "" && p.masterPort != 0 {
+		// Master ip and port were manually configured (probably for development purposes).
+		return nil
+	}
 	masterService, err := p.clientSet.CoreV1().Services(p.namespace).Get(
 		context.TODO(), p.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
