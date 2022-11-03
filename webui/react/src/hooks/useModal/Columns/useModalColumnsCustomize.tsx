@@ -1,5 +1,5 @@
 import { ModalFuncProps } from 'antd';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Transfer from 'components/Transfer';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
@@ -27,7 +27,7 @@ const useModalColumnsCustomize = ({
   initialVisibleColumns,
   onSave,
 }: Props): ModalHooks => {
-  const [columnList] = useState(columns); // This is only to prevent rerendering
+  const columnList = useRef(columns).current; // This is only to prevent rerendering
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     initialVisibleColumns ?? defaultVisibleColumns,
@@ -75,7 +75,12 @@ const useModalColumnsCustomize = ({
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(modalProps);
+    const modal = modalRef.current;
+    if (modal) openOrUpdate(modalProps);
+
+    return () => {
+      if (modal) modalRef.current = undefined;
+    };
   }, [modalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
