@@ -106,6 +106,9 @@ type KubernetesResourceManagerConfig struct {
 	SlotType                 device.Type                        `json:"slot_type"`
 	SlotResourceRequests     kubernetes.PodSlotResourceRequests `json:"slot_resource_requests"`
 	Fluent                   kubernetes.FluentConfig            `json:"fluent"`
+	CredsDir                 string                             `json:"_creds_dir,omitempty"`
+	MasterIP                 string                             `json:"_master_ip,omitempty"`
+	MasterPort               int32                              `json:"_master_port,omitempty"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{

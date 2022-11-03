@@ -9,6 +9,8 @@ import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import handleError from 'utils/error';
 
+const FORM_ID = 'new-workspace-form';
+
 interface FormInputs {
   workspaceName: string;
 }
@@ -19,12 +21,13 @@ interface Props {
 
 const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
+  const workspaceName = Form.useWatch('workspaceName', form);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const modalContent = useMemo(() => {
     return (
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item
           label="Workspace Name"
           name="workspaceName"
@@ -64,20 +67,21 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
     }
   }, [form]);
 
-  const getModalProps = useCallback((): ModalFuncProps => {
+  const getModalProps = useMemo((): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
+      okButtonProps: { disabled: !workspaceName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Create Workspace',
       onOk: handleOk,
       title: 'New Workspace',
     };
-  }, [handleOk, modalContent]);
+  }, [handleOk, modalContent, workspaceName]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
-      openOrUpdate({ ...getModalProps(), ...initialModalProps });
+      openOrUpdate({ ...getModalProps, ...initialModalProps });
     },
     [getModalProps, openOrUpdate],
   );
@@ -87,7 +91,7 @@ const useModalWorkspaceCreate = ({ onClose }: Props = {}): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps());
+    if (modalRef.current) openOrUpdate(getModalProps);
   }, [getModalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
