@@ -76,6 +76,12 @@ func (m *Master) canDoActionOnCheckpoint(
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/checkpoints/%s", req.CheckpointUuid),
+		"method": "get",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -101,6 +107,12 @@ func (a *apiServer) DeleteCheckpoints(
 	ctx context.Context,
 	req *apiv1.DeleteCheckpointsRequest,
 ) (*apiv1.DeleteCheckpointsResponse, error) {
+	fields := log.Fields{
+		"endpoint": "/api/v1/checkpoints",
+		"method": "delete",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -208,6 +220,12 @@ func (a *apiServer) DeleteCheckpoints(
 func (a *apiServer) PostCheckpointMetadata(
 	ctx context.Context, req *apiv1.PostCheckpointMetadataRequest,
 ) (*apiv1.PostCheckpointMetadataResponse, error) {
+	fields := log.Fields{
+		"endpoint": fmt.Sprintf("/api/v1/checkpoints/%s/metadata", req.Checkpoint.Uuid),
+		"method": "post",
+	}
+	ctx = context.WithValue(ctx, "logFields", fields)
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
