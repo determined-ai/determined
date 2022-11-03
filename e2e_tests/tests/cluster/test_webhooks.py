@@ -103,5 +103,3 @@ def test_slack_webhook() -> None:
     assert expected_payload["blocks"] == request_to_webhook_endpoint["blocks"]
     assert expected_color == request_to_webhook_endpoint["attachments"][0]["color"]
     assert expected_field == request_to_webhook_endpoint["attachments"][0]["blocks"][0]["fields"][0]
-    assert expected_payload == request_to_webhook_endpoint
-    assert expected_payload == request_to_webhook_endpoint
