@@ -27,7 +27,6 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 	fields := log.Fields{
 		"endpoint": "/api/v1/groups",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -75,7 +74,6 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 	fields := log.Fields{
 		"endpoint": "/api/v1/groups/search",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -132,7 +130,6 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -182,7 +179,6 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -235,7 +231,6 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
 		"method": "delete",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 

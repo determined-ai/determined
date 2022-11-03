@@ -134,7 +134,6 @@ func (a *apiServer) GetUsers(
 	fields := log.Fields{
 		"endpoint": "/api/v1/users",
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -196,7 +195,6 @@ func (a *apiServer) GetUser(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/users/%d", req.UserId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -225,7 +223,6 @@ func (a *apiServer) PostUser(
 	fields := log.Fields{
 		"endpoint": "/api/v1/users",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -298,7 +295,6 @@ func (a *apiServer) SetUserPassword(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/users/%d/password", req.UserId),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -342,7 +338,6 @@ func (a *apiServer) PatchUser(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/users/%d", req.UserId),
 		"method": "patch",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -498,7 +493,6 @@ func (a *apiServer) GetUserSetting(
 	fields := log.Fields{
 		"endpoint": "/api/v1/users/setting",
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -520,7 +514,6 @@ func (a *apiServer) PostUserSetting(
 	fields := log.Fields{
 		"endpoint": "/api/v1/users/setting",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -553,7 +546,6 @@ func (a *apiServer) ResetUserSetting(
 	fields := log.Fields{
 		"endpoint": "/api/v1/users/setting/reset",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 

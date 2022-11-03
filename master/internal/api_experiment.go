@@ -200,7 +200,6 @@ func (a *apiServer) GetSearcherEvents(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/searcher_events", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -258,7 +257,6 @@ func (a *apiServer) PostSearcherOperations(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/searcher_operations", req.ExperimentId),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -285,7 +283,6 @@ func (a *apiServer) GetExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -341,7 +338,6 @@ func (a *apiServer) DeleteExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d", req.ExperimentId),
 		"method": "delete",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -459,7 +455,6 @@ func (a *apiServer) GetExperiments(
 	fields := logrus.Fields{
 		"endpoint": "/api/v1/experiments",
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -666,7 +661,6 @@ func (a *apiServer) GetExperimentLabels(ctx context.Context,
 	fields := logrus.Fields{
 		"endpoint": "/api/v1/experiment/labels",
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -728,7 +722,6 @@ func (a *apiServer) GetExperimentValidationHistory(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/validation-history", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -754,7 +747,6 @@ func (a *apiServer) PreviewHPSearch(
 	fields := logrus.Fields{
 		"endpoint": "/api/v1/preview-hp-search",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -853,7 +845,6 @@ func (a *apiServer) ActivateExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/activate", req.Id),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -879,7 +870,6 @@ func (a *apiServer) PauseExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/pause", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -905,7 +895,6 @@ func (a *apiServer) CancelExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/cancel", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -928,7 +917,6 @@ func (a *apiServer) KillExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/kill", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -951,7 +939,6 @@ func (a *apiServer) ArchiveExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/archive", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -986,7 +973,6 @@ func (a *apiServer) UnarchiveExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/unarchive", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -1022,7 +1008,6 @@ func (a *apiServer) PatchExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d", req.Experiment.Id),
 		"method": "patch",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -1117,7 +1102,6 @@ func (a *apiServer) GetExperimentCheckpoints(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/checkpoints", req.Id),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -1208,7 +1192,6 @@ func (a *apiServer) CreateExperiment(
 	fields := logrus.Fields{
 		"endpoint": "/api/v1/experiments",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -1311,7 +1294,6 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/metric-names", experimentID),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx := context.WithValue(resp.Context(), "logFields", fields)
 
@@ -1396,7 +1378,6 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 	fields := logrus.Fields{
 		"endpoint": "/api/v1/trials/metrics-stream/metric-names",
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx := context.WithValue(resp.Context(), "logFields", fields)
 
@@ -1470,7 +1451,6 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/batches", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx := context.WithValue(resp.Context(), "logFields", fields)
 
@@ -1555,7 +1535,6 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/trials-snapshot", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx := context.WithValue(resp.Context(), "logFields", fields)
 
@@ -1805,7 +1784,6 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/trials-sample", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx := context.WithValue(resp.Context(), "logFields", fields)
 
@@ -1930,7 +1908,6 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 	fields := logrus.Fields{
 		"endpoint": "/api/v1/experiments-compare",
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx := context.WithValue(resp.Context(), "logFields", fields)
 
@@ -2045,7 +2022,6 @@ func (a *apiServer) ComputeHPImportance(ctx context.Context,
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/hyperparameter-importance", req.ExperimentId),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -2099,7 +2075,6 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/hyperparameter-importance", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx := context.WithValue(resp.Context(), "logFields", fields)
 
@@ -2178,7 +2153,6 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/searcher/best_searcher_validation_metric", req.ExperimentId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -2231,7 +2205,6 @@ func (a *apiServer) MoveExperiment(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/move", req.ExperimentId),
 		"method": "post",
-		"body": req.String(), // TODO: see if we can get away without needing the body (unless there is a legit need)
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -2288,7 +2261,6 @@ func (a *apiServer) GetModelDefTree(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/file_tree", req.ExperimentId),
 		"method": "get",
-		"body": req.String(), // TODO: see if we can get away without needing the body (unless there is a legit need)
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -2311,7 +2283,6 @@ func (a *apiServer) GetModelDefFile(
 	fields := logrus.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/file", req.ExperimentId),
 		"method": "post",
-		"body": req.String(), // TODO: see if we can get away without needing the body (unless there is a legit need)
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 

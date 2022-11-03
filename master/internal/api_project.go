@@ -79,7 +79,6 @@ func (a *apiServer) GetProject(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -98,7 +97,6 @@ func (a *apiServer) PostProject(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/projects", req.WorkspaceId),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -128,7 +126,6 @@ func (a *apiServer) AddProjectNote(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/notes", req.ProjectId),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -156,7 +153,6 @@ func (a *apiServer) PutProjectNotes(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/notes", req.ProjectId),
 		"method": "put",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -178,7 +174,6 @@ func (a *apiServer) PatchProject(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
 		"method": "patch",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -268,7 +263,6 @@ func (a *apiServer) DeleteProject(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
 		"method": "delete",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -309,7 +303,6 @@ func (a *apiServer) MoveProject(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/move", req.ProjectId),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -354,7 +347,6 @@ func (a *apiServer) ArchiveProject(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/archive", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -387,7 +379,6 @@ func (a *apiServer) UnarchiveProject(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/unarchive", req.Id),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 

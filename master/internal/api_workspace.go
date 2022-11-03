@@ -75,7 +75,6 @@ func (a *apiServer) GetWorkspace(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -94,7 +93,6 @@ func (a *apiServer) GetWorkspaceProjects(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/projects", req.Id),
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -171,7 +169,6 @@ func (a *apiServer) GetWorkspaces(
 	fields := log.Fields{
 		"endpoint": "/api/v1/workspaces",
 		"method": "get",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -244,7 +241,6 @@ func (a *apiServer) PostWorkspace(
 	fields := log.Fields{
 		"endpoint": "/api/v1/workspaces",
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -322,7 +318,6 @@ func (a *apiServer) PatchWorkspace(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
 		"method": "patch",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -417,7 +412,6 @@ func (a *apiServer) DeleteWorkspace(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
 		"method": "delete",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -466,7 +460,6 @@ func (a *apiServer) ArchiveWorkspace(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/archive", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -494,7 +487,6 @@ func (a *apiServer) UnarchiveWorkspace(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/unarchive", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -521,7 +513,6 @@ func (a *apiServer) PinWorkspace(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/pin", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
@@ -543,7 +534,6 @@ func (a *apiServer) UnpinWorkspace(
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/unpin", req.Id),
 		"method": "post",
-		"body": req.String(),
 	}
 	ctx = context.WithValue(ctx, "logFields", fields)
 
