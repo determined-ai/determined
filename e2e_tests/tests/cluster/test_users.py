@@ -12,10 +12,10 @@ import uuid
 from typing import Dict, Generator, Iterator, List, Optional, Tuple, cast
 
 import appdirs
-from torch import randint
 import pexpect
 import pytest
 from pexpect import spawn
+from torch import randint
 
 from determined.common import api, constants, yaml
 from determined.common.api import authentication, bindings, certs, errors
@@ -264,7 +264,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     child.wait()
     child.close()
     assert child.status == 0
-    
+
     # Change Determined password back to "".
     change_user_password(constants.DEFAULT_DETERMINED_USER, "")
     # Clean up.

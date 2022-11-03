@@ -224,6 +224,7 @@ def whoami() -> User:
     assert _determined is not None
     return _determined.whoami()
 
+
 @_require_singleton
 def logout() -> None:
     """

@@ -78,9 +78,7 @@ class User:
         resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
         return resp
 
-    def change_password(
-        self, new_password: str
-    ) -> bindings.v1PatchUserResponse:
+    def change_password(self, new_password: str) -> bindings.v1PatchUserResponse:
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password)
         patch_user_req = bindings.v1PatchUserRequest(

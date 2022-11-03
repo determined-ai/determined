@@ -62,9 +62,9 @@ class Determined:
         # a REST API call against the master.
         auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
         self._session = api.Session(master, user, auth, cert)
-    
+
     def _from_bindings(self, raw: bindings.v1User):
-        if raw.agentUserGroup is not None: 
+        if raw.agentUserGroup is not None:
             return user.User(
                 user_id=raw.id,
                 username=raw.username,
@@ -89,8 +89,8 @@ class Determined:
 
     def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
         create_user = bindings.v1User(username=username, admin=admin, active=True)
-        req =  api.salt_and_hash(password)
-        req = bindings.v1PostUserRequest(password=password, user=create_user,isHashed=True)
+        req = api.salt_and_hash(password)
+        req = bindings.v1PostUserRequest(password=password, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
         return self._from_bindings(resp.user)
 

@@ -93,7 +93,7 @@ def change_password(parsed_args: Namespace) -> None:
     if password != check_password:
         print(colored("Passwords do not match", "red"))
         return
-    
+
     user_obj = client.get_user_by_name(username)
     user_obj.change_password(new_password=password)
 
@@ -132,6 +132,7 @@ def create_user(parsed_args: Namespace) -> None:
     username = parsed_args.username
     admin = bool(parsed_args.admin)
     client.create_user(username=username, admin=admin)
+
 
 @login_sdk_client
 def whoami(parsed_args: Namespace) -> None:
