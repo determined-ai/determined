@@ -44,7 +44,7 @@ def log_in_user(parsed_args: Namespace) -> None:
 
     message = "Password for user '{}': ".format(username)
     password = getpass.getpass(message)
-    
+
     token_store = authentication.TokenStore(parsed_args.master)
     token = authentication.do_login(parsed_args.master, username, password)
     token_store.set_token(username, token)
@@ -52,17 +52,13 @@ def log_in_user(parsed_args: Namespace) -> None:
 
 
 @authentication.optional
+@login_sdk_client
 def log_out_user(parsed_args: Namespace) -> None:
     auth = authentication.cli_auth
     if auth is None:
         return
     try:
-        api.post(
-            parsed_args.master,
-            "logout",
-            headers={"Authorization": "Bearer {}".format(auth.get_session_token())},
-            authenticated=False,
-        )
+        client.logout()
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e

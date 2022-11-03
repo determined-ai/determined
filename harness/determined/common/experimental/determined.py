@@ -106,6 +106,9 @@ class Determined:
         resp = bindings.get_GetMe(self._session)
         return self._from_bindings(resp.user)
 
+    def logout(self) -> None:
+        bindings.post_Logout(self._session)
+
     def list_users(self) -> Sequence[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
         users = []

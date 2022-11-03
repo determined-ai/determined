@@ -224,6 +224,15 @@ def whoami() -> User:
     assert _determined is not None
     return _determined.whoami()
 
+@_require_singleton
+def logout() -> None:
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    current user.
+    """
+    assert _determined is not None
+    return _determined.logout()
+
 
 @_require_singleton
 def list_users() -> Sequence[User]:

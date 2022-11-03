@@ -264,7 +264,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     child.wait()
     child.close()
     assert child.status == 0
-
+    
     # Change Determined password back to "".
     change_user_password(constants.DEFAULT_DETERMINED_USER, "")
     # Clean up.
