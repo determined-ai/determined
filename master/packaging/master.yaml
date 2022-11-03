@@ -42,7 +42,7 @@
 
 ## The docker image to use for the agent when using dynamic agents. This value
 ## must be configured.
-#      agent_docker_image: determinedai/determined-agent:<version>
+#      agent_docker_image: determinedai/hpe-mlde-agent:<version>
 
 ## The maximum idle period of agents. The master waits for this period of time
 ## before shutting down idle agents. Defaults to 5 min.
