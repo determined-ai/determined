@@ -1,3 +1,4 @@
+---
 name: 🤔 Question
 title: '🤔[question] '
 description: Question
@@ -8,9 +9,11 @@ body:
     id: description
     attributes:
       label: Describe your question
-      description: |
+      description: >
         We have Slack community too.
-        Feel free to join the community from [here](https://determined-community.slack.com/join/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew#/shared-invite)
+
+        Feel free to join the community from
+        [here](https://determined-community.slack.com/join/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew#/shared-invite)
       placeholder: Ex. I have a question about...
     validations:
       required: true

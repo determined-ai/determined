@@ -1,6 +1,7 @@
+---
 name: "Lint migrations"
 
-on:
+on:  # yamllint disable-line rule:truthy
   pull_request:
     paths:
       - master/static/migrations/**

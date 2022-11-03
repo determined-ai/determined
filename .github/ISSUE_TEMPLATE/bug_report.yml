@@ -1,3 +1,4 @@
+---
 name: 🐛 Bug Report
 title: '🐛[bug] '
 description: Report a bug
@@ -6,16 +7,20 @@ labels: ['bug']
 body:
   - type: markdown
     attributes:
-      value: |
+      value: >
         ## Before you file an issue...
-        1. Please search for [existing issues](https://github.com/determined-ai/determined/issues) if there are any relavant issues
+
+        1. Please search for
+        [existing issues](https://github.com/determined-ai/determined/issues)
+        if there are any relavant issues
 
   - type: textarea
     id: description
     attributes:
       label: Describe the bug
-      description: |
-        A clear description of what the bug is. Please attach screenshot into Screenshot section below.
+      description: >
+        A clear description of what the bug is. Please attach screenshot into
+        Screenshot section below.
       placeholder: Bug description
     validations:
       required: true
@@ -40,7 +45,8 @@ body:
     id: expectation
     attributes:
       label: Expected Behavior
-      description: A clear and concise description of what you expected to happen
+      description: >
+        A clear and concise description of what you expected to happen
       placeholder: It should work like ...
     validations:
       required: true
@@ -49,7 +55,8 @@ body:
     id: screenshot
     attributes:
       label: Screenshot
-      description: If applicable, add screenshots to help explain your problem.
+      description: >
+        If applicable, add screenshots to help explain your problem.
       placeholder: It should work like ...
     validations:
       required: true

@@ -1,7 +1,7 @@
 ---
 name: "Scan Docker images"
 
-on:
+on:  # yamllint disable-line rule:truthy
   schedule:
     - cron: "15 1 * * 0"
 
@@ -16,7 +16,10 @@ jobs:
         id: get-images
         uses: mikefarah/yq@master
         with:
-          cmd: yq -o=json '[with_entries(select(.key | test("_hashed$"))).[].new]' tools/scripts/bumpenvs.yaml
+          cmd: |
+            yq -o=json \
+             '[with_entries(select(.key | test("_hashed$"))).[].new]' \
+             tools/scripts/bumpenvs.yaml
   scan-images:
     needs: list-images
     runs-on: ubuntu-latest
@@ -48,4 +51,4 @@ jobs:
           sarif_file: ${{ steps.scan.outputs.sarif }}
       - name: Fail job if scan failed
         if: steps.scan.outcome == 'failure'
-        run:  exit 1
+        run: exit 1

@@ -1,7 +1,7 @@
 ---
 name: "Lint go"
 
-on:
+on:  # yamllint disable-line rule:truthy
   pull_request:
     paths-ignore:
       - '*.md'
@@ -20,7 +20,7 @@ jobs:
         service: [agent, master, proto]
     runs-on: ubuntu-latest
     env:
-      GO111MODULE: on
+      GO111MODULE: "on"
     steps:
       - uses: actions/checkout@v3
       - name: Setup Go
