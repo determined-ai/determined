@@ -1013,8 +1013,8 @@ const ProjectDetails: React.FC = () => {
               numOfPinned={(settings.pinned?.[id] ?? []).length}
               pagination={getFullPaginationConfig(
                 {
-                  limit: settings.tableLimit || 0,
-                  offset: settings.tableOffset || 0,
+                  limit: settings.tableLimit,
+                  offset: settings.tableOffset,
                 },
                 total,
               )}

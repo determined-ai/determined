@@ -393,6 +393,7 @@ const InteractiveTable: InteractiveTable = ({
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
+  const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {
@@ -453,7 +454,7 @@ const InteractiveTable: InteractiveTable = ({
       };
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (columnKey && settings.columns.find((col) => columnDefs[col]?.key === columnKey)) {
+      if (columnKey && settingsColumns.find((col) => columnDefs[col]?.key === columnKey)) {
         newSettings.sortDesc = order === 'descend';
         newSettings.sortKey = columnKey;
       }
@@ -469,9 +470,9 @@ const InteractiveTable: InteractiveTable = ({
 
   const moveColumn = useCallback(
     (fromIndex, toIndex) => {
-      if (!settings.columnWidths || !settings.columns) return;
+      if (!settings.columnWidths || !settingsColumns) return;
 
-      const reorderedColumns = [...settings.columns];
+      const reorderedColumns = [...settingsColumns];
       const reorderedWidths = [...settings.columnWidths];
       const col = reorderedColumns.splice(fromIndex, 1)[0];
       const width = reorderedWidths.splice(fromIndex, 1)[0];
@@ -480,16 +481,16 @@ const InteractiveTable: InteractiveTable = ({
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
       setWidthData({ ...widthData, widths: reorderedWidths });
     },
-    [settings.columns, settings.columnWidths, widthData, updateSettings],
+    [settingsColumns, settings.columnWidths, widthData, updateSettings],
   );
 
   const handleResize = useCallback(
     (resizeIndex) => {
       return (e: Event, { x }: DraggableData) => {
-        if (!settings.columns) return;
+        if (!settingsColumns) return;
 
         if (timeout.current) clearTimeout(timeout.current);
-        const column = settings.columns[resizeIndex];
+        const column = settingsColumns[resizeIndex];
         const minWidth = columnDefs[column]?.defaultWidth ?? 40;
         const currentWidths = widthData.widths;
 
@@ -528,18 +529,18 @@ const InteractiveTable: InteractiveTable = ({
         }, DEFAULT_RESIZE_THROTTLE_TIME);
       };
     },
-    [settings.columns, widthData.widths, pageWidth, columnDefs],
+    [settingsColumns, widthData.widths, pageWidth, columnDefs],
   );
 
   const handleResizeStart = useCallback(
     (index) =>
       (e: Event, { x }: DraggableData) => {
-        if (!settings.columns) return;
+        if (!settingsColumns) return;
 
         setIsResizing(true);
 
         setWidthData(({ widths, ...rest }) => {
-          const column = settings.columns[index];
+          const column = settingsColumns[index];
           const startWidth = widths[index];
           const minWidth = columnDefs[column]?.defaultWidth ?? 40;
           const deltaX = startWidth - minWidth;
@@ -547,7 +548,7 @@ const InteractiveTable: InteractiveTable = ({
           return { minX, widths, ...rest };
         });
       },
-    [settings.columns, columnDefs],
+    [settingsColumns, columnDefs],
   );
 
   const handleResizeStop = useCallback(() => {
@@ -594,7 +595,7 @@ const InteractiveTable: InteractiveTable = ({
   const renderColumns = useMemo(() => {
     if (!settings) return;
 
-    const columns = settings.columns ?? [];
+    const columns = settingsColumns ?? [];
     const newColumns = columns.reduce<ColumnsType<UnknownRecord>>((acc, columnName, index) => {
       if (!columnDefs[columnName]) return acc;
 
