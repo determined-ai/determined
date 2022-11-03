@@ -11,16 +11,19 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    env:
+      # these checks currently require a ridiculous number of dependencies :)
+      # consider repackaging them in a container in the future
+      SKIP: "web-js-lint-check,web-css-lint-check,web-misc-lint-check"
     steps:
       - uses: actions/checkout@v3.0.0
         with:
           fetch-depth: 1  # full repo for tag comparisons, etc
       - uses: actions/setup-python@v3
-
       # this action is not getting new features, but isn't deprecated yet
       # switch to just running pre-commit locally when/if that happens that's
       # why this one specifies a full version; presumably there will be a
       # version bump when things change. :shrug:
       - uses: pre-commit/action@v3.0.0
-        #with:
-        #  extra_args: ""
+      # with:
+      #   extra_args: ""
