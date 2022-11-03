@@ -1,6 +1,5 @@
-import { Alert, Button, InputNumber } from 'antd';
-import { Form, Input, Select } from 'antd';
-import { ModalFuncProps } from 'antd';
+import { Alert, Button, Form, Input, InputNumber, Select } from 'antd';
+import type { ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
