@@ -995,7 +995,7 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
-    assert modded_user.displayName == "renamed display-name"
+    assert modded_user.displayName == "renamed"
 
     # Rename user display name using SDK
     det_obj = Determined(master=conf.make_master_url())
