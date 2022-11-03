@@ -14,7 +14,6 @@ import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
-import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -90,7 +89,10 @@ const ResourcepoolDetail: React.FC = () => {
     }
   }, [canceler.signal, poolname]);
 
-  usePolling(fetchStats, { rerunOnNewFn: true });
+  useEffect(() => {
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (tab || !pool) return;

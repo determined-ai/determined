@@ -138,11 +138,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   } = useStore();
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
+  const pathname = window.location.pathname;
   const shouldSkipUpdates = useMemo(
     () =>
-      config.applicableRoutespace.includes('/') &&
-      !window.location.pathname.endsWith(config.applicableRoutespace),
-    [config.applicableRoutespace],
+      config.applicableRoutespace.includes('/') && !pathname.endsWith(config.applicableRoutespace),
+    [config.applicableRoutespace, pathname],
   );
 
   // parse navigation url to state

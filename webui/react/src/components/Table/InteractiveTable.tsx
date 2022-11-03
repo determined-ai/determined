@@ -465,7 +465,7 @@ const InteractiveTable: InteractiveTable = ({
 
       updateSettings(newSettings, shouldPush);
     },
-    [settings, updateSettings, columnDefs],
+    [settings, updateSettings, columnDefs, settingsColumns],
   );
 
   const moveColumn = useCallback(
