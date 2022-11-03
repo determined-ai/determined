@@ -3483,6 +3483,7 @@ class v1GetMasterResponse:
         return out
 
 class v1GetMeResponse:
+
     def __init__(
         self,
         *,
@@ -3492,14 +3493,16 @@ class v1GetMeResponse:
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetMeResponse":
-        return cls(
-            user=v1User.from_json(obj["user"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "user": self.user.to_json(),
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "user": v1User.from_json(obj["user"]),
         }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "user": self.user.to_json(omit_unset),
+        }
+        return out
 
 class v1GetModelDefFileRequest:
     experimentId: "typing.Optional[int]" = None
@@ -4498,6 +4501,7 @@ class v1GetTrialsCollectionsResponse:
         return out
 
 class v1GetUserByUsernameResponse:
+
     def __init__(
         self,
         *,
@@ -4507,14 +4511,16 @@ class v1GetUserByUsernameResponse:
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetUserByUsernameResponse":
-        return cls(
-            user=v1User.from_json(obj["user"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "user": self.user.to_json(),
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "user": v1User.from_json(obj["user"]),
         }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "user": self.user.to_json(omit_unset),
+        }
+        return out
 
 class v1GetUserResponse:
 
@@ -6765,31 +6771,46 @@ class v1PatchUser:
         return out
 
 class v1PatchUserRequest:
+    isHashed: "typing.Optional[bool]" = None
+    user: "typing.Optional[v1PatchUser]" = None
+    userId: "typing.Optional[int]" = None
+
     def __init__(
         self,
         *,
-        isHashed: "typing.Optional[bool]" = None,
-        user: "typing.Optional[v1PatchUser]" = None,
-        userId: "typing.Optional[int]" = None,
+        isHashed: "typing.Union[bool, None, Unset]" = _unset,
+        user: "typing.Union[v1PatchUser, None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
     ):
-        self.userId = userId
-        self.user = user
-        self.isHashed = isHashed
+        if not isinstance(isHashed, Unset):
+            self.isHashed = isHashed
+        if not isinstance(user, Unset):
+            self.user = user
+        if not isinstance(userId, Unset):
+            self.userId = userId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchUserRequest":
-        return cls(
-            userId=obj.get("userId", None),
-            user=v1PatchUser.from_json(obj["user"]) if obj.get("user", None) is not None else None,
-            isHashed=obj.get("isHashed", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "userId": self.userId if self.userId is not None else None,
-            "user": self.user.to_json() if self.user is not None else None,
-            "isHashed": self.isHashed if self.isHashed is not None else None,
+        kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "isHashed" in obj:
+            kwargs["isHashed"] = obj["isHashed"]
+        if "user" in obj:
+            kwargs["user"] = v1PatchUser.from_json(obj["user"]) if obj["user"] is not None else None
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "isHashed" in vars(self):
+            out["isHashed"] = self.isHashed
+        if not omit_unset or "user" in vars(self):
+            out["user"] = None if self.user is None else self.user.to_json(omit_unset)
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
+        return out
 
 class v1PatchUserResponse:
 
@@ -7314,16 +7335,19 @@ class v1PostTrialProfilerMetricsBatchRequest:
         return out
 
 class v1PostUserRequest:
+    isHashed: "typing.Optional[bool]" = None
     password: "typing.Optional[str]" = None
     user: "typing.Optional[v1User]" = None
 
     def __init__(
         self,
         *,
-<<<<<<< HEAD
+        isHashed: "typing.Union[bool, None, Unset]" = _unset,
         password: "typing.Union[str, None, Unset]" = _unset,
         user: "typing.Union[v1User, None, Unset]" = _unset,
     ):
+        if not isinstance(isHashed, Unset):
+            self.isHashed = isHashed
         if not isinstance(password, Unset):
             self.password = password
         if not isinstance(user, Unset):
@@ -7333,6 +7357,8 @@ class v1PostUserRequest:
     def from_json(cls, obj: Json) -> "v1PostUserRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "isHashed" in obj:
+            kwargs["isHashed"] = obj["isHashed"]
         if "password" in obj:
             kwargs["password"] = obj["password"]
         if "user" in obj:
@@ -7341,30 +7367,9 @@ class v1PostUserRequest:
 
     def to_json(self, omit_unset: bool = False) -> typing.Any:
         out: "typing.Dict[str, typing.Any]" = {
-=======
-        isHashed: "typing.Optional[bool]" = None,
-        password: "typing.Optional[str]" = None,
-        user: "typing.Optional[v1User]" = None,
-    ):
-        self.user = user
-        self.password = password
-        self.isHashed = isHashed
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostUserRequest":
-        return cls(
-            user=v1User.from_json(obj["user"]) if obj.get("user", None) is not None else None,
-            password=obj.get("password", None),
-            isHashed=obj.get("isHashed", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "user": self.user.to_json() if self.user is not None else None,
-            "password": self.password if self.password is not None else None,
-            "isHashed": self.isHashed if self.isHashed is not None else None,
->>>>>>> 40b52dc2c (isHashed fix)
         }
+        if not omit_unset or "isHashed" in vars(self):
+            out["isHashed"] = self.isHashed
         if not omit_unset or "password" in vars(self):
             out["password"] = self.password
         if not omit_unset or "user" in vars(self):
