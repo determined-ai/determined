@@ -16,6 +16,7 @@ import (
 
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -78,9 +79,9 @@ func (a *apiServer) GetCheckpoint(
 ) (*apiv1.GetCheckpointResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/checkpoints/%s", req.CheckpointUuid),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -109,9 +110,9 @@ func (a *apiServer) DeleteCheckpoints(
 ) (*apiv1.DeleteCheckpointsResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/checkpoints",
-		"method": "delete",
+		"method":   audit.DeleteMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -222,9 +223,9 @@ func (a *apiServer) PostCheckpointMetadata(
 ) (*apiv1.PostCheckpointMetadataResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/checkpoints/%s/metadata", req.Checkpoint.Uuid),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {

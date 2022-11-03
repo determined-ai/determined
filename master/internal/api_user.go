@@ -3,9 +3,10 @@ package internal
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -133,9 +135,9 @@ func (a *apiServer) GetUsers(
 ) (*apiv1.GetUsersResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/users",
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	sortColMap := map[apiv1.GetUsersRequest_SortBy]string{
 		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:   "id",
@@ -194,9 +196,9 @@ func (a *apiServer) GetUser(
 ) (*apiv1.GetUserResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/users/%d", req.UserId),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -222,9 +224,9 @@ func (a *apiServer) PostUser(
 ) (*apiv1.PostUserResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/users",
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "must specify user to create")
@@ -294,9 +296,9 @@ func (a *apiServer) SetUserPassword(
 ) (*apiv1.SetUserPasswordResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/users/%d/password", req.UserId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	// TODO if ExternalSessions is there, don't even allow this
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -337,9 +339,9 @@ func (a *apiServer) PatchUser(
 ) (*apiv1.PatchUserResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/users/%d", req.UserId),
-		"method": "patch",
+		"method":   "patch",
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -492,9 +494,9 @@ func (a *apiServer) GetUserSetting(
 ) (*apiv1.GetUserSettingResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/users/setting",
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -513,9 +515,9 @@ func (a *apiServer) PostUserSetting(
 ) (*apiv1.PostUserSettingResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/users/setting",
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if req.Setting == nil {
 		return nil, status.Error(codes.InvalidArgument, "must specify setting")
@@ -545,9 +547,9 @@ func (a *apiServer) ResetUserSetting(
 ) (*apiv1.ResetUserSettingResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/users/setting/reset",
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {

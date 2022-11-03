@@ -6,9 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
+
+	log "github.com/sirupsen/logrus"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/ghodss/yaml"
@@ -21,6 +21,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -170,9 +171,9 @@ func (a *apiServer) GetCommands(
 ) (resp *apiv1.GetCommandsResponse, err error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/commands",
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -208,9 +209,9 @@ func (a *apiServer) GetCommand(
 	fields := audit.ExtractLogFields(ctx)
 	if len(fields) == 0 {
 		fields["endpoint"] = fmt.Sprintf("/api/v1/commands/%s", req.CommandId)
-		fields["method"] = "get"
+		fields["method"] = audit.GetMethod
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -236,9 +237,9 @@ func (a *apiServer) KillCommand(
 ) (resp *apiv1.KillCommandResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/commands/%s/kill", req.CommandId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
 		return nil, err
@@ -252,9 +253,9 @@ func (a *apiServer) SetCommandPriority(
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/commands/%s/set_priority", req.CommandId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
 		return nil, err

@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -78,9 +79,9 @@ func (a *apiServer) GetProject(
 ) (*apiv1.GetProjectResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -96,9 +97,9 @@ func (a *apiServer) PostProject(
 ) (*apiv1.PostProjectResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/projects", req.WorkspaceId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -125,9 +126,9 @@ func (a *apiServer) AddProjectNote(
 ) (*apiv1.AddProjectNoteResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/notes", req.ProjectId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	p, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId,
 		project.AuthZProvider.Get().CanSetProjectNotes)
@@ -152,9 +153,9 @@ func (a *apiServer) PutProjectNotes(
 ) (*apiv1.PutProjectNotesResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/notes", req.ProjectId),
-		"method": "put",
+		"method":   audit.PutMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	_, _, err := a.getProjectAndCheckCanDoActions(ctx, req.ProjectId,
 		project.AuthZProvider.Get().CanSetProjectNotes)
@@ -173,9 +174,9 @@ func (a *apiServer) PatchProject(
 ) (*apiv1.PatchProjectResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
-		"method": "patch",
+		"method":   "patch",
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	currProject, currUser, err := a.getProjectAndCheckCanDoActions(ctx, req.Id)
 	if err != nil {
@@ -262,9 +263,9 @@ func (a *apiServer) DeleteProject(
 ) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d", req.Id),
-		"method": "delete",
+		"method":   audit.DeleteMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	_, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
 		project.AuthZProvider.Get().CanDeleteProject)
@@ -302,9 +303,9 @@ func (a *apiServer) MoveProject(
 ) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/move", req.ProjectId),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -346,10 +347,9 @@ func (a *apiServer) ArchiveProject(
 ) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/archive", req.Id),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
-
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	p, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
 		project.AuthZProvider.Get().CanArchiveProject)
@@ -378,9 +378,9 @@ func (a *apiServer) UnarchiveProject(
 ) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/projects/%d/unarchive", req.Id),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	p, _, err := a.getProjectAndCheckCanDoActions(ctx, req.Id,
 		project.AuthZProvider.Get().CanUnarchiveProject)

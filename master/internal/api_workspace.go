@@ -14,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -74,9 +75,9 @@ func (a *apiServer) GetWorkspace(
 ) (*apiv1.GetWorkspaceResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -92,9 +93,9 @@ func (a *apiServer) GetWorkspaceProjects(
 ) (*apiv1.GetWorkspaceProjectsResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/projects", req.Id),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -168,9 +169,9 @@ func (a *apiServer) GetWorkspaces(
 ) (*apiv1.GetWorkspacesResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/workspaces",
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -240,9 +241,9 @@ func (a *apiServer) PostWorkspace(
 ) (*apiv1.PostWorkspaceResponse, error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/workspaces",
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -317,9 +318,9 @@ func (a *apiServer) PatchWorkspace(
 ) (*apiv1.PatchWorkspaceResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
-		"method": "patch",
+		"method":   "patch",
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	currWorkspace, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, true)
 	if err != nil {
@@ -411,9 +412,9 @@ func (a *apiServer) DeleteWorkspace(
 ) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d", req.Id),
-		"method": "delete",
+		"method":   audit.DeleteMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanDeleteWorkspace)
@@ -459,9 +460,9 @@ func (a *apiServer) ArchiveWorkspace(
 ) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/archive", req.Id),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanArchiveWorkspace)
@@ -486,9 +487,9 @@ func (a *apiServer) UnarchiveWorkspace(
 ) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/unarchive", req.Id),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanUnarchiveWorkspace)
@@ -512,9 +513,9 @@ func (a *apiServer) PinWorkspace(
 ) (*apiv1.PinWorkspaceResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/pin", req.Id),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	_, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanPinWorkspace)
@@ -533,9 +534,9 @@ func (a *apiServer) UnpinWorkspace(
 ) (*apiv1.UnpinWorkspaceResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/workspaces/%d/unpin", req.Id),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	_, currUser, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanUnpinWorkspace)

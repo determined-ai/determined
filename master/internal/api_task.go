@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -22,9 +24,9 @@ func (a *apiServer) GetTask(
 ) (resp *apiv1.GetTaskResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/tasks/%s", req.TaskId),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {

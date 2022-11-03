@@ -3,8 +3,11 @@ package usergroup
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"strings"
+
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -26,9 +29,9 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 ) (resp *apiv1.CreateGroupResponse, err error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/groups",
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if strings.Contains(req.Name, db.PersonalGroupPostfix) {
 		return nil, status.Error(codes.InvalidArgument,
@@ -73,9 +76,9 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 ) (resp *apiv1.GetGroupsResponse, err error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/groups/search",
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -129,9 +132,9 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 ) (resp *apiv1.GetGroupResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -178,9 +181,9 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 ) (resp *apiv1.UpdateGroupResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
@@ -230,9 +233,9 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 ) (resp *apiv1.DeleteGroupResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
-		"method": "delete",
+		"method":   audit.DeleteMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {

@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -166,9 +167,9 @@ func (a *apiServer) AllocationReady(
 ) (*apiv1.AllocationReadyResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/ready", req.AllocationId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
@@ -193,9 +194,9 @@ func (a *apiServer) AllocationWaiting(
 ) (*apiv1.AllocationWaitingResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/waiting", req.AllocationId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
@@ -220,9 +221,9 @@ func (a *apiServer) AllocationAllGather(
 ) (*apiv1.AllocationAllGatherResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/all_gather", req.AllocationId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
@@ -270,9 +271,9 @@ func (a *apiServer) PostAllocationProxyAddress(
 ) (*apiv1.PostAllocationProxyAddressResponse, error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/proxy_address", req.AllocationId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
@@ -302,9 +303,9 @@ func (a *apiServer) TaskLogs(
 ) error {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/tasks/%s/logs", req.TaskId),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx := context.WithValue(resp.Context(), "logFields", fields)
+	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
 
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
@@ -335,9 +336,9 @@ func (a *apiServer) GetActiveTasksCount(
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/tasks/count",
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -517,7 +518,7 @@ func (a *apiServer) TaskLogsFields(
 ) error {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/tasks/%s/logs/fields", req.TaskId),
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
 
 	taskID := model.TaskID(req.TaskId)
@@ -525,7 +526,7 @@ func (a *apiServer) TaskLogsFields(
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.WithValue(resp.Context(), "logFields", fields)
+			ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
 			if err := a.canDoActionsOnTask(ctx, taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err

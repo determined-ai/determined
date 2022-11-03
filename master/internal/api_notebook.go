@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
-	log "github.com/sirupsen/logrus"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -49,9 +50,9 @@ func (a *apiServer) GetNotebooks(
 ) (resp *apiv1.GetNotebooksResponse, err error) {
 	fields := log.Fields{
 		"endpoint": "/api/v1/notebooks",
-		"method": "get",
+		"method":   audit.GetMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -87,9 +88,9 @@ func (a *apiServer) GetNotebook(
 	fields := audit.ExtractLogFields(ctx)
 	if len(fields) == 0 {
 		fields["endpoint"] = fmt.Sprintf("/api/v1/notebooks/%s", req.NotebookId)
-		fields["method"] = "get"
+		fields["method"] = audit.GetMethod
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -115,9 +116,9 @@ func (a *apiServer) IdleNotebook(
 ) (resp *apiv1.IdleNotebookResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/notebooks/%s/report_idle", req.NotebookId),
-		"method": "put",
+		"method":   audit.PutMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if _, err := a.GetNotebook(ctx,
 		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
@@ -132,9 +133,9 @@ func (a *apiServer) KillNotebook(
 ) (resp *apiv1.KillNotebookResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/notebooks/%s/kill", req.NotebookId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if _, err := a.GetNotebook(ctx,
 		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
@@ -149,9 +150,9 @@ func (a *apiServer) SetNotebookPriority(
 ) (resp *apiv1.SetNotebookPriorityResponse, err error) {
 	fields := log.Fields{
 		"endpoint": fmt.Sprintf("/api/v1/notebooks/%s/set_priority", req.NotebookId),
-		"method": "post",
+		"method":   audit.PostMethod,
 	}
-	ctx = context.WithValue(ctx, "logFields", fields)
+	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 	if _, err := a.GetNotebook(ctx,
 		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
