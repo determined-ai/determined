@@ -1,10 +1,8 @@
 import pathlib
-from telnetlib import AUTHENTICATION
 
 import pytest
 
 import determined.common.api as determined_api
-from determined.common.api import bindings
 import determined.common.api.certs as certs
 from determined.common import context, util
 from determined.common.api.bindings import determinedexperimentv1State as EXP_STATE

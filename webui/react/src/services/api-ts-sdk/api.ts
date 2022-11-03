@@ -25193,11 +25193,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get the current user.
-         * @param {number} [holder] Cannot have an empty message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMe(holder?: number, options: any = {}): FetchArgs {
+        getMe(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/me`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25210,10 +25209,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            if (holder !== undefined) {
-                localVarQueryParameter['holder'] = holder;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -25597,12 +25592,11 @@ export const UsersApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get the current user.
-         * @param {number} [holder] Cannot have an empty message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMe(holder?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(holder, options);
+        getMe(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25799,12 +25793,11 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get the current user.
-         * @param {number} [holder] Cannot have an empty message.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMe(holder?: number, options?: any) {
-            return UsersApiFp(configuration).getMe(holder, options)(fetch, basePath);
+        getMe(options?: any) {
+            return UsersApiFp(configuration).getMe(options)(fetch, basePath);
         },
         /**
          * 
@@ -25912,13 +25905,12 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get the current user.
-     * @param {number} [holder] Cannot have an empty message.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getMe(holder?: number, options?: any) {
-        return UsersApiFp(this.configuration).getMe(holder, options)(this.fetch, this.basePath);
+    public getMe(options?: any) {
+        return UsersApiFp(this.configuration).getMe(options)(this.fetch, this.basePath);
     }
 
     /**

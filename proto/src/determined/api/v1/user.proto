@@ -72,10 +72,7 @@ message GetUserByUsernameResponse {
 }
 
 // Get the requested current user.
-message GetMeRequest {
-  // Cannot have an empty message.
-  int32 holder = 1;
-}
+message GetMeRequest {}
 // Response to GetMeRequest.
 message GetMeResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

@@ -12779,12 +12779,8 @@ def get_GetMasterConfig(
 
 def get_GetMe(
     session: "api.Session",
-    *,
-    holder: "typing.Optional[int]" = None,
 ) -> "v1GetMeResponse":
-    _params = {
-        "holder": holder,
-    }
+    _params = None
     _resp = session._do_request(
         method="GET",
         path="/api/v1/me",
