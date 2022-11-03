@@ -39,8 +39,6 @@ func (a *apiServer) Login(
 		return nil, status.Error(codes.InvalidArgument, "missing argument: username")
 	}
 
-	fmt.Println("username")
-	fmt.Println(req.Username)
 	userModel, err := user.UserByUsername(req.Username)
 	switch err {
 	case nil:
