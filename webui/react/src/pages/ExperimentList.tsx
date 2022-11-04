@@ -136,7 +136,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [updateDestinationSettings, project?.workspaceId]);
 
   const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ExperimentListSettings>(settingsConfig(id));
+    useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
