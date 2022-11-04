@@ -147,7 +147,7 @@ const ProjectDetails: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.workspaceId]);
 
-  const id = useMemo(() => parseInt(projectId ?? '1'), [projectId]);
+  const id = parseInt(projectId ?? '1');
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ProjectDetailsSettings>(settingsConfig(id));

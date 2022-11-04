@@ -129,7 +129,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const permissions = usePermissions();
 
-  const id = useMemo(() => project?.id, [project?.id]);
+  const id = project?.id;
 
   useEffect(() => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
