@@ -1075,8 +1075,9 @@ func (m *Master) Run(ctx context.Context) error {
 	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
 
-	// Catch all requests because echo does not set the response error on the context if no handler is matched
-	m.echo.Any("/*", func (c echo.Context) error {
+	// Catch-all for requests not matched by any above handler
+	// echo does not set the response error on the context if no handler is matched
+	m.echo.Any("/*", func(c echo.Context) error {
 		return echo.ErrNotFound
 	})
 
