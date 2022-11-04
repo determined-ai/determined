@@ -54,10 +54,14 @@ stages:
           level: $OPT_DEBUGLEVEL
         cache:
           cache_dir: /tmp
-        task_container_defaults:
+        task_container_defaults: 
           bind_mounts:
             - host_path: /etc/hosts
               container_path: /etc/hosts
+          # Next line is intentionally not indented to simplify inserting multi-line content.
+$OPT_TASKCONTAINERDEFAULTS
+          image: $OPT_DEFAULTIMAGE
+
         resource_manager:
           master_host: $OPT_MASTERHOST
           master_port: $OPT_MASTERPORT
@@ -81,6 +85,9 @@ stages:
           gres_supported: $OPT_GRESSUPPORTED
           rendezvous_network_interface: $OPT_RENDEVOUSIFACE
           slot_type: $OPT_SLOTTYPE
+          partition_overrides: 
+          # Next line is intentionally not indented to simplify inserting multi-line content.
+$OPT_PARTITIONOVERRIDES
           # Specify per-partition overrides for submitted tasks.
           # partition_overrides:
           #   defq:
