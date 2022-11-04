@@ -176,10 +176,6 @@ func (s *websocketActor) processWriteMessage(
 	return s.conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 }
 
-func isClosingError(err error) bool {
-	return err == websocket.ErrCloseSent || websocket.IsCloseError(err, websocket.CloseNormalClosure)
-}
-
 func (s *websocketActor) setupPingLoop(ctx *actor.Context) {
 	s.conn.SetPongHandler(func(data string) error {
 		return s.handlePong(ctx, data)
@@ -324,4 +320,8 @@ func parseMsg(raw []byte, msgType reflect.Type) (interface{}, error) {
 		return parsed, nil
 	}
 	return reflect.ValueOf(parsed).Elem().Interface(), nil
+}
+
+func isClosingError(err error) bool {
+	return err == websocket.ErrCloseSent || websocket.IsCloseError(err, websocket.CloseNormalClosure)
 }

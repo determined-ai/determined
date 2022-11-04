@@ -670,7 +670,6 @@ func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
 					Device:  device.Device{Type: deviceType},
 					Enabled: true,
 					Container: &cproto.Container{
-						Parent:  actor.Addr(""),
 						ID:      cproto.ID(taskName),
 						State:   "RUNNING",
 						Devices: []device.Device{},

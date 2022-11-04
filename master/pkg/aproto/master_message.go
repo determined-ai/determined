@@ -1,6 +1,7 @@
 package aproto
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -52,6 +53,15 @@ type ContainerReattachAck struct {
 	Failure   *ContainerFailure
 }
 
+// FromContainerStateChanged forms a container reattach ack from a state change message.
+func FromContainerStateChanged(csc *ContainerStateChanged) *ContainerReattachAck {
+	ack := ContainerReattachAck{Container: csc.Container}
+	if csc.ContainerStopped != nil {
+		ack.Failure = csc.ContainerStopped.Failure
+	}
+	return &ack
+}
+
 // ID is an identifier for an agent.
 type ID string
 
@@ -75,6 +85,10 @@ type ContainerStateChanged struct {
 type ContainerStarted struct {
 	ProxyAddress  string
 	ContainerInfo types.ContainerJSON
+}
+
+func (s ContainerStarted) String() string {
+	return fmt.Sprintf("docker container %s running", s.ContainerInfo.ID)
 }
 
 // ContainerStatsRecord notifies the master that about the container stats of docker.
@@ -167,7 +181,7 @@ func (c ContainerStopped) String() string {
 
 // ContainerLog notifies the master that a new log message is available for the container.
 type ContainerLog struct {
-	Container   cproto.Container
+	ContainerID cproto.ID
 	Timestamp   time.Time
 	Level       *string
 	PullMessage *string

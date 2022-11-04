@@ -1,361 +1,278 @@
 package internal
 
 import (
-	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
-	"net/http"
-	"net/http/pprof"
-	"os"
-	"os/exec"
-	"runtime"
 	"strings"
-	"syscall"
-	"time"
 
-	"github.com/docker/docker/api/types/container"
+	dclient "github.com/docker/docker/client"
 	"github.com/gorilla/websocket"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/actor/api"
+	"github.com/determined-ai/determined/agent/internal/container"
+	"github.com/determined-ai/determined/agent/internal/containers"
+	"github.com/determined-ai/determined/agent/internal/detect"
+	"github.com/determined-ai/determined/agent/internal/fluent"
+	"github.com/determined-ai/determined/agent/internal/options"
+	"github.com/determined-ai/determined/agent/pkg/docker"
+	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/logger"
-	"github.com/determined-ai/determined/master/pkg/model"
-	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry"
+	"github.com/determined-ai/determined/master/pkg/groupx/errgroupx"
+	"github.com/determined-ai/determined/master/pkg/ws"
 )
 
 const (
-	httpInsecureScheme = "http"
-	httpSecureScheme   = "https"
-	wsInsecureScheme   = "ws"
-	wsSecureScheme     = "wss"
+	wsInsecureScheme = "ws"
+	wsSecureScheme   = "wss"
+	eventChanSize    = 64 // same size as the websocket outbox
 )
 
-type agent struct {
-	Version               string
-	Options               `json:"options"`
-	MasterSetAgentOptions *aproto.MasterSetAgentOptions
-	Devices               []device.Device `json:"devices"`
+// MasterWebsocket is the type for a websocket which communicates with the master.
+type MasterWebsocket = ws.Websocket[*aproto.AgentMessage, *aproto.MasterMessage]
 
-	socket *actor.Ref
-	cm     *actor.Ref
-	fluent *actor.Ref
+// Agent is the manager for all other processes in the agent. It launches Fluent Bit, the container
+// manager, and all external connections, to Docker and the master. Once launched, it takes actions
+// directed by the master and monitors the subprocesses for failure. The agent fails and enters the
+// recovery flow on the failure of any component.
+type Agent struct {
+	// Configuration details
+	version string
+	opts    options.AgentOptions
+	mopts   aproto.MasterSetAgentOptions
+	devices []device.Device
 
-	masterProto  string
-	masterClient *http.Client
+	// System dependencies
+	log     *logrus.Entry
+	manager *containers.Manager
+	socket  *MasterWebsocket
+	docker  *docker.Client
+	fluent  *fluent.Fluent
 
-	reconnecting bool
+	// Internal state
+	outbox chan container.Event
+
+	wg errgroupx.Group
 }
 
-func newAgent(version string, options Options) *agent {
-	return &agent{Version: version, Options: options}
-}
+// New constructs and runs a new agent according to the provided configuration.
+func New(parent context.Context, version string, options options.AgentOptions) *Agent {
+	a := &Agent{
+		version: version,
+		opts:    options,
 
-func (a *agent) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case actor.PreStart:
-		ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
-		err := a.connect(ctx)
-		if err != nil {
-			a.onConnectionLost(ctx)
-		}
+		log: logrus.WithField("component", "agent"),
 
-		// Set up SIGINT and SIGTERM listeners after we try to connect to master.
-		// Ironically listening before we connect to master means we are unable
-		// to process signals during a.connect since this PreStart message blocks
-		// processing other messages (including the os.Signal messages). Without
-		// setting up listeners, Go will handle closing our program for us.
-		actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
-		return err
-	case aproto.AgentMessage:
-		switch {
-		case msg.MasterSetAgentOptions != nil:
-			if a.MasterSetAgentOptions != nil {
-				ctx.Log().Debugf("received MasterSetAgentOptions more than once: %v",
-					*msg.MasterSetAgentOptions)
-				a.MasterSetAgentOptions = msg.MasterSetAgentOptions
-				return a.setupAfterMasterRestart(ctx)
-			}
+		wg: errgroupx.WithContext(parent),
+	}
 
-			a.MasterSetAgentOptions = msg.MasterSetAgentOptions
-			if a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelEnabled {
-				opentelemetry.ConfigureOtel(
-					a.MasterSetAgentOptions.MasterInfo.Telemetry.OtelExportedOtlpEndpoint, "determined-agent")
-			}
-			return a.setup(ctx)
-		case msg.StartContainer != nil:
-			a.addProxy(&msg.StartContainer.Spec.RunSpec.ContainerConfig)
-			if !a.validateDevices(msg.StartContainer.Container.Devices) {
-				return errors.New("could not start container; devices specified in spec not found on agent")
-			}
-			ctx.Tell(a.cm, *msg.StartContainer)
-		case msg.SignalContainer != nil:
-			ctx.Tell(a.cm, *msg.SignalContainer)
-		case msg.AgentShutdown != nil:
-			ctx.Log().Infof("shutting down agent due to master message: %s", msg.AgentShutdown.ErrMsg)
-			ctx.Self().Stop()
+	a.wg.Go(func(ctx context.Context) error {
+		switch err := a.run(ctx); {
+		case errors.Is(err, context.Canceled):
+			return nil
+		case err != nil:
+			return err
 		default:
-			panic(fmt.Sprintf("unknown message received: %+v", msg))
+			return nil
 		}
+	})
 
-	case aproto.ContainerStateChanged:
-		if a.socket != nil {
-			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerStateChanged: &msg}})
-		} else {
-			ctx.Log().Warnf("Not sending container state change to the master: %+v", msg)
+	return a
+}
+
+// Wait for the agent to exit, returning an error indicating the reason.
+func (a *Agent) Wait() error {
+	return a.wg.Wait()
+}
+
+// Run sets up the agent and starts the watch loop. All configurations and system depenencies should
+// be setup _before_ the watch loop is started.
+func (a *Agent) run(ctx context.Context) (err error) {
+	a.log.Trace("detecting devices")
+	a.devices, err = detect.Detect(
+		a.opts.SlotType, a.opts.AgentID, a.opts.VisibleGPUs, a.opts.ArtificialSlots,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to detect devices: %v", a.devices)
+	}
+
+	a.log.Trace("connecting to master")
+	a.socket, err = a.connect(ctx)
+	if err != nil {
+		return fmt.Errorf("crashing due to websocket connection failure: %w", err)
+	}
+	defer func() {
+		a.log.Trace("cleaning up socket")
+		if cErr := a.socket.Close(); err != nil {
+			a.log.WithError(cErr).Error("closing master websocket")
 		}
-	case aproto.ContainerLog:
-		if a.socket != nil {
-			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerLog: &msg}})
+	}()
+
+	a.log.Trace("reading master set agent options message")
+	select {
+	case msg, ok := <-a.socket.Inbox:
+		switch {
+		case !ok:
+			return fmt.Errorf("socket closed while reading setup messages")
+		case msg.MasterSetAgentOptions == nil:
+			return fmt.Errorf("master did not send setup messages")
+		default:
+			a.mopts = *msg.MasterSetAgentOptions
 		}
+	case <-ctx.Done():
+		return fmt.Errorf("canceled while reading setup messages: %w", ctx.Err())
+	}
 
-	case aproto.ContainerStatsRecord:
-		if a.socket != nil {
-			ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{ContainerStatsRecord: &msg}})
+	a.log.Trace("setting up docker client")
+	cl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
+	if err != nil {
+		return fmt.Errorf("failed to build docker client: %w", err)
+	}
+	a.docker = docker.NewClient(cl)
+	defer func() {
+		a.log.Trace("cleaning up docker client")
+		if cErr := a.docker.Close(); err != nil {
+			a.log.WithError(cErr).Error("closing docker client")
 		}
+	}()
 
-	case model.TaskLog:
-		return a.postTaskLog(msg)
+	a.log.Trace("setting up fluentbit daemon")
+	a.fluent, err = fluent.Start(ctx, a.opts, a.mopts, a.docker)
+	if err != nil {
+		return fmt.Errorf("setting up fluentbit failed: %w", err)
+	}
+	defer func() {
+		a.log.Trace("cleaning up fluent client")
+		if cErr := a.fluent.Close(); err != nil {
+			a.log.WithError(cErr).Error("closing fluentbit")
+		}
+	}()
 
-	case actor.ChildFailed:
-		switch msg.Child {
-		case a.socket:
-			if a.attemptReconnect(ctx) {
+	a.log.Trace("setting up container manager")
+	a.manager, err = containers.New(a.opts, a.mopts, a.devices, a.docker, a.sender())
+	if err != nil {
+		return fmt.Errorf("error initializing container manager: %w", err)
+	}
+	defer func() {
+		a.log.Trace("detaching container manager")
+		a.manager.Detach()
+	}()
+
+	a.log.Trace("reattaching containers")
+	reattached, err := a.manager.ReattachContainers(ctx, a.mopts.ContainersToReattach)
+	if err != nil {
+		return fmt.Errorf("failed to reattach containers: %w", err)
+	}
+
+	a.log.Trace("writing agent started message")
+	select {
+	case a.socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
+		Version:              a.version,
+		Devices:              a.devices,
+		Label:                a.opts.Label,
+		ContainersReattached: reattached,
+	}}:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return a.watch(ctx)
+}
+
+func (a *Agent) watch(ctx context.Context) error {
+	a.log.Trace("watching for ws requests and system events")
+	inbox := a.socket.Inbox
+	outbox := make(chan *aproto.MasterMessage, eventChanSize)
+	for {
+		select {
+		case msg, ok := <-inbox:
+			a.log.Tracef("received message: %v", msg)
+			if !ok {
+				return errors.New("crashing due to websocket inbox closure")
+			}
+			if err := a.receive(ctx, msg); err != nil {
+				return err
+			}
+
+		case msg := <-outbox:
+			a.log.Tracef("sent message: %v", msg)
+			select {
+			case a.socket.Outbox <- msg:
+			case <-ctx.Done():
 				return nil
 			}
-			ctx.Log().Warn("master socket disconnected, shutting down agent...")
-			a.onConnectionLost(ctx)
-		case a.cm:
-			ctx.Log().Warn("container manager failed, shutting down agent...")
-		case a.fluent:
-			ctx.Log().Warn("fluent bit failed, restarting it...")
-			go func() {
-				// Do this in a goroutine so we don't block the agent actor while retrying.
-				if err := a.restartFluent(ctx); err != nil {
-					logrus.WithError(err).Error("failed to restart fluent with retries")
-					ctx.Self().Stop()
-				}
-			}()
+
+		case <-a.socket.Done:
+			a.log.Trace("socket exited")
+			if err := a.socket.Error(); err != nil {
+				return fmt.Errorf("crashing due to websocket connection failure: %w", err)
+			}
+			return nil
+
+		case <-a.fluent.Done:
+			a.log.Trace("fluent exited")
+			if err := a.fluent.Error(); err != nil {
+				return fmt.Errorf("restarting due fluent failure: %w", err)
+			}
+			return nil
+
+		case <-ctx.Done():
+			a.log.Trace("context canceled")
 			return nil
 		}
-		return errors.Wrapf(msg.Error, "unexpected child failure: %s", msg.Child.Address())
+	}
+}
 
-	case actor.ChildStopped:
-		return errors.Errorf("unexpected child stopped: %s", msg.Child.Address())
+func (a *Agent) send(ctx context.Context, msg *aproto.MasterMessage) error {
+	select {
+	case a.socket.Outbox <- msg:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
 
-	case os.Signal:
-		switch msg {
-		case syscall.SIGINT, syscall.SIGTERM:
-			ctx.Log().Info("shutting down agent...")
-			ctx.Self().Stop()
-		default:
-			ctx.Log().Infof("unexpected signal received: %s", msg)
+func (a *Agent) receive(ctx context.Context, msg *aproto.AgentMessage) error {
+	switch {
+	case msg.StartContainer != nil:
+		if err := a.manager.StartContainer(ctx, *msg.StartContainer); err != nil {
+			a.log.WithError(err).Error("could not starting container")
 		}
-
-	case echo.Context:
-		a.handleAPIRequest(ctx, msg)
-
-	case actor.PostStop:
-		if a.fluent != nil {
-			if err := a.fluent.StopAndAwaitTermination(); err != nil {
-				ctx.Log().Errorf("error killing logging container %v", err)
-			}
-		}
-
-		ctx.Log().Info("agent shut down")
-
+	case msg.SignalContainer != nil:
+		a.manager.SignalContainer(ctx, *msg.SignalContainer)
 	default:
-		return actor.ErrUnexpectedMessage(ctx)
+		panic(fmt.Sprintf("unknown message received: %+v", msg))
 	}
 	return nil
 }
 
-func (a *agent) restartFluent(ctx *actor.Context) error {
-	i := 0
-	for {
-		fluentActor, err := newFluentActor(a.Options, *a.MasterSetAgentOptions)
-		switch {
-		case err == nil:
-			a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
-			return nil
-		case err != nil && i >= 5:
-			return errors.Wrap(err, "failed to restart Fluent daemon")
-		default:
-			ctx.Log().Warnf("failed to restart Fluent daemon: %s", err)
-			// Just use exponential backoff.
-			t := time.Duration(math.Pow(2, float64(i))) * time.Second
-			i++
-			ctx.Log().Infof("trying to restart Fluent daemon in %s", t)
-			time.Sleep(t)
-		}
-	}
-}
-
-func (a *agent) onConnectionLost(ctx *actor.Context) {
-	cmd := a.Options.Hooks.OnConnectionLost
-	if len(cmd) == 0 {
-		return
-	}
-	if out, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput(); err != nil { //nolint:gosec
-		ctx.Log().
-			WithError(err).
-			WithField("output", string(out)).
-			Error("error running connection failure hook")
-	}
-}
-
-func (a *agent) addProxy(config *container.Config) {
-	addVars := map[string]string{
-		"HTTP_PROXY":  a.Options.HTTPProxy,
-		"HTTPS_PROXY": a.Options.HTTPSProxy,
-		"FTP_PROXY":   a.Options.FTPProxy,
-		"NO_PROXY":    a.Options.NoProxy,
-	}
-
-	for _, v := range config.Env {
-		key := strings.SplitN(v, "=", 2)[0]
-		key = strings.ToUpper(key)
-		_, ok := addVars[key]
-		if ok {
-			delete(addVars, key)
-		}
-	}
-
-	for k, v := range addVars {
-		if v != "" {
-			config.Env = append(config.Env, k+"="+v)
-		}
-	}
-}
-
-// validateDevices checks the devices requested in container.Spec are a subset of agent devices.
-func (a *agent) validateDevices(devices []device.Device) bool {
-	for _, d := range devices {
-		if !a.containsDevice(d) {
-			return false
-		}
-	}
-	return true
-}
-
-func (a *agent) containsDevice(d device.Device) bool {
-	for _, dev := range a.Devices {
-		if d.ID == dev.ID {
-			return true
-		}
-	}
-	return false
-}
-
-func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
-	switch apiCtx.Request().Method {
-	case echo.GET:
-		ctx.Respond(apiCtx.JSON(http.StatusOK, a))
-
-	case echo.POST:
-		body, err := ioutil.ReadAll(apiCtx.Request().Body)
-		if err != nil {
-			ctx.Respond(err)
-			return
-		}
-
-		var msg aproto.AgentMessage
-		if err = json.Unmarshal(body, &msg); err != nil {
-			ctx.Respond(err)
-			return
-		}
-
-		switch {
-		case msg.StartContainer != nil:
-			switch result := ctx.Ask(a.cm, *msg.StartContainer).Get().(type) {
-			case error:
-				ctx.Respond(err)
+func (a *Agent) sender() events.Publisher[container.Event] {
+	return events.FuncPublisher[container.Event](
+		func(ctx context.Context, in container.Event) error {
+			var out aproto.MasterMessage
+			switch {
+			case in.StateChange != nil:
+				out.ContainerStateChanged = in.StateChange
+			case in.StatsRecord != nil:
+				out.ContainerStatsRecord = in.StatsRecord
+			case in.Log != nil:
+				out.ContainerLog = in.Log
 			default:
-				ctx.Respond(apiCtx.JSON(http.StatusOK, result))
+				panic(fmt.Sprintf("unknown outgoing message: %+v", in))
 			}
-		case msg.SignalContainer != nil:
-			ctx.Tell(a.cm, *msg.SignalContainer)
-		default:
-			ctx.Respond(errors.Errorf("unknown message received"))
-		}
-
-	default:
-		ctx.Respond(echo.ErrMethodNotAllowed)
-	}
-}
-
-func (a *agent) tlsConfig() (*tls.Config, error) {
-	if !a.Options.Security.TLS.Enabled {
-		return nil, nil
-	}
-
-	var pool *x509.CertPool
-	if certFile := a.Options.Security.TLS.MasterCert; certFile != "" {
-		certData, err := ioutil.ReadFile(certFile) //nolint:gosec
-		if err != nil {
-			msg := fmt.Sprintf("failed to read certificate file %q", certFile)
-			return nil, errors.Wrapf(err, msg)
-		}
-		pool = x509.NewCertPool()
-		if !pool.AppendCertsFromPEM(certData) {
-			return nil, errors.New("certificate file contains no certificates")
-		}
-	}
-
-	var certs []tls.Certificate
-	switch cert, err := a.Options.Security.TLS.ReadClientCertificate(); {
-	case err != nil:
-		msg := fmt.Sprintf("failed to read agent certificate file %q or certificate key %q",
-			a.Options.Security.TLS.ClientCert, a.Options.Security.TLS.ClientKey)
-		return nil, errors.Wrapf(err, msg)
-	case cert != nil:
-		certs = append(certs, *cert)
-	}
-
-	return &tls.Config{
-		InsecureSkipVerify: a.Options.Security.TLS.SkipVerify, //nolint:gosec
-		MinVersion:         tls.VersionTLS12,
-		RootCAs:            pool,
-		ServerName:         a.Options.Security.TLS.MasterCertName,
-		Certificates:       certs,
-	}, nil
-}
-
-func (a *agent) makeMasterClient() error {
-	tlsConfig, err := a.tlsConfig()
-	if err != nil {
-		return errors.Wrap(err, "failed to construct TLS config")
-	}
-
-	a.masterProto = httpInsecureScheme
-	if tlsConfig != nil {
-		a.masterProto = httpSecureScheme
-	}
-	a.masterClient = &http.Client{
-		Transport: &http.Transport{
-			Proxy:           http.DefaultTransport.(*http.Transport).Proxy,
-			TLSClientConfig: tlsConfig,
+			return a.send(ctx, &out)
 		},
-	}
-	return nil
+	)
 }
 
-func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
+func (a *Agent) connect(ctx context.Context) (*MasterWebsocket, error) {
 	tlsConfig, err := a.tlsConfig()
 	if err != nil {
-		return errors.Wrap(err, "failed to construct TLS config")
+		return nil, errors.Wrap(err, "failed to construct TLS config")
 	}
 
 	masterProto := wsInsecureScheme
@@ -368,229 +285,70 @@ func (a *agent) makeMasterWebsocket(ctx *actor.Context) error {
 		TLSClientConfig:  tlsConfig,
 	}
 
-	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%t",
-		masterProto, a.MasterHost, a.MasterPort, a.AgentID, a.Version, a.ResourcePool, a.reconnecting)
-	ctx.Log().Infof("connecting to master at: %s", masterAddr)
-	conn, resp, err := dialer.Dial(masterAddr, nil)
+	masterAddr := fmt.Sprintf(
+		"%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%v",
+		masterProto, a.opts.MasterHost, a.opts.MasterPort, a.opts.AgentID, a.version,
+		a.opts.ResourcePool, false,
+	)
+	a.log.Infof("connecting to master at: %s", masterAddr)
+	conn, resp, err := dialer.DialContext(ctx, masterAddr, nil)
 	if resp != nil {
 		defer func() {
 			if err = resp.Body.Close(); err != nil {
-				ctx.Log().WithError(err).Error("failed to read master response on connection")
+				a.log.WithError(err).Error("failed to read master response on connection")
 			}
 		}()
 	}
 	if err != nil {
 		if resp == nil {
-			return errors.Wrap(err, "error dialing master")
+			return nil, errors.Wrap(err, "error dialing master")
 		}
 
 		b, rErr := ioutil.ReadAll(resp.Body)
 		if rErr == nil && strings.Contains(string(b), aproto.ErrAgentMustReconnect.Error()) {
-			return aproto.ErrAgentMustReconnect
+			return nil, aproto.ErrAgentMustReconnect
 		}
 
-		return errors.Wrapf(err, "error dialing master: %s", b)
+		return nil, errors.Wrapf(err, "error dialing master: %s", b)
 	}
-
-	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, aproto.AgentMessage{}, true))
-	return nil
+	return ws.Wrap[*aproto.AgentMessage, *aproto.MasterMessage](a.opts.AgentID, conn), nil
 }
 
-func (a *agent) attemptReconnect(ctx *actor.Context) bool {
-	a.reconnecting = true
-	defer func() {
-		a.reconnecting = false
-	}()
-	for i := 0; i < a.Options.AgentReconnectAttempts; i++ {
-		switch err := a.connect(ctx); {
-		case err == nil:
-			return true
-		case errors.Is(err, aproto.ErrAgentMustReconnect):
-			ctx.Log().Warn("received ErrAgentMustReconnect, exiting")
-			return false
-		default:
-			ctx.Log().WithError(err).Error("error reconnecting to master")
+func (a *Agent) tlsConfig() (*tls.Config, error) {
+	if !a.opts.Security.TLS.Enabled {
+		return nil, nil
+	}
+
+	var pool *x509.CertPool
+	if certFile := a.opts.Security.TLS.MasterCert; certFile != "" {
+		certData, err := ioutil.ReadFile(certFile) //nolint:gosec
+		if err != nil {
+			msg := fmt.Sprintf("failed to read certificate file %q", certFile)
+			return nil, errors.Wrapf(err, msg)
 		}
-		time.Sleep(time.Duration(a.Options.AgentReconnectBackoff) * time.Second)
-	}
-	ctx.Log().Warn("exhausted reconnect attempts, exiting")
-	return false
-}
-
-func (a *agent) connect(ctx *actor.Context) error {
-	if a.MasterPort == 0 {
-		if a.Options.Security.TLS.Enabled {
-			a.MasterPort = 443
-		} else {
-			a.MasterPort = 80
+		pool = x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(certData) {
+			return nil, errors.New("certificate file contains no certificates")
 		}
 	}
 
-	if a.MasterHost == "" {
-		return fmt.Errorf("no master address specified")
+	var certs []tls.Certificate
+	switch cert, err := a.opts.Security.TLS.ReadClientCertificate(); {
+	case err != nil:
+		msg := fmt.Sprintf(
+			"failed to read agent certificate file %q or certificate key %q",
+			a.opts.Security.TLS.ClientCert, a.opts.Security.TLS.ClientKey,
+		)
+		return nil, errors.Wrapf(err, msg)
+	case cert != nil:
+		certs = append(certs, *cert)
 	}
 
-	if err := a.connectToMaster(ctx); err != nil {
-		return err
-	}
-	ctx.Log().Infof("successfully connected to master")
-
-	return nil
-}
-
-func (a *agent) setup(ctx *actor.Context) error {
-	fluentActor, err := newFluentActor(a.Options, *a.MasterSetAgentOptions)
-	if err != nil {
-		return errors.Wrap(err, "failed to start Fluent daemon")
-	}
-	a.fluent, _ = ctx.ActorOf("fluent", fluentActor)
-
-	if err = a.detect(); err != nil {
-		return err
-	}
-	ctx.Log().Info("detected compute devices:")
-	for _, d := range a.Devices {
-		ctx.Log().Infof("\t%s", d.String())
-	}
-
-	v, err := getNvidiaVersion()
-	if err != nil {
-		return err
-	} else if v != "" {
-		ctx.Log().Infof("Nvidia driver version: %s", v)
-	}
-
-	v, err = getRocmVersion()
-	if err != nil {
-		return err
-	} else if v != "" {
-		ctx.Log().Infof("Rocm driver version: %s", v)
-	}
-
-	if a.MasterPort == 0 {
-		if a.Options.Security.TLS.Enabled {
-			a.MasterPort = 443
-		} else {
-			a.MasterPort = 80
-		}
-	}
-
-	cm, err := newContainerManager(a, fluentActor.port)
-	if err != nil {
-		return errors.Wrap(err, "error initializing container manager")
-	}
-	a.cm, _ = ctx.ActorOf("containers", cm)
-	res := ctx.Ask(a.cm, requestReattachContainers{
-		a.MasterSetAgentOptions.ContainersToReattach,
-	}).Get().(responseReattachContainers)
-
-	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
-		AgentStarted: &aproto.AgentStarted{
-			Version:              a.Version,
-			Devices:              a.Devices,
-			Label:                a.Label,
-			ContainersReattached: res.ContainersReattached,
-		},
-	}})
-	return nil
-}
-
-func (a *agent) setupAfterMasterRestart(ctx *actor.Context) error {
-	// TODO(ilia): reinitialize fluent logging settings per the new master config,
-	// if possible.
-
-	res := ctx.Ask(a.cm, requestRevalidateContainers{
-		a.MasterSetAgentOptions.ContainersToReattach,
-	}).Get().(responseReattachContainers)
-
-	ctx.Ask(a.socket, api.WriteMessage{Message: aproto.MasterMessage{
-		AgentStarted: &aproto.AgentStarted{
-			Version:              a.Version,
-			Devices:              a.Devices,
-			Label:                a.Label,
-			ContainersReattached: res.ContainersReattached,
-		},
-	}})
-
-	// TODO(ilia): buffer and resend pending network messages.
-
-	return nil
-}
-
-func (a *agent) connectToMaster(ctx *actor.Context) error {
-	if err := a.makeMasterClient(); err != nil {
-		return errors.Wrap(err, "error creating master client")
-	}
-	if err := a.makeMasterWebsocket(ctx); err != nil {
-		return errors.Wrap(err, "error connecting to master")
-	}
-	return nil
-}
-
-func (a *agent) postTaskLog(log model.TaskLog) error {
-	j, err := json.Marshal([]model.TaskLog{log})
-	if err != nil {
-		return err
-	}
-
-	resp, err := a.masterClient.Post(
-		fmt.Sprintf("%s://%s:%d/task-logs", a.masterProto, a.MasterHost, a.MasterPort),
-		"application/json",
-		bytes.NewReader(j),
-	)
-	if err != nil {
-		return errors.Wrap(err, "failed to post task log")
-	}
-	if err := resp.Body.Close(); err != nil {
-		return errors.Wrap(err, "failed to read master response for task log")
-	}
-	return nil
-}
-
-func runAPIServer(options Options, system *actor.System) error {
-	server := echo.New()
-	server.Logger = logger.New()
-	server.HidePort = true
-	server.HideBanner = true
-	server.Use(middleware.Recover())
-	server.Pre(middleware.RemoveTrailingSlash())
-	server.Use(otelecho.Middleware("determined-agent"))
-
-	server.Any("/*", api.Route(system, nil))
-	server.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
-	server.Any("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
-	server.Any("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
-	server.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
-	server.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
-
-	bindAddr := fmt.Sprintf("%s:%d", options.BindIP, options.BindPort)
-	logrus.Infof("starting agent server on [%s]", bindAddr)
-	if options.TLS {
-		return server.StartTLS(bindAddr, options.CertFile, options.KeyFile)
-	}
-	return server.Start(bindAddr)
-}
-
-// Run runs a new agent system and actor with the provided options.
-func Run(version string, options Options) error {
-	printableConfig, err := options.Printable()
-	if err != nil {
-		return err
-	}
-	logrus.Infof("agent configuration: %s", printableConfig)
-
-	system := actor.NewSystem(options.AgentID)
-	a := newAgent(version, options)
-	ref, _ := system.ActorOf(actor.Addr("agent"), a)
-
-	errs := make(chan error)
-	if options.APIEnabled {
-		go func() {
-			errs <- runAPIServer(options, system)
-		}()
-	}
-	go func() {
-		errs <- ref.AwaitTermination()
-	}()
-	return <-errs
+	return &tls.Config{
+		InsecureSkipVerify: a.opts.Security.TLS.SkipVerify, //nolint:gosec
+		MinVersion:         tls.VersionTLS12,
+		RootCAs:            pool,
+		ServerName:         a.opts.Security.TLS.MasterCertName,
+		Certificates:       certs,
+	}, nil
 }

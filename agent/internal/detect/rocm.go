@@ -1,4 +1,4 @@
-package internal
+package detect
 
 import (
 	"encoding/csv"
@@ -149,7 +149,8 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 	return result, nil
 }
 
-func getRocmDeviceByUUID(uuid string) *RocmDevice {
+// GetRocmDeviceByUUID gets a RocmDevice by UUID from the singleton discovered Rocm devices.
+func GetRocmDeviceByUUID(uuid string) *RocmDevice {
 	for _, d := range discoveredRocmDevices {
 		if d.UUID == uuid {
 			return &d

@@ -16,9 +16,10 @@ type (
 	// ContainerLog notifies the task actor that a new log message is available for the container.
 	// It is used by the resource providers to communicate internally and with the task handlers.
 	ContainerLog struct {
-		Container cproto.Container
-		Timestamp time.Time
+		ContainerID cproto.ID
+		Timestamp   time.Time
 
+		// TODO(Brad): Pull message is totally pointless, does the same thing as aux message.
 		PullMessage *string
 		RunMessage  *aproto.RunMessage
 		AuxMessage  *string
@@ -69,8 +70,8 @@ func (c ContainerLog) Message() string {
 
 func (c ContainerLog) String() string {
 	var shortID string
-	if len(c.Container.ID) >= 8 {
-		shortID = c.Container.ID[:8].String()
+	if len(c.ContainerID) >= 8 {
+		shortID = c.ContainerID[:8].String()
 	}
 	timestamp := c.Timestamp.UTC().Format(time.RFC3339Nano)
 	return fmt.Sprintf("[%s] %s || %s", timestamp, shortID, c.Message())
@@ -79,8 +80,8 @@ func (c ContainerLog) String() string {
 // ToEvent converts a container log to a container event.
 func (c ContainerLog) ToEvent() Event {
 	return Event{
-		State:       string(c.Container.State),
-		ContainerID: string(c.Container.ID),
+		// State:       string(c.Container.State), // TODO(???)
+		ContainerID: c.ContainerID.String(),
 		Time:        c.Timestamp.UTC(),
 		LogEvent:    ptrs.Ptr(c.Message()),
 	}
@@ -89,7 +90,7 @@ func (c ContainerLog) ToEvent() Event {
 // ToTaskLog converts a container log to a task log.
 func (c ContainerLog) ToTaskLog() model.TaskLog {
 	return model.TaskLog{
-		ContainerID: ptrs.Ptr(string(c.Container.ID)),
+		ContainerID: ptrs.Ptr(c.ContainerID.String()),
 		Level:       c.Level,
 		Timestamp:   ptrs.Ptr(c.Timestamp.UTC()),
 		Log:         c.Message(),

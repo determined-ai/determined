@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -240,6 +241,8 @@ end
 	makeOutputConfig(&config, files, masterHost, masterPort, loggingConfig, tlsConfig)
 
 	files[configPath] = []byte(config.String())
+
+	spew.Sdump(config.String())
 
 	args := []string{"/fluent-bit/bin/fluent-bit", "-c", configPath}
 

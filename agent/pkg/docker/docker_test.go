@@ -1,6 +1,7 @@
-package internal
+package docker
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"testing"
@@ -8,12 +9,15 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 
-	"github.com/stretchr/testify/require"
+	"github.com/determined-ai/determined/agent/pkg/events"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetDockerAuths(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	dockerhubAuthConfig := types.AuthConfig{
 		Username:      "username",
 		Password:      "password",
@@ -72,9 +76,9 @@ func TestGetDockerAuths(t *testing.T) {
 		{"determined.ai/detai", nil, dockerAuthSection, types.AuthConfig{}},
 	}
 
-	ctx := getMockDockerActorCtx()
+	evs := make(chan Event, 100)
 	for _, testCase := range cases {
-		d := dockerActor{
+		d := Client{
 			authConfigs: testCase.authConfigs,
 		}
 
@@ -83,25 +87,10 @@ func TestGetDockerAuths(t *testing.T) {
 		require.NoError(t, err, "could not get image to correct format")
 		ref = reference.TagNameOnly(ref)
 
-		actual, err := d.getDockerAuths(ctx, testCase.expconfReg, ref)
+		actual, err := d.getDockerAuths(ctx, ref, testCase.expconfReg, events.ChannelPublisher(evs))
 		require.NoError(t, err)
-		require.Equal(t, testCase.expected, actual)
+		require.Equal(t, testCase.expected, *actual)
 	}
-}
-
-func getMockDockerActorCtx() *actor.Context {
-	var ctx *actor.Context
-	sys := actor.NewSystem("")
-	child, _ := sys.ActorOf(actor.Addr("child"), actor.ActorFunc(func(context *actor.Context) error {
-		ctx = context
-		return nil
-	}))
-	parent, _ := sys.ActorOf(actor.Addr("parent"), actor.ActorFunc(func(context *actor.Context) error {
-		context.Ask(child, "").Get()
-		return nil
-	}))
-	sys.Ask(parent, "").Get()
-	return ctx
 }
 
 func TestRegistryToString(t *testing.T) {

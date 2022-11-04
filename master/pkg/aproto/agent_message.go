@@ -46,4 +46,5 @@ type SignalContainer struct {
 }
 
 // ErrAgentMustReconnect is the error returned by the master when the agent must exit and reconnect.
+// TODO(???): rm -rf
 var ErrAgentMustReconnect = errors.New("agent is past reconnect period, it must restart")

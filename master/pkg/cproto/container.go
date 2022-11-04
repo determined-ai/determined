@@ -1,7 +1,8 @@
 package cproto
 
 import (
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"golang.org/x/exp/slices"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
@@ -10,8 +11,6 @@ import (
 
 // Container tracks a container running in the cluster.
 type Container struct {
-	// Parent stores the task handler actor address.
-	Parent  actor.Address   `json:"parent"`
 	ID      ID              `json:"id"`
 	State   State           `json:"state"`
 	Devices []device.Device `json:"devices"`
@@ -21,7 +20,7 @@ type Container struct {
 func (c Container) Transition(new State) Container {
 	check.Panic(c.State.checkTransition(new))
 	return Container{
-		Parent: c.Parent, ID: c.ID, State: new, Devices: c.Devices,
+		ID: c.ID, State: new, Devices: c.Devices,
 	}
 }
 
@@ -46,26 +45,21 @@ func (c *Container) ToProto() *containerv1.Container {
 		devices = append(devices, d.Proto())
 	}
 	return &containerv1.Container{
-		Parent:  c.Parent.String(),
 		Id:      c.ID.String(),
 		State:   c.State.Proto(),
 		Devices: devices,
 	}
 }
 
-// DeepCopy returns the proto representation of the container.
+// DeepCopy returns a deep copy of the container.
 func (c *Container) DeepCopy() *Container {
 	if c == nil {
 		return nil
 	}
 
-	devices := make([]device.Device, len(c.Devices))
-	copy(devices, c.Devices)
-
 	return &Container{
-		Parent:  c.Parent,
 		ID:      c.ID,
 		State:   c.State,
-		Devices: devices,
+		Devices: slices.Clone(c.Devices),
 	}
 }
