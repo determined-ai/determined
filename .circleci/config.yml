@@ -1065,7 +1065,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - pre-package-and-push-system:
           check: false
       - run: make package
@@ -1092,7 +1092,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1131,7 +1131,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1161,7 +1161,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
