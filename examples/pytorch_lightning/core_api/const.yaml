@@ -1,6 +1,6 @@
 name: ptl test
 resources:
-  slots_per_trial: 8
+  slots_per_trial: 1
 hyperparameters:
   lr: 0.02
   batch_size: 256

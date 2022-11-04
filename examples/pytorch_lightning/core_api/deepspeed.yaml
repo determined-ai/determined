@@ -4,8 +4,7 @@ resources:
 environment:
   environment_variables:
     - NCCL_DEBUG=INFO
-    # If you encounter NCCL errors, you may need to alter this to match your network device name.
-    - NCCL_SOCKET_IFNAME=ens8,ens,eth,ib
+    - NCCL_SOCKET_IFNAME=ens,eth,ib
   image:
     gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-9119094
 hyperparameters:

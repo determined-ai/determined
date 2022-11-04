@@ -1,6 +1,8 @@
 from argparse import Namespace
+from attrdict import AttrDict
 from dataclasses import dataclass
 import glob
+import json
 import logging
 import os
 from pathlib import Path
@@ -60,7 +62,7 @@ def get_checkpoint_metadata(core_context: det.core.Context) -> Optional[Dict]:
     if info:
         ckpt_id = info.latest_checkpoint
         if ckpt_id:
-            return core_context.checkpoint.get_metadata(ckpt_id)
+            return cast(Dict, core_context.checkpoint.get_metadata(ckpt_id))
     return None
 
 
@@ -90,6 +92,54 @@ class DeterminedIntegrationSharedState:
     current_op: SearcherOperation
     global_step: int = 0
     last_metric: Optional[float] = None
+
+
+# Default environment settings in PTL don't work with multi-node DeepSpeed launch, so we
+# need to explicitly configure this.
+class DeterminedClusterEnvironment(
+    pl.plugins.environments.cluster_environment.ClusterEnvironment  # type: ignore
+):
+    def __init__(self, shared: DeterminedIntegrationSharedState):
+        self.shared = shared
+
+    @property
+    def creates_processes_externally(self) -> bool:
+        return True
+
+    @property
+    def main_address(self) -> str:
+        return os.environ["DET_CHIEF_IP"]
+
+    @property
+    def main_port(self) -> int:
+        if "USE_DEEPSPEED" in os.environ:
+            # Determined uses the default port for DeepSpeed init_distributed:
+            # - https://deepspeed.readthedocs.io/en/latest/initialize.html
+            return 29500
+        else:
+            return int(os.environ["MASTER_PORT"])
+
+    @staticmethod
+    def detect() -> bool:
+        raise Exception("Unimplemented")
+
+    def world_size(self) -> int:
+        return self.shared.core_context.distributed.size
+
+    def set_world_size(self, size: int) -> None:
+        assert size == self.shared.core_context.distributed.size
+
+    def global_rank(self) -> int:
+        return self.shared.core_context.distributed.rank
+
+    def set_global_rank(self, rank: int) -> None:
+        assert rank == self.shared.core_context.distributed.rank
+
+    def local_rank(self) -> int:
+        return self.shared.core_context.distributed.local_rank
+
+    def node_rank(self) -> int:
+        return self.shared.core_context.distributed.cross_rank
 
 
 class DeterminedLogger(pl.loggers.logger.Logger):  # type: ignore
@@ -177,9 +227,11 @@ class DeterminedCallback(pl.callbacks.Callback):  # type: ignore
         self.val_epoch_outputs: List[pl.utilities.types.STEP_OUTPUT] = []
         self.test_epoch_outputs: List[pl.utilities.types.STEP_OUTPUT] = []
 
-    def setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: str) -> None:
+    def setup(
+        self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: Optional[str] = None
+    ) -> None:
         # If fitting/testing multiple times, keep a monotonically increasing global step for
-        # for reporting Determined metrics and checkpoints.
+        # reporting Determined metrics and checkpoints.
         self.shared.global_step += 1
         self.initial_global_step = self.shared.global_step
 
@@ -191,6 +243,7 @@ class DeterminedCallback(pl.callbacks.Callback):  # type: ignore
         batch: Any,
         batch_idx: int,
     ) -> None:
+        outputs = cast(Dict[str, Any], outputs)
         self.shared.global_step = self.initial_global_step + trainer.global_step
         if self.core_context.distributed.rank == 0:
             outputs = {k: v.item() for k, v in outputs.items()}
@@ -198,28 +251,6 @@ class DeterminedCallback(pl.callbacks.Callback):  # type: ignore
             self.core_context.train.report_training_metrics(
                 steps_completed=self.shared.global_step, metrics=outputs
             )
-
-    # def on_train_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
-    #     if self.core_context.distributed.rank == 0:
-    #         self.shared.current_op.report_progress(trainer.current_epoch + 1)
-    #     if (trainer.current_epoch + 1) >= self.shared.current_op.length:
-    #         if self.core_context.distributed.rank == 0:
-    #             if self.shared.last_metric is None:
-    #                 logging.warning(
-    #                     f"Searcher metric {get_searcher_metric()} was not "
-    #                     "logged during training.  Reporting as 0.",
-    #                 )
-    #                 self.shared.current_op.report_completed(0)
-    #             else:
-    #                 self.shared.current_op.report_completed(self.shared.last_metric)
-    #         try:
-    #             self.shared.current_op = next(self.shared.searcher_ops)
-    #         except StopIteration:
-    #             logging.info("Reached end of searcher operations.")
-    #             trainer.should_stop = True
-    #     if self.core_context.preempt.should_preempt():
-    #         trainer.save_checkpoint(TEMP_CHECKPOINT_FILE)
-    #         raise Exception("Training pre-empted.")
 
     def on_validation_epoch_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         self.val_epoch_outputs = []
@@ -234,6 +265,7 @@ class DeterminedCallback(pl.callbacks.Callback):  # type: ignore
         dataloader_idx: int,
     ) -> None:
         if outputs:
+            outputs = cast(Dict[str, Any], outputs)
             self.val_epoch_outputs.append({k: v.item() for k, v in outputs.items()})
 
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
@@ -298,46 +330,114 @@ class DeterminedCallback(pl.callbacks.Callback):  # type: ignore
                 )
 
 
-# This class inserts a save_checkpoint hook into DeepSpeedStrategy.
 class DeterminedDeepSpeedStrategy(pl.strategies.DeepSpeedStrategy):  # type: ignore
-    def __init__(self, *args: List, **kwargs: Dict) -> None:
-        super().__init__(*args, **kwargs)
-        self._shared: Optional[DeterminedIntegrationSharedState] = None
+    """
+    Inserts a save_checkpoint hook into DeepSpeedStrategy.
+    """
 
-    def _set_shared(self, shared: DeterminedIntegrationSharedState) -> None:
-        self._shared = shared
+    def __init__(
+        self, shared: DeterminedIntegrationSharedState, *args: List, **kwargs: Dict
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.shared = shared
 
     def save_checkpoint(
         self, checkpoint: Dict, filepath: Union[str, Path], storage_options: Optional[Any] = None
     ) -> None:
-        assert self._shared
         super().save_checkpoint(checkpoint, filepath, storage_options)
-        upload_determined_checkpoint(filepath, self._shared)
+        upload_determined_checkpoint(filepath, self.shared)
+
+
+def get_hyperparameters() -> AttrDict:
+    """
+    Returns Determined trial hyperparameters as an AttrDict.
+    """
+    info = det.get_cluster_info()
+    assert info is not None, "This example only runs on-cluster"
+    return cast(Dict, AttrDict(info.trial.hparams))
+
+
+def determined_core_init() -> det.core.Context:
+    """
+    Checks for DeepSpeed and initializes a det.core.Context appropriately.
+    """
+    if "USE_DEEPSPEED" in os.environ:
+        distributed_context = det.core.DistributedContext.from_deepspeed()
+    else:
+        distributed_context = det.core.DistributedContext.from_torch_distributed()
+    return det.core.init(distributed=distributed_context)
+
+
+def _add_integration_controlled_args(kwargs: Dict[str, Any], intargs: Dict[str, Any]) -> None:
+    """
+    Adds arguments to kwargs after asserting they're not present.
+    """
+    for k in intargs:
+        assert (
+            k not in kwargs
+        ), f"`{k}` is supplied by build_determined_trainer, so can not be as an argument."
+        kwargs[k] = intargs[k]
+
+
+def _append_integration_controlled_args(kwargs: Dict[str, Any], intargs: Dict[str, Any]) -> None:
+    """
+    Appends the value in intargs to the associated list in kwargs, creating if necessary.
+    """
+    for k in intargs:
+        val = kwargs.get(k, [])
+        if not (isinstance(val, list)):
+            val = [val]
+        val.append(intargs[k])
+        kwargs[k] = val
+
+
+def _configure_deepspeed(kwargs: Dict[str, Any], shared: DeterminedIntegrationSharedState) -> None:
+    if "USE_DEEPSPEED" in os.environ:
+        hparams = get_hyperparameters()
+        with open(hparams["ds_config"], "r") as f:
+            assert "strategy" not in kwargs or not (
+                kwargs["strategy"]
+            ), "Can't supply alternative strategy when using DeepSpeed."
+            kwargs["strategy"] = DeterminedDeepSpeedStrategy(
+                shared=shared,
+                cluster_environment=DeterminedClusterEnvironment(shared),
+                config=json.load(f),
+                logging_batch_size_per_gpu=hparams["batch_size"],
+            )
 
 
 def build_determined_trainer(
     core_context: det.core.Context,
     module_cls: Type[pl.LightningModule],
-    *args: List[Any],
     base_ckpt_io: Optional[pl.plugins.io.CheckpointIO] = None,
     **kwargs: Any,
 ) -> Tuple[pl.Trainer, pl.LightningModule]:
+    """
+    Returns a tuple of (Trainer, LightningModule) configured to run under Determined.
+    The trainer and module state will be loaded from checkpoint if resumed from a pause.
+    The module state will be loaded from checkpoint if this is a new trial with
+    a checkpoint supplied (e.g. Continue Trial in the Web UI).
+
+    Accepts the usual parameters to Trainer(...), with the following exceptions controlled
+    by the Determined trial configuration:
+    - num_nodes
+    - devices
+    - accelerator
+    - resume_from_checkpoint
+    - max_epochs
+    """
     searcher_ops = core_context.searcher.operations()
-    current_op = next(searcher_ops)
     shared = DeterminedIntegrationSharedState(
         core_context=core_context,
         searcher_ops=searcher_ops,
-        current_op=current_op,
+        current_op=next(searcher_ops),
     )
-    if "strategy" in kwargs:
-        strategy = kwargs["strategy"]
-        if isinstance(strategy, DeterminedDeepSpeedStrategy):
-            strategy._set_shared(shared)
+    _configure_deepspeed(kwargs, shared)
     module_load_only = False
     ckpt_metadata = get_checkpoint_metadata(core_context)
     if ckpt_metadata and ckpt_metadata["trial_id"] != get_cluster_info_with_assert().trial.trial_id:
-        # New trial, experiment hyperparameters may have changed.  Instead of fully loading
-        # checkpoint, just load the module.
+        # New trial, so experiment hyperparameters may have changed.  Instead of fully loading
+        # the training checkpoint, we just load the module.
         logging.info("New trial -- only loading module weights and not training state.")
         module_load_only = True
     ckpt_path = download_checkpoint(core_context, module_load_only)
@@ -345,27 +445,22 @@ def build_determined_trainer(
         module = module_cls.load_from_checkpoint(ckpt_path)
     else:
         module = module_cls()
-
-    if "max_epochs" in kwargs:
-        logging.warning(
-            "Overwriting max_epochs argument with Determined configured searcher max_length"
-        )
-    kwargs["max_epochs"] = get_searcher_max_length()
-    callbacks: List[pl.callbacks.Callback] = kwargs.get("callbacks", [])
-    callbacks.append(DeterminedCallback(shared))
-    kwargs["callbacks"] = callbacks
-    plugins: List[pl.plugins.PLUGIN] = kwargs.get("plugins", [])
-    plugins.append(DeterminedCheckpointIO(shared, base_ckpt_io))
-    kwargs["plugins"] = plugins
-    loggers = kwargs.get("logger", [])
-    if not (isinstance(loggers, list)):
-        loggers = [loggers]
-    loggers.append(DeterminedLogger(shared))
-    kwargs["logger"] = loggers
-    if not (module_load_only):
-        if "resume_from_checkpoint" in kwargs and kwargs["resume_from_checkpoint"]:
-            logging.warning(
-                "Overwriting resume_from_checkpoint argument with Determined checkpoint."
-            )
-        kwargs["resume_from_checkpoint"] = ckpt_path
-    return (pl.Trainer(*args, **kwargs), module)
+    _append_integration_controlled_args(
+        kwargs,
+        {
+            "callbacks": DeterminedCallback(shared),
+            "logger": DeterminedLogger(shared),
+            "plugins": DeterminedCheckpointIO(shared, base_ckpt_io),
+        },
+    )
+    _add_integration_controlled_args(
+        kwargs,
+        {
+            "num_nodes": core_context.distributed.cross_size,
+            "devices": "auto",
+            "accelerator": "gpu",
+            "resume_from_checkpoint": None if module_load_only else ckpt_path,
+            "max_epochs": get_searcher_max_length(),
+        },
+    )
+    return (pl.Trainer(**kwargs), module)

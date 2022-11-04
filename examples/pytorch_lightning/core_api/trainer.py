@@ -1,12 +1,9 @@
 # Adapted from
 # https://pytorch-lightning.readthedocs.io/en/stable/notebooks/lightning_examples/cifar10-baseline.html
 
-from attrdict import AttrDict
-import json
 import logging
-from typing import Any, cast, Dict, Optional, Tuple
+from typing import Any, cast, Optional, Tuple
 
-import determined as det
 import numpy as np
 import torch
 import torch.nn as nn
@@ -18,13 +15,7 @@ import pytorch_lightning as pl
 from torch.optim.lr_scheduler import LambdaLR
 from torchmetrics.functional import accuracy
 
-from integration import build_determined_trainer, DeterminedDeepSpeedStrategy
-
-
-def get_hyperparameters() -> AttrDict:
-    info = det.get_cluster_info()
-    assert info is not None, "This example only runs on-cluster"
-    return cast(Dict, AttrDict(info.trial.hparams))
+from integration import build_determined_trainer, determined_core_init, get_hyperparameters
 
 
 class LitResnet(pl.LightningModule):  # type: ignore
@@ -123,32 +114,15 @@ cifar10_dm.train_transforms = train_transforms
 cifar10_dm.val_transforms = test_transforms
 cifar10_dm.test_transforms = test_transforms
 
-hparams = get_hyperparameters()
-use_deepspeed = "ds_config" in hparams
-strategy = None
-if use_deepspeed:
-    distributed_context = det.core.DistributedContext.from_deepspeed()
-    with open(hparams["ds_config"], "r") as f:
-        strategy = DeterminedDeepSpeedStrategy(
-            config=json.load(f), logging_batch_size_per_gpu=hparams["batch_size"]
-        )
-else:
-    distributed_context = det.core.DistributedContext.from_torch_distributed()
-
-with det.core.init(distributed=distributed_context) as core_context:
+with determined_core_init() as core_context:
     trainer, model = build_determined_trainer(
         core_context,
         LitResnet,
-        num_nodes=distributed_context.cross_size,
-        gpus=distributed_context.local_size,
-        accelerator="auto",
-        devices=1 if torch.cuda.is_available() else None,
         logger=pl.loggers.CSVLogger(save_dir="logs/"),
         callbacks=[
             pl.callbacks.LearningRateMonitor(logging_interval="step"),
             pl.callbacks.progress.TQDMProgressBar(refresh_rate=10),
         ],
-        strategy=strategy,
     )
     trainer.fit(model, cifar10_dm)
     # Note that PTL advises running testing on a single GPU to ensure that distributed sampling
