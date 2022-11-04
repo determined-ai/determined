@@ -83,7 +83,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     useSettings<Settings>(settingsConfig);
 
   const { settings: projectSettings, updateSettings: updateProjectSettings } =
-    useSettings<ProjectDetailsSettings>(projectDetailConfigSettings);
+    useSettings<ProjectDetailsSettings>(projectDetailConfigSettings());
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);

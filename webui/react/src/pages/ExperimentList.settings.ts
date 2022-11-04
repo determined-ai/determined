@@ -74,8 +74,8 @@ export interface ExperimentListSettings extends InteractiveTableSettings {
   user?: string[];
 }
 
-const config: SettingsConfig<ExperimentListSettings> = {
-  applicableRoutespace: '/experiments',
+const config: (id?: number | string) => SettingsConfig<ExperimentListSettings> = (id = '') => ({
+  applicableRoutespace: `${id}/experiments`,
   settings: {
     archived: {
       defaultValue: false,
@@ -197,6 +197,6 @@ const config: SettingsConfig<ExperimentListSettings> = {
     },
   },
   storagePath: 'project-details',
-};
+});
 
 export default config;

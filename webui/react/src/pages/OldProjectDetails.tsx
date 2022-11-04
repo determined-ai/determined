@@ -150,7 +150,7 @@ const ProjectDetails: React.FC = () => {
   const id = parseInt(projectId ?? '1');
 
   const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ProjectDetailsSettings>(settingsConfig);
+    useSettings<ProjectDetailsSettings>(settingsConfig(id));
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
