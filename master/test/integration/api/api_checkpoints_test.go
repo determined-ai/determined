@@ -35,7 +35,7 @@ func TestGetCheckpoint(t *testing.T) {
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
-	testGetCheckpoint(t, creds, cl, pgDB)
+	testGetCheckpoint(creds, t, cl, pgDB)
 }
 
 func TestGetExperimentCheckpoints(t *testing.T) {
@@ -43,7 +43,7 @@ func TestGetExperimentCheckpoints(t *testing.T) {
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
-	testGetExperimentCheckpoints(t, creds, cl, pgDB)
+	testGetExperimentCheckpoints(creds, t, cl, pgDB)
 }
 
 func TestGetTrialCheckpoints(t *testing.T) {
@@ -51,11 +51,11 @@ func TestGetTrialCheckpoints(t *testing.T) {
 	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
-	testGetTrialCheckpoints(t, creds, cl, pgDB)
+	testGetTrialCheckpoints(creds, t, cl, pgDB)
 }
 
 func testGetCheckpoint(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
 	type testCase struct {
 		name     string
@@ -102,9 +102,9 @@ func testGetCheckpoint(
 				assert.NilError(t, err, "failed to add validation metrics")
 			}
 
-			checkpointUuid := uuid.NewString()
+			checkpointUUID := uuid.NewString()
 			checkpointMeta := model.CheckpointV2{
-				UUID:         conv.ToUUID(checkpointUuid),
+				UUID:         conv.ToUUID(checkpointUUID),
 				TaskID:       trial.TaskID,
 				AllocationID: allocation.AllocationID,
 				ReportTime:   timestamppb.Now().AsTime(),
@@ -122,12 +122,12 @@ func testGetCheckpoint(
 
 			ctx, cancel := context.WithTimeout(creds, 10*time.Second)
 			defer cancel()
-			req := apiv1.GetCheckpointRequest{CheckpointUuid: checkpointUuid}
+			req := apiv1.GetCheckpointRequest{CheckpointUuid: checkpointUUID}
 
 			ckptResp, err := cl.GetCheckpoint(ctx, &req)
 			assert.NilError(t, err, "failed to get checkpoint from api")
-			ckptCl := *ckptResp.Checkpoint
-			assert.Equal(t, ckptCl.Uuid, checkpointUuid)
+			ckptCl := ckptResp.Checkpoint
+			assert.Equal(t, ckptCl.Uuid, checkpointUUID)
 
 			entrypoint := ckptCl.Training.ExperimentConfig.GetFields()["entrypoint"].GetStringValue()
 			assert.Equal(t, entrypoint, "model_def:SomeTrialClass")
@@ -155,18 +155,18 @@ func testGetCheckpoint(
 }
 
 func testGetExperimentCheckpoints(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
 	experiment, trial, allocation := createPrereqs(t, db)
 	conv := &protoconverter.ProtoConverter{}
 
 	var uuids []string
 	for i := 0; i < 5; i++ {
-		checkpointUuid := uuid.NewString()
-		uuids = append(uuids, checkpointUuid)
+		checkpointUUID := uuid.NewString()
+		uuids = append(uuids, checkpointUUID)
 		stepsCompleted := 10 * i
 		checkpointMeta := model.CheckpointV2{
-			UUID:         conv.ToUUID(checkpointUuid),
+			UUID:         conv.ToUUID(checkpointUUID),
 			TaskID:       trial.TaskID,
 			AllocationID: allocation.AllocationID,
 			ReportTime:   timestamppb.Now().AsTime(),
@@ -191,7 +191,7 @@ func testGetExperimentCheckpoints(
 					Fields: map[string]*structpb.Value{
 						"loss": {
 							Kind: &structpb.Value_NumberValue{
-								NumberValue: float64(float64(i) * (4.5 - float64(i))),
+								NumberValue: float64(i) * (4.5 - float64(i)),
 							},
 						},
 					},
@@ -225,7 +225,7 @@ func testGetExperimentCheckpoints(
 	ckptsCl = resp.Checkpoints
 
 	assert.Equal(t, len(ckptsCl), 5)
-	for j := 0; j < 5; j += 1 {
+	for j := 0; j < 5; j++ {
 		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
 	}
 
@@ -250,7 +250,7 @@ func testGetExperimentCheckpoints(
 
 	assert.Equal(t, len(ckptsCl), 5)
 	sort.Strings(uuids)
-	for j := 0; j < 5; j += 1 {
+	for j := 0; j < 5; j++ {
 		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
 	}
 
@@ -264,24 +264,24 @@ func testGetExperimentCheckpoints(
 	// ascending uuid
 	assert.Equal(t, len(ckptsCl), 3)
 	sort.Strings(uuids)
-	for j := 2; j < 5; j += 1 {
+	for j := 2; j < 5; j++ {
 		assert.Equal(t, ckptsCl[j-2].Uuid, uuids[j])
 	}
 }
 
 func testGetTrialCheckpoints(
-	t *testing.T, creds context.Context, cl apiv1.DeterminedClient, db *db.PgDB,
+	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, db *db.PgDB,
 ) {
 	_, trial, allocation := createPrereqs(t, db)
 	conv := &protoconverter.ProtoConverter{}
 
 	var uuids []string
 	for i := 0; i < 5; i++ {
-		checkpointUuid := uuid.NewString()
-		uuids = append(uuids, checkpointUuid)
+		checkpointUUID := uuid.NewString()
+		uuids = append(uuids, checkpointUUID)
 		stepsCompleted := 10 * i
 		checkpointMeta := model.CheckpointV2{
-			UUID:         conv.ToUUID(checkpointUuid),
+			UUID:         conv.ToUUID(checkpointUUID),
 			TaskID:       trial.TaskID,
 			AllocationID: allocation.AllocationID,
 			ReportTime:   timestamppb.Now().AsTime(),
@@ -318,7 +318,7 @@ func testGetTrialCheckpoints(
 	ckptsCl = resp.Checkpoints
 
 	assert.Equal(t, len(ckptsCl), 5)
-	for j := 0; j < 5; j += 1 {
+	for j := 0; j < 5; j++ {
 		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
 	}
 
@@ -330,7 +330,7 @@ func testGetTrialCheckpoints(
 
 	assert.Equal(t, len(ckptsCl), 5)
 	sort.Strings(uuids)
-	for j := 0; j < 5; j += 1 {
+	for j := 0; j < 5; j++ {
 		assert.Equal(t, ckptsCl[j].Uuid, uuids[j])
 	}
 
@@ -344,7 +344,7 @@ func testGetTrialCheckpoints(
 	// ascending uuid
 	assert.Equal(t, len(ckptsCl), 3)
 	sort.Strings(uuids)
-	for j := 2; j < 5; j += 1 {
+	for j := 2; j < 5; j++ {
 		assert.Equal(t, ckptsCl[j-2].Uuid, uuids[j])
 	}
 }

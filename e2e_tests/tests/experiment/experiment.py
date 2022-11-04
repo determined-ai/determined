@@ -72,6 +72,72 @@ def cancel_trial(trial_id: int) -> None:
     wait_for_trial_state(trial_id, determinedexperimentv1State.STATE_CANCELED)
 
 
+def wait_for_experiment_by_name_is_active(
+    experiment_name: str,
+    min_trials: int = 1,
+    max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    log_every: int = 60,
+) -> int:
+    for seconds_waited in range(max_wait_secs):
+        try:
+            response = bindings.get_GetExperiments(
+                determined_test_session(), name=experiment_name
+            ).experiments
+            if len(response) == 0:
+                time.sleep(1)
+                continue
+            if len(response) > 1:
+                pytest.fail(
+                    f"Multiple experiments with name={experiment_name}, "
+                    f"expected only 1 experiment."
+                )
+            experiment = response[0]
+            experiment_id = experiment.id
+        except api.errors.NotFoundException:
+            logging.warning(
+                "Experiment not yet available to check state: "
+                "experiment {}".format(experiment_name)
+            )
+            time.sleep(0.25)
+            continue
+
+        if _is_experiment_active(experiment.state):
+            if experiment.numTrials > min_trials:
+                return experiment_id
+            time.sleep(0.25)
+            continue
+
+        if is_terminal_state(experiment.state):
+            report_failed_experiment(experiment_id)
+
+            pytest.fail(
+                f"Experiment {experiment_id} terminated in {experiment.state.value} state, "
+                f"expected {determinedexperimentv1State.STATE_ACTIVE}"
+            )
+
+        if seconds_waited > 0 and seconds_waited % log_every == 0:
+            print(
+                f"Waited {seconds_waited} seconds for experiment {experiment_name} "
+                f"(currently {experiment.state.value}) to reach "
+                f"{determinedexperimentv1State.STATE_ACTIVE}"
+            )
+
+        time.sleep(1)
+
+    else:
+        pytest.fail(f"Experiment {experiment_name} did not start any trial {max_wait_secs} seconds")
+
+
+def _is_experiment_active(exp_state: determinedexperimentv1State) -> bool:
+    return exp_state in (
+        determinedexperimentv1State.STATE_ACTIVE,
+        determinedexperimentv1State.STATE_RUNNING,
+        determinedexperimentv1State.STATE_QUEUED,
+        determinedexperimentv1State.STATE_PULLING,
+        determinedexperimentv1State.STATE_STARTING,
+    )
+
+
 def wait_for_experiment_state(
     experiment_id: int,
     target_state: determinedexperimentv1State,
@@ -81,16 +147,6 @@ def wait_for_experiment_state(
     for seconds_waited in range(max_wait_secs):
         try:
             state = experiment_state(experiment_id)
-        # Ignore network errors while polling for experiment state to avoid a
-        # single network flake to cause a test suite failure. If the master is
-        # unreachable multiple times, this test will fail after max_wait_secs.
-        except api.errors.MasterNotFoundException:
-            logging.warning(
-                "Network failure ignored when polling for state of "
-                "experiment {}".format(experiment_id)
-            )
-            time.sleep(1)
-            continue
         except api.errors.NotFoundException:
             logging.warning(
                 "Experiment not yet available to check state: "
@@ -139,15 +195,6 @@ def wait_for_trial_state(
     for seconds_waited in range(max_wait_secs):
         try:
             state = trial_state(trial_id)
-        # Ignore network errors while polling for experiment state to avoid a
-        # single network flake to cause a test suite failure. If the master is
-        # unreachable multiple times, this test will fail after max_wait_secs.
-        except api.errors.MasterNotFoundException:
-            logging.warning(
-                "Network failure ignored when polling for state of " "trial {}".format(trial_id)
-            )
-            time.sleep(1)
-            continue
         except api.errors.NotFoundException:
             logging.warning("Trial not yet available to check state: " "trial {}".format(trial_id))
             time.sleep(0.25)
@@ -272,11 +319,14 @@ def experiment_first_trial(exp_id: int) -> int:
     return trial_id
 
 
-def determined_test_session() -> api.Session:
+def determined_test_session(admin: bool = False) -> api.Session:
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
-    authentication.cli_auth = authentication.Authentication(murl, try_reauth=True)
-    return api.Session(murl, "determined", authentication.cli_auth, certs.cli_cert)
+    username = "admin" if admin else "determined"
+    authentication.cli_auth = authentication.Authentication(
+        murl, requested_user=username, password="", try_reauth=True
+    )
+    return api.Session(murl, username, authentication.cli_auth, certs.cli_cert)
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
@@ -348,7 +398,7 @@ def num_trials(experiment_id: int) -> int:
 
 def num_active_trials(experiment_id: int) -> int:
     return sum(
-        1 if t.trial.state == determinedexperimentv1State.STATE_ACTIVE else 0
+        1 if t.trial.state == determinedexperimentv1State.STATE_RUNNING else 0
         for t in experiment_trials(experiment_id)
     )
 
@@ -368,9 +418,7 @@ def num_error_trials(experiment_id: int) -> int:
 
 
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
-    certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
-    return [tl["message"] for tl in api.trial_logs(conf.make_master_url(), trial_id, follow=follow)]
+    return [tl.message for tl in api.trial_logs(determined_test_session(), trial_id, follow=follow)]
 
 
 def workloads_with_training(
@@ -573,7 +621,7 @@ def run_list_cli_tests(experiment_id: int) -> None:
 
 def report_failed_experiment(experiment_id: int) -> None:
     trials = experiment_trials(experiment_id)
-    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_ACTIVE)
+    active = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_RUNNING)
     paused = sum(1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_PAUSED)
     stopping_completed = sum(
         1 for t in trials if t.trial.state == determinedexperimentv1State.STATE_STOPPING_COMPLETED
@@ -770,7 +818,13 @@ def run_failure_test(config_file: str, model_def_file: str, error_str: Optional[
 
         logs = trial_logs(trial.id)
         if error_str is not None:
-            assert any(error_str in line for line in logs)
+            try:
+                assert any(error_str in line for line in logs)
+            except AssertionError:
+                # Display error log for triage of this failure
+                print(f"Trial {trial.id} log did not contain expected message:  {error_str}")
+                print_trial_logs(trial.id)
+                raise
 
     return experiment_id
 

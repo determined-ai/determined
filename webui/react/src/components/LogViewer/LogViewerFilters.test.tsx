@@ -10,10 +10,10 @@ import LogViewerFilters, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewer
 const DEFAULT_FILTER_OPTIONS = {
   agentIds: new Array(3).fill('').map(() => `i-${generateAlphaNumeric(17)}`),
   allocationIds: new Array(2).fill('').map((_, i) => `${generateUUID()}.${i}`),
-  containerIds: [ '', ...new Array(2).fill('').map(() => generateUUID()) ],
-  rankIds: [ 0, 1, 2 ],
-  sources: [ 'agent', 'master' ],
-  stdtypes: [ 'stdout', 'stderr' ],
+  containerIds: ['', ...new Array(2).fill('').map(() => generateUUID())],
+  rankIds: [0, 1, 2],
+  sources: ['agent', 'master'],
+  stdtypes: ['stdout', 'stderr'],
 };
 
 const setup = (filterOptions: Filters, filterValues: Filters) => {
@@ -22,6 +22,7 @@ const setup = (filterOptions: Filters, filterValues: Filters) => {
   const view = render(
     <LogViewerFilters
       options={filterOptions}
+      showSearch={true}
       values={filterValues}
       onChange={handleOnChange}
       onReset={handleOnReset}
@@ -46,11 +47,11 @@ describe('LogViewerFilter', () => {
 
   it('should render select filters with selected options', async () => {
     const values: Filters = {
-      agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ],
-      allocationIds: [ DEFAULT_FILTER_OPTIONS.allocationIds[1] ],
-      containerIds: [ DEFAULT_FILTER_OPTIONS.containerIds[1] ],
-      levels: [ LogLevelFromApi.Info ],
-      rankIds: [ DEFAULT_FILTER_OPTIONS.rankIds[1] ],
+      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]],
+      allocationIds: [DEFAULT_FILTER_OPTIONS.allocationIds[1]],
+      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds[1]],
+      levels: [LogLevelFromApi.Info],
+      rankIds: [DEFAULT_FILTER_OPTIONS.rankIds[1]],
     };
     setup(DEFAULT_FILTER_OPTIONS, values);
 
@@ -59,8 +60,7 @@ describe('LogViewerFilter', () => {
         const key = labelKey as keyof Filters;
         if (!values[key]?.length) return;
 
-        const regex = new RegExp(`${values[key]?.length} ${LABELS[key]}`, 'i');
-        expect(screen.queryByText(regex)).toBeInTheDocument();
+        expect(screen.queryAllByText(new RegExp('\\+ \\d ...')).length).toBeGreaterThan(1);
       });
     });
   });
@@ -71,7 +71,7 @@ describe('LogViewerFilter', () => {
       allocationIds: [],
       containerIds: [],
       levels: [],
-      rankIds: [ 0, undefined ],
+      rankIds: [0, undefined],
     };
     const { user } = setup(values, { ...values, rankIds: [] });
 
@@ -93,18 +93,16 @@ describe('LogViewerFilter', () => {
     const agent = screen.getByText(agentRegex);
     await user.click(agent);
 
-    const agentOption1 = screen.getByText(agentOptionText1);
-    const agentOption2 = screen.getByText(agentOptionText2);
-    await user.click(agentOption1);
+    const agentOption1 = await screen.findAllByText(agentOptionText1);
+    const agentOption2 = await screen.findByText(agentOptionText2);
+    await user.click(agentOption1[1]);
     await user.click(agentOption2);
 
     await waitFor(() => {
-      /**
-       * Since value is not getting updated with the selected options,
-       * the results returned by `onChange` do not compound.
-       */
-      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [ agentOptionText1 ] });
-      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [ agentOptionText2 ] });
+      expect(handleOnChange).toHaveBeenCalledWith({ agentIds: [agentOptionText1] });
+      expect(handleOnChange).toHaveBeenCalledWith({
+        agentIds: [agentOptionText1, agentOptionText2],
+      });
     });
   });
 
@@ -115,15 +113,15 @@ describe('LogViewerFilter', () => {
 
   it('should show reset button when filters are set', () => {
     const values = {
-      agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ],
-      containerIds: [ DEFAULT_FILTER_OPTIONS.containerIds[1] ],
+      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]],
+      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds[1]],
     };
     setup(DEFAULT_FILTER_OPTIONS, values);
     expect(screen.queryByText(ARIA_LABEL_RESET)).toBeInTheDocument();
   });
 
   it('should call onReset when reset button is clicked', async () => {
-    const values = { agentIds: [ DEFAULT_FILTER_OPTIONS.agentIds[1] ] };
+    const values = { agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]] };
     const { handleOnReset, user } = setup(DEFAULT_FILTER_OPTIONS, values);
 
     await user.click(screen.getByText(ARIA_LABEL_RESET));

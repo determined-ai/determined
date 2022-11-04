@@ -4,7 +4,7 @@ import GalleryModal from './GalleryModal';
 
 export default {
   component: GalleryModal,
-  title: 'GalleryModal',
+  title: 'Determined/GalleryModal',
 };
 
 const GALLERY_CONTENT = [
@@ -51,7 +51,7 @@ const GALLERY_CONTENT = [
 ];
 
 export const Default = (): React.ReactNode => {
-  const [ index, setIndex ] = useState<number>(0);
+  const [index, setIndex] = useState<number>(0);
 
   const handleNext = useCallback(() => {
     setIndex((prev) => {

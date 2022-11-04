@@ -1,11 +1,9 @@
 {
   "extends": "./src/shared/configs/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    "module": "esnext",
+    "noImplicitAny": false
   },
-  "include": [
-    "src/**/*",
-    "typings/**/*.ts",
-    ".storybook/**/*"
-  ]
+  "include": ["src/**/*", "typings/**/*.ts"]
 }

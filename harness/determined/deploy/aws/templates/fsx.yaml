@@ -2,36 +2,36 @@ Description:  This template deploys a VPC, with a public and private subnet, and
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-0986c991cc80c6ad9
-      Agent: ami-00c89d16ea9843add
+      Master: ami-09b18720cb71042df
+      Agent: ami-0f9f90f487608fe99
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-0565d651769eb3de5
-    #   Agent: ami-0aaf4152512f23ba9
+    #   Master: ami-07d16c043aa8e5153
+    #   Agent: ami-07d607bacc01685db
     # ap-southeast-1:
-    #   Master: ami-0eaf04122a1ae7b3b
-    #   Agent: ami-07da7ba3728db537c
+    #   Master: ami-00e912d13fbb4f225
+    #   Agent: ami-00a7448716c007550
     # ap-southeast-2:
-    #   Master: ami-048a2d001938101dd
-    #   Agent: ami-07e10c7acae0b91e7
+    #   Master: ami-055166f8a8041fbf1
+    #   Agent: ami-0d21deaec03b109ed
     eu-central-1:
-      Master: ami-06cac34c3836ff90b
-      Agent: ami-039f0d443cb78c701
+      Master: ami-06148e0e81e5187c8
+      Agent: ami-00b8e14625cfffff7
     eu-west-1:
-      Master: ami-0141514361b6a3c1b
-      Agent: ami-0c6a0bac14a017e63
+      Master: ami-0fd8802f94ed1c969
+      Agent: ami-0d9b2638b858a0451
     # eu-west-2:
-    #   Master: ami-014b642f603e350c3
-    #   Agent: ami-06e4ffddf1cc1f73c
+    #   Master: ami-04842bc62789b682e
+    #   Agent: ami-08c2f17a10d4b052e
     us-east-1:
-      Master: ami-0070c5311b7677678
-      Agent: ami-077a7a0cff5c661a7
+      Master: ami-0149b2da6ceec4bb0
+      Agent: ami-0b2014aa470f13435
     us-east-2:
-      Master: ami-07f84a50d2dec2fa4
-      Agent: ami-0d263764033434809
+      Master: ami-0d5bf08bc8017c83b
+      Agent: ami-003178452b1145c22
     us-west-2:
-      Master: ami-0aab355e1bfa1e72e
-      Agent: ami-089a4a6ab425591a3
+      Master: ami-0c09c7eb16d3e8e70
+      Agent: ami-0c41987fab4c81bc3
 
 Parameters:
   VpcCIDR:
@@ -81,7 +81,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.19.3-dev0
+    Default: 0.19.7-dev0
 
   DBPassword:
     Type: String
@@ -169,6 +169,11 @@ Parameters:
     Type: Number
     Description: Time between reconnect attempts, with the exception of the first.
     Default: 5
+
+  AgentConfigFileContents:
+    Type: String
+    Description: Contents of the agent config file
+    Default: ''
 
 
   CpuEnvImage:
@@ -832,6 +837,7 @@ Resources:
                 tag_value: det-agent-${AWS::StackName}
                 agent_reconnect_attempts: ${AgentReconnectAttempts}
                 agent_reconnect_backoff: ${AgentReconnectBackoff}
+                agent_config_file_contents: ${AgentConfigFileContents}
                 startup_script: |
                   wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
                   bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'

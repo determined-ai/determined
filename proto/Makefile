@@ -29,15 +29,13 @@ build: build/proto.stamp $(swagger_out)
 clean:
 	rm -rf build pkg
 
+.PHONY: get-deps
 get-deps:
-	go install github.com/bufbuild/buf/cmd/buf@v0.42.1
-	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
-	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway@v1.14.6
-	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger@v1.14.6
-	go install github.com/swaggo/swag/cmd/swag@v1.7.0
+	./get-deps.sh
 
 build/proto.stamp: $(source_files)
+	protoc --version |perl -ne '/.*(\d+)\.(\d+)\.(\d+)/&&(($$1==3&&$$2<15)||$$1<3)&&print("\nERROR: \
+		Detected protoc version: $$1.$$2.$$3. Please upgrade protoc to version 3.15.0 or above\n\n.")&&exit 1;'
 	rm -rf build/proto pkg
 	mkdir -p build/proto
 	# Protobuf generation.

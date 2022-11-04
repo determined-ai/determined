@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/pkg/errors"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 )
@@ -9,18 +10,22 @@ import (
 // An AgentUserGroup represents a username and primary group for a user on an
 // agent host machine. There is at most one AgentUserGroup for each User.
 type AgentUserGroup struct {
+	bun.BaseModel `bun:"table:agent_user_groups"`
+
 	ID int `db:"id" json:"id"`
 
 	UserID UserID `db:"user_id" json:"user_id"`
 
 	// The User is the username on an agent host machine. This may be different
 	// from the username of the user in the User database.
-	User string `db:"user_" json:"user"`
+	User string `db:"user_" bun:"user_" json:"user"`
 	UID  int    `db:"uid" json:"uid"`
 
 	// The Group is the primary group of the user.
-	Group string `db:"group_" json:"group"`
+	Group string `db:"group_" bun:"group_" json:"group"`
 	GID   int    `db:"gid" json:"gid"`
+
+	RelatedUser *User `bun:"rel:belongs-to,join:user_id=id"`
 }
 
 // Validate validates the fields of the AgentUserGroup.

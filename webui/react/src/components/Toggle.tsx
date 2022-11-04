@@ -13,7 +13,7 @@ interface Props {
 const Toggle: React.FC<Props> = ({ checked = false, onChange, ...props }: Props) => {
   const handleClick = useCallback(() => {
     if (onChange) onChange(!checked);
-  }, [ checked, onChange ]);
+  }, [checked, onChange]);
 
   return (
     <Space onClick={handleClick}>

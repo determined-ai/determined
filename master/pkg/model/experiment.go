@@ -465,6 +465,40 @@ type TrialMetrics struct {
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
 }
 
+// Represent order of active states (Queued -> Pulling -> Starting -> Running).
+var experimentStateIndex = map[experimentv1.State]int{
+	experimentv1.State_STATE_UNSPECIFIED:        0,
+	experimentv1.State_STATE_ACTIVE:             1,
+	experimentv1.State_STATE_QUEUED:             2,
+	experimentv1.State_STATE_PULLING:            3,
+	experimentv1.State_STATE_STARTING:           4,
+	experimentv1.State_STATE_RUNNING:            5,
+	experimentv1.State_STATE_PAUSED:             6,
+	experimentv1.State_STATE_COMPLETED:          7,
+	experimentv1.State_STATE_CANCELED:           8,
+	experimentv1.State_STATE_ERROR:              9,
+	experimentv1.State_STATE_STOPPING_COMPLETED: 10,
+	experimentv1.State_STATE_STOPPING_KILLED:    12,
+	experimentv1.State_STATE_STOPPING_CANCELED:  13,
+	experimentv1.State_STATE_STOPPING_ERROR:     14,
+	experimentv1.State_STATE_DELETED:            15,
+	experimentv1.State_STATE_DELETING:           16,
+	experimentv1.State_STATE_DELETE_FAILED:      17,
+}
+
+// MostProgressedExperimentState returns the more advanced active state
+// based on experimentStateIndex (Queued -> Pulling -> Starting -> Running).
+func MostProgressedExperimentState(
+	state1 experimentv1.State, state2 experimentv1.State,
+) experimentv1.State {
+	stateValue1 := experimentStateIndex[state1]
+	stateValue2 := experimentStateIndex[state2]
+	if stateValue1 > stateValue2 {
+		return state1
+	}
+	return state2
+}
+
 // CheckpointVersion describes the format in which some checkpoint metadata is saved.
 type CheckpointVersion int
 
@@ -816,6 +850,20 @@ func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
 		return InvalidHP
 	case trialv1.TrialEarlyExit_EXITED_REASON_INIT_INVALID_HP:
 		return InitInvalidHP
+	default:
+		panic(fmt.Errorf("unexpected exited reason: %v", r))
+	}
+}
+
+// ToProto converts an ExitedReason to its protobuf representation.
+func (r *ExitedReason) ToProto() experimentv1.TrialExitedEarly_ExitedReason {
+	switch *r {
+	case Errored:
+		return *experimentv1.TrialExitedEarly_EXITED_REASON_UNSPECIFIED.Enum()
+	case InvalidHP:
+		return *experimentv1.TrialExitedEarly_EXITED_REASON_INVALID_HP.Enum()
+	case UserCanceled:
+		return *experimentv1.TrialExitedEarly_EXITED_REASON_USER_REQUESTED_STOP.Enum()
 	default:
 		panic(fmt.Errorf("unexpected exited reason: %v", r))
 	}

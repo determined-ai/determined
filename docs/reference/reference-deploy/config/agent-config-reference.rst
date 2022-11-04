@@ -93,3 +93,16 @@
 
 -  ``container_auto_remove_disabled`` (debug): Whether to disable setting ``AutoRemove`` flag on
    task containers. Defaults to false.
+
+-  ``hooks``: Configuration for commands to run when certain events occur. The value of each option
+   in this section is an array of strings specifying the command and its arguments.
+
+   -  ``on_connection_lost``: A command to run when the agent fails to either connect to the master
+      on startup or reconnect after a loss of connection. (When reconnecting, the agent will make
+      several attempts as specified by the ``agent_reconnect_attempts`` and
+      ``agent_reconnect_backoff`` configuration options.)
+
+      In order to shut down the machine on which the agent is running, set this to ``["sudo",
+      "shutdown", "now"]``, or just ``["shutdown", "now"]`` if the agent is running as root.
+      Additional system configuration may be required in order to allow the agent to execute the
+      command from inside a Docker container or without the need to enter a password.

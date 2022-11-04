@@ -21,7 +21,7 @@ class TypeAnno:
     def load(self, val: Code) -> Code:
         raise NotImplementedError(type(self))
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         raise NotImplementedError(type(self))
 
     def isnone(self) -> bool:
@@ -42,7 +42,7 @@ class TypeAnno:
 
         Defaults to the normal dump(), but can be overridden.
         """
-        return self.dump(val)
+        return self.dump(val, omit_unset="True")
 
 
 class TypeDef:
@@ -59,7 +59,7 @@ class NoParse:
     def load(self, val: Code) -> Code:
         return val
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         return val
 
 
@@ -98,7 +98,7 @@ class Float(TypeAnno):
     def load(self, val: Code) -> Code:
         return f"float({val})"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         return f"dump_float({val})"
 
 
@@ -175,14 +175,14 @@ class Ref(TypeAnno):
         )
         return self.defn.load(val)
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         assert self.linked, "link step must be completed before generating code!"
         assert self.defn, "it doesn't make sense to dump an empty class"
         assert isinstance(self.defn, (Enum, Class)), (
             self.name,
             type(self.defn).__name__,
         )
-        return self.defn.dump(val)
+        return self.defn.dump(val, omit_unset)
 
 
 class Dict(TypeAnno):
@@ -206,10 +206,11 @@ class Dict(TypeAnno):
             return val
         return f"{{k: {self.values.load('v')} for k, v in {val}.items()}}"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         if not self.need_parse():
             return val
-        return f"{{k: {self.values.dump('v')} for k, v in {val}.items()}}"
+        each = self.values.dump("v", omit_unset)
+        return f"{{k: {each} for k, v in {val}.items()}}"
 
 
 class Sequence(TypeAnno):
@@ -233,10 +234,11 @@ class Sequence(TypeAnno):
             return val
         return f"[{self.items.load('x')} for x in {val}]"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         if not self.need_parse():
             return val
-        return f"[{self.items.dump('x')} for x in {val}]"
+        each = self.items.dump("x", omit_unset)
+        return f"[{each} for x in {val}]"
 
 
 class Parameter:
@@ -272,63 +274,95 @@ class Parameter:
         else:
             typestr = f'"typing.Optional[{self.type.annotation(prequoted=True)}]"'
             default = " = None"
-        default = "" if self.required else " = None"
         return f"    {self.name}: {typestr}{default},"
 
-    def dump(self) -> Code:
-        return self.type.dump(self.name)
+    def gen_init_param(self) -> Code:
+        if self.required:
+            typestr = self.type.annotation()
+            default = ""
+        else:
+            typestr = f'"typing.Union[{self.type.annotation(prequoted=True)}, None, Unset]"'
+            default = " = _unset"
+        return f"    {self.name}: {typestr}{default},"
+
+    def dump(self, omit_unset: Code) -> Code:
+        return self.type.dump(self.name, omit_unset)
 
 
 class Class(TypeDef):
     def __init__(self, name: str, params: typing.Dict[str, Parameter]):
         self.name = name
-        # self.members = members
         self.params = params
 
     def load(self, val: Code) -> Code:
         return f"{self.name}.from_json({val})"
 
-    def dump(self, val: Code) -> Code:
-        return f"{val}.to_json()"
+    def dump(self, val: Code, omit_unset: Code) -> Code:
+        return f"{val}.to_json({omit_unset})"
 
     def gen_def(self) -> Code:
+        required = sorted(p for p in self.params if self.params[p].required)
+        optional = sorted(p for p in self.params if not self.params[p].required)
         out = [f"class {self.name}:"]
+        for k in optional:
+            v = self.params[k]
+            out += [f'    {k}: "typing.Optional[{v.type.annotation(prequoted=True)}]" = None']
+        out += [""]
         out += ["    def __init__("]
         out += ["        self,"]
         out += ["        *,"]
-        required = sorted(p for p in self.params if self.params[p].required)
-        optional = sorted(p for p in self.params if not self.params[p].required)
-        for name in required + optional:
-            out += ["    " + self.params[name].gen_function_param()]
+        for k in required + optional:
+            v = self.params[k]
+            out += ["    " + v.gen_init_param()]
         out += ["    ):"]
-        out += [f"        self.{k} = {k}" for k in self.params]
+        for k in required:
+            out += [f"        self.{k} = {k}"]
+        for k in optional:
+            out += [f"        if not isinstance({k}, Unset):"]
+            out += [f"            self.{k} = {k}"]
         out += [""]
         out += ["    @classmethod"]
         out += [f'    def from_json(cls, obj: Json) -> "{self.name}":']
-        out += ["        return cls("]
-        for k, v in self.params.items():
+        out += ['        kwargs: "typing.Dict[str, typing.Any]" = {']
+        for k in required:
+            v = self.params[k]
             if v.type.need_parse():
                 parsed = v.type.load(f'obj["{k}"]')
-                if not v.required:
-                    parsed = parsed + f' if obj.get("{k}", None) is not None else None'
-            elif v.required:
-                parsed = f'obj["{k}"]'
             else:
-                parsed = f'obj.get("{k}", None)'
-            out.append(f"""            {k}={parsed},""")
-        out += ["        )"]
-        out += [""]
-        out += ["    def to_json(self) -> typing.Any:"]
-        out += ["        return {"]
-        for k, v in self.params.items():
+                parsed = f'obj["{k}"]'
+            out += [f'            "{k}": {parsed},']
+        out += ["        }"]
+        for k in optional:
+            v = self.params[k]
             if v.type.need_parse():
-                parsed = v.type.dump(f"self.{k}")
+                parsed = v.type.load(f'obj["{k}"]')
+                parsed = parsed + f' if obj["{k}"] is not None else None'
+            else:
+                parsed = f'obj["{k}"]'
+            out += [f'        if "{k}" in obj:']
+            out += [f'            kwargs["{k}"] = {parsed}']
+        out += ["        return cls(**kwargs)"]
+        out += [""]
+        out += ['    def to_json(self, omit_unset: bool = False) -> typing.Any:']
+        out += ['        out: "typing.Dict[str, typing.Any]" = {']
+        for k in required:
+            v = self.params[k]
+            if v.type.need_parse():
+                parsed = v.type.dump(f"self.{k}", "omit_unset")
             else:
                 parsed = f"self.{k}"
-            if not v.required:
-                parsed = parsed + f" if self.{k} is not None else None"
             out.append(f'            "{k}": {parsed},')
         out += ["        }"]
+        for k in optional:
+            v = self.params[k]
+            if v.type.need_parse():
+                parsed = v.type.dump(f"self.{k}", "omit_unset")
+                parsed = f"None if self.{k} is None else {parsed}"
+            else:
+                parsed = f"self.{k}"
+            out += [f'        if not omit_unset or "{k}" in vars(self):']
+            out += [f'            out["{k}"] = {parsed}']
+        out += ["        return out"]
 
         return "\n".join(out)
 
@@ -341,7 +375,7 @@ class Enum(TypeDef):
     def load(self, val: Code) -> Code:
         return f"{self.name}({val})"
 
-    def dump(self, val: Code) -> Code:
+    def dump(self, val: Code, omit_unset: Code) -> Code:
         return f"{val}.value"
 
     def gen_def(self) -> Code:
@@ -358,12 +392,14 @@ class Function:
         path: str,
         params: typing.Dict[str, Parameter],
         responses: typing.Dict[str, dict],
+        streaming: bool,
     ):
         self.name = name
         self.method = method
         self.path = path
         self.params = params
         self.responses = responses
+        self.streaming = streaming
 
     def __repr__(self) -> str:
         out = (
@@ -392,21 +428,16 @@ class Function:
             out += [self.params[name].gen_function_param()]
 
         # Function return type.
-        # (simplifying assumptions; if broken we need more logic)
-        responses = {**self.responses}
-        default = responses.pop("default")
-        assert isinstance(default, Ref) and default.name == "runtimeError", (
-            self.name,
-            default,
-        )
-
-        if len(responses) == 1:
-            returntype = next(iter(responses.values()))
-            returntypestr = returntype.annotation()
-        else:
-            returntypes = set(r.annotation(prequoted=True) for r in responses.values())
-            returntypestr = '"Union[' + ", ".join(sorted(returntypes)) + ']"'
-        assert len(responses) == 1, (self.name, responses)
+        # We wrap the return type annotation for streaming or union responses.
+        need_quotes = self.streaming or len(self.responses) > 1
+        returntypes = set(r.annotation(prequoted=need_quotes) for r in self.responses.values())
+        returntypestr = ",".join(sorted(returntypes))
+        if len(returntypes) > 1:
+            returntypestr = f"typing.Union[{returntypestr}]"
+        if self.streaming:
+            returntypestr = f"typing.Iterable[{returntypestr}]"
+        if need_quotes:
+            returntypestr = f'"{returntypestr}"'
 
         out += [f") -> {returntypestr}:"]
 
@@ -436,7 +467,9 @@ class Function:
             out += ["    _params = None"]
 
         if "body" in self.params:
-            bodystr = self.params["body"].dump()
+            # It is important that request bodies omit unset values so that PATCH request bodies
+            # do not include extraneous None values.
+            bodystr = self.params["body"].dump("True")
         else:
             bodystr = "None"
         out += ["    _resp = session._do_request("]
@@ -447,14 +480,30 @@ class Function:
         out += ["        data=None,"]
         out += ["        headers=None,"]
         out += ["        timeout=None,"]
-        out += ["        stream=False,"]
+        out += [f"        stream={self.streaming},"]
         out += ["    )"]
-        for expect, returntype in responses.items():
+        for expect, returntype in self.responses.items():
             out += [f"    if _resp.status_code == {expect}:"]
-            if returntype.isnone():
-                out += ["        return"]
+            if not self.streaming:
+                if returntype.isnone():
+                    out += ["        return"]
+                else:
+                    out += [f'        return {returntype.load("_resp.json()")}']
             else:
-                out += [f'        return {returntype.load("_resp.json()")}']
+                assert not returntype.isnone(), "unable to stream empty result class: {self}"
+                # Too many quotes to do bit inline:
+                yieldable = returntype.load('_j["result"]')
+                out += [
+                    f"        for _line in _resp.iter_lines():",
+                    f"            _j = json.loads(_line)",
+                    f'            if "error" in _j:',
+                    f"                raise APIHttpStreamError(",
+                    f'                    "{self.method}_{self.name}",',
+                    f'                    runtimeStreamError.from_json(_j["error"])',
+                    f"            )",
+                    f'            yield {yieldable}',
+                    f'        return',
+                ]
         out += [f'    raise APIHttpError("{self.method}_{self.name}", _resp)']
 
         return "\n".join(out)
@@ -578,25 +627,58 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
             name = spec["operationId"]
             # Figure out response types.
             responses = {}
+            streaming = None
             bad_op = False
             for code, rspec in spec["responses"].items():
-                if rspec.get("schema", {}).get("title", "").startswith("Stream result"):
-                    # TODO(gh-3382): support streaming endpoints.
-                    print(
-                        f'skipped generating streaming operation: "{name}"',
-                        file=sys.stderr,
-                    )
-                    bad_op = True
-                    break
-                if rspec["schema"].get("type") == "":
+                rschema = rspec["schema"]
+                if code == "default":
+                    # We expect all "default" responses to be runtimeErrors, and we ignore them.
+                    default_type = classify_type(enums, f"{name}.responses.default", rschema)
+                    assert isinstance(default_type, Ref), rschema
+                    assert default_type.name == "runtimeError", rschema
+                    # Safe to ignore this return type.
+                    continue
+
+                if rschema.get("type") == "":
                     # not a valid response schema, skipping
                     bad_op = True
                     break
-                responses[code] = classify_type(
-                    enums, f"{name}.responses.{code}", rspec["schema"]
-                )
+
+                if rspec.get("schema", {}).get("title", "").startswith("Stream result"):
+                    # We expect a specific structure to streaming endpoints.
+                    assert rschema["type"] == "object", rschema
+                    assert "additionalProperties" not in rschema, rschema
+                    rprops = rschema["properties"]
+                    assert set(rprops.keys()) == set(("result", "error")), rschema
+                    result_type = classify_type(
+                        enums, f"{name}.responses.{code}.properties.result", rprops["result"]
+                    )
+                    error_type = classify_type(
+                        enums, f"{name}.responses.{code}.properties.error", rprops["error"]
+                    )
+                    # We expect all "error" results to be runtimeStreamError.  They are parsed in
+                    # code generated by Function.gen_def().
+                    assert isinstance(error_type, Ref), rschema
+                    assert error_type.name == "runtimeStreamError", rschema
+                    if streaming is False:
+                        raise ValueError(
+                            f"a method must be either all-streaming or all-nonstreaming: {rspec}"
+                        )
+                    streaming = True
+                    responses[code] = result_type
+                    continue
+
+                responses[code] = classify_type(enums, f"{name}.responses.{code}", rschema)
+                if streaming is True:
+                    raise ValueError(
+                        f"a method must be either all-streaming or all-nonstreaming: {rspec}"
+                    )
+                streaming = False
+
             if bad_op:
                 continue
+
+            assert streaming is not None
 
             # Figure out parameters.
             params = {}
@@ -620,7 +702,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
 
             assert is_expected_path(path), (path, name)
             path = path.replace(".", "_")
-            op = Function(name, method, path, params, responses)
+            op = Function(name, method, path, params, responses, streaming)
             ops[name] = op
     return ops
 
@@ -658,8 +740,9 @@ def gen_paginated(defs: TypeDefs) -> typing.List[str]:
 
 def pybindings(swagger: dict) -> str:
     prefix = """
-# The contents of this file are programmatically generated.
+# Code generated by generate_bindings.py. DO NOT EDIT.
 import enum
+import json
 import math
 import typing
 
@@ -672,15 +755,12 @@ if typing.TYPE_CHECKING:
 Json = typing.Any
 
 
-Request = typing.Callable[
-    [
-        str,  # method
-        str,  # path
-        typing.Optional[typing.Dict[str, typing.Any]],  # params
-        typing.Any,  # json body
-    ],
-    requests.Response,
-]
+# Unset is a type to distinguish between things not set and things set to None.
+class Unset:
+    pass
+
+
+_unset = Unset()
 
 
 def dump_float(val: typing.Any) -> typing.Any:
@@ -697,7 +777,20 @@ class APIHttpError(Exception):
         self.response = response
         self.operation_name = operation_name
         self.message = (
-            f"API Error: {operation_name} failed."
+            f"API Error: {operation_name} failed: {response.reason}."
+        )
+
+    def __str__(self) -> str:
+        return self.message
+
+
+class APIHttpStreamError(APIHttpError):
+    # APIHttpStreamError is used if an streaming API request fails mid-stream.
+    def __init__(self, operation_name: str, error: "runtimeStreamError") -> None:
+        self.operation_name = operation_name
+        self.error = error
+        self.message = (
+            f"Stream Error during {operation_name}: {error.message}"
         )
 
     def __str__(self) -> str:

@@ -2,8 +2,13 @@ import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
 import { Pagination, RawJson } from 'shared/types';
-import { flattenObject, isNullOrUndefined, isNumber, isObject,
-  isPrimitive } from 'shared/utils/data';
+import {
+  flattenObject,
+  isNullOrUndefined,
+  isNumber,
+  isObject,
+  isPrimitive,
+} from 'shared/utils/data';
 import { capitalize } from 'shared/utils/string';
 import * as types from 'types';
 
@@ -15,13 +20,62 @@ export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
     id: data.id || 0,
     isActive: data.active,
     isAdmin: data.admin,
-    modifiedAt: (new Date(data.modifiedAt || 1)).getTime(),
+    modifiedAt: new Date(data.modifiedAt || 1).getTime(),
     username: data.username,
   };
 };
 
 export const mapV1UserList = (data: Sdk.V1GetUsersResponse): types.DetailedUser[] => {
   return (data.users || []).map((user) => mapV1User(user));
+};
+
+export const mapV1Role = (role: Sdk.V1Role): types.UserRole => {
+  return {
+    id: role.roleId,
+    name: role.name || '',
+    permissions: (role.permissions || []).map(mapV1Permission),
+  };
+};
+
+export const mapV1UserRole = (res: Sdk.V1RoleWithAssignments): types.UserRole => {
+  const { role, groupRoleAssignments, userRoleAssignments } = res;
+  return {
+    fromGroup: groupRoleAssignments?.map((g) => g.groupId),
+    fromWorkspace: userRoleAssignments
+      ?.map((ur) => ur.roleAssignment?.scopeWorkspaceId || 0)
+      .filter((v) => v > 0),
+    id: role?.roleId || 0,
+    name: role?.name || '',
+    permissions: (role?.permissions || []).map(mapV1Permission),
+  };
+};
+
+export const mapV1GroupRole = (res: Sdk.V1GetRolesAssignedToGroupResponse): types.UserRole[] => {
+  const { roles, assignments } = res;
+  return roles.map((role) => ({
+    fromWorkspace: assignments.find((a) => a.roleId === role.roleId)?.scopeWorkspaceIds,
+    id: role.roleId,
+    name: role.name || '',
+    permissions: (role.permissions || []).map(mapV1Permission),
+  }));
+};
+
+export const mapV1Permission = (permission: Sdk.V1Permission): types.Permission => {
+  return {
+    id: permission.id,
+    scopeCluster: permission.scopeTypeMask?.cluster || false,
+    scopeWorkspace: permission.scopeTypeMask?.workspace || false,
+  };
+};
+
+export const mapV1UserAssignment = (
+  assignment: Sdk.V1RoleAssignmentSummary,
+): types.UserAssignment => {
+  return {
+    roleId: assignment.roleId,
+    scopeCluster: assignment.scopeCluster || false,
+    workspaces: assignment.scopeWorkspaceIds || [],
+  };
 };
 
 export const mapV1Pagination = (data?: Sdk.V1Pagination): Pagination => {
@@ -46,16 +100,16 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): types.Determined
     clusterName: data.clusterName,
     externalLoginUri: data.externalLoginUri,
     externalLogoutUri: data.externalLogoutUri,
+    featureSwitches: data.featureSwitches || [],
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
+    rbacEnabled: !!data.rbacEnabled,
     ssoProviders: data.ssoProviders,
     version: data.version,
   };
 };
 
-export const mapV1ResourcePool = (
-  data: Sdk.V1ResourcePool,
-): types.ResourcePool => {
+export const mapV1ResourcePool = (data: Sdk.V1ResourcePool): types.ResourcePool => {
   return { ...data, slotType: mapV1DeviceType(data.slotType) };
 };
 
@@ -65,15 +119,21 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
     const resources = Object.keys(agentSlots).map((slotId) => {
       const slot = agentSlots[slotId];
 
-      let resourceContainer = undefined;
+      let resourceContainer:
+        | {
+            id: string;
+            state: types.ResourceState | undefined;
+          }
+        | undefined = undefined;
       if (slot.container) {
-        let resourceContainerState = undefined;
+        let resourceContainerState: types.ResourceState | undefined = undefined;
         if (slot.container.state) {
-          resourceContainerState = types.ResourceState[
-            capitalize(
-              slot.container.state.toString().replace('STATE_', ''),
-            ) as keyof typeof types.ResourceState
-          ];
+          resourceContainerState =
+            types.ResourceState[
+              capitalize(
+                slot.container.state.toString().replace('STATE_', ''),
+              ) as keyof typeof types.ResourceState
+            ];
         }
 
         resourceContainer = {
@@ -82,7 +142,7 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
         };
       }
 
-      let resourceType = types.ResourceType.UNSPECIFIED;
+      let resourceType: types.ResourceType = types.ResourceType.UNSPECIFIED;
       if (slot.device?.type) {
         resourceType = mapV1DeviceType(slot.device.type);
       }
@@ -106,25 +166,20 @@ export const jsonToAgents = (agents: Array<Sdk.V1Agent>): types.Agent[] => {
   });
 };
 
-const mapV1TaskState =
-  (containerState: Sdk.Determinedtaskv1State): types.CommandState => {
-    switch (containerState) {
-      case Sdk.Determinedtaskv1State.PENDING:
-        return types.CommandState.Pending;
-      case Sdk.Determinedtaskv1State.ASSIGNED:
-        return types.CommandState.Assigned;
-      case Sdk.Determinedtaskv1State.PULLING:
-        return types.CommandState.Pulling;
-      case Sdk.Determinedtaskv1State.STARTING:
-        return types.CommandState.Starting;
-      case Sdk.Determinedtaskv1State.RUNNING:
-        return types.CommandState.Running;
-      case Sdk.Determinedtaskv1State.TERMINATED:
-        return types.CommandState.Terminated;
-      default:
-        return types.CommandState.Pending;
-    }
-  };
+const mapV1TaskState = (containerState: Sdk.Determinedtaskv1State): types.CommandState => {
+  switch (containerState) {
+    case Sdk.Determinedtaskv1State.PULLING:
+      return types.CommandState.Pulling;
+    case Sdk.Determinedtaskv1State.STARTING:
+      return types.CommandState.Starting;
+    case Sdk.Determinedtaskv1State.RUNNING:
+      return types.CommandState.Running;
+    case Sdk.Determinedtaskv1State.TERMINATED:
+      return types.CommandState.Terminated;
+    default:
+      return types.CommandState.Queued;
+  }
+};
 
 const mapCommonV1Task = (
   task: Sdk.V1Command | Sdk.V1Notebook | Sdk.V1Shell | Sdk.V1Tensorboard,
@@ -157,17 +212,16 @@ export const mapV1Shell = (shell: Sdk.V1Shell): types.CommandTask => {
   return { ...mapCommonV1Task(shell, types.CommandType.Shell) };
 };
 
-export const mapV1TensorBoard =
-  (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
-    return {
-      ...mapCommonV1Task(tensorboard, types.CommandType.TensorBoard),
-      misc: {
-        experimentIds: tensorboard.experimentIds || [],
-        trialIds: tensorboard.trialIds || [],
-      },
-      serviceAddress: tensorboard.serviceAddress,
-    };
+export const mapV1TensorBoard = (tensorboard: Sdk.V1Tensorboard): types.CommandTask => {
+  return {
+    ...mapCommonV1Task(tensorboard, types.CommandType.TensorBoard),
+    misc: {
+      experimentIds: tensorboard.experimentIds || [],
+      trialIds: tensorboard.trialIds || [],
+    },
+    serviceAddress: tensorboard.serviceAddress,
   };
+};
 
 export const mapV1Template = (template: Sdk.V1Template): types.Template => {
   return { config: template.config, name: template.name };
@@ -175,23 +229,24 @@ export const mapV1Template = (template: Sdk.V1Template): types.Template => {
 
 export const mapV1Task = (task: Sdk.V1Task): types.TaskItem => {
   return {
-    allocations: task.allocations?.map((a) => {
-      const setState = {
-        STATE_ASSIGNED: types.CommandState.Assigned,
-        STATE_PENDING: types.CommandState.Pending,
-        STATE_PULLING: types.CommandState.Pulling,
-        STATE_RUNNING: types.CommandState.Running,
-        STATE_STARTING: types.CommandState.Starting,
-        STATE_TERMINATED: types.CommandState.Terminated,
-        STATE_TERMINATING: types.CommandState.Terminating,
-      }[String(a?.state) || 'STATE_PENDING'] || types.CommandState.Pending;
+    allocations:
+      task.allocations?.map((a) => {
+        const setState =
+          {
+            STATE_PULLING: types.CommandState.Pulling,
+            STATE_RUNNING: types.CommandState.Running,
+            STATE_STARTING: types.CommandState.Starting,
+            STATE_TERMINATED: types.CommandState.Terminated,
+            STATE_TERMINATING: types.CommandState.Terminating,
+            STATE_WAITING: types.CommandState.Waiting,
+          }[String(a?.state) || 'STATE_QUEUED'] || types.CommandState.Queued;
 
-      return {
-        isReady: a.isReady || false,
-        state: setState,
-        taskId: a.taskId,
-      };
-    }) || [],
+        return {
+          isReady: a.isReady || false,
+          state: setState,
+          taskId: a.taskId,
+        };
+      }) || [],
     taskId: task.taskId || '',
   };
 };
@@ -212,9 +267,7 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
   };
 };
 
-export const mapV1ModelVersion = (
-  modelVersion: Sdk.V1ModelVersion,
-): types.ModelVersion => {
+export const mapV1ModelVersion = (modelVersion: Sdk.V1ModelVersion): types.ModelVersion => {
   return {
     checkpoint: decodeCheckpoint(modelVersion.checkpoint),
     comment: modelVersion.comment,
@@ -234,20 +287,22 @@ export const mapV1ModelVersion = (
 export const mapV1ModelDetails = (
   modelDetailsResponse: Sdk.V1GetModelVersionsResponse,
 ): types.ModelVersions | undefined => {
-  if (!modelDetailsResponse.model ||
+  if (
+    !modelDetailsResponse.model ||
     !modelDetailsResponse.modelVersions ||
-    !modelDetailsResponse.pagination) return;
+    !modelDetailsResponse.pagination
+  )
+    return;
   return {
     model: mapV1Model(modelDetailsResponse.model),
-    modelVersions: modelDetailsResponse.modelVersions.map((version) =>
-      mapV1ModelVersion(version) as types.ModelVersion),
+    modelVersions: modelDetailsResponse.modelVersions.map(
+      (version) => mapV1ModelVersion(version) as types.ModelVersion,
+    ),
     pagination: modelDetailsResponse.pagination,
   };
 };
 
-const ioToHyperparametereter = (
-  io: ioTypes.ioTypeHyperparameter,
-): types.Hyperparameter => {
+const ioToHyperparametereter = (io: ioTypes.ioTypeHyperparameter): types.Hyperparameter => {
   return {
     base: io.base != null ? io.base : undefined,
     count: io.count != null ? io.count : undefined,
@@ -259,9 +314,7 @@ const ioToHyperparametereter = (
   };
 };
 
-const ioToHyperparametereters = (
-  io: ioTypes.ioTypeHyperparameters,
-): types.Hyperparameters => {
+const ioToHyperparametereters = (io: ioTypes.ioTypeHyperparameters): types.Hyperparameters => {
   const hparams: Record<string, unknown> = {};
   Object.keys(io).forEach((key) => {
     /*
@@ -272,9 +325,11 @@ const ioToHyperparametereters = (
      */
     const ioHp = io[key] as ioTypes.ioTypeHyperparameter;
     const valIsPrimitive = isPrimitive(ioHp.val);
-    const valListIsPrimitive = Array.isArray(ioHp.vals) && ioHp.vals.reduce((acc, val) => {
-      return acc && (isPrimitive(val) && !isNullOrUndefined(val));
-    }, true);
+    const valListIsPrimitive =
+      Array.isArray(ioHp.vals) &&
+      ioHp.vals.reduce((acc, val) => {
+        return acc && isPrimitive(val) && !isNullOrUndefined(val);
+      }, true);
     if (!ioHp.type && isObject(ioHp)) {
       hparams[key] = ioToHyperparametereters(ioHp as Record<string, unknown>);
     } else if (valIsPrimitive || valListIsPrimitive) {
@@ -284,23 +339,28 @@ const ioToHyperparametereters = (
   return hparams as types.Hyperparameters;
 };
 
-export const ioToExperimentConfig =
-(io: ioTypes.ioTypeExperimentConfig): types.ExperimentConfig => {
+export const ioToExperimentConfig = (
+  io: ioTypes.ioTypeExperimentConfig,
+): types.ExperimentConfig => {
   const config: types.ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
-    checkpointStorage: io.checkpoint_storage ? {
-      bucket: io.checkpoint_storage.bucket || undefined,
-      hostPath: io.checkpoint_storage.host_path || undefined,
-      saveExperimentBest: io.checkpoint_storage.save_experiment_best,
-      saveTrialBest: io.checkpoint_storage.save_trial_best,
-      saveTrialLatest: io.checkpoint_storage.save_trial_latest,
-      storagePath: io.checkpoint_storage.storage_path || undefined,
-      type: io.checkpoint_storage.type as types.CheckpointStorageType || undefined,
-    } : undefined,
-    dataLayer: io.data_layer ? {
-      containerStoragePath: io.data_layer.container_storage_path || undefined,
-      type: io.data_layer.type,
-    } : undefined,
+    checkpointStorage: io.checkpoint_storage
+      ? {
+          bucket: io.checkpoint_storage.bucket || undefined,
+          hostPath: io.checkpoint_storage.host_path || undefined,
+          saveExperimentBest: io.checkpoint_storage.save_experiment_best,
+          saveTrialBest: io.checkpoint_storage.save_trial_best,
+          saveTrialLatest: io.checkpoint_storage.save_trial_latest,
+          storagePath: io.checkpoint_storage.storage_path || undefined,
+          type: (io.checkpoint_storage.type as types.CheckpointStorageType) || undefined,
+        }
+      : undefined,
+    dataLayer: io.data_layer
+      ? {
+          containerStoragePath: io.data_layer.container_storage_path || undefined,
+          type: io.data_layer.type,
+        }
+      : undefined,
     description: io.description || undefined,
     hyperparameters: ioToHyperparametereters(io.hyperparameters),
     labels: io.labels || undefined,
@@ -335,11 +395,15 @@ const experimentStateMap = {
   [Sdk.Determinedexperimentv1State.STOPPINGERROR]: types.RunState.StoppingError,
   [Sdk.Determinedexperimentv1State.CANCELED]: types.RunState.Canceled,
   [Sdk.Determinedexperimentv1State.COMPLETED]: types.RunState.Completed,
-  [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Errored,
+  [Sdk.Determinedexperimentv1State.ERROR]: types.RunState.Error,
   [Sdk.Determinedexperimentv1State.DELETED]: types.RunState.Deleted,
   [Sdk.Determinedexperimentv1State.DELETING]: types.RunState.Deleting,
   [Sdk.Determinedexperimentv1State.DELETEFAILED]: types.RunState.DeleteFailed,
   [Sdk.Determinedexperimentv1State.STOPPINGKILLED]: types.RunState.StoppingCanceled,
+  [Sdk.Determinedexperimentv1State.QUEUED]: types.RunState.Queued,
+  [Sdk.Determinedexperimentv1State.PULLING]: types.RunState.Pulling,
+  [Sdk.Determinedexperimentv1State.STARTING]: types.RunState.Starting,
+  [Sdk.Determinedexperimentv1State.RUNNING]: types.RunState.Running,
 };
 
 export const decodeCheckpointState = (
@@ -351,9 +415,9 @@ export const decodeCheckpointState = (
 export const encodeCheckpointState = (
   state: types.CheckpointState,
 ): Sdk.Determinedcheckpointv1State => {
-  const stateKey = Object
-    .keys(checkpointStateMap)
-    .find((key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state);
+  const stateKey = Object.keys(checkpointStateMap).find(
+    (key) => checkpointStateMap[key as unknown as Sdk.Determinedcheckpointv1State] === state,
+  );
   if (stateKey) return stateKey as unknown as Sdk.Determinedcheckpointv1State;
   return Sdk.Determinedcheckpointv1State.UNSPECIFIED;
 };
@@ -363,29 +427,26 @@ export const decodeExperimentState = (data: Sdk.Determinedexperimentv1State): ty
 };
 
 export const encodeExperimentState = (state: types.RunState): Sdk.Determinedexperimentv1State => {
-  const stateKey = Object
-    .keys(experimentStateMap)
-    .find((key) => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state);
+  const stateKey = Object.keys(experimentStateMap).find(
+    (key) => experimentStateMap[key as unknown as Sdk.Determinedexperimentv1State] === state,
+  );
   if (stateKey) return stateKey as unknown as Sdk.Determinedexperimentv1State;
   return Sdk.Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const mapV1GetExperimentDetailsResponse = (
-  { experiment: exp, jobSummary }: Sdk.V1GetExperimentResponse,
-): types.ExperimentBase => {
-  const ioConfig = ioTypes
-    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, exp.config);
+export const mapV1GetExperimentDetailsResponse = ({
+  experiment: exp,
+  jobSummary,
+}: Sdk.V1GetExperimentResponse): types.ExperimentBase => {
+  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
+    ioTypes.ioExperimentConfig,
+    exp.config,
+  );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(
-    ioConfig.hyperparameters,
-    { continueFn },
-  ) as types.HyperparametersFlattened;
-  const v1Exp = mapV1Experiment(exp);
-  v1Exp.jobSummary = jobSummary;
-  const resolvedState = v1Exp.state === types.RunState.Active && v1Exp.jobSummary ?
-    v1Exp.jobSummary.state : v1Exp.state;
-  v1Exp.state = resolvedState;
-
+  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
+    continueFn,
+  }) as types.HyperparametersFlattened;
+  const v1Exp = mapV1Experiment(exp, jobSummary);
   return {
     ...v1Exp,
     config: ioToExperimentConfig(ioConfig),
@@ -402,14 +463,16 @@ export const mapV1GetExperimentDetailsResponse = (
 
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
+  jobSummary?: types.JobSummary,
 ): types.ExperimentItem => {
-  const ioConfig = ioTypes
-    .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, data.config);
+  const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
+    ioTypes.ioExperimentConfig,
+    data.config,
+  );
   const continueFn = (value: unknown) => !(value as types.HyperparameterBase).type;
-  const hyperparameters = flattenObject<types.HyperparameterBase>(
-    ioConfig.hyperparameters,
-    { continueFn },
-  ) as types.HyperparametersFlattened;
+  const hyperparameters = flattenObject<types.HyperparameterBase>(ioConfig.hyperparameters, {
+    continueFn,
+  }) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
     config: ioToExperimentConfig(ioConfig),
@@ -420,6 +483,7 @@ export const mapV1Experiment = (
     hyperparameters,
     id: data.id,
     jobId: data.jobId,
+    jobSummary: jobSummary,
     labels: data.labels || [],
     name: data.name,
     notes: data.notes,
@@ -436,7 +500,8 @@ export const mapV1Experiment = (
 };
 
 export const mapV1ExperimentList = (data: Sdk.V1Experiment[]): types.ExperimentItem[] => {
-  return data.map(mapV1Experiment);
+  // empty JobSummary
+  return data.map((e) => mapV1Experiment(e));
 };
 
 const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {
@@ -446,7 +511,7 @@ const filterNonScalarMetrics = (metrics: RawJson): RawJson | undefined => {
   }
   const scalarMetrics: RawJson = {};
   for (const key in metrics) {
-    if ([ 'Infinity', '-Infinity', 'NaN' ].includes(metrics[key])) {
+    if (['Infinity', '-Infinity', 'NaN'].includes(metrics[key])) {
       scalarMetrics[key] = Number(metrics[key]);
     } else if (isNumber(metrics[key])) {
       scalarMetrics[key] = metrics[key];
@@ -464,9 +529,8 @@ const decodeMetricsWorkload = (data: Sdk.V1MetricsWorkload): types.MetricsWorklo
 };
 
 const decodeCheckpointWorkload = (data: Sdk.V1CheckpointWorkload): types.CheckpointWorkload => {
-
   const resources: Record<string, number> = {};
-  Object.entries(data.resources || {}).forEach(([ res, val ]) => {
+  Object.entries(data.resources || {}).forEach(([res, val]) => {
     resources[res] = parseFloat(val);
   });
 
@@ -487,9 +551,9 @@ export const decodeMetrics = (data: Sdk.V1Metrics): types.Metrics => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const decodeMetricStruct = (data: any): Record<string, number> => {
     const metrics: Record<string, number> = {};
-    Object.entries(data || {}).forEach(([ metric, value ]) => {
+    Object.entries(data || {}).forEach(([metric, value]) => {
       if (typeof metric === 'string' && (typeof value === 'number' || typeof value === 'string')) {
-        const numberValue = (typeof value === 'number') ? value : parseFloat(value);
+        const numberValue = typeof value === 'number' ? value : parseFloat(value);
         if (!isNaN(numberValue)) metrics[metric] = numberValue;
       }
     });
@@ -503,7 +567,7 @@ export const decodeMetrics = (data: Sdk.V1Metrics): types.Metrics => {
 
 export const decodeCheckpoint = (data: Sdk.V1Checkpoint): types.CoreApiGenericCheckpoint => {
   const resources: Record<string, number> = {};
-  Object.entries(data.resources || {}).forEach(([ res, val ]) => {
+  Object.entries(data.resources || {}).forEach(([res, val]) => {
     resources[res] = parseFloat(val);
   });
   return {
@@ -540,7 +604,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     autoRestarts: data.restarts,
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
-    endTime: data.endTime && data.endTime as unknown as string,
+    endTime: data.endTime && (data.endTime as unknown as string),
     experimentId: data.experimentId,
     hyperparameters: flattenObject(data.hparams),
     id: data.id,
@@ -551,24 +615,21 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
   };
 };
 
-const decodeSummaryMetrics = (
-  data: Sdk.V1SummarizedMetric[],
-): types.MetricContainer[] => {
+const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricContainer[] => {
   return data.map((m) => ({
     data: m.data.map((pt) => ({
       batches: pt.batches,
       value: pt.value,
     })),
     name: m.name,
-    type: m.type === Sdk.V1MetricType.TRAINING
-      ? types.MetricType.Training
-      : types.MetricType.Validation,
+    type:
+      m.type === Sdk.V1MetricType.TRAINING
+        ? types.MetricType.Training
+        : types.MetricType.Validation,
   }));
 };
 
-export const decodeTrialSummary = (
-  data: Sdk.V1SummarizeTrialResponse,
-): types.TrialSummary => {
+export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.TrialSummary => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
 
   return {
@@ -595,7 +656,7 @@ export const decodeTrialResponseToTrialDetails = (
   data: Sdk.V1GetTrialResponse,
 ): types.TrialDetails => {
   const trialItem = decodeV1TrialToTrialItem(data.trial);
-  const EMPTY_STATES = new Set([ 'UNSPECIFIED', '', undefined ]);
+  const EMPTY_STATES = new Set(['UNSPECIFIED', '', undefined]);
 
   return {
     ...trialItem,
@@ -606,12 +667,12 @@ export const decodeTrialResponseToTrialDetails = (
 
 export const jsonToClusterLog = (data: unknown): types.Log => {
   const logData = data as Sdk.V1MasterLogsResponse;
-  return ({
+  return {
     id: logData.logEntry?.id ?? 0,
     level: decodeV1LogLevelToLogLevel(logData.logEntry?.level ?? Sdk.V1LogLevel.UNSPECIFIED),
     message: logData.logEntry?.message ?? '',
     time: logData.logEntry?.timestamp as unknown as string,
-  });
+  };
 };
 
 const decodeV1LogLevelToLogLevel = (level: Sdk.V1LogLevel): types.LogLevel | undefined => {
@@ -631,13 +692,13 @@ const newlineRegex = /(\r\n|\n)$/g;
 const messageRegex = new RegExp(
   [
     '^',
-    '\\[([^\\]]+)\\]\\s',                             // timestamp
-    '([0-9a-f]{8})?\\s?',                             // container id
-    '(\\[rank=(\\d+)\\])?\\s?',                       // rank id
-    '(\\|\\|\\s)?',                                   // divider ||
-    '((CRITICAL|DEBUG|ERROR|INFO|WARNING):\\s)?',     // log level
-    '(\\[(\\d+)\\]\\s)?',                             // process id
-    '([\\s\\S]*)',                                    // message
+    '\\[([^\\]]+)\\]\\s', // timestamp
+    '([0-9a-f]{8})?\\s?', // container id
+    '(\\[rank=(\\d+)\\])?\\s?', // rank id
+    '(\\|\\|\\s)?', // divider ||
+    '((CRITICAL|DEBUG|ERROR|INFO|WARNING):\\s)?', // log level
+    '(\\[(\\d+)\\]\\s)?', // process id
+    '([\\s\\S]*)', // message
     '$',
   ].join(''),
   'im',
@@ -663,9 +724,9 @@ const formatLogMessage = (message: string): string => {
   return filteredMessage.trim();
 };
 
-export const mapV1LogsResponse = <
-  T extends Sdk.V1TrialLogsResponse | Sdk.V1TaskLogsResponse
->(data: unknown): types.TrialLog => {
+export const mapV1LogsResponse = <T extends Sdk.V1TrialLogsResponse | Sdk.V1TaskLogsResponse>(
+  data: unknown,
+): types.TrialLog => {
   const logData = data as T;
   return {
     id: logData.id,
@@ -677,8 +738,7 @@ export const mapV1LogsResponse = <
 
 export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.ResourceType => {
   return types.ResourceType[
-    data.toString().toUpperCase()
-      .replace('TYPE_', '') as keyof typeof types.ResourceType
+    data.toString().toUpperCase().replace('TYPE_', '') as keyof typeof types.ResourceType
   ];
 };
 
@@ -696,8 +756,9 @@ export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
   };
 };
 
-export const mapDeletionStatus = (response: Sdk.V1DeleteProjectResponse
-| Sdk.V1DeleteWorkspaceResponse): types.DeletionStatus => {
+export const mapDeletionStatus = (
+  response: Sdk.V1DeleteProjectResponse | Sdk.V1DeleteWorkspaceResponse,
+): types.DeletionStatus => {
   return { completed: response.completed };
 };
 
@@ -728,10 +789,26 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   };
 };
 
-export const decodeJobStates = (states?: Sdk.Determinedjobv1State[]): Array<
-'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
+export const mapV1Webhook = (data: Sdk.V1Webhook): types.Webhook => {
+  return {
+    id: data.id || -1,
+    triggers: data.triggers || [],
+    url: data.url,
+    webhookType:
+      {
+        [Sdk.V1WebhookType.UNSPECIFIED]: 'Unspecified',
+        [Sdk.V1WebhookType.DEFAULT]: 'Default',
+        [Sdk.V1WebhookType.SLACK]: 'Slack',
+      }[data.webhookType] || 'Unspecified',
+  };
+};
+
+export const decodeJobStates = (
+  states?: Sdk.Determinedjobv1State[],
+): Array<
+  'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
 > => {
   return states as unknown as Array<
-  'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
+    'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'
   >;
 };

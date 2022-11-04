@@ -17,7 +17,6 @@ import torch.distributed as dist
 
 import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
-from determined.common import check
 from determined.horovod import hvd
 from determined.util import has_param
 
@@ -33,8 +32,9 @@ class PyTorchTrialController(det.TrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        check.is_instance(trial_inst, PyTorchTrial, "PyTorchTrialController needs an PyTorchTrial")
-        self.trial = cast(PyTorchTrial, trial_inst)
+        if not isinstance(trial_inst, PyTorchTrial):
+            raise TypeError("PyTorchTrialController requires a PyTorchTrial.")
+        self.trial = trial_inst
         self.context = cast(pytorch.PyTorchTrialContext, self.context)
         self.context._set_determined_profiler(self.prof)
         if torch.cuda.is_available():
@@ -44,22 +44,20 @@ class PyTorchTrialController(det.TrialController):
             if util.is_overridden(callback.on_checkpoint_end, pytorch.PyTorchCallback):
                 warnings.warn(
                     "The on_checkpoint_end callback is deprecated, please use "
-                    "on_checkpoint_write_end instead",
+                    "on_checkpoint_write_end instead.",
                     FutureWarning,
                 )
 
-        check.gt_eq(
-            len(self.context.models),
-            1,
-            "Must have at least one model. "
-            "This might be caused by not wrapping your model with wrap_model()",
-        )
-        check.gt_eq(
-            len(self.context.optimizers),
-            1,
-            "Must have at least one optimizer. "
-            "This might be caused by not wrapping your optimizer with wrap_optimizer()",
-        )
+        if len(self.context.models) == 0:
+            raise det.errors.InvalidExperimentException(
+                "Must have at least one model. "
+                "This might be caused by not wrapping your model with wrap_model().",
+            )
+        if len(self.context.optimizers) == 0:
+            raise det.errors.InvalidExperimentException(
+                "Must have at least one optimizer. "
+                "This might be caused by not wrapping your optimizer with wrap_optimizer().",
+            )
         self._check_evaluate_implementation()
 
         self.wlsq = None  # type: Optional[layers.WorkloadSequencer]
@@ -135,13 +133,12 @@ class PyTorchTrialController(det.TrialController):
         """
         logging.debug(f"Evaluate_batch_defined: {self._evaluate_batch_defined()}.")
         logging.debug(f"Evaluate full dataset defined: {self._evaluate_full_dataset_defined()}.")
-        check.not_eq(
-            self._evaluate_batch_defined(),
-            self._evaluate_full_dataset_defined(),
-            "Please define exactly one of: `evaluate_batch()` or `evaluate_full_dataset()`. "
-            "For most use cases `evaluate_batch()` is recommended because "
-            "it can be parallelized across all devices.",
-        )
+        if self._evaluate_batch_defined() == self._evaluate_full_dataset_defined():
+            raise det.errors.InvalidExperimentException(
+                "Please define exactly one of: `evaluate_batch()` or `evaluate_full_dataset()`. "
+                "For most use cases `evaluate_batch()` is recommended because "
+                "it can be parallelized across all devices.",
+            )
 
     def _evaluate_batch_defined(self) -> bool:
         return util.is_overridden(self.trial.evaluate_batch, PyTorchTrial)
@@ -374,15 +371,12 @@ class PyTorchTrialController(det.TrialController):
     def _should_update_scaler(self) -> bool:
         if not self.context._scaler or not self.context.experimental._auto_amp:
             return False
-        if self.context.distributed.size > 1:
-            return self.context._should_communicate_and_update()  # type: ignore
-        return True
+        return self.context._should_communicate_and_update()  # type: ignore
 
     def _train_for_step(
         self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Metrics:
         self.prof.set_training(True)
-        check.gt(step_id, 0)
         step_start_time = time.time()
         self.context.reset_reducers()
 
@@ -454,12 +448,11 @@ class PyTorchTrialController(det.TrialController):
                 self.context._scaler.update()
             if isinstance(tr_metrics, torch.Tensor):
                 tr_metrics = {"loss": tr_metrics}
-            check.is_instance(
-                tr_metrics,
-                dict,
-                "train_batch() must return a dictionary "
-                f"mapping string names to Tensor metrics, got {type(tr_metrics)}",
-            )
+            if not isinstance(tr_metrics, dict):
+                raise TypeError(
+                    "train_batch() must return a dictionary "
+                    f"mapping string names to Tensor metrics, got {type(tr_metrics)}.",
+                )
 
             # Step learning rate of a pytorch.LRScheduler.
             with self.prof.record_timing("step_lr_schedulers"):
@@ -545,8 +538,9 @@ class PyTorchTrialController(det.TrialController):
             keys = None
             batch_metrics = []
 
-            self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
-            check.gt(len(self.validation_loader), 0)
+            assert isinstance(self.validation_loader, torch.utils.data.DataLoader)
+            if len(self.validation_loader) == 0:
+                raise RuntimeError("validation_loader is empty.")
             for callback in self.callbacks.values():
                 callback.on_validation_epoch_start()
             for idx, batch in enumerate(self.validation_loader):
@@ -562,18 +556,18 @@ class PyTorchTrialController(det.TrialController):
                 if keys is None:
                     keys = vld_metrics.keys()
                 else:
-                    check.eq(
-                        keys,
-                        vld_metrics.keys(),
-                        "Validation metric names must match across all batches of data.",
+                    if keys != vld_metrics.keys():
+                        raise ValueError(
+                            "Validation metric names must match across all batches of data: "
+                            f"{keys} != {vld_metrics.keys()}.",
+                        )
+                if not isinstance(vld_metrics, dict):
+                    raise TypeError(
+                        "validation_metrics() must return a "
+                        "dictionary of string names to Tensor "
+                        "metrics; "
+                        f"got {vld_metrics}.",
                     )
-                check.is_instance(
-                    vld_metrics,
-                    dict,
-                    "validation_metrics() must return a "
-                    "dictionary of string names to Tensor "
-                    "metrics",
-                )
                 # TODO: For performance perform -> cpu() only at the end of validation.
                 batch_metrics.append(pytorch._convert_metrics_to_numpy(vld_metrics))
                 if self.env.test_mode:
@@ -599,14 +593,15 @@ class PyTorchTrialController(det.TrialController):
                 num_inputs, num_batches = [sum(n) for n in zip(*input_counts)]
 
         else:
-            check.true(self._evaluate_full_dataset_defined())
+            assert self._evaluate_full_dataset_defined(), "evaluate_full_dataset not defined."
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             if self.is_chief:
                 metrics = self.trial.evaluate_full_dataset(data_loader=self.validation_loader)
 
-                check.is_instance(
-                    metrics, dict, f"eval() must return a dictionary, got {type(metrics)}."
-                )
+                if not isinstance(metrics, dict):
+                    raise TypeError(
+                        f"eval() must return a dictionary, got {type(metrics).__name__}."
+                    )
 
                 metrics = pytorch._convert_metrics_to_numpy(metrics)
                 num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)
@@ -624,7 +619,7 @@ class PyTorchTrialController(det.TrialController):
                 "Broadcasting metrics to all worker processes to execute a "
                 "validation step end callback"
             )
-            metrics = hvd.broadcast_object(metrics, root_rank=0)
+            metrics = self.context.distributed.broadcast(metrics)
 
         for callback in self.callbacks.values():
             if util.is_overridden(callback.on_validation_step_end, pytorch.PyTorchCallback):
@@ -650,8 +645,8 @@ class PyTorchTrialController(det.TrialController):
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
     def _load(self, load_path: pathlib.Path) -> None:
-        # Backwards compat with older checkpoint formats. List is newest to
-        # oldest known state_dict locations.
+        # Backwards compat with older checkpoint formats. List is of the newest to
+        # the oldest known state_dict locations.
         potential_paths = [
             ["state_dict.pth"],
             ["determined", "state_dict.pth"],
@@ -673,8 +668,13 @@ class PyTorchTrialController(det.TrialController):
 
         if "model_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
-            check.not_in("models_state_dict", checkpoint)
-            check.eq(len(self.context.models), 1)
+            if "models_state_dict" in checkpoint:
+                raise RuntimeError("Both model_state_dict and models_state_dict in checkpoint.")
+            if len(self.context.models) > 1:
+                raise RuntimeError(
+                    "Old-format checkpoint cannot be loaded into a context with more than one "
+                    "model."
+                )
             self.context.models[0].load_state_dict(checkpoint["model_state_dict"])
         else:
             for idx, model in enumerate(self.context.models):
@@ -688,7 +688,7 @@ class PyTorchTrialController(det.TrialController):
                         logging.debug("Loading non-DDP checkpoint into a DDP model")
                         self._add_prefix_in_state_dict_if_not_present(model_state_dict, "module.")
                     else:
-                        # If the checkpointed model is DDP and we are currently running in
+                        # If the checkpointed model is DDP and if we are currently running in
                         # single-slot mode, remove the module prefix from checkpointed data
                         logging.debug("Loading DDP checkpoint into a non-DDP model")
                         torch.nn.modules.utils.consume_prefix_in_state_dict_if_present(
@@ -698,8 +698,15 @@ class PyTorchTrialController(det.TrialController):
 
         if "optimizer_state_dict" in checkpoint:
             # Backward compatible with older checkpoint format.
-            check.not_in("optimizers_state_dict", checkpoint)
-            check.eq(len(self.context.optimizers), 1)
+            if "optimizers_state_dict" in checkpoint:
+                raise RuntimeError(
+                    "Both optimizer_state_dict and optimizers_state_dict in checkpoint."
+                )
+            if len(self.context.optimizers) > 1:
+                raise RuntimeError(
+                    "Old-format checkpoint cannot be loaded into a context with more than one "
+                    "optimizer."
+                )
             self.context.optimizers[0].load_state_dict(checkpoint["optimizer_state_dict"])
         else:
             for idx, optimizer in enumerate(self.context.optimizers):
@@ -707,8 +714,13 @@ class PyTorchTrialController(det.TrialController):
 
         if "lr_scheduler" in checkpoint:
             # Backward compatible with older checkpoint format.
-            check.not_in("lr_schedulers_state_dict", checkpoint)
-            check.eq(len(self.context.lr_schedulers), 1)
+            if "lr_schedulers_state_dict" in checkpoint:
+                raise RuntimeError("Both lr_scheduler and lr_schedulers_state_dict in checkpoint.")
+            if len(self.context.lr_schedulers) > 1:
+                raise RuntimeError(
+                    "Old-format checkpoint cannot be loaded into a context with more than one LR "
+                    "scheduler."
+                )
             self.context.lr_schedulers[0].load_state_dict(checkpoint["lr_scheduler"])
         else:
             for idx, lr_scheduler in enumerate(self.context.lr_schedulers):
@@ -924,12 +936,12 @@ class PyTorchTrial(det.Trial):
 
         .. warning::
 
-           You might see significantly different metrics for trials which are paused and later
-           continued than trials which are not paused if some of your models, optimizers, and
-           learning rate schedulers are not wrapped. The reason is that the model's state might
-           not be restored accurately or completely from the checkpoint, which is saved to a
-           checkpoint and then later loaded into the trial during resuming training. When using
-           PyTorch, this can sometimes happen if the PyTorch API is not used correctly.
+           You may see metrics for trials that are paused and later continued that are significantly
+           different from trials that are not paused if some of your models, optimizers, and
+           learning rate schedulers are not wrapped. The reason is that the model's state may not be
+           restored accurately or completely from the checkpoint, which is saved to a checkpoint and
+           then later loaded into the trial during resumed training. When using PyTorch, this can
+           sometimes happen if the PyTorch API is not used correctly.
 
         Here is a code example.
 

@@ -1160,19 +1160,11 @@
     },
     "horizontal_flip": {
       "type": "categorical",
-      "vals": [
-        true,
-        false
-      ]
+      "vals": [true, false]
     },
     "n_filter": {
       "type": "categorical",
-      "vals": [
-        8,
-        16,
-        32,
-        64
-      ]
+      "vals": [8, 16, 32, 64]
     },
     "layer1_dropout": {
       "count": null,
@@ -1810,25 +1802,11 @@
     },
     "node1_edge": {
       "type": "categorical",
-      "vals": [
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1
-      ]
+      "vals": [1, 1, 1, 1, 1, 1, 1, 1]
     },
     "node1_op": {
       "type": "categorical",
-      "vals": [
-        "tanh",
-        "relu",
-        "sigmoid",
-        "identity"
-      ]
+      "vals": ["tanh", "relu", "sigmoid", "identity"]
     },
     "nonmono": {
       "type": "const",
@@ -2968,13 +2946,7 @@
     },
     "normal_node1_edge1": {
       "type": "categorical",
-      "vals": [
-        1,
-        1,
-        1,
-        1,
-        1
-      ]
+      "vals": [1, 1, 1, 1, 1]
     },
     "normal_node1_edge1_op": {
       "type": "categorical",
@@ -2990,13 +2962,7 @@
     },
     "reduce_node1_edge1": {
       "type": "categorical",
-      "vals": [
-        1,
-        1,
-        1,
-        1,
-        1
-      ]
+      "vals": [1, 1, 1, 1, 1]
     },
     "reduce_node1_edge1_op": {
       "type": "categorical",

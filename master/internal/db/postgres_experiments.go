@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -56,7 +57,7 @@ func (db *PgDB) ProjectExperiments(id int) (experiments []*model.Experiment, err
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 	   git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-		 job_id, u.username as username
+		 job_id, u.username as username, project_id
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.project_id = $1`, id)
@@ -508,7 +509,7 @@ FROM trials t
 WHERE t.id=$2
   AND s.state = 'COMPLETED'
   AND total_batches >= $3
-  AND total_batches <= $4
+  AND ($4 <= 0 OR total_batches <= $4)
   AND s.end_time > $5
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
@@ -536,7 +537,7 @@ JOIN validations v ON t.id = v.trial_id
 WHERE t.id=$2
   AND v.state = 'COMPLETED'
   AND v.total_batches >= $3
-  AND v.total_batches <= $4
+  AND ($4 <= 0 OR v.total_batches <= $4)
   AND v.end_time > $5
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
@@ -928,6 +929,27 @@ WHERE t.id = $1`, &experiment, id); err != nil {
 	return &experiment, nil
 }
 
+// ExperimentWithoutConfigByTaskID looks up an experiment by a given taskID, returning an error
+// if none exists. It loads the experiment without its configuration, for callers that do not need
+// it, or can't handle backwards incompatible changes.
+func ExperimentWithoutConfigByTaskID(
+	ctx context.Context, taskID model.TaskID,
+) (*model.Experiment, error) {
+	var experiment model.Experiment
+	if err := Bun().NewRaw(`
+SELECT e.id, e.state, e.model_definition AS model_definition_bytes, e.start_time, e.end_time,
+       e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id,
+       e.notes, e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON e.owner_id = u.id
+WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
 // ExperimentIDByTrialID looks up an experiment ID by a trial ID.
 func (db *PgDB) ExperimentIDByTrialID(trialID int) (int, error) {
 	var experimentID int
@@ -944,7 +966,7 @@ func (db *PgDB) NonTerminalExperiments() ([]*model.Experiment, error) {
 	rows, err := db.sql.Queryx(`
 SELECT e.id, state, config, model_definition, start_time, end_time, archived,
        git_remote, git_commit, git_committer, git_commit_date, owner_id, job_id,
-			 u.username as username
+       u.username as username, project_id
 FROM experiments e
 JOIN users u ON e.owner_id = u.id
 WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', 'STOPPING_ERROR')`)
@@ -960,16 +982,25 @@ WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', '
 	for rows.Next() {
 		var exp model.Experiment
 		if err := rows.StructScan(&exp); err != nil {
+			// Log this error, but try to figure out the experiment ID first.
+			configErr := err
+
 			items, err := rows.SliceScan()
 			if err != nil {
+				log.WithError(configErr).Errorf("failed to read non-terminal experiment config")
 				return nil, errors.Wrap(err, "unable to read experiment from db")
 			}
 
 			expID, ok := items[0].(int64)
 			if !ok {
+				log.WithError(configErr).Errorf("failed to read non-terminal experiment config")
 				return nil, errors.Errorf(
 					"Expected an integer experiment ID, but got: %s", reflect.TypeOf(items[0]))
 			}
+
+			log.WithError(configErr).Errorf(
+				"failed to read non-terminal experiment config for experiment %v", expID,
+			)
 
 			err = db.TerminateExperimentInRestart(int(expID), model.ErrorState)
 			if err != nil {

@@ -16,20 +16,20 @@ interface Props {
 }
 
 const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave }: Props) => {
-  const [ isEditing, setIsEditing ] = useState(false);
-  const [ isLoading, setIsLoading ] = useState(false);
-  const [ editedMetadata, setEditedMetadata ] = useState<Metadata>(metadata ?? {});
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editedMetadata, setEditedMetadata] = useState<Metadata>(metadata ?? {});
 
   const metadataArray = useMemo(() => {
-    return Object.entries(metadata ?? {}).map(([ key, value ]) => {
-      return ({ content: value, label: key });
+    return Object.entries(metadata ?? {}).map(([key, value]) => {
+      return { content: value, label: key };
     });
-  }, [ metadata ]);
+  }, [metadata]);
 
   const editMetadata = useCallback(() => {
     if (disabled) return;
     setIsEditing(true);
-  }, [ disabled ]);
+  }, [disabled]);
 
   const saveMetadata = useCallback(async () => {
     try {
@@ -44,7 +44,7 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
       });
     }
     setIsLoading(false);
-  }, [ editedMetadata, onSave ]);
+  }, [editedMetadata, onSave]);
 
   const cancelEditMetadata = useCallback(() => {
     setIsEditing(false);
@@ -52,23 +52,29 @@ const MetadataCard: React.FC<Props> = ({ disabled = false, metadata = {}, onSave
 
   const showPlaceholder = useMemo(() => {
     return metadataArray.length === 0 && !isEditing;
-  }, [ isEditing, metadataArray.length ]);
+  }, [isEditing, metadataArray.length]);
 
   return (
     <Card
       bodyStyle={{ padding: '16px' }}
-      extra={isEditing ? (
-        <Space size="small">
-          <Button size="small" onClick={cancelEditMetadata}>Cancel</Button>
-          <Button size="small" type="primary" onClick={saveMetadata}>Save</Button>
-        </Space>
-      ) : (
-        disabled || (
-          <Tooltip title="Edit">
-            <EditOutlined onClick={editMetadata} />
-          </Tooltip>
+      extra={
+        isEditing ? (
+          <Space size="small">
+            <Button size="small" onClick={cancelEditMetadata}>
+              Cancel
+            </Button>
+            <Button size="small" type="primary" onClick={saveMetadata}>
+              Save
+            </Button>
+          </Space>
+        ) : (
+          disabled || (
+            <Tooltip title="Edit">
+              <EditOutlined onClick={editMetadata} />
+            </Tooltip>
+          )
         )
-      )}
+      }
       headStyle={{ paddingInline: '16px' }}
       title={'Metadata'}>
       {showPlaceholder ? (

@@ -4,10 +4,10 @@ Description: Determined Template
 Mappings:
   RegionMap:
     us-gov-east-1:
-      Master: ami-03106245b0320c1b6
+      Master: ami-0b36c558c9dd26c75
       Agent: ami-0b71e56244b8ac1cb
     us-gov-west-1:
-      Master: ami-06bc7677241f6bdeb
+      Master: ami-0f1289f37e46c1eff
       Agent: ami-0d26002529bfac823
 Parameters:
   Keypair:
@@ -47,7 +47,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.19.3-dev0
+    Default: 0.19.7-dev0
 
   DBPassword:
     Type: String
@@ -621,6 +621,7 @@ Resources:
                 ssh_key_name: ${Keypair}
                 tag_key: det-${AWS::StackName}
                 tag_value: det-agent-${AWS::StackName}
+                agent_config_file_contents: ${AgentConfigFileContents}
 
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}

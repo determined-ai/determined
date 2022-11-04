@@ -5,10 +5,10 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import PageMessage from 'components/PageMessage';
 import { terminalCommandStates } from 'constants/states';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { serverAddress } from 'routes/utils';
 import { getTask } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { CommandState } from 'types';
@@ -17,10 +17,10 @@ import { WaitStatus } from 'utils/wait';
 
 import css from './Wait.module.scss';
 
-interface Params {
+type Params = {
   taskId: string;
   taskType: string;
-}
+};
 
 interface Queries {
   eventUrl?: string;
@@ -28,12 +28,14 @@ interface Queries {
 }
 
 const Wait: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
+  const {
+    actions: { showChrome, hideChrome },
+  } = useUI();
   const { taskType } = useParams<Params>();
-  const [ waitStatus, setWaitStatus ] = useState<WaitStatus>();
+  const [waitStatus, setWaitStatus] = useState<WaitStatus>();
   const { eventUrl, serviceAddr }: Queries = queryString.parse(location.search);
 
-  const capitalizedTaskType = capitalize(taskType);
+  const capitalizedTaskType = capitalize(taskType ?? '');
   const isLoading = !waitStatus || !terminalCommandStates.has(waitStatus.state);
 
   let message = `Waiting for ${capitalizedTaskType} ...`;
@@ -41,17 +43,22 @@ const Wait: React.FC = () => {
     message = 'Missing required parameters.';
   } else if (waitStatus && terminalCommandStates.has(waitStatus.state)) {
     message = `${capitalizedTaskType} has been terminated.`;
+  } else if (
+    capitalizedTaskType === 'Tensor-board' &&
+    waitStatus &&
+    waitStatus?.state === CommandState.Waiting
+  ) {
+    message = `Waiting for ${capitalizedTaskType} metrics step to be completed.`;
   }
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.HideUIChrome });
-    return () => storeDispatch({ type: StoreAction.ShowUIChrome });
-  }, [ storeDispatch ]);
+    hideChrome();
+    return showChrome;
+  }, [hideChrome, showChrome]);
 
-  const handleTaskError = (err: Error) => {
-    handleError({
-      error: err,
-      message: 'failed while waiting for command to be ready',
+  const handleTaskError = (e: Error) => {
+    handleError(e, {
+      publicMessage: 'Failed while waiting for command to be ready',
       silent: false,
       type: ErrorType.Server,
     });
@@ -70,7 +77,7 @@ const Wait: React.FC = () => {
         if (!lastRun) {
           return;
         }
-        if ([ CommandState.Terminated ].includes(lastRun.state)) {
+        if (CommandState.Terminated === lastRun.state) {
           clearInterval(ival);
         } else if (lastRun.isReady) {
           clearInterval(ival);
@@ -81,7 +88,7 @@ const Wait: React.FC = () => {
         handleTaskError(e as Error);
       }
     }, 1000);
-  }, [ eventUrl, serviceAddr ]);
+  }, [eventUrl, serviceAddr]);
 
   return (
     <PageMessage title={capitalizedTaskType}>

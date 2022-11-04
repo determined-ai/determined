@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: row;
     gap: 6px;
-    
+
     .column {
       flex-basis: 50%;
 
@@ -25,7 +25,7 @@
       .listContainer {
         border: solid var(--theme-stroke-width) var(--theme-surface-border);
         border-radius: var(--theme-border-radius);
-          
+
         ul {
           height: 200px;
           list-style-type: none;
@@ -49,7 +49,7 @@
         }
       }
       button {
-        padding: 6px
+        padding: 6px;
       }
     }
   }

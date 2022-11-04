@@ -68,7 +68,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
             # higher-priority task bumping us off the cluster, or for a user pausing
             # the experiment via the WebUI or CLI.
             if core_context.preempt.should_preempt():
-                # At this point, a checkpoint ws just saved, so training can exit
+                # At this point, a checkpoint was just saved, so training can exit
                 # immediately and resume when the trial is reactivated.
                 return
 

@@ -2,7 +2,10 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { clone } from 'shared/utils/data';
 
-enum ActionType { Reset, Set }
+const ActionType = {
+  Reset: 0,
+  Set: 1,
+} as const;
 
 interface Options<T, A> {
   initialState: T;
@@ -11,8 +14,8 @@ interface Options<T, A> {
 }
 
 type Action<T> =
-| { type: ActionType.Reset; value: T }
-| { type: ActionType.Set; value: T }
+  | { type: typeof ActionType.Reset; value: T }
+  | { type: typeof ActionType.Set; value: T };
 
 type Export<T, A> = {
   ActionType: typeof ActionType;
@@ -51,20 +54,16 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
   const reducer = options.reducer || defaultReducer;
 
   interface Props {
-    children?: React.ReactNode
+    children?: React.ReactNode;
   }
 
   const Provider: React.FC<Props> = (props: Props) => {
-    const [ state, dispatch ] = useReducer(reducer, initialState);
+    const [state, dispatch] = useReducer(reducer, initialState);
 
     return React.createElement(
       StateContext.Provider,
       { value: state },
-      React.createElement(
-        ActionContext.Provider,
-        { value: dispatch },
-        props.children,
-      ),
+      React.createElement(ActionContext.Provider, { value: dispatch }, props.children),
     );
   };
 
@@ -76,10 +75,6 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
       'useActionContext',
       ActionContext,
     ),
-    useStateContext: generateContextHook<T>(
-      options.name,
-      'useStateContext',
-      StateContext,
-    ),
+    useStateContext: generateContextHook<T>(options.name, 'useStateContext', StateContext),
   };
 };

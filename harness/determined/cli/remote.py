@@ -9,25 +9,25 @@ from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
-from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, launch_command, parse_config
-
 
 @authentication.required
 def run_command(args: Namespace) -> None:
-    config = parse_config(args.config_file, args.entrypoint, args.config, args.volume)
-    resp = launch_command(
+    config = command.parse_config(args.config_file, args.entrypoint, args.config, args.volume)
+    resp = command.launch_command(
         args.master,
         "api/v1/commands",
         config,
         args.template,
         context_path=args.context,
+        includes=args.include,
     )["command"]
 
     if args.detach:
         print(resp["id"])
         return
 
-    api.pprint_task_logs(args.master, resp["id"], follow=True)
+    logs = api.task_logs(cli.setup_session(args), resp["id"], follow=True)
+    api.pprint_task_logs(resp["id"], logs)
 
 
 # fmt: off
@@ -51,9 +51,17 @@ args_description = [
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
             Arg("-v", "--volume", action="append", default=[],
-                help=VOLUME_DESC),
-            Arg("-c", "--context", default=None, type=Path, help=CONTEXT_DESC),
-            Arg("--config", action="append", default=[], help=CONFIG_DESC),
+                help=command.VOLUME_DESC),
+            Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+            Arg(
+                "-i",
+                "--include",
+                default=[],
+                action="append",
+                type=Path,
+                help=command.INCLUDE_DESC
+            ),
+            Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
             Arg("--template", type=str,
                 help="name of template to apply to the command configuration"),
             Arg("-d", "--detach", action="store_true",

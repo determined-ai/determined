@@ -1,0 +1,5 @@
+# .git-blame-ignore-revs
+# Format code with Prettier in web
+85396ebc4f0ec95c6b4ef9625061c92fa324cdce
+# chore: migrate shared-web to subtree (#4402)
+0505422648e7f98aa25495b4cc525cd776a87840

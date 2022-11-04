@@ -9,24 +9,24 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
-import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
-import { MetricContainer, MetricName, Scale } from 'types';
+import { Metric, MetricContainer, Scale } from 'types';
 
 interface Props {
-  defaultMetricNames: MetricName[];
+  defaultMetricNames: Metric[];
   id?: string;
-  metricNames: MetricName[];
-  metrics: MetricName[];
-  onMetricChange: (value: MetricName[]) => void;
+  metricNames: Metric[];
+  metrics: Metric[];
+  onMetricChange: (value: Metric[]) => void;
   trialId?: number;
   trialTerminated: boolean;
 }
 
-const getChartMetricLabel = (metric: MetricName): string => {
+const getChartMetricLabel = (metric: Metric): string => {
   if (metric.type === 'training') return `[T] ${metric.name}`;
   if (metric.type === 'validation') return `[V] ${metric.name}`;
   return metric.name;
@@ -40,8 +40,8 @@ const TrialChart: React.FC<Props> = ({
   trialId,
   trialTerminated,
 }: Props) => {
-  const [ scale, setScale ] = useState<Scale>(Scale.Linear);
-  const [ trialSumm, setTrialSummary ] = useState<MetricContainer[]>([]);
+  const [scale, setScale] = useState<Scale>(Scale.Linear);
+  const [trialSumm, setTrialSummary] = useState<MetricContainer[]>([]);
 
   const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
@@ -50,18 +50,30 @@ const TrialChart: React.FC<Props> = ({
         metricNames: metricNames,
         scale: scale,
         startBatches: 0,
-        trialIds: [ trialId ],
+        trialIds: [trialId],
       });
       setTrialSummary(summ[0].metrics);
     }
-  }, [ metricNames, scale, trialId ]);
+  }, [metricNames, scale, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
+
   useEffect(() => {
     if (trialTerminated) {
       stopPolling();
     }
-  }, [ trialTerminated, stopPolling ]);
+  }, [trialTerminated, stopPolling]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setScale(Scale.Linear);
+      setTrialSummary([]);
+    };
+  }, [stopPolling]);
+
   if (trialTerminated) {
     stopPolling();
   }
@@ -73,8 +85,9 @@ const TrialChart: React.FC<Props> = ({
     metrics.forEach((metric, index) => {
       yValues[index] = {};
 
-      const mWrapper = trialSumm.find((mContainer) =>
-        mContainer.name === metric.name && mContainer.type === metric.type);
+      const mWrapper = trialSumm.find(
+        (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
+      );
       if (!mWrapper || !mWrapper.data) {
         return;
       }
@@ -90,11 +103,11 @@ const TrialChart: React.FC<Props> = ({
     xValues.sort((a, b) => a - b);
 
     const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
-      return xValues.map((xValue) => yValue[xValue] != null ? yValue[xValue] : null);
+      return xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null));
     });
 
-    return [ xValues, ...yValuesArray ];
-  }, [ metrics, trialSumm ]);
+    return [xValues, ...yValuesArray];
+  }, [metrics, trialSumm]);
 
   const chartOptions: Options = useMemo(() => {
     return {
@@ -105,7 +118,7 @@ const TrialChart: React.FC<Props> = ({
       height: 400,
       key: trialId,
       legend: { show: false },
-      plugins: [ tooltipsPlugin(), trackAxis() ],
+      plugins: [tooltipsPlugin(), trackAxis()],
       scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
       series: [
         { label: 'Batch' },
@@ -117,13 +130,13 @@ const TrialChart: React.FC<Props> = ({
         })),
       ],
     };
-  }, [ metrics, scale, trialId ]);
+  }, [metrics, scale, trialId]);
 
   const options = (
     <ResponsiveFilters>
       <MetricSelectFilter
-        defaultMetricNames={defaultMetricNames}
-        metricNames={metricNames}
+        defaultMetrics={defaultMetricNames}
+        metrics={metricNames}
         multiple
         value={metrics}
         onChange={onMetricChange}
@@ -137,11 +150,11 @@ const TrialChart: React.FC<Props> = ({
       <div className={css.base}>
         {
           <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
-            {
-              chartData[0].length === 0
-                ? <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                : <UPlotChart data={chartData} options={chartOptions} />
-            }
+            {chartData[0].length === 0 ? (
+              <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            ) : (
+              <UPlotChart data={chartData} options={chartOptions} />
+            )}
           </Spinner>
         }
       </div>

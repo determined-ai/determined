@@ -1,9 +1,10 @@
 import { EditOutlined } from '@ant-design/icons';
 import { Button, Card, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Prompt, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 import Spinner from 'shared/components/Spinner/Spinner';
+import history from 'shared/routes/history';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
@@ -23,45 +24,68 @@ interface Props {
   title?: string;
 }
 
-const NotesCard: React.FC<Props> = (
-  {
-    disabled = false,
-    notes,
-    onSave,
-    onSaveTitle,
-    style,
-    title = 'Notes',
-    extra,
-    onChange,
-    noteChangeSignal,
-  }: Props,
-) => {
-  const [ isEditing, setIsEditing ] = useState(false);
-  const [ isLoading, setIsLoading ] = useState(false);
-  const [ editedNotes, setEditedNotes ] = useState(notes);
+const NotesCard: React.FC<Props> = ({
+  disabled = false,
+  notes,
+  onSave,
+  onSaveTitle,
+  style,
+  title = 'Notes',
+  extra,
+  onChange,
+  noteChangeSignal,
+}: Props) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editedNotes, setEditedNotes] = useState(notes);
   const location = useLocation();
 
   const existingNotes = useRef(notes);
 
   useEffect(() => {
     existingNotes.current = notes;
-  }, [ notes ]);
+  }, [notes]);
 
   useEffect(() => {
     setIsEditing(false);
     setIsLoading(false);
     setEditedNotes(existingNotes.current);
-  }, [ noteChangeSignal ]);
+  }, [noteChangeSignal]);
+
+  useEffect(() => {
+    // TODO: This is an alternative of Prompt from react-router-dom
+    // As soon as react-router-domv6 supports Prompt, replace this with Promt
+    const unblock = isEditing
+      ? history.block((tx) => {
+          const pathnames = ['notes', 'models', 'projects'];
+          let isAllowedNavigation = true;
+
+          // check pathname if one of these names is included
+          if (pathnames.some((name) => location.pathname.includes(name)) && notes !== editedNotes) {
+            isAllowedNavigation = window.confirm(
+              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.',
+            );
+          }
+          if (isAllowedNavigation) {
+            unblock();
+            tx.retry();
+          }
+          return isAllowedNavigation;
+        })
+      : () => undefined;
+
+    return () => unblock();
+  }, [editedNotes, isEditing, location.pathname, notes]);
 
   const editNotes = useCallback(() => {
     if (disabled) return;
     setIsEditing(true);
-  }, [ disabled ]);
+  }, [disabled]);
 
   const cancelEdit = useCallback(() => {
     setIsEditing(false);
     setEditedNotes(notes);
-  }, [ notes ]);
+  }, [notes]);
 
   const saveNotes = useCallback(async () => {
     try {
@@ -76,21 +100,27 @@ const NotesCard: React.FC<Props> = (
       });
     }
     setIsLoading(false);
-  }, [ editedNotes, onSave ]);
+  }, [editedNotes, onSave]);
 
-  const handleEditedNotes = useCallback((newNotes: string) => {
-    setEditedNotes(newNotes);
-    onChange?.(newNotes);
-  }, [ onChange ]);
+  const handleEditedNotes = useCallback(
+    (newNotes: string) => {
+      setEditedNotes(newNotes);
+      onChange?.(newNotes);
+    },
+    [onChange],
+  );
 
-  const handleNotesClick = useCallback((e: React.MouseEvent) => {
-    if (e.detail > 1 || notes === '') editNotes();
-  }, [ editNotes, notes ]);
+  const handleNotesClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.detail > 1 || notes === '') editNotes();
+    },
+    [editNotes, notes],
+  );
 
   useEffect(() => {
     setEditedNotes(notes);
     setIsEditing(false);
-  }, [ notes ]);
+  }, [notes]);
 
   return (
     <Card
@@ -101,24 +131,30 @@ const NotesCard: React.FC<Props> = (
         padding: 0,
       }}
       className={css.base}
-      extra={isEditing ? (
-        <Space size="small">
-          <Button size="small" onClick={cancelEdit}>Cancel</Button>
-          <Button size="small" type="primary" onClick={saveNotes}>Save</Button>
-        </Space>
-      ) : (
-        disabled || (
-          <Space size="middle">
-            <Tooltip title="Edit">
-              <EditOutlined onClick={editNotes} />
-            </Tooltip>
-            {extra}
+      extra={
+        isEditing ? (
+          <Space size="small">
+            <Button size="small" onClick={cancelEdit}>
+              Cancel
+            </Button>
+            <Button size="small" type="primary" onClick={saveNotes}>
+              Save
+            </Button>
           </Space>
+        ) : (
+          disabled || (
+            <Space size="middle">
+              <Tooltip title="Edit">
+                <EditOutlined onClick={editNotes} />
+              </Tooltip>
+              {extra}
+            </Space>
+          )
         )
-      )}
+      }
       headStyle={{ minHeight: 'fit-content', paddingInline: '16px' }}
       style={{ height: isEditing ? '500px' : '100%', ...style }}
-      title={(
+      title={
         <InlineEditor
           disabled={!onSaveTitle || disabled}
           focusSignal={noteChangeSignal}
@@ -126,27 +162,16 @@ const NotesCard: React.FC<Props> = (
           value={title}
           onSave={onSaveTitle}
         />
-      )}>
+      }>
       <Spinner spinning={isLoading}>
         <Markdown
+          disabled={disabled}
           editing={isEditing}
           markdown={isEditing ? editedNotes : notes}
           onChange={handleEditedNotes}
           onClick={handleNotesClick}
         />
       </Spinner>
-      <Prompt
-        message={(newLocation) => {
-          const isSameExperiment = location.pathname.split('/')[0] === 'experiment' &&
-             newLocation.pathname.startsWith(location.pathname.split('/').slice(0, -1).join('/'));
-          return (
-            isSameExperiment ?
-              true :
-              'You have unsaved notes, are you sure you want to leave? Unsaved notes will be lost.'
-          );
-        }}
-        when={editedNotes !== notes}
-      />
     </Card>
   );
 };

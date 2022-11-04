@@ -205,6 +205,21 @@ func (r *ActorResourceManager) ExternalPreemptionPending(
 	return r.ask(ctx, msg, nil)
 }
 
+// IsReattachEnabled is a default implementation (not Reattachable).
+func (r *ActorResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
+	return false
+}
+
+// IsReattachableOnlyAfterStarted is a default implementation (true).
+func (r *ActorResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) bool {
+	return true
+}
+
+// IsReattachEnabledForRP is a default implementation for an RP being reattachable (false).
+func (r *ActorResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName string) bool {
+	return false
+}
+
 func (r *ActorResourceManager) tell(ctx actor.Messenger, req interface{}) {
 	ctx.Tell(r.ref, req)
 }

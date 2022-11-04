@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -29,6 +30,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
+	"github.com/determined-ai/determined/proto/pkg/taskv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
@@ -39,6 +41,19 @@ const terminatedDuration = 24 * time.Hour
 // terminateForGC is an internal message indicating that the command actor
 // should stop and garbage collect its state.
 type terminateForGC struct{}
+
+// queueStates are allocation states which the API and UI will show as "Queued".
+var queueStates = []model.AllocationState{
+	model.AllocationStatePending,
+	model.AllocationStateAssigned,
+}
+
+func enrichState(state model.AllocationState) taskv1.State {
+	if slices.Contains(queueStates, state) {
+		return taskv1.State_STATE_QUEUED
+	}
+	return state.Proto()
+}
 
 func createGenericCommandActor(
 	ctx *actor.Context,
@@ -179,7 +194,7 @@ func tryRestoreCommandsByType(
 	taskLogger *task.Logger,
 	taskType model.TaskType,
 ) {
-	if config.IsReattachEnabled() {
+	if rm.IsReattachEnabled(ctx) {
 		err := restoreCommandsByType(ctx, pgDB, rm, taskLogger, taskType)
 		if err != nil {
 			ctx.Log().WithError(err).Warnf("failed to restoreCommandsByType: %s", taskType)
@@ -285,7 +300,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			Group:             ctx.Self(),
 
 			SlotsNeeded:  c.Config.Resources.Slots,
-			Label:        c.Config.Resources.AgentLabel,
+			AgentLabel:   c.Config.Resources.AgentLabel,
 			ResourcePool: c.Config.Resources.ResourcePool,
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: true,
@@ -543,12 +558,14 @@ func (c *command) serviceAddress() string {
 }
 
 func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
-	state := c.refreshAllocationState(ctx)
+	allo := c.refreshAllocationState(ctx)
+	state := enrichState(allo.State)
+
 	return &notebookv1.Notebook{
 		Id:             c.stringID(),
-		State:          state.State.Proto(),
+		State:          state,
 		Description:    c.Config.Description,
-		Container:      state.FirstContainer().ToProto(),
+		Container:      allo.FirstContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:       c.Base.Owner.Username,
@@ -561,12 +578,13 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 }
 
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
-	state := c.refreshAllocationState(ctx)
+	allo := c.refreshAllocationState(ctx)
+	state := enrichState(allo.State)
 	return &commandv1.Command{
 		Id:           c.stringID(),
-		State:        state.State.Proto(),
+		State:        state,
 		Description:  c.Config.Description,
-		Container:    state.FirstContainer().ToProto(),
+		Container:    allo.FirstContainer().ToProto(),
 		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
 		Username:     c.Base.Owner.Username,
 		UserId:       int32(c.Base.Owner.ID),
@@ -578,13 +596,14 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 }
 
 func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
-	state := c.refreshAllocationState(ctx)
+	allo := c.refreshAllocationState(ctx)
+	state := enrichState(allo.State)
 	return &shellv1.Shell{
 		Id:             c.stringID(),
-		State:          state.State.Proto(),
+		State:          state,
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:      state.FirstContainer().ToProto(),
+		Container:      allo.FirstContainer().ToProto(),
 		PrivateKey:     *c.Metadata.PrivateKey,
 		PublicKey:      *c.Metadata.PublicKey,
 		Username:       c.Base.Owner.Username,
@@ -592,20 +611,21 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
-		Addresses:      toProto(state.FirstContainerAddresses()),
+		Addresses:      toProto(allo.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 		JobId:          c.jobID.String(),
 	}
 }
 
 func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
-	state := c.refreshAllocationState(ctx)
+	allo := c.refreshAllocationState(ctx)
+	state := enrichState(allo.State)
 	return &tensorboardv1.Tensorboard{
 		Id:             c.stringID(),
-		State:          state.State.Proto(),
+		State:          state,
 		Description:    c.Config.Description,
 		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:      state.FirstContainer().ToProto(),
+		Container:      allo.FirstContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
 		ExperimentIds:  c.Metadata.ExperimentIDs,
 		TrialIds:       c.Metadata.TrialIDs,

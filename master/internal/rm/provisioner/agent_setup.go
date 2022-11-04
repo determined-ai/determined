@@ -16,6 +16,7 @@ type agentSetupScriptConfig struct {
 	StartupScriptBase64          string
 	ContainerStartupScriptBase64 string
 	MasterCertBase64             string
+	ConfigFileBase64             string
 	SlotType                     device.Type
 	AgentDockerRuntime           string
 	AgentNetwork                 string

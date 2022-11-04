@@ -31,7 +31,8 @@ def follow_experiment_logs(master_url: str, exp_id: int) -> None:
 
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
     print("Following first trial with ID {}".format(first_trial_id))
-    logs.pprint_trial_logs(master_url, first_trial_id, follow=True)
+    tlogs = logs.trial_logs(sess, first_trial_id, follow=True)
+    logs.pprint_trial_logs(first_trial_id, tlogs)
 
 
 def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
@@ -109,7 +110,8 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
         elif exp_state == constants.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = trials[0].id
-            logs.pprint_trial_logs(master_url, trial_id)
+            tlogs = logs.trial_logs(sess, trial_id)
+            logs.pprint_trial_logs(trial_id, tlogs)
             sys.exit(1)
         else:
             print_progress(active_stage, ended=False)

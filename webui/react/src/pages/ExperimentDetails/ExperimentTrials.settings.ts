@@ -1,5 +1,5 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
@@ -41,6 +41,10 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
   totalBatchesProcessed: 74,
 };
 
+export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetExperimentTrialsRequestSortBy => {
+  return Object.values(V1GetExperimentTrialsRequestSortBy).includes(String(sortKey));
+};
+
 export interface Settings extends InteractiveTableSettings {
   columns: TrialColumnName[];
   compare: boolean;
@@ -53,6 +57,7 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: '/trials',
   settings: [
     {
       defaultValue: DEFAULT_COLUMNS,

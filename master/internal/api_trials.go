@@ -54,7 +54,7 @@ var (
 )
 
 func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
-	trialID int, actionFunc func(model.User, *model.Experiment) error,
+	trialID int, actionFunc func(context.Context, model.User, *model.Experiment) error,
 ) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -69,13 +69,13 @@ func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Contex
 		return err
 	}
 	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, exp); err != nil {
+	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
 		return err
 	} else if !ok {
 		return trialNotFound
 	}
 
-	if err = actionFunc(*curUser, exp); err != nil {
+	if err = actionFunc(ctx, *curUser, exp); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	return nil
@@ -91,6 +91,60 @@ type TrialLogBackend interface {
 	TrialLogsCount(trialID int, filters []api.Filter) (int, error)
 	TrialLogsFields(trialID int) (*apiv1.TrialLogsFieldsResponse, error)
 	DeleteTrialLogs(trialIDs []int) error
+}
+
+// Catches information on active running trials.
+type trialAllocation struct {
+	Pulling  bool
+	Running  bool
+	Starting bool
+	Task     model.TaskID
+}
+
+func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
+	// filter allocations by TaskIDs on this page of trials
+	taskFilter := make([]string, 0, len(trials))
+	for _, trial := range trials {
+		taskFilter = append(taskFilter, trial.TaskId)
+	}
+
+	// get active trials by TaskId
+	tasks := []trialAllocation{}
+	err := a.m.db.Query(
+		"aggregate_allocation_state_by_task",
+		&tasks,
+		strings.Join(taskFilter, ","),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Collect state information by TaskID
+	byTaskID := make(map[model.TaskID]experimentv1.State, len(tasks))
+	for _, task := range tasks {
+		switch {
+		case task.Running:
+			byTaskID[task.Task] = experimentv1.State_STATE_RUNNING
+		case task.Starting:
+			byTaskID[task.Task] = experimentv1.State_STATE_STARTING
+		case task.Pulling:
+			byTaskID[task.Task] = experimentv1.State_STATE_PULLING
+		default:
+			byTaskID[task.Task] = experimentv1.State_STATE_QUEUED
+		}
+	}
+
+	// Active trials converted to Queued, Pulling, Starting, or Running
+	for _, trial := range trials {
+		if trial.State == experimentv1.State_STATE_ACTIVE {
+			if setState, ok := byTaskID[model.TaskID(trial.TaskId)]; ok {
+				trial.State = setState
+			} else {
+				trial.State = experimentv1.State_STATE_QUEUED
+			}
+		}
+	}
+	return nil
 }
 
 func (a *apiServer) TrialLogs(
@@ -137,7 +191,6 @@ func (a *apiServer) TrialLogs(
 	case t.LogVersion == model.TaskLogVersion1:
 		// Translate the request.
 		res := make(chan api.BatchResult, taskLogsChanBuffer)
-		// TODO(nick) make a.taskLogs recheck auth.
 		go a.taskLogs(ctx, &apiv1.TaskLogsRequest{
 			TaskId:          string(taskID),
 			Limit:           req.Limit,
@@ -456,8 +509,8 @@ func (a *apiServer) KillTrial(
 
 func (a *apiServer) GetExperimentTrials(
 	ctx context.Context, req *apiv1.GetExperimentTrialsRequest,
-) (*apiv1.GetExperimentTrialsResponse, error) {
-	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
+) (resp *apiv1.GetExperimentTrialsResponse, err error) {
+	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -500,8 +553,8 @@ func (a *apiServer) GetExperimentTrials(
 		orderExpr = fmt.Sprintf("id %s", sortByMap[req.OrderBy])
 	}
 
-	resp := &apiv1.GetExperimentTrialsResponse{}
-	if err := a.m.db.QueryProtof(
+	resp = &apiv1.GetExperimentTrialsResponse{}
+	if err = a.m.db.QueryProtof(
 		"proto_get_trial_ids_for_experiment",
 		[]interface{}{orderExpr},
 		resp,
@@ -525,7 +578,7 @@ func (a *apiServer) GetExperimentTrials(
 		trialIDs = append(trialIDs, trial.Id)
 	}
 
-	switch err := a.m.db.QueryProtof(
+	switch err = a.m.db.QueryProtof(
 		"proto_get_trials_plus",
 		[]any{strings.Join(valuesExpr, ", ")},
 		&resp.Trials,
@@ -535,6 +588,10 @@ func (a *apiServer) GetExperimentTrials(
 		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIDs)
 	case err != nil:
 		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+	}
+
+	if err = a.enrichTrialState(resp.Trials...); err != nil {
+		return nil, err
 	}
 
 	return resp, nil
@@ -558,6 +615,13 @@ func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	); err != nil {
 		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
+
+	if resp.Trial.State == experimentv1.State_STATE_ACTIVE {
+		if err := a.enrichTrialState(resp.Trial); err != nil {
+			return nil, err
+		}
+	}
+
 	return resp, nil
 }
 
@@ -691,7 +755,8 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 
 	sortCode := "total_batches"
 	if req.SortKey != "" && req.SortKey != "batches" {
-		sortCode = fmt.Sprintf("metrics->>'%s'", strings.ReplaceAll(req.SortKey, "'", ""))
+		sortCode = fmt.Sprintf("sort_metrics->'avg_metrics'->>'%s'",
+			strings.ReplaceAll(req.SortKey, "'", ""))
 	}
 
 	switch err := a.m.db.QueryProtof(
@@ -708,6 +773,7 @@ func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWo
 		limit,
 		req.Filter.String(),
 		req.IncludeBatchMetrics,
+		req.MetricType.String(),
 	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d workloads not found:", req.TrialId)
@@ -855,11 +921,14 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	allocationID := model.AllocationID(req.AllocationId)
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
@@ -888,10 +957,13 @@ func (a *apiServer) AllocationPreemptionSignal(
 	}
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AckAllocationPreemptionSignal(
-	_ context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
+	ctx context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
 ) (*apiv1.AckAllocationPreemptionSignalResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	allocationID := model.AllocationID(req.AllocationId)
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
@@ -909,11 +981,14 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 	return &apiv1.AckAllocationPreemptionSignalResponse{}, nil
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationPendingPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPendingPreemptionSignalRequest,
 ) (*apiv1.AllocationPendingPreemptionSignalResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	if err := a.m.rm.ExternalPreemptionPending(
 		a.m.system,
 		sproto.PendingPreemption{AllocationID: model.AllocationID(req.AllocationId)},
@@ -924,11 +999,14 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	return &apiv1.AllocationPendingPreemptionSignalResponse{}, nil
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) MarkAllocationResourcesDaemon(
-	_ context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
+	ctx context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
 ) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
 	allocationID := model.AllocationID(req.AllocationId)
+
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
 		sproto.GetAllocationHandler{ID: allocationID},
@@ -967,8 +1045,8 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 	}
 
 	return &apiv1.GetCurrentTrialSearcherOperationResponse{
-		Op: &experimentv1.SearcherOperation{
-			Union: &experimentv1.SearcherOperation_ValidateAfter{
+		Op: &experimentv1.TrialOperation{
+			Union: &experimentv1.TrialOperation_ValidateAfter{
 				ValidateAfter: resp.Op.ToProto(),
 			},
 		},
@@ -992,7 +1070,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 	if err = a.ask(exp, trialCompleteOperation{
 		requestID: rID,
 		metric:    req.CompletedOperation.SearcherMetric,
-		op:        searcher.ValidateAfterFromProto(rID, req.CompletedOperation.Op),
+		op:        searcher.NewValidateAfter(rID, req.CompletedOperation.Op.Length),
 	}, nil); err != nil {
 		return nil, err
 	}
@@ -1069,11 +1147,11 @@ func (a *apiServer) ReportTrialValidationMetrics(
 	return &apiv1.ReportTrialValidationMetricsResponse{}, nil
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) ReportCheckpoint(
 	ctx context.Context, req *apiv1.ReportCheckpointRequest,
 ) (*apiv1.ReportCheckpointResponse, error) {
-	if err := a.checkTaskExists(model.TaskID(req.Checkpoint.TaskId)); err != nil {
+	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.Checkpoint.TaskId),
+		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
 
@@ -1127,12 +1205,14 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 	return c, nil
 }
 
-// TODO(nick) auth with allocations.
 func (a *apiServer) AllocationRendezvousInfo(
 	ctx context.Context, req *apiv1.AllocationRendezvousInfoRequest,
 ) (*apiv1.AllocationRendezvousInfoResponse, error) {
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
 	}
 
 	allocationID := model.AllocationID(req.AllocationId)
@@ -1180,18 +1260,6 @@ func (a *apiServer) PostTrialRunnerMetadata(
 	}
 
 	return &apiv1.PostTrialRunnerMetadataResponse{}, nil
-}
-
-func (a *apiServer) checkTaskExists(id model.TaskID) error {
-	ok, err := a.m.db.CheckTaskExists(id)
-	switch {
-	case err != nil:
-		return status.Errorf(codes.Internal, "failed to check if task exists: %s", err)
-	case !ok:
-		return status.Errorf(codes.NotFound, "task %s not found", id)
-	default:
-		return nil
-	}
 }
 
 // isTrialTerminalFunc returns an api.TerminationCheckFn that waits for a trial to finish and

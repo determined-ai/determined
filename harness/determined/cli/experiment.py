@@ -133,7 +133,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
 @authentication.required
 def submit_experiment(args: Namespace) -> None:
     experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
-    model_context = context.read_legacy_context(args.model_def)
+    model_context = context.read_legacy_context(args.model_def, args.include)
 
     additional_body_fields = {}
     if args.git:
@@ -470,8 +470,8 @@ def experiment_logs(args: Namespace) -> None:
         return
     first_trial_id = sorted(t_id.id for t_id in trials)[0]
 
-    api.pprint_trial_logs(
-        args.master,
+    logs = api.trial_logs(
+        cli.setup_session(args),
         first_trial_id,
         head=args.head,
         tail=args.tail,
@@ -481,10 +481,11 @@ def experiment_logs(args: Namespace) -> None:
         rank_ids=args.rank_ids,
         sources=args.sources,
         stdtypes=args.stdtypes,
-        level_above=args.level,
+        min_level=args.level,
         timestamp_before=args.timestamp_before,
         timestamp_after=args.timestamp_after,
     )
+    api.pprint_trial_logs(first_trial_id, logs)
 
 
 @authentication.required
@@ -837,7 +838,7 @@ main_cmd = Cmd(
     [
         # Inspection commands.
         Cmd(
-            "list",
+            "list ls",
             list_experiments,
             "list experiments",
             [
@@ -925,6 +926,14 @@ main_cmd = Cmd(
             [
                 Arg("config_file", type=FileType("r"), help="experiment config file (.yaml)"),
                 Arg("model_def", type=Path, help="file or directory containing model definition"),
+                Arg(
+                    "-i",
+                    "--include",
+                    action="append",
+                    default=[],
+                    type=Path,
+                    help="additional files to copy into the task container",
+                ),
                 Arg(
                     "-g",
                     "--git",

@@ -3,46 +3,46 @@ Description:  This template deploys a VPC, with a public and private subnet. It 
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-0986c991cc80c6ad9
-      Agent: ami-00c89d16ea9843add
-      Bastion: ami-0986c991cc80c6ad9
+      Master: ami-09b18720cb71042df
+      Agent: ami-0f9f90f487608fe99
+      Bastion: ami-09b18720cb71042df
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-0565d651769eb3de5
-    #   Agent: ami-0aaf4152512f23ba9
-    #   Bastion: ami-0565d651769eb3de5
+    #   Master: ami-07d16c043aa8e5153
+    #   Agent: ami-07d607bacc01685db
+    #   Bastion: ami-07d16c043aa8e5153
     # ap-southeast-1:
-    #   Master: ami-0eaf04122a1ae7b3b
-    #   Agent: ami-07da7ba3728db537c
-    #   Bastion: ami-0eaf04122a1ae7b3b
+    #   Master: ami-00e912d13fbb4f225
+    #   Agent: ami-00a7448716c007550
+    #   Bastion: ami-00e912d13fbb4f225
     # ap-southeast-2:
-    #   Master: ami-048a2d001938101dd
-    #   Agent: ami-07e10c7acae0b91e7
-    #   Bastion: ami-048a2d001938101dd
+    #   Master: ami-055166f8a8041fbf1
+    #   Agent: ami-0d21deaec03b109ed
+    #   Bastion: ami-055166f8a8041fbf1
     eu-central-1:
-      Master: ami-06cac34c3836ff90b
-      Agent: ami-039f0d443cb78c701
-      Bastion: ami-06cac34c3836ff90b
+      Master: ami-06148e0e81e5187c8
+      Agent: ami-00b8e14625cfffff7
+      Bastion: ami-06148e0e81e5187c8
     eu-west-1:
-      Master: ami-0141514361b6a3c1b
-      Agent: ami-0c6a0bac14a017e63
-      Bastion: ami-0141514361b6a3c1b
+      Master: ami-0fd8802f94ed1c969
+      Agent: ami-0d9b2638b858a0451
+      Bastion: ami-0fd8802f94ed1c969
     # eu-west-2:
-    #   Master: ami-014b642f603e350c3
-    #   Agent: ami-06e4ffddf1cc1f73c
-    #   Bastion: ami-014b642f603e350c3
+    #   Master: ami-04842bc62789b682e
+    #   Agent: ami-08c2f17a10d4b052e
+    #   Bastion: ami-04842bc62789b682e
     us-east-1:
-      Master: ami-0070c5311b7677678
-      Agent: ami-077a7a0cff5c661a7
-      Bastion: ami-0070c5311b7677678
+      Master: ami-0149b2da6ceec4bb0
+      Agent: ami-0b2014aa470f13435
+      Bastion: ami-0149b2da6ceec4bb0
     us-east-2:
-      Master: ami-07f84a50d2dec2fa4
-      Agent: ami-0d263764033434809
-      Bastion: ami-07f84a50d2dec2fa4
+      Master: ami-0d5bf08bc8017c83b
+      Agent: ami-003178452b1145c22
+      Bastion: ami-0d5bf08bc8017c83b
     us-west-2:
-      Master: ami-0aab355e1bfa1e72e
-      Agent: ami-089a4a6ab425591a3
-      Bastion: ami-0aab355e1bfa1e72e
+      Master: ami-0c09c7eb16d3e8e70
+      Agent: ami-0c41987fab4c81bc3
+      Bastion: ami-0c09c7eb16d3e8e70
 
 Parameters:
   VpcCIDR:
@@ -102,7 +102,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.19.3-dev0
+    Default: 0.19.7-dev0
 
   DBPassword:
     Type: String
@@ -827,6 +827,7 @@ Resources:
                 ssh_key_name: ${Keypair}
                 tag_key: det-${AWS::StackName}
                 tag_value: det-agent-${AWS::StackName}
+                agent_config_file_contents: ${AgentConfigFileContents}
 
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}

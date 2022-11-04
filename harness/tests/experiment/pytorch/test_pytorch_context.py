@@ -2,7 +2,6 @@ import pytest
 import torch
 
 from determined import errors, pytorch
-from determined.common import check
 from tests.experiment.fixtures import pytorch_onevar_model
 
 
@@ -28,12 +27,10 @@ class TestPyTorchContext:
                 )
 
         eval_ds = trial.build_validation_data_loader()
-        for batch in eval_ds:
-            metrics = trial.evaluate_batch(batch)
+        for batch_idx, batch in enumerate(eval_ds):
+            _ = trial.evaluate_batch(batch, batch_idx)
 
     def test_average_gradients(self) -> None:
-        with pytest.raises(check.CheckFailedError):
-            self.context._average_gradients(None, 0)
         assert self.context._average_gradients(None, 1) is None
 
     def test_training_not_started(self) -> None:
@@ -50,10 +47,6 @@ class TestPyTorchContext:
             self.context._should_communicate_and_update()
 
     def test_wrap_scaler(self) -> None:
-        if torch.cuda.is_available():
-            scaler = torch.cuda.amp.GradScaler()  # type: ignore # GradScaler.__init__ is untyped
-            assert scaler == self.context.wrap_scaler(scaler)
-            assert scaler == self.context._scaler
-        else:
-            with pytest.raises(check.CheckFailedError):
-                self.context.wrap_scaler(None)
+        scaler = torch.cuda.amp.GradScaler()  # type: ignore # GradScaler.__init__ is untyped
+        assert scaler == self.context.wrap_scaler(scaler)
+        assert scaler == self.context._scaler

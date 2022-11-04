@@ -9,10 +9,7 @@ clean:
 
 .PHONY: get-deps
 get-deps:
-	go install mvdan.cc/gofumpt@v0.3.1
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
-	go install golang.org/x/tools/cmd/goimports@v0.1.5
-	go install github.com/goreleaser/goreleaser@v1.1.0
+	./get-deps.sh
 
 .PHONY: build
 build:
@@ -61,7 +58,7 @@ package: packaging/LICENSE
 
 .PHONY: release
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc" | grep "v$(VERSION)" -A1 | sed -n '2 p')
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release: packaging/LICENSE
 	goreleaser --rm-dist
 

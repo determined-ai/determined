@@ -1,5 +1,5 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { CommandState, CommandType } from 'types';
 
@@ -34,11 +34,29 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TaskColumnName, number> = {
   user: 85,
 };
 
+export const ALL_SORTKEY = [
+  'id',
+  'name',
+  'resourcePool',
+  'startTime',
+  'state',
+  'type',
+  'user',
+] as const;
+
+type SORTKEYTuple = typeof ALL_SORTKEY;
+
+export type SORTKEY = SORTKEYTuple[number];
+
+export const isOfSortKey = (sortKey: React.Key): sortKey is SORTKEY => {
+  return !!ALL_SORTKEY.find((d) => d === String(sortKey));
+};
+
 export interface Settings extends InteractiveTableSettings {
   columns: TaskColumnName[];
   row?: string[];
   search?: string;
-  sortKey: 'id' | 'name' | 'resourcePool' | 'startTime' | 'state' | 'type' | 'user';
+  sortKey: SORTKEY;
   state?: CommandState[];
   type?: CommandType[];
   user?: string[];
@@ -46,7 +64,6 @@ export interface Settings extends InteractiveTableSettings {
 
 const config: SettingsConfig = {
   settings: [
-
     {
       defaultValue: DEFAULT_COLUMNS,
       key: 'columns',

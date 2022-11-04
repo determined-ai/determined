@@ -363,14 +363,18 @@ func (d *dockerActor) reattachContainer(ctx *actor.Context, id cproto.ID) {
 				senderRef,
 				containerReattached{dockerID: cont.ID, containerInfo: containerInfo},
 			)
-			select {
-			case err = <-eerr:
-				sendErrParent(ctx, errors.Wrap(err, "error while waiting for reattached container to exit"))
-			case exit := <-exit:
-				ctx.Tell(
-					senderRef,
-					containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
-			}
+
+			go func() {
+				select {
+				case err = <-eerr:
+					sendErrParent(ctx,
+						errors.Wrap(err, "error while waiting for reattached container to exit"))
+				case exit := <-exit:
+					ctx.Tell(
+						senderRef,
+						containerTerminated{ExitCode: aproto.ExitCode(exit.StatusCode)})
+				}
+			}()
 		}
 	}
 }

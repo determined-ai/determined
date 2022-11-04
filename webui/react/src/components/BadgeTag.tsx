@@ -12,12 +12,7 @@ export interface Props extends BadgeProps {
 
 const TOOLTIP_DELAY = 1.0;
 
-const BadgeTag: React.FC<Props> = ({
-  children,
-  label,
-  preLabel,
-  ...props
-}: Props) => {
+const BadgeTag: React.FC<Props> = ({ children, label, preLabel, ...props }: Props) => {
   return (
     <span className={css.base}>
       {preLabel && (

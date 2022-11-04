@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -43,6 +44,8 @@ type ExperimentConfigV0 struct {
 	RawSecurity                 *SecurityConfigV0           `json:"security,omitempty"`
 	RawTensorboardStorage       *TensorboardStorageConfigV0 `json:"tensorboard_storage,omitempty"`
 	RawWorkspace                *string                     `json:"workspace"`
+	RawSlurmConfig              *SlurmConfigV0              `json:"slurm,omitempty"`
+	RawPbsConfig                *PbsConfigV0                `json:"pbs,omitempty"`
 }
 
 // Unit implements the model.InUnits interface.
@@ -182,6 +185,20 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 }
 
 //go:generate ../gen.sh
+// SlurmConfigV0 configures experiment resource usage.
+type SlurmConfigV0 struct {
+	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
+	RawSbatchArgs   []string `json:"sbatch_args,omitempty"`
+}
+
+//go:generate ../gen.sh
+// PbsConfigV0 configures experiment resource usage.
+type PbsConfigV0 struct {
+	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
+	RawSbatchArgs   []string `json:"pbsbatch_args,omitempty"`
+}
+
+//go:generate ../gen.sh
 // ResourcesConfigV0 configures experiment resource usage.
 type ResourcesConfigV0 struct {
 	// Slots is used by commands while trials use SlotsPerTrial.
@@ -297,6 +314,26 @@ type DeviceV0 struct {
 	RawHostPath      string  `json:"host_path"`
 	RawContainerPath string  `json:"container_path"`
 	RawMode          *string `json:"mode"`
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *DeviceV0) UnmarshalJSON(data []byte) error {
+	var plain string
+	if err := json.Unmarshal(data, &plain); err == nil {
+		fields := strings.Split(plain, ":")
+		if len(fields) < 2 || len(fields) > 3 {
+			return errors.Errorf("invalid device string: %q", plain)
+		}
+		d.RawHostPath = fields[0]
+		d.RawContainerPath = fields[1]
+		if len(fields) > 2 {
+			d.RawMode = &fields[2]
+		}
+		return nil
+	}
+
+	type DefaultParser *DeviceV0
+	return json.Unmarshal(data, DefaultParser(d))
 }
 
 //go:generate ../gen.sh

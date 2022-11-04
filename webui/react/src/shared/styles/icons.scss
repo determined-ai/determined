@@ -3,8 +3,7 @@
   font-family: 'determined-ai';
   font-style: normal;
   font-weight: normal;
-  src:
-    url('../assets/fonts/determined-ai.woff2?1v4ahh') format('woff2'),
+  src: url('../assets/fonts/determined-ai.woff2?1v4ahh') format('woff2'),
     url('../assets/fonts/determined-ai.woff?1v4ahh') format('woff');
 }
 
@@ -24,72 +23,216 @@
   line-height: 1;
   text-transform: none;
 }
-.icon-add-small::before { content: '\e92b'; }
-.icon-arrow-down::before { content: '\ea02'; }
-.icon-arrow-left::before { content: '\ea04'; }
-.icon-arrow-right::before { content: '\ea05'; }
-.icon-arrow-up::before { content: '\ea03'; }
-.icon-dai-logo::before { content: '\e900'; }
-.icon-dashboard::before { content: '\e924'; }
-.icon-download::before { content: '\e91d'; }
-.icon-checkpoint::before { content: '\e91f'; }
-.icon-checkmark::before { content: '\e921'; }
-.icon-clipboard::before { content: '\e919'; }
-.icon-close::before { content: '\e925'; }
-.icon-close-small::before { content: '\e926'; }
-.icon-cloud::before { content: '\e923'; }
-.icon-cluster::before { content: '\e913'; }
-.icon-collapse::before { content: '\e90d'; }
-.icon-command::before { content: '\e914'; }
-.icon-critical::before { content: '\e902'; }
-.icon-debug::before { content: '\e901'; }
-.icon-docs::before { content: '\e922'; }
-.icon-document::before { content: '\e922'; }
-.icon-error::before { content: '\e902'; }
-.icon-expand::before { content: '\e90e'; }
-.icon-experiment::before { content: '\e903'; }
-.icon-eye-close::before { content: '\e917'; }
-.icon-eye-open::before { content: '\e918'; }
-.icon-filter::before { content: '\e92a'; }
-.icon-fullscreen::before { content: '\e91a'; }
-.icon-grid::before { content: '\e904'; }
-.icon-heat::before { content: '\e92d'; }
-.icon-info::before { content: '\e91e'; }
-.icon-jupyter-lab::before { content: '\e915'; }
-.icon-learning::before { content: '\e92c'; }
-.icon-list::before { content: '\e905'; }
-.icon-lock::before { content: '\e911'; }
-.icon-logs::before { content: '\e91b'; }
-.icon-model::before { content: '\e937'; }
-.icon-notebook::before { content: '\e906'; }
-.icon-overflow-horizontal::before { content: '\e907'; }
-.icon-overflow-vertical::before { content: '\e908'; }
-.icon-parcoords::before { content: '\e92f'; }
-.icon-pencil::before { content: '\e930'; }
-.icon-popout::before { content: '\e910'; }
-.icon-queue::before { content: '\e938'; }
-.icon-reset::before { content: '\e932'; }
-.icon-scatter-plot::before { content: '\e92e'; }
-.icon-search::before { content: '\ea01'; }
-.icon-settings::before { content: '\e929'; }
-.icon-shell::before { content: '\e909'; }
-.icon-spinner::before { content: '\e90f'; }
-.icon-star::before { content: '\e90a'; }
-.icon-tasks::before { content: '\e920'; }
-.icon-tensor-board::before { content: '\e90b'; }
-.icon-tensorflow::before { content: '\e90b'; }
-.icon-trace::before { content: '\e901'; }
-.icon-undo::before { content: '\e931'; }
-.icon-user::before { content: '\e916'; }
-.icon-user-small::before { content: '\e912'; }
-.icon-warning::before { content: '\e91c'; }
-.icon-warning-large::before { content: '\e900'; }
-.icon-pause::before { content: '\e933'; }
-.icon-play::before { content: '\e934'; }
-.icon-stop::before { content: '\e935'; }
-.icon-fork::before { content: '\e936'; }
-.icon-archive::before { content: '\e939'; }
-.icon-workspaces::before { content: '\e93a'; }
-.icon-searcher-adaptive::before { content: '\e93c'; }
-.icon-searcher-grid::before { content: '\e93d'; }
-.icon-searcher-random::before { content: '\e93e'; }
+.icon-add-small::before {
+  content: '\e92b';
+}
+.icon-arrow-down::before {
+  content: '\ea02';
+}
+.icon-arrow-left::before {
+  content: '\ea04';
+}
+.icon-arrow-right::before {
+  content: '\ea05';
+}
+.icon-arrow-up::before {
+  content: '\ea03';
+}
+.icon-dai-logo::before {
+  content: '\e901';
+}
+.icon-dashboard::before {
+  content: '\e924';
+}
+.icon-download::before {
+  content: '\e91d';
+}
+.icon-checkpoint::before {
+  content: '\e91f';
+}
+.icon-checkmark::before {
+  content: '\e921';
+}
+.icon-clipboard::before {
+  content: '\e919';
+}
+.icon-close::before {
+  content: '\e925';
+}
+.icon-close-small::before {
+  content: '\e93f';
+}
+.icon-cloud::before {
+  content: '\e923';
+}
+.icon-cluster::before {
+  content: '\e913';
+}
+.icon-collapse::before {
+  content: '\e90d';
+}
+.icon-command::before {
+  content: '\e914';
+}
+.icon-critical::before {
+  content: '\e902';
+}
+.icon-debug::before {
+  content: '\e903';
+}
+.icon-docs::before {
+  content: '\e922';
+}
+.icon-document::before {
+  content: '\e922';
+}
+.icon-error::before {
+  content: '\e902';
+}
+.icon-expand::before {
+  content: '\e90e';
+}
+.icon-experiment::before {
+  content: '\e904';
+}
+.icon-eye-close::before {
+  content: '\e917';
+}
+.icon-eye-open::before {
+  content: '\e918';
+}
+.icon-filter::before {
+  content: '\e92a';
+}
+.icon-fullscreen::before {
+  content: '\e91a';
+}
+.icon-grid::before {
+  content: '\e905';
+}
+.icon-heat::before {
+  content: '\e92d';
+}
+.icon-info::before {
+  content: '\e91e';
+}
+.icon-jupyter-lab::before {
+  content: '\e915';
+}
+.icon-learning::before {
+  content: '\e92c';
+}
+.icon-list::before {
+  content: '\e906';
+}
+.icon-lock::before {
+  content: '\e911';
+}
+.icon-logs::before {
+  content: '\e91b';
+}
+.icon-model::before {
+  content: '\e937';
+}
+.icon-notebook::before {
+  content: '\e907';
+}
+.icon-overflow-horizontal::before {
+  content: '\e908';
+}
+.icon-overflow-vertical::before {
+  content: '\e909';
+}
+.icon-parcoords::before {
+  content: '\e92f';
+}
+.icon-pencil::before {
+  content: '\e930';
+}
+.icon-popout::before {
+  content: '\e910';
+}
+.icon-queue::before {
+  content: '\e938';
+}
+.icon-reset::before {
+  content: '\e932';
+}
+.icon-scatter-plot::before {
+  content: '\e92e';
+}
+.icon-search::before {
+  content: '\ea01';
+}
+.icon-settings::before {
+  content: '\e929';
+}
+.icon-shell::before {
+  content: '\e90a';
+}
+.icon-spinner::before {
+  content: '\e90f';
+}
+.icon-star::before {
+  content: '\e90b';
+}
+.icon-tasks::before {
+  content: '\e920';
+}
+.icon-tensor-board::before {
+  content: '\e926';
+}
+.icon-tensorflow::before {
+  content: '\e926';
+}
+.icon-trace::before {
+  content: '\e901';
+}
+.icon-undo::before {
+  content: '\e931';
+}
+.icon-user::before {
+  content: '\e916';
+}
+.icon-user-small::before {
+  content: '\e912';
+}
+.icon-warning::before {
+  content: '\e91c';
+}
+.icon-warning-large::before {
+  content: '\e900';
+}
+.icon-webhooks::before {
+  content: '\e93e';
+}
+.icon-pause::before {
+  content: '\e933';
+}
+.icon-play::before {
+  content: '\e934';
+}
+.icon-stop::before {
+  content: '\e935';
+}
+.icon-fork::before {
+  content: '\e936';
+}
+.icon-archive::before {
+  content: '\e939';
+}
+.icon-workspaces::before {
+  content: '\e93a';
+}
+.icon-searcher-adaptive::before {
+  content: '\e93c';
+}
+.icon-searcher-grid::before {
+  content: '\e93d';
+}
+.icon-searcher-random::before {
+  content: '\e93e';
+}
+.icon-group::before {
+  content: '\e940';
+}

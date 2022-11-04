@@ -8,6 +8,7 @@
   line-height: 18px;
   padding: 0 6px;
   text-align: center;
+  white-space: break-spaces;
 }
 .dashed {
   border: dashed var(--theme-stroke-width) var(--theme-float-border-strong);

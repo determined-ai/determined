@@ -1,6 +1,6 @@
 import queryString from 'query-string';
 import { useCallback } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from 'react-router-dom';
 
 import { AUTH_COOKIE_KEY, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { globalStorage } from 'globalStorage';
@@ -26,7 +26,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     const redirect = encodeURIComponent(window.location.href);
     const authUrl = `${info.externalLoginUri}?redirect=${redirect}`;
     routeAll(authUrl);
-  }, [ info.externalLoginUri ]);
+  }, [info.externalLoginUri]);
 
   const checkAuth = useCallback(async (): Promise<void> => {
     /*

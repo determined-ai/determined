@@ -82,8 +82,12 @@
 }
 .base.loading {
   .growWrap > textarea,
-  .growWrap > .spinner { display: block; }
-  .growWrap > .backdrop { display: block; }
+  .growWrap > .spinner {
+    display: block;
+  }
+  .growWrap > .backdrop {
+    display: block;
+  }
 }
 .base.disabled .growWrap:hover > textarea {
   border-color: transparent;

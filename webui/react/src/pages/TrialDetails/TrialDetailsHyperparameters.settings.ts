@@ -1,14 +1,9 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export type HyperparameterColumnName =
-  | 'hyperparameter'
-  | 'value';
+export type HyperparameterColumnName = 'hyperparameter' | 'value';
 
-export const DEFAULT_COLUMNS: HyperparameterColumnName[] = [
-  'hyperparameter',
-  'value',
-];
+export const DEFAULT_COLUMNS: HyperparameterColumnName[] = ['hyperparameter', 'value'];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<HyperparameterColumnName, number> = {
   hyperparameter: 150,
@@ -20,6 +15,7 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: '/hyperparameters',
   settings: [
     {
       defaultValue: DEFAULT_COLUMNS,
@@ -32,8 +28,9 @@ const config: SettingsConfig = {
       },
     },
     {
-      defaultValue: DEFAULT_COLUMNS.map((col: HyperparameterColumnName) =>
-        DEFAULT_COLUMN_WIDTHS[col]),
+      defaultValue: DEFAULT_COLUMNS.map(
+        (col: HyperparameterColumnName) => DEFAULT_COLUMN_WIDTHS[col],
+      ),
       key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',

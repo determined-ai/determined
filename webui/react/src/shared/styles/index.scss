@@ -13,12 +13,24 @@ body,
   height: calc(var(--vh, 1vh) * 100);
   width: 100vw;
 }
-h1 { font-size: 32px; }
-h2 { font-size: 28px; }
-h3 { font-size: 24px; }
-h4 { font-size: 22px; }
-h5 { font-size: 20px; }
-h6 { font-size: 18px; }
+h1 {
+  font-size: 32px;
+}
+h2 {
+  font-size: 28px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 22px;
+}
+h5 {
+  font-size: 20px;
+}
+h6 {
+  font-size: 18px;
+}
 #clipboard {
   opacity: 0;
   user-select: none;

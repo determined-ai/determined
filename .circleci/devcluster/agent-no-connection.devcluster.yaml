@@ -1,0 +1,9 @@
+stages:
+  - agent:
+      name: agent
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8080
+        agent_id: agent
+        hooks:
+          on_connection_lost: ["touch", "/tmp/agent-connection-lost"]

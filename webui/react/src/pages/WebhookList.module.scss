@@ -1,0 +1,20 @@
+.overflow {
+  padding: 6px;
+}
+.emptyBase {
+  margin-inline: auto;
+  margin-top: 150px;
+  max-width: 350px;
+  text-align: center;
+
+  .icon {
+    padding: 16px;
+  }
+  h4 {
+    margin-bottom: 8;
+  }
+}
+.listBadge {
+  display: inline-block;
+  margin-right: 10px;
+}

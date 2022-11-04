@@ -22,13 +22,8 @@ export interface Props {
   size?: 'tiny' | 'small' | 'medium' | 'large';
 }
 
-const Link: React.FC<Props> = ({
-  external,
-  popout,
-  onClick,
-  ...props
-}: Props) => {
-  const classes = [ css.base ];
+const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) => {
+  const classes = [css.base];
   const rel = windowOpenFeatures.join(' ');
 
   if (props.className) classes.push(props.className);
@@ -38,13 +33,18 @@ const Link: React.FC<Props> = ({
   if (props.size) classes.push(css[props.size]);
 
   const href = props.path ? linkPath(props.path, external) : undefined;
-  const handleClick = useCallback((event: MouseEvent) => {
-    handlePath(event, { external, onClick, path: props.path, popout });
-  }, [ onClick, popout, props.path, external ]);
+  const handleClick = useCallback(
+    (event: MouseEvent) => {
+      handlePath(event, { external, onClick, path: props.path, popout });
+    },
+    [onClick, popout, props.path, external],
+  );
 
   if (props.disabled) {
     return props.isButton ? (
-      <Button className={classes.join(' ')} disabled>{props.children}</Button>
+      <Button className={classes.join(' ')} disabled>
+        {props.children}
+      </Button>
     ) : (
       <span className={classes.join(' ')}>{props.children}</span>
     );

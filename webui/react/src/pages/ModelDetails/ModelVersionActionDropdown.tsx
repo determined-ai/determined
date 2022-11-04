@@ -4,6 +4,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
+import { ValueOf } from 'shared/types';
 
 interface Props {
   children?: React.ReactNode;
@@ -26,50 +27,54 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   trigger,
 }: Props) => {
-  const handleDownloadClick = useCallback(() => onDownload?.(), [ onDownload ]);
+  const handleDownloadClick = useCallback(() => onDownload?.(), [onDownload]);
 
-  const handleDeleteClick = useCallback(() => onDelete?.(), [ onDelete ]);
+  const handleDeleteClick = useCallback(() => onDelete?.(), [onDelete]);
 
   const ModelVersionActionMenu = useMemo(() => {
-    enum MenuKey {
-      DOWNLOAD = 'download',
-      DELETE_VERSION = 'delete-version'
-    }
+    const MenuKey = {
+      DeleteVersion: 'delete-version',
+      Download: 'download',
+    } as const;
 
     const funcs = {
-      [MenuKey.DOWNLOAD]: () => { handleDownloadClick(); },
-      [MenuKey.DELETE_VERSION]: () => { handleDeleteClick(); },
+      [MenuKey.Download]: () => {
+        handleDownloadClick();
+      },
+      [MenuKey.DeleteVersion]: () => {
+        handleDeleteClick();
+      },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { key: MenuKey.DOWNLOAD, label: 'Download' },
-      { danger: true, key: MenuKey.DELETE_VERSION, label: 'Deregister Version' },
+      { key: MenuKey.Download, label: 'Download' },
+      { danger: true, key: MenuKey.DeleteVersion, label: 'Deregister Version' },
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [ handleDeleteClick, handleDownloadClick ]);
+  }, [handleDeleteClick, handleDownloadClick]);
 
   return children ? (
     <Dropdown
       overlay={ModelVersionActionMenu}
       placement="bottomLeft"
-      trigger={trigger ?? [ 'contextMenu', 'click' ]}
+      trigger={trigger ?? ['contextMenu', 'click']}
       onVisibleChange={onVisibleChange}>
       {children}
     </Dropdown>
   ) : (
     <div
-      className={[ css.base, className ].join(' ')}
+      className={[css.base, className].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
         overlay={ModelVersionActionMenu}
         placement="bottomRight"
-        trigger={trigger ?? [ 'click' ]}>
+        trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

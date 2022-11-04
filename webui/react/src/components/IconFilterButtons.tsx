@@ -17,9 +17,12 @@ interface Props {
 }
 
 const FilterButtons: React.FC<Props> = ({ buttons, onClick }: Props) => {
-  const handleClick = useCallback((id: string) => {
-    return (e: React.MouseEvent) => onClick?.(id, e);
-  }, [ onClick ]);
+  const handleClick = useCallback(
+    (id: string) => {
+      return (e: React.MouseEvent) => onClick?.(id, e);
+    },
+    [onClick],
+  );
 
   return (
     <Space className={css.base}>

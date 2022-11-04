@@ -70,32 +70,31 @@ const formValuesToUpdate = async (
   }
 };
 
-const ManageJob: React.FC<Props> = (
-  { onFinish, rpStats, job, schedulerType, initialPool, jobCount },
-) => {
-  const formRef = useRef <FormInstance<FormValues>>(null);
+const ManageJob: React.FC<Props> = ({
+  onFinish,
+  rpStats,
+  job,
+  schedulerType,
+  initialPool,
+  jobCount,
+}) => {
+  const formRef = useRef<FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
   const { resourcePools } = useStore();
-  const [ selectedPoolName, setSelectedPoolName ] = useState(initialPool);
+  const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 
   const details = useMemo(() => {
     interface Item {
       label: ReactNode;
       value: ReactNode;
     }
-    const tableKeys = [
-      'user',
-      'slots',
-      'submitted',
-      'type',
-      'name',
-    ];
+    const tableKeys = ['user', 'slots', 'submitted', 'type', 'name'];
     const tableDetails: Record<string, Item> = {};
 
     tableKeys.forEach((td) => {
       const col = columns.find((col) => col.key === td);
       if (!col || !col.render) return;
-      tableDetails[td] = { label: col.title, value: col.render(undefined, job, 0) };
+      tableDetails[td] = { label: <>{col.title}</>, value: <>col.render(undefined, job, 0)</> };
     });
 
     const items = [
@@ -109,8 +108,7 @@ const ManageJob: React.FC<Props> = (
       },
       {
         label: 'Progress',
-        value: job.progress ?
-          floatToPercent(job.progress, 1) : undefined,
+        value: job.progress ? floatToPercent(job.progress, 1) : undefined,
       },
       tableDetails.slots,
       { label: 'Is Preemtible', value: job.isPreemptible ? 'Yes' : 'No' },
@@ -122,55 +120,52 @@ const ManageJob: React.FC<Props> = (
     ];
 
     return items.filter((item) => !!item && item.value !== undefined) as Item[];
-
-  }, [ job, isOrderedQ ]);
+  }, [job, isOrderedQ]);
 
   const currentPool = useMemo(() => {
     return resourcePools.find((rp) => rp.name === selectedPoolName);
-  }, [ resourcePools, selectedPoolName ]);
+  }, [resourcePools, selectedPoolName]);
 
   const currentPoolStats = useMemo(() => {
     return rpStats.find((rp) => rp.resourcePool === selectedPoolName);
-  }, [ rpStats, selectedPoolName ]);
+  }, [rpStats, selectedPoolName]);
 
   const poolDetails = useMemo(() => {
     return (
       <div>
-        <p>Current slot allocation:{' '}
-          {currentPool?.slotsUsed} / {currentPool?.slotsAvailable} (used / total)
+        <p>
+          Current slot allocation: {currentPool?.slotsUsed} / {currentPool?.slotsAvailable} (used /
+          total)
           <br />
           Jobs in queue:
           {(currentPoolStats?.stats.queuedCount ?? 0) +
-          (currentPoolStats?.stats.scheduledCount ?? 0)}
+            (currentPoolStats?.stats.scheduledCount ?? 0)}
           <br />
           Spot instance pool: {!!currentPool?.details.aws?.spotEnabled + ''}
         </p>
       </div>
     );
-  }, [ currentPool, currentPoolStats ]);
+  }, [currentPool, currentPoolStats]);
 
   const handleUpdateResourcePool = useCallback((changedValues) => {
     if (changedValues.resourcePool) setSelectedPoolName(changedValues.resourcePool);
   }, []);
 
-  const onOk = useCallback(
-    async () => {
-      try {
-        const update = formRef.current &&
-          await formValuesToUpdate(formRef.current.getFieldsValue(), job);
-        if (update) await updateJobQueue({ updates: [ update ] });
-      } catch (e) {
-        handleError(e, {
-          isUserTriggered: true,
-          publicSubject: 'Failed to update the job.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-      }
-      onFinish?.();
-    },
-    [ formRef, onFinish, job ],
-  );
+  const onOk = useCallback(async () => {
+    try {
+      const update =
+        formRef.current && (await formValuesToUpdate(formRef.current.getFieldsValue(), job));
+      if (update) await updateJobQueue({ updates: [update] });
+    } catch (e) {
+      handleError(e, {
+        isUserTriggered: true,
+        publicSubject: 'Failed to update the job.',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+    onFinish?.();
+  }, [formRef, onFinish, job]);
 
   const isSingular = job.summary && job.summary.jobsAhead === 1;
 
@@ -182,13 +177,12 @@ const ManageJob: React.FC<Props> = (
       onCancel={onFinish}
       onOk={onOk}>
       {isOrderedQ && (
-        <p>There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'no'} job
+        <p>
+          There {isSingular ? 'is' : 'are'} {job.summary?.jobsAhead || 'no'} job
           {isSingular ? '' : 's'} ahead of this job.
         </p>
       )}
-      <h6>
-        Queue Settings
-      </h6>
+      <h6>Queue Settings</h6>
       <Form<FormValues>
         initialValues={{
           position: job.summary.jobsAhead + 1,
@@ -219,12 +213,7 @@ const ManageJob: React.FC<Props> = (
           hidden={unsupportedQPosSchedulers.has(schedulerType)}
           label="Position in Queue"
           name="position">
-          <Input
-            addonAfter={`out of ${jobCount}`}
-            max={jobCount}
-            min={1}
-            type="number"
-          />
+          <Input addonAfter={`out of ${jobCount}`} max={jobCount} min={1} type="number" />
         </Form.Item>
         <Form.Item
           hidden={schedulerType !== api.V1SchedulerType.FAIRSHARE}
@@ -239,22 +228,20 @@ const ManageJob: React.FC<Props> = (
           name="resourcePool">
           <Select disabled={job.type !== JobType.EXPERIMENT}>
             {resourcePools.map((rp) => (
-              <Option key={rp.name} value={rp.name}>{rp.name}</Option>
+              <Option key={rp.name} value={rp.name}>
+                {rp.name}
+              </Option>
             ))}
           </Select>
         </Form.Item>
       </Form>
-      <h6>
-        Job Details
-      </h6>
+      <h6>Job Details</h6>
       <List
         dataSource={details}
         renderItem={(item) => (
           <List.Item className={css.item}>
             <Typography.Text className={css.key}>{item.label}</Typography.Text>
-            <div className={css.value}>
-              {item.value}
-            </div>
+            <div className={css.value}>{item.value}</div>
           </List.Item>
         )}
         size="small"

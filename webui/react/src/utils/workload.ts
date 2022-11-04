@@ -2,9 +2,7 @@ import { RecordKey } from 'shared/types';
 import * as Type from 'types';
 
 // Checkpoint size in bytes.
-export const checkpointSize = (
-  checkpoint?: { resources?: Record<RecordKey, number> },
-): number => {
+export const checkpointSize = (checkpoint?: { resources?: Record<RecordKey, number> }): number => {
   if (checkpoint?.resources) {
     return Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
   }

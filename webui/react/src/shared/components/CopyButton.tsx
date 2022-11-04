@@ -2,7 +2,7 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-type TextOptions = 'Copy to Clipboard' | 'Copied!'
+type TextOptions = 'Copy to Clipboard' | 'Copied!';
 
 const DEFAULT_TOOLTIP_TEXT: TextOptions = 'Copy to Clipboard';
 
@@ -11,7 +11,7 @@ interface Props {
 }
 
 const CopyButton: React.FC<Props> = ({ onCopy }: Props) => {
-  const [ text, setText ] = useState<TextOptions>(DEFAULT_TOOLTIP_TEXT);
+  const [text, setText] = useState<TextOptions>(DEFAULT_TOOLTIP_TEXT);
 
   const handleCopy = useCallback(async () => {
     await onCopy();
@@ -19,7 +19,7 @@ const CopyButton: React.FC<Props> = ({ onCopy }: Props) => {
     setTimeout(() => {
       setText(DEFAULT_TOOLTIP_TEXT);
     }, 2000);
-  }, [ onCopy ]);
+  }, [onCopy]);
 
   return (
     <Tooltip title={text}>

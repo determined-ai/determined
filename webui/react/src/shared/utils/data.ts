@@ -2,23 +2,31 @@
 import { Primitive, RawJson, RecordKey, UnknownRecord } from '../types';
 
 // `bigint` is not support yet for
+
 export const isBigInt = (data: unknown): data is bigint => typeof data === 'bigint';
 export const isBoolean = (data: unknown): data is boolean => typeof data === 'boolean';
 export const isDate = (data: unknown): data is Date => data instanceof Date;
-export const isMap = (data: unknown): boolean => data instanceof Map;
+export const isMap = (data: unknown): data is Map<unknown, unknown> => data instanceof Map;
 export const isNullOrUndefined = (data: unknown): data is null | undefined => data == null;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
+export const isFiniteNumber = (data: unknown): data is number => isNumber(data) && isFinite(data);
 export const isObject = (data: unknown): boolean => {
   return typeof data === 'object' && !Array.isArray(data) && !isSet(data) && data !== null;
 };
-export const isPrimitive = (data: unknown): boolean => (
+
+export const finiteElseUndefined = (data: string | undefined): number | undefined => {
+  if (data === undefined) return undefined;
+  const x = parseFloat(data);
+  return isFinite(x) ? x : undefined;
+};
+
+export const isPrimitive = (data: unknown): boolean =>
   isBigInt(data) ||
   isBoolean(data) ||
   isNullOrUndefined(data) ||
   isNumber(data) ||
   isString(data) ||
-  isSymbol(data)
-);
+  isSymbol(data);
 export const isPromise = (data: unknown): data is Promise<unknown> => {
   if (!isObject(data)) return false;
   return typeof (data as { then?: any }).then === 'function';
@@ -39,7 +47,7 @@ export const isSyncFunction = (fn: unknown): boolean => {
 
 export const isEqual = (a: unknown, b: unknown): boolean => {
   if (isMap(a) && isMap(b)) {
-    return JSON.stringify(Array.from(a as any)) === JSON.stringify(Array.from(b as any));
+    return JSON.stringify(Array.from(a)) === JSON.stringify(Array.from(b));
   }
   if (isSymbol(a) && isSymbol(b)) return a.toString() === b.toString();
   if (isObject(a) && isObject(b)) return JSON.stringify(a) === JSON.stringify(b);
@@ -71,9 +79,9 @@ export const hasObjectKeys = (data: unknown): boolean => {
 export const flattenObject = <T = Primitive>(
   object: UnknownRecord,
   options?: {
-    continueFn?: (value: unknown) => boolean,
-    delimiter?: string,
-    keys?: RecordKey[],
+    continueFn?: (value: unknown) => boolean;
+    delimiter?: string;
+    keys?: RecordKey[];
   },
 ): Record<RecordKey, T> => {
   const continueFn = options?.continueFn ?? isObject;
@@ -81,7 +89,7 @@ export const flattenObject = <T = Primitive>(
   const keys = options?.keys ?? [];
   return Object.keys(object).reduce((acc, key) => {
     const value = object[key] as UnknownRecord;
-    const newKeys = [ ...keys, key ];
+    const newKeys = [...keys, key];
     if (continueFn(value)) {
       acc = { ...acc, ...flattenObject<T>(value, { continueFn, delimiter, keys: newKeys }) };
     } else {
@@ -99,7 +107,7 @@ export const unflattenObject = <T = unknown>(
   const unflattened: UnknownRecord = {};
   const regexSafeDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(`^(.+?)${regexSafeDelimiter}(.+)$`);
-  Object.entries(object).forEach(([ paramPath, value ]) => {
+  Object.entries(object).forEach(([paramPath, value]) => {
     let key = paramPath;
     let matches = key.match(regex);
     let pathRef = unflattened;
@@ -119,19 +127,22 @@ export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
   if (path === '') return obj as T;
   let value = obj || {};
-  return path.split('.').every((key) => ((value = value[key]) !== undefined)) ?
-    value as T : undefined;
+  return path.split('.').every((key) => {
+    if (!value) return false;
+    else {
+      value = value[key];
+      return value !== undefined;
+    }
+  })
+    ? (value as T)
+    : undefined;
 };
 
 export const getPathList = <T>(obj: RawJson, path: string[]): T | undefined => {
   return getPath<T>(obj, path.join('.'));
 };
 
-export const getPathOrElse = <T>(
-  obj: Record<string, unknown>,
-  path: string,
-  fallback: T,
-): T => {
+export const getPathOrElse = <T>(obj: Record<string, unknown>, path: string, fallback: T): T => {
   const value = getPath<T>(obj, path);
   return value !== undefined ? value : fallback;
 };

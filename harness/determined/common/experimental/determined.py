@@ -1,6 +1,6 @@
 import pathlib
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
@@ -68,6 +68,7 @@ class Determined:
         self,
         config: Union[str, pathlib.Path, Dict],
         model_dir: Union[str, pathlib.Path],
+        includes: Optional[Iterable[Union[str, pathlib.Path]]] = None,
     ) -> experiment.ExperimentReference:
         """
         Create an experiment with config parameters and model directory. The function
@@ -77,6 +78,8 @@ class Determined:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
                 or a dict.
             model_dir(string): directory containing model definition.
+            iterables (Iterable[Union[str, pathlib.Path]], optional): Additional files or
+                directories to include in the model definition.  (default: ``None``)
         """
         if isinstance(config, str):
             with open(config) as f:
@@ -96,7 +99,8 @@ class Determined:
         if isinstance(model_dir, str):
             model_dir = pathlib.Path(model_dir)
 
-        model_context = context.read_v1_context(model_dir)
+        path_includes = (pathlib.Path(i) for i in includes or [])
+        model_context = context.read_v1_context(model_dir, includes=path_includes)
 
         req = bindings.v1CreateExperimentRequest(
             # TODO: add this as a param to create_experiment()

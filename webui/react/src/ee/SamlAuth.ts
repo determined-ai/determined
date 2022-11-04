@@ -8,7 +8,7 @@ export const samlUrl = (basePath: string, queries?: string): string => {
   return `${basePath}?relayState=${encodeURIComponent(queries)}`;
 };
 
-type WithRelayState<T> = T & { relayState?: string }
+type WithRelayState<T> = T & { relayState?: string };
 
 // Decode relayState into expected query params T.
 export const handleRelayState = <T>(queries: WithRelayState<T>): T => {
@@ -16,7 +16,7 @@ export const handleRelayState = <T>(queries: WithRelayState<T>): T => {
 
   const newQueries = {
     ...queries,
-    ...(queryString.parse(queries.relayState)),
+    ...queryString.parse(queries.relayState),
   };
   delete newQueries.relayState;
   history.push(`${history.location.pathname}?${queryString.stringify(newQueries)}`);

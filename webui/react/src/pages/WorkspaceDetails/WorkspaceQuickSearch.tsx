@@ -21,10 +21,10 @@ interface Props {
 }
 
 const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
-  const [ searchText, setSearchText ] = useState<string>('');
-  const [ workspaceMap, setWorkspaceMap ] = useState<Map<Workspace, Project[]>>(new Map());
-  const [ isLoading, setIsLoading ] = useState(true);
-  const [ isModalVisible, setIsModalVisible ] = useState(false);
+  const [searchText, setSearchText] = useState<string>('');
+  const [workspaceMap, setWorkspaceMap] = useState<Map<Workspace, Project[]>>(new Map());
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -34,10 +34,10 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
 
       const projectMap = new Map<number, Project[]>();
       for (const project of projectResponse.projects) {
-        projectMap.set(
-          project.workspaceId,
-          [ ...projectMap.get(project.workspaceId) ?? [], project ],
-        );
+        projectMap.set(project.workspaceId, [
+          ...(projectMap.get(project.workspaceId) ?? []),
+          project,
+        ]);
       }
 
       const tempWorkspaceMap: Map<Workspace, Project[]> = new Map();
@@ -57,7 +57,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [ ]);
+  }, []);
 
   const onChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchText(e.target.value);
@@ -66,48 +66,59 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
   const onShowModal = useCallback(() => {
     setIsModalVisible(true);
     fetchData();
-  }, [ fetchData ]);
+  }, [fetchData]);
 
   const onHideModal = useCallback(() => {
     setIsModalVisible(false);
     setSearchText('');
   }, []);
 
-  const onClickProject = useCallback((project: Project) => {
-    routeToReactUrl(paths.projectDetails(project.id));
-    onHideModal();
-  }, [ onHideModal ]);
+  const onClickProject = useCallback(
+    (project: Project) => {
+      routeToReactUrl(paths.projectDetails(project.id));
+      onHideModal();
+    },
+    [onHideModal],
+  );
 
-  const onClickWorkspace = useCallback((workspaceId: number) => {
-    routeToReactUrl(paths.workspaceDetails(workspaceId));
-    onHideModal();
-  }, [ onHideModal ]);
+  const onClickWorkspace = useCallback(
+    (workspaceId: number) => {
+      routeToReactUrl(paths.workspaceDetails(workspaceId));
+      onHideModal();
+    },
+    [onHideModal],
+  );
 
-  const getNodesForProject = useCallback((projects: Project[], text: string) => {
-    const treeChildren: DefaultOptionType[] = projects
-      .filter((project) => project.name.toLocaleLowerCase().includes(text))
-      .map((project) => ({
-        title: (
-          <div className={`${css.flexRow} ${css.ellipsis}`}>
-            <ProjectOutlined style={{ fontSize: '16px' }} />
-            <Link onClick={() => onClickProject(project)}>{project.name}</Link>
-          </div>
-        ),
-        value: `project-${project.id}`,
-      }));
-    return treeChildren;
-  }, [ onClickProject ]);
+  const getNodesForProject = useCallback(
+    (projects: Project[], text: string) => {
+      const treeChildren: DefaultOptionType[] = projects
+        .filter((project) => project.name.toLocaleLowerCase().includes(text))
+        .map((project) => ({
+          key: `project-${project.id}`,
+          title: (
+            <div className={`${css.flexRow} ${css.ellipsis}`}>
+              <ProjectOutlined style={{ fontSize: '16px' }} />
+              <Link onClick={() => onClickProject(project)}>{project.name}</Link>
+            </div>
+          ),
+          value: `project-${project.id}`,
+        }));
+      return treeChildren;
+    },
+    [onClickProject],
+  );
 
   const treeData: DefaultOptionType[] = useMemo(() => {
     const text = searchText.toLocaleLowerCase();
     const data: DefaultOptionType[] = Array.from(workspaceMap)
-      .map(([ workspace, projects ]) => {
+      .map(([workspace, projects]) => {
         const isWorkspaceNameIncluded = workspace.name.toLocaleLowerCase().includes(text);
         const children = getNodesForProject(projects, text);
-        return ({
+        return {
           children: children,
-          isWorkspaceIncluded: searchText.length > 0 ?
-            (isWorkspaceNameIncluded || children.length > 0) : true,
+          isWorkspaceIncluded:
+            searchText.length > 0 ? isWorkspaceNameIncluded || children.length > 0 : true,
+          key: `workspace-${workspace.id}`,
           title: (
             <div className={`${css.flexRow} ${css.ellipsis}`}>
               <Icon name="workspaces" />
@@ -115,11 +126,11 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
             </div>
           ),
           value: `workspace-${workspace.id}`,
-        });
+        };
       })
       .filter((item) => item.isWorkspaceIncluded);
     return data;
-  }, [ getNodesForProject, onClickWorkspace, searchText, workspaceMap ]);
+  }, [getNodesForProject, onClickWorkspace, searchText, workspaceMap]);
 
   return (
     <>
@@ -127,7 +138,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       <Modal
         closable={false}
         footer={null}
-        title={(
+        title={
           <Input
             autoFocus
             placeholder="Search workspace or project"
@@ -136,20 +147,22 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
             width={'100%'}
             onChange={onChange}
           />
-        )}
+        }
         visible={isModalVisible}
         width={'clamp(520px, 50vw, 1000px)'}
         onCancel={onHideModal}>
         <div className={css.modalBody}>
-          {isLoading ?
-            <Spinner center tip={'Loading...'} /> : (
-              <>
-                {treeData.length === 0 ?
-                  <Message title="No matching workspace or projects" type={MessageType.Empty} /> : (
-                    <Tree defaultExpandAll selectable={false} treeData={treeData} />
-                  )}
-              </>
-            )}
+          {isLoading ? (
+            <Spinner center tip={'Loading...'} />
+          ) : (
+            <>
+              {treeData.length === 0 ? (
+                <Message title="No matching workspace or projects" type={MessageType.Empty} />
+              ) : (
+                <Tree defaultExpandAll selectable={false} treeData={treeData} />
+              )}
+            </>
+          )}
         </div>
       </Modal>
     </>

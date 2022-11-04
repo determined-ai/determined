@@ -32,6 +32,7 @@ issues:
     # Exclude "gosec: Errors unhandled" because it duplicates errcheck.
     - G104
     - and that stutters
+    - declaration of "(err|ctx)" shadows declaration at
 
   # Independently from option `exclude` golangci-lint uses default exclude patterns.
   exclude-use-default: false

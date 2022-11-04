@@ -4,22 +4,22 @@ import { RawJson, UnknownRecord } from '../types';
 
 import * as utils from './data';
 
-enum Type {
-  AsyncFn = 'async-function',
-  BigInt = 'bigint',
-  Boolean = 'boolean',
-  Date = 'date',
-  Fn = 'function',
-  Map = 'map',
-  NullOrUndefined = 'null-or-undefined',
-  Number = 'number',
-  Object = 'object',
-  Primitive = 'primitive',
-  Promise = 'promise',
-  Set = 'set',
-  String = 'string',
-  SyncFn = 'sync-function',
-}
+const Type = {
+  AsyncFn: 'async-function',
+  BigInt: 'bigint',
+  Boolean: 'boolean',
+  Date: 'date',
+  Fn: 'function',
+  Map: 'map',
+  NullOrUndefined: 'null-or-undefined',
+  Number: 'number',
+  Object: 'object',
+  Primitive: 'primitive',
+  Promise: 'promise',
+  Set: 'set',
+  String: 'string',
+  SyncFn: 'sync-function',
+} as const;
 
 const testGroups = [
   { fn: utils.isAsyncFunction, type: Type.AsyncFn },
@@ -57,49 +57,72 @@ const asyncFn = async (): Promise<boolean> => {
   }
 };
 
-const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
+const object = {
+  a: true,
+  b: null,
+  c: { x: { y: -1.2e10 }, z: undefined },
+  nested: {
+    x0: 0,
+    xEmptyString: '',
+    xFalse: false,
+    xNull: null,
+    xUndefined: undefined,
+  },
+};
 
 describe('Data Utilities', () => {
   describe('type checking utilities', () => {
     const tests = [
       // Functions
-      { type: [ Type.AsyncFn, Type.Fn ], value: asyncFn },
-      { type: [ Type.SyncFn, Type.Fn ], value: syncFn },
-      { type: [ Type.SyncFn, Type.Fn ], value: voidFn },
+      { type: [Type.AsyncFn, Type.Fn], value: asyncFn },
+      { type: [Type.SyncFn, Type.Fn], value: syncFn },
+      { type: [Type.SyncFn, Type.Fn], value: voidFn },
 
       // Maps and Sets
-      { type: [ Type.Map, Type.Object ], value: new Map() },
-      { type: [ Type.Map, Type.Object ], value: new Map([ [ 'a', 'value1' ], [ 'b', 'value2' ] ]) },
-      { type: [ Type.Map, Type.Object ], value: new Map([ [ 'x', -1 ], [ 'y', 1.5 ] ]) },
-      { type: [ Type.Set ], value: new Set() },
-      { type: [ Type.Set ], value: new Set([ 'abc', 'def', 'ghi' ]) },
+      { type: [Type.Map, Type.Object], value: new Map() },
       {
-        type: [ Type.Set ],
-        value: new Set([ -1.5, Number.MAX_VALUE, null, undefined ]),
+        type: [Type.Map, Type.Object],
+        value: new Map([
+          ['a', 'value1'],
+          ['b', 'value2'],
+        ]),
+      },
+      {
+        type: [Type.Map, Type.Object],
+        value: new Map([
+          ['x', -1],
+          ['y', 1.5],
+        ]),
+      },
+      { type: [Type.Set], value: new Set() },
+      { type: [Type.Set], value: new Set(['abc', 'def', 'ghi']) },
+      {
+        type: [Type.Set],
+        value: new Set([-1.5, Number.MAX_VALUE, null, undefined]),
       },
 
       // Primitives
-      { type: [ Type.NullOrUndefined, Type.Primitive ], value: null },
-      { type: [ Type.NullOrUndefined, Type.Primitive ], value: undefined },
-      { type: [ Type.BigInt, Type.Primitive ], value: 9007199254740993n },
-      { type: [ Type.Number, Type.Primitive ], value: -3.14159 },
-      { type: [ Type.Number, Type.Primitive ], value: 1.23e-8 },
-      { type: [ Type.Number, Type.Primitive ], value: 0 },
-      { type: [ Type.Primitive, Type.String ], value: 'Jalapeño' },
+      { type: [Type.NullOrUndefined, Type.Primitive], value: null },
+      { type: [Type.NullOrUndefined, Type.Primitive], value: undefined },
+      { type: [Type.BigInt, Type.Primitive], value: 9007199254740993n },
+      { type: [Type.Number, Type.Primitive], value: -3.14159 },
+      { type: [Type.Number, Type.Primitive], value: 1.23e-8 },
+      { type: [Type.Number, Type.Primitive], value: 0 },
+      { type: [Type.Primitive, Type.String], value: 'Jalapeño' },
 
       // Objects
-      { type: [ Type.Date, Type.Object ], value: new Date() },
+      { type: [Type.Date, Type.Object], value: new Date() },
       { type: Type.Object, value: {} },
       { type: Type.Object, value: { 0: 1.5, a: undefined, [Symbol('b')]: null } },
-      { type: [ Type.Primitive, Type.String ], value: 'hello world' },
-      { type: [ Type.Object, Type.Promise ], value: new Promise((resolve) => resolve(undefined)) },
+      { type: [Type.Primitive, Type.String], value: 'hello world' },
+      { type: [Type.Object, Type.Promise], value: new Promise((resolve) => resolve(undefined)) },
     ];
     testGroups.forEach((group) => {
       describe(group.fn.name, () => {
         tests.forEach((test) => {
           it(`should test value "${test.value}" correctly as ${JSON.stringify(test.type)}`, () => {
             const result = Array.isArray(test.type)
-              ? test.type.includes(group.type)
+              ? test.type.map((type) => type === group.type).some((res) => res)
               : test.type === group.type;
             expect(group.fn(test.value)).toBe(result);
           });
@@ -110,79 +133,67 @@ describe('Data Utilities', () => {
 
   describe('isEqual', () => {
     const tests = [
-      { input: [ object, object ], output: true },
+      { input: [object, object], output: true },
+      {
+        input: [{ abc: 123 }, { abc: 123, ghi: undefined }],
+        output: true,
+      },
+      {
+        input: [{ abc: 123 }, { abc: 123, ghi: 456 }],
+        output: false,
+      },
+      {
+        input: [{ abc: 123 }, { abc: 123, ghi: null }],
+        output: false,
+      },
+      { input: ['abc', 'abc'], output: true },
+      { input: ['abc', 'xyz'], output: false },
+      { input: ['abc', 0.5], output: false },
+      { input: [1e-12, 1e-12], output: true },
+      { input: [1e-12, 0.5], output: false },
+      { input: [1e-12, 'abc'], output: false },
+      { input: [Symbol('coin'), Symbol('coin')], output: true },
+      { input: [Symbol('bit'), Symbol('coin')], output: false },
+      { input: [Symbol('bit'), 123], output: false },
+      {
+        input: [new Set(['abc', 123]), new Set(['abc', 123])],
+        output: true,
+      },
+      { input: [new Set(['abc', 123]), new Set(['abc'])], output: false },
+      { input: [new Set(['abc', 123]), new Map([['abc', 123]])], output: false },
       {
         input: [
-          { abc: 123 },
-          { abc: 123, ghi: undefined },
+          new Map([
+            ['abc', 123],
+            ['def', 456],
+          ]),
+          new Map([
+            ['abc', 123],
+            ['def', 456],
+          ]),
         ],
         output: true,
       },
       {
         input: [
-          { abc: 123 },
-          { abc: 123, ghi: 456 },
+          new Map([['abc', 123]]),
+          new Map([
+            ['abc', 123],
+            ['def', 456],
+          ]),
         ],
         output: false,
       },
       {
-        input: [
-          { abc: 123 },
-          { abc: 123, ghi: null },
-        ],
-        output: false,
-      },
-      { input: [ 'abc', 'abc' ], output: true },
-      { input: [ 'abc', 'xyz' ], output: false },
-      { input: [ 'abc', 0.5 ], output: false },
-      { input: [ 1e-12, 1e-12 ], output: true },
-      { input: [ 1e-12, 0.5 ], output: false },
-      { input: [ 1e-12, 'abc' ], output: false },
-      { input: [ Symbol('coin'), Symbol('coin') ], output: true },
-      { input: [ Symbol('bit'), Symbol('coin') ], output: false },
-      { input: [ Symbol('bit'), 123 ], output: false },
-      {
-        input: [
-          new Set([ 'abc', 123 ]),
-          new Set([ 'abc', 123 ]),
-        ],
-        output: true,
-      },
-      { input: [ new Set([ 'abc', 123 ]), new Set([ 'abc' ]) ], output: false },
-      { input: [ new Set([ 'abc', 123 ]), new Map([ [ 'abc', 123 ] ]) ], output: false },
-      {
-        input: [
-          new Map([ [ 'abc', 123 ], [ 'def', 456 ] ]),
-          new Map([ [ 'abc', 123 ], [ 'def', 456 ] ]),
-        ],
+        input: [new Set([1, 2, 3]), new Set([1, 3, 2])],
         output: true,
       },
       {
-        input: [
-          new Map([ [ 'abc', 123 ] ]),
-          new Map([ [ 'abc', 123 ], [ 'def', 456 ] ]),
-        ],
+        input: [new Set([1, 2, 3]), new Set([1, 2, 3, 4])],
         output: false,
       },
       {
-        input: [
-          new Set([ 1, 2, 3 ]),
-          new Set([ 1, 3, 2 ]),
-        ],
-        output: true,
-      },
-      {
-        input: [
-          new Set([ 1, 2, 3 ]),
-          new Set([ 1, 2, 3, 4 ]),
-        ],
-        output: false,
-      },
-      {
-        input: [
-          new Set([ 1, 2, 3 ]),
-          new Set([ 1, 2, 5 ]),
-        ],
+        input: [new Set([1, 2, 3]), new Set([1, 2, 5])],
         output: false,
       },
       /**
@@ -193,23 +204,17 @@ describe('Data Utilities', () => {
        * true
        */
       {
-        input: [
-          new Set([ [ 1 ] ]),
-          new Set([ [ 1 ] ]),
-        ],
+        input: [new Set([[1]]), new Set([[1]])],
         output: false,
       },
     ];
     tests.forEach((test) => {
-      const [ a, b ] = test.input;
+      const [a, b] = test.input;
       const aLabel = utils.isPrimitive(a) ? String(a) : JSON.stringify(a);
       const bLabel = utils.isPrimitive(b) ? String(b) : JSON.stringify(b);
-      it(
-        `${JSON.stringify(aLabel)} should
+      it(`${JSON.stringify(aLabel)} should
           ${test.output ? 'not ' : ''}equal
-          ${JSON.stringify(bLabel)}`,
-        () => expect(utils.isEqual(a, b)).toBe(test.output),
-      );
+          ${JSON.stringify(bLabel)}`, () => expect(utils.isEqual(a, b)).toBe(test.output));
     });
   });
 
@@ -225,13 +230,16 @@ describe('Data Utilities', () => {
     });
 
     it('should clone maps', () => {
-      const map = new Map([ [ 'x', -1 ], [ 'y', 1.5 ] ]);
+      const map = new Map([
+        ['x', -1],
+        ['y', 1.5],
+      ]);
       expect(utils.clone(map)).not.toBe(map);
       expect(utils.clone(map)).toMatchObject(map);
     });
 
     it('should clone sets', () => {
-      const set = new Set([ -1.5, Number.MAX_VALUE, null, undefined ]);
+      const set = new Set([-1.5, Number.MAX_VALUE, null, undefined]);
       expect(utils.clone(set)).not.toBe(set);
       expect(utils.clone(set)).toMatchObject(set);
     });
@@ -258,33 +266,33 @@ describe('Data Utilities', () => {
         input: {
           a: {
             x: true,
-            y: -5.280,
+            y: -5.28,
             z: { hello: 'world' },
           },
-          b: [ 0, 1, 2 ],
+          b: [0, 1, 2],
         },
         output: {
           'a.x': true,
-          'a.y': -5.280,
+          'a.y': -5.28,
           'a.z.hello': 'world',
-          'b': [ 0, 1, 2 ],
+          'b': [0, 1, 2],
         },
       },
       {
         input: {
           a: {
             x: true,
-            y: -5.280,
+            y: -5.28,
             z: { hello: 'world' },
           },
-          b: [ 0, 1, 2 ],
+          b: [0, 1, 2],
         },
         options: { delimiter: '->]X[<-' },
         output: {
           'a->]X[<-x': true,
-          'a->]X[<-y': -5.280,
+          'a->]X[<-y': -5.28,
           'a->]X[<-z->]X[<-hello': 'world',
-          'b': [ 0, 1, 2 ],
+          'b': [0, 1, 2],
         },
       },
       {
@@ -318,8 +326,9 @@ describe('Data Utilities', () => {
 
     it('should unflatten object', () => {
       tests.forEach((test) => {
-        expect(utils.unflattenObject(test.output as UnknownRecord, test.options?.delimiter))
-          .toStrictEqual(test.input);
+        expect(
+          utils.unflattenObject(test.output as UnknownRecord, test.options?.delimiter),
+        ).toStrictEqual(test.input);
       });
     });
   });
@@ -330,10 +339,22 @@ describe('Data Utilities', () => {
         expect(utils.getPath<boolean>(object, 'a')).toBe(true);
         expect(utils.getPath<string>(object, 'x.x')).toBeUndefined();
         expect(utils.getPath<number>(object, 'c.x.y')).toBe(-1.2e10);
+        expect(utils.getPath(object, 'nested.xNull')).toBeNull();
+        expect(utils.getPath(object, 'nested.xUndefined')).toBeUndefined();
+        expect(utils.getPath(object, 'nested.xFalse')).toBe(false);
+        expect(utils.getPath(object, 'nested.x0')).toBe(0);
+        expect(utils.getPath(object, 'nested.xEmptyString')).toBe('');
       });
 
       it('should support empty path', () => {
         expect(utils.getPath<RawJson>(object, '')).toBe(object);
+      });
+
+      it('should return undefined when value is undefined or null', () => {
+        const obj1 = { hash: '', pathname: '/login', search: '', state: undefined };
+        const obj2 = { hash: '', pathname: '/login', search: '', state: null };
+        expect(utils.getPath<Location>(obj1, 'state.loginRedirect')).toBeUndefined();
+        expect(utils.getPath<Location>(obj2, 'state.loginRedirect')).toBeUndefined();
       });
     });
 
@@ -361,30 +382,30 @@ describe('Data Utilities', () => {
 
       describe('getPathList', () => {
         it('should return undefined for bad paths', () => {
-          const actual = utils.getPathList(config, [ 'x', 'y', 'z' ]);
+          const actual = utils.getPathList(config, ['x', 'y', 'z']);
           expect(actual).toBeUndefined();
         });
 
         it('should return undefined for partial matching bad paths', () => {
-          const path = [ 'searcher', 'step_budget' ];
+          const path = ['searcher', 'step_budget'];
           expect(utils.getPathList(config, path)).not.toBeUndefined();
-          const actual = utils.getPathList(config, [ ...path, 'xyz' ]);
+          const actual = utils.getPathList(config, [...path, 'xyz']);
           expect(actual).toBeUndefined();
         });
 
         it('should return null', () => {
-          const actual = utils.getPathList(config, [ 'min_checkpoint_period' ]);
+          const actual = utils.getPathList(config, ['min_checkpoint_period']);
           expect(actual).toBeNull();
         });
 
         it('should return objects', () => {
-          const actual = utils.getPathList(config, [ 'searcher' ]);
+          const actual = utils.getPathList(config, ['searcher']);
           expect(actual).toHaveProperty('mode');
           expect(typeof actual).toEqual('object');
         });
 
         it('should return a reference', () => {
-          const searcher = utils.getPathList<RawJson>(config, [ 'searcher' ]);
+          const searcher = utils.getPathList<RawJson>(config, ['searcher']);
           const TEST_VALUE = 'TEST';
           expect(searcher).toHaveProperty('mode');
           config.searcher.mode = TEST_VALUE;
@@ -395,7 +416,7 @@ describe('Data Utilities', () => {
       describe('deletePathList', () => {
         it('should remove from input', () => {
           expect(config.min_validation_period).not.toBeUndefined();
-          utils.deletePathList(config, [ 'min_validation_period' ]);
+          utils.deletePathList(config, ['min_validation_period']);
           expect(config.min_validation_period).toBeUndefined();
         });
       });
@@ -403,7 +424,7 @@ describe('Data Utilities', () => {
       describe('setPathList', () => {
         it('should set on input', () => {
           const value = { abc: 3 };
-          utils.setPathList(config, [ 'min_validation_period' ], value);
+          utils.setPathList(config, ['min_validation_period'], value);
           expect(config.min_validation_period).toStrictEqual(value);
           expect(config.min_validation_period === value).toBeTruthy();
         });
@@ -412,17 +433,17 @@ describe('Data Utilities', () => {
   });
 
   describe('enum utilities', () => {
-    enum CarType {
-      Convertible = 'Convertible',
-      Coupe = 'Coupe',
-      Hatchback = 'Hatchback',
-      Minivan = 'Minivan',
-      PickupTruck = 'Pickup Truck',
-      Sedan = 'Sedan',
-      SportsCar = 'Sports Car',
-      StationWagon = 'Station Wagon',
-      SUV = 'SUV',
-    }
+    const CarType = {
+      Convertible: 'Convertible',
+      Coupe: 'Coupe',
+      Hatchback: 'Hatchback',
+      Minivan: 'Minivan',
+      PickupTruck: 'Pickup Truck',
+      Sedan: 'Sedan',
+      SportsCar: 'Sports Car',
+      StationWagon: 'Station Wagon',
+      SUV: 'SUV',
+    } as const;
     const INVALID_CAR_TYPE = 'Not a CarType';
 
     describe('validateEnum', () => {
@@ -447,13 +468,13 @@ describe('Data Utilities', () => {
           testName: '`undefined` enum should remain `undefined`',
         },
         {
-          input: [ CarType.Coupe, CarType.PickupTruck ],
-          output: [ CarType.Coupe, CarType.PickupTruck ],
+          input: [CarType.Coupe, CarType.PickupTruck],
+          output: [CarType.Coupe, CarType.PickupTruck],
           testName: 'should leave valid enum values untouched',
         },
         {
-          input: [ CarType.Hatchback, INVALID_CAR_TYPE, CarType.SportsCar ],
-          output: [ CarType.Hatchback, CarType.SportsCar ],
+          input: [CarType.Hatchback, INVALID_CAR_TYPE, CarType.SportsCar],
+          output: [CarType.Hatchback, CarType.SportsCar],
           testName: 'should filter out invalid enum values',
         },
       ];

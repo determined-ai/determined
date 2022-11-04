@@ -643,7 +643,9 @@ points in the grid for this hyperparameter. Grid points are evenly spaced betwee
 The ``searcher`` section defines how the experiment's hyperparameter space will be explored. To run
 an experiment that trains a single trial with fixed hyperparameters, specify the ``single`` searcher
 and specify constant values for the model's hyperparameters. Otherwise, Determined supports three
-different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``.
+different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``. To define
+your own hyperparameter search algorithm, specify the ``custom`` searcher. For more information
+about custom search algorithms, see :ref:`topic-guides_hp-tuning-det_custom`.
 
 The name of the hyperparameter search algorithm to use is configured via the ``name`` field; the
 remaining fields configure the behavior of the searcher and depend on the searcher being used. For
@@ -1038,9 +1040,9 @@ workloads for this experiment. For more information on customizing the trial env
    images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu``
    key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1`` for NVIDIA GPUs.
-   -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.1`` for CPUs.
-   -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1`` for ROCm.
+   -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4`` for NVIDIA GPUs.
+   -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4`` for CPUs.
+   -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4`` for ROCm.
 
    When the cluster is configured with :ref:`resource_manager.type: slurm
    <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using
@@ -1050,7 +1052,7 @@ workloads for this experiment. For more information on customizing the trial env
       -  A full path to a local Singulary image (beginning with a / character).
 
       -  Any of the other supported Singularity container formats identified by prefix (e.g.
-         ``instance://``, ``library://``, ``shub://``, ``oci://``, or ``docker://``). See the
+         ``instance://``, ``library://``, ``shub://``, ``oras://``, or ``docker://``). See the
          `Singularity run <https://docs.sylabs.io/guides/3.7/user-guide/cli/singularity_run.html>`__
          command documentation for a full description of the capabilities.
 
@@ -1059,9 +1061,17 @@ workloads for this experiment. For more information on customizing the trial env
 
       -  If none of the above applies, Determined will apply the ``docker://`` prefix to the image.
 
+   When the cluster is configured with :ref:`resource_manager.type: slurm
+   <cluster-configuration-slurm>` and ``container_run_type: podman``, images are executed using the
+   PodMan container runtime. The image can be any of the supported PodMan container formats
+   identified by transport (e.g. ``docker:`` (the default), ``docker-archive:``, ``docker-daemon:``,
+   or ``oci-archive:``). See the `PodMan run
+   <https://docs.podman.io/en/latest/markdown/podman-run.1.html>`__ command documentation for a full
+   description of the capabilities.
+
 ``force_pull_image``
-   Forcibly pull the image from the Docker registry, bypassing the Docker or Singularity cache.
-   Defaults to ``false``.
+   Forcibly pull the image from the Docker registry, bypassing the Docker or Singularity built-in
+   cache. Defaults to ``false``.
 
 ``registry_auth``
    The `Docker registry credentials
@@ -1099,18 +1109,6 @@ workloads for this experiment. For more information on customizing the trial env
    rather than ``--cap-add``.
 
 .. _exp-environment-slurm:
-
-``slurm``
-   Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
-   control of Slurm options not otherwise managed by Determined. For example, to specify required
-   memory per cpu and exclusive access to an entire node when scheduled, you could specify:
-
-   .. code:: yaml
-
-      environment:
-         slurm:
-            - --mem-per-cpu=10
-            - --exclusive
 
 ***************
  Optimizations
@@ -1286,3 +1284,65 @@ To verify your search is working as intended before committing to a full run, yo
 .. code::
 
    det preview-search <configuration.yaml>
+
+.. _slurm-config:
+
+***************
+ Slurm Options
+***************
+
+The ``slurm`` section specifies configuration options applicable when the cluster is configured with
+:ref:`resource_manager.type: slurm <cluster-configuration-slurm>`.
+
+**Optional Fields**
+
+``sbatch_args``
+   Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
+   control of Slurm options not otherwise managed by Determined. For example, to specify required
+   memory per cpu and exclusive access to an entire node when scheduled, you could specify:
+
+   .. code:: yaml
+
+      slurm:
+         sbatch_args:
+            - --mem-per-cpu=10
+            - --exclusive
+
+``slots_per_node``
+   The minimum number of slots required for a node to be scheduled during a trial. If
+   :ref:`gres_supported <cluster-configuration-slurm>` is false, specify ``slots_per_node`` in order
+   to utilize more than one GPU per node. It is the user’s responsibility to ensure that
+   ``slots_per_node`` GPUs will be available on nodes selected for the job using other
+   configurations such as targeting a specific resource pool with only GPU nodes or specifying a
+   Slurm constraint in the experiment configuration.
+
+.. _pbs-config:
+
+*************
+ PBS Options
+*************
+
+The ``pbs`` section specifies configuration options applicable when the cluster is configured with
+:ref:`resource_manager.type: pbs <cluster-configuration-slurm>`.
+
+**Optional Fields**
+
+``pbsbatch_args``
+   Additional PBS options to be passed when launching trials with ``qsub``. These options enable
+   control of PBS options not otherwise managed by Determined. For example, to specify that the job
+   should have a priority of ``1000`` and a project name of ``MyProjectName``, you could specify:
+
+   .. code:: yaml
+
+      pbs:
+         pbsbatch_args:
+            - -p1000
+            - -PMyProjectName
+
+``slots_per_node``
+   The minimum number of slots required for a node to be scheduled during a trial. If
+   :ref:`gres_supported <cluster-configuration-slurm>` is false, specify ``slots_per_node`` in order
+   to utilize more than one GPU per node. It is the user’s responsibility to ensure that
+   ``slots_per_node`` GPUs will be available on the nodes selected for the job using other
+   configurations such as targeting a specific resource pool with only ``slots_per_node`` GPU nodes
+   or specifying a PBS constraint in the experiment configuration.

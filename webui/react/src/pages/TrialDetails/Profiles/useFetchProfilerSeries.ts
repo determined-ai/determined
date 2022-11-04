@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import { V1GetTrialProfilerAvailableSeriesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import useUI from 'shared/contexts/stores/UI';
 
 import { AvailableSeries } from './types';
 
 export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
-  const { ui } = useStore();
-  const [ availableSeries, setAvailableSeries ] = useState<AvailableSeries>({});
+  const { ui } = useUI();
+  const [availableSeries, setAvailableSeries] = useState<AvailableSeries>({});
 
   useEffect(() => {
     if (ui.isPageHidden) return;
@@ -17,11 +17,9 @@ export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
     const canceler = new AbortController();
 
     readStream(
-      detApi.StreamingProfiler.getTrialProfilerAvailableSeries(
-        trialId,
-        true,
-        { signal: canceler.signal },
-      ),
+      detApi.StreamingProfiler.getTrialProfilerAvailableSeries(trialId, true, {
+        signal: canceler.signal,
+      }),
       (event: V1GetTrialProfilerAvailableSeriesResponse) => {
         const newAvailableSeries: AvailableSeries = {};
 
@@ -49,7 +47,7 @@ export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
     );
 
     return () => canceler.abort();
-  }, [ trialId, ui.isPageHidden ]);
+  }, [trialId, ui.isPageHidden]);
 
   return availableSeries;
 };

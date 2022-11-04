@@ -7,9 +7,7 @@ import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { humanReadableBytes } from 'shared/utils/string';
 import { ShirtSize } from 'themes';
-import {
-  CheckpointWorkloadExtended, ExperimentBase, TrialDetails,
-} from 'types';
+import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
 
 interface Props {
   experiment: ExperimentBase;
@@ -17,7 +15,6 @@ interface Props {
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
-
   const bestCheckpoint: CheckpointWorkloadExtended | undefined = useMemo(() => {
     if (!trial) return;
     const cp = trial.bestAvailableCheckpoint;
@@ -28,21 +25,19 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       experimentId: trial.experimentId,
       trialId: trial.id,
     };
-  }, [ trial ]);
+  }, [trial]);
 
   const totalCheckpointsSize = useMemo(() => {
     const totalBytes = trial?.totalCheckpointSize;
     if (!totalBytes) return;
     return humanReadableBytes(totalBytes);
-  }, [ trial?.totalCheckpointSize ]);
+  }, [trial?.totalCheckpointSize]);
 
   return (
     <Section>
-      <Grid gap={ShirtSize.medium} minItemWidth={180} mode={GridMode.AutoFill}>
+      <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
         {trial?.runnerState && (
-          <OverviewStats title="Last Runner State">
-            {trial.runnerState}
-          </OverviewStats>
+          <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
         )}
         {trial?.startTime && (
           <OverviewStats title="Start Time">
@@ -50,9 +45,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
         {totalCheckpointsSize && (
-          <OverviewStats title="Total Checkpoint Size">
-            {totalCheckpointsSize}
-          </OverviewStats>
+          <OverviewStats title="Total Checkpoint Size">{totalCheckpointsSize}</OverviewStats>
         )}
         {bestCheckpoint && (
           <CheckpointModalTrigger

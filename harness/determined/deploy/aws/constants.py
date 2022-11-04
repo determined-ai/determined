@@ -1,11 +1,10 @@
 class deployment_types:
     SIMPLE = "simple"
     SECURE = "secure"
-    VPC = "vpc"
     EFS = "efs"
     FSX = "fsx"
     GOVCLOUD = "govcloud"
-    DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC, EFS, FSX, GOVCLOUD]
+    DEPLOYMENT_TYPES = [SIMPLE, SECURE, EFS, FSX, GOVCLOUD]
     TYPE_TAG_KEY = "deployment-type"
 
 
@@ -20,11 +19,6 @@ class defaults:
 class cloudformation:
     CLUSTER_ID = "ClusterId"
     KEYPAIR = "Keypair"
-    VPC = "VPC"
-    PUBLIC_SUBNET = "PublicSubnetId"
-    PRIVATE_SUBNET = "PrivateSubnetId"
-    AGENT_INSTANCE_PROFILE_KEY = "AgentInstanceProfile"
-    AGENT_SECURITY_GROUP_ID_KEY = "AgentSecurityGroupId"
     MASTER_ID = "MasterId"
     BASTION_ID = "BastionId"
     CHECKPOINT_BUCKET = "CheckpointBucket"
@@ -68,6 +62,7 @@ class cloudformation:
     AGENT_REATTACH_ENABLED = "AgentReattachEnabled"
     AGENT_RECONNECT_ATTEMPTS = "AgentReconnectAttempts"
     AGENT_RECONNECT_BACKOFF = "AgentReconnectBackoff"
+    AGENT_CONFIG_FILE_CONTENTS = "AgentConfigFileContents"
 
 
 class misc:

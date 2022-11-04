@@ -33,8 +33,8 @@ interface CIELAB {
 }
 
 export interface ColorScale {
-  color: string;    // rgb(a) or hex color
-  scale: number;    // scale between 0.0 and 1.0
+  color: string; // rgb(a) or hex color
+  scale: number; // scale between 0.0 and 1.0
 }
 
 const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
@@ -99,13 +99,19 @@ export const rgba2hsl = (rgba: RgbaColor): HslColor => {
     const d = max - min;
     hsl.s = hsl.l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
-      case r: hsl.h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: hsl.h = (b - r) / d + 2; break;
-      case b: hsl.h = (r - g) / d + 4; break;
+      case r:
+        hsl.h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        hsl.h = (b - r) / d + 2;
+        break;
+      case b:
+        hsl.h = (r - g) / d + 4;
+        break;
     }
   }
 
-  hsl.h = Math.round(360 * hsl.h / 6);
+  hsl.h = Math.round((360 * hsl.h) / 6);
   hsl.s = Math.round(hsl.s * 100);
   hsl.l = Math.round(hsl.l * 100);
 
@@ -146,11 +152,11 @@ export const rgbaMix = (
   const dg = rgba1.g - rgba0.g;
   const db = rgba1.b - rgba0.b;
   const da = (rgba1.a ?? 1.0) - (rgba0.a ?? 1.0);
-  const [ adr, adg, adb, ada ] = [ dr, dg, db, da ].map((x) => Math.abs(x));
-  const delta = adr + adg + adb + (255 * ada);
+  const [adr, adg, adb, ada] = [dr, dg, db, da].map((x) => Math.abs(x));
+  const delta = adr + adg + adb + 255 * ada;
   if (delta === 0) return rgba0;
 
-  const [ pr, pg, pb, pa ] = [ dr, dg, db, da ].map((x) => x * amount / delta);
+  const [pr, pg, pb, pa] = [dr, dg, db, da].map((x) => (x * amount) / delta);
   const r = Math.min(255, Math.max(0, rgba0.r + pr));
   const g = Math.min(255, Math.max(0, rgba0.g + pg));
   const b = Math.min(255, Math.max(0, rgba0.b + pb));
@@ -186,22 +192,18 @@ export const str2rgba = (str: string): RgbaColor => {
 
 /** check if r g b for a single color are equal within a tolerance. color is almost monochrome */
 export const isMonochrome = (rgba: RgbaColor, tolerance = 0): boolean => {
-  return (Math.abs(rgba.r - rgba.g) < tolerance && Math.abs(rgba.g - rgba.b) < tolerance);
+  return Math.abs(rgba.r - rgba.g) < tolerance && Math.abs(rgba.g - rgba.b) < tolerance;
 };
 
 /** convert rgb to CIELAB color. ignores alpha values */
 export const rgb2lab = (rgb: RgbaColor): CIELAB => {
-  const [ r, g, b ] = [ rgb.r / 255, rgb.g / 255, rgb.b / 255 ];
-  const [ x, y, z ] = [
+  const [r, g, b] = [rgb.r / 255, rgb.g / 255, rgb.b / 255];
+  const [x, y, z] = [
     r * 0.4124 + g * 0.3576 + b * 0.1805,
     r * 0.2126 + g * 0.7152 + b * 0.0722,
     r * 0.0193 + g * 0.1192 + b * 0.9505,
   ];
-  const [ l, a, bb ] = [
-    116 * y ** 2 - 16,
-    500 * (x - y),
-    200 * (y - z),
-  ];
+  const [l, a, bb] = [116 * y ** 2 - 16, 500 * (x - y), 200 * (y - z)];
   return { a, b: bb, l };
 };
 
@@ -219,7 +221,7 @@ const pointDistance = (p0: number[], p1: number[]): number => {
 
 /** calculate euclidean distance between two CIELAB colors */
 export const labDistance = (lab0: CIELAB, lab1: CIELAB): number => {
-  return pointDistance([ lab0.l, lab0.a, lab0.b ], [ lab1.l, lab1.a, lab1.b ]);
+  return pointDistance([lab0.l, lab0.a, lab0.b], [lab1.l, lab1.a, lab1.b]);
 };
 
 /** calculate max color distance between two rgba colors */
@@ -232,5 +234,5 @@ export const maxColorDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => 
 };
 
 export const rgbDistance = (rgba0: RgbaColor, rgba1: RgbaColor): number => {
-  return pointDistance([ rgba0.r, rgba0.g, rgba0.b ], [ rgba1.r, rgba1.g, rgba1.b ]);
+  return pointDistance([rgba0.r, rgba0.g, rgba0.b], [rgba1.r, rgba1.g, rgba1.b]);
 };

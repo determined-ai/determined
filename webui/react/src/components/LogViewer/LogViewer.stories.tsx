@@ -9,9 +9,9 @@ import LogViewer from './LogViewer';
 
 export default {
   component: LogViewer,
-  decorators: [ HelmetDecorator ],
+  decorators: [HelmetDecorator],
   parameters: { layout: 'fullscreen' },
-  title: 'LogViewer',
+  title: 'Determined/LogViewer',
 };
 
 const messageWithTags = `continuing trial: <COMPUTE_VALIDATION_METRICS: (10,10,30)>
@@ -26,8 +26,18 @@ export const Default = (): React.ReactNode => (
       initialLogs={[
         { id: '0', message: 'Simple one liner.', time: '2020-06-02T21:48:07.456381-06:00' },
         { id: '1', message: 'Another line', time: '2020-06-02T21:48:08.456381-06:00' },
-        { id: '2', message: 'Example of a really long line. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.', time: '2020-06-02T21:48:09.456381-06:00' },
-        { id: '3', message: 'Example of multi-line log with newlines\nanother line\nanother line\nanother line', time: '2020-06-02T21:48:10.456381-06:00' },
+        {
+          id: '2',
+          message:
+            "Example of a really long line. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
+          time: '2020-06-02T21:48:09.456381-06:00',
+        },
+        {
+          id: '3',
+          message:
+            'Example of multi-line log with newlines\nanother line\nanother line\nanother line',
+          time: '2020-06-02T21:48:10.456381-06:00',
+        },
         { id: '4', message: messageWithTags, time: '2020-06-02T21:48:12.456389-06:00' },
       ]}
     />
@@ -88,7 +98,11 @@ export const Ansi = (): React.ReactNode => (
     <LogViewer
       decoder={mapV1LogsResponse}
       initialLogs={[
-        { id: '0', message: 'example of logs with ANSI color codes', time: '2020-06-02T21:48:07.456381-06:00' },
+        {
+          id: '0',
+          message: 'example of logs with ANSI color codes',
+          time: '2020-06-02T21:48:07.456381-06:00',
+        },
         { id: '1', message: ansiText, time: '2020-06-02T21:48:08.456381-06:00' },
       ]}
     />
@@ -96,15 +110,13 @@ export const Ansi = (): React.ReactNode => (
 );
 
 export const DefaultDownload = (): React.ReactNode => (
-  <button onClick={() => downloadText('default-logs.txt', [ messageWithTags ])}>
+  <button onClick={() => downloadText('default-logs.txt', [messageWithTags])}>
     Download Default Logs
   </button>
 );
 
 export const AnsiDownload = (): React.ReactNode => (
-  <button onClick={() => downloadText('ansi-logs.txt', [ ansiText ])}>
-    Download Ansi Logs
-  </button>
+  <button onClick={() => downloadText('ansi-logs.txt', [ansiText])}>Download Ansi Logs</button>
 );
 
 export const SimulatedDownload = (): React.ReactNode => {

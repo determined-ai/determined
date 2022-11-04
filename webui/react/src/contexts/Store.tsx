@@ -2,15 +2,26 @@ import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import { V1UserWebSetting } from 'services/api-ts-sdk';
-import { DarkLight, Mode, Theme } from 'shared/themes';
+import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { percent } from 'shared/utils/number';
+import { checkDeepEquality } from 'shared/utils/store';
 import {
-  Agent, Auth, ClusterOverview, ClusterOverviewResource,
-  DetailedUser, DeterminedInfo, PoolOverview, ResourcePool, ResourceType,
-  UserAssignment, UserRole, Workspace,
+  Agent,
+  Auth,
+  ClusterOverview,
+  ClusterOverviewResource,
+  DetailedUser,
+  DeterminedInfo,
+  PoolOverview,
+  ResourcePool,
+  ResourceType,
+  UserAssignment,
+  UserRole,
+  Workspace,
 } from 'types';
+import { getCookie, setCookie } from 'utils/browser';
 
 const logger = rootLogger.extend('store');
 
@@ -22,124 +33,111 @@ interface OmnibarState {
   isShowing: boolean;
 }
 
-interface UI {
-  chromeCollapsed: boolean;
-  darkLight: DarkLight;
-  isPageHidden: boolean;
-  mode: Mode;
-  omnibar: OmnibarState;
-  showChrome: boolean;
-  showSpinner: boolean;
-  theme: Theme;
-}
-
-export interface State {
+interface State {
   activeExperiments: number;
   activeTasks: {
     commands: number;
     notebooks: number;
     shells: number;
     tensorboards: number;
-  },
+  };
   agents: Agent[];
   auth: Auth & { checked: boolean };
   cluster: ClusterOverview;
   info: DeterminedInfo;
+  knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
   pool: PoolOverview;
   resourcePools: ResourcePool[];
-  ui: UI;
+  ui: {
+    omnibar: OmnibarState;
+  };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
   userSettings: V1UserWebSetting[];
   users: DetailedUser[];
 }
 
-export enum StoreAction {
-  Reset = 'Reset',
+export const StoreAction = {
+  // Omnibar
+  HideOmnibar: 'HideOmnibar',
 
-  // Agents
-  SetAgents = 'SetAgents',
+  Reset: 'Reset',
 
   // Auth
-  ResetAuth = 'ResetAuth',
-  ResetAuthCheck = 'ResetAuthCheck',
-  SetAuth = 'SetAuth',
-  SetAuthCheck = 'SetAuthCheck',
+  ResetAuth: 'ResetAuth',
 
-  // Info
-  SetInfo = 'SetInfo',
-  SetInfoCheck = 'SetInfoCheck',
-
-  // UI
-  HideUIChrome = 'HideUIChrome',
-  HideUISpinner = 'HideUISpinner',
-  SetMode = 'SetMode',
-  SetPageVisibility = 'SetPageVisibility',
-  SetTheme = 'SetTheme',
-  ShowUIChrome = 'ShowUIChrome',
-  ShowUISpinner = 'ShowUISpinner',
-
-  // Users
-  SetUsers = 'SetUsers',
-  SetCurrentUser = 'SetCurrentUser',
-
-  // User Settings
-  SetUserSettings = 'SetUserSettings',
-
-  // Omnibar
-  HideOmnibar = 'HideOmnibar',
-  ShowOmnibar = 'ShowOmnibar',
-
-  // ResourcePools
-  SetResourcePools = 'SetResourcePools',
-
-  // PinnedWorkspaces
-  SetPinnedWorkspaces = 'SetPinnedWorkspaces',
-
-  // Tasks
-  SetActiveTasks = 'SetActiveTasks',
+  ResetAuthCheck: 'ResetAuthCheck',
 
   // Active Experiments
-  SetActiveExperiments = 'SetActiveExperiments',
+  SetActiveExperiments: 'SetActiveExperiments',
+
+  // Tasks
+  SetActiveTasks: 'SetActiveTasks',
+
+  // Agents
+  SetAgents: 'SetAgents',
+
+  SetAuth: 'SetAuth',
+
+  SetAuthCheck: 'SetAuthCheck',
+
+  SetCurrentUser: 'SetCurrentUser',
+
+  // Info
+  SetInfo: 'SetInfo',
+
+  SetInfoCheck: 'SetInfoCheck',
 
   // User assignments, roles, and derived permissions
-  SetUserAssignments = 'SetUserAssignments',
-  SetUserRoles = 'SetUserRoles',
-}
+  SetKnownRoles: 'SetKnownRoles',
 
-export type Action =
-| { type: StoreAction.Reset }
-| { type: StoreAction.SetAgents; value: Agent[] }
-| { type: StoreAction.ResetAuth }
-| { type: StoreAction.ResetAuthCheck }
-| { type: StoreAction.SetAuth; value: Auth }
-| { type: StoreAction.SetAuthCheck }
-| { type: StoreAction.SetInfo; value: DeterminedInfo }
-| { type: StoreAction.SetInfoCheck }
-| { type: StoreAction.HideUIChrome }
-| { type: StoreAction.HideUISpinner }
-| { type: StoreAction.SetMode; value: Mode }
-| { type: StoreAction.SetPageVisibility; value: boolean }
-| { type: StoreAction.SetTheme; value: { darkLight: DarkLight, theme: Theme } }
-| { type: StoreAction.ShowUIChrome }
-| { type: StoreAction.ShowUISpinner }
-| { type: StoreAction.SetUsers; value: DetailedUser[] }
-| { type: StoreAction.SetCurrentUser; value: DetailedUser }
-| { type: StoreAction.SetUserSettings; value: V1UserWebSetting[] }
-| { type: StoreAction.SetResourcePools; value: ResourcePool[] }
-| { type: StoreAction.SetPinnedWorkspaces; value: Workspace[] }
-| { type: StoreAction.HideOmnibar }
-| { type: StoreAction.ShowOmnibar }
-| { type: StoreAction.SetActiveTasks, value: {
-  commands: number;
-  notebooks: number;
-  shells: number;
-  tensorboards: number;
-}}
-| { type: StoreAction.SetActiveExperiments, value: number }
-| { type: StoreAction.SetUserRoles, value: UserRole[] }
-| { type: StoreAction.SetUserAssignments, value: UserAssignment[] }
+  // PinnedWorkspaces
+  SetPinnedWorkspaces: 'SetPinnedWorkspaces',
+
+  // ResourcePools
+  SetResourcePools: 'SetResourcePools',
+
+  SetUserAssignments: 'SetUserAssignments',
+
+  SetUserRoles: 'SetUserRoles',
+
+  // Users
+  SetUsers: 'SetUsers',
+  // User Settings
+  SetUserSettings: 'SetUserSettings',
+  ShowOmnibar: 'ShowOmnibar',
+} as const;
+
+type Action =
+  | { type: typeof StoreAction.Reset }
+  | { type: typeof StoreAction.SetAgents; value: Agent[] }
+  | { type: typeof StoreAction.ResetAuth }
+  | { type: typeof StoreAction.ResetAuthCheck }
+  | { type: typeof StoreAction.SetAuth; value: Auth }
+  | { type: typeof StoreAction.SetAuthCheck }
+  | { type: typeof StoreAction.SetInfo; value: DeterminedInfo }
+  | { type: typeof StoreAction.SetInfoCheck }
+  | { type: typeof StoreAction.SetUsers; value: DetailedUser[] }
+  | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
+  | { type: typeof StoreAction.SetUserSettings; value: V1UserWebSetting[] }
+  | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
+  | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
+  | { type: typeof StoreAction.HideOmnibar }
+  | { type: typeof StoreAction.ShowOmnibar }
+  | {
+      type: typeof StoreAction.SetActiveTasks;
+      value: {
+        commands: number;
+        notebooks: number;
+        shells: number;
+        tensorboards: number;
+      };
+    }
+  | { type: typeof StoreAction.SetActiveExperiments; value: number }
+  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
+  | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
+  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -147,7 +145,7 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-export const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
+const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 const initClusterOverview: ClusterOverview = {
   [ResourceType.CPU]: clone(initResourceTally),
   [ResourceType.CUDA]: clone(initResourceTally),
@@ -155,25 +153,18 @@ const initClusterOverview: ClusterOverview = {
   [ResourceType.ALL]: clone(initResourceTally),
   [ResourceType.UNSPECIFIED]: clone(initResourceTally),
 };
-const initInfo: DeterminedInfo = {
+export const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
   clusterId: '',
   clusterName: '',
+  featureSwitches: [],
   isTelemetryEnabled: false,
   masterId: '',
+  rbacEnabled: false,
   version: process.env.VERSION || '',
 };
-const initUI = {
-  chromeCollapsed: false,
-  darkLight: DarkLight.Light,
-  isPageHidden: false,
-  mode: Mode.System,
-  omnibar: { isShowing: false },
-  showChrome: true,
-  showSpinner: false,
-  theme: {} as Theme,
-};
+
 const initState: State = {
   activeExperiments: 0,
   activeTasks: {
@@ -186,24 +177,19 @@ const initState: State = {
   auth: initAuth,
   cluster: initClusterOverview,
   info: initInfo,
+  knownRoles: [],
   pinnedWorkspaces: [],
   pool: {},
   resourcePools: [],
-  ui: initUI,
-  userAssignments: [ {
-    cluster: true,
-    name: 'OSS User',
-  } ],
-  userRoles: [ {
-    id: -1,
-    name: 'OSS User',
-    permissions: [ {
-      globalOnly: true,
-      id: -1,
-      name: 'oss_user',
-      workspaceOnly: false,
-    } ],
-  } ],
+  ui: { omnibar: { isShowing: false } }, // TODO move down a level
+  userAssignments: [],
+  userRoles: [
+    {
+      id: -10,
+      name: 'INITIALIZATION',
+      permissions: [],
+    },
+  ],
   users: [],
   userSettings: [],
 };
@@ -213,6 +199,14 @@ const DispatchContext = React.createContext<Dispatch<Action> | undefined>(undefi
 
 const clearAuthCookie = (): void => {
   document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+};
+
+/**
+ * set the auth cookie if it's not already set.
+ * @param token auth token
+ */
+const ensureAuthCookieSet = (token: string): void => {
+  if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
 };
 
 export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
@@ -234,8 +228,10 @@ export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
 
   for (const key in overview) {
     const rt = key as ResourceType;
-    overview[rt].allocation = overview[rt].total !== 0 ?
-      percent((overview[rt].total - overview[rt].available) / overview[rt].total) : 0;
+    overview[rt].allocation =
+      overview[rt].total !== 0
+        ? percent((overview[rt].total - overview[rt].available) / overview[rt].total)
+        : 0;
   }
 
   return overview;
@@ -258,13 +254,16 @@ export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
   });
 
   for (const key in overview) {
-    overview[key].allocation = overview[key].total !== 0 ?
-      percent((overview[key].total - overview[key].available) / overview[key].total) : 0;
+    overview[key].allocation =
+      overview[key].total !== 0
+        ? percent((overview[key].total - overview[key].available) / overview[key].total)
+        : 0;
   }
 
   return overview;
 };
 
+// TODO turn this into a partial reducer simliar to reducerUI.
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
@@ -284,6 +283,12 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, auth: { ...state.auth, checked: false } };
     case StoreAction.SetAuth:
       if (action.value.token) {
+        /**
+         * project Samuel provisioned auth doesn't set a cookie
+         * like our other auth methods do.
+         *
+         */
+        ensureAuthCookieSet(action.value.token);
         globalStorage.authToken = action.value.token;
       }
       return { ...state, auth: { ...action.value, checked: true } };
@@ -295,37 +300,12 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, info: action.value };
     case StoreAction.SetInfoCheck:
       return { ...state, info: { ...state.info, checked: true } };
-    case StoreAction.HideUIChrome:
-      if (!state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: false } };
-    case StoreAction.HideUISpinner:
-      if (!state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: false } };
-    case StoreAction.SetMode:
-      return { ...state, ui: { ...state.ui, mode: action.value } };
-    case StoreAction.SetPageVisibility:
-      return { ...state, ui: { ...state.ui, isPageHidden: action.value } };
-    case StoreAction.SetTheme:
-      return {
-        ...state,
-        ui: {
-          ...state.ui,
-          darkLight: action.value.darkLight,
-          theme: action.value.theme,
-        },
-      };
-    case StoreAction.ShowUIChrome:
-      if (state.ui.showChrome) return state;
-      return { ...state, ui: { ...state.ui, showChrome: true } };
-    case StoreAction.ShowUISpinner:
-      if (state.ui.showSpinner) return state;
-      return { ...state, ui: { ...state.ui, showSpinner: true } };
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
     case StoreAction.SetCurrentUser: {
       if (isEqual(action.value, state.auth.user)) return state;
-      const users = [ ...state.users ];
+      const users = [...state.users];
       const userIdx = users.findIndex((user) => user.id === action.value.id);
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
@@ -351,6 +331,9 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetActiveTasks:
       if (isEqual(state.activeTasks, action.value)) return state;
       return { ...state, activeTasks: action.value };
+    case StoreAction.SetKnownRoles:
+      if (isEqual(state.knownRoles, action.value)) return state;
+      return { ...state, knownRoles: action.value };
     case StoreAction.SetUserRoles:
       if (isEqual(state.userRoles, action.value)) return state;
       return { ...state, userRoles: action.value };
@@ -379,19 +362,21 @@ export const useStoreDispatch = (): Dispatch<Action> => {
 };
 
 const StoreProvider: React.FC<Props> = ({ children }: Props) => {
-  const [ state, dispatch ] = useReducer((state: State, action: Action) => {
-    const newState = reducer(state, action);
-    if (isEqual(state, newState)) return state; // CHECK: performance concerns?
-    logger.debug('store state updated', action.type);
-    return newState;
-  }, initState);
+  const [state, dispatch] = useReducer(checkDeepEquality(reducer, logger), initState);
   return (
     <StateContext.Provider value={state}>
-      <DispatchContext.Provider value={dispatch}>
-        {children}
-      </DispatchContext.Provider>
+      <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
     </StateContext.Provider>
   );
 };
 
-export default StoreProvider;
+/** a set of app level store providers */
+const StackedStoreProvider: React.FC<Props> = ({ children }: Props) => {
+  return (
+    <StoreProvider>
+      <UIStoreProvider>{children}</UIStoreProvider>
+    </StoreProvider>
+  );
+};
+
+export default StackedStoreProvider;

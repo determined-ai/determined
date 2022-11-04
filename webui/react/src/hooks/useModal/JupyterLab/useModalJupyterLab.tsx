@@ -1,6 +1,5 @@
-import { Alert, Button, InputNumber } from 'antd';
-import { Form, Input, Select } from 'antd';
-import { ModalFuncProps } from 'antd';
+import { Alert, Button, Form, Input, InputNumber, Select } from 'antd';
+import type { ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -23,7 +22,7 @@ const { Item } = Form;
 const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
 
-const settingsConfig : SettingsConfig = {
+const settingsConfig: SettingsConfig = {
   settings: [
     {
       defaultValue: '',
@@ -67,23 +66,24 @@ interface FullConfigProps {
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 const useModalJupyterLab = (): ModalHooks => {
-  const [ visible, setVisible ] = useState(false);
-  const [ showFullConfig, setShowFullConfig ] = useState(false);
-  const [ config, setConfig ] = useState<string>();
-  const [ configError, setConfigError ] = useState<string>();
-  const [ buttonDisabled, setButtonDisabled ] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [showFullConfig, setShowFullConfig] = useState(false);
+  const [config, setConfig] = useState<string>();
+  const [configError, setConfigError] = useState<string>();
+  const [buttonDisabled, setButtonDisabled] = useState(false);
   const previousConfig = usePrevious(config, config);
   const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
 
   const handleModalClose = useCallback(() => setVisible(false), []);
 
-  const { modalClose, modalOpen: openOrUpdate, ...modalHook } = useModal(
-    { onClose: handleModalClose },
-  );
+  const {
+    modalClose,
+    modalOpen: openOrUpdate,
+    ...modalHook
+  } = useModal({ onClose: handleModalClose });
 
-  const { settings: fields, updateSettings: updateFields } = useSettings<JupyterLabOptions>(
-    settingsConfig,
-  );
+  const { settings: fields, updateSettings: updateFields } =
+    useSettings<JupyterLabOptions>(settingsConfig);
   const previousFields = usePrevious(fields, undefined);
 
   const fetchConfig = useCallback(async () => {
@@ -99,12 +99,12 @@ const useModalJupyterLab = (): ModalHooks => {
       setConfig(undefined);
       setConfigError('Unable to fetch JupyterLab config.');
     }
-  }, [ fields ]);
+  }, [fields]);
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) setButtonDisabled(false);
     setShowFullConfig((show) => !show);
-  }, [ showFullConfig ]);
+  }, [showFullConfig]);
 
   const handleCreateEnvironment = useCallback(() => {
     if (showFullConfig) {
@@ -119,68 +119,78 @@ const useModalJupyterLab = (): ModalHooks => {
     }
     modalClose();
     setVisible(false);
-  }, [ config, fields, showFullConfig, modalClose ]);
+  }, [config, fields, showFullConfig, modalClose]);
 
   const handleConfigChange = useCallback((config: string) => {
     setConfig(config);
     setConfigError(undefined);
   }, []);
 
-  const formContent = useMemo(() => showFullConfig ? (
-    <JupyterLabFullConfig
-      config={config}
-      configError={configError}
-      setButtonDisabled={setButtonDisabled}
-      onChange={handleConfigChange}
-    />
-  ) : (
-    <JupyterLabForm fields={fields} updateFields={updateFields} />
-  ), [ config, configError, fields, handleConfigChange, showFullConfig, updateFields ]);
+  const formContent = useMemo(
+    () =>
+      showFullConfig ? (
+        <JupyterLabFullConfig
+          config={config}
+          configError={configError}
+          setButtonDisabled={setButtonDisabled}
+          onChange={handleConfigChange}
+        />
+      ) : (
+        <JupyterLabForm fields={fields} updateFields={updateFields} />
+      ),
+    [config, configError, fields, handleConfigChange, showFullConfig, updateFields],
+  );
 
-  const content = useMemo(() => (
-    <>
-      {formContent}
-      <div className={css.buttons}>
-        <Button onClick={handleSecondary}>
-          {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
-        </Button>
-        <Button
-          disabled={buttonDisabled}
-          type="primary"
-          onClick={handleCreateEnvironment}>
-          Launch
-        </Button>
-      </div>
-    </>
-  ), [ formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig ]);
+  const content = useMemo(
+    () => (
+      <>
+        {formContent}
+        <div className={css.buttons}>
+          <Button onClick={handleSecondary}>
+            {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
+          </Button>
+          <Button disabled={buttonDisabled} type="primary" onClick={handleCreateEnvironment}>
+            Launch
+          </Button>
+        </div>
+      </>
+    ),
+    [formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig],
+  );
 
-  const modalProps: ModalFuncProps = useMemo(() => ({
-    className: css.noFooter,
-    closable: true,
-    content,
-    icon: null,
-    title: 'Launch JupyterLab',
-    width: showFullConfig ? 1000 : undefined,
-  }), [ content, showFullConfig ]);
+  const modalProps: ModalFuncProps = useMemo(
+    () => ({
+      className: css.noFooter,
+      closable: true,
+      content,
+      icon: null,
+      title: 'Launch JupyterLab',
+      width: showFullConfig ? 1000 : undefined,
+    }),
+    [content, showFullConfig],
+  );
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    setVisible(true);
-    openOrUpdate({ ...modalProps, ...initialModalProps });
-  }, [ modalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      setVisible(true);
+      openOrUpdate({ ...modalProps, ...initialModalProps });
+    },
+    [modalProps, openOrUpdate],
+  );
 
   // Fetch full config when showing advanced mode.
   useEffect(() => {
     if (showFullConfig) {
       fetchConfig();
     }
-  }, [ fetchConfig, showFullConfig ]);
+  }, [fetchConfig, showFullConfig]);
 
   // Update modal when any form fields change.
   useEffect(() => {
     if (visible && fields !== previousFields) {
       openOrUpdate(modalProps);
     }
-  }, [ fields, previousFields, openOrUpdate, modalProps, visible ]);
+  }, [fields, previousFields, openOrUpdate, modalProps, visible]);
 
   // Update the modal when user toggles the `Show Full Config` button.
   useEffect(() => {
@@ -206,31 +216,38 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   onChange,
   setButtonDisabled,
 }: FullConfigProps) => {
-  const [ field, setField ] = useState([ { name: 'config', value: '' } ]);
+  const [field, setField] = useState([{ name: 'config', value: '' }]);
 
-  const handleConfigChange = useCallback((_, allFields) => {
-    if (!Array.isArray(allFields) || allFields.length === 0) return;
-    try {
-      const configString = allFields[0].value;
-      onChange?.(configString);
-    } catch (e) { handleError(e); }
-  }, [ onChange ]);
+  const handleConfigChange = useCallback(
+    (_, allFields) => {
+      if (!Array.isArray(allFields) || allFields.length === 0) return;
+      try {
+        const configString = allFields[0].value;
+        onChange?.(configString);
+      } catch (e) {
+        handleError(e);
+      }
+    },
+    [onChange],
+  );
 
   useEffect(() => {
-    setField([ { name: 'config', value: config || '' } ]);
-  }, [ config ]);
+    setField([{ name: 'config', value: config || '' }]);
+  }, [config]);
 
   return (
-    <Form
-      fields={field}
-      onFieldsChange={handleConfigChange}>
+    <Form fields={field} onFieldsChange={handleConfigChange}>
       <div className={css.note}>
         <Link external path="/docs/reference/api/command-notebook-config.html">
           Read about JupyterLab settings
         </Link>
       </div>
       <React.Suspense
-        fallback={<div className={css.loading}><Spinner tip="Loading text editor..." /></div>}>
+        fallback={
+          <div className={css.loading}>
+            <Spinner tip="Loading text editor..." />
+          </div>
+        }>
         <Item
           name="config"
           rules={[
@@ -243,9 +260,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
                   return Promise.resolve();
                 } catch (err: unknown) {
                   setButtonDisabled(true);
-                  return Promise.reject(new Error(
-                    `Invalid YAML on line ${(err as {mark: {line: string}}).mark.line}.`,
-                  ));
+                  return Promise.reject(
+                    new Error(
+                      `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line}.`,
+                    ),
+                  );
                 }
               },
             },
@@ -265,8 +284,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
 };
 
 const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps) => {
-  const [ templates, setTemplates ] = useState<Template[]>([]);
-  const [ resourcePools, setResourcePools ] = useState<ResourcePool[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [resourcePools, setResourcePools] = useState<ResourcePool[]>([]);
 
   const resourceInfo = useMemo(() => {
     const selectedPool = resourcePools.find((pool) => pool.name === fields.pool);
@@ -289,34 +308,38 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [ fields.pool, updateFields, resourcePools, fields.slots ]);
+  }, [fields.pool, updateFields, resourcePools, fields.slots]);
 
   const fetchResourcePools = useCallback(async () => {
     try {
       setResourcePools(await getResourcePools({}));
-    } catch (e) { handleError(e); }
+    } catch (e) {
+      handleError(e);
+    }
   }, []);
 
   const fetchTemplates = useCallback(async () => {
     try {
       setTemplates(await getTaskTemplates({}));
-    } catch (e) { handleError(e); }
+    } catch (e) {
+      handleError(e);
+    }
   }, []);
 
   useEffect(() => {
     fetchResourcePools();
-  }, [ fetchResourcePools ]);
+  }, [fetchResourcePools]);
 
   useEffect(() => {
     fetchTemplates();
-  }, [ fetchTemplates ]);
+  }, [fetchTemplates]);
 
   useEffect(() => {
     if (!fields.pool && resourcePools[0]?.name) {
       const pool = resourcePools[0]?.name;
       updateFields?.({ pool });
     }
-  }, [ resourcePools, fields.pool, updateFields ]);
+  }, [resourcePools, fields.pool, updateFields]);
 
   return (
     <div className={css.form}>
@@ -329,7 +352,9 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               value={fields.template}
               onChange={(value) => updateFields?.({ template: value?.toString() })}>
               {templates.map((temp) => (
-                <Option key={temp.name} value={temp.name}>{temp.name}</Option>
+                <Option key={temp.name} value={temp.name}>
+                  {temp.name}
+                </Option>
               ))}
             </Select>
           ),
@@ -353,7 +378,9 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               value={fields.pool}
               onChange={(value) => updateFields?.({ pool: value })}>
               {resourcePools.map((pool) => (
-                <Option key={pool.name} value={pool.name}>{pool.name}</Option>
+                <Option key={pool.name} value={pool.name}>
+                  {pool.name}
+                </Option>
               ))}
             </Select>
           ),
@@ -374,7 +401,12 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
         },
       ].map((row) => {
         if (row.condition === false) return null;
-        return <div className={css.line} key={row.label}><p>{row.label}</p>{row.content}</div>;
+        return (
+          <div className={css.line} key={row.label}>
+            <p>{row.label}</p>
+            {row.content}
+          </div>
+        );
       })}
     </div>
   );

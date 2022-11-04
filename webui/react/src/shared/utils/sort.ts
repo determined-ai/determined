@@ -22,7 +22,7 @@ export const booleanSorter = (a: NullOrUndefined<boolean>, b: NullOrUndefined<bo
   if (a == null || b == null) return nullSorter(a, b);
 
   // True values first.
-  return (a === b) ? 0 : (a ? -1 : 1);
+  return a === b ? 0 : a ? -1 : 1;
 };
 
 /*
@@ -37,7 +37,7 @@ export const dateTimeStringSorter = (
   if (a == null || b == null) return nullSorter(a, b);
 
   // Compare as date objects.
-  const [ aTime, bTime ] = [ new Date(a).getTime(), new Date(b).getTime() ];
+  const [aTime, bTime] = [new Date(a).getTime(), new Date(b).getTime()];
   if (aTime === bTime) return 0;
   return aTime < bTime ? -1 : 1;
 };
@@ -77,14 +77,14 @@ export const primitiveSorter = (
 
 /** return true if a semantic version a is older than b */
 export const semVerIsOlder = (a: SemanticVersion, b: SemanticVersion): boolean => {
-  return a.major < b.major ||
-        (a.major === b.major && a.minor < b.minor) ||
-        (a.major === b.major
-          && a.minor === b.minor && a.patch < b.patch);
+  return (
+    a.major < b.major ||
+    (a.major === b.major && a.minor < b.minor) ||
+    (a.major === b.major && a.minor === b.minor && a.patch < b.patch)
+  );
 };
 
 /** sort a list of versions from latest to oldest. */
 export const sortVersions = (versions: SemanticVersion[]): SemanticVersion[] => {
-  return versions
-    .sort((a, b) => semVerIsOlder(a, b) ? 1 : -1);
+  return versions.sort((a, b) => (semVerIsOlder(a, b) ? 1 : -1));
 };

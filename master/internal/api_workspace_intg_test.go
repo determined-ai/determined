@@ -10,10 +10,12 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -24,57 +26,212 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-var workspaceAuthZ *mocks.WorkspaceAuthZ
+func newProtoStruct(t *testing.T, in map[string]any) *structpb.Struct {
+	s, err := structpb.NewStruct(in)
+	require.NoError(t, err)
+	return s
+}
+
+func TestPostWorkspace(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t)
+
+	// Name min error.
+	_, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: ""})
+	require.Error(t, err)
+
+	// Name max error.
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: string(make([]byte, 81))})
+	require.Error(t, err)
+
+	// Invalid configs.
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.New().String(),
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type": "s3",
+		}),
+	})
+	require.Error(t, err)
+
+	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.New().String(),
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type":   "s3",
+			"bucket": "bucketbucket",
+			"prefix": "./../.",
+		}),
+	})
+	require.Error(t, err)
+
+	// Valid workspace.
+	workspaceName := uuid.New().String()
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: workspaceName,
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type":       "s3",
+			"bucket":     "bucketofrain",
+			"secret_key": "thisisasecret",
+		}),
+	})
+	require.NoError(t, err)
+
+	// Workspace returned correctly?
+	expected := &workspacev1.Workspace{
+		Id:             resp.Workspace.Id,
+		Name:           workspaceName,
+		Archived:       false,
+		Username:       curUser.Username,
+		Immutable:      false,
+		NumProjects:    0,
+		Pinned:         true,
+		UserId:         int32(curUser.ID),
+		NumExperiments: 0,
+		State:          workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED,
+		ErrorMessage:   "",
+		AgentUserGroup: nil,
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type":                 "s3",
+			"bucket":               "bucketofrain",
+			"secret_key":           "********",
+			"access_key":           nil,
+			"endpoint_url":         nil,
+			"prefix":               nil,
+			"save_experiment_best": nil,
+			"save_trial_best":      nil,
+			"save_trial_latest":    nil,
+		}),
+	}
+	proto.Equal(expected, resp.Workspace)
+	require.Equal(t, expected, resp.Workspace)
+
+	// Workspace persisted correctly?
+	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
+	require.NoError(t, err)
+	proto.Equal(expected, getWorkResp.Workspace)
+	require.Equal(t, expected, getWorkResp.Workspace)
+}
+
+func TestPatchWorkspace(t *testing.T) {
+	api, _, ctx := setupAPITest(t)
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID := resp.Workspace.Id
+
+	// Ensure created without checkpoint config.
+	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: workspaceID})
+	require.NoError(t, err)
+	require.Nil(t, getWorkResp.Workspace.CheckpointStorageConfig)
+
+	// Try adding invalid workspace configs.
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type": "shared_fs",
+			}),
+		},
+	})
+	require.Error(t, err)
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type":   "s3",
+				"bucket": "bucketbucket",
+				"prefix": "../../..",
+			}),
+		},
+	})
+	require.Error(t, err)
+
+	// Patch with valid workspace config.
+	patchResp, err := api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: workspaceID,
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type":                 "s3",
+				"bucket":               "bucketofrain",
+				"secret_key":           "keyyyyy",
+				"save_experiment_best": 4,
+				"save_trial_best":      2,
+			}),
+		},
+	})
+	require.NoError(t, err)
+
+	// Correct response returned by patch?
+	expected := newProtoStruct(t, map[string]any{
+		"type":                 "s3",
+		"bucket":               "bucketofrain",
+		"secret_key":           "********",
+		"access_key":           nil,
+		"endpoint_url":         nil,
+		"prefix":               nil,
+		"save_experiment_best": 4,
+		"save_trial_best":      2,
+		"save_trial_latest":    nil,
+	})
+	proto.Equal(expected, patchResp.Workspace.CheckpointStorageConfig)
+	require.Equal(t, expected, patchResp.Workspace.CheckpointStorageConfig)
+
+	// Change persisted?
+	getWorkResp, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: workspaceID})
+	require.NoError(t, err)
+	proto.Equal(expected, getWorkResp.Workspace.CheckpointStorageConfig)
+	require.Equal(t, expected, getWorkResp.Workspace.CheckpointStorageConfig)
+}
+
+var wAuthZ *mocks.WorkspaceAuthZ
 
 func workspaceNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("workspace (%d) not found", id))
 }
 
-func SetupWorkspaceAuthZTest(
+func setupWorkspaceAuthZTest(
 	t *testing.T,
 ) (*apiServer, *mocks.WorkspaceAuthZ, model.User, context.Context) {
-	api, _, curUser, ctx := SetupUserAuthzTest(t)
+	api, _, curUser, ctx := setupUserAuthzTest(t)
 
-	if workspaceAuthZ == nil {
-		workspaceAuthZ = &mocks.WorkspaceAuthZ{}
-		workspace.AuthZProvider.Register("mock", workspaceAuthZ)
+	if wAuthZ == nil {
+		wAuthZ = &mocks.WorkspaceAuthZ{}
+		workspace.AuthZProvider.Register("mock", wAuthZ)
 	}
-	return api, workspaceAuthZ, curUser, ctx
+	return api, wAuthZ, curUser, ctx
 }
 
 func TestAuthzGetWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 	// Deny returns same as 404.
 	_, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: -9999})
 	require.Equal(t, workspaceNotFoundErr(-9999).Error(), err.Error())
 
-	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(false, nil).Once()
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(false, nil).Once()
 	_, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: 1})
 	require.Equal(t, workspaceNotFoundErr(1).Error(), err.Error())
 
 	// A error returned by CanGetWorkspace is returned unmodified.
 	expectedErr := fmt.Errorf("canGetWorkspaceError")
-	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(false, expectedErr).Once()
 	_, err = api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: 1})
 	require.Equal(t, expectedErr, err)
 }
 
 func TestAuthzGetWorkspaceProjects(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceProjectsError")
-	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
-	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything).
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Once()
+	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
 	_, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{Id: 1})
 	require.Equal(t, expectedErr, err)
 
 	// Nil error returns whatever the filtering returned.
 	expected := []*projectv1.Project{{Name: "test"}}
-	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
-	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything).
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Once()
+	workspaceAuthZ.On("FilterWorkspaceProjects", mock.Anything, mock.Anything, mock.Anything).
 		Return(expected, nil).Once()
 	resp, err := api.GetWorkspaceProjects(ctx, &apiv1.GetWorkspaceProjectsRequest{Id: 1})
 	require.NoError(t, err)
@@ -82,18 +239,18 @@ func TestAuthzGetWorkspaceProjects(t *testing.T) {
 }
 
 func TestAuthzGetWorkspaces(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny with error returns error unmodified.
 	expectedErr := fmt.Errorf("filterWorkspaceError")
-	workspaceAuthZ.On("FilterWorkspaces", mock.Anything, mock.Anything).
+	workspaceAuthZ.On("FilterWorkspaces", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
 	_, err := api.GetWorkspaces(ctx, &apiv1.GetWorkspacesRequest{})
 	require.Equal(t, expectedErr, err)
 
 	// Nil error returns whatever the filtering returned.
 	expected := []*workspacev1.Workspace{{Name: "test"}}
-	workspaceAuthZ.On("FilterWorkspaces", mock.Anything, mock.Anything).
+	workspaceAuthZ.On("FilterWorkspaces", mock.Anything, mock.Anything, mock.Anything).
 		Return(expected, nil).Once()
 	resp, err := api.GetWorkspaces(ctx, &apiv1.GetWorkspacesRequest{})
 	require.NoError(t, err)
@@ -101,29 +258,44 @@ func TestAuthzGetWorkspaces(t *testing.T) {
 }
 
 func TestAuthzPostWorkspace(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 
 	// Deny returns error wrapped in forbidden.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateWorkspaceDeny")
-	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canCreateWorkspaceDeny")).Once()
 	_, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// Allow allows the workspace to be created and gotten.
-	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
 
-	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
-	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(true, nil).Once()
 	getResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
 	require.NoError(t, err)
+	proto.Equal(resp.Workspace, getResp.Workspace)
 	require.Equal(t, resp.Workspace, getResp.Workspace)
+
+	// Tried to create with checkpoint storage config.
+	expectedErr = status.Error(codes.PermissionDenied, "storageConfDeny")
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
+	workspaceAuthZ.On("CanCreateWorkspaceWithCheckpointStorageConfig",
+		mock.Anything, mock.Anything).Return(fmt.Errorf("storageConfDeny"))
+	resp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.New().String(),
+		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+			"type": "s3",
+		}),
+	})
+	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
 func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
-	api, workspaceAuthZ, _, ctx := SetupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t)
 	cases := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id int) error
@@ -133,6 +305,18 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 				Id: int32(id),
 				Workspace: &workspacev1.PatchWorkspace{
 					Name: wrapperspb.String(uuid.New().String()),
+				},
+			})
+			return err
+		}},
+		{"CanSetWorkspacesCheckpointStorageConfig", func(id int) error {
+			_, err := api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+				Id: int32(id),
+				Workspace: &workspacev1.PatchWorkspace{
+					CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+						"type":   "s3",
+						"bucket": "bucketbucket",
+					}),
 				},
 			})
 			return err
@@ -171,7 +355,7 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 
 	for _, curCase := range cases {
 		// Create workspace to test with.
-		workspaceAuthZ.On("CanCreateWorkspace", mock.Anything).Return(nil).Once()
+		workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 		resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 		require.NoError(t, err)
 		id := int(resp.Workspace.Id)
@@ -180,19 +364,21 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 		require.Equal(t, workspaceNotFoundErr(-9999), curCase.IDToReqCall(-9999))
 
 		// Without permission to view returns not found.
-		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(false, nil).Once()
+		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+			Return(false, nil).Once()
 		require.Equal(t, workspaceNotFoundErr(id).Error(), curCase.IDToReqCall(id).Error())
 
 		// A error returned by CanGetWorkspace is returned unmodified.
 		cantGetWorkspaceErr := fmt.Errorf("canGetWorkspaceError")
-		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).
+		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 			Return(false, cantGetWorkspaceErr).Once()
 		require.Equal(t, cantGetWorkspaceErr, curCase.IDToReqCall(id))
 
 		// Deny with permission to view returns error wrapped in forbidden.
 		expectedErr := status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Deny")
-		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything).Return(true, nil).Once()
-		workspaceAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything).
+		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+			Return(true, nil).Once()
+		workspaceAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything, mock.Anything).
 			Return(fmt.Errorf("%sDeny", curCase.DenyFuncName)).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(id).Error())
 	}

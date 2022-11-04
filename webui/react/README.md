@@ -1,4 +1,4 @@
-# React WebUI [![CircleCI](https://circleci.com/gh/determined-ai/determined/tree/master.svg?style=svg)](<https://app.circleci.com/pipelines/github/determined-ai/determined?branch=master&filter=all>) [![codecov](https://codecov.io/gh/determined-ai/determined/branch/master/graph/badge.svg?flag=web)](https://codecov.io/gh/determined-ai/determined/tree/master/webui/react/)
+# React WebUI [![CircleCI](https://circleci.com/gh/determined-ai/determined/tree/master.svg?style=svg)](https://app.circleci.com/pipelines/github/determined-ai/determined?branch=master&filter=all) [![codecov](https://codecov.io/gh/determined-ai/determined/branch/master/graph/badge.svg?flag=web)](https://codecov.io/gh/determined-ai/determined/tree/master/webui/react/)
 
 ## Brief Architecture
 
@@ -38,12 +38,12 @@ The page will automatically load and display new changes via [Hot Module Replace
 ## Environment Variables
 
 - `SERVER_ADDRESS`: If set, directs the WebUI to find the Determined cluster at this address.
-This allows users to host the WebUI on a separate server from Determined. This would need the target
-server to allow requests coming from the domain hosting the WebUI, aka CORS.
+  This allows users to host the WebUI on a separate server from Determined. This would need the target
+  server to allow requests coming from the domain hosting the WebUI, aka CORS.
 - `PUBLIC_URL`: Indicates where the React assets are being served from relative to the root of the webserver. Set this variable to an empty string to serve from `/`.
-This is set to `/det` by default for typical workflows in this project.  [More info](https://create-react-app.dev/docs/using-the-public-folder/)
+  This is set to `/det` by default for typical workflows in this project. [More info](https://create-react-app.dev/docs/using-the-public-folder/)
 - `DET_NODE_ENV`: set this to `development` to skip some build optimizations when developing and building
-locally to lower build time.
+  locally to lower build time.
 
 ## Developing Against a Remote Cluster
 
@@ -55,22 +55,37 @@ If the remote cluster has `enable_cors` set to any value or allows CORS requests
 
 ## Testing
 
-### Style and JS Linting
+### CSS and JS Linting and Formatting
 
 We check Javascript linting with [eslint](http://eslint.org/) and CSS linting with [stylelint](https://stylelint.io/).
 
+We also use [Prettier](https://prettier.io/) for formatting code.
+
 ```sh
 # check both CSS and JS linting
-npm run lint
+make check
+
+# check both CSS and JS formmating
+make fmt
 
 # check JS linting
-npm run lint:js
+make check-eslint check-prettier-js
+
+# check JS formmating
+make fmt-js
 
 # check CSS linting
-npm run lint:css
+make check-stylelint check-prettier-css
+
+# check CSS formmating
+make fmt-css
 ```
 
 Our Javascript linting rules and CSS linting rules can be found in [.eslintrc.js](.eslintrc.js) and [.stylelintrc.js](.stylelintrc.js) respectively.
+
+`Prettier` formatting rules can be found in [.prettierrc.js](.prettierrc.js).
+
+More commands can be found in [Makefile](Makefile).
 
 ### Unit and Interaction Testing
 
@@ -132,7 +147,7 @@ The bundle analyzer will look at the generated source maps for the `build` direc
 
 We are heavily leveraging a lot of goodness from **Create React App** discussed above. To continue benefitting from it, we need to avoid ejecting the project. Meaning we do not want to start managing the webpack configuration. The `npm run eject` command is a one-way operation and once you do it, **there is no going back**! The following describes what exactly happens when you do eject.
 
->If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+> If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
 > Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
 

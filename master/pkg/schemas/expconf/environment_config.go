@@ -50,7 +50,6 @@ type EnvironmentConfigV0 struct {
 	RawRegistryAuth   *types.AuthConfig `json:"registry_auth"`
 	RawForcePullImage *bool             `json:"force_pull_image"`
 	RawPodSpec        *PodSpec          `json:"pod_spec"`
-	RawSlurm          []string          `json:"slurm"`
 
 	RawAddCapabilities  []string `json:"add_capabilities"`
 	RawDropCapabilities []string `json:"drop_capabilities"`

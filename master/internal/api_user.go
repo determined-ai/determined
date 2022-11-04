@@ -17,18 +17,73 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
-var errUserNotFound = status.Error(codes.NotFound, "user not found")
+const determinedName = "determined"
+
+var (
+	errUserNotFound = status.Error(codes.NotFound, "user not found")
+	latinText       = regexp.MustCompile("[^[:graph:]\\s]")
+)
+
+func clearUsername(targetUser model.User, name string, minLength int) (*string, error) {
+	clearName := strings.TrimSpace(name)
+	// Reject non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
+	if latinText.ReplaceAllLiteralString(clearName, "") != clearName {
+		return nil, status.Error(codes.InvalidArgument,
+			"Display name and username cannot contain non-ASCII characters.")
+	}
+	if len(clearName) < minLength {
+		return nil, status.Error(codes.InvalidArgument,
+			"Display name or username value has minimum length.")
+	}
+	// Restrict 'admin' and 'determined'.
+	if !targetUser.Admin && (strings.ToLower(clearName) == "admin") {
+		return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
+	}
+	if targetUser.Username != determinedName && (strings.ToLower(clearName) == determinedName) {
+		return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
+	}
+	return &clearName, nil
+}
+
+func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
+	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
+		return status.Error(
+			codes.InvalidArgument,
+			"AgentUid, AgentGid, AgentUser and AgentGroup cannot be empty",
+		)
+	}
+	if *aug.AgentUser == "" || *aug.AgentGroup == "" {
+		return status.Error(
+			codes.InvalidArgument,
+			"AgentUser and AgentGroup names cannot be empty",
+		)
+	}
+
+	return nil
+}
+
+// TODO(ilia): We need null.Int32.
+func i64Ptr2i32(v *int64) *int32 {
+	if v == nil {
+		return nil
+	}
+
+	return ptrs.Ptr(int32(*v))
+}
 
 func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	var agentUserGroup *userv1.AgentUserGroup
-	if user.AgentUID.Valid || user.AgentGID.Valid {
+	if user.AgentUID.Valid || user.AgentGID.Valid || user.AgentUser.Valid || user.AgentGroup.Valid {
 		agentUserGroup = &userv1.AgentUserGroup{
-			AgentUid: int32(user.AgentUID.ValueOrZero()),
-			AgentGid: int32(user.AgentGID.ValueOrZero()),
+			AgentUid:   i64Ptr2i32(user.AgentUID.Ptr()),
+			AgentGid:   i64Ptr2i32(user.AgentGID.Ptr()),
+			AgentUser:  user.AgentUser.Ptr(),
+			AgentGroup: user.AgentGroup.Ptr(),
 		}
 	}
 	displayNameString := user.DisplayName.ValueOrZero()
@@ -115,7 +170,7 @@ func (a *apiServer) GetUsers(
 	if err != nil {
 		return nil, err
 	}
-	if users, err = user.AuthZProvider.Get().FilterUserList(*curUser, users); err != nil {
+	if users, err = user.AuthZProvider.Get().FilterUserList(ctx, *curUser, users); err != nil {
 		return nil, err
 	}
 
@@ -140,7 +195,8 @@ func (a *apiServer) GetUser(
 	}
 
 	var ok bool
-	if ok, err = user.AuthZProvider.Get().CanGetUser(*curUser, targetFullUser.ToUser()); err != nil {
+	if ok, err = user.AuthZProvider.Get().CanGetUser(
+		ctx, *curUser, targetFullUser.ToUser()); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errUserNotFound
@@ -159,15 +215,38 @@ func (a *apiServer) PostUser(
 		Admin:    req.User.Admin,
 		Active:   req.User.Active,
 	}
+	clearedUsername, err := clearUsername(*userToAdd, userToAdd.Username, 2)
+	if err != nil {
+		return nil, err
+	}
+	userToAdd.Username = *clearedUsername
+
 	if req.User.DisplayName != "" {
-		userToAdd.DisplayName = null.StringFrom(req.User.DisplayName)
+		clearedDisplayName, err := clearUsername(*userToAdd, req.User.DisplayName, 0)
+		if err != nil {
+			return nil, err
+		}
+		userToAdd.DisplayName = null.StringFrom(*clearedDisplayName)
 	}
 
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
+		aug := req.User.AgentUserGroup
+		if err := validateProtoAgentUserGroup(aug); err != nil {
+			return nil, err
+		}
+
 		agentUserGroup = &model.AgentUserGroup{
-			UID: int(req.User.AgentUserGroup.AgentUid),
-			GID: int(req.User.AgentUserGroup.AgentGid),
+			UID:   int(*req.User.AgentUserGroup.AgentUid),
+			GID:   int(*req.User.AgentUserGroup.AgentGid),
+			User:  *req.User.AgentUserGroup.AgentUser,
+			Group: *req.User.AgentUserGroup.AgentGroup,
+		}
+		if agentUserGroup.User == "" || agentUserGroup.Group == "" {
+			return nil, status.Error(
+				codes.InvalidArgument,
+				"AgentUser and AgentGroup names cannot be empty",
+			)
 		}
 	}
 
@@ -176,7 +255,7 @@ func (a *apiServer) PostUser(
 		return nil, err
 	}
 	if err = user.AuthZProvider.Get().
-		CanCreateUser(*curUser, *userToAdd, agentUserGroup); err != nil {
+		CanCreateUser(ctx, *curUser, *userToAdd, agentUserGroup); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -215,9 +294,9 @@ func (a *apiServer) SetUserPassword(
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if err = user.AuthZProvider.Get().CanSetUsersPassword(*curUser, targetUser); err != nil {
+	if err = user.AuthZProvider.Get().CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
 		if ok, canGetErr := user.AuthZProvider.
-			Get().CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 			return nil, canGetErr
 		} else if !ok {
 			return nil, errUserNotFound
@@ -252,9 +331,9 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
 		if ok, canGetErr := user.AuthZProvider.Get().
-			CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+			CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 			return nil, canGetErr
 		} else if !ok {
 			return nil, errUserNotFound
@@ -262,11 +341,10 @@ func (a *apiServer) PatchUser(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	// TODO: handle any field name:
 	if req.User.DisplayName != nil {
-		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(*curUser, targetUser); err != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -275,24 +353,47 @@ func (a *apiServer) PatchUser(
 		}
 
 		u := &userv1.User{}
-		if req.User.DisplayName.Value == "" {
-			// Disallow empty diaplay name for sorting purpose.
+
+		displayName, err2 := clearUsername(targetUser, *req.User.DisplayName, 0)
+		if err2 != nil {
+			return nil, err2
+		}
+
+		if displayName == nil || *displayName == "" {
+			// Set empty display name to null.
 			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, nil)
 		} else {
-			// Remove non-ASCII chars to avoid hidden whitespace, confusable letters, etc.
-			re := regexp.MustCompile("[^\\p{Latin}\\p{N}\\s]")
-			displayName := re.ReplaceAllLiteralString(req.User.DisplayName.Value, "")
-			// Restrict 'admin' and 'determined' in display names.
-			if !(curUser.Admin && curUser.ID == uid) && strings.Contains(strings.ToLower(displayName),
-				"admin") {
-				return nil, status.Error(codes.InvalidArgument, "Non-admin user cannot be renamed 'admin'")
-			}
-			if curUser.Username != "determined" && strings.Contains(strings.ToLower(displayName),
-				"determined") {
-				return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
-			}
-			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, strings.TrimSpace(displayName))
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, displayName)
 		}
+		if err == db.ErrNotFound {
+			return nil, errUserNotFound
+		} else if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.User.Username != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersUsername(ctx, *curUser, targetUser); err != nil {
+			if ok, findErr := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
+				return nil, findErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, err
+		}
+
+		// Reject SSO and SCIM
+		if user.IsSSOUser(targetUser) {
+			return nil, status.Error(codes.InvalidArgument,
+				"Cannot change username of SSO/SCIM user through this API.")
+		}
+
+		username, err3 := clearUsername(targetUser, *req.User.Username, 2)
+		if err3 != nil {
+			return nil, err3
+		}
+
+		err = a.m.db.UpdateUsername(&targetUser.ID, *username)
 		if err == db.ErrNotFound {
 			return nil, errUserNotFound
 		} else if err != nil {
@@ -303,9 +404,9 @@ func (a *apiServer) PatchUser(
 	var toUpdate []string
 	if req.User.Active != nil {
 		if err = user.AuthZProvider.Get().
-			CanSetUsersActive(*curUser, targetUser, req.User.Active.Value); err != nil {
+			CanSetUsersActive(ctx, *curUser, targetUser, req.User.Active.Value); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -317,10 +418,10 @@ func (a *apiServer) PatchUser(
 	}
 
 	if req.User.Admin != nil {
-		if err = user.AuthZProvider.Get().CanSetUsersAdmin(*curUser, targetUser,
+		if err = user.AuthZProvider.Get().CanSetUsersAdmin(ctx, *curUser, targetUser,
 			req.User.Admin.Value); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -332,15 +433,20 @@ func (a *apiServer) PatchUser(
 	}
 
 	var ug *model.AgentUserGroup
-	if pug := req.User.AgentUserGroup; pug != nil {
+	if aug := req.User.AgentUserGroup; aug != nil {
+		if err = validateProtoAgentUserGroup(aug); err != nil {
+			return nil, err
+		}
 		ug = &model.AgentUserGroup{
-			UID: int(req.User.AgentUserGroup.AgentUid),
-			GID: int(req.User.AgentUserGroup.AgentGid),
+			UID:   int(*req.User.AgentUserGroup.AgentUid),
+			GID:   int(*req.User.AgentUserGroup.AgentGid),
+			User:  *req.User.AgentUserGroup.AgentUser,
+			Group: *req.User.AgentUserGroup.AgentGroup,
 		}
 		if err = user.AuthZProvider.Get().
-			CanSetUsersAgentUserGroup(*curUser, targetUser, *ug); err != nil {
+			CanSetUsersAgentUserGroup(ctx, *curUser, targetUser, *ug); err != nil {
 			if ok, canGetErr := user.AuthZProvider.Get().
-				CanGetUser(*curUser, targetFullUser.ToUser()); canGetErr != nil {
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
 				return nil, canGetErr
 			} else if !ok {
 				return nil, errUserNotFound
@@ -367,7 +473,7 @@ func (a *apiServer) GetUserSetting(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanGetUsersOwnSettings(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -392,7 +498,8 @@ func (a *apiServer) PostUserSetting(
 		Value:       req.Setting.Value,
 		StoragePath: req.StoragePath,
 	}
-	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(*curUser, settingModel); err != nil {
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnSetting(
+		ctx, *curUser, settingModel); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -407,7 +514,7 @@ func (a *apiServer) ResetUserSetting(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanResetUsersOwnSettings(*curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanResetUsersOwnSettings(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

@@ -23,7 +23,7 @@ const GROUPNAME = 'test_groupname1';
 const user = userEvent.setup();
 
 interface Props {
-  group:V1GroupSearchResult
+  group: V1GroupSearchResult;
 }
 
 const Container: React.FC<Props> = ({ group }) => {
@@ -38,7 +38,6 @@ const Container: React.FC<Props> = ({ group }) => {
 };
 
 const setup = async () => {
-
   const group = {
     group: {
       groupId: 1,
@@ -62,9 +61,9 @@ describe('useModalCreateGroup', () => {
   it('should open modal with correct values', async () => {
     await setup();
 
-    expect(screen.getByText(
-      `Are you sure you want to delete group ${GROUPNAME} (ID: 1).`,
-    )).toBeInTheDocument();
+    expect(
+      screen.getByText(`Are you sure you want to delete group ${GROUPNAME} (ID: 1).`),
+    ).toBeInTheDocument();
   });
 
   it('should close the modal via upper right close button', async () => {
@@ -74,9 +73,7 @@ describe('useModalCreateGroup', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER })).not.toBeInTheDocument();
     });
   });
 
@@ -87,9 +84,7 @@ describe('useModalCreateGroup', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER })).not.toBeInTheDocument();
     });
   });
 
@@ -107,9 +102,7 @@ describe('useModalCreateGroup', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(
-        screen.queryByRole('heading', { name: MODAL_HEADER }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER })).not.toBeInTheDocument();
     });
 
     // Check that the API method was called with the correct parameters.

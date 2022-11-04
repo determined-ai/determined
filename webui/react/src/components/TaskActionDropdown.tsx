@@ -5,16 +5,12 @@ import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import { paths } from 'routes/utils';
-import {
-  killTask,
-} from 'services/api';
+import { killTask } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
-import {
-  ExperimentAction as Action, AnyTask, CommandTask, DetailedUser,
-} from 'types';
+import { ExperimentAction as Action, AnyTask, CommandTask, DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { isTaskKillable } from 'utils/task';
 
@@ -36,14 +32,15 @@ const TaskActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   children,
 }: Props) => {
-
   const isKillable = isTaskKillable(task);
 
   const handleMenuClick = (params: MenuInfo): void => {
     params.domEvent.stopPropagation();
     try {
       const action = params.key as Action;
-      switch (action) { // Cases should match menu items.
+      switch (
+        action // Cases should match menu items.
+      ) {
         case Action.Kill:
           Modal.confirm({
             content: `
@@ -91,13 +88,13 @@ const TaskActionDropdown: React.FC<Props> = ({
     <Dropdown
       overlay={menu}
       placement="bottomLeft"
-      trigger={[ 'contextMenu' ]}
+      trigger={['contextMenu']}
       onVisibleChange={onVisibleChange}>
       {children}
     </Dropdown>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
+      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>

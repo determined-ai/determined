@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/wrappers.proto";
+import "determined/api/v1/pagination.proto";
+import "determined/group/v1/group.proto";
+import "determined/user/v1/user.proto";
+import "determined/rbac/v1/rbac.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// List all permissions for the current user in all parts of the cluster.
+message GetPermissionsSummaryRequest {}
+
+// Response to GetPermissionsSummaryRequest.
+message GetPermissionsSummaryResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "assignments", "roles" ] }
+  };
+
+  // A group of roles in cluster and other scopes.
+  repeated determined.rbac.v1.Role roles = 1;
+  // Lists of assignments for the cluster and other scopes.
+  repeated determined.rbac.v1.RoleAssignmentSummary assignments = 2;
+}
+
+// Request object for GetGroupsAndUsersAssignedToWorkspace.
+message GetGroupsAndUsersAssignedToWorkspaceRequest {
+  // ID of workspace getting groups and users.
+  int32 workspace_id = 1;
+  // Name of groups and users to search by. Name filters by group name for
+  // groups. Name filters by display name then username if display name is null
+  // for users.
+  string name = 2;
+}
+
+// Response object for GetGroupsAndUsersAssignedToWorkspace.
+message GetGroupsAndUsersAssignedToWorkspaceResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "groups", "users_assigned_directly", "assignments" ]
+    }
+  };
+
+  // Groups with a role assigned to the given workspace scope.
+  // Contains user membership of each group.
+  repeated determined.group.v1.GroupDetails groups = 1;
+  // Only contains users assigned directly to roles on the workspace scope.
+  repeated determined.user.v1.User users_assigned_directly = 2;
+  // Roles assigned to workspace with associations between
+  // groups and users_assigned_directly with roles.
+  repeated determined.rbac.v1.RoleWithAssignments assignments = 3;
+}
+
+// Request object for GetRolesByID
+message GetRolesByIDRequest {
+  // The ids of the roles to be returned
+  repeated int32 role_ids = 1;
+}
+
+// Response object for GetRolesByID
+message GetRolesByIDResponse {
+  // The roles requested
+  repeated determined.rbac.v1.RoleWithAssignments roles = 1;
+}
+
+// Request object for GetRolesAssignedToUser
+message GetRolesAssignedToUserRequest {
+  // The id of the user to search for role assignments for
+  int32 user_id = 1;
+}
+
+// Response object for GetRolesAssignedToUser
+message GetRolesAssignedToUserResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "roles" ] }
+  };
+
+  // The roles assigned to the requested user with assignment information.
+  repeated determined.rbac.v1.RoleWithAssignments roles = 1;
+}
+
+// Request object for GetRolesAssignedToGroup
+message GetRolesAssignedToGroupRequest {
+  // The id of the group to search for role assignments for
+  int32 group_id = 1;
+}
+
+// Response object for GetRolesAssignedToGroup
+message GetRolesAssignedToGroupResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "roles", "assignments" ] }
+  };
+
+  // The roles assigned to the requested groups.
+  repeated determined.rbac.v1.Role roles = 1;
+
+  // What scope each role is assigned to.
+  repeated determined.rbac.v1.RoleAssignmentSummary assignments = 2;
+}
+
+// Request object for SearchRolesAssignableToScope
+message SearchRolesAssignableToScopeRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "limit" ] }
+  };
+
+  // The maximum number of results to return
+  int32 limit = 1;
+  // The offset to use with pagination
+  int32 offset = 2;
+  // The id of the workspace to use if searching for a workspace-assignable role
+  google.protobuf.Int32Value workspace_id = 3;
+}
+
+// Response object for SearchRolesAssignableToScope
+message SearchRolesAssignableToScopeResponse {
+  // pagination information.
+  Pagination pagination = 1;
+  // the set of roles and all assignments belonging to it.
+  repeated determined.rbac.v1.Role roles = 2;
+}
+
+// ListRolesRequest is the body of the request for the call
+// to search for a role.
+message ListRolesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "limit" ] }
+  };
+  // the offset for pagination.
+  int32 offset = 3;
+  // the limit for pagination.
+  int32 limit = 4;
+}
+
+// ListRolesResponse is the body of the response for the call
+// to search for a role.
+message ListRolesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "roles", "pagination" ] }
+  };
+  // a set of roles and all assignments belonging to it.
+  repeated determined.rbac.v1.Role roles = 1;
+  // pagination information.
+  Pagination pagination = 2;
+}
+
+// AssignRolesRequest is the body of the request for the call to
+// grant a user or group a role. It requires group_id, role_id,
+// and either scope_workspace_id or scope_project_id.
+message AssignRolesRequest {
+  // the set of groups being assigned to a role.
+  repeated determined.rbac.v1.GroupRoleAssignment group_role_assignments = 1;
+  // the set of users being assigned to a role.
+  repeated determined.rbac.v1.UserRoleAssignment user_role_assignments = 2;
+}
+
+// AssignRolesResponse is the body of the request for the call
+// to grant a user or group a role.
+message AssignRolesResponse {}
+
+// RemoveAssignmentsRequest is the body of the request for the call
+// to remove a user or group from a role.
+message RemoveAssignmentsRequest {
+  // the set of groups being removed from a role.
+  repeated determined.rbac.v1.GroupRoleAssignment group_role_assignments = 1;
+  // the set of users being removed from a role.
+  repeated determined.rbac.v1.UserRoleAssignment user_role_assignments = 2;
+}
+
+// RemoveAssignmentsResponse is the body of the response for teh call
+// to remove a user or group from a role.
+message RemoveAssignmentsResponse {}

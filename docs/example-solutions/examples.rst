@@ -223,6 +223,22 @@ For an introduction to using the training API, please see the Training APIs sect
       -  Omniglot
       -  :download:`protonet_omniglot_pytorch.tgz </examples/protonet_omniglot_pytorch.tgz>`
 
+***********
+ Diffusion
+***********
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  det_logos
+      -  :download:`textual_inversion_stable_diffusion.tgz
+         </examples/textual_inversion_stable_diffusion.tgz>`
+
 ****************************************
  Generative Adversarial Networks (GANs)
 ****************************************
@@ -305,3 +321,18 @@ For an introduction to using the training API, please see the Training APIs sect
    -  -  PyTorch
       -  MNIST
       -  :download:`hp_constraints_mnist_pytorch.tgz </examples/hp_constraints_mnist_pytorch.tgz>`
+
+********************************
+ Features: Custom Search Method
+********************************
+
+.. list-table::
+   :header-rows: 1
+
+   -  -  Framework
+      -  Dataset
+      -  Filename
+
+   -  -  PyTorch
+      -  MNIST
+      -  :download:`asha_search_method.tgz </examples/asha_search_method.tgz>`

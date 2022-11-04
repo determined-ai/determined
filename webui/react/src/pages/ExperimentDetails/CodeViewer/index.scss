@@ -2,10 +2,14 @@
   background: var(--theme-surface-strong);
   width: 100%;
 }
-.ant-tree.ant-tree-directory .ant-tree-treenode .ant-tree-node-content-wrapper.ant-tree-node-selected {
+.ant-tree.ant-tree-directory
+  .ant-tree-treenode
+  .ant-tree-node-content-wrapper.ant-tree-node-selected {
   background: var(--antd-wave-shadow-color);
 }
-.ant-tree.ant-tree-directory .ant-tree-treenode .ant-tree-node-content-wrapper:hover:not(.ant-tree-node-selected) {
+.ant-tree.ant-tree-directory
+  .ant-tree-treenode
+  .ant-tree-node-content-wrapper:hover:not(.ant-tree-node-selected) {
   background: var(--theme-surface-weak);
 }
 .ant-tree-list {

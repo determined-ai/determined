@@ -54,6 +54,8 @@ stages:
         agent_reconnect_attempts: 24
         agent_reconnect_backoff: 5
         container_auto_remove_disabled: true
+        hooks:
+          on_connection_lost: ["touch", "/tmp/agent1-connection-lost"]
 
 
   - agent:

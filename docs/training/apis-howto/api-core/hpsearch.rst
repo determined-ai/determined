@@ -4,7 +4,7 @@
  Hyperparameter Search
 #######################
 
-With Core API you can run advanced hyperparameter searches with arbitrary training code. The
+With the Core API you can run advanced hyperparameter searches with arbitrary training code. The
 hyperparameter search logic is in the master, which coordinates many different Trials. Each trial
 runs a train-validate-report loop:
 
@@ -16,7 +16,7 @@ runs a train-validate-report loop:
    |          | have to keep track of how much you have already trained to know how much |
    |          | more to train.                                                           |
    +----------+--------------------------------------------------------------------------+
-   | Validate | Validate your model to obtain the metric you configure in the            |
+   | Validate | Validate your model to obtain the metric you configured in the           |
    |          | ``searcher.metric`` field of your experiment config.                     |
    +----------+--------------------------------------------------------------------------+
    | Report   | Use the Core API to report results to the master.                        |
@@ -35,7 +35,7 @@ runs a train-validate-report loop:
 
 #. Modify ``main()`` to run the train-validate-report loop mentioned above by iterating through
    ``core_context.searcher.operations()``. Each :class:`~determined.core.SearcherOperation` from
-   :meth:`~determined.core.SearcherContext.operations` has a ``.length`` attribute to specify the
+   :meth:`~determined.core.SearcherContext.operations` has a ``length`` attribute that specifies the
    absolute length of training to complete. After validating, report the searcher metric value using
    ``op.report_completed()``.
 

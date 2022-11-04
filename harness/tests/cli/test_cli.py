@@ -222,6 +222,60 @@ def test_read_context_with_detignore_subdirs(tmp_path: Path) -> None:
         assert {f["path"] for f in model_def} == {"A.py", "B.py"}
 
 
+def test_read_context_with_detignore_wildcard(tmp_path: Path) -> None:
+    with FileTree(
+        tmp_path,
+        {
+            "dir/file.py": "",
+            "dir/subdir/A.py": "",
+            "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
+            ".detignore": "\ndir/sub*/\n",
+        },
+    ) as tree:
+        model_def = context.read_legacy_context(tree)
+        assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
+
+    with FileTree(
+        tmp_path,
+        {
+            "dir/file.py": "",
+            "dir/subdir/A.py": "",
+            "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
+            ".detignore": "\ndir/sub*\n",
+        },
+    ) as tree:
+        model_def = context.read_legacy_context(tree)
+        assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
+
+    with FileTree(
+        tmp_path,
+        {
+            "dir/file.py": "",
+            "dir/subdir/A.py": "",
+            "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
+            ".detignore": "\ndir/*/\n",
+        },
+    ) as tree:
+        model_def = context.read_legacy_context(tree)
+        assert {f["path"] for f in model_def} == {"dir", "dir/file.py"}
+
+    with FileTree(
+        tmp_path,
+        {
+            "dir/file.py": "",
+            "dir/subdir/A.py": "",
+            "dir/subdir/B.py": "",
+            "dir/subdir/subdir/subdir/C.py": "",
+            ".detignore": "\ndir/*\n",
+        },
+    ) as tree:
+        model_def = context.read_legacy_context(tree)
+        assert {f["path"] for f in model_def} == {"dir"}
+
+
 def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
     with FileTree(
         tmp_path,
@@ -234,6 +288,42 @@ def test_read_context_ignore_pycaches(tmp_path: Path) -> None:
     ) as tree:
         model_def = context.read_legacy_context(tree)
         assert {f["path"] for f in model_def} == {"A.py", "subdir", "subdir/A.py"}
+
+
+def test_includes(tmp_path: Path) -> None:
+    with FileTree(
+        tmp_path,
+        {
+            "A.py": "",
+            "dir/B.py": "",
+            "context/C.py": "",
+        },
+    ) as tree:
+        # Directory name is stripped for contexts, preserved for includes.
+        model_def = context.read_legacy_context(
+            context_root=tree / "context",
+            includes=[tree / "A.py", tree / "dir"],
+        )
+        assert {f["path"] for f in model_def} == {"A.py", "dir", "dir/B.py", "C.py"}
+
+        # Includes without a context is supported.
+        model_def = context.read_legacy_context(
+            context_root=None,
+            includes=[tree / "A.py", tree / "dir"],
+        )
+        assert {f["path"] for f in model_def} == {"A.py", "dir", "dir/B.py"}
+
+        # Disallow context-include conflicts.
+        with pytest.raises(ValueError):
+            context.read_legacy_context(context_root=tree, includes=[tree / "A.py"])
+        with pytest.raises(ValueError):
+            context.read_legacy_context(context_root=tree, includes=[tree / "dir"])
+
+        # Disallow include-include conflicts.
+        with pytest.raises(ValueError):
+            context.read_legacy_context(context_root=None, includes=[tree / "A.py", tree / "A.py"])
+        with pytest.raises(ValueError):
+            context.read_legacy_context(context_root=None, includes=[tree / "dir", tree / "dir"])
 
 
 def test_cli_args_exist() -> None:

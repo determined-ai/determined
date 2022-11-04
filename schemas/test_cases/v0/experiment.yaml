@@ -31,8 +31,8 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094
-        cuda: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-9119094
+        cpu: determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+        cuda: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730
         rocm: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-roсm-4537b95
       pod_spec: null
       ports:
@@ -92,6 +92,10 @@
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
     perform_initial_validation: false
+    pbs:
+      slots_per_node: 99
+      pbsbatch_args:
+        - --aa bb
     profiling:
       enabled: true
       begin_on_batch: 0
@@ -106,6 +110,7 @@
         - host_path: "/dev/infiniband"
           container_path: "/dev/infiniband"
           mode: "rmw"
+        - "/host/dev1:/container/dev1"
       slots_per_trial: 15
       weight: 1000
       max_slots: 900
@@ -130,6 +135,10 @@
       container_path: /asdf
       checkpoint_path: /qwer
       tensorboard_path: /zxcv
+    slurm:
+      slots_per_node: 101
+      sbatch_args:
+        - --another
 
 - name: minimal valid experiment
   sane_as:
@@ -169,7 +178,6 @@
       pod_spec:
       ports: {}
       registry_auth: null
-      slurm: []
       add_capabilities: []
       drop_capabilities: []
     hyperparameters: {}
@@ -190,6 +198,7 @@
       mixed_precision: O0
       tensor_fusion_cycle_time: 5
       tensor_fusion_threshold: 64
+    pbs: {}
     perform_initial_validation: false
     profiling:
       enabled: false
@@ -218,6 +227,7 @@
       smaller_is_better: true
       source_checkpoint_uuid: null
       source_trial_id: null
+    slurm: {}
     workspace: ''
     project: ''
 

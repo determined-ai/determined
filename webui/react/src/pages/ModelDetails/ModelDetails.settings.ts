@@ -1,5 +1,5 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 
@@ -29,6 +29,10 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ModelVersionColumnName, number> = {
   tags: 106,
   user: 85,
   version: 74,
+};
+
+export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelVersionsRequestSortBy => {
+  return Object.values(V1GetModelVersionsRequestSortBy).includes(String(sortKey));
 };
 
 export interface Settings extends InteractiveTableSettings {

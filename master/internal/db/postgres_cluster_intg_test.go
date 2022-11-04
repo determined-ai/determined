@@ -15,7 +15,7 @@ import (
 )
 
 func TestClusterAPI(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
@@ -65,20 +65,24 @@ func TestClusterAPI(t *testing.T) {
 
 	// Add a cluster heartbeat after allocation, so it is as if the master died with it open.
 	currentTime := time.Now().UTC().Truncate(time.Millisecond)
-	db.UpdateClusterHeartBeat(currentTime)
+	require.NoError(t, db.UpdateClusterHeartBeat(currentTime))
 
 	var clusterHeartbeat time.Time
 	err = db.sql.QueryRow("SELECT cluster_heartbeat FROM cluster_id").Scan(&clusterHeartbeat)
 	require.NoError(t, err, "error reading cluster_heartbeat from cluster_id table")
 
-	require.Equal(t, currentTime, clusterHeartbeat, "Retrieved cluster heartbeat doesn't match the correct time")
+	require.Equal(t, currentTime, clusterHeartbeat,
+		"Retrieved cluster heartbeat doesn't match the correct time")
 
 	// Don't complete the above allocation and call CloseOpenAllocations
-	db.CloseOpenAllocations(nil)
+	require.NoError(t, db.CloseOpenAllocations(nil))
 
 	// Retrieve the open allocation and check if end time is set to cluster_heartbeat
 	aOut, err := db.AllocationByID(aIn.AllocationID)
+	require.NoError(t, err)
 	require.NotNil(t, aOut, "aOut is Nil")
 	require.NotNil(t, aOut.EndTime, "aOut.EndTime is Nil")
-	require.Equal(t, *aOut.EndTime, clusterHeartbeat, "Expected end time of open allocation is = %q but it is = %q instead", clusterHeartbeat.String(), (*aOut.EndTime).String())
+	require.Equal(t, *aOut.EndTime, clusterHeartbeat,
+		"Expected end time of open allocation is = %q but it is = %q instead",
+		clusterHeartbeat.String(), aOut.EndTime.String())
 }

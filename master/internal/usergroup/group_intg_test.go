@@ -5,10 +5,10 @@ package usergroup
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -36,7 +36,8 @@ func TestUserGroups(t *testing.T) {
 		index := groupsContain(groups, testGroup.ID)
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
 		foundGroup := groups[index]
-		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
+		require.Equal(t, testGroup.Name, foundGroup.Name,
+			"Expected found group to have the same name as the one we created")
 
 		groups, _, count, err = SearchGroups(ctx, testGroup.Name, 0, 0, 0)
 		require.NoError(t, err, "failed to search for groups")
@@ -49,7 +50,8 @@ func TestUserGroups(t *testing.T) {
 	t.Run("find group by id", func(t *testing.T) {
 		foundGroup, err := GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to find group by id")
-		require.Equal(t, testGroup.Name, foundGroup.Name, "Expected found group to have the same name as the one we created")
+		require.Equal(t, testGroup.Name, foundGroup.Name,
+			"Expected found group to have the same name as the one we created")
 	})
 
 	t.Run("update group", func(t *testing.T) {
@@ -57,7 +59,8 @@ func TestUserGroups(t *testing.T) {
 		defer func(name string) {
 			testGroup.Name = name
 			err := UpdateGroupTx(ctx, nil, testGroup)
-			require.NoError(t, err, "failed to put things back how they were after testing UpdateGroup")
+			require.NoError(t, err,
+				"failed to put things back how they were after testing UpdateGroup")
 		}(testGroup.Name)
 
 		newName := "kljhadsflkgjhjklsfhgasdhj"
@@ -83,20 +86,34 @@ func TestUserGroups(t *testing.T) {
 	})
 
 	t.Run("search groups by user membership", func(t *testing.T) {
-		groups, _, count, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
-		require.NoError(t, err, "failed to search for groups that user blongs to")
+		groups, _, count, err := SearchGroupsWithoutPersonalGroups(ctx, "", testUser.ID, 0, 0)
+		require.NoError(t, err, "failed to search for groups that user belongs to")
 
 		index := groupsContain(groups, testGroup.ID)
 		require.Equal(t, 2, count, "group search returned wrong count")
-		require.NotEqual(t, -1, index, "Group user was added to not found when searching by user membership")
+		require.NotEqual(t, -1, index,
+			"Group user was added to not found when searching by user membership")
+	})
+
+	t.Run("manually edit groups query", func(t *testing.T) {
+		query := SearchGroupsQuery("", testUser.ID, false)
+		query = query.Where("group_name = ?", testGroup.Name)
+		groups, _, count, err := SearchGroupsPaginated(ctx, query, 0, 0)
+		require.NoError(t, err, "failed to search for group in modified query")
+		require.Equal(t, 1, count, "modified group search returned wrong count")
+		index := groupsContain(groups, testGroup.ID)
+		require.NotEqual(t, -1, index,
+			"Group user was added to not found when searching by user membership")
 	})
 
 	t.Run("remove users from group", func(t *testing.T) {
 		err := RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, -500)
-		require.True(t, errors.Is(err, db.ErrNotFound), "failed to return ErrNotFound when removing non-existent users from group")
+		require.True(t, errors.Is(err, db.ErrNotFound),
+			"failed to return ErrNotFound when removing non-existent users from group")
 
 		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID, -500)
-		require.NoError(t, err, "erroneously returned error when trying to remove a mix of users in a group and not")
+		require.NoError(t, err,
+			"erroneously returned error when trying to remove a mix of users in a group and not")
 
 		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "failed to look for users in group")
@@ -105,28 +122,35 @@ func TestUserGroups(t *testing.T) {
 		require.Equal(t, -1, i, "User found in group after removing them from it")
 
 		err = RemoveUsersFromGroupTx(ctx, nil, testGroup.ID, testUser.ID)
-		require.True(t, errors.Is(err, db.ErrNotFound), "failed to return ErrNotFound when trying to remove users from group they're not in")
+		require.True(t, errors.Is(err, db.ErrNotFound),
+			"failed to return ErrNotFound when trying to remove users from group they're not in")
 	})
 
-	t.Run("partial success on adding users to a group results in tx rollback and ErrNotFound", func(t *testing.T) {
-		err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
-		require.True(t, errors.Is(err, db.ErrNotFound), "didn't return ErrNotFound when adding non-existent users to a group")
+	t.Run("partial success on adding users to a group results in tx rollback and ErrNotFound",
+		func(t *testing.T) {
+			err := AddUsersToGroupTx(ctx, nil, testGroup.ID, testUser.ID, 125674576, 12934728, 0, -15)
+			require.True(t, errors.Is(err, db.ErrNotFound),
+				"didn't return ErrNotFound when adding non-existent users to a group")
 
-		users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
-		require.NoError(t, err, "failed to search for users that belong to group")
+			users, err := UsersInGroupTx(ctx, nil, testGroup.ID)
+			require.NoError(t, err, "failed to search for users that belong to group")
 
-		index := usersContain(users, testUser.ID)
-		require.Equal(t, -1, index, "Expected users in group not to contain the one added in the erroring call")
-	})
+			index := usersContain(users, testUser.ID)
+			require.Equal(t, -1, index,
+				"Expected users in group not to contain the one added in the erroring call")
+		})
 
-	t.Run("AddUsersToGroup fails with ErrNotFound when attempting to add users to a non-existent group", func(t *testing.T) {
+	t.Run("AddUsersToGroup fails with ErrNotFound when attempting "+
+		"to add users to a non-existent group", func(t *testing.T) {
 		err := AddUsersToGroupTx(ctx, nil, -500, testUser.ID)
-		require.True(t, errors.Is(err, db.ErrNotFound), "didn't return ErrNotFound when trying to add users to a non-existent group")
+		require.True(t, errors.Is(err, db.ErrNotFound),
+			"didn't return ErrNotFound when trying to add users to a non-existent group")
 	})
 
 	t.Run("Deleting a group that doesn't exist results in ErrNotFound", func(t *testing.T) {
 		err := DeleteGroup(ctx, -500)
-		require.True(t, errors.Is(err, db.ErrNotFound), "didn't return ErrNotFound when trying to delete a non-existent group")
+		require.True(t, errors.Is(err, db.ErrNotFound),
+			"didn't return ErrNotFound when trying to delete a non-existent group")
 	})
 
 	t.Run("Deleting a group that has users should work", func(t *testing.T) {
@@ -144,29 +168,34 @@ func TestUserGroups(t *testing.T) {
 		require.NoError(t, err, "errored when deleting group")
 
 		_, err = GroupByIDTx(ctx, nil, tmpGroup.ID)
-		require.True(t, errors.Is(err, db.ErrNotFound), "deleted group should not be found, and ErrNotFound returned")
+		require.True(t, errors.Is(err, db.ErrNotFound),
+			"deleted group should not be found, and ErrNotFound returned")
 	})
 
-	t.Run("AddGroup returns ErrDuplicateRecord when creating a group that already exists", func(t *testing.T) {
-		_, _, err := AddGroupWithMembers(ctx, testGroupStatic)
-		require.True(t, errors.Is(err, db.ErrDuplicateRecord), "didn't return ErrDuplicateRecord")
-	})
+	t.Run("AddGroup returns ErrDuplicateRecord when creating a group that already exists",
+		func(t *testing.T) {
+			_, _, err := AddGroupWithMembers(ctx, testGroupStatic)
+			require.True(t, errors.Is(err, db.ErrDuplicateRecord), "didn't return ErrDuplicateRecord")
+		})
 
-	t.Run("AddUsersToGroup returns ErrDuplicateRecord when adding users to a group they're already in", func(t *testing.T) {
+	t.Run("AddUsersToGroup returns ErrDuplicateRecord when adding users to a "+
+		"group they're already in", func(t *testing.T) {
 		err := AddUsersToGroupTx(ctx, nil, testGroupStatic.ID, testUser.ID)
-		require.True(t, errors.Is(err, db.ErrDuplicateRecord), "should have returned ErrDuplicateRecord")
+		require.True(t, errors.Is(err, db.ErrDuplicateRecord),
+			"should have returned ErrDuplicateRecord")
 	})
 
-	t.Run("Static test group should exist at the end and test user should be in it", func(t *testing.T) {
-		_, err := GroupByIDTx(ctx, nil, testGroupStatic.ID)
-		require.NoError(t, err, "errored while getting static test group")
+	t.Run("Static test group should exist at the end and test user should be in it",
+		func(t *testing.T) {
+			_, err := GroupByIDTx(ctx, nil, testGroupStatic.ID)
+			require.NoError(t, err, "errored while getting static test group")
 
-		users, err := UsersInGroupTx(ctx, nil, testGroupStatic.ID)
-		require.NoError(t, err, "failed to search for users that belong to static group")
+			users, err := UsersInGroupTx(ctx, nil, testGroupStatic.ID)
+			require.NoError(t, err, "failed to search for users that belong to static group")
 
-		index := usersContain(users, testUser.ID)
-		require.NotEqual(t, -1, index, "Expected users in static group to contain the test user")
-	})
+			index := usersContain(users, testUser.ID)
+			require.NotEqual(t, -1, index, "Expected users in static group to contain the test user")
+		})
 
 	t.Run("search group with offsets and limits", func(t *testing.T) {
 		answerGroups, _, count, err := SearchGroups(ctx, "", 0, 0, 3)
@@ -181,17 +210,20 @@ func TestUserGroups(t *testing.T) {
 		index := groupsContain(groups, answerGroups[0].ID)
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
 		foundGroup := groups[index]
-		require.Equal(t, answerGroups[0].Name, foundGroup.Name, "Expected found group to have the same name as the first answerGroup")
+		require.Equal(t, answerGroups[0].Name, foundGroup.Name,
+			"Expected found group to have the same name as the first answerGroup")
 		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
 
 		groups, _, count, err = SearchGroups(ctx, "", 0, 1, 2)
 		require.NoError(t, err, "failed to search for groups")
 		require.GreaterOrEqual(t, count, len(testGroups), "search returned the wrong count")
-		require.LessOrEqual(t, len(groups), 2, "Expected no more than two groups to have been returned")
+		require.LessOrEqual(t, len(groups), 2,
+			"Expected no more than two groups to have been returned")
 		index = groupsContain(groups, answerGroups[1].ID)
 		require.NotEqual(t, -1, index, "Expected groups to contain the new one")
 		foundGroup = groups[index]
-		require.Equal(t, answerGroups[1].Name, foundGroup.Name, "Expected found group to have the same name as the second answerGroup")
+		require.Equal(t, answerGroups[1].Name, foundGroup.Name,
+			"Expected found group to have the same name as the second answerGroup")
 	})
 
 	t.Run("AddGroupWithMembers rolls back transactions", func(t *testing.T) {
@@ -200,7 +232,7 @@ func TestUserGroups(t *testing.T) {
 		// Just in case this fails, clean up.
 		defer func(g Group) {
 			if g.ID != 0 {
-				DeleteGroup(ctx, g.ID)
+				require.NoError(t, DeleteGroup(ctx, g.ID))
 			}
 		}(g)
 		require.True(t, errors.Is(err, db.ErrNotFound), "error")
@@ -235,13 +267,15 @@ func TestUserGroups(t *testing.T) {
 		_, err = pgDB.AddUser(&updateTestUser2, nil)
 		require.NoError(t, err, "failure creating user in setup")
 
-		users, name, err := UpdateGroupAndMembers(ctx, testGroup.ID, "newName", []model.UserID{updateTestUser1.ID}, []model.UserID{})
+		users, name, err := UpdateGroupAndMembers(ctx, testGroup.ID, "newName",
+			[]model.UserID{updateTestUser1.ID}, []model.UserID{})
 		require.NoError(t, err, "failed to update group")
 		require.Equal(t, name, "newName", "group name not updated properly")
 		index := usersContain(users, updateTestUser1.ID)
 		require.NotEqual(t, -1, index, "group users not updated properly")
 
-		users, name, err = UpdateGroupAndMembers(ctx, testGroup.ID, "anotherNewName", []model.UserID{updateTestUser2.ID}, []model.UserID{updateTestUser1.ID})
+		users, name, err = UpdateGroupAndMembers(ctx, testGroup.ID, "anotherNewName",
+			[]model.UserID{updateTestUser2.ID}, []model.UserID{updateTestUser1.ID})
 		require.NoError(t, err, "failed to update group")
 		require.Equal(t, name, "anotherNewName", "group name not updated properly")
 		index = usersContain(users, updateTestUser1.ID)
@@ -249,19 +283,20 @@ func TestUserGroups(t *testing.T) {
 		index = usersContain(users, updateTestUser2.ID)
 		require.NotEqual(t, -1, index, "group users not updated properly")
 
-		users, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", nil, []model.UserID{-500})
+		_, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", nil, []model.UserID{-500})
 		require.Error(t, err, "succeeded when update should have failed")
 		group, err := GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
 		require.Equal(t, group.Name, "anotherNewName", "group name should not be updated")
 
-		users, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", []model.UserID{-500}, nil)
+		_, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", []model.UserID{-500}, nil)
 		require.Error(t, err, "succeeded when update should have failed")
 		group, err = GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
 		require.Equal(t, group.Name, "anotherNewName", "group name should not be updated")
 
-		users, name, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", nil, []model.UserID{updateTestUser2.ID, -500})
+		users, name, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", nil,
+			[]model.UserID{updateTestUser2.ID, -500})
 		require.NoError(t, err, "failed to update group")
 		require.Equal(t, name, "testGroup", "group name not updated properly")
 		require.GreaterOrEqual(t, 0, len(users), "group users not updated properly")
@@ -269,6 +304,36 @@ func TestUserGroups(t *testing.T) {
 		require.Equal(t, -1, index, "group users not removed properly")
 		index = usersContain(users, updateTestUser2.ID)
 		require.Equal(t, -1, index, "group users not removed properly")
+	})
+
+	t.Run("test personal group", func(t *testing.T) {
+		// Get personal group.
+		groups, _, _, err := SearchGroups(ctx, "", testUser.ID, 0, 0)
+		require.NoError(t, err)
+		var personalGroup *Group
+		for _, g := range groups {
+			if g.OwnerID != 0 {
+				require.Nil(t, personalGroup, "only one personal group should be returned")
+				g := g
+				personalGroup = &g
+			}
+		}
+		require.NotNil(t, personalGroup, "no personal group returned")
+
+		_, err = GroupByIDTx(ctx, nil, personalGroup.ID)
+		require.ErrorIs(t, err, db.ErrNotFound)
+
+		require.ErrorIs(t, DeleteGroup(ctx, personalGroup.ID), db.ErrNotFound)
+		require.ErrorIs(t, UpdateGroupTx(ctx, nil, *personalGroup), db.ErrNotFound)
+		require.ErrorIs(t, AddUsersToGroupTx(ctx, nil, personalGroup.ID), db.ErrNotFound)
+		require.ErrorIs(t, RemoveUsersFromGroupTx(ctx, nil, personalGroup.ID), db.ErrNotFound)
+
+		_, _, err = UpdateGroupAndMembers(ctx, personalGroup.ID, "", nil, nil)
+		require.ErrorIs(t, err, db.ErrNotFound)
+
+		// Personal group still returns no error for UsersInGroupTx.
+		_, err = UsersInGroupTx(ctx, nil, personalGroup.ID)
+		require.NoError(t, err)
 	})
 }
 
@@ -324,7 +389,7 @@ func cleanUp(ctx context.Context, t *testing.T) {
 	}
 }
 
-// groupsContains returns -1 if group id was not found, else returns the index
+// groupsContains returns -1 if group id was not found, else returns the index.
 func groupsContain(groups []Group, id int) int {
 	if len(groups) < 1 {
 		return -1
@@ -339,7 +404,7 @@ func groupsContain(groups []Group, id int) int {
 	return -1
 }
 
-// usersContains returns -1 if user id was not found, else returns the index
+// usersContains returns -1 if user id was not found, else returns the index.
 func usersContain(users []model.User, id model.UserID) int {
 	if len(users) < 1 {
 		return -1

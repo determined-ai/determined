@@ -6,7 +6,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import { relativeTimeRenderer } from 'components/Table';
+import { relativeTimeRenderer } from 'components/Table/Table';
 import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
@@ -28,7 +28,7 @@ type Action = {
   key: string;
   onClick: () => void;
   text: string;
-}
+};
 
 interface Props {
   modelVersion: ModelVersion;
@@ -44,95 +44,95 @@ const ModelVersionHeader: React.FC<Props> = ({
   onSaveName,
 }: Props) => {
   const { users } = useStore();
-  const [ showUseInNotebook, setShowUseInNotebook ] = useState(false);
+  const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
-  const {
-    contextHolder: modalModelDownloadContextHolder,
-    modalOpen: openModelDownload,
-  } = useModalModelDownload();
+  const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
+    useModalModelDownload();
 
-  const {
-    contextHolder: modalModelVersionDeleteContextHolder,
-    modalOpen: openModalVersionDelete,
-  } = useModalModelVersionDelete();
+  const { contextHolder: modalModelVersionDeleteContextHolder, modalOpen: openModalVersionDelete } =
+    useModalModelVersionDelete();
 
   const handleDownloadModel = useCallback(() => {
     openModelDownload(modelVersion);
-  }, [ modelVersion, openModelDownload ]);
+  }, [modelVersion, openModelDownload]);
 
   const infoRows: InfoRow[] = useMemo(() => {
-    return [ {
-      content: (
-        <Space>
-          <Avatar userId={modelVersion.userId} />
-          {getDisplayName(users.find((user) => user.id === modelVersion.userId))}
-          on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
-        </Space>
-      ),
-      label: 'Created by',
-    },
-    {
-      content: relativeTimeRenderer(
-        new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime),
-      ),
-      label: 'Updated',
-    },
-    {
-      content: (
-        <InlineEditor
-          disabled={modelVersion.model.archived}
-          placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
-          value={modelVersion.comment ?? ''}
-          onSave={onSaveDescription}
-        />
-      ),
-      label: 'Description',
-    },
-    {
-      content: (
-        <TagList
-          disabled={modelVersion.model.archived}
-          ghost={false}
-          tags={modelVersion.labels ?? []}
-          onChange={onUpdateTags}
-        />
-      ),
-      label: 'Tags',
-    } ] as InfoRow[];
-  }, [ modelVersion, onSaveDescription, onUpdateTags, users ]);
+    return [
+      {
+        content: (
+          <Space>
+            <Avatar userId={modelVersion.userId} />
+            {getDisplayName(users.find((user) => user.id === modelVersion.userId))}
+            on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+          </Space>
+        ),
+        label: 'Created by',
+      },
+      {
+        content: relativeTimeRenderer(
+          new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime),
+        ),
+        label: 'Updated',
+      },
+      {
+        content: (
+          <InlineEditor
+            disabled={modelVersion.model.archived}
+            placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
+            value={modelVersion.comment ?? ''}
+            onSave={onSaveDescription}
+          />
+        ),
+        label: 'Description',
+      },
+      {
+        content: (
+          <TagList
+            disabled={modelVersion.model.archived}
+            ghost={false}
+            tags={modelVersion.labels ?? []}
+            onChange={onUpdateTags}
+          />
+        ),
+        label: 'Tags',
+      },
+    ] as InfoRow[];
+  }, [modelVersion, onSaveDescription, onUpdateTags, users]);
 
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);
-  }, [ openModalVersionDelete, modelVersion ]);
+  }, [openModalVersionDelete, modelVersion]);
 
-  const actions: Action[] = useMemo(() => ([
-    {
-      danger: false,
-      disabled: false,
-      key: 'download-model',
-      onClick: handleDownloadModel,
-      text: 'Download',
-    },
-    {
-      danger: false,
-      disabled: false,
-      key: 'use-in-notebook',
-      onClick: () => setShowUseInNotebook(true),
-      text: 'Use in Notebook',
-    },
-    {
-      danger: true,
-      disabled: false,
-      key: 'deregister-version',
-      onClick: handleDelete,
-      text: 'Deregister Version',
-    },
-  ]), [ handleDelete, handleDownloadModel ]);
+  const actions: Action[] = useMemo(
+    () => [
+      {
+        danger: false,
+        disabled: false,
+        key: 'download-model',
+        onClick: handleDownloadModel,
+        text: 'Download',
+      },
+      {
+        danger: false,
+        disabled: false,
+        key: 'use-in-notebook',
+        onClick: () => setShowUseInNotebook(true),
+        text: 'Use in Notebook',
+      },
+      {
+        danger: true,
+        disabled: false,
+        key: 'deregister-version',
+        onClick: handleDelete,
+        text: 'Deregister Version',
+      },
+    ],
+    [handleDelete, handleDownloadModel],
+  );
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return (
-      `from determined.experimental import Determined
+    return `from determined.experimental import Determined
 client = Determined()
 model_entry = client.get_model("${escapedModelName}")
 version = model_entry.get_version(${modelVersion.version})
@@ -148,12 +148,12 @@ trial = ckpt.load()
 ckpt_path = ckpt.download()
 ckpt = torch.load(os.path.join(ckpt_path, 'state_dict.pth'))
 # assuming your model is already instantiated, you can then load the state_dict
-my_model.load_state_dict(ckpt['models_state_dict'][0])`);
-  }, [ modelVersion ]);
+my_model.load_state_dict(ckpt['models_state_dict'][0])`;
+  }, [modelVersion]);
 
   const handleCopy = useCallback(async () => {
     await copyToClipboard(referenceText);
-  }, [ referenceText ]);
+  }, [referenceText]);
 
   const menu = useMemo(() => {
     const onItemClick: MenuProps['onClick'] = (e) => {
@@ -167,11 +167,10 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
       disabled: action.disabled,
       key: action.key,
       label: action.text,
-    }
-    ));
+    }));
 
     return <Menu className={css.overflow} items={menuItems} onClick={onItemClick} />;
-  }, [ actions ]);
+  }, [actions]);
 
   return (
     <header className={css.base}>
@@ -183,9 +182,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link path={paths.modelList()}>
-              Model Registry
-            </Link>
+            <Link path={paths.modelList()}>Model Registry</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
@@ -200,9 +197,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
       <div className={css.headerContent}>
         <div className={css.mainRow}>
           <div className={css.title}>
-            <div className={css.versionBox}>
-              V{modelVersion.version}
-            </div>
+            <div className={css.versionBox}>V{modelVersion.version}</div>
             <h1 className={css.versionName}>
               <InlineEditor
                 allowClear={false}
@@ -224,9 +219,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
                 {action.text}
               </Button>
             ))}
-            <Dropdown
-              overlay={menu}
-              trigger={[ 'click' ]}>
+            <Dropdown overlay={menu} trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>
@@ -247,7 +240,9 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`);
           <p>Reference this model in a notebook</p>
           <CopyButton onCopy={handleCopy} />
         </div>
-        <pre className={css.codeSample}><code>{referenceText}</code></pre>
+        <pre className={css.codeSample}>
+          <code>{referenceText}</code>
+        </pre>
         <p>Copy/paste code into a notebook cell</p>
       </Modal>
     </header>

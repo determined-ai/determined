@@ -10,7 +10,7 @@ from determined import pytorch, util
 def _process_combined_metrics_and_batches(
     combined_metrics_and_batches: List[Any],
 ) -> Tuple[Dict[str, Any], List[int]]:
-    # Remove entries with 0 num batches. These are from ranks that do not repoort metrics.
+    # Remove entries with 0 num batches. These are from ranks that do not report metrics.
     combined_metrics_and_batches = [a for a in combined_metrics_and_batches if a[1]]
 
     # Reshape so e.g. all_metrics = [metrics, metrics, ...].

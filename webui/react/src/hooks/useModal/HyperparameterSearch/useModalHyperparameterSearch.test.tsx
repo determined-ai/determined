@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { CreateExperimentParams } from 'services/types';
-import { generateTestExperimentData } from 'storybook/shared/generateTestExperiments';
+import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ResourceType } from 'types';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
@@ -20,63 +20,59 @@ jest.mock('services/api', () => ({
     return mockCreateExperiment(params);
   },
   getResourcePools: () => Promise.resolve([]),
-}
-));
+}));
 
 const { experiment } = generateTestExperimentData();
 
 const ModalTrigger: React.FC = () => {
   const storeDispatch = useStoreDispatch();
 
-  const {
-    contextHolder,
-    modalOpen,
-  } = useModalHyperparameterSearch({ experiment: experiment });
+  const { contextHolder, modalOpen } = useModalHyperparameterSearch({ experiment: experiment });
 
   useEffect(() => {
     storeDispatch({
       type: StoreAction.SetResourcePools,
-      value: [ {
-        agentDockerImage: '',
-        agentDockerNetwork: '',
-        agentDockerRuntime: '',
-        agentFluentImage: '',
-        auxContainerCapacity: 0,
-        auxContainerCapacityPerAgent: 0,
-        auxContainersRunning: 0,
-        containerStartupScript: '',
-        defaultAuxPool: false,
-        defaultComputePool: true,
-        description: '',
-        details: {},
-        imageId: '',
-        instanceType: '',
-        location: '',
-        masterCertName: '',
-        masterUrl: '',
-        maxAgents: 1,
-        maxAgentStartingPeriod: 1000,
-        maxIdleAgentPeriod: 1000,
-        minAgents: 0,
-        name: 'default',
-        numAgents: 1,
-        preemptible: false,
-        schedulerFittingPolicy: V1FittingPolicy.UNSPECIFIED,
-        schedulerType: V1SchedulerType.UNSPECIFIED,
-        slotsAvailable: 1,
-        slotsUsed: 0,
-        slotType: ResourceType.CUDA,
-        startupScript: '',
-        type: V1ResourcePoolType.UNSPECIFIED,
-      } ],
+      value: [
+        {
+          agentDockerImage: '',
+          agentDockerNetwork: '',
+          agentDockerRuntime: '',
+          agentFluentImage: '',
+          auxContainerCapacity: 0,
+          auxContainerCapacityPerAgent: 0,
+          auxContainersRunning: 0,
+          containerStartupScript: '',
+          defaultAuxPool: false,
+          defaultComputePool: true,
+          description: '',
+          details: {},
+          imageId: '',
+          instanceType: '',
+          location: '',
+          masterCertName: '',
+          masterUrl: '',
+          maxAgents: 1,
+          maxAgentStartingPeriod: 1000,
+          maxIdleAgentPeriod: 1000,
+          minAgents: 0,
+          name: 'default',
+          numAgents: 1,
+          preemptible: false,
+          schedulerFittingPolicy: V1FittingPolicy.UNSPECIFIED,
+          schedulerType: V1SchedulerType.UNSPECIFIED,
+          slotsAvailable: 1,
+          slotsUsed: 0,
+          slotType: ResourceType.CUDA,
+          startupScript: '',
+          type: V1ResourcePoolType.UNSPECIFIED,
+        },
+      ],
     });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return (
     <>
-      <Button onClick={() => modalOpen()}>
-        Open Modal
-      </Button>
+      <Button onClick={() => modalOpen()}>Open Modal</Button>
       {contextHolder}
     </>
   );

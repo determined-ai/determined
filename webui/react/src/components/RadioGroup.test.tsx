@@ -9,11 +9,7 @@ const user = userEvent.setup();
 const setup = (options: RadioGroupOption[], iconOnly = false) => {
   const handleOnChange = jest.fn();
   const view = render(
-    <RadioGroup
-      iconOnly={iconOnly}
-      options={options}
-      onChange={handleOnChange}
-    />,
+    <RadioGroup iconOnly={iconOnly} options={options} onChange={handleOnChange} />,
   );
   return { handleOnChange, view };
 };

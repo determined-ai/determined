@@ -1,7 +1,7 @@
 ---
 name: "Lint bindings"
 
-on:
+on:  # yamllint disable-line rule:truthy
   pull_request:
     paths-ignore:
       - '*.md'
@@ -15,7 +15,7 @@ jobs:
   build-proto:
     runs-on: ubuntu-latest
     env:
-      GO111MODULE: on
+      GO111MODULE: "on"
     steps:
       - uses: actions/checkout@v3
       - name: Setup Go
@@ -31,7 +31,7 @@ jobs:
         uses: arduino/setup-protoc@v1
         with:
           version: 3.17.1
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.DETERMINED_TOKEN }}
       - name: Install dependencies
         run: |
           make -C proto get-deps

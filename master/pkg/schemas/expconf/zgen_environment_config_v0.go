@@ -66,14 +66,6 @@ func (e *EnvironmentConfigV0) SetPodSpec(val *PodSpec) {
 	e.RawPodSpec = val
 }
 
-func (e EnvironmentConfigV0) Slurm() []string {
-	return e.RawSlurm
-}
-
-func (e *EnvironmentConfigV0) SetSlurm(val []string) {
-	e.RawSlurm = val
-}
-
 func (e EnvironmentConfigV0) AddCapabilities() []string {
 	return e.RawAddCapabilities
 }

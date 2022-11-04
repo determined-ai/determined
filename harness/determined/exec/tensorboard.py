@@ -16,6 +16,7 @@ import determined.common
 from determined.tensorboard import fetchers
 
 TENSORBOARD_TRIGGER_READY_MSG = "TensorBoard contains metrics"
+TRIGGER_WAITING_MSG = "TensorBoard waits on metrics"
 FETCH_INTERVAL = 1
 MAX_WAIT_TIME = 600
 
@@ -124,8 +125,11 @@ def start_tensorboard(
                         raise RuntimeError(f"Tensorboard process died, exit code({ret_code}).")
 
                     # Check if we have reached a timeout without receiving metrics
-                    if num_fetched_files == 0 and time.time() > stop_time:
-                        raise RuntimeError("No new files were fetched before the timeout.")
+                    if num_fetched_files == 0:
+                        if time.time() > stop_time:
+                            raise RuntimeError("No new files were fetched before the timeout.")
+                        else:
+                            print(TRIGGER_WAITING_MSG, flush=True)
 
                     if not responsive:
                         if time.time() > stop_time:

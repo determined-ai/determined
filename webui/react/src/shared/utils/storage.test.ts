@@ -1,10 +1,10 @@
-import { MemoryStore, Storage } from './storage';
+import { MemoryStore, StorageManager } from './storage';
 
 const testKey = 'testKey';
 const anotherTestKey = 'anotherTestKey';
 
 describe('MemoryStore', () => {
-  const testStorage = new Storage({ store: new MemoryStore() });
+  const testStorage = new StorageManager({ store: new MemoryStore() });
 
   beforeEach(() => {
     testStorage.clear();
@@ -34,7 +34,7 @@ describe('MemoryStore', () => {
 
   it('should clear all values', () => {
     const value1 = { x: 1, y: 2, z: 3 };
-    const value2 = [ 'a', 'b', 'c' ];
+    const value2 = ['a', 'b', 'c'];
     testStorage.set(testKey, value1);
     testStorage.set(anotherTestKey, value2);
     testStorage.clear();
@@ -43,13 +43,13 @@ describe('MemoryStore', () => {
   });
 
   it('should work with arrays', () => {
-    const value = [ 'test', 'a', 'b' ];
+    const value = ['test', 'a', 'b'];
     testStorage.set(testKey, value);
     expect(testStorage.get(testKey)).toStrictEqual(value);
   });
 
   it('should work with nested arrays', () => {
-    const value = [ 'test', 'a', [ 1, 2, 3 ] ];
+    const value = ['test', 'a', [1, 2, 3]];
     testStorage.set(testKey, value);
     expect(testStorage.get(testKey)).toStrictEqual(value);
   });
@@ -61,7 +61,7 @@ describe('MemoryStore', () => {
   });
 
   it('should disallow storing a Set type', () => {
-    const value = new Set([ 1, 2, 3 ]);
+    const value = new Set([1, 2, 3]);
     expect(() => testStorage.set(testKey, value)).toThrow();
   });
 
@@ -74,10 +74,10 @@ describe('MemoryStore', () => {
     expect(testStorage.keys()).toStrictEqual([]);
 
     testStorage.set(testKey, true);
-    expect(testStorage.keys()).toStrictEqual([ testKey ]);
+    expect(testStorage.keys()).toStrictEqual([testKey]);
 
     testStorage.set(anotherTestKey, true);
-    expect(testStorage.keys()).toStrictEqual([ testKey, anotherTestKey ]);
+    expect(testStorage.keys()).toStrictEqual([testKey, anotherTestKey]);
   });
 
   it('should dump the storage content into a string', () => {
@@ -102,11 +102,11 @@ describe('MemoryStore', () => {
     const basePath = 'test';
     const forkedStorage = testStorage.fork(basePath);
     forkedStorage.set(anotherTestKey, true);
-    expect(testStorage.keys()).toStrictEqual([ testKey, `${basePath}/${anotherTestKey}` ]);
-    expect(forkedStorage.keys()).toStrictEqual([ anotherTestKey ]);
+    expect(testStorage.keys()).toStrictEqual([testKey, `${basePath}/${anotherTestKey}`]);
+    expect(forkedStorage.keys()).toStrictEqual([anotherTestKey]);
 
     forkedStorage.reset();
-    expect(testStorage.keys()).toStrictEqual([ testKey ]);
+    expect(testStorage.keys()).toStrictEqual([testKey]);
     expect(forkedStorage.keys()).toStrictEqual([]);
   });
 });

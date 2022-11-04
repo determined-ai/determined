@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -289,7 +288,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 			AllocationRef:     ctx.Self(),
 			Group:             ctx.Self().Parent(),
 			SlotsNeeded:       t.config.Resources().SlotsPerTrial(),
-			Label:             t.config.Resources().AgentLabel(),
+			AgentLabel:        t.config.Resources().AgentLabel(),
 			ResourcePool:      t.config.Resources().ResourcePool(),
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: false,
@@ -324,7 +323,7 @@ func (t *trial) maybeAllocateTask(ctx *actor.Context) error {
 		Group:             ctx.Self().Parent(),
 
 		SlotsNeeded:  t.config.Resources().SlotsPerTrial(),
-		Label:        t.config.Resources().AgentLabel(),
+		AgentLabel:   t.config.Resources().AgentLabel(),
 		ResourcePool: t.config.Resources().ResourcePool(),
 		FittingRequirements: sproto.FittingRequirements{
 			SingleAgent: false,
@@ -663,17 +662,21 @@ func mustParseTrialRunID(child *actor.Ref) int {
 }
 
 func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, error) {
-	if !t.restored || !config.IsReattachEnabled() {
+	if !t.restored || !t.rm.IsReattachEnabled(ctx) {
 		return nil, nil
 	}
 
-	// Do we have an open allocation?
 	var allocations []model.Allocation
-	err := db.Bun().NewSelect().Model(&allocations).
+	selectQuery := db.Bun().NewSelect().Model(&allocations).
 		Where("task_id = ?", t.taskID).
-		Where("start_time IS NOT NULL").
-		Where("end_time IS NULL").
-		Scan(context.TODO())
+		Where("end_time IS NULL")
+
+	if t.rm.IsReattachableOnlyAfterStarted(ctx) {
+		selectQuery.Where("start_time IS NOT NULL")
+	}
+
+	// Do we have an open allocation?
+	err := selectQuery.Scan(context.TODO())
 	if err != nil {
 		return nil, err
 	}
@@ -684,7 +687,7 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 		return nil, nil
 	case openAllocs == 1:
 		allocation := &allocations[0]
-		if !config.IsReattachEnabledForRP(allocation.ResourcePool) {
+		if !t.rm.IsReattachEnabledForRP(ctx, allocation.ResourcePool) {
 			return nil, nil
 		}
 

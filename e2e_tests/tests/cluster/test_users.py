@@ -183,18 +183,44 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 
 @pytest.mark.e2e_cpu
 def test_post_user_api(clean_auth: None) -> None:
-    master_url = conf.make_master_url()
-    authentication.cli_auth = authentication.Authentication(
-        conf.make_master_url(), requested_user="admin", password="", try_reauth=True
-    )
     new_username = get_random_string()
+
+    sess = exp.determined_test_session(admin=True)
 
     user = bindings.v1User(active=True, admin=False, username=new_username)
     body = bindings.v1PostUserRequest(password="", user=user)
-    resp = bindings.post_PostUser(
-        api.Session(master_url, "admin", authentication.cli_auth, None), body=body
-    )
+    resp = bindings.post_PostUser(sess, body=body)
+    assert resp and resp.user
     assert resp.to_json()["user"]["username"] == new_username
+    assert resp.user.agentUserGroup is None
+
+    user = bindings.v1User(
+        active=True,
+        admin=False,
+        username=get_random_string(),
+        agentUserGroup=bindings.v1AgentUserGroup(
+            agentUid=1000, agentGid=1001, agentUser="username", agentGroup="groupname"
+        ),
+    )
+    resp = bindings.post_PostUser(sess, body=bindings.v1PostUserRequest(user=user))
+    assert resp and resp.user and resp.user.agentUserGroup
+    assert resp.user.agentUserGroup.agentUser == "username"
+    assert resp.user.agentUserGroup.agentGroup == "groupname"
+    assert resp.user.agentUserGroup.agentUid == 1000
+    assert resp.user.agentUserGroup.agentGid == 1001
+
+    user = bindings.v1User(
+        active=True,
+        admin=False,
+        username=get_random_string(),
+        agentUserGroup=bindings.v1AgentUserGroup(
+            agentUid=1000,
+            agentGid=1001,
+        ),
+    )
+
+    with pytest.raises(errors.APIException):
+        bindings.post_PostUser(sess, body=bindings.v1PostUserRequest(user=user))
 
 
 @pytest.mark.e2e_cpu
@@ -896,6 +922,13 @@ def test_experiment_delete() -> None:
                 pytest.fail("experiment didn't delete after timeout")
 
 
+def _fetch_user_by_username(sess: api.Session, username: str) -> bindings.v1User:
+    # Get API bindings object for the created test user
+    all_users = bindings.get_GetUsers(sess).users
+    assert all_users is not None
+    return next(u for u in all_users if u.username == username)
+
+
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
 def test_change_displayname(clean_auth: None) -> None:
@@ -909,19 +942,16 @@ def test_change_displayname(clean_auth: None) -> None:
     )
     sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
 
-    # Get API bindings object for the created test user
-    all_users = bindings.get_GetUsers(sess).users
-    assert all_users is not None
-    current_user = list(filter(lambda u: u.username == original_name, all_users))[0]
+    current_user = _fetch_user_by_username(sess, original_name)
     assert current_user is not None and current_user.id
 
     # Rename user using display name
-    patch_user = bindings.v1PatchUser(displayName="renamed")
+    patch_user = bindings.v1PatchUser(displayName="renamed display-name")
     bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
-    assert modded_user.displayName == "renamed"
+    assert modded_user.displayName == "renamed display-name"
 
     # Avoid display name of 'admin'
     patch_user.displayName = "Admin"
@@ -935,3 +965,33 @@ def test_change_displayname(clean_auth: None) -> None:
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
     assert modded_user.displayName == ""
+
+
+@pytest.mark.e2e_cpu
+def test_patch_agentusergroup(clean_auth: None) -> None:
+    test_user_credentials = create_test_user(ADMIN_CREDENTIALS, False)
+    test_username = test_user_credentials.username
+
+    # Patch - normal.
+    sess = exp.determined_test_session(admin=True)
+    patch_user = bindings.v1PatchUser(
+        agentUserGroup=bindings.v1AgentUserGroup(
+            agentGid=1000, agentUid=1000, agentUser="username", agentGroup="groupname"
+        )
+    )
+    test_user = _fetch_user_by_username(sess, test_username)
+    assert test_user.id
+    bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
+    patched_user = bindings.get_GetUser(sess, userId=test_user.id).user
+    assert patched_user is not None and patched_user.agentUserGroup is not None
+    assert patched_user.agentUserGroup.agentUser == "username"
+    assert patched_user.agentUserGroup.agentGroup == "groupname"
+
+    # Patch - missing username/groupname.
+    patch_user = bindings.v1PatchUser(
+        agentUserGroup=bindings.v1AgentUserGroup(agentGid=1000, agentUid=1000)
+    )
+    test_user = _fetch_user_by_username(sess, test_username)
+    assert test_user.id
+    with pytest.raises(errors.APIException):
+        bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)

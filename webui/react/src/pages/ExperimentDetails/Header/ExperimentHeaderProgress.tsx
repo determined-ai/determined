@@ -10,11 +10,14 @@ interface Props {
   experiment: ExperimentBase;
 }
 
-const activeStates = [ JobState.SCHEDULED, JobState.SCHEDULEDBACKFILLED, RunState.Active ];
-
 const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
   const progressPercent = (experiment.progress ?? 0) * 100;
-  const status = activeStates.includes(experiment.state) ? 'active' : undefined;
+  const status =
+    experiment.state === JobState.SCHEDULED ||
+    experiment.state === JobState.SCHEDULEDBACKFILLED ||
+    experiment.state === RunState.Active
+      ? 'active'
+      : undefined;
 
   return experiment.progress === undefined ? null : (
     <Tooltip title={progressPercent.toFixed(0) + '%'}>

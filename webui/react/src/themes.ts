@@ -1,4 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
+import { Determinedtrialv1State } from 'services/api-ts-sdk';
 import {
   DarkLight,
   getCssVar,
@@ -7,18 +8,29 @@ import {
   themeLightDetermined,
   themeLightHpe,
 } from 'shared/themes';
-import { BrandingType, CheckpointState, CommandState, JobState, ResourceState, RunState,
-  SlotState, WorkspaceState } from 'types';
+import { ValueOf } from 'shared/types';
+import {
+  BrandingType,
+  CheckpointState,
+  CommandState,
+  JobState,
+  ResourceState,
+  RunState,
+  SlotState,
+  WorkspaceState,
+} from 'types';
 
 /*
  * Where did we get our sizes from?
  * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
  */
-export enum ShirtSize {
-  small = 'small',
-  medium = 'medium',
-  large = 'large',
-}
+export const ShirtSize = {
+  Small: 'small',
+  Medium: 'medium',
+  Large: 'large',
+} as const;
+
+export type ShirtSize = ValueOf<typeof ShirtSize>;
 
 const stateColorMapping = {
   [RunState.Active]: 'active',
@@ -27,14 +39,18 @@ const stateColorMapping = {
   [RunState.Deleted]: 'critical',
   [RunState.Deleting]: 'critical',
   [RunState.DeleteFailed]: 'critical',
-  [RunState.Errored]: 'critical',
+  [RunState.Error]: 'critical',
   [RunState.Paused]: 'warning',
   [RunState.StoppingCanceled]: 'inactive',
   [RunState.StoppingCompleted]: 'success',
   [RunState.StoppingError]: 'critical',
+  [RunState.StoppingKilled]: 'killed',
   [RunState.Unspecified]: 'inactive',
-  [CommandState.Pending]: 'warning',
-  [CommandState.Assigned]: 'warning',
+  [RunState.Queued]: 'warning',
+  [RunState.Pulling]: 'pending',
+  [RunState.Starting]: 'pending',
+  [RunState.Running]: 'active',
+  [CommandState.Waiting]: 'inactive',
   [CommandState.Pulling]: 'active',
   [CommandState.Starting]: 'active',
   [CommandState.Running]: 'active',
@@ -53,14 +69,30 @@ const stateColorMapping = {
   [JobState.SCHEDULED]: 'active',
   [JobState.SCHEDULEDBACKFILLED]: 'active',
   [JobState.QUEUED]: 'warning',
+  [Determinedtrialv1State.ACTIVE]: 'active',
+  [Determinedtrialv1State.PAUSED]: 'warning',
+  [Determinedtrialv1State.STOPPINGCANCELED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGKILLED]: 'inactive',
+  [Determinedtrialv1State.STOPPINGCOMPLETED]: 'success',
+  [Determinedtrialv1State.STOPPINGERROR]: 'critical',
+  [Determinedtrialv1State.CANCELED]: 'inactive',
+  [Determinedtrialv1State.COMPLETED]: 'success',
+  [Determinedtrialv1State.ERROR]: 'critical',
 };
 
-export type StateOfUnion = RunState | CommandState | ResourceState | CheckpointState |
-SlotState | JobState | WorkspaceState
+export type StateOfUnion =
+  | RunState
+  | CommandState
+  | ResourceState
+  | CheckpointState
+  | SlotState
+  | JobState
+  | WorkspaceState
+  | Determinedtrialv1State;
 
 export const getStateColorCssVar = (
   state: StateOfUnion | undefined,
-  options: { isOn?: boolean, strongWeak?: 'strong' | 'weak' } = {},
+  options: { isOn?: boolean; strongWeak?: 'strong' | 'weak' } = {},
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
   const on = options.isOn ? '-on' : '';

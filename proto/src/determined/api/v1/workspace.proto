@@ -3,11 +3,13 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/wrappers.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/project/v1/project.proto";
 import "determined/workspace/v1/workspace.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+import "determined/user/v1/user.proto";
 
 // Get the requested workspace.
 message GetWorkspaceRequest {
@@ -139,6 +141,11 @@ message PostWorkspaceRequest {
 
   // The name of the workspace.
   string name = 1;
+  // Optional agent host uid and gid override.
+  optional determined.user.v1.AgentUserGroup agent_user_group = 12;
+
+  // Optional checkpoint storage config.
+  optional google.protobuf.Struct checkpoint_storage_config = 13;
 }
 
 // Response to PostWorkspaceRequest.

@@ -3,13 +3,8 @@
 table.align-default {
     margin-left: inherit !important;
 }
-h4 {
-    font-weight: 400 !important;
-}
-h5 {
-    font-weight: 400 !important;
-}
-h6 {
+h4,h5,h6 {
+    text-transform: none;
     font-weight: 400 !important;
 }
 

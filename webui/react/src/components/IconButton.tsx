@@ -24,13 +24,14 @@ const IconButton: React.FC<Props> = ({
   tooltipPlacement = 'top',
   type,
 }: Props) => {
-  const handleClick = useCallback((e: React.MouseEvent) => onClick?.(e), [ onClick ]);
+  const handleClick = useCallback((e: React.MouseEvent) => onClick?.(e), [onClick]);
 
   return (
     <Tooltip placement={tooltipPlacement} title={label}>
       <Button
         aria-label={label}
         className={className}
+        style={{ height: 'fit-content', paddingBottom: 0 }}
         type={type}
         onClick={handleClick}>
         <Icon name={icon} size={iconSize} />

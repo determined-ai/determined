@@ -16,10 +16,10 @@ import { CommandType } from 'types';
 
 import css from './TaskLogs.module.scss';
 
-interface Params {
+type Params = {
   taskId: string;
   taskType: string;
-}
+};
 
 interface Props {
   headerComponent?: React.ReactNode;
@@ -31,100 +31,101 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
 export const TaskLogsWrapper: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();
-  return <TaskLogs taskId={taskId} taskType={taskType} />;
+  return <TaskLogs taskId={taskId ?? ''} taskType={taskType ?? ''} />;
 };
 const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerComponent }: Props) => {
-  const [ filterOptions, setFilterOptions ] = useState<Filters>({});
+  const [filterOptions, setFilterOptions] = useState<Filters>({});
 
   const queries = queryString.parse(location.search);
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
   const title = `${queries.id ? `${queries.id} ` : ''}Logs`;
 
-  const {
-    resetSettings,
-    settings,
-    updateSettings,
-  } = useSettings<Settings>(settingsConfig);
+  const { resetSettings, settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
-  const filterValues: Filters = useMemo(() => ({
-    agentIds: settings.agentId,
-    containerIds: settings.containerId,
-    levels: settings.level,
-    rankIds: settings.rankId,
-    searchText: settings.searchText,
-  }), [ settings ]);
+  const filterValues: Filters = useMemo(
+    () => ({
+      agentIds: settings.agentId,
+      containerIds: settings.containerId,
+      levels: settings.level,
+      rankIds: settings.rankId,
+      searchText: settings.searchText,
+    }),
+    [settings],
+  );
 
-  const handleFilterChange = useCallback((filters: Filters) => {
-    updateSettings({
-      agentId: filters.agentIds,
-      allocationId: filters.allocationIds,
-      containerId: filters.containerIds,
-      level: filters.levels,
-      rankId: filters.rankIds,
-      searchText: filters.searchText,
-    });
-  }, [ updateSettings ]);
+  const handleFilterChange = useCallback(
+    (filters: Filters) => {
+      updateSettings({
+        agentId: filters.agentIds,
+        allocationId: filters.allocationIds,
+        containerId: filters.containerIds,
+        level: filters.levels,
+        rankId: filters.rankIds,
+        searchText: filters.searchText,
+      });
+    },
+    [updateSettings],
+  );
 
-  const handleFilterReset = useCallback(() => resetSettings(), [ resetSettings ]);
+  const handleFilterReset = useCallback(() => resetSettings(), [resetSettings]);
 
-  const handleFetch = useCallback((config: FetchConfig, type: FetchType) => {
-    const options = {
-      follow: false,
-      limit: config.limit,
-      orderBy: 'ORDER_BY_UNSPECIFIED',
-      timestampAfter: '',
-      timestampBefore: '',
-    };
+  const handleFetch = useCallback(
+    (config: FetchConfig, type: FetchType) => {
+      const options = {
+        follow: false,
+        limit: config.limit,
+        orderBy: 'ORDER_BY_UNSPECIFIED',
+        timestampAfter: '',
+        timestampBefore: '',
+      };
 
-    if (type === FetchType.Initial) {
-      options.orderBy = config.fetchDirection === FetchDirection.Older
-        ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
-    } else if (type === FetchType.Newer) {
-      options.orderBy = 'ORDER_BY_ASC';
-      if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
-    } else if (type === FetchType.Older) {
-      options.orderBy = 'ORDER_BY_DESC';
-      if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
-    } else if (type === FetchType.Stream) {
-      options.follow = true;
-      options.limit = 0;
-      options.orderBy = 'ORDER_BY_ASC';
-      options.timestampAfter = new Date().toISOString();
-    }
+      if (type === FetchType.Initial) {
+        options.orderBy =
+          config.fetchDirection === FetchDirection.Older ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
+      } else if (type === FetchType.Newer) {
+        options.orderBy = 'ORDER_BY_ASC';
+        if (config.offsetLog?.time) options.timestampAfter = config.offsetLog.time;
+      } else if (type === FetchType.Older) {
+        options.orderBy = 'ORDER_BY_DESC';
+        if (config.offsetLog?.time) options.timestampBefore = config.offsetLog.time;
+      } else if (type === FetchType.Stream) {
+        options.follow = true;
+        options.limit = 0;
+        options.orderBy = 'ORDER_BY_ASC';
+        options.timestampAfter = new Date().toISOString();
+      }
 
-    return detApi.StreamingJobs.taskLogs(
-      taskId,
-      options.limit,
-      options.follow,
-      settings.allocationId,
-      settings.agentId,
-      settings.containerId,
-      settings.rankId,
-      settings.level,
-      undefined,
-      undefined,
-      options.timestampBefore ? new Date(options.timestampBefore) : undefined,
-      options.timestampAfter ? new Date(options.timestampAfter) : undefined,
-      options.orderBy as OrderBy,
-      settings.searchText,
-      { signal: config.canceler.signal },
-    );
-  }, [ settings, taskId ]);
+      return detApi.StreamingJobs.taskLogs(
+        taskId,
+        options.limit,
+        options.follow,
+        settings.allocationId,
+        settings.agentId,
+        settings.containerId,
+        settings.rankId,
+        settings.level,
+        undefined,
+        undefined,
+        options.timestampBefore ? new Date(options.timestampBefore) : undefined,
+        options.timestampAfter ? new Date(options.timestampAfter) : undefined,
+        options.orderBy as OrderBy,
+        settings.searchText,
+        { signal: config.canceler.signal },
+      );
+    },
+    [settings, taskId],
+  );
 
   useEffect(() => {
     const canceler = new AbortController();
 
     readStream(
-      detApi.StreamingJobs.taskLogsFields(
-        taskId,
-        true,
-        { signal: canceler.signal },
-      ),
+      detApi.StreamingJobs.taskLogsFields(taskId, true, { signal: canceler.signal }),
       (event) => setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();
-  }, [ taskId ]);
+  }, [taskId]);
 
   const logFilters = (
     <div className={css.filters}>

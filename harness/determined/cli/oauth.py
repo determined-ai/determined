@@ -48,7 +48,7 @@ def remove_client(parsed_args: Namespace) -> None:
 args_description = [
     Cmd("oauth", None, "manage OAuth", [
         Cmd("client", None, "manage clients", [
-            Cmd("list", list_clients, "list OAuth client applications", [], is_default=True),
+            Cmd("list ls", list_clients, "list OAuth client applications", [], is_default=True),
             Cmd("add", add_client, "add OAuth client application", [
                 Arg("name", type=str, help="descriptive name"),
                 Arg("domain", type=str, help="redirect domain"),

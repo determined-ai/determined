@@ -23,15 +23,18 @@ interface Props {
 const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  const handleOverlayClick = useCallback((e: React.MouseEvent) => {
-    // Prevent `onCancel` from getting called if the sheet (not the overlay) was clicked
-    if (sheetRef.current?.contains(e.target as HTMLElement)) return;
-    if (onCancel) onCancel();
-  }, [ onCancel ]);
+  const handleOverlayClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Prevent `onCancel` from getting called if the sheet (not the overlay) was clicked
+      if (sheetRef.current?.contains(e.target as HTMLElement)) return;
+      if (onCancel) onCancel();
+    },
+    [onCancel],
+  );
 
   const handleCancelClick = useCallback(() => {
     if (onCancel) onCancel();
-  }, [ onCancel ]);
+  }, [onCancel]);
 
   function renderActionItem(action: ActionItem) {
     if (action.render) {
@@ -39,9 +42,13 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
     } else {
       return (
         <Link className={css.item} key={action.label} path={action.path} {...action}>
-          {action.icon && typeof action.icon === 'string' ?
-            <div className={css.icon}><Icon name={action.icon} size="large" /></div> :
-            <div className={css.icon}>{action.icon}</div>}
+          {action.icon && typeof action.icon === 'string' ? (
+            <div className={css.icon}>
+              <Icon name={action.icon} size="large" />
+            </div>
+          ) : (
+            <div className={css.icon}>{action.icon}</div>
+          )}
           {!action.icon && <span className={css.spacer} />}
           <div className={css.label}>{action.label}</div>
         </Link>
@@ -64,13 +71,13 @@ const ActionSheet: React.FC<Props> = ({ onCancel, ...props }: Props) => {
       <div className={css.base} onClick={handleOverlayClick}>
         <div className={css.sheet} ref={sheetRef}>
           <div className={css.actionList}>
-            {props.actions.map((action) => (
-              renderActionItem(action)
-            ))}
+            {props.actions.map((action) => renderActionItem(action))}
           </div>
           {!props.hideCancel && (
             <Link className={css.item} key="cancel" onClick={handleCancelClick}>
-              <div className={css.icon}><Icon name="error" size="large" /></div>
+              <div className={css.icon}>
+                <Icon name="error" size="large" />
+              </div>
               <div className={css.label}>Cancel</div>
             </Link>
           )}

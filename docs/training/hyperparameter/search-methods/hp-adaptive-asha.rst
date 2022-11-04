@@ -4,8 +4,8 @@
  Adaptive (Asynchronous) Method
 ################################
 
-The state-of-the-art ``adaptive_asha`` search method employs an asynchronous version of successive
-halving (`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is suitable for large-scale
+The ``adaptive_asha`` search method employs an Asynchronous version of the Successive Halving
+Algorithm (`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is suitable for large-scale
 experiments with hundreds or thousands of trials.
 
 *************
@@ -109,7 +109,7 @@ order to maximize compute efficiency of the searcher. In contrast to SHA which i
 trials in the bottom rung at the outset, ASHA will continuously add trials to the bottom rung until
 the desired number of trials is reached.
 
-See the difference in asynchronous vs. sychronous promotions in the two animated GIFs below:
+See the difference in asynchronous vs. synchronous promotions in the two animated GIFs below:
 
 .. image:: /assets/images/sha.gif
 

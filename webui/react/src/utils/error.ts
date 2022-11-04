@@ -3,11 +3,15 @@ import { ArgsProps, NotificationApi } from 'antd/lib/notification';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
-import history from 'shared/routes/history';
-import { DetError, DetErrorOptions, ERROR_NAMESPACE, ErrorLevel,
-  isDetError } from 'shared/utils/error';
+import {
+  DetError,
+  DetErrorOptions,
+  ERROR_NAMESPACE,
+  ErrorLevel,
+  isDetError,
+} from 'shared/utils/error';
 import { LoggerInterface } from 'shared/utils/Logger';
-import { filterOutLoginLocation } from 'shared/utils/routes';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
 import { listToStr } from 'shared/utils/string';
 
@@ -23,13 +27,13 @@ const openNotification = (e: DetError) => {
 
   notification?.({
     description: e.publicMessage || '',
-    message: e.publicSubject || listToStr([ e.type, e.level ]),
+    message: e.publicSubject || listToStr([e.type, e.level]),
   });
 };
 
 const log = (e: DetError) => {
   const key = errorLevelMap[e.level] as keyof LoggerInterface;
-  const message = listToStr([ `${e.type}:`, e.publicMessage, e.message ]);
+  const message = listToStr([`${e.type}:`, e.publicMessage, e.message]);
   e.logger[key](message);
   e.logger[key](e);
 };
@@ -62,7 +66,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
-      history.push(paths.logout(), { loginRedirect: filterOutLoginLocation(window.location) });
+      routeToReactUrl(paths.logout());
     }
   }
 

@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from time import sleep
-from typing import Any, Pattern
+from typing import Pattern, Optional
 
 import backoff
 from determined.common import api
@@ -24,23 +24,25 @@ BACKOFF_SECONDS = 5
     RequestException,
     giveup=lambda e: e.response is not None and e.response.status_code < 500,
 )
-def post_ready(master_url: str, cert: certs.Cert, allocation_id: str):
+def post_ready(master_url: str, cert: certs.Cert, allocation_id: str, state: str):
     api.post(
         master_url,
-        f"/api/v1/allocations/{allocation_id}/ready",
+        f"/api/v1/allocations/{allocation_id}/{state}",
         {},
         cert=cert,
     )
 
 
-def main(ready: Pattern):
+def main(ready: Pattern, waiting: Optional[Pattern] = None):
     master_url = str(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
     for line in sys.stdin:
         if ready.match(line):
-            post_ready(master_url, cert, allocation_id)
+            post_ready(master_url, cert, allocation_id, "ready")
             return
+        if waiting and waiting.match(line):
+            post_ready(master_url, cert, allocation_id, "waiting")
 
 
 if __name__ == "__main__":
@@ -48,9 +50,16 @@ if __name__ == "__main__":
         description="Read STDIN for a match and mark a task as ready"
     )
     parser.add_argument(
-        "--ready-regex", type=str, help="the pattern to match", required=True
+        "--ready-regex", type=str, help="the pattern to match task ready", required=True
+    )
+    parser.add_argument(
+        "--waiting-regex", type=str, help="the pattern to match task waiting"
     )
     args = parser.parse_args()
 
     ready_regex = re.compile(args.ready_regex)
-    main(ready_regex)
+    if args.waiting_regex: 
+        waiting_regrex = re.compile(args.waiting_regex)
+        main(ready_regex, waiting_regrex)
+    else:
+        main(ready_regex, None)

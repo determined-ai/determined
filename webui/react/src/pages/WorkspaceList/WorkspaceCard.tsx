@@ -19,24 +19,19 @@ interface Props {
 }
 
 const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) => {
-
   const handleCardClick = useCallback(() => {
     routeToReactUrl(paths.workspaceDetails(workspace.id));
-  }, [ workspace.id ]);
+  }, [workspace.id]);
 
   return (
-    <WorkspaceActionDropdown
-      workspace={workspace}
-      onComplete={fetchWorkspaces}>
+    <WorkspaceActionDropdown workspace={workspace} onComplete={fetchWorkspaces}>
       <div className={css.base} onClick={handleCardClick}>
         <DynamicIcon name={workspace.name} size={70} />
         <div className={css.info}>
           <div className={css.nameRow}>
             <h6 className={css.name}>
               <Link inherit path={paths.workspaceDetails(workspace.id)}>
-                <Typography.Paragraph ellipsis={true}>
-                  {workspace.name}
-                </Typography.Paragraph>
+                <Typography.Paragraph ellipsis={true}>{workspace.name}</Typography.Paragraph>
               </Link>
             </h6>
             {workspace.archived && (
@@ -50,7 +45,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
           <p className={css.projects}>
             {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
           </p>
-          <div className={css.avatar}><Avatar userId={workspace.userId} /></div>
+          <div className={css.avatar}>
+            <Avatar userId={workspace.userId} />
+          </div>
         </div>
         {workspace.pinned && <PushpinOutlined className={css.pinned} />}
         {!workspace.immutable && (

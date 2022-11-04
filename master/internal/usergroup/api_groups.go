@@ -2,13 +2,15 @@ package usergroup
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/groupv1"
@@ -20,10 +22,24 @@ type UserGroupAPIServer struct{}
 // CreateGroup creates a group and adds members to it, if any.
 func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.CreateGroupResponse, err error) {
+	if strings.Contains(req.Name, db.PersonalGroupPostfix) {
+		return nil, status.Error(codes.InvalidArgument,
+			"group name cannot contain 'DeterminedPersonalGroup'")
+	}
+
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	group := Group{
 		Name: req.Name,
@@ -49,15 +65,27 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 ) (resp *apiv1.GetGroupsResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
 
-	if req.Limit > maxLimit || req.Limit == 0 {
-		return nil, errInvalidLimit
+	if req.Limit > apiutils.MaxLimit || req.Limit == 0 {
+		return nil, apiutils.ErrInvalidLimit
 	}
 
-	groups, memberCounts, tableCount, err := SearchGroups(ctx,
-		req.Name, model.UserID(req.UserId), int(req.Offset), int(req.Limit))
+	query := SearchGroupsQuery(req.Name, model.UserID(req.UserId), false)
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query, err = AuthZProvider.Get().FilterGroupsList(ctx, *curUser, query)
+	if err != nil {
+		return nil, err
+	}
+
+	groups, memberCounts, tableCount, err := SearchGroupsPaginated(ctx,
+		query, int(req.Offset), int(req.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +115,23 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 ) (resp *apiv1.GetGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	gid := int(req.GroupId)
+
+	canGet, err := AuthZProvider.Get().CanGetGroup(ctx, *curUser, gid)
+	if err != nil {
+		return nil, err
+	} else if !canGet {
+		return nil, errors.Wrapf(db.ErrNotFound, "Error getting group %d", gid)
+	}
+
 	g, err := GroupByIDTx(ctx, nil, gid)
 	if err != nil {
 		return nil, err
@@ -117,8 +158,18 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 ) (resp *apiv1.UpdateGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	var addUsers []model.UserID
 	var removeUsers []model.UserID
@@ -153,8 +204,18 @@ func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteG
 ) (resp *apiv1.DeleteGroupResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
 	}()
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = AuthZProvider.Get().CanUpdateGroups(ctx, *curUser)
+	if err != nil {
+		return nil, err
+	}
 
 	err = DeleteGroup(ctx, int(req.GroupId))
 	if err != nil {
@@ -171,43 +232,4 @@ func intsToUserIDs(ints []int32) []model.UserID {
 	}
 
 	return ids
-}
-
-const (
-	maxLimit = 500
-)
-
-var (
-	errBadRequest   = status.Error(codes.InvalidArgument, "bad request")
-	errInvalidLimit = status.Errorf(codes.InvalidArgument,
-		"Bad request: limit is required and must be <= %d", maxLimit)
-	errNotFound        = status.Error(codes.NotFound, "not found")
-	errDuplicateRecord = status.Error(codes.AlreadyExists, "duplicate record")
-	errInternal        = status.Error(codes.Internal, "internal server error")
-	errPassthroughMap  = map[error]bool{
-		nil:                true,
-		errBadRequest:      true,
-		errInvalidLimit:    true,
-		errNotFound:        true,
-		errDuplicateRecord: true,
-		errInternal:        true,
-	}
-)
-
-func mapAndFilterErrors(err error) error {
-	// FIXME: whitelist might not work.
-	if whitelisted := errPassthroughMap[err]; whitelisted {
-		return err
-	}
-
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, db.ErrDuplicateRecord):
-		return status.Error(codes.AlreadyExists, err.Error())
-	}
-
-	logrus.WithError(err).Debug("suppressing error at API boundary")
-
-	return errInternal // TODO: delete comment: deliberately don't wrap this error
 }

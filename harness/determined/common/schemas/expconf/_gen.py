@@ -702,7 +702,21 @@ schemas = {
     "title": "DevicesConfig",
     "type": "array",
     "items": {
-        "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
+        "union": {
+            "defaultMessage": "is neither a list of --device strings nor a map containing host_path, container_path, and mode",
+            "items": [
+                {
+                    "unionKey": "never",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/device.json"
+                },
+                {
+                    "unionKey": "never",
+                    "type": "string",
+                    "$comment": "from man docker-run: --device=onhost:incontainer[:mode] ",
+                    "pattern": "^/[^:]*:/[^:]*(:[rwm]*)?"
+                }
+            ]
+        }
     }
 }
 
@@ -981,16 +995,6 @@ schemas = {
                     }
                 }
             }
-        },
-        "slurm": {
-            "type": [
-                "array",
-                "null"
-            ],
-            "default": [],
-            "items": {
-                "type": "string"
-            }
         }
     }
 }
@@ -1155,6 +1159,14 @@ schemas = {
             "default": {},
             "optionalRef": "http://determined.ai/schemas/expconf/v0/optimizations.json"
         },
+        "pbs": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json"
+        },
         "perform_initial_validation": {
             "type": [
                 "boolean",
@@ -1223,6 +1235,14 @@ schemas = {
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/security.json"
+        },
+        "slurm": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {},
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json"
         },
         "tensorboard_storage": {
             "type": [
@@ -1445,6 +1465,72 @@ schemas = {
             ],
             "default": 1,
             "minimum": 0
+        }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-pbs.json",
+    "title": "PbsConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "slots_per_node": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": null
+        },
+        "pbsbatch_args": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": null,
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}
+
+"""
+    ),
+    "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/hpc-cluster-slurm.json",
+    "title": "SlurmConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [],
+    "properties": {
+        "slots_per_node": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": null
+        },
+        "sbatch_args": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": null,
+            "items": {
+                "type": "string"
+            }
         }
     }
 }
@@ -2630,6 +2716,52 @@ schemas = {
 
 """
     ),
+    "http://determined.ai/schemas/expconf/v0/searcher-custom.json": json.loads(
+        r"""
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/searcher-custom.json",
+    "title": "CustomConfig",
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+        "name"
+    ],
+    "eventuallyRequired": [
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "custom"
+        },
+        "metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "unit": {
+            "enum": [
+                "batches",
+                "records",
+                "epochs",
+                null
+            ],
+            "default": null
+        }
+    }
+}
+
+"""
+    ),
     "http://determined.ai/schemas/expconf/v0/searcher-grid.json": json.loads(
         r"""
 {
@@ -2970,7 +3102,7 @@ schemas = {
     },
     "then": {
         "union": {
-            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', or 'adaptive_asha'",
+            "defaultMessage": "is not an object where object[\"name\"] is one of 'single', 'random', 'grid', 'custom', or 'adaptive_asha'",
             "items": [
                 {
                     "unionKey": "const:name=single",
@@ -2983,6 +3115,10 @@ schemas = {
                 {
                     "unionKey": "const:name=grid",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
+                },
+                {
+                    "unionKey": "const:name=custom",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
                 },
                 {
                     "unionKey": "const:name=adaptive_asha",
@@ -3055,7 +3191,8 @@ schemas = {
             "default": null
         },
         "budget": true,
-        "train_stragglers": true
+        "train_stragglers": true,
+        "unit": true
     }
 }
 

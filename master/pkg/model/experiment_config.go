@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -18,6 +19,7 @@ const (
 	MinUserSchedulingPriority = 1
 	// MaxUserSchedulingPriority is the largest priority users may specify.
 	MaxUserSchedulingPriority = 99
+	defaultDeviceMode         = "mrw"
 )
 
 // DevicesConfig is the configuration for devices.  It is a named type because it needs custom
@@ -57,7 +59,23 @@ type DeviceConfig struct {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (d *DeviceConfig) UnmarshalJSON(data []byte) error {
-	d.Mode = "mrw"
+	var plain string
+	if err := json.Unmarshal(data, &plain); err == nil {
+		fields := strings.Split(plain, ":")
+		if len(fields) < 2 || len(fields) > 3 {
+			return errors.Errorf("invalid device string: %q", plain)
+		}
+		d.HostPath = fields[0]
+		d.ContainerPath = fields[1]
+		if len(fields) > 2 {
+			d.Mode = fields[2]
+		} else {
+			d.Mode = defaultDeviceMode
+		}
+		return nil
+	}
+
+	d.Mode = defaultDeviceMode
 	type DefaultParser *DeviceConfig
 	return errors.Wrap(json.Unmarshal(data, DefaultParser(d)), "failed to parse device")
 }

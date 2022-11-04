@@ -23,7 +23,9 @@ const ScaleSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
       value={value}
       onSelect={(newValue: SelectValue) => onChange(newValue as Scale)}>
       {Object.values(Scale).map((scale) => (
-        <Option key={scale} value={scale}>{capitalize(scale)}</Option>
+        <Option key={scale} value={scale}>
+          {capitalize(scale)}
+        </Option>
       ))}
     </SelectFilter>
   );

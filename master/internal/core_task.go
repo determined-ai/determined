@@ -3,23 +3,37 @@ package internal
 import (
 	"github.com/labstack/echo/v4"
 
-	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/context"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func (m *Master) getTasks(c echo.Context) (interface{}, error) {
-	return m.rm.GetAllocationSummaries(m.system, sproto.GetAllocationSummaries{})
-}
-
-func (m *Master) getTask(c echo.Context) (interface{}, error) {
-	args := struct {
-		AllocationID string `path:"allocation_id"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
+	summary, err := m.rm.GetAllocationSummaries(m.system, sproto.GetAllocationSummaries{})
+	if err != nil {
 		return nil, err
 	}
-	return m.rm.GetAllocationSummary(m.system, sproto.GetAllocationSummary{
-		ID: model.AllocationID(args.AllocationID),
-	})
+
+	curUser := c.(*context.DetContext).MustGetUser()
+	ctx := c.Request().Context()
+	for allocationID := range summary {
+		isExp, exp, err := expFromAllocationID(m, allocationID)
+		if err != nil {
+			return nil, err
+		}
+		if !isExp {
+			if ok, err := canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID); err != nil {
+				return nil, err
+			} else if !ok {
+				delete(summary, allocationID)
+			}
+		}
+
+		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
+			return nil, err
+		} else if !ok {
+			delete(summary, allocationID)
+		}
+	}
+	return summary, nil
 }

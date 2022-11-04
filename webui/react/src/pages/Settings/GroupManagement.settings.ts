@@ -1,18 +1,10 @@
-import { InteractiveTableSettings } from 'components/InteractiveTable';
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 
-export type UserColumnName =
-| 'id'
-| 'name'
-| 'users'
-| 'action'
+export type UserColumnName = 'id' | 'name' | 'users' | 'action';
 
-export const DEFAULT_COLUMNS: UserColumnName[] = [
-  'id',
-  'name',
-  'users',
-];
+export const DEFAULT_COLUMNS: UserColumnName[] = ['id', 'name', 'users'];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
   action: 20,
@@ -21,7 +13,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
   users: 40,
 };
 
-export type GroupManagementSettings = InteractiveTableSettings
+export type GroupManagementSettings = InteractiveTableSettings;
 
 const config: SettingsConfig = {
   settings: [
@@ -43,7 +35,6 @@ const config: SettingsConfig = {
         baseType: BaseType.Float,
         isArray: true,
       },
-
     },
     {
       key: 'row',

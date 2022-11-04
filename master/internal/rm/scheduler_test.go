@@ -82,7 +82,7 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 			Name:              string(t.id),
 			SlotsNeeded:       t.slotsNeeded,
 			Preemptible:       !t.nonPreemptible,
-			Label:             t.label,
+			AgentLabel:        t.label,
 			ResourcePool:      t.resourcePool,
 			AllocationRef:     ctx.Self(),
 		}
@@ -334,7 +334,7 @@ func mockTaskToAllocateRequest(
 		AllocationID:      mockTask.id,
 		JobID:             model.JobID(jobID),
 		SlotsNeeded:       mockTask.slotsNeeded,
-		Label:             mockTask.label,
+		AgentLabel:        mockTask.label,
 		IsUserVisible:     true,
 		AllocationRef:     allocationRef,
 		Preemptible:       !mockTask.nonPreemptible,

@@ -57,6 +57,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/aproto"
@@ -815,8 +816,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	user.InitService(m.db, m.system, &m.config.InternalConfig.ExternalSessions)
 	userService := user.GetService()
-	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
-	adminAuthFuncs := []echo.MiddlewareFunc{userService.ProcessAdminAuthentication}
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
 		HTTPAuth: userService.ProcessProxyAuthentication,
@@ -884,6 +883,8 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
+	m.echo.Use(userService.ProcessAuthentication)
+
 	m.echo.Logger = logger.New()
 	m.echo.HideBanner = true
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
@@ -908,9 +909,8 @@ func (m *Master) Run(ctx context.Context) error {
 		},
 		cert,
 	)
-	tasksGroup := m.echo.Group("/tasks", authFuncs...)
+	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
-	tasksGroup.GET("/:task_id", api.Route(m.getTask))
 
 	// Distributed lock server.
 	rwCoordinator := newRWCoordinator()
@@ -937,7 +937,6 @@ func (m *Master) Run(ctx context.Context) error {
 		m.db,
 		m.rm,
 		m.taskLogger,
-		authFuncs...,
 	)
 
 	if err = m.closeOpenAllocations(); err != nil {
@@ -994,6 +993,18 @@ func (m *Master) Run(ctx context.Context) error {
 		default:
 			hasMatchingFile = !stat.IsDir()
 		}
+
+		// Files that receive a unique hash when bundled and deployed can be cached forever
+		// Other static files should only be cached for a short period of time
+		cacheFileLongTerm := regexp.MustCompile(`.(chunk\.(css|js)|woff2|woff)$`)
+		cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
+
+		if cacheFileLongTerm.MatchString(requestedFile) {
+			c.Response().Header().Set("cache-control", "public, max-age=31536000")
+		} else if cacheFileShortTerm.MatchString(requestedFile) {
+			c.Response().Header().Set("cache-control", "public, max-age=600")
+		}
+
 		if hasMatchingFile {
 			return c.File(requestedFile)
 		}
@@ -1004,25 +1015,28 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
-	m.echo.GET("/config", api.Route(m.getConfig), adminAuthFuncs...)
+	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
-	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
+	m.echo.GET("/logs", api.Route(m.getMasterLogs))
 
-	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
+	experimentsGroup := m.echo.Group("/experiments")
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
 	experimentsGroup.GET("/:experiment_id/file/download", m.getExperimentModelFile)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
-	searcherGroup := m.echo.Group("/searcher", authFuncs...)
+	checkpointsGroup := m.echo.Group("/checkpoints")
+	checkpointsGroup.GET("/:checkpoint_uuid", m.getCheckpoint)
+
+	searcherGroup := m.echo.Group("/searcher")
 	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
 
-	trialsGroup := m.echo.Group("/trials", authFuncs...)
+	trialsGroup := m.echo.Group("/trials")
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 
-	resourcesGroup := m.echo.Group("/resources", authFuncs...)
+	resourcesGroup := m.echo.Group("/resources")
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
@@ -1033,23 +1047,20 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.GET("/ws/data-layer/*",
 		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 
-	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)), authFuncs...)
+	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
 	m.echo.Any(
 		"/debug/pprof/cmdline",
 		echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)),
-		authFuncs...,
 	)
 	m.echo.Any(
 		"/debug/pprof/profile",
 		echo.WrapHandler(http.HandlerFunc(pprof.Profile)),
-		authFuncs...,
 	)
 	m.echo.Any(
 		"/debug/pprof/symbol",
 		echo.WrapHandler(http.HandlerFunc(pprof.Symbol)),
-		authFuncs...,
 	)
-	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)), authFuncs...)
+	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
 	if m.config.Observability.EnablePrometheus {
 		p := prometheus.NewPrometheus("echo", nil)
@@ -1081,8 +1092,8 @@ func (m *Master) Run(ctx context.Context) error {
 		return echo.ErrNotFound
 	})
 
-	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
-	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
+	user.RegisterAPIHandler(m.echo, userService)
+	template.RegisterAPIHandler(m.echo, m.db)
 
 	telemetry.Setup(
 		m.system,
@@ -1095,5 +1106,9 @@ func (m *Master) Run(ctx context.Context) error {
 	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
 		return err
 	}
+
+	webhooks.Init()
+	defer webhooks.Deinit()
+
 	return m.startServers(ctx, cert)
 }

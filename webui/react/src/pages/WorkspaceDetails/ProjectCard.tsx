@@ -27,13 +27,13 @@ const ProjectCard: React.FC<Props> = ({
 }: Props) => {
   const handleCardClick = useCallback(() => {
     routeToReactUrl(paths.projectDetails(project.id));
-  }, [ project.id ]);
+  }, [project.id]);
 
   return (
     <ProjectActionDropdown
       curUser={curUser}
       project={project}
-      trigger={[ 'contextMenu' ]}
+      trigger={['contextMenu']}
       workspaceArchived={workspaceArchived}
       onComplete={fetchProjects}>
       <div className={css.base} onClick={handleCardClick}>
@@ -67,8 +67,11 @@ const ProjectCard: React.FC<Props> = ({
           {project.description}
         </Typography.Paragraph>
         <div className={css.experiments}>
-          <Tooltip title={`${project.numExperiments.toLocaleString()}` +
-            ` experiment${project.numExperiments === 1 ? '' : 's'}`}>
+          <Tooltip
+            title={
+              `${project.numExperiments.toLocaleString()}` +
+              ` experiment${project.numExperiments === 1 ? '' : 's'}`
+            }>
             <Icon name="experiment" size="small" />
             <span>{project.numExperiments.toLocaleString()}</span>
           </Tooltip>
@@ -80,7 +83,9 @@ const ProjectCard: React.FC<Props> = ({
             />
           )}
         </div>
-        <div className={css.avatar}><Avatar userId={project.userId} /></div>
+        <div className={css.avatar}>
+          <Avatar userId={project.userId} />
+        </div>
       </div>
     </ProjectActionDropdown>
   );

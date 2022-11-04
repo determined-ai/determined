@@ -1,35 +1,47 @@
-import { Form, Input, message, Select, Switch, Table } from 'antd';
+import { Form, Input, message, Select, Switch, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import { getUserPermissions, patchUser, postUser, updateGroup } from 'services/api';
+import {
+  assignRolesToUser,
+  getUserRoles,
+  patchUser,
+  postUser,
+  removeRolesFromUser,
+  updateGroup,
+} from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { BrandingType, DetailedUser, Permission } from 'types';
+import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
 
 export const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
-export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created, 
+export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created,
 advise user to reset password as soon as possible.`;
 export const API_SUCCESS_MESSAGE_EDIT = 'User has been updated';
 export const DISPLAY_NAME_NAME = 'displayName';
 export const DISPLAY_NAME_LABEL = 'Display Name';
 export const MODAL_HEADER_LABEL_CREATE = 'Create User';
 export const MODAL_HEADER_LABEL_EDIT = 'Edit User';
+export const MODAL_HEADER_LABEL_VIEW = 'View User';
 export const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 export const GROUP_LABEL = 'Add to Groups';
 export const GROUP_NAME = 'groups';
+export const ROLE_LABEL = 'Roles';
+export const ROLE_NAME = 'roles';
 
 interface Props {
-  branding: BrandingType;
   form: FormInstance;
   groups: V1GroupSearchResult[];
+  roles: UserRole[] | null;
   user?: DetailedUser;
   viewOnly?: boolean;
 }
@@ -41,53 +53,25 @@ interface FormValues {
   USER_NAME_NAME: string;
 }
 
-const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) => {
-  const [ permissions, setPermissions ] = useState<Permission[]>([]);
-
-  const canSeePermissions = usePermissions().canGetPermissions();
-
-  const updatePermissions = useCallback(async () => {
-    if (user && canSeePermissions) {
-      const viewPermissions = await getUserPermissions({ userId: user.id });
-      setPermissions(viewPermissions);
-    }
-  }, [ canSeePermissions, user ]);
+const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => {
+  const rbacEnabled = useFeature().isOn('rbac');
+  const { canAssignRoles, canModifyPermissions } = usePermissions();
+  const { knownRoles } = useStore();
 
   useEffect(() => {
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
+      [ROLE_NAME]: roles?.map((r) => r.id),
     });
-    if (user) {
-      updatePermissions();
-    }
-  }, [ form, updatePermissions, user ]);
+  }, [form, user, roles]);
 
-  const columns = [
-    {
-      dataIndex: 'name',
-      key: 'name',
-      title: 'Name',
-    },
-    {
-      dataIndex: 'globalOnly',
-      key: 'globalOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
-      title: 'Global?',
-    },
-    {
-      dataIndex: 'workspaceOnly',
-      key: 'workspaceOnly',
-      render: (val: boolean) => val ? <Icon name="checkmark" /> : '',
-      title: 'Workspaces?',
-    },
-  ];
+  if (user !== undefined && roles === null && canAssignRoles({})) {
+    return <Spinner tip="Loading roles..." />;
+  }
 
   return (
-    <Form<FormValues>
-      form={form}
-      labelCol={{ span: 8 }}
-      wrapperCol={{ span: 14 }}>
+    <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
       <Form.Item
         initialValue={user?.username}
         label={USER_NAME_LABEL}
@@ -99,46 +83,58 @@ const ModalForm: React.FC<Props> = ({ form, branding, user, groups, viewOnly }) 
             required: true,
           },
         ]}
-        validateTrigger={[ 'onSubmit' ]}>
+        validateTrigger={['onSubmit']}>
         <Input autoFocus disabled={!!user} maxLength={128} placeholder="User Name" />
       </Form.Item>
-      <Form.Item
-        label={DISPLAY_NAME_LABEL}
-        name={DISPLAY_NAME_NAME}>
+      <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
         <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
       </Form.Item>
-      {branding === BrandingType.Determined ? (
-        <Form.Item
-          label={ADMIN_LABEL}
-          name={ADMIN_NAME}
-          valuePropName="checked">
+      {!rbacEnabled && (
+        <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
           <Switch disabled={viewOnly} />
         </Form.Item>
-      ) : null }
-      {!user && (
-        <Form.Item
-          label={GROUP_LABEL}
-          name={GROUP_NAME}>
+      )}
+      {!user && rbacEnabled && (
+        <Form.Item label={GROUP_LABEL} name={GROUP_NAME}>
           <Select
             mode="multiple"
             optionFilterProp="children"
             placeholder="Select Groups"
-            showSearch>{
-              groups.map((u) => (
-                <Select.Option key={u.group.groupId} value={u.group.groupId}>
-                  {u.group.name}
-                </Select.Option>
-              ))
-            }
+            showSearch>
+            {groups.map((u) => (
+              <Select.Option key={u.group.groupId} value={u.group.groupId}>
+                {u.group.name}
+              </Select.Option>
+            ))}
           </Select>
         </Form.Item>
       )}
-      {!!user && canSeePermissions && (
-        <Table
-          columns={columns}
-          dataSource={permissions}
-          pagination={{ hideOnSinglePage: true, size: 'small' }}
-        />
+      {rbacEnabled && canModifyPermissions && (
+        <>
+          <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
+            <Select
+              disabled={(user !== undefined && roles === null) || viewOnly}
+              mode="multiple"
+              optionFilterProp="children"
+              placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
+              showSearch>
+              {knownRoles.map((r) => (
+                <Select.Option
+                  disabled={
+                    roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
+                    roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
+                  }
+                  key={r.id}
+                  value={r.id}>
+                  {r.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Typography.Text type="secondary">
+            Note that roles inherited from user groups or workspaces cannot be removed here.
+          </Typography.Text>
+        </>
       )}
     </Form>
   );
@@ -155,68 +151,115 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
-  const [ form ] = Form.useForm();
-  const { info } = useStore();
+  const [form] = Form.useForm();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
+  // Null means the roles have not yet loaded
+  const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
+  const { canAssignRoles, canModifyPermissions } = usePermissions();
+
+  const fetchUserRoles = useCallback(async () => {
+    if (user !== undefined && canAssignRoles({})) {
+      try {
+        const roles = await getUserRoles({ userId: user.id });
+        setUserRoles(roles);
+      } catch (e) {
+        handleError(e, { publicSubject: "Unable to fetch this user's roles." });
+      }
+    }
+  }, [user, canAssignRoles]);
+
+  useEffect(() => {
+    fetchUserRoles();
+  }, [fetchUserRoles]);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
-  }, [ form ]);
+  }, [form]);
 
-  const handleOk = useCallback(async (viewOnly?: boolean) => {
-    if (viewOnly) {
-      handleCancel();
-      return;
-    }
-    await form.validateFields();
-
-    const formData = form.getFieldsValue();
-    try {
-      if (user) {
-        await patchUser({ userId: user.id, userParams: formData });
-        message.success(API_SUCCESS_MESSAGE_EDIT);
-      } else {
-        const u = await postUser(formData);
-        const uid = u.user?.id;
-        if (uid && formData.groups) {
-          (formData.groups as number[]).forEach(async (gid) => {
-            await updateGroup({ addUsers: [ uid ], groupId: gid });
-          });
-        }
-
-        message.success(API_SUCCESS_MESSAGE_CREATE);
+  const handleOk = useCallback(
+    async (viewOnly?: boolean) => {
+      if (viewOnly) {
+        handleCancel();
+        return;
       }
+      await form.validateFields();
 
-      form.resetFields();
-      onClose?.();
-    } catch (e) {
-      message.error(user ? 'Error updating user' : 'Error creating new user');
-      handleError(e, { silent: true, type: ErrorType.Input });
+      const formData = form.getFieldsValue();
 
-      // Re-throw error to prevent modal from getting dismissed.
-      throw e;
-    }
-  }, [ form, onClose, user, handleCancel ]);
+      const newRoles: Set<number> = new Set(formData.roles);
+      const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
+      const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
+      const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
-  const modalOpen = useCallback((viewOnly?: boolean) => {
-    openOrUpdate({
-      closable: true,
-      // passing a default brandind due to changes on the initial state
-      content:
-  <ModalForm
-    branding={info.branding || BrandingType.Determined}
-    form={form}
-    groups={groups}
-    user={user}
-    viewOnly={viewOnly}
-  />,
-      icon: null,
-      okText: viewOnly ? 'Close' : (user ? 'Update' : 'Create User'),
-      onCancel: handleCancel,
-      onOk: () => handleOk(viewOnly),
-      title: <h5>{user ? MODAL_HEADER_LABEL_EDIT : MODAL_HEADER_LABEL_CREATE}</h5>,
-    });
-  }, [ form, handleCancel, handleOk, openOrUpdate, info, user, groups ]);
+      try {
+        if (user) {
+          await patchUser({ userId: user.id, userParams: formData });
+          if (canModifyPermissions) {
+            rolesToAdd.size > 0 &&
+              (await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id }));
+            rolesToRemove.size > 0 &&
+              (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
+          }
+          fetchUserRoles();
+          message.success(API_SUCCESS_MESSAGE_EDIT);
+        } else {
+          const u = await postUser(formData);
+          const uid = u.user?.id;
+          if (uid && formData.groups) {
+            (formData.groups as number[]).forEach(async (gid) => {
+              await updateGroup({ addUsers: [uid], groupId: gid });
+            });
+          }
+          if (uid && rolesToAdd.size > 0) {
+            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
+          }
+
+          message.success(API_SUCCESS_MESSAGE_CREATE);
+          form.resetFields();
+        }
+        onClose?.();
+      } catch (e) {
+        message.error(user ? 'Error updating user' : 'Error creating new user');
+        handleError(e, { silent: true, type: ErrorType.Input });
+
+        // Re-throw error to prevent modal from getting dismissed.
+        throw e;
+      }
+    },
+    [form, onClose, user, handleCancel, userRoles, canModifyPermissions, fetchUserRoles],
+  );
+
+  const modalOpen = useCallback(
+    (viewOnly?: boolean) => {
+      openOrUpdate({
+        closable: true,
+        // passing a default brandind due to changes on the initial state
+        content: (
+          <ModalForm
+            form={form}
+            groups={groups}
+            roles={userRoles}
+            user={user}
+            viewOnly={viewOnly}
+          />
+        ),
+        icon: null,
+        okText: viewOnly ? 'Close' : user ? 'Update' : 'Create User',
+        onCancel: handleCancel,
+        onOk: () => handleOk(viewOnly),
+        title: (
+          <h5>
+            {user
+              ? viewOnly
+                ? MODAL_HEADER_LABEL_VIEW
+                : MODAL_HEADER_LABEL_EDIT
+              : MODAL_HEADER_LABEL_CREATE}
+          </h5>
+        ),
+      });
+    },
+    [form, handleCancel, handleOk, openOrUpdate, user, groups, userRoles],
+  );
 
   return { modalOpen, ...modalHook };
 };

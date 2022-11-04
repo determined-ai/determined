@@ -1,11 +1,15 @@
 import React, { useCallback } from 'react';
 
+import { ValueOf } from 'shared/types';
+
 import RadioGroup from './RadioGroup';
 
-export enum GridListView {
-  Grid = 'grid',
-  List = 'list',
-}
+export const GridListView = {
+  Grid: 'grid',
+  List: 'list',
+} as const;
+
+export type GridListView = ValueOf<typeof GridListView>;
 
 interface Props {
   onChange?: (view: GridListView) => void;
@@ -13,9 +17,12 @@ interface Props {
 }
 
 const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
-  const handleChange = useCallback((id: string) => {
-    if (onChange) onChange(id as GridListView);
-  }, [ onChange ]);
+  const handleChange = useCallback(
+    (id: string) => {
+      if (onChange) onChange(id as GridListView);
+    },
+    [onChange],
+  );
 
   return (
     <RadioGroup

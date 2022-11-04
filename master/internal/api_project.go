@@ -17,7 +17,9 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-func (a *apiServer) GetProjectByID(id int32, curUser model.User) (*projectv1.Project, error) {
+func (a *apiServer) GetProjectByID(
+	ctx context.Context, id int32, curUser model.User,
+) (*projectv1.Project, error) {
 	notFoundErr := status.Errorf(codes.NotFound, "project (%d) not found", id)
 	p := &projectv1.Project{}
 	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
@@ -26,7 +28,7 @@ func (a *apiServer) GetProjectByID(id int32, curUser model.User) (*projectv1.Pro
 		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
 	}
 
-	if ok, err := project.AuthZProvider.Get().CanGetProject(curUser, p); err != nil {
+	if ok, err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, notFoundErr
@@ -35,19 +37,20 @@ func (a *apiServer) GetProjectByID(id int32, curUser model.User) (*projectv1.Pro
 }
 
 func (a *apiServer) getProjectAndCheckCanDoActions(
-	ctx context.Context, projectID int32, canDoActions ...func(model.User, *projectv1.Project) error,
+	ctx context.Context, projectID int32,
+	canDoActions ...func(context.Context, model.User, *projectv1.Project) error,
 ) (*projectv1.Project, model.User, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, model.User{}, err
 	}
-	p, err := a.GetProjectByID(projectID, *curUser)
+	p, err := a.GetProjectByID(ctx, projectID, *curUser)
 	if err != nil {
 		return nil, model.User{}, err
 	}
 
 	for _, canDoAction := range canDoActions {
-		if err = canDoAction(*curUser, p); err != nil {
+		if err = canDoAction(ctx, *curUser, p); err != nil {
 			return nil, model.User{}, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
@@ -77,7 +80,7 @@ func (a *apiServer) GetProject(
 		return nil, err
 	}
 
-	p, err := a.GetProjectByID(req.Id, *curUser)
+	p, err := a.GetProjectByID(ctx, req.Id, *curUser)
 	return &apiv1.GetProjectResponse{Project: p}, err
 }
 
@@ -88,11 +91,11 @@ func (a *apiServer) PostProject(
 	if err != nil {
 		return nil, err
 	}
-	w, err := a.GetWorkspaceByID(req.WorkspaceId, *curUser, true)
+	w, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, true)
 	if err != nil {
 		return nil, err
 	}
-	if err = project.AuthZProvider.Get().CanCreateProject(*curUser, w); err != nil {
+	if err = project.AuthZProvider.Get().CanCreateProject(ctx, *curUser, w); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -158,7 +161,7 @@ func (a *apiServer) PatchProject(
 
 	madeChanges := false
 	if req.Project.Name != nil && req.Project.Name.Value != currProject.Name {
-		if err = project.AuthZProvider.Get().CanSetProjectName(currUser, currProject); err != nil {
+		if err = project.AuthZProvider.Get().CanSetProjectName(ctx, currUser, currProject); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
@@ -170,7 +173,7 @@ func (a *apiServer) PatchProject(
 
 	if req.Project.Description != nil && req.Project.Description.Value != currProject.Description {
 		if err = project.AuthZProvider.Get().
-			CanSetProjectDescription(currUser, currProject); err != nil {
+			CanSetProjectDescription(ctx, currUser, currProject); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
@@ -203,7 +206,7 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 		return err
 	}
 
-	log.Errorf("deleting project %d experiments", projectID)
+	log.Debugf("deleting project %d experiments", projectID)
 	for _, exp := range expList {
 		if err = a.deleteExperiment(exp, user); err != nil {
 			log.WithError(err).Errorf("failed to delete experiment %d", exp.ID)
@@ -211,14 +214,14 @@ func (a *apiServer) deleteProject(ctx context.Context, projectID int32,
 			return err
 		}
 	}
-	log.Errorf("project %d experiments deleted successfully", projectID)
+	log.Debugf("project %d experiments deleted successfully", projectID)
 	err = a.m.db.QueryProto("delete_project", holder, projectID)
 	if err != nil {
 		log.WithError(err).Errorf("failed to delete project %d", projectID)
 		_ = a.m.db.QueryProto("delete_fail_project", holder, projectID, err.Error())
 		return err
 	}
-	log.Errorf("project %d deleted successfully", projectID)
+	log.Debugf("project %d deleted successfully", projectID)
 	return nil
 }
 
@@ -264,20 +267,20 @@ func (a *apiServer) MoveProject(
 	if err != nil {
 		return nil, err
 	}
-	p, err := a.GetProjectByID(req.ProjectId, *curUser)
+	p, err := a.GetProjectByID(ctx, req.ProjectId, *curUser)
 	if err != nil { // Can view project?
 		return nil, err
 	}
 	// Allow projects to be moved from immutable workspaces but not to immutable workspaces.
-	from, err := a.GetWorkspaceByID(p.WorkspaceId, *curUser, false)
+	from, err := a.GetWorkspaceByID(ctx, p.WorkspaceId, *curUser, false)
 	if err != nil {
 		return nil, err
 	}
-	to, err := a.GetWorkspaceByID(req.DestinationWorkspaceId, *curUser, true)
+	to, err := a.GetWorkspaceByID(ctx, req.DestinationWorkspaceId, *curUser, true)
 	if err != nil {
 		return nil, err
 	}
-	if err = project.AuthZProvider.Get().CanMoveProject(*curUser, p, from, to); err != nil {
+	if err = project.AuthZProvider.Get().CanMoveProject(ctx, *curUser, p, from, to); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

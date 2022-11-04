@@ -1,5 +1,6 @@
 import argparse
 import base64
+import json
 import re
 import sys
 from pathlib import Path
@@ -45,7 +46,6 @@ def get_deployment_class(deployment_type: str) -> Type[base.DeterminedDeployment
     deployment_type_map = {
         constants.deployment_types.SIMPLE: simple.Simple,
         constants.deployment_types.SECURE: secure.Secure,
-        constants.deployment_types.VPC: vpc.VPC,
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
         constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
@@ -152,6 +152,11 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         with open(args.master_tls_key, "rb") as f:
             master_tls_key = base64.b64encode(f.read()).decode()
 
+    config_file_contents = {}
+
+    if args.shut_down_on_connection_loss:
+        config_file_contents["hooks"] = {"on_connection_lost": ["shutdown", "now"]}
+
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
         constants.cloudformation.ENABLE_CORS: args.enable_cors,
@@ -186,6 +191,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.AGENT_REATTACH_ENABLED: args.agent_reattach_enabled,
         constants.cloudformation.AGENT_RECONNECT_ATTEMPTS: args.agent_reconnect_attempts,
         constants.cloudformation.AGENT_RECONNECT_BACKOFF: args.agent_reconnect_backoff,
+        constants.cloudformation.AGENT_CONFIG_FILE_CONTENTS: json.dumps(config_file_contents),
     }
 
     if args.master_config_template_path:
@@ -509,6 +515,14 @@ args_description = Cmd(
                     type=int,
                     default=5,
                     help="time between reconnect attempts, with the exception of the first.",
+                ),
+                BoolOptArg(
+                    "--shut-down-agents-on-connection-loss",
+                    "--no-shut-down-agents-on-connection-loss",
+                    dest="shut_down_on_connection_loss",
+                    default=True,
+                    true_help="shut down agent instances on connection loss",
+                    false_help="do not shut down agent instances on connection loss",
                 ),
                 BoolOptArg(
                     "--update-terminate-agents",

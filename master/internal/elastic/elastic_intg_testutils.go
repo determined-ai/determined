@@ -19,6 +19,7 @@ const (
 	taskLogsIndexPattern = "determined-tasklogs-*"
 )
 
+// WaitForIngest waits for index to be ingested.
 func (e *Elastic) WaitForIngest(index string) error {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
@@ -65,6 +66,7 @@ func (e *Elastic) AddDateNanosTemplate() error {
 	return nil
 }
 
+// CurrentLogstashIndex returns the current logstash index.
 func CurrentLogstashIndex() string {
 	t := time.Now().UTC()
 	return logstashIndexFromTimestamp(&t)

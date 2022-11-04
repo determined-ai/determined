@@ -4,7 +4,7 @@ import InfoBox, { InfoRow } from './InfoBox';
 
 export default {
   component: InfoBox,
-  title: 'InfoBox',
+  title: 'Determined/InfoBox',
 };
 
 const longText = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. 

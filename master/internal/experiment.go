@@ -1,10 +1,12 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/shopspring/decimal"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -16,11 +18,13 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -30,6 +34,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -68,6 +73,12 @@ type (
 		requestID model.RequestID
 		reason    model.ExitedReason
 	}
+
+	// UnwatchEvents is initiated from the get searcher events API. It deletes the watcher with the
+	// given ID.
+	UnwatchEvents struct {
+		id uuid.UUID
+	}
 )
 
 type (
@@ -92,6 +103,7 @@ type (
 		db                  *db.PgDB
 		rm                  rm.ResourceManager
 		searcher            *searcher.Searcher
+		queue               *searcher.SearcherEventQueue
 		warmStartCheckpoint *model.Checkpoint
 
 		taskSpec *tasks.TaskSpec
@@ -141,14 +153,11 @@ func newExperiment(m *Master, expModel *model.Experiment, taskSpec *tasks.TaskSp
 		telemetry.ReportExperimentCreated(m.system, expModel)
 	}
 
-	agentUserGroup, err := m.db.AgentUserGroup(*expModel.OwnerID)
+	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, expModel)
 	if err != nil {
 		return nil, err
 	}
 
-	if agentUserGroup == nil {
-		agentUserGroup = &m.config.Security.DefaultTask
-	}
 	taskSpec.AgentUserGroup = agentUserGroup
 
 	return &experiment{
@@ -365,6 +374,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return errors.New("experiment is already in a terminal state")
 		}
 		telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
+		if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
+			log.WithError(err).Error("failed to send experiment state change webhook")
+		}
 
 		if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 			return err
@@ -410,6 +422,76 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		ctx.Log().Info("experiment shut down successfully")
+
+	case *apiv1.PostSearcherOperationsRequest:
+		queue, err := e.searcher.GetCustomSearcherEventQueue()
+		if err != nil {
+			ctx.Respond(status.Error(codes.Internal, err.Error()))
+			return nil
+		}
+		var ops []searcher.Operation
+		for _, searcherOp := range msg.SearcherOperations {
+			switch concreteOperation := searcherOp.GetUnion().(type) {
+			case *experimentv1.SearcherOperation_CreateTrial:
+				op, err := searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType)
+				if err != nil {
+					ctx.Log().Error(err)
+				} else {
+					ops = append(ops, *op)
+				}
+			case *experimentv1.SearcherOperation_ShutDown:
+				ops = append(ops, searcher.NewShutdown())
+			case *experimentv1.SearcherOperation_TrialOperation:
+				switch sub := concreteOperation.TrialOperation.GetUnion().(type) {
+				case *experimentv1.TrialOperation_ValidateAfter:
+					op, err := searcher.ValidateAfterFromProto(sub)
+					if err != nil {
+						ctx.Log().Error(err)
+					} else {
+						ops = append(ops, *op)
+					}
+				}
+			case *experimentv1.SearcherOperation_CloseTrial:
+				op, err := searcher.CloseFromProto(concreteOperation)
+				if err != nil {
+					ctx.Log().Error(err)
+				} else {
+					ops = append(ops, *op)
+				}
+			case *experimentv1.SearcherOperation_SetSearcherProgress:
+				ops = append(ops, searcher.SetSearcherProgressFromProto(concreteOperation))
+			default:
+				ctx.Log().Errorf("unimplemented op %+v", concreteOperation)
+			}
+		}
+		ctx.Log().Infof("processing searcher operations %+v", ops)
+
+		// Remove newly processed events from queue.
+		if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
+			ctx.Respond(status.Error(codes.Internal, "failed to remove events from queue"))
+		} else {
+			e.searcher.Record(ops)
+			e.processOperations(ctx, ops, nil)
+			ctx.Respond(&apiv1.PostSearcherOperationsResponse{})
+		}
+
+	case *apiv1.GetSearcherEventsRequest:
+		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
+			ctx.Respond(status.Error(codes.Internal, err.Error()))
+		} else {
+			if w, err := queue.Watch(); err != nil {
+				ctx.Respond(err)
+			} else {
+				ctx.Respond(w)
+			}
+		}
+
+	case UnwatchEvents:
+		if queue, err := e.searcher.GetCustomSearcherEventQueue(); err != nil {
+			ctx.Respond(status.Error(codes.Internal, err.Error()))
+		} else {
+			queue.Unwatch(msg.id)
+		}
 
 	case *apiv1.ActivateExperimentRequest:
 		switch ok := e.updateState(ctx, model.StateWithReason{
@@ -548,6 +630,11 @@ func (e *experiment) processOperations(
 			state.Complete = false
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
+		case searcher.SetSearcherProgress:
+			if err := e.searcher.SetCustomSearcherProgress(op.Progress); err != nil {
+				ctx.Respond(status.Error(codes.Internal, err.Error()))
+			}
+
 		case searcher.Close:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Closed = true
@@ -611,6 +698,9 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 		return true
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
+	if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
+		log.WithError(err).Error("failed to send experiment state change webhook")
+	}
 
 	ctx.Log().Infof("experiment state changed to %s", state.State)
 	ctx.TellAll(state, ctx.Children()...)

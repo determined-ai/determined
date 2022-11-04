@@ -33,3 +33,13 @@
     }
   }
 }
+.tagsRenderer {
+  :global([aria-label='new-tag-trigger']) {
+    display: none !important;
+  }
+  &:hover {
+    :global([aria-label='new-tag-trigger']) {
+      display: inherit !important;
+    }
+  }
+}

@@ -87,7 +87,7 @@ class MetricReducer:
         the trial (or 1 in non-distributed training).  cross_slot_reduce must return the final
         metric.
 
-        In the example of calculating a distributed mean, cross_slot_reduce might recieve a list of
+        In the example of calculating a distributed mean, cross_slot_reduce might receive a list of
         (sum, count) tuples and it would calculate the overall mean.
 
         .. code:: python

@@ -4,24 +4,24 @@ describe('Array.prototype utility', () => {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const arrays: Record<RecordKey, Record<RecordKey, any[]>> = {
     boolean: {
-      original: [ true, false, false, true ],
-      sorted: [ false, false, true, true ],
+      original: [true, false, false, true],
+      sorted: [false, false, true, true],
     },
     empty: {
       original: [],
       sorted: [],
     },
     mixed: {
-      original: [ -10, 0, null, undefined, 10, 200 ],
-      sorted: [ undefined, null, -10, 0, 10, 200 ],
+      original: [-10, 0, null, undefined, 10, 200],
+      sorted: [undefined, null, -10, 0, 10, 200],
     },
     numbers: {
-      original: [ 5280, 3.14, 2e10, -123, 5e-6, 0 ],
-      sorted: [ -123, 0, 5e-6, 3.14, 5280, 2e10 ],
+      original: [5280, 3.14, 2e10, -123, 5e-6, 0],
+      sorted: [-123, 0, 5e-6, 3.14, 5280, 2e10],
     },
     strings: {
-      original: [ 'abcdef', 'ghij', 'xyz', 'XYZ' ],
-      sorted: [ 'XYZ', 'abcdef', 'ghij', 'xyz' ],
+      original: ['abcdef', 'ghij', 'xyz', 'XYZ'],
+      sorted: ['XYZ', 'abcdef', 'ghij', 'xyz'],
     },
   };
 
@@ -63,7 +63,7 @@ describe('Array.prototype utility', () => {
     });
 
     describe('sortAll', () => {
-      const arrCopy = [ ...arr ];
+      const arrCopy = [...arr];
       arrCopy.sortAll(dumbCompare);
       it('should sort different types of array', () => {
         expect(arrCopy).toEqual(sortedArr);

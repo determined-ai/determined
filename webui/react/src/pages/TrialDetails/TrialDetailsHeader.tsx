@@ -6,13 +6,17 @@ import { terminalRunStates } from 'constants/states';
 import useCreateExperimentModal, {
   CreateExperimentType,
 } from 'hooks/useModal/Experiment/useModalExperimentCreate';
-import useModalHyperparameterSearch
-  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
-import { ExperimentAction as Action, ExperimentAction, ExperimentBase,
-  TrialDetails, TrialWorkloadFilter } from 'types';
+import {
+  ExperimentAction as Action,
+  ExperimentAction,
+  ExperimentBase,
+  TrialDetails,
+  TrialWorkloadFilter,
+} from 'types';
 import { canActionExperiment } from 'utils/experiment';
 import { openCommand } from 'utils/wait';
 
@@ -22,15 +26,11 @@ interface Props {
   trial: TrialDetails;
 }
 
-const TrialDetailsHeader: React.FC<Props> = ({
-  experiment,
-  fetchTrialDetails,
-  trial,
-}: Props) => {
-  const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
-  const [ trialNeverData, setTrialNeverData ] = useState<boolean>(false);
+const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, trial }: Props) => {
+  const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
+  const [trialNeverData, setTrialNeverData] = useState<boolean>(false);
 
-  const handleModalClose = useCallback(() => fetchTrialDetails(), [ fetchTrialDetails ]);
+  const handleModalClose = useCallback(() => fetchTrialDetails(), [fetchTrialDetails]);
 
   const {
     contextHolder: modalExperimentCreateContextHolder,
@@ -44,11 +44,11 @@ const TrialDetailsHeader: React.FC<Props> = ({
 
   const handleContinueTrial = useCallback(() => {
     openModalExperimentCreate({ experiment, trial, type: CreateExperimentType.ContinueTrial });
-  }, [ experiment, openModalExperimentCreate, trial ]);
+  }, [experiment, openModalExperimentCreate, trial]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
-  }, [ openModalHyperparameterSearch ]);
+  }, [openModalHyperparameterSearch]);
 
   useMemo(async () => {
     if (!terminalRunStates.has(trial.state)) {
@@ -61,7 +61,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
       });
       setTrialNeverData(wl.workloads.length === 0);
     }
-  }, [ trial ]);
+  }, [trial]);
 
   const headerOptions = useMemo<Option[]>(() => {
     const options: Option[] = [];
@@ -74,7 +74,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
         label: 'TensorBoard',
         onClick: async () => {
           setIsRunningTensorBoard(true);
-          const tensorboard = await openOrCreateTensorBoard({ trialIds: [ trial.id ] });
+          const tensorboard = await openOrCreateTensorBoard({ trialIds: [trial.id] });
           openCommand(tensorboard);
           await fetchTrialDetails();
           setIsRunningTensorBoard(false);
@@ -100,11 +100,7 @@ const TrialDetailsHeader: React.FC<Props> = ({
       }
     }
 
-    if (canActionExperiment(
-      ExperimentAction.HyperparameterSearch,
-      experiment,
-      trial,
-    )) {
+    if (canActionExperiment(ExperimentAction.HyperparameterSearch, experiment, trial)) {
       options.push({
         key: Action.HyperparameterSearch,
         label: 'Hyperparameter Search',
@@ -113,13 +109,15 @@ const TrialDetailsHeader: React.FC<Props> = ({
     }
 
     return options;
-  }, [ experiment,
+  }, [
+    experiment,
     fetchTrialDetails,
     handleContinueTrial,
     handleHyperparameterSearch,
     isRunningTensorBoard,
     trial,
-    trialNeverData ]);
+    trialNeverData,
+  ]);
 
   return (
     <>

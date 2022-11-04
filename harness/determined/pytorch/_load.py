@@ -69,7 +69,7 @@ def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorch
             "directly from the files in the checkpoint.  Instead, a metadata.json was written "
             "during the call to Checkpoint.download().  If you are reading an old checkpoint "
             "directly from checkpoint storage, you can either use Checkpoint.download() instead or "
-            "you can use Checkpoint.write_metatdata_file('metadata.json') to create a suitable "
+            "you can use Checkpoint.write_metadata_file('metadata.json') to create a suitable "
             "metadata file for loading a legacy checkpoint."
         )
 

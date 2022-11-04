@@ -1,7 +1,10 @@
 import logging
 import os
 import pathlib
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, no_type_check
+
+import requests.exceptions
+import urllib3.exceptions
 
 from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
@@ -32,6 +35,7 @@ class GCSTensorboardManager(base.TensorboardManager):
     def get_storage_prefix(self, storage_id: pathlib.Path) -> str:
         return os.path.join(self.prefix, storage_id)
 
+    @no_type_check
     @util.preserve_random_state
     def sync(
         self,
@@ -44,10 +48,22 @@ class GCSTensorboardManager(base.TensorboardManager):
             mangled_relative_path = mangler(relative_path, rank)
             mangled_path = self.sync_path.joinpath(mangled_relative_path)
             to_path = self.get_storage_prefix(mangled_path)
+
+            from google.api_core import exceptions, retry
+
+            retry_network_errors = retry.Retry(
+                retry.if_exception_type(
+                    ConnectionError,
+                    exceptions.ServerError,
+                    urllib3.exceptions.ProtocolError,
+                    requests.exceptions.ConnectionError,
+                )
+            )
+
             blob = self.bucket.blob(to_path)
 
             logger.debug(f"Uploading {path} to GCS: {to_path}")
-            blob.upload_from_filename(str(path))
+            retry_network_errors(blob.upload_from_filename)(str(path))
 
     def delete(self) -> None:
         prefix_path = self.get_storage_prefix(self.sync_path)

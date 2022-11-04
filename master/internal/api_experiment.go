@@ -12,11 +12,14 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/prom"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -51,8 +54,76 @@ import (
 
 var experimentsAddr = actor.Addr("experiments")
 
+// Catches information on active running experiments.
+type experimentAllocation struct {
+	Job      model.JobID
+	Pulling  bool
+	Running  bool
+	Starting bool
+}
+
+// Enrich one or more experiments by converting Active state to Queued/Pulling/Starting/Running.
+func (a *apiServer) enrichExperimentState(experiments ...*experimentv1.Experiment) error {
+	// filter allocations by JobIDs on this page of experiments
+	jobFilter := make([]string, 0, len(experiments))
+	for _, exp := range experiments {
+		jobFilter = append(jobFilter, exp.JobId)
+	}
+
+	// get active experiments by JobID
+	tasks := []experimentAllocation{}
+	err := a.m.db.Query(
+		"aggregate_allocation_state_by_job",
+		&tasks,
+		strings.Join(jobFilter, ","),
+	)
+	if err != nil {
+		return err
+	}
+
+	// Collect state information by JobID
+	byJobID := make(map[model.JobID]experimentv1.State, len(tasks))
+	for _, task := range tasks {
+		switch {
+		case task.Running:
+			byJobID[task.Job] = experimentv1.State_STATE_RUNNING
+		case task.Starting:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_STARTING)
+		case task.Pulling:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_PULLING)
+		default:
+			byJobID[task.Job] = model.MostProgressedExperimentState(byJobID[task.Job],
+				experimentv1.State_STATE_QUEUED)
+		}
+	}
+
+	// Active experiments converted to Queued, Pulling, Starting, or Running
+	for _, exp := range experiments {
+		if exp.State == experimentv1.State_STATE_ACTIVE {
+			if setState, ok := byJobID[model.JobID(exp.JobId)]; ok {
+				exp.State = setState
+			} else {
+				exp.State = experimentv1.State_STATE_QUEUED
+			}
+		}
+	}
+	return nil
+}
+
+// Return if experiment state is Active or any of its sub-states.
+func isActiveExperimentState(state experimentv1.State) bool {
+	return slices.Contains([]experimentv1.State{
+		experimentv1.State_STATE_ACTIVE,
+		experimentv1.State_STATE_PULLING, experimentv1.State_STATE_QUEUED,
+		experimentv1.State_STATE_RUNNING, experimentv1.State_STATE_STARTING,
+	}, state)
+}
+
+// Return a single experiment with enriched state, if the user can access it.
 func (a *apiServer) getExperiment(
-	curUser model.User, experimentID int,
+	ctx context.Context, curUser model.User, experimentID int,
 ) (*experimentv1.Experiment, error) {
 	expNotFound := status.Errorf(codes.NotFound, "experiment not found: %d", experimentID)
 	exp := &experimentv1.Experiment{}
@@ -66,9 +137,9 @@ func (a *apiServer) getExperiment(
 	if err != nil {
 		return nil, err
 	}
-	if ok, err := expauth.AuthZProvider.Get().
-		CanGetExperiment(curUser, modelExp); err != nil {
-		return nil, err
+	if ok, authErr := expauth.AuthZProvider.Get().
+		CanGetExperiment(ctx, curUser, modelExp); authErr != nil {
+		return nil, authErr
 	} else if !ok {
 		return nil, expNotFound
 	}
@@ -76,6 +147,11 @@ func (a *apiServer) getExperiment(
 	sort.Slice(exp.TrialIds, func(i, j int) bool {
 		return exp.TrialIds[i] < exp.TrialIds[j]
 	})
+
+	if err = a.enrichExperimentState(exp); err != nil {
+		return nil, err
+	}
+
 	return exp, nil
 }
 
@@ -83,7 +159,7 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	ctx context.Context,
 	expID int,
 	withConfig bool,
-	actions ...func(model.User, *model.Experiment) error,
+	actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -104,18 +180,89 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 	}
 
 	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(*curUser, e); err != nil {
+	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, e); err != nil {
 		return nil, model.User{}, err
 	} else if !ok {
 		return nil, model.User{}, expNotFound
 	}
 
 	for _, action := range actions {
-		if err = action(*curUser, e); err != nil {
+		if err = action(ctx, *curUser, e); err != nil {
 			return nil, model.User{}, status.Errorf(codes.PermissionDenied, err.Error())
 		}
 	}
 	return e, *curUser, nil
+}
+
+func (a *apiServer) GetSearcherEvents(
+	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
+) (*apiv1.GetSearcherEventsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := a.getExperiment(ctx, *curUser, int(req.ExperimentId))
+	if err != nil {
+		return nil, err
+	}
+	if !isActiveExperimentState(exp.State) {
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: []*experimentv1.SearcherEvent{{
+				Id: -1,
+				Event: &experimentv1.SearcherEvent_ExperimentInactive{
+					ExperimentInactive: &experimentv1.ExperimentInactive{
+						ExperimentState: exp.State,
+					},
+				},
+			}},
+		}, nil
+	}
+
+	addr := experimentsAddr.Child(req.ExperimentId)
+	var w searcher.EventsWatcher
+	if err = a.ask(addr, req, &w); err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"failed to get events from actor: long polling %v", err)
+	}
+
+	defer a.m.system.TellAt(addr, UnwatchEvents{w.ID})
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(60)*time.Second)
+	defer cancel()
+
+	select {
+	case events := <-w.C:
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: events,
+		}, nil
+	case <-ctx.Done():
+		return &apiv1.GetSearcherEventsResponse{
+			SearcherEvents: nil,
+		}, nil
+	}
+}
+
+func (a *apiServer) PostSearcherOperations(
+	ctx context.Context,
+	req *apiv1.PostSearcherOperationsRequest,
+) (
+	resp *apiv1.PostSearcherOperationsResponse, err error,
+) {
+	_, _, err = a.getExperimentAndCheckCanDoActions(
+		ctx, int(req.ExperimentId), false, expauth.AuthZProvider.Get().CanRunCustomSearch,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "fetching experiment from database")
+	}
+
+	addr := experimentsAddr.Child(req.ExperimentId)
+	switch err = a.ask(addr, req, &resp); {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to post operations: %v", err)
+	default:
+		logrus.Infof("posted operations %v", req.SearcherOperations)
+		return resp, nil
+	}
 }
 
 func (a *apiServer) GetExperiment(
@@ -125,7 +272,7 @@ func (a *apiServer) GetExperiment(
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
-	exp, err := a.getExperiment(*user, int(req.ExperimentId))
+	exp, err := a.getExperiment(ctx, *user, int(req.ExperimentId))
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +281,8 @@ func (a *apiServer) GetExperiment(
 		Experiment: exp,
 	}
 
-	if model.StateFromProto(exp.State) != model.ActiveState {
+	// Only continue to add a job summary if it's an active experiment.
+	if !isActiveExperimentState(exp.State) {
 		return &resp, nil
 	}
 
@@ -206,18 +354,15 @@ func (a *apiServer) DeleteExperiment(
 	return &apiv1.DeleteExperimentResponse{}, nil
 }
 
-func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) error {
+func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.User) error {
 	conf, err := a.m.db.LegacyExperimentConfigByID(exp.ID)
 	if err != nil {
 		return fmt.Errorf("failed to read config for experiment: %w", err)
 	}
 
-	agentUserGroup, err := a.m.db.AgentUserGroup(*exp.OwnerID)
-	switch {
-	case err != nil:
-		return errors.Errorf("cannot find user and group for experiment")
-	case agentUserGroup == nil:
-		agentUserGroup = &a.m.config.Security.DefaultTask
+	agentUserGroup, err := user.GetAgentUserGroup(*exp.OwnerID, exp)
+	if err != nil {
+		return err
 	}
 
 	taskSpec := *a.m.taskSpec
@@ -230,13 +375,12 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, user *model.User) er
 	if err != nil {
 		return err
 	}
-
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	jobSubmissionTime := exp.StartTime
 	taskID := model.NewTaskID()
 	ckptGCTask := newCheckpointGCTask(
 		a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-		conf, checkpoints, true, agentUserGroup, user, nil,
+		conf, checkpoints, true, agentUserGroup, userModel, nil,
 	)
 	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
 		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
@@ -390,13 +534,21 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("e.owner_id IN (?)", bun.In(req.UserIds))
 	}
 
+	if req.ExperimentIdFilter != nil {
+		var err error
+		query, err = db.ApplyInt32FieldFilter(query, bun.Ident("e.id"), req.ExperimentIdFilter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 	var proj *projectv1.Project
 	if req.ProjectId != 0 {
-		proj, err = a.GetProjectByID(req.ProjectId, *curUser)
+		proj, err = a.GetProjectByID(ctx, req.ProjectId, *curUser)
 		if err != nil {
 			return nil, err
 		}
@@ -404,12 +556,16 @@ func (a *apiServer) GetExperiments(
 		query = query.Where("project_id = ?", req.ProjectId)
 	}
 	if query, err = expauth.AuthZProvider.Get().
-		FilterExperimentsQuery(*curUser, proj, query); err != nil {
+		FilterExperimentsQuery(ctx, *curUser, proj, query); err != nil {
 		return nil, err
 	}
 
 	resp.Pagination, err = runPagedBunExperimentsQuery(ctx, query, int(req.Offset), int(req.Limit))
 	if err != nil {
+		return nil, err
+	}
+
+	if err = a.enrichExperimentState(resp.Experiments...); err != nil {
 		return nil, err
 	}
 
@@ -487,7 +643,7 @@ func (a *apiServer) GetExperimentLabels(ctx context.Context,
 
 	var proj *projectv1.Project
 	if req.ProjectId != 0 {
-		proj, err = a.GetProjectByID(req.ProjectId, *curUser)
+		proj, err = a.GetProjectByID(ctx, req.ProjectId, *curUser)
 		if err != nil {
 			return nil, err
 		}
@@ -496,7 +652,7 @@ func (a *apiServer) GetExperimentLabels(ctx context.Context,
 	}
 
 	if query, err = expauth.AuthZProvider.Get().
-		FilterExperimentLabelsQuery(*curUser, proj, query); err != nil {
+		FilterExperimentLabelsQuery(ctx, *curUser, proj, query); err != nil {
 		return nil, err
 	}
 
@@ -550,7 +706,7 @@ func (a *apiServer) PreviewHPSearch(
 	if err != nil {
 		return nil, err
 	}
-	if err = expauth.AuthZProvider.Get().CanPreviewHPSearch(*curUser); err != nil {
+	if err = expauth.AuthZProvider.Get().CanPreviewHPSearch(ctx, *curUser); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
@@ -769,7 +925,7 @@ func (a *apiServer) PatchExperiment(
 	if err != nil {
 		return nil, err
 	}
-	exp, err := a.getExperiment(*curUser, int(req.Experiment.Id))
+	exp, err := a.getExperiment(ctx, *curUser, int(req.Experiment.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -777,7 +933,9 @@ func (a *apiServer) PatchExperiment(
 	if err != nil {
 		return nil, err
 	}
-	if err = expauth.AuthZProvider.Get().CanEditExperimentsMetadata(*curUser, modelExp); err != nil {
+
+	if err = expauth.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
@@ -828,8 +986,8 @@ func (a *apiServer) PatchExperiment(
 			Description: exp.Description,
 			Name:        exp.Name,
 		}
-		marshalledPatches, err := json.Marshal(patches)
-		if err != nil {
+		marshalledPatches, patchErr := json.Marshal(patches)
+		if patchErr != nil {
 			return nil, status.Errorf(codes.Internal, "failed to marshal experiment patch")
 		}
 
@@ -838,6 +996,11 @@ func (a *apiServer) PatchExperiment(
 		if err != nil {
 			return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 		}
+	}
+
+	// include queued / pulling / starting / running state
+	if err = a.enrichExperimentState(exp); err != nil {
+		return nil, err
 	}
 
 	return &apiv1.PatchExperimentResponse{Experiment: exp}, nil
@@ -944,7 +1107,7 @@ func (a *apiServer) CreateExperiment(
 		detParams.ParentID = ptrs.Ptr(int(req.ParentId))
 		// Can't use getExperimentAndCheckDoActions since model.Experiment doesn't have ParentArchived.
 		var parentExp *experimentv1.Experiment
-		parentExp, err = a.getExperiment(*user, *detParams.ParentID)
+		parentExp, err = a.getExperiment(ctx, *user, *detParams.ParentID)
 		if err != nil {
 			return nil, err
 		}
@@ -955,7 +1118,7 @@ func (a *apiServer) CreateExperiment(
 		}
 
 		if err = expauth.AuthZProvider.Get().
-			CanForkFromExperiment(*user, modelExp); err != nil {
+			CanForkFromExperiment(ctx, *user, modelExp); err != nil {
 			return nil, status.Errorf(codes.PermissionDenied, err.Error())
 		}
 		if parentExp.ParentArchived {
@@ -968,29 +1131,24 @@ func (a *apiServer) CreateExperiment(
 		detParams.ProjectID = &projectID
 	}
 
-	dbExp, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
-	if errors.Is(err, errCantFindProject) {
-		return nil, status.Errorf(codes.NotFound, errCantFindProject.Error())
-	} else if err != nil {
+	dbExp, p, validateOnly, taskSpec, err := a.m.parseCreateExperiment(&detParams, user)
+	if err != nil {
+		if _, ok := err.(ErrProjectNotFound); ok {
+			return nil, status.Errorf(codes.NotFound, err.Error())
+		}
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment: %s", err)
 	}
-
-	proj, err := a.GetProjectByID(int32(dbExp.ProjectID), *user)
-	if e, ok := status.FromError(err); ok && e.Code() == codes.NotFound {
-		return nil, status.Errorf(codes.NotFound, errCantFindProject.Error())
-	} else if err != nil {
-		return nil, err
-	}
-	if err = expauth.AuthZProvider.Get().CanCreateExperiment(*user, proj, dbExp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p, dbExp); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
+
 	if validateOnly {
 		return &apiv1.CreateExperimentResponse{}, nil
 	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
 	if req.Activate {
-		if err = expauth.AuthZProvider.Get().CanEditExperiment(*user, dbExp); err != nil {
+		if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *user, dbExp); err != nil {
 			return nil, status.Errorf(codes.PermissionDenied, err.Error())
 		}
 	}
@@ -1008,7 +1166,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	protoExp, err := a.getExperiment(*user, e.ID)
+	protoExp, err := a.getExperiment(ctx, *user, e.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -1105,6 +1263,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	}
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 	resp apiv1.Determined_ExpCompareMetricNamesServer,
 ) error {
@@ -1140,7 +1299,7 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 		newTrain, newValid, tEndTime, vEndTime, err := a.m.db.ExpCompareMetricNames(req.TrialId,
 			tStartTime, vStartTime)
 		if err != nil {
-			return nil
+			return err
 		}
 		tStartTime = tEndTime
 		vStartTime = vEndTime
@@ -1352,6 +1511,8 @@ func (a *apiServer) topTrials(experimentID int, maxTrials int, s expconf.Searche
 		ranking = ByMetricOfInterest
 	case expconf.GridConfig:
 		ranking = ByMetricOfInterest
+	case expconf.CustomConfig:
+		ranking = ByMetricOfInterest
 	case expconf.AsyncHalvingConfig:
 		ranking = ByTrainingLength
 	case expconf.AdaptiveASHAConfig:
@@ -1433,6 +1594,7 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	return &trial, nil
 }
 
+// DEPRECATED -- do not use.
 func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int, endBatches int,
 	currentTrials map[int32]bool,
@@ -1888,7 +2050,7 @@ func (a *apiServer) MoveExperiment(
 	}
 
 	// check that user can view destination project
-	destProject, err := a.GetProjectByID(req.DestinationProjectId, curUser)
+	destProject, err := a.GetProjectByID(ctx, req.DestinationProjectId, curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -1898,7 +2060,7 @@ func (a *apiServer) MoveExperiment(
 	}
 
 	// check that user can view source project
-	srcProject, err := a.GetProjectByID(int32(exp.ProjectID), curUser)
+	srcProject, err := a.GetProjectByID(ctx, int32(exp.ProjectID), curUser)
 	if err != nil {
 		return nil, err
 	}
@@ -1907,7 +2069,7 @@ func (a *apiServer) MoveExperiment(
 			srcProject.Id)
 	}
 
-	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(curUser, exp, srcProject,
+	if err = project.AuthZProvider.Get().CanMoveProjectExperiments(ctx, curUser, exp, srcProject,
 		destProject); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}

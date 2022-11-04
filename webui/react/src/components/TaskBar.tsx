@@ -5,20 +5,19 @@ import { Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
-import {
-  killTask,
-} from 'services/api';
+import { killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { CommandTask, CommandType } from 'types';
 
 import css from './TaskBar.module.scss';
-interface Props{
+interface Props {
   handleViewLogsClick: () => void;
   id: string;
   name: string;
   resourcePool: string;
-  type: CommandType
+  type: CommandType;
 }
 
 export const TaskBar: React.FC<Props> = ({
@@ -27,12 +26,11 @@ export const TaskBar: React.FC<Props> = ({
   name,
   resourcePool,
   type,
-} : Props) => {
-
+}: Props) => {
   const task = useMemo(() => {
     const commandTask = { id, name, resourcePool, type } as CommandTask;
     return commandTask;
-  }, [ id, name, resourcePool, type ]);
+  }, [id, name, resourcePool, type]);
 
   const deleteTask = useCallback((task: CommandTask) => {
     Modal.confirm({
@@ -51,40 +49,39 @@ export const TaskBar: React.FC<Props> = ({
   }, []);
 
   const dropdownOverlay = useMemo(() => {
-    enum MenuKey {
-      KILL = 'kill',
-      VIEW_LOGS = 'viewLogs'
-    }
+    const MenuKey = {
+      Kill: 'kill',
+      ViewLogs: 'viewLogs',
+    } as const;
 
     const funcs = {
-      [MenuKey.KILL]: () => { deleteTask(task); },
-      [MenuKey.VIEW_LOGS]: () => { handleViewLogsClick(); },
+      [MenuKey.Kill]: () => {
+        deleteTask(task);
+      },
+      [MenuKey.ViewLogs]: () => {
+        handleViewLogsClick();
+      },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { key: MenuKey.KILL, label: 'Kill' },
-      { key: MenuKey.VIEW_LOGS, label: 'View Logs' },
+      { key: MenuKey.Kill, label: 'Kill' },
+      { key: MenuKey.ViewLogs, label: 'View Logs' },
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [ task, deleteTask, handleViewLogsClick ]);
+  }, [task, deleteTask, handleViewLogsClick]);
 
   return (
     <div className={css.base}>
       <div className={css.barContent}>
         <span>{name}</span>
         <span>&#8212;</span>
-        <Dropdown
-          overlay={dropdownOverlay}
-          placement="bottomRight"
-          trigger={[ 'click' ]}>
-          <div
-            className={css.dropdownTrigger}
-            data-testid="task-action-dropdown-trigger">
+        <Dropdown overlay={dropdownOverlay} placement="bottomRight" trigger={['click']}>
+          <div className={css.dropdownTrigger} data-testid="task-action-dropdown-trigger">
             <span className={css.dropdownTrigger}>{resourcePool}</span>
             <Icon name="arrow-down" size="tiny" />
           </div>

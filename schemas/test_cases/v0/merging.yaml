@@ -23,6 +23,7 @@
   case:
     - host_path: /asdf
       container_path: /asdf
+    - "/qwer:/qwer"
   merge_src:
     - host_path: /zxcv
       container_path: /zxcv
@@ -31,6 +32,9 @@
   merged:
     - host_path: /asdf
       container_path: /asdf
+      mode:
+    - host_path: /qwer
+      container_path: /qwer
       mode:
     - host_path: /zxcv
       container_path: /zxcv
@@ -105,10 +109,10 @@
       task: language-modeling
   merged:
     transformer:
-      backbone: 
+      backbone:
         type: const
         val: bert
-      task: 
+      task:
         type: const
         val: language-modeling
 
@@ -122,7 +126,7 @@
   merged:
     transformer:
       type: const
-      val: 
+      val:
 
 - name: checkpoint storage merges only allow one union type
   merge_as: http://determined.ai/schemas/expconf/v0/checkpoint-storage.json

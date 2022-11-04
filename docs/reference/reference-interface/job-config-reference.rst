@@ -45,9 +45,9 @@ The following configuration settings are supported:
       different container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6),
       CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.1`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4`` for CPUs.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
       cache. Defaults to ``false``.
@@ -161,3 +161,9 @@ The following configuration settings are supported:
       terminal that is currently being viewed in JupyterLab is inputting or outputting any data. (A
       terminal that is running a command but not being viewed or running a command with no output is
       treated as idle, since JupyterLab does not provide activity information for those case.)
+
+-  ``slurm``: Slurm cluster details may optionally be specified in the same fashion as for
+   :ref:`experiments <slurm-config>`.
+
+-  ``pbs``: PBS cluster details may optionally be specified in the same fashion as for
+   :ref:`experiments <pbs-config>`.

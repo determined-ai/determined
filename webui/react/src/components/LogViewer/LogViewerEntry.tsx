@@ -38,21 +38,23 @@ const LogViewerEntry: React.FC<Props> = ({
   formattedTime,
   timeStyle,
 }) => {
-  const classes = [ css.base ];
-  const levelClasses = [ css.level, css[level] ];
-  const messageClasses = [ css.message, css[level] ];
+  const classes = [css.base];
+  const levelClasses = [css.level, css[level]];
+  const messageClasses = [css.message, css[level]];
 
   if (noWrap) classes.push(css.noWrap);
 
   return (
-    <div className={classes.join(' ')} style={style}>
+    <div className={classes.join(' ')} style={style} tabIndex={0}>
       <Tooltip placement="top" title={`Level: ${capitalize(level)}`}>
         <div className={levelClasses.join(' ')} style={{ width: ICON_WIDTH }}>
           <div className={css.levelLabel}>&lt;[{level}]&gt;</div>
           <Icon name={level} size="small" />
         </div>
       </Tooltip>
-      <div className={css.time} style={timeStyle}>{formattedTime}</div>
+      <div className={css.time} style={timeStyle}>
+        {formattedTime}
+      </div>
       <div
         className={messageClasses.join(' ')}
         dangerouslySetInnerHTML={{ __html: ansiToHtml(message) }}

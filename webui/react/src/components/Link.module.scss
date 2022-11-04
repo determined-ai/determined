@@ -1,7 +1,9 @@
 .base {
   cursor: pointer;
 
-  &:focus { box-shadow: var(--theme-ix-active); }
+  &:focus {
+    box-shadow: var(--theme-ix-active);
+  }
 }
 .inherit {
   color: inherit;
@@ -15,7 +17,15 @@
   color: var(--theme-ix-inactive);
   cursor: not-allowed;
 }
-.tiny { font-size: 11px; }
-.small { font-size: 12px; }
-.medium { font-size: 14px; }
-.large { font-size: 16px; }
+.tiny {
+  font-size: 11px;
+}
+.small {
+  font-size: 12px;
+}
+.medium {
+  font-size: 14px;
+}
+.large {
+  font-size: 16px;
+}

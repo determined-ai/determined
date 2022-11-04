@@ -12,36 +12,58 @@ import handleError from 'utils/error';
 
 import css from './SettingsAccount.module.scss';
 
+export const API_DISPLAYNAME_ERROR_MESSAGE = 'Could not update display name.';
+export const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
+export const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
+export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
-export const API_SUCCESS_MESSAGE = 'Display name updated.';
-export const API_ERROR_MESSAGE = 'Could not update display name.';
 
 const SettingsAccount: React.FC = () => {
   const { auth } = useStore();
   const storeDispatch = useStoreDispatch();
 
-  const {
-    contextHolder: modalPasswordChangeContextHolder,
-    modalOpen: openChangePasswordModal,
-  } = useModalPasswordChange();
+  const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
+    useModalPasswordChange();
 
   const handlePasswordClick = useCallback(() => {
     openChangePasswordModal();
-  }, [ openChangePasswordModal ]);
+  }, [openChangePasswordModal]);
 
-  const handleSave = useCallback(async (newValue: string) => {
-    try {
-      const user = await patchUser({
-        userId: auth.user?.id || 0,
-        userParams: { displayName: newValue },
-      });
-      storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
-      message.success(API_SUCCESS_MESSAGE);
-    } catch (e) {
-      message.error(API_ERROR_MESSAGE);
-      handleError(e, { silent: true, type: ErrorType.Input });
-    }
-  }, [ auth.user, storeDispatch ]);
+  const handleSaveDisplayName = useCallback(
+    async (newValue: string): Promise<void | Error> => {
+      try {
+        const user = await patchUser({
+          userId: auth.user?.id || 0,
+          userParams: { displayName: newValue },
+        });
+        storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+        message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
+      } catch (e) {
+        message.error(API_DISPLAYNAME_ERROR_MESSAGE);
+        handleError(e, { silent: true, type: ErrorType.Input });
+        return e as Error;
+      }
+    },
+    [auth.user, storeDispatch],
+  );
+
+  const handleSaveUsername = useCallback(
+    async (newValue: string): Promise<void | Error> => {
+      try {
+        const user = await patchUser({
+          userId: auth.user?.id || 0,
+          userParams: { username: newValue },
+        });
+        storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+        message.success(API_USERNAME_SUCCESS_MESSAGE);
+      } catch (e) {
+        message.error(API_USERNAME_ERROR_MESSAGE);
+        handleError(e, { silent: true, type: ErrorType.Input });
+        return e as Error;
+      }
+    },
+    [auth.user, storeDispatch],
+  );
 
   return (
     <div className={css.base}>
@@ -51,7 +73,13 @@ const SettingsAccount: React.FC = () => {
       <Divider />
       <div className={css.row}>
         <label>Username</label>
-        <div className={css.info}>{auth.user?.username}</div>
+        <InlineEditor
+          maxLength={32}
+          pattern={new RegExp('^[a-z][a-z0-9]*$', 'i')}
+          placeholder="Add username"
+          value={auth.user?.username || ''}
+          onSave={handleSaveUsername}
+        />
       </div>
       <Divider />
       <div className={css.row}>
@@ -61,7 +89,7 @@ const SettingsAccount: React.FC = () => {
           pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           placeholder="Add display name"
           value={auth.user?.displayName || ''}
-          onSave={handleSave}
+          onSave={handleSaveDisplayName}
         />
       </div>
       <Divider />

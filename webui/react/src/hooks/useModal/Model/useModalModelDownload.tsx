@@ -28,32 +28,33 @@ const useModalModelDownload = ({ onClose }: Props = {}): ModalHooks => {
           <p>Download Model Command</p>
           <CopyButton onCopy={handleCopy} />
         </div>
-        <Input
-          className={css.codeSample}
-          value={downloadCommand}
-        />
-        <p className={css.bottomLine}>
-          Copy/paste command into the Determined CLI
-        </p>
+        <Input className={css.codeSample} value={downloadCommand} />
+        <p className={css.bottomLine}>Copy/paste command into the Determined CLI</p>
       </div>
     );
   }, []);
 
-  const getModalProps = useCallback((version: ModelVersion) => {
-    return {
-      cancelText: 'Okay',
-      closable: true,
-      content: getModalContent(version),
-      footer: null,
-      icon: null,
-      okButtonProps: { style: { display: 'none' } },
-      title: 'Download',
-    };
-  }, [ getModalContent ]);
+  const getModalProps = useCallback(
+    (version: ModelVersion) => {
+      return {
+        cancelText: 'Okay',
+        closable: true,
+        content: getModalContent(version),
+        footer: null,
+        icon: null,
+        okButtonProps: { style: { display: 'none' } },
+        title: 'Download',
+      };
+    },
+    [getModalContent],
+  );
 
-  const modalOpen = useCallback((version: ModelVersion) => {
-    openOrUpdate(getModalProps(version));
-  }, [ getModalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (version: ModelVersion) => {
+      openOrUpdate(getModalProps(version));
+    },
+    [getModalProps, openOrUpdate],
+  );
 
   return { modalOpen, ...modalHook };
 };

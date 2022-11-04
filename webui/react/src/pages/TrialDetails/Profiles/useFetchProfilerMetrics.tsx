@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
+import useUI from 'shared/contexts/stores/UI';
 import { clone } from 'shared/utils/data';
 import { RunState } from 'types';
 
 import { MetricsAggregateInterface, MetricType, ProfilerMetricsResponse } from './types';
 
-const BUCKET_SIZE = .1; // in seconds
+const BUCKET_SIZE = 0.1; // in seconds
 const BUCKET_WIDTH = 1000 * BUCKET_SIZE; // seconds -> millisecondss
 const PADDING_WINDOW = 5; // in seconds
 const PADDING_BUCKETS = PADDING_WINDOW / BUCKET_SIZE;
@@ -19,7 +19,7 @@ const BATCH_INDEX = 1;
 const DEFAULT_DATA: MetricsAggregateInterface = {
   isEmpty: true,
   isLoading: true,
-  names: [ 'batch' ],
+  names: ['batch'],
 };
 
 /* Get the time as the nearest 1/10th of a second timestamp */
@@ -32,12 +32,12 @@ export const useFetchProfilerMetrics = (
   trialId: number,
   trialState: RunState,
   labelsMetricType: MetricType,
-  labelsName: string|undefined = undefined,
-  labelsAgentId: string|undefined = undefined,
-  labelsGpuUuid: string|undefined = undefined,
+  labelsName: string | undefined = undefined,
+  labelsAgentId: string | undefined = undefined,
+  labelsGpuUuid: string | undefined = undefined,
 ): MetricsAggregateInterface => {
-  const { ui } = useStore();
-  const [ data, setData ] = useState<MetricsAggregateInterface>(clone(DEFAULT_DATA));
+  const { ui } = useUI();
+  const [data, setData] = useState<MetricsAggregateInterface>(clone(DEFAULT_DATA));
 
   useEffect(() => {
     if (ui.isPageHidden) return;
@@ -63,8 +63,7 @@ export const useFetchProfilerMetrics = (
           if (newData.values.length !== 0) {
             let names = prev.names;
             const newTimestamps = newData.timestamps;
-            const initialTimestamp =
-              prev.initialTimestamp ?? parseTime((newTimestamps[0]));
+            const initialTimestamp = prev.initialTimestamp ?? parseTime(newTimestamps[0]);
             let data = prev.data;
             const labelName: string = newData.labels.gpuUuid || newData.labels.name;
             if (data == null) {
@@ -85,8 +84,8 @@ export const useFetchProfilerMetrics = (
             let labelDataIndex;
 
             if (labelNamesIndex === -1) {
-              names = [ ...names, labelName ];
-              data = [ ...data, data[0].map(() => null) ];
+              names = [...names, labelName];
+              data = [...data, data[0].map(() => null)];
               labelDataIndex = data.length - 1;
             } else {
               labelDataIndex = labelNamesIndex + 1;
@@ -94,9 +93,7 @@ export const useFetchProfilerMetrics = (
 
             const timestamps = data[0];
             const prevMaxTimestamp = timestamps[timestamps.length - 1] ?? Number.MAX_SAFE_INTEGER;
-            const newMaxTimestamp = parseTime(
-              (newTimestamps[newTimestamps.length - 1]),
-            );
+            const newMaxTimestamp = parseTime(newTimestamps[newTimestamps.length - 1]);
 
             if (prevMaxTimestamp < newMaxTimestamp) {
               for (
@@ -109,8 +106,7 @@ export const useFetchProfilerMetrics = (
 
               for (let i = 1; i < data.length; i++) {
                 const series = data[i] as (number | null | undefined)[]; // AlignedData.ySeries
-                while (series.length < timestamps.length)
-                  series.push(null);
+                while (series.length < timestamps.length) series.push(null);
               }
             }
 
@@ -129,7 +125,7 @@ export const useFetchProfilerMetrics = (
 
             return {
               ...prev,
-              data: [ ...data ],
+              data: [...data],
               initialTimestamp,
               isEmpty: false,
               isLoading: false,

@@ -10,6 +10,135 @@
  Version 0.19
 **************
 
+Version 0.19.6
+==============
+
+**Release Date:** October 28, 2022
+
+**Breaking Changes**
+
+-  API: Remove the legacy endpoint ``/tasks/:task_id`` due to it always incorrectly returning a
+   missing parameter.
+
+-  Experiment: Additional Slurm options formerly specified in the experiment environment section are
+   now part of a new ``slurm`` section of the experiment configuration. For example, what was
+   formerly written as
+
+   .. code:: yaml
+
+      environment:
+      ...
+        slurm:
+          - --mem-per-cpu=10
+          - --exclusive
+
+   is now specified as
+
+   .. code:: yaml
+
+      environment:
+      ...
+      slurm:
+        sbatch_args:
+          - --mem-per-cpu=10
+          - --exclusive
+
+**Improvements**
+
+-  CLI: Add the ``ls`` abbreviation for ``list`` to all applicable CLI commands.
+
+-  CLI: Support a new ``-i``/``--include`` option in task-starting CLI commands. The context option
+   (``--context``) is useful for copying a directory of files into the task container, but it may
+   only be provided once, and it can be clunky if you only care about one or two files. The
+   ``--include`` option also copies files into the task container, but:
+
+   -  The directory name is preserved, so ``-i my_data/`` would result in a directory named
+      ``my_data/`` appearing in the working directory of the task container.
+   -  It may point to a file, so ``-i my_data.csv`` will place ``my_data.csv`` into the working
+      directory.
+   -  It may be specified multiple times to include multiple files and/or directories.
+
+-  **Breaking Change:** ``det deploy aws`` by default now configures agent instances to
+   automatically shut down if they lose their connection to the master. The
+   ``--no-shut-down-agents-on-connection-loss`` option can be used to turn off this behavior.
+
+**New Features**
+
+-  Custom Searcher: users can now define their own logic to coordinate across multiple trials within
+   an experiment. Examples of use cases are custom hyperparameter searching algorithms, ensembling,
+   active learning, neural architecture search, reinforcement learning. See
+   :ref:`topic-guides_hp-tuning-det_custom` for more information.
+
+-  Cluster: The enterprise edition of `HPE Machine Learning Development Environment
+   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_
+   can now be deployed on a PBS cluster. When using PBS scheduler, HPE Machine Learning Development
+   Environment delegates all job scheduling and prioritization to the PBS workload manager. This
+   integration enables existing PBS workloads and HPE Machine Learning Development Environment
+   workloads to coexist and access all of the advanced capabilities of the PBS workload manager. You
+   can use either Singularity or Podman for the container runtime.
+
+Version 0.19.5
+==============
+
+**Release Date:** October 10, 2022
+
+**Improvements**
+
+-  Added the ability to set what Unix user and group tasks will run as on the agent at the workspace
+   level. The setting takes precedence over users' individual user and group settings.
+-  CLI: The ``det workspace edit`` command now accepts a new workspace name as an optional
+   ``--name`` flag, e.g., ``det workspace edit OLD_WORKSPACE_NAME --name NEW_WORKSPACE_NAME``.
+
+**Bug Fixes**
+
+-  Agent: Fixed a bug where in certain cases of the master restarting with active tasks, the agent
+   resource manager could prevent other tasks from running.
+-  Kubernetes: When a TensorBoard inherits its images from an experiment configuration, it now also
+   inherits the ``environment.pod_spec.spec.imagePullSecrets`` value.
+
+Version 0.19.4
+==============
+
+**Release Date:** September 22, 2022
+
+**Breaking Changes**
+
+-  ``det deploy aws``: Remove ``--deployment-type=vpc`` option. Please use ``efs`` or ``fsx``
+   deployment types instead.
+
+**API Changes**
+
+-  The ``STATE_ACTIVE`` state for experiments and trials is now divided into four sub-states:
+   ``STATE_QUEUED``, ``STATE_PULLING``, ``STATE_STARTING``, and ``STATE_RUNNING``. Queries to
+   ``GetExperimentsRequest`` that filter by state continue to use ``STATE_ACTIVE``.
+
+-  The possible states of tasks have been adjusted to match those of experiments and trials. The
+   previous ``STATE_PENDING`` and ``STATE_ASSIGNED`` are now ``STATE_QUEUED``.
+
+**Bug Fixes**
+
+-  Checkpoints: Fixed a bug where operations that listed checkpoints could sometimes return the same
+   checkpoint multiple times.
+
+Version 0.19.3
+==============
+
+**Release Date:** September 09, 2022
+
+**Improvements**
+
+-  Slurm: Singularity containers may now use AMD ROCm GPUs.
+-  Slurm: PodMan V4.0+ is now supported in conjunction with the Slurm job scheduler.
+-  Kubernetes: The UID and GID of Fluent Bit logging sidecars may now be configured on a
+   cluster-wide basis.
+
+**New Features**
+
+-  Example: Allow training of models that do not fit into GPU memory using DeepSpeed ZeRO Stage 3
+   with CPU offloading.
+-  Kubernetes: Allow the UID and GID of Fluent Bit logging sidecars to be configured on a
+   cluster-wide basis.
+
 Version 0.19.2
 ==============
 
@@ -31,6 +160,9 @@ Version 0.19.2
 
 -  CLI: ``det job list`` will now return all jobs by default instead of a single API results page.
    Use ``--pages=1`` option for the old behavior.
+
+-  The ``/api/v1/trials/:id`` endpoint no longer returns the ``workloads`` attribute. Workloads
+   should instead be retrieved from the paginated ``/api/v1/trials/:id/workloads`` endpoint.
 
 **Bug Fixes**
 
@@ -337,6 +469,15 @@ Version 0.18.1
    -  Enabling or disabling a slot.
 
 -  Logging: Ensure logs for very short tasks are not truncated in Kubernetes.
+
+-  Web: Centralize sidebar options ``Cluster``, ``Job Queues``, and ``Cluster Logs`` into
+   ``Cluster`` page for a simplified layout.
+
+-  Web: In order to provide a more precise view of resource pools, new fields like ``accelerator``
+   and ``warm slots`` have been added.
+
+-  Web: Clicking on resource pool cards will lead to a detail page, which also includes a ``Stats``
+   tab showing average queued time by day.
 
 **Breaking Changes**
 

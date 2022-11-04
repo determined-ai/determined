@@ -2,15 +2,9 @@
 /// <reference types="react-scripts" />
 /// <reference path="types.ts" />
 
-declare namespace NodeJS {
-  export interface ProcessEnv {
-    IS_DEV: boolean;
-    VERSION: string;
-    SERVER_ADDRESS?: string;
-  }
-}
+export {};
 
-export declare global {
+declare global {
   interface Window {
     analytics: any;
     dev: any;
@@ -22,8 +16,14 @@ export declare global {
     random(): T;
     sortAll(compareFn: (a: T, b: T) => number): Array<T>;
   }
+}
 
-  interface Storage {
-    keys(): string[];
+declare module global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      IS_DEV: boolean;
+      VERSION: string;
+      SERVER_ADDRESS?: string;
+    }
   }
 }

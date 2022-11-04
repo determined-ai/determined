@@ -3,9 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import LearningCurveChart from 'components/LearningCurveChart';
 import Section from 'components/Section';
-import TableBatch from 'components/TableBatch';
+import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
@@ -13,12 +12,19 @@ import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import { flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
-  ExperimentAction as Action, CommandTask, ExperimentBase, Hyperparameter, MetricName,
-  metricTypeParamMap, RunState, Scale,
+  ExperimentAction as Action,
+  CommandTask,
+  ExperimentBase,
+  Hyperparameter,
+  Metric,
+  metricTypeParamMap,
+  RunState,
+  Scale,
 } from 'types';
 import handleError from 'utils/error';
 import { openCommand } from 'utils/wait';
@@ -33,7 +39,7 @@ interface Props {
   filters?: React.ReactNode;
   fullHParams: string[];
   selectedMaxTrial: number;
-  selectedMetric: MetricName
+  selectedMetric: Metric;
   selectedScale: Scale;
 }
 
@@ -47,16 +53,16 @@ const LearningCurve: React.FC<Props> = ({
   selectedMetric,
   selectedScale,
 }: Props) => {
-  const { ui } = useStore();
-  const [ trialIds, setTrialIds ] = useState<number[]>([]);
-  const [ batches, setBatches ] = useState<number[]>([]);
-  const [ chartData, setChartData ] = useState<(number | null)[][]>([]);
-  const [ trialHps, setTrialHps ] = useState<TrialHParams[]>([]);
-  const [ highlightedTrialId, setHighlightedTrialId ] = useState<number>();
-  const [ hasLoaded, setHasLoaded ] = useState(false);
-  const [ pageError, setPageError ] = useState<Error>();
-  const [ selectedRowKeys, setSelectedRowKeys ] = useState<number[]>([]);
-  const [ showCompareTrials, setShowCompareTrials ] = useState(false);
+  const { ui } = useUI();
+  const [trialIds, setTrialIds] = useState<number[]>([]);
+  const [batches, setBatches] = useState<number[]>([]);
+  const [chartData, setChartData] = useState<(number | null)[][]>([]);
+  const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
+  const [highlightedTrialId, setHighlightedTrialId] = useState<number>();
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [pageError, setPageError] = useState<Error>();
+  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+  const [showCompareTrials, setShowCompareTrials] = useState(false);
 
   const hasTrials = trialHps.length !== 0;
   const isExperimentTerminal = terminalRunStates.has(experiment.state as RunState);
@@ -66,13 +72,16 @@ const LearningCurve: React.FC<Props> = ({
       acc[key] = experiment.hyperparameters[key];
       return acc;
     }, {} as Record<string, Hyperparameter>);
-  }, [ experiment.hyperparameters, fullHParams ]);
+  }, [experiment.hyperparameters, fullHParams]);
 
-  const handleTrialClick = useCallback((event: MouseEvent, trialId: number) => {
-    const href = paths.trialDetails(trialId, experiment.id);
-    if (isNewTabClickEvent(event)) openBlank(href);
-    else routeToReactUrl(href);
-  }, [ experiment.id ]);
+  const handleTrialClick = useCallback(
+    (event: MouseEvent, trialId: number) => {
+      const href = paths.trialDetails(trialId, experiment.id);
+      if (isNewTabClickEvent(event)) openBlank(href);
+      else routeToReactUrl(href);
+    },
+    [experiment.id],
+  );
 
   const handleTrialFocus = useCallback((trialId: number | null) => {
     setHighlightedTrialId(trialId != null ? trialId : undefined);
@@ -123,7 +132,7 @@ const LearningCurve: React.FC<Props> = ({
          * chart and the table.
          */
 
-        (event.promotedTrials || []).forEach((trialId) => trialIdsMap[trialId] = trialId);
+        (event.promotedTrials || []).forEach((trialId) => (trialIdsMap[trialId] = trialId));
         (event.demotedTrials || []).forEach((trialId) => delete trialIdsMap[trialId]);
         const newTrialIds = Object.values(trialIdsMap);
         setTrialIds(newTrialIds);
@@ -157,59 +166,71 @@ const LearningCurve: React.FC<Props> = ({
         const newBatches = Object.values(batchesMap);
         setBatches(newBatches);
 
-        const newChartData = newTrialIds.map((trialId) => newBatches.map((batch) => {
-          /**
-           * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-           * dynamic min/max ranges via uPlot.Scales.
-           */
-          const value = metricsMap[trialId][batch];
-          return Number.isFinite(value) ? value : null;
-        }));
+        const newChartData = newTrialIds.map((trialId) =>
+          newBatches.map((batch) => {
+            /**
+             * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+             * dynamic min/max ranges via uPlot.Scales.
+             */
+            const value = metricsMap[trialId][batch];
+            return Number.isFinite(value) ? value : null;
+          }),
+        );
         setChartData(newChartData);
 
         // One successful event as come through.
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
-  }, [ experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden ]);
+  }, [experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden]);
 
-  const sendBatchActions = useCallback(async (action: Action) => {
-    if (action === Action.OpenTensorBoard) {
-      return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
-    } else if (action === Action.CompareTrials) {
-      return setShowCompareTrials(true);
-    }
-  }, [ selectedRowKeys ]);
-
-  const submitBatchAction = useCallback(async (action: Action) => {
-    try {
-      const result = await sendBatchActions(action);
-      if (action === Action.OpenTensorBoard && result) {
-        openCommand(result as CommandTask);
+  const sendBatchActions = useCallback(
+    async (action: Action) => {
+      if (action === Action.OpenTensorBoard) {
+        return await openOrCreateTensorBoard({ trialIds: selectedRowKeys });
+      } else if (action === Action.CompareTrials) {
+        return setShowCompareTrials(true);
       }
-    } catch (e) {
-      const publicSubject = action === Action.OpenTensorBoard ?
-        'Unable to View TensorBoard for Selected Trials' :
-        `Unable to ${action} Selected Trials`;
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject,
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [ sendBatchActions ]);
+    },
+    [selectedRowKeys],
+  );
+
+  const submitBatchAction = useCallback(
+    async (action: Action) => {
+      try {
+        const result = await sendBatchActions(action);
+        if (action === Action.OpenTensorBoard && result) {
+          openCommand(result as CommandTask);
+        }
+      } catch (e) {
+        const publicSubject =
+          action === Action.OpenTensorBoard
+            ? 'Unable to View TensorBoard for Selected Trials'
+            : `Unable to ${action} Selected Trials`;
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject,
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
+    },
+    [sendBatchActions],
+  );
 
   const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
 
-  const handleTrialUnselect = useCallback((trialId: number) =>
-    setSelectedRowKeys((rowKeys) => rowKeys.filter((id) => id !== trialId)), []);
+  const handleTrialUnselect = useCallback(
+    (trialId: number) => setSelectedRowKeys((rowKeys) => rowKeys.filter((id) => id !== trialId)),
+    [],
+  );
 
   if (pageError) {
     return <Message title={pageError.message} />;

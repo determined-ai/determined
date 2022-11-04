@@ -12,14 +12,12 @@ from determined.common.api import authentication, bindings, request
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
-from .command import CONFIG_DESC, CONTEXT_DESC, VOLUME_DESC, parse_config, render_event_stream
-
 
 @authentication.required
 def start_notebook(args: Namespace) -> None:
-    config = parse_config(args.config_file, None, args.config, args.volume)
+    config = command.parse_config(args.config_file, None, args.config, args.volume)
 
-    files = args.context and context.read_v1_context(args.context)
+    files = context.read_v1_context(args.context, args.include)
     body = bindings.v1LaunchNotebookRequest(
         config=config, files=files, preview=args.preview, templateName=args.template
     )
@@ -49,7 +47,7 @@ def start_notebook(args: Namespace) -> None:
                     ),
                 )
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
-            render_event_stream(msg)
+            command.render_event_stream(msg)
 
 
 @authentication.required
@@ -89,9 +87,17 @@ args_description = [
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
             Arg("-v", "--volume", action="append", default=[],
-                help=VOLUME_DESC),
-            Arg("-c", "--context", default=None, type=Path, help=CONTEXT_DESC),
-            Arg("--config", action="append", default=[], help=CONFIG_DESC),
+                help=command.VOLUME_DESC),
+            Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+            Arg(
+                "-i",
+                "--include",
+                default=[],
+                action="append",
+                type=Path,
+                help=command.INCLUDE_DESC
+            ),
+            Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
             Arg("--template", type=str,
                 help="name of template to apply to the notebook configuration"),
             Arg("--no-browser", action="store_true",

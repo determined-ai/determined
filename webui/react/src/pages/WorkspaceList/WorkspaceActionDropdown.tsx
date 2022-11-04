@@ -9,6 +9,7 @@ import usePermissions from 'hooks/usePermissions';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -29,19 +30,16 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   className,
   direction = 'vertical',
   workspace,
-  onComplete, trigger,
+  onComplete,
+  trigger,
   onVisibleChange,
 }: Props) => {
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
-  const {
-    contextHolder: modalWorkspaceDeleteContextHolder,
-    modalOpen: openWorkspaceDelete,
-  } = useModalWorkspaceDelete({ onClose: onComplete, workspace });
-  const {
-    contextHolder: modalWorkspaceEditContextHolder,
-    modalOpen: openWorkspaceEdit,
-  } = useModalWorkspaceEdit({ onClose: onComplete, workspace });
+  const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
+    useModalWorkspaceDelete({ onClose: onComplete, workspace });
+  const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
+    useModalWorkspaceEdit({ onClose: onComplete, workspace });
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
@@ -61,7 +59,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ onComplete, workspace.archived, workspace.id ]);
+  }, [onComplete, workspace.archived, workspace.id]);
 
   const handlePinClick = useCallback(async () => {
     if (workspace.pinned) {
@@ -81,52 +79,62 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         handleError(e, { publicSubject: 'Unable to archive workspace.' });
       }
     }
-  }, [ fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned ]);
+  }, [fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned]);
 
   const handleEditClick = useCallback(() => {
     openWorkspaceEdit();
-  }, [ openWorkspaceEdit ]);
+  }, [openWorkspaceEdit]);
 
   const handleDeleteClick = useCallback(() => {
     openWorkspaceDelete();
-  }, [ openWorkspaceDelete ]);
+  }, [openWorkspaceDelete]);
 
   const WorkspaceActionMenu = useMemo(() => {
-    enum MenuKey {
-      SWITCH_PIN = 'switchPin',
-      EDIT = 'edit',
-      SWITCH_ARCHIVED = 'switchArchive',
-      DELETE = 'delete',
-    }
+    const MenuKey = {
+      Delete: 'delete',
+      Edit: 'edit',
+      SwitchArchived: 'switchArchive',
+      SwitchPin: 'switchPin',
+    } as const;
 
     const funcs = {
-      [MenuKey.SWITCH_PIN]: () => { handlePinClick(); },
-      [MenuKey.EDIT]: () => { handleEditClick(); },
-      [MenuKey.SWITCH_ARCHIVED]: () => { handleArchiveClick(); },
-      [MenuKey.DELETE]: () => { handleDeleteClick(); },
+      [MenuKey.SwitchPin]: () => {
+        handlePinClick();
+      },
+      [MenuKey.Edit]: () => {
+        handleEditClick();
+      },
+      [MenuKey.SwitchArchived]: () => {
+        handleArchiveClick();
+      },
+      [MenuKey.Delete]: () => {
+        handleDeleteClick();
+      },
     };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
-    const menuItems: MenuProps['items'] = [ {
-      key: MenuKey.SWITCH_PIN,
-      label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
-    } ];
+    const menuItems: MenuProps['items'] = [
+      {
+        key: MenuKey.SwitchPin,
+        label: workspace.pinned ? 'Unpin from sidebar' : 'Pin to sidebar',
+      },
+    ];
 
     if (canModifyWorkspace({ workspace })) {
       if (!workspace.archived) {
-        menuItems.push({ key: MenuKey.EDIT, label: 'Edit...' });
+        menuItems.push({ key: MenuKey.Edit, label: 'Edit...' });
       }
       menuItems.push({
-        key: MenuKey.SWITCH_ARCHIVED,
+        key: MenuKey.SwitchArchived,
         label: workspace.archived ? 'Unarchive' : 'Archive',
       });
     }
     if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
       menuItems.push({ type: 'divider' });
-      menuItems.push({ key: MenuKey.DELETE, label: 'Delete...' });
+      menuItems.push({ key: MenuKey.Delete, label: 'Delete...' });
     }
     return <Menu items={menuItems} onClick={onItemClick} />;
   }, [
@@ -144,7 +152,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       <Dropdown
         overlay={WorkspaceActionMenu}
         placement="bottomLeft"
-        trigger={trigger ?? [ 'contextMenu', 'click' ]}
+        trigger={trigger ?? ['contextMenu', 'click']}
         onVisibleChange={onVisibleChange}>
         {children}
       </Dropdown>
@@ -153,13 +161,13 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     </>
   ) : (
     <div
-      className={[ css.base, className ].join(' ')}
+      className={[css.base, className].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
         overlay={WorkspaceActionMenu}
         placement="bottomRight"
-        trigger={trigger ?? [ 'click' ]}>
+        trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

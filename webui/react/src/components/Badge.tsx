@@ -2,20 +2,23 @@ import { Tooltip } from 'antd';
 import React, { CSSProperties, useMemo } from 'react';
 
 import { stateToLabel } from 'constants/states';
-import { useStore } from 'contexts/Store';
+import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, getCssVar } from 'shared/themes';
+import { ValueOf } from 'shared/types';
 import { hsl2str, str2hsl } from 'shared/utils/color';
 import { getStateColorCssVar, StateOfUnion } from 'themes';
 import { ResourceState, RunState, SlotState } from 'types';
 
 import css from './Badge.module.scss';
 
-export enum BadgeType {
-  Default = 'Default',
-  Header = 'Header',
-  Id = 'Id',
-  State = 'State',
-}
+export const BadgeType = {
+  Default: 'Default',
+  Header: 'Header',
+  Id: 'Id',
+  State: 'State',
+} as const;
+
+export type BadgeType = ValueOf<typeof BadgeType>;
 
 export interface BadgeProps {
   children?: React.ReactNode;
@@ -30,11 +33,11 @@ const Badge: React.FC<BadgeProps> = ({
   type = BadgeType.Default,
   ...props
 }: BadgeProps) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
 
   const { classes, style } = useMemo(() => {
     const isDark = ui.darkLight === DarkLight.Dark;
-    const classes = [ css.base ];
+    const classes = [css.base];
     const style: CSSProperties = {};
 
     if (type === BadgeType.State) {
@@ -47,9 +50,11 @@ const Badge: React.FC<BadgeProps> = ({
       style.color = getStateColorCssVar(state, { isOn: true });
       classes.push(css.state);
 
-      if (state === SlotState.Free
-        || state === ResourceState.Warm
-        || state === ResourceState.Potential) {
+      if (
+        state === SlotState.Free ||
+        state === ResourceState.Warm ||
+        state === ResourceState.Potential
+      ) {
         classes.push(css.neutral);
 
         if (state === ResourceState.Potential) classes.push(css.dashed);
@@ -62,7 +67,7 @@ const Badge: React.FC<BadgeProps> = ({
     }
 
     return { classes, style };
-  }, [ state, type, ui.darkLight ]);
+  }, [state, type, ui.darkLight]);
 
   const badge = (
     <span className={classes.join(' ')} style={style}>

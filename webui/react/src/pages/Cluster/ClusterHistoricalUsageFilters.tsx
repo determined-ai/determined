@@ -7,21 +7,27 @@ import DatePickerFilter from 'components/DatePickerFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import SelectFilter from 'components/SelectFilter';
 import {
-  DEFAULT_RANGE_DAY, DEFAULT_RANGE_MONTH, MAX_RANGE_DAY, MAX_RANGE_MONTH,
+  DEFAULT_RANGE_DAY,
+  DEFAULT_RANGE_MONTH,
+  MAX_RANGE_DAY,
+  MAX_RANGE_MONTH,
 } from 'pages/Cluster/ClusterHistoricalUsage';
+import { ValueOf } from 'shared/types';
 import { capitalize } from 'shared/utils/string';
 
 const { Option } = Select;
 
-enum GroupBy {
-  Day = 'day',
-  Month = 'month',
-}
+const GroupBy = {
+  Day: 'day',
+  Month: 'month',
+} as const;
+
+type GroupBy = ValueOf<typeof GroupBy>;
 
 export interface ClusterHistoricalUsageFiltersInterface {
-  afterDate: Dayjs,
-  beforeDate: Dayjs,
-  groupBy: GroupBy,
+  afterDate: Dayjs;
+  beforeDate: Dayjs;
+  groupBy: GroupBy;
 }
 
 interface ClusterHistoricalUsageFiltersProps {
@@ -29,9 +35,10 @@ interface ClusterHistoricalUsageFiltersProps {
   value: ClusterHistoricalUsageFiltersInterface;
 }
 
-const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps> = (
-  { onChange, value }: ClusterHistoricalUsageFiltersProps,
-) => {
+const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps> = ({
+  onChange,
+  value,
+}: ClusterHistoricalUsageFiltersProps) => {
   const handleGroupBySelect = (groupBy: SelectValue) => {
     if (groupBy === GroupBy.Month) {
       onChange({
@@ -48,7 +55,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
     }
   };
 
-  const handleAfterDateSelect = (afterDate: Dayjs|null) => {
+  const handleAfterDateSelect = (afterDate: Dayjs | null) => {
     if (!afterDate) return;
 
     const dateDiff = value.beforeDate.diff(afterDate, value.groupBy);
@@ -63,7 +70,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
     onChange({ ...value, afterDate });
   };
 
-  const handleBeforeDateSelect = (beforeDate: Dayjs|null) => {
+  const handleBeforeDateSelect = (beforeDate: Dayjs | null) => {
     if (!beforeDate) return;
 
     const dateDiff = beforeDate.diff(value.afterDate, value.groupBy);
@@ -86,7 +93,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
     return currentDate.isBefore(value.afterDate) || currentDate.isAfter(dayjs());
   };
 
-  let periodFilters = null;
+  let periodFilters: React.ReactNode = undefined;
   if (value.groupBy === GroupBy.Day) {
     periodFilters = (
       <>
@@ -145,7 +152,9 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
         value={value.groupBy}
         onSelect={handleGroupBySelect}>
         {Object.values(GroupBy).map((value) => (
-          <Option key={value} value={value}>{capitalize(value)}</Option>
+          <Option key={value} value={value}>
+            {capitalize(value)}
+          </Option>
         ))}
       </SelectFilter>
     </ResponsiveFilters>

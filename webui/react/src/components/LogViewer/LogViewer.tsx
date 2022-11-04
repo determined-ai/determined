@@ -1,7 +1,11 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import {
-  ListChildComponentProps, ListOnItemsRenderedProps, ListOnScrollProps, VariableSizeList,
+  ListChildComponentProps,
+  ListOnItemsRenderedProps,
+  ListOnScrollProps,
+  VariableSizeList,
 } from 'react-window';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
@@ -16,7 +20,7 @@ import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import { RecordKey } from 'shared/types';
+import { RecordKey, ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
@@ -50,17 +54,21 @@ export interface FetchConfig {
   offsetLog?: Log;
 }
 
-export enum FetchType {
-  Initial = 'Initial',
-  Newer = 'Newer',
-  Older = 'Older',
-  Stream = 'Stream',
-}
+export const FetchType = {
+  Initial: 'Initial',
+  Newer: 'Newer',
+  Older: 'Older',
+  Stream: 'Stream',
+} as const;
 
-export enum FetchDirection {
-  Newer = 'Newer',
-  Older = 'Older',
-}
+export type FetchType = ValueOf<typeof FetchType>;
+
+export const FetchDirection = {
+  Newer: 'Newer',
+  Older: 'Older',
+} as const;
+
+export type FetchDirection = ValueOf<typeof FetchDirection>;
 
 export const ARIA_LABEL_ENABLE_TAILING = 'Enable Tailing';
 export const ARIA_LABEL_SCROLL_TO_OLDEST = 'Scroll to Oldest';
@@ -94,13 +102,15 @@ const formatClipboardHeader = (log: Log): string => {
   return sprintf(`%-9s ${format}`, level, logEntry.formattedTime);
 };
 
-const logSorter = (key: keyof Log) => (a: Log, b: Log): number => {
-  const aValue = a[key];
-  const bValue = b[key];
-  if (key === 'id') return numericSorter(aValue as number, bValue as number);
-  if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
-  return 0;
-};
+const logSorter =
+  (key: keyof Log) =>
+  (a: Log, b: Log): number => {
+    const aValue = a[key];
+    const bValue = b[key];
+    if (key === 'id') return numericSorter(aValue as number, bValue as number);
+    if (key === 'time') return dateTimeStringSorter(aValue as string, bValue as string);
+    return 0;
+  };
 
 const LogViewer: React.FC<Props> = ({
   decoder,
@@ -114,16 +124,16 @@ const LogViewer: React.FC<Props> = ({
   const baseRef = useRef<HTMLDivElement>(null);
   const logsRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<VariableSizeList>(null);
-  const [ isFetching, setIsFetching ] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const local = useRef(clone(defaultLocal));
-  const [ canceler ] = useState(new AbortController());
-  const [ fetchDirection, setFetchDirection ] = useState(FetchDirection.Older);
-  const [ isTailing, setIsTailing ] = useState(true);
-  const [ showButtons, setShowButtons ] = useState(false);
-  const [ logs, setLogs ] = useState<ViewerLog[]>([]);
+  const [canceler] = useState(new AbortController());
+  const [fetchDirection, setFetchDirection] = useState<FetchDirection>(FetchDirection.Older);
+  const [isTailing, setIsTailing] = useState<boolean>(true);
+  const [showButtons, setShowButtons] = useState<boolean>(false);
+  const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);
-  const enableTailingClasses = [ css.enableTailing ];
+  const enableTailingClasses = [css.enableTailing];
 
   if (isTailing && fetchDirection === FetchDirection.Older) enableTailingClasses.push(css.enabled);
 
@@ -133,154 +143,161 @@ const LogViewer: React.FC<Props> = ({
       (containerSize.width - ICON_WIDTH - dateTimeWidth - 2 * PADDING) / charMeasures.width,
     );
     return { dateTimeWidth, maxCharPerLine };
-  }, [ charMeasures.width, containerSize.width ]);
+  }, [charMeasures.width, containerSize.width]);
 
-  const getItemHeight = useCallback((index: number): number => {
-    const log = logs[index];
-    if (!log) return charMeasures.height;
+  const getItemHeight = useCallback(
+    (index: number): number => {
+      const log = logs[index];
+      if (!log) return charMeasures.height;
 
-    const lineCount = log.message
-      .split('\n')
-      .map((line) => line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1)
-      .reduce((acc, count) => acc + count, 0);
-    const itemHeight = lineCount * charMeasures.height;
+      const lineCount = log.message
+        .split('\n')
+        .map((line) => (line.length > maxCharPerLine ? Math.ceil(line.length / maxCharPerLine) : 1))
+        .reduce((acc, count) => acc + count, 0);
+      const itemHeight = lineCount * charMeasures.height;
 
-    return (index === 0 || index === logs.length - 1) ? itemHeight + PADDING : itemHeight;
-  }, [ charMeasures, maxCharPerLine, logs ]);
+      return index === 0 || index === logs.length - 1 ? itemHeight + PADDING : itemHeight;
+    },
+    [charMeasures, maxCharPerLine, logs],
+  );
 
   const resizeLogs = useCallback(() => listRef.current?.resetAfterIndex(0), []);
 
-  const processLogs = useCallback((newLogs: Log[]) => {
-    const map = local.current.idMap;
-    return newLogs
-      .filter((log) => {
-        const isDuplicate = map[log.id];
-        const isTqdm = log.message.includes('\r');
-        map[log.id] = true;
-        return !isDuplicate && !isTqdm;
-      })
-      .map((log) => formatLogEntry(log))
-      .sort(logSorter(sortKey));
-  }, [ sortKey ]);
+  const processLogs = useCallback(
+    (newLogs: Log[]) => {
+      const map = local.current.idMap;
+      return newLogs
+        .filter((log) => {
+          const isDuplicate = map[log.id];
+          const isTqdm = log.message.includes('\r');
+          map[log.id] = true;
+          return !isDuplicate && !isTqdm;
+        })
+        .map((log) => formatLogEntry(log))
+        .sort(logSorter(sortKey));
+    },
+    [sortKey],
+  );
 
-  const addLogs = useCallback((newLogs: ViewerLog[], prepend = false): void => {
-    if (newLogs.length === 0) return;
-    setLogs((prevLogs) => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
-    resizeLogs();
-  }, [ resizeLogs ]);
+  const addLogs = useCallback(
+    (newLogs: ViewerLog[], prepend = false): void => {
+      if (newLogs.length === 0) return;
+      flushSync(() => {
+        setLogs((prevLogs) => (prepend ? [...newLogs, ...prevLogs] : [...prevLogs, ...newLogs]));
+        resizeLogs();
+      });
+    },
+    [resizeLogs],
+  );
 
-  const fetchLogs = useCallback(async (
-    config: Partial<FetchConfig>,
-    type: FetchType,
-  ): Promise<ViewerLog[]> => {
-    if (!onFetch) return [];
+  const fetchLogs = useCallback(
+    async (config: Partial<FetchConfig>, type: FetchType): Promise<ViewerLog[]> => {
+      if (!onFetch) return [];
 
-    const buffer: Log[] = [];
+      const buffer: Log[] = [];
 
-    setIsFetching(true);
-    local.current.isFetching = true;
+      setIsFetching(true);
+      local.current.isFetching = true;
 
-    await readStream(
-      onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type),
-      (event) => {
+      await readStream(onFetch({ limit: PAGE_LIMIT, ...config } as FetchConfig, type), (event) => {
         const logEntry = decoder(event);
         fetchDirection === FetchDirection.Older ? buffer.unshift(logEntry) : buffer.push(logEntry);
-      },
-    );
+      });
 
-    setIsFetching(false);
-    local.current.isFetching = false;
+      setIsFetching(false);
+      local.current.isFetching = false;
 
-    return processLogs(buffer);
-  }, [ decoder, fetchDirection, onFetch, processLogs ]);
+      return processLogs(buffer);
+    },
+    [decoder, fetchDirection, onFetch, processLogs],
+  );
 
-  const handleItemsRendered = useCallback(async ({
-    visibleStartIndex,
-    visibleStopIndex,
-  }: ListOnItemsRenderedProps) => {
-    // Scroll may occur before the initial logs have rendered.
-    if (!local.current.isScrollReady) return;
+  const handleItemsRendered = useCallback(
+    async ({ visibleStartIndex, visibleStopIndex }: ListOnItemsRenderedProps) => {
+      // Scroll may occur before the initial logs have rendered.
+      if (!local.current.isScrollReady) return;
 
-    local.current.isOnTop = visibleStartIndex === 0;
-    local.current.isOnBottom = visibleStopIndex === logs.length - 1;
+      local.current.isOnTop = visibleStartIndex === 0;
+      local.current.isOnBottom = visibleStopIndex === logs.length - 1;
 
-    // Still busy with a previous fetch, prevent another fetch.
-    if (local.current.isFetching || local.current.isAtOffsetEnd) return;
+      // Still busy with a previous fetch, prevent another fetch.
+      if (local.current.isFetching || local.current.isAtOffsetEnd) return;
 
-    // Detect when user scrolls to the "edge" and requires more logs to load.
-    const shouldFetchNewLogs = local.current.isOnBottom && fetchDirection === FetchDirection.Newer;
-    const shouldFetchOldLogs = local.current.isOnTop && fetchDirection === FetchDirection.Older;
+      // Detect when user scrolls to the "edge" and requires more logs to load.
+      const shouldFetchNewLogs =
+        local.current.isOnBottom && fetchDirection === FetchDirection.Newer;
+      const shouldFetchOldLogs = local.current.isOnTop && fetchDirection === FetchDirection.Older;
 
-    if (shouldFetchNewLogs || shouldFetchOldLogs) {
-      const newLogs = await fetchLogs(
-        {
-          canceler,
-          fetchDirection,
-          offsetLog: shouldFetchNewLogs ? logs.last() : logs.first(),
-        },
-        shouldFetchNewLogs ? FetchType.Newer : FetchType.Older,
-      );
+      if (shouldFetchNewLogs || shouldFetchOldLogs) {
+        const newLogs = await fetchLogs(
+          {
+            canceler,
+            fetchDirection,
+            offsetLog: shouldFetchNewLogs ? logs.last() : logs.first(),
+          },
+          shouldFetchNewLogs ? FetchType.Newer : FetchType.Older,
+        );
 
-      addLogs(newLogs, shouldFetchOldLogs);
+        addLogs(newLogs, shouldFetchOldLogs);
 
-      // Restore previous scroll position upon adding older logs.
-      if (shouldFetchOldLogs) {
-        listRef.current?.scrollToItem(newLogs.length + 1, 'start');
-      }
+        // Restore previous scroll position upon adding older logs.
+        if (shouldFetchOldLogs) {
+          listRef.current?.scrollToItem(newLogs.length + 1, 'start');
+        }
 
-      // No more logs will load.
-      if (newLogs.length === 0) {
-        local.current.isAtOffsetEnd = true;
+        // No more logs will load.
+        if (newLogs.length === 0) {
+          local.current.isAtOffsetEnd = true;
 
-        /**
-         * The user has scrolled all the way to the newest entry,
-         * enable tailing behavior.
-         */
-        if (shouldFetchNewLogs) {
-          setIsTailing(true);
-          setFetchDirection(FetchDirection.Older);
+          /**
+           * The user has scrolled all the way to the newest entry,
+           * enable tailing behavior.
+           */
+          if (shouldFetchNewLogs) {
+            setIsTailing(true);
+            setFetchDirection(FetchDirection.Older);
+          }
         }
       }
-    }
-  }, [ addLogs, canceler, fetchDirection, fetchLogs, logs ]);
+    },
+    [addLogs, canceler, fetchDirection, fetchLogs, logs],
+  );
 
   /**
    * scrollUpdateWasRequested:
    *   true:  if the scroll was caused by scrollTo() or scrollToItem()
    *   false: if the scroll was caused by user interaction in the browser
    */
-  const handleScroll = useCallback(({
-    scrollDirection,
-    scrollOffset,
-    scrollUpdateWasRequested,
-  }: ListOnScrollProps) => {
-    /**
-     * `react-window` automatically adjusts floating point offsets to integers.
-     * Unfortunately, this triggers a second `onScroll` event with the `scrollUpdateWasRequested`
-     * set as `false` indicating user triggered scrolling, which is not the case.
-     * `isAutoWindowAdjustment` logic is used to filter out these auto adjustments made
-     * my `react-window`.
-     */
-    const prevScrollOffset = local.current.scrollOffset;
-    const isUserScrollBackwards = scrollDirection === 'backward' && !scrollUpdateWasRequested;
-    const isAutoWindowAdjustment = (
-      prevScrollOffset !== scrollOffset && Math.floor(prevScrollOffset) === scrollOffset
-    );
-    if (isUserScrollBackwards && !isAutoWindowAdjustment) setIsTailing(false);
+  const handleScroll = useCallback(
+    ({ scrollDirection, scrollOffset, scrollUpdateWasRequested }: ListOnScrollProps) => {
+      /**
+       * `react-window` automatically adjusts floating point offsets to integers.
+       * Unfortunately, this triggers a second `onScroll` event with the `scrollUpdateWasRequested`
+       * set as `false` indicating user triggered scrolling, which is not the case.
+       * `isAutoWindowAdjustment` logic is used to filter out these auto adjustments made
+       * my `react-window`.
+       */
+      const prevScrollOffset = local.current.scrollOffset;
+      const isUserScrollBackwards = scrollDirection === 'backward' && !scrollUpdateWasRequested;
+      const isAutoWindowAdjustment =
+        prevScrollOffset !== scrollOffset && Math.floor(prevScrollOffset) === scrollOffset;
+      if (isUserScrollBackwards && !isAutoWindowAdjustment) setIsTailing(false);
 
-    // Re-engage tailing if the scroll position is at the bottom of the scrollable window.
-    if (logsRef.current) {
-      const listParent = logsRef.current.firstElementChild;
-      const list = listParent?.firstElementChild;
-      const scrollHeight = list?.scrollHeight ?? 0;
-      const parentHeight = listParent?.clientHeight ?? 0;
-      const scrollTop = scrollHeight - parentHeight;
-      if (scrollTop && scrollTop === scrollOffset) setIsTailing(true);
-    }
+      // Re-engage tailing if the scroll position is at the bottom of the scrollable window.
+      if (logsRef.current) {
+        const listParent = logsRef.current.firstElementChild;
+        const list = listParent?.firstElementChild;
+        const scrollHeight = list?.scrollHeight ?? 0;
+        const parentHeight = listParent?.clientHeight ?? 0;
+        const scrollTop = scrollHeight - parentHeight;
+        if (scrollTop && scrollTop === scrollOffset) setIsTailing(true);
+      }
 
-    // Store last scrollOffset.
-    local.current.scrollOffset = scrollOffset;
-  }, []);
+      // Store last scrollOffset.
+      local.current.scrollOffset = scrollOffset;
+    },
+    [],
+  );
 
   const handleScrollToOldest = useCallback(() => {
     setIsTailing(false);
@@ -293,10 +310,12 @@ const LogViewer: React.FC<Props> = ({
       local.current.isScrollReady = false;
       local.current.isAtOffsetEnd = false;
 
-      setLogs([]);
-      setFetchDirection(FetchDirection.Newer);
+      flushSync(() => {
+        setLogs([]);
+        setFetchDirection(FetchDirection.Newer);
+      });
     }
-  }, [ fetchDirection ]);
+  }, [fetchDirection]);
 
   const handleEnableTailing = useCallback(() => {
     setIsTailing(true);
@@ -312,12 +331,12 @@ const LogViewer: React.FC<Props> = ({
       setLogs([]);
       setFetchDirection(FetchDirection.Older);
     }
-  }, [ fetchDirection, logs.length ]);
+  }, [fetchDirection, logs.length]);
 
   const handleCopyToClipboard = useCallback(async () => {
-    const content = logs.map((log) => (
-      `${formatClipboardHeader(log)}${log.message || ''}`
-    )).join('\n');
+    const content = logs
+      .map((log) => `${formatClipboardHeader(log)}${log.message || ''}`)
+      .join('\n');
 
     try {
       await copyToClipboard(content);
@@ -332,7 +351,7 @@ const LogViewer: React.FC<Props> = ({
         message: 'Unable to Copy to Clipboard',
       });
     }
-  }, [ logs ]);
+  }, [logs]);
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
@@ -340,7 +359,7 @@ const LogViewer: React.FC<Props> = ({
 
   const handleDownload = useCallback(() => {
     onDownload?.();
-  }, [ onDownload ]);
+  }, [onDownload]);
 
   // Fetch initial logs on a mount or when the mode changes.
   useEffect(() => {
@@ -358,7 +377,7 @@ const LogViewer: React.FC<Props> = ({
         local.current.isScrollReady = true;
       }
     });
-  }, [ addLogs, canceler, fetchDirection, fetchLogs ]);
+  }, [addLogs, canceler, fetchDirection, fetchLogs]);
 
   // Enable streaming for loading latest entries.
   useEffect(() => {
@@ -401,7 +420,7 @@ const LogViewer: React.FC<Props> = ({
       canceler.abort();
       throttledProcessBuffer.cancel();
     };
-  }, [ addLogs, decoder, fetchDirection, onFetch, processLogs ]);
+  }, [addLogs, decoder, fetchDirection, onFetch, processLogs]);
 
   // Re-fetch logs when fetch callback changes.
   useEffect(() => {
@@ -410,33 +429,40 @@ const LogViewer: React.FC<Props> = ({
     setLogs([]);
     setIsTailing(true);
     setFetchDirection(FetchDirection.Older);
-  }, [ onFetch ]);
+  }, [onFetch]);
 
   // Initialize logs if applicable.
   useEffect(() => {
     if (!initialLogs) return;
 
     addLogs(initialLogs.map((log) => formatLogEntry(decoder(log))));
-  }, [ addLogs, decoder, initialLogs ]);
+  }, [addLogs, decoder, initialLogs]);
 
   // Abort all outstanding API calls if log viewer unmounts.
+  // cleanup
   useEffect(() => {
-    return () => canceler.abort();
-  }, [ canceler ]);
+    return () => {
+      canceler.abort();
+      setIsFetching(false);
+      setFetchDirection(FetchDirection.Older);
+      setIsTailing(false);
+      setShowButtons(false);
+      setLogs([]);
+    };
+  }, [canceler]);
 
   // Force recomputing messages height when container size changes.
   useLayoutEffect(() => {
     if (containerSize.width === 0 || containerSize.height === 0) return;
 
-    const sizeChanged = (
+    const sizeChanged =
       containerSize.height !== local.current.previousHeight ||
-      containerSize.width !== local.current.previousWidth
-    );
+      containerSize.width !== local.current.previousWidth;
     if (sizeChanged) resizeLogs();
 
     local.current.previousWidth = containerSize.width;
     local.current.previousHeight = containerSize.height;
-  }, [ containerSize, resizeLogs ]);
+  }, [containerSize, resizeLogs]);
 
   // Show scrolling buttons based on whether or not logs spill outside of the list view.
   useLayoutEffect(() => {
@@ -448,7 +474,7 @@ const LogViewer: React.FC<Props> = ({
       const parentHeight = listParent?.clientHeight ?? 0;
       return scrollHeight > parentHeight;
     });
-  }, [ logs.length ]);
+  }, [logs.length]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -471,11 +497,15 @@ const LogViewer: React.FC<Props> = ({
       if (lines?.length <= 1) {
         e.clipboardData?.setData(clipboardFormat, selection);
       } else {
-        const oddOrEven = lines.map((line) => /^\[/.test(line) || /\]$/.test(line))
-          .reduce((acc, isTimestamp, index) => {
-            if (isTimestamp) acc[index % 2 === 0 ? 'even' : 'odd']++;
-            return acc;
-          }, { even: 0, odd: 0 });
+        const oddOrEven = lines
+          .map((line) => /^\[/.test(line) || /\]$/.test(line))
+          .reduce(
+            (acc, isTimestamp, index) => {
+              if (isTimestamp) acc[index % 2 === 0 ? 'even' : 'odd']++;
+              return acc;
+            },
+            { even: 0, odd: 0 },
+          );
         const isEven = oddOrEven.even > oddOrEven.odd;
         const content = lines.reduce((acc, line, index) => {
           const skipNewline = (isEven && index % 2 === 0) || (!isEven && index % 2 === 1);
@@ -510,13 +540,8 @@ const LogViewer: React.FC<Props> = ({
           />
         </Tooltip>
         {handleCloseLogs && (
-
           <Link onClick={handleCloseLogs}>
-            <Icon
-              aria-label="Close Logs"
-              name="close"
-              title="Close Logs"
-            />
+            <Icon aria-label="Close Logs" name="close" title="Close Logs" />
           </Link>
         )}
         {onDownload && (
@@ -532,18 +557,22 @@ const LogViewer: React.FC<Props> = ({
     </div>
   );
 
-  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(({ data, index, style }) => (
-    <LogViewerEntry
-      style={{
-        ...style,
-        left: parseFloat(`${style.left}`) + PADDING,
-        paddingTop: index === 0 ? PADDING : 0,
-        width: `calc(100% - ${2 * PADDING}px)`,
-      }}
-      timeStyle={{ width: dateTimeWidth }}
-      {...data[index]}
-    />
-  ), [ dateTimeWidth ]);
+  const LogViewerRow: React.FC<ListChildComponentProps> = useCallback(
+    ({ data, index, style }) => (
+      <LogViewerEntry
+        style={{
+          ...style,
+          left: parseFloat(`${style.left}`) + PADDING,
+          outline: 'none',
+          paddingTop: index === 0 ? PADDING : 0,
+          width: `calc(100% - ${2 * PADDING}px)`,
+        }}
+        timeStyle={{ width: dateTimeWidth }}
+        {...data[index]}
+      />
+    ),
+    [dateTimeWidth],
+  );
 
   return (
     <Section
@@ -569,7 +598,7 @@ const LogViewer: React.FC<Props> = ({
             </VariableSizeList>
           </div>
           <Spinner className={css.empty} conditionalRender spinning={isFetching}>
-            {(logs.length === 0) && <Message title="No logs to show." type={MessageType.Empty} />}
+            {logs.length === 0 && <Message title="No logs to show." type={MessageType.Empty} />}
           </Spinner>
         </div>
         <div className={css.buttons} style={{ display: showButtons ? 'flex' : 'none' }}>

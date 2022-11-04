@@ -62,7 +62,7 @@ export const getColorFn = (colorFn: unknown, fallbackColor: string): BubbleFn =>
   };
 };
 
-export const getMinMax = (u: uPlot, dataIndex: number): [ number, number ] => {
+export const getMinMax = (u: uPlot, dataIndex: number): [number, number] => {
   let minValue = Infinity;
   let maxValue = -Infinity;
 
@@ -76,7 +76,7 @@ export const getMinMax = (u: uPlot, dataIndex: number): [ number, number ] => {
     }
   }
 
-  return [ minValue, maxValue ];
+  return [minValue, maxValue];
 };
 
 // quadratic scaling (px area)
@@ -98,7 +98,7 @@ export const range = (
   scaleKey: string,
 ): Range<number> => {
   // Return a standard range if there is not any valid data.
-  if (min == null || max == null) return [ 0, 100 ];
+  if (min == null || max == null) return [0, 100];
 
   // When there is only one distinct value in the dataset.
   if (min === max) {
@@ -109,23 +109,23 @@ export const range = (
     if (/categorical/i.test(scaleKey)) {
       // Using splits for categorical axis.
       const splits = getSplits?.(u, axisIndex, min, max) || [];
-      return splits.length > 1 ? [ splits.first(), splits.last() ] : [ -1, 1 ];
+      return splits.length > 1 ? [splits.first(), splits.last()] : [-1, 1];
     } else if (/log/i.test(scaleKey)) {
       const logBase = u.scales[scaleKey].log || DEFAULT_LOG_BASE;
       const nearestBase = Math.log(max) / Math.log(logBase);
-      return [ logBase ** (nearestBase - 1), logBase ** (nearestBase + 1) ];
+      return [logBase ** (nearestBase - 1), logBase ** (nearestBase + 1)];
     } else {
       const delta = Math.abs(max) || 100;
-      return [ min - delta, max + delta ];
+      return [min - delta, max + delta];
     }
   }
 
-  return [ min as number, max as number ];
+  return [min as number, max as number];
 };
 
 export const offsetRange = (offsetPercent = 0.1) => {
   return (u: uPlot, min: UPlotData, max: UPlotData, scaleKey: string): Range<number> => {
-    const [ minValue, maxValue ] = range(u, min, max, scaleKey);
+    const [minValue, maxValue] = range(u, min, max, scaleKey);
 
     // Offset log scale based on the exponents.
     if (/log/i.test(scaleKey)) {
@@ -133,11 +133,11 @@ export const offsetRange = (offsetPercent = 0.1) => {
       const minLog = Math.log(minValue) / Math.log(logBase);
       const maxLog = Math.log(maxValue) / Math.log(logBase);
       const offset = (maxLog - minLog) * offsetPercent;
-      return [ logBase ** (minLog - offset), logBase ** (maxLog + offset) ];
+      return [logBase ** (minLog - offset), logBase ** (maxLog + offset)];
     }
 
     const offset = (maxValue - minValue) * offsetPercent;
-    return [ minValue - offset, maxValue + offset ];
+    return [minValue - offset, maxValue + offset];
   };
 };
 
@@ -147,81 +147,74 @@ export const makeDrawPoints = (
   const { disp, each } = options;
 
   return (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-    uPlot.orient(u, seriesIdx, (
-      series,
-      dataX,
-      dataY,
-      scaleX,
-      scaleY,
-      valToPosX,
-      valToPosY,
-      xOff,
-      yOff,
-      xDim,
-      yDim,
-    ) => {
-      if (!series?.fill || !series?.stroke || !scaleX?.key || !scaleY?.key) return;
+    uPlot.orient(
+      u,
+      seriesIdx,
+      (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
+        if (!series?.fill || !series?.stroke || !scaleX?.key || !scaleY?.key) return;
 
-      const data = u.data[seriesIdx];
-      const strokeWidth = STROKE_WIDTH;
+        const data = u.data[seriesIdx];
+        const strokeWidth = STROKE_WIDTH;
 
-      u.ctx.save();
+        u.ctx.save();
 
-      u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
-      u.ctx.clip();
+        u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+        u.ctx.clip();
 
-      u.ctx.lineWidth = strokeWidth;
+        u.ctx.lineWidth = strokeWidth;
 
-      // Calculate bubble fill and size.
-      const sizes = (disp?.size?.values(u, seriesIdx, idx0, idx1) || []) as unknown as number[];
-      const fills = (disp?.fill?.values(u, seriesIdx, idx0, idx1) || []) as unknown as string[];
-      const strokes = (disp?.stroke?.values(u, seriesIdx, idx0, idx1) || []) as unknown as string[];
+        // Calculate bubble fill and size.
+        const sizes = (disp?.size?.values(u, seriesIdx, idx0, idx1) || []) as unknown as number[];
+        const fills = (disp?.fill?.values(u, seriesIdx, idx0, idx1) || []) as unknown as string[];
+        const strokes = (disp?.stroke?.values(u, seriesIdx, idx0, idx1) ||
+          []) as unknown as string[];
 
-      // todo: this depends on direction & orientation
-      // todo: calc once per redraw, not per path
-      const devicePixelRatio = window.devicePixelRatio;
-      const filtLft = u.posToVal(-MAX_DIAMETER / 2, scaleX.key);
-      const filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + MAX_DIAMETER / 2, scaleX.key);
-      const filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + MAX_DIAMETER / 2, scaleY.key);
-      const filtTop = u.posToVal(-MAX_DIAMETER / 2, scaleY.key);
+        // todo: this depends on direction & orientation
+        // todo: calc once per redraw, not per path
+        const devicePixelRatio = window.devicePixelRatio;
+        const filtLft = u.posToVal(-MAX_DIAMETER / 2, scaleX.key);
+        const filtRgt = u.posToVal(u.bbox.width / devicePixelRatio + MAX_DIAMETER / 2, scaleX.key);
+        const filtBtm = u.posToVal(u.bbox.height / devicePixelRatio + MAX_DIAMETER / 2, scaleY.key);
+        const filtTop = u.posToVal(-MAX_DIAMETER / 2, scaleY.key);
 
-      const xData = data[0] as unknown as number[];
-      const yData = data[1] as unknown as UPlotData[];
+        const xData = data[0] as unknown as number[];
+        const yData = data[1] as unknown as UPlotData[];
 
-      for (let i = 0; i < xData.length; i++) {
-        const xVal = xData[i];
-        const yVal = yData[i] ?? 0;
-        const size = sizes[i] * devicePixelRatio;
-        const fill = fills[i];
-        const stroke = strokes[i];
+        for (let i = 0; i < xData.length; i++) {
+          const xVal = xData[i];
+          const yVal = yData[i] ?? 0;
+          const size = sizes[i] * devicePixelRatio;
+          const fill = fills[i];
+          const stroke = strokes[i];
 
-        if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
-          const cx = valToPosX(xVal, scaleX, xDim, xOff);
-          const cy = valToPosY(yVal, scaleY, yDim, yOff);
+          if (xVal >= filtLft && xVal <= filtRgt && yVal >= filtBtm && yVal <= filtTop) {
+            const cx = valToPosX(xVal, scaleX, xDim, xOff);
+            const cy = valToPosY(yVal, scaleY, yDim, yOff);
 
-          u.ctx.fillStyle = fill;
-          u.ctx.strokeStyle = stroke;
+            u.ctx.fillStyle = fill;
+            u.ctx.strokeStyle = stroke;
 
-          u.ctx.moveTo(cx + size / 2, cy);
-          u.ctx.beginPath();
-          u.ctx.arc(cx, cy, size / 2, 0, 2 * Math.PI);
-          u.ctx.fill();
-          u.ctx.stroke();
+            u.ctx.moveTo(cx + size / 2, cy);
+            u.ctx.beginPath();
+            u.ctx.arc(cx, cy, size / 2, 0, 2 * Math.PI);
+            u.ctx.fill();
+            u.ctx.stroke();
 
-          each?.(
-            u,
-            seriesIdx,
-            i,
-            cx - size / 2 - strokeWidth / 2,
-            cy - size / 2 - strokeWidth / 2,
-            size + strokeWidth,
-            size + strokeWidth,
-          );
+            each?.(
+              u,
+              seriesIdx,
+              i,
+              cx - size / 2 - strokeWidth / 2,
+              cy - size / 2 - strokeWidth / 2,
+              size + strokeWidth,
+              size + strokeWidth,
+            );
+          }
         }
-      }
 
-      u.ctx.restore();
-    });
+        u.ctx.restore();
+      },
+    );
 
     return null;
   };

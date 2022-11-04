@@ -2,9 +2,8 @@ from determined.deploy.aws import aws, constants
 from determined.deploy.aws.deployment_types import base
 
 
-class VPC(base.DeterminedDeployment):
-    template = "vpc.yaml"
-    deployment_type = constants.deployment_types.VPC
+class VPCBase(base.DeterminedDeployment):
+    deployment_type = None  # type: str
 
     template_parameter_keys = [
         constants.cloudformation.ENABLE_CORS,
@@ -34,6 +33,7 @@ class VPC(base.DeterminedDeployment):
         constants.cloudformation.AGENT_REATTACH_ENABLED,
         constants.cloudformation.AGENT_RECONNECT_ATTEMPTS,
         constants.cloudformation.AGENT_RECONNECT_BACKOFF,
+        constants.cloudformation.AGENT_CONFIG_FILE_CONTENTS,
     ]
 
     def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:
@@ -55,11 +55,11 @@ class VPC(base.DeterminedDeployment):
         self.print_results()
 
 
-class FSx(VPC):
+class FSx(VPCBase):
     template = "fsx.yaml"
     deployment_type = constants.deployment_types.FSX
 
 
-class EFS(VPC):
+class EFS(VPCBase):
     template = "efs.yaml"
     deployment_type = constants.deployment_types.EFS

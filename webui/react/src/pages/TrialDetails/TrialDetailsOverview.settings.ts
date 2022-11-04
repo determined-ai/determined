@@ -1,4 +1,4 @@
-import { MINIMUM_PAGE_SIZE } from 'components/Table';
+import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { TrialWorkloadFilter } from 'types';
 
@@ -12,6 +12,7 @@ export interface Settings {
 }
 
 const config: SettingsConfig = {
+  applicableRoutespace: 'overview',
   settings: [
     {
       defaultValue: TrialWorkloadFilter.CheckpointOrValidation,

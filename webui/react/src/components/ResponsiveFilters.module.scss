@@ -4,7 +4,9 @@
     display: flex;
     flex-wrap: wrap;
 
-    & > * { margin-left: 24px; }
+    & > * {
+      margin-left: 24px;
+    }
   }
   .close {
     position: absolute;
@@ -50,15 +52,15 @@
     & > *:not(:first-child) {
       margin-top: 16px;
     }
-    & > [class*=GridListRadioGroup_base_] {
+    & > [class*='GridListRadioGroup_base_'] {
       flex-direction: row;
     }
-    & > * > [class*=Label_base_] {
+    & > * > [class*='Label_base_'] {
       margin-left: 0;
       padding-bottom: 8px;
       text-align: left;
     }
-    & > *:first-child > [class^=Label_base_] {
+    & > *:first-child > [class^='Label_base_'] {
       padding: 0 0 8px 0;
     }
     & > * > *:not(:first-child) {

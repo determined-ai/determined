@@ -82,7 +82,7 @@ class EstimatorTrialContext(det.TrialContext, estimator._EstimatorReducerContext
         This should be used to wrap optimizer objects immediately after they have
         been created. Users should use the output of this wrapper as the new instance
         of their optimizer. For example, if users create their optimizer within
-        ``build_estimator()``, they should call ``optimizer = wrap_optimizer(optimzer)``
+        ``build_estimator()``, they should call ``optimizer = wrap_optimizer(optimizer)``
         prior to passing the optimizer into their Estimator.
         """
         if not self.env.managed_training:

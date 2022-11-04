@@ -25,6 +25,7 @@ from determined.cli.model import args_description as model_args_description
 from determined.cli.notebook import args_description as notebook_args_description
 from determined.cli.oauth import args_description as oauth_args_description
 from determined.cli.project import args_description as project_args_description
+from determined.cli.rbac import args_description as rbac_args_description
 from determined.cli.remote import args_description as remote_args_description
 from determined.cli.resources import args_description as resources_args_description
 from determined.cli.shell import args_description as shell_args_description
@@ -152,6 +153,7 @@ all_args_description = (
     + remote_args_description
     + user_args_description
     + user_groups_args_description
+    + rbac_args_description
     + version_args_description
     + workspace_args_description
     + auth_args_description
@@ -228,21 +230,23 @@ def main(
                     conn.connect(cast(Sequence[Union[str, int]], (addr.hostname, addr.port)))
                     conn.do_handshake()
                     peer_cert_chain = conn.get_peer_cert_chain()
-                    if peer_cert_chain is None:
+                    if peer_cert_chain is None or len(peer_cert_chain) == 0:
                         # Peer presented no cert.  It seems unlikely that this is possible after
                         # do_handshake() succeeded, but checking for None makes mypy happy.
                         raise crypto.Error()
-                    cert_pem_data = "".join(
+                    cert_pem_data = [
                         crypto.dump_certificate(crypto.FILETYPE_PEM, cert).decode()
                         for cert in peer_cert_chain
-                    )
+                    ]
                 except crypto.Error:
                     die(
                         "Tried to connect over HTTPS but couldn't get a certificate from the "
                         "master; consider using HTTP"
                     )
 
-                cert_hash = hashlib.sha256(ssl.PEM_cert_to_DER_cert(cert_pem_data)).hexdigest()
+                # Compute the fingerprint of the certificate; this is the same as the output of
+                # `openssl x509 -fingerprint -sha256 -inform pem -noout -in <cert>`.
+                cert_hash = hashlib.sha256(ssl.PEM_cert_to_DER_cert(cert_pem_data[0])).hexdigest()
                 cert_fingerprint = ":".join(chunks(cert_hash, 2))
 
                 if not render.yes_or_no(
@@ -253,10 +257,11 @@ def main(
                 ):
                     die("Unable to verify master certificate")
 
-                certs.CertStore(certs.default_store()).set_cert(parsed_args.master, cert_pem_data)
+                joined_certs = "".join(cert_pem_data)
+                certs.CertStore(certs.default_store()).set_cert(parsed_args.master, joined_certs)
                 # Reconfigure the CLI's Cert singleton, but preserve the certificate name.
                 old_cert_name = certs.cli_cert.name
-                certs.cli_cert = certs.Cert(cert_pem=cert_pem_data, name=old_cert_name)
+                certs.cli_cert = certs.Cert(cert_pem=joined_certs, name=old_cert_name)
 
                 check_version(parsed_args)
 

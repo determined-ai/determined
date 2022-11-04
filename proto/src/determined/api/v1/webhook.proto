@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+import "protoc-gen-swagger/options/annotations.proto";
+
+import "determined/webhook/v1/webhook.proto";
+
+// Get a single webhook.
+message GetWebhookRequest {
+  // The id of the webhook.
+  int32 webhook_id = 1;
+}
+
+// Response to GetWebhookRequest.
+message GetWebhookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "webhook" ] }
+  };
+  // The requested Webhook.
+  determined.webhook.v1.Webhook webhook = 1;
+}
+
+// Get a list of webhooks.
+message GetWebhooksRequest {}
+
+// Response to GetWebhooksRequest.
+message GetWebhooksResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "webhooks" ] }
+  };
+
+  // The list of returned webhooks.
+  repeated determined.webhook.v1.Webhook webhooks = 1;
+}
+
+// Request for creating a webhook
+message PostWebhookRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "webhook" ] }
+  };
+
+  // The webhook to store.
+  determined.webhook.v1.Webhook webhook = 1;
+}
+
+// Response to PostWebhookRequest.
+message PostWebhookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "webhook" ] }
+  };
+
+  // The webhook created.
+  determined.webhook.v1.Webhook webhook = 1;
+}
+
+// Request for deleting a webhook.
+message DeleteWebhookRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the webhook.
+  int32 id = 1;
+}
+
+// Response to DeleteWebhookRequest.
+message DeleteWebhookResponse {}
+
+// Request for testing a webhook.
+message TestWebhookRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the webhook.
+  int32 id = 1;
+}
+
+// Response to TestWebhookRequest.
+message TestWebhookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "completed" ] }
+  };
+
+  // Status of test.
+  bool completed = 1;
+}

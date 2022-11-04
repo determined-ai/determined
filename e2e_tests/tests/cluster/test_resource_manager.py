@@ -54,7 +54,7 @@ def test_allocation_resources_incremental_release() -> None:
         # Wait for the experiment to start and run some.
         exp.wait_for_experiment_state(
             exp_id,
-            determinedexperimentv1State.STATE_ACTIVE,
+            determinedexperimentv1State.STATE_RUNNING,
         )
         exp.wait_for_experiment_active_workload(exp_id)
 

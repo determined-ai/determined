@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/shopspring/decimal"
+	"golang.org/x/exp/slices"
 
 	"github.com/stretchr/testify/require"
 
@@ -27,7 +28,7 @@ import (
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -106,7 +107,7 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 }
 
 func TestAllocationState(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -129,11 +130,12 @@ func TestAllocationState(t *testing.T) {
 		}
 		require.NoError(t, db.AddTask(task), "failed to add task")
 
+		s := state
 		a := &model.Allocation{
 			TaskID:       tID,
 			AllocationID: model.AllocationID(tID + "allocationID"),
 			ResourcePool: "default",
-			State:        &state,
+			State:        &s,
 		}
 		require.NoError(t, db.AddAllocation(a), "failed to add allocation")
 
@@ -156,19 +158,24 @@ func TestAllocationState(t *testing.T) {
 			// Ensure our state is the same as allocation.
 			require.Equal(t, len(tOut.Allocations), 1, "failed to get exactly 1 allocation")
 			aOut := tOut.Allocations[0]
-			require.Equal(t, a.State.Proto(), aOut.State, "proto state not equal")
-			require.Equal(t, fmt.Sprintf("STATE_%s", *a.State), aOut.State.String(),
-				"proto state to strings not equal")
+
+			if slices.Contains([]model.AllocationState{
+				model.AllocationStatePending,
+				model.AllocationStateAssigned,
+			}, *a.State) {
+				require.Equal(t, "STATE_QUEUED", aOut.State.String(),
+					"allocation states not converted to queued")
+			} else {
+				require.Equal(t, a.State.Proto(), aOut.State, "proto state not equal")
+				require.Equal(t, fmt.Sprintf("STATE_%s", *a.State), aOut.State.String(),
+					"proto state to strings not equal")
+			}
 		}
 	}
 }
 
-const (
-	postgresExhaustiveEnum = "postgresexhaustiveenum"
-)
-
 func TestExhaustiveEnums(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 

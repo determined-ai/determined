@@ -179,8 +179,10 @@ SELECT
     SELECT sum((jsonb_each).value::text::bigint)
     FROM (
         SELECT jsonb_each(resources) FROM checkpoints_old_view c WHERE c.trial_id = t.id
+          AND state != 'DELETED'
         UNION ALL
         SELECT jsonb_each(resources) FROM checkpoints_new_view c WHERE c.trial_id = t.id
+          AND state != 'DELETED'
     ) r
   ) AS total_checkpoint_size,
   -- `restart` count is incremented before `restart <= max_restarts` stop restart check,

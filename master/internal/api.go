@@ -15,7 +15,10 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/rbac"
+	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/usergroup"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -24,6 +27,9 @@ type apiServer struct {
 	m *Master
 
 	usergroup.UserGroupAPIServer
+	rbac.RBACAPIServerWrapper
+	trials.TrialsAPIServer
+	webhooks.WebhooksAPIServer
 }
 
 // paginate returns a paginated subset of the values and sets the pagination response.
@@ -166,15 +172,19 @@ func (a *apiServer) filter(values interface{}, check func(int) bool) {
 	rv.Elem().Set(results)
 }
 
+func errActorNotFound(addr actor.Address) error {
+	return status.Errorf(codes.NotFound, "actor %s could not be found", addr)
+}
+
 // ask asks at addr the req and puts the response into what v points at. When appropriate,
 // errors are converted appropriate for an API response. Error cases are enumerated below:
-//  * If v points to an unsettable value, a 500 is returned.
-//  * If the actor cannot be found, a 404 is returned.
-//  * If v is settable and the actor didn't respond or responded with nil, a 404 is returned.
-//  * If the actor returned an error and it is a well-known error type, it is coalesced to gRPC.
-//  * If the actor returned plain error, a 500 is returned.
-//  * Finally, if the response's type is OK, it is put into v.
-//  * Else, a 500 is returned.
+//   - If v points to an unsettable value, a 500 is returned.
+//   - If the actor cannot be found, a 404 is returned.
+//   - If v is settable and the actor didn't respond or responded with nil, a 404 is returned.
+//   - If the actor returned an error and it is a well-known error type, it is coalesced to gRPC.
+//   - If the actor returned plain error, a 500 is returned.
+//   - Finally, if the response's type is OK, it is put into v.
+//   - Else, a 500 is returned.
 func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) error {
 	if reflect.ValueOf(v).IsValid() && !reflect.ValueOf(v).Elem().CanSet() {
 		return status.Errorf(
@@ -185,10 +195,7 @@ func (a *apiServer) ask(addr actor.Address, req interface{}, v interface{}) erro
 	expectingResponse := reflect.ValueOf(v).IsValid() && reflect.ValueOf(v).Elem().CanSet()
 	switch resp := a.m.system.AskAt(addr, req); {
 	case resp.Source() == nil:
-		return status.Errorf(
-			codes.NotFound,
-			"actor %s could not be found", addr,
-		)
+		return errActorNotFound(addr)
 	case expectingResponse && resp.Empty(), expectingResponse && resp.Get() == nil:
 		return status.Errorf(
 			codes.NotFound,

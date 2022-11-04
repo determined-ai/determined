@@ -136,7 +136,7 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 }
 
 func (s *asyncHalvingStoppingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric float64,
+	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
 ) ([]Operation, error) {
 	if !s.SmallerIsBetter {
 		metric *= -1

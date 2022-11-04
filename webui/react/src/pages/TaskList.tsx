@@ -6,31 +6,39 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
-import InteractiveTable, { ColumnDef, InteractiveTableSettings } from 'components/InteractiveTable';
 import Link from 'components/Link';
 import Page from 'components/Page';
+import InteractiveTable, {
+  ColumnDef,
+  InteractiveTableSettings,
+} from 'components/Table/InteractiveTable';
 import {
-  defaultRowClassName, getFullPaginationConfig, relativeTimeRenderer,
-  stateRenderer, taskIdRenderer, taskNameRenderer, taskTypeRenderer, userRenderer,
-} from 'components/Table';
-import { TaskRenderer } from 'components/Table';
-import TableBatch from 'components/TableBatch';
-import TableFilterDropdown from 'components/TableFilterDropdown';
-import TableFilterSearch from 'components/TableFilterSearch';
+  defaultRowClassName,
+  getFullPaginationConfig,
+  relativeTimeRenderer,
+  stateRenderer,
+  taskIdRenderer,
+  taskNameRenderer,
+  TaskRenderer,
+  taskTypeRenderer,
+  userRenderer,
+} from 'components/Table/Table';
+import TableBatch from 'components/Table/TableBatch';
+import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import usePolling from 'shared/hooks/usePolling';
+import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import {
-  alphaNumericSorter, dateTimeStringSorter, numericSorter,
-} from 'shared/utils/sort';
+import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
@@ -38,12 +46,19 @@ import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } 
 import { getDisplayName } from 'utils/user';
 
 import css from './TaskList.module.scss';
-import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TaskList.settings';
+import settingsConfig, {
+  ALL_SORTKEY,
+  DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
+  Settings,
+} from './TaskList.settings';
 
-enum TensorBoardSourceType {
-  Experiment = 'Experiment',
-  Trial = 'Trial',
-}
+const TensorBoardSourceType = {
+  Experiment: 'Experiment',
+  Trial: 'Trial',
+} as const;
+
+type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
 
 interface TensorBoardSource {
   id: number;
@@ -57,25 +72,24 @@ interface SourceInfo {
   sources: TensorBoardSource[];
 }
 
-const filterKeys: Array<keyof Settings> = [ 'search', 'state', 'type', 'user' ];
+const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
 const TaskList: React.FC = () => {
-  const { users, auth: { user } } = useStore();
-  const [ canceler ] = useState(new AbortController());
-  const [ tasks, setTasks ] = useState<CommandTask[] | undefined>(undefined);
-  const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
+  const {
+    users,
+    auth: { user },
+  } = useStore();
+  const [canceler] = useState(new AbortController());
+  const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
+  const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
 
-  const {
-    activeSettings,
-    resetSettings,
-    settings,
-    updateSettings,
-  } = useSettings<Settings>(settingsConfig);
+  const { activeSettings, resetSettings, settings, updateSettings } =
+    useSettings<Settings>(settingsConfig);
 
   const fetchUsers = useFetchUsers(canceler);
 
-  const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [ tasks ]);
+  const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
   const filteredTasks = useMemo(() => {
     return filterTasks<CommandType, CommandTask>(
@@ -89,46 +103,46 @@ const TaskList: React.FC = () => {
       users || [],
       settings.search,
     );
-  }, [ loadedTasks, settings, users ]);
+  }, [loadedTasks, settings, users]);
 
   const taskMap = useMemo(() => {
     return (loadedTasks || []).reduce((acc, task) => {
       acc[task.id] = task;
       return acc;
     }, {} as Record<string, CommandTask>);
-  }, [ loadedTasks ]);
+  }, [loadedTasks]);
 
   const selectedTasks = useMemo(() => {
     return (settings.row || []).map((id) => taskMap[id]).filter((task) => !!task);
-  }, [ settings.row, taskMap ]);
+  }, [settings.row, taskMap]);
 
   const hasKillable = useMemo(() => {
     for (const task of selectedTasks) {
       if (isTaskKillable(task)) return true;
     }
     return false;
-  }, [ selectedTasks ]);
+  }, [selectedTasks]);
 
-  const filterCount = useMemo(() => activeSettings(filterKeys).length, [ activeSettings ]);
+  const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
   const clearSelected = useCallback(() => {
     updateSettings({ row: undefined });
-  }, [ updateSettings ]);
+  }, [updateSettings]);
 
   const resetFilters = useCallback(() => {
-    resetSettings([ ...filterKeys, 'tableOffset' ]);
+    resetSettings([...filterKeys, 'tableOffset']);
     clearSelected();
-  }, [ clearSelected, resetSettings ]);
+  }, [clearSelected, resetSettings]);
 
   const fetchTasks = useCallback(async () => {
     try {
-      const [ commands, jupyterLabs, shells, tensorboards ] = await Promise.all([
+      const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
         getCommands({ signal: canceler.signal }),
         getJupyterLabs({ signal: canceler.signal }),
         getShells({ signal: canceler.signal }),
         getTensorBoards({ signal: canceler.signal }),
       ]);
-      const newTasks = [ ...commands, ...jupyterLabs, ...shells, ...tensorboards ];
+      const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
       setTasks((prev) => {
         if (isEqual(prev, newTasks)) return prev;
         return newTasks;
@@ -140,100 +154,124 @@ const TaskList: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [ canceler ]);
+  }, [canceler]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([ fetchUsers(), fetchTasks() ]);
-  }, [ fetchTasks, fetchUsers ]);
+    await Promise.allSettled([fetchUsers(), fetchTasks()]);
+  }, [fetchTasks, fetchUsers]);
 
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
   const handleSourceDismiss = useCallback(() => setSourcesModal(undefined), []);
 
-  const handleActionComplete = useCallback(() => fetchAll(), [ fetchAll ]);
+  const handleActionComplete = useCallback(() => fetchAll(), [fetchAll]);
 
   const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
-  const handleNameSearchApply = useCallback((newSearch: string) => {
-    updateSettings({ row: undefined, search: newSearch || undefined });
-  }, [ updateSettings ]);
+  const handleNameSearchApply = useCallback(
+    (newSearch: string) => {
+      updateSettings({ row: undefined, search: newSearch || undefined });
+    },
+    [updateSettings],
+  );
 
   const handleNameSearchReset = useCallback(() => {
     updateSettings({ row: undefined, search: undefined });
-  }, [ updateSettings ]);
+  }, [updateSettings]);
 
-  const nameFilterSearch = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterSearch
-      {...filterProps}
-      value={settings.search || ''}
-      onReset={handleNameSearchReset}
-      onSearch={handleNameSearchApply}
-    />
-  ), [ handleNameSearchApply, handleNameSearchReset, settings.search ]);
+  const nameFilterSearch = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterSearch
+        {...filterProps}
+        value={settings.search || ''}
+        onReset={handleNameSearchReset}
+        onSearch={handleNameSearchApply}
+      />
+    ),
+    [handleNameSearchApply, handleNameSearchReset, settings.search],
+  );
 
-  const handleTypeFilterApply = useCallback((types: string[]) => {
-    updateSettings({
-      row: undefined,
-      type: types.length !== 0 ? types as CommandType[] : undefined,
-    });
-  }, [ updateSettings ]);
+  const handleTypeFilterApply = useCallback(
+    (types: string[]) => {
+      updateSettings({
+        row: undefined,
+        type: types.length !== 0 ? (types as CommandType[]) : undefined,
+      });
+    },
+    [updateSettings],
+  );
 
   const handleTypeFilterReset = useCallback(() => {
     updateSettings({ row: undefined, type: undefined });
-  }, [ updateSettings ]);
+  }, [updateSettings]);
 
-  const typeFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterDropdown
-      {...filterProps}
-      multiple
-      values={settings.type}
-      width={180}
-      onFilter={handleTypeFilterApply}
-      onReset={handleTypeFilterReset}
-    />
-  ), [ handleTypeFilterApply, handleTypeFilterReset, settings.type ]);
+  const typeFilterDropdown = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        values={settings.type}
+        width={180}
+        onFilter={handleTypeFilterApply}
+        onReset={handleTypeFilterReset}
+      />
+    ),
+    [handleTypeFilterApply, handleTypeFilterReset, settings.type],
+  );
 
-  const handleStateFilterApply = useCallback((states: string[]) => {
-    updateSettings({
-      row: undefined,
-      state: states.length !== 0 ? states as CommandState[] : undefined,
-    });
-  }, [ updateSettings ]);
+  const handleStateFilterApply = useCallback(
+    (states: string[]) => {
+      updateSettings({
+        row: undefined,
+        state: states.length !== 0 ? (states as CommandState[]) : undefined,
+      });
+    },
+    [updateSettings],
+  );
 
   const handleStateFilterReset = useCallback(() => {
     updateSettings({ row: undefined, state: undefined });
-  }, [ updateSettings ]);
+  }, [updateSettings]);
 
-  const stateFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterDropdown
-      {...filterProps}
-      multiple
-      values={settings.state}
-      onFilter={handleStateFilterApply}
-      onReset={handleStateFilterReset}
-    />
-  ), [ handleStateFilterApply, handleStateFilterReset, settings.state ]);
+  const stateFilterDropdown = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        values={settings.state}
+        onFilter={handleStateFilterApply}
+        onReset={handleStateFilterReset}
+      />
+    ),
+    [handleStateFilterApply, handleStateFilterReset, settings.state],
+  );
 
-  const handleUserFilterApply = useCallback((users: string[]) => {
-    updateSettings({
-      row: undefined,
-      user: users.length !== 0 ? users : undefined,
-    });
-  }, [ updateSettings ]);
+  const handleUserFilterApply = useCallback(
+    (users: string[]) => {
+      updateSettings({
+        row: undefined,
+        user: users.length !== 0 ? users : undefined,
+      });
+    },
+    [updateSettings],
+  );
 
   const handleUserFilterReset = useCallback(() => {
     updateSettings({ row: undefined, user: undefined });
-  }, [ updateSettings ]);
+  }, [updateSettings]);
 
-  const userFilterDropdown = useCallback((filterProps: FilterDropdownProps) => (
-    <TableFilterDropdown
-      {...filterProps}
-      multiple
-      searchable
-      values={settings.user}
-      onFilter={handleUserFilterApply}
-      onReset={handleUserFilterReset}
-    />
-  ), [ handleUserFilterApply, handleUserFilterReset, settings.user ]);
+  const userFilterDropdown = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        searchable
+        values={settings.user}
+        onFilter={handleUserFilterApply}
+        onReset={handleUserFilterReset}
+      />
+    ),
+    [handleUserFilterApply, handleUserFilterReset, settings.user],
+  );
 
   const columns = useMemo(() => {
     const nameNSourceRenderer: TaskRenderer = (_, record, index) => {
@@ -335,11 +373,10 @@ const TaskList: React.FC = () => {
         dataIndex: 'state',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         filterDropdown: stateFilterDropdown,
-        filters: Object.values(CommandState)
-          .map((value) => ({
-            text: <Badge state={value} type={BadgeType.State} />,
-            value,
-          })),
+        filters: Object.values(CommandState).map((value) => ({
+          text: <Badge state={value} type={BadgeType.State} />,
+          value,
+        })),
         isFiltered: (settings: Settings) => !!settings.state,
         key: 'state',
         render: stateRenderer,
@@ -381,14 +418,16 @@ const TaskList: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<CommandTask>[];
-  }, [ handleActionComplete,
+  }, [
+    handleActionComplete,
     handleSourceShow,
     nameFilterSearch,
     stateFilterDropdown,
     tableSearchIcon,
     typeFilterDropdown,
     userFilterDropdown,
-    users ]);
+    users,
+  ]);
 
   const handleBatchKill = useCallback(async () => {
     try {
@@ -414,7 +453,7 @@ const TaskList: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ fetchAll, selectedTasks, updateSettings ]);
+  }, [fetchAll, selectedTasks, updateSettings]);
 
   const showConfirmation = useCallback(() => {
     Modal.confirm({
@@ -427,38 +466,45 @@ const TaskList: React.FC = () => {
       onOk: handleBatchKill,
       title: 'Confirm Batch Kill',
     });
-  }, [ handleBatchKill ]);
+  }, [handleBatchKill]);
 
-  const handleBatchAction = useCallback((action?: string) => {
-    if (action === Action.Kill) showConfirmation();
-  }, [ showConfirmation ]);
+  const handleBatchAction = useCallback(
+    (action?: string) => {
+      if (action === Action.Kill) showConfirmation();
+    },
+    [showConfirmation],
+  );
 
-  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
-    if (Array.isArray(tableSorter)) return;
+  const handleTableChange = useCallback(
+    (tablePagination, tableFilters, tableSorter) => {
+      if (Array.isArray(tableSorter)) return;
 
-    const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
-    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
+      const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
+      if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
+      const newSettings = {
+        sortDesc: order === 'descend',
+        sortKey: isOfSortKey(columnKey) ? columnKey : ALL_SORTKEY[0],
+        tableLimit: tablePagination.pageSize,
+        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+      };
+      const shouldPush = settings.tableOffset !== newSettings.tableOffset;
+      updateSettings(newSettings, shouldPush);
+    },
+    [columns, settings, updateSettings],
+  );
 
-    const newSettings = {
-      sortDesc: order === 'descend',
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-      sortKey: columnKey as any,
-      tableLimit: tablePagination.pageSize,
-      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
-    };
-    const shouldPush = settings.tableOffset !== newSettings.tableOffset;
-    updateSettings(newSettings, shouldPush);
-  }, [ columns, settings, updateSettings ]);
-
-  const handleTableRowSelect = useCallback((rowKeys) => {
-    updateSettings({ row: rowKeys });
-  }, [ updateSettings ]);
+  const handleTableRowSelect = useCallback(
+    (rowKeys) => {
+      updateSettings({ row: rowKeys });
+    },
+    [updateSettings],
+  );
 
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   useEffect(() => {
     return () => canceler.abort();
-  }, [ canceler ]);
+  }, [canceler]);
 
   const TaskActionDropdownCM = useCallback(
     ({ record, onVisibleChange, children }) => (
@@ -470,23 +516,24 @@ const TaskList: React.FC = () => {
         {children}
       </TaskActionDropdown>
     ),
-    [ user, handleActionComplete ],
+    [user, handleActionComplete],
   );
 
   return (
     <Page
       containerRef={pageRef}
       id="tasks"
-      options={(
+      options={
         <Space>
-          {filterCount > 0 &&
-          <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />}
+          {filterCount > 0 && (
+            <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
+          )}
         </Space>
-      )}
+      }
       title="Tasks">
       <div className={css.base}>
         <TableBatch
-          actions={[ { disabled: !hasKillable, label: Action.Kill, value: Action.Kill } ]}
+          actions={[{ disabled: !hasKillable, label: Action.Kill, value: Action.Kill }]}
           selectedRowCount={(settings.row ?? []).length}
           onAction={handleBatchAction}
           onClear={clearSelected}
@@ -497,10 +544,13 @@ const TaskList: React.FC = () => {
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
           loading={tasks === undefined}
-          pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          }, filteredTasks.length)}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            filteredTasks.length,
+          )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="id"
           rowSelection={{
@@ -525,11 +575,10 @@ const TaskList: React.FC = () => {
         visible={!!sourcesModal}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
-          <Grid gap={ShirtSize.medium} minItemWidth={120}>
+          <Grid gap={ShirtSize.Medium} minItemWidth={120}>
             {sourcesModal?.sources.map((source) => (
-              <Link
-                key={source.id}
-                path={source.path}>{source.type} {source.id}
+              <Link key={source.id} path={source.path}>
+                {source.type} {source.id}
               </Link>
             ))}
           </Grid>
