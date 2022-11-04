@@ -11,6 +11,9 @@
 # the auth_file if a ~/.{CLUSTER}.token file is present.   Use the -a option
 # (one time) to retrieve a remote token file from the cluster.
 #
+# You can utilize a launcher instance created by the hpc-ard-capsule-core
+# loadDevLauncher.sh script with the -d argument.
+#
 # Pre-requisites:
 #   1) Configure your USERPORT_${USER} port below using your login name on
 #      the desktop that you are using.
@@ -71,11 +74,12 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     -h|--help)
-        echo "Usage: $0 [-anxtpd] [-u {username}]  {cluster}"
-        echo "  -h     This help message."
+        echo "Usage: $0 [-anxtpdi] [-u {username}]  {cluster}"
+        echo "  -h     This help message & documentation."
         echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
         echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
         echo "  -t     Force debug level to trace regardless of cluster configuration value."
+        echo "  -i     Force debug level to INFO regardless of cluster configuration value."
         echo "  -p     Use podman as a container host (otherwise singlarity)."
         echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
         echo "  -u     Use provided {username} to lookup the per-user port number."
@@ -97,9 +101,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-
-CLUSTERS=('atlas' 'casablanca'  'mosaic' 'osprey'  'shuco' 'horizon' 'swan' 'casablanca-login' 'casablanca-mgmt1' 'raptor' 'casablanca-login2' 'o184i023' 'sawmill')
-
+# Evaluate a dynamically constructed env variable name
 function lookup() {
     echo "${!1}"
 }
@@ -153,19 +155,17 @@ USERPORT_canmingcobble=8092
 
 USERPORT=$(lookup "USERPORT_$USERNAME")
 if [[ -z $USERPORT ]]; then
-    echo "$0: User $USERNAME does not have a configured port, update the script."
+    echo >&2 "$0: User $USERNAME does not have a configured port, update the script."
     exit 1
 fi
 
+# Re-map names that include - as variables with embedded - are treated as math expressions
 if [[ $CLUSTER == "casablanca-login" ]]; then
    CLUSTER=casablanca_login
 elif [[ $CLUSTER == "casablanca-mgmt1" ]]; then
    CLUSTER=casablanca
 elif [[ $CLUSTER == "casablanca-login2" ]]; then
    CLUSTER=casablanca_login2
-elif [[ ! " ${CLUSTERS[*]} " =~ " $CLUSTER "  ]]; then
-    echo "$0: Cluster name $CLUSTER does not have a configuration.  Specify one of: ${CLUSTERS[*]}"
-    exit 1
 fi
 
 # Update your JETTY HTTP username/port pair from loadDevLauncher.sh
@@ -234,7 +234,7 @@ OPT_MASTERHOST_casablanca_login2=casablanca-login2
 OPT_MASTERPORT_casablanca_login2=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login2=false
 
-# Configuration for sawmill
+# Configuration for sawmill (10.100.97.101)
 OPT_name_sawmill=10.100.97.101
 OPT_LAUNCHERHOST_sawmill=localhost
 OPT_LAUNCHERPROTOCOL_sawmill=http
@@ -244,6 +244,21 @@ OPT_MASTERPORT_sawmill=$USERPORT
 OPT_TRESSUPPORTED_sawmill=false
 OPT_GRESSUPPORTED_sawmill=false
 OPT_PROTOCOL_sawmill=http
+OPT_DEFAULTIMAGE_sawmill=/scratch2/karlon/new/detAI-cuda-11.3-pytorch-1.10-tf-2.8-gpu-nccl-0.19.4.sif
+# Indentation of task_container_defaults must match devcluster-slurm.yaml
+OPT_TASKCONTAINERDEFAULTS_sawmill=$(cat <<EOF
+          environment_variables:
+            - USE_HOST_LIBFABRIC=y
+            - NCCL_DEBUG=INFO
+            - OMPI_MCA_orte_tmpdir_base=/dev/shm/
+EOF
+)
+# Indentation of partition_overrides must match devcluster-slurm.yaml
+OPT_PARTITIONOVERRIDES_sawmill=$(cat <<EOF
+             grizzly:
+                slot_type: cuda
+EOF
+)
 
 # Configuration for shuco
 OPT_name_shuco=shuco.us.cray.com
@@ -322,6 +337,13 @@ OPT_GRESSUPPORTED_o184i023=false
 OPT_PROTOCOL_o184i023=http
 OPT_SLOTTYPE_o184i023=rocm
 
+
+# This is the list of options that can be injected into devcluster-slurm.yaml
+# If a value is not configured for a specific target cluster, it will be
+# blank and get the default value.   OPT_TASKCONTAINERDEFAULTS & OPT_PARTITIONOVERRIDES
+# are multi-line values and must match the indentation of the associated
+# section in devcluster-slurm.yaml.   See OPT_TASKCONTAINERDEFAULTS_sawmill as
+# an example of how to provide such multi-line values.
 export OPT_LAUNCHERHOST=$(lookup "OPT_LAUNCHERHOST_$CLUSTER")
 export OPT_LAUNCHERPORT=$(lookup "OPT_LAUNCHERPORT_$CLUSTER")
 export OPT_LAUNCHERPROTOCOL=$(lookup "OPT_LAUNCHERPROTOCOL_$CLUSTER")
@@ -333,6 +355,10 @@ export OPT_GRESSUPPORTED=$(lookup "OPT_GRESSUPPORTED_$CLUSTER")
 export OPT_RENDEVOUSIFACE=$(lookup "OPT_RENDEVOUSIFACE_$CLUSTER")
 export OPT_REMOTEUSER=$(lookup "OPT_REMOTEUSER_$CLUSTER")
 export OPT_SLOTTYPE=$(lookup "OPT_SLOTTYPE_$CLUSTER")
+export OPT_DEFAULTIMAGE=$(lookup "OPT_DEFAULTIMAGE_$CLUSTER")
+export OPT_TASKCONTAINERDEFAULTS=$(lookup "OPT_TASKCONTAINERDEFAULTS_$CLUSTER")
+export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
+
 
 if [[ -z $OPT_GRESSUPPORTED ]]; then
     export OPT_GRESSUPPORTED="true"
@@ -340,7 +366,7 @@ fi
 
 if [[ -n $DEVLAUNCHER ]]; then
     if [ -z $DEV_LAUNCHER_PORT ]; then
-        echo "$0: User $USERNAME does not have a configured DEV_LAUNCHER_PORT, update the script."
+        echo >&2 "$0: User $USERNAME does not have a configured DEV_LAUNCHER_PORT, update the script."
         exit 1
     fi
     OPT_LAUNCHERPORT=$DEV_LAUNCHER_PORT
@@ -351,12 +377,13 @@ fi
 
 SLURMCLUSTER=$(lookup "OPT_name_$CLUSTER")
 if [[ -z $SLURMCLUSTER ]]; then
-    echo "$0: Cluster name $CLUSTER does not have a configuration. Specify one of: $(set -o posix; set | grep OPT_name | cut -f 2 -d =)."
+    echo >&2 "$0: Cluster name $CLUSTER does not have a configuration. Specify one of:"
+    echo >&2 "$(set -o posix; set | grep OPT_name | cut -f 1 -d = | cut -c 10-)"
     exit 1
 fi
 
 if [[ -z $OPT_LAUNCHERPORT ]]; then
-    echo "$0: Cluster name $CLUSTER does not have an installed launcher, specify -d to utilize a dev launcher."
+    echo >&2 "$0: Cluster name $CLUSTER does not have an installed launcher, specify -d to utilize a dev launcher."
     exit 1
 fi
 
@@ -405,4 +432,5 @@ sleep 3
 TEMPYAML=/tmp/devcluster-$CLUSTER.yaml
 rm -f $TEMPYAML
 envsubst <  tools/devcluster-slurm.yaml  > $TEMPYAML
+echo "INFO: Generated devcluster file: $TEMPYAML"
 devcluster -c $TEMPYAML --oneshot
