@@ -1,2 +1,6 @@
-.buttons { display: inline-flex; }
-.buttons > *:not(:first-child) { margin-left: 8px; }
+.buttons {
+  display: inline-flex;
+}
+.buttons > *:not(:first-child) {
+  margin-left: 8px;
+}

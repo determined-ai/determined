@@ -9,7 +9,7 @@ export interface Props {
 }
 
 export const ImageAlert: React.FC<Props> = ({ darkLight }) => {
-  const classes = [ css.alert ];
+  const classes = [css.alert];
   if (darkLight === DarkLight.Dark) classes.push(css.dark);
   return (
     <svg
@@ -63,7 +63,7 @@ export const ImageEmpty: React.FC<Props> = () => (
 );
 
 export const ImageWarning: React.FC<Props> = ({ darkLight }) => {
-  const classes = [ css.warning ];
+  const classes = [css.warning];
   if (darkLight === DarkLight.Dark) classes.push(css.dark);
   return (
     <svg

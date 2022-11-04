@@ -1,9 +1,10 @@
 import json
 from argparse import Namespace
 from time import sleep
-from typing import Any, List, Sequence
+from typing import Any, List, Optional, Sequence
 
 from determined import cli
+from determined.cli.user import AGENT_USER_GROUP_ARGS
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
@@ -11,26 +12,46 @@ from determined.common.declarative_argparse import Arg, Cmd
 from . import render
 
 PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
-WORKSPACE_HEADERS = ["ID", "Name", "# Projects"]
+WORKSPACE_HEADERS = [
+    "ID",
+    "Name",
+    "# Projects",
+    "Agent Uid",
+    "Agent Gid",
+    "Agent User",
+    "Agent Group",
+]
 
 
-def render_workspaces(workspaces: Sequence[bindings.v1Workspace]) -> None:
-    values = [
-        [
+def render_workspaces(
+    workspaces: Sequence[bindings.v1Workspace], from_list_api: bool = False
+) -> None:
+    values = []
+    for w in workspaces:
+        value = [
             w.id,
             w.name,
             w.numProjects,
+            w.agentUserGroup.agentUid if w.agentUserGroup else None,
+            w.agentUserGroup.agentGid if w.agentUserGroup else None,
+            w.agentUserGroup.agentUser if w.agentUserGroup else None,
+            w.agentUserGroup.agentGroup if w.agentUserGroup else None,
         ]
-        for w in workspaces
-    ]
-    render.tabulate_or_csv(WORKSPACE_HEADERS, values, False)
+        if not from_list_api:
+            value.append(w.checkpointStorageConfig)
+        values.append(value)
+
+    headers = WORKSPACE_HEADERS
+    if not from_list_api:
+        headers = WORKSPACE_HEADERS + ["Checkpoint Storage Config"]
+    render.tabulate_or_csv(headers, values, False)
 
 
 def workspace_by_name(sess: api.Session, name: str) -> bindings.v1Workspace:
     w = bindings.get_GetWorkspaces(sess, name=name).workspaces
     if len(w) == 0:
         raise errors.EmptyResultException(f'Did not find a workspace with name "{name}".')
-    return w[0]
+    return bindings.get_GetWorkspace(sess, id=w[0].id).workspace
 
 
 @authentication.required
@@ -56,7 +77,7 @@ def list_workspaces(args: Namespace) -> None:
     if args.json:
         print(json.dumps([w.to_json() for w in all_workspaces], indent=2))
     else:
-        render_workspaces(all_workspaces)
+        render_workspaces(all_workspaces, from_list_api=True)
 
 
 @authentication.required
@@ -99,9 +120,40 @@ def list_workspace_projects(args: Namespace) -> None:
         render.tabulate_or_csv(PROJECT_HEADERS, values, False)
 
 
+def _parse_agent_user_group_args(args: Namespace) -> Optional[bindings.v1AgentUserGroup]:
+    if args.agent_uid or args.agent_gid or args.agent_user or args.agent_group:
+        return bindings.v1AgentUserGroup(
+            agentUid=args.agent_uid,
+            agentGid=args.agent_gid,
+            agentUser=args.agent_user,
+            agentGroup=args.agent_group,
+        )
+    return None
+
+
+def _parse_checkpoint_storage_args(args: Namespace) -> Any:
+    if (args.checkpoint_storage_config is not None) and (
+        args.checkpoint_storage_config_file is not None
+    ):
+        raise api.errors.BadRequestException(
+            "can only provide --checkpoint_storage_config or --checkpoint_storage_config_file"
+        )
+    checkpoint_storage = args.checkpoint_storage_config_file
+    if args.checkpoint_storage_config is not None:
+        checkpoint_storage = json.loads(args.checkpoint_storage_config)
+    return checkpoint_storage
+
+
 @authentication.required
 def create_workspace(args: Namespace) -> None:
-    content = bindings.v1PostWorkspaceRequest(name=args.name)
+    agent_user_group = _parse_agent_user_group_args(args)
+    checkpoint_storage = _parse_checkpoint_storage_args(args)
+
+    content = bindings.v1PostWorkspaceRequest(
+        name=args.name,
+        agentUserGroup=agent_user_group,
+        checkpointStorageConfig=checkpoint_storage,
+    )
     w = bindings.post_PostWorkspace(cli.setup_session(args), body=content).workspace
 
     if args.json:
@@ -172,15 +224,39 @@ def unarchive_workspace(args: Namespace) -> None:
 
 @authentication.required
 def edit_workspace(args: Namespace) -> None:
+    checkpoint_storage = _parse_checkpoint_storage_args(args)
+
     sess = cli.setup_session(args)
     current = workspace_by_name(sess, args.workspace_name)
-    updated = bindings.v1PatchWorkspace(name=args.new_name)
+    agent_user_group = _parse_agent_user_group_args(args)
+    updated = bindings.v1PatchWorkspace(
+        name=args.name, agentUserGroup=agent_user_group, checkpointStorageConfig=checkpoint_storage
+    )
     w = bindings.patch_PatchWorkspace(sess, body=updated, id=current.id).workspace
 
     if args.json:
         print(json.dumps(w.to_json(), indent=2))
     else:
         render_workspaces([w])
+
+
+def json_file_arg(val: str) -> Any:
+    with open(val) as f:
+        return json.load(f)
+
+
+CHECKPOINT_STORAGE_WORKSPACE_ARGS = [
+    Arg(
+        "--checkpoint-storage-config",
+        type=str,
+        help="Storage config (JSON-formatted string). To remove storage config use '{}'",
+    ),
+    Arg(
+        "--checkpoint-storage-config-file",
+        type=json_file_arg,
+        help="Storage config (path to JSON-formatted file)",
+    ),
+]
 
 
 # do not use util.py's pagination_args because behavior here is
@@ -206,7 +282,7 @@ args_description = [
         "manage workspaces",
         [
             Cmd(
-                "list",
+                "list ls",
                 list_workspaces,
                 "list all workspaces",
                 [
@@ -259,6 +335,8 @@ args_description = [
                 "create workspace",
                 [
                     Arg("name", type=str, help="unique name of the workspace"),
+                    *AGENT_USER_GROUP_ARGS,
+                    *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -291,7 +369,9 @@ args_description = [
                 "edit workspace",
                 [
                     Arg("workspace_name", type=str, help="current name of the workspace"),
-                    Arg("new_name", type=str, help="new name of the workspace"),
+                    Arg("--name", type=str, help="new name of the workspace"),
+                    *AGENT_USER_GROUP_ARGS,
+                    *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),

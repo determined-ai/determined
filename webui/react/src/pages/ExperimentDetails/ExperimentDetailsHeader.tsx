@@ -8,11 +8,7 @@ import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import TimeDuration from 'components/TimeDuration';
-import {
-  pausableRunStates,
-  stateToLabel,
-  terminalRunStates,
-} from 'constants/states';
+import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
 import useExperimentTags from 'hooks/useExperimentTags';
 import useModalExperimentCreate, {
   CreateExperimentType,
@@ -20,14 +16,15 @@ import useModalExperimentCreate, {
 import useModalExperimentDelete from 'hooks/useModal/Experiment/useModalExperimentDelete';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalExperimentStop from 'hooks/useModal/Experiment/useModalExperimentStop';
-import useModalHyperparameterSearch
-  from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
+import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
 import {
   activateExperiment,
-  archiveExperiment, openOrCreateTensorBoard, patchExperiment,
+  archiveExperiment,
+  openOrCreateTensorBoard,
+  patchExperiment,
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
@@ -36,12 +33,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { getDuration } from 'shared/utils/datetime';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
-import {
-  ExperimentAction as Action,
-  ExperimentBase,
-  RunState,
-  TrialItem,
-} from 'types';
+import { ExperimentAction as Action, ExperimentBase, RunState, TrialItem } from 'types';
 import handleError from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommand } from 'utils/wait';
@@ -76,14 +68,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   fetchExperimentDetails,
   trial,
 }: Props) => {
-  const [ isChangingState, setIsChangingState ] = useState(false);
-  const [ isRunningArchive, setIsRunningArchive ] = useState<boolean>(false);
-  const [ isRunningTensorBoard, setIsRunningTensorBoard ] = useState<boolean>(false);
-  const [ isRunningUnarchive, setIsRunningUnarchive ] = useState<boolean>(false);
-  const [ isRunningDelete, setIsRunningDelete ] = useState<boolean>(
+  const [isChangingState, setIsChangingState] = useState(false);
+  const [isRunningArchive, setIsRunningArchive] = useState<boolean>(false);
+  const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
+  const [isRunningUnarchive, setIsRunningUnarchive] = useState<boolean>(false);
+  const [isRunningDelete, setIsRunningDelete] = useState<boolean>(
     experiment.state === RunState.Deleting,
   );
-  const classes = [ css.state ];
+  const classes = [css.state];
 
   const maxRestarts = experiment.config.maxRestarts;
   const autoRestarts = trial?.autoRestarts ?? 0;
@@ -96,45 +88,44 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const experimentTags = useExperimentTags(fetchExperimentDetails);
 
-  const handleModalClose = useCallback(() => fetchExperimentDetails(), [ fetchExperimentDetails ]);
+  const handleModalClose = useCallback(() => fetchExperimentDetails(), [fetchExperimentDetails]);
 
-  const { canDeleteExperiment, canMoveExperiment } = usePermissions();
+  const expPermissions = usePermissions();
+  const isMovable =
+    canActionExperiment(Action.Move, experiment) &&
+    expPermissions.canMoveExperiment({ experiment });
+  const canPausePlay = expPermissions.canModifyExperiment({
+    workspace: { id: experiment.workspaceId },
+  });
 
-  const isMovable = canActionExperiment(
-    Action.Move,
-    experiment,
-  ) && canMoveExperiment({ experiment });
+  const { contextHolder: modalExperimentStopContextHolder, modalOpen: openModalStop } =
+    useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
 
-  const {
-    contextHolder: modalExperimentStopContextHolder,
-    modalOpen: openModalStop,
-  } = useModalExperimentStop({ experimentId: experiment.id, onClose: handleModalClose });
+  const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openModalMove } =
+    useModalExperimentMove({ onClose: handleModalClose });
 
-  const {
-    contextHolder: modalExperimentMoveContextHolder,
-    modalOpen: openModalMove,
-  } = useModalExperimentMove({ onClose: handleModalClose });
+  const { contextHolder: modalExperimentDeleteContextHolder, modalOpen: openModalDelete } =
+    useModalExperimentDelete({ experiment: experiment });
 
-  const {
-    contextHolder: modalExperimentDeleteContextHolder,
-    modalOpen: openModalDelete,
-  } = useModalExperimentDelete({ experiment: experiment });
-
-  const {
-    contextHolder: modalExperimentCreateContextHolder,
-    modalOpen: openModalCreate,
-  } = useModalExperimentCreate();
+  const { contextHolder: modalExperimentCreateContextHolder, modalOpen: openModalCreate } =
+    useModalExperimentCreate();
 
   const {
     contextHolder: modalHyperparameterSearchContextHolder,
     modalOpen: openModalHyperparameterSearch,
   } = useModalHyperparameterSearch({ experiment });
 
-  const stateStyle = useMemo(() => ({
-    backgroundColor: getStateColorCssVar(experiment.state),
-    color: getStateColorCssVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
-  }), [ experiment.state ]);
-  const disabled = experiment?.parentArchived || experiment?.archived;
+  const stateStyle = useMemo(
+    () => ({
+      backgroundColor: getStateColorCssVar(experiment.state),
+      color: getStateColorCssVar(experiment.state, { isOn: true, strongWeak: 'strong' }),
+    }),
+    [experiment.state],
+  );
+  const disabled =
+    experiment?.parentArchived ||
+    experiment?.archived ||
+    !expPermissions.canModifyExperimentMetadata({ workspace: { id: experiment?.workspaceId } });
 
   const handlePauseClick = useCallback(async () => {
     setIsChangingState(true);
@@ -152,7 +143,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     } finally {
       setIsChangingState(false);
     }
-  }, [ experiment.id, fetchExperimentDetails ]);
+  }, [experiment.id, fetchExperimentDetails]);
 
   const handlePlayClick = useCallback(async () => {
     setIsChangingState(true);
@@ -170,20 +161,20 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     } finally {
       setIsChangingState(false);
     }
-  }, [ experiment.id, fetchExperimentDetails ]);
+  }, [experiment.id, fetchExperimentDetails]);
 
-  const handleStopClick = useCallback(() => openModalStop(), [ openModalStop ]);
+  const handleStopClick = useCallback(() => openModalStop(), [openModalStop]);
 
-  const handleDeleteClick = useCallback(() => openModalDelete(), [ openModalDelete ]);
+  const handleDeleteClick = useCallback(() => openModalDelete(), [openModalDelete]);
 
   const handleMoveClick = useCallback(
     () =>
       openModalMove({
-        experimentIds: isMovable ? [ experiment.id ] : undefined,
+        experimentIds: isMovable ? [experiment.id] : undefined,
         sourceProjectId: experiment.projectId,
         sourceWorkspaceId: experiment.workspaceId,
       }),
-    [ openModalMove, experiment, isMovable ],
+    [openModalMove, experiment, isMovable],
   );
 
   const handleContinueTrialClick = useCallback(() => {
@@ -192,56 +183,62 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       trial,
       type: CreateExperimentType.ContinueTrial,
     });
-  }, [ experiment, openModalCreate, trial ]);
+  }, [experiment, openModalCreate, trial]);
 
   const handleForkClick = useCallback(() => {
     openModalCreate({ experiment, type: CreateExperimentType.Fork });
-  }, [ experiment, openModalCreate ]);
+  }, [experiment, openModalCreate]);
 
   const handleHyperparameterSearch = useCallback(() => {
     openModalHyperparameterSearch();
-  }, [ openModalHyperparameterSearch ]);
+  }, [openModalHyperparameterSearch]);
 
   useEffect(() => {
     setIsRunningArchive(false);
     setIsRunningUnarchive(false);
-  }, [ experiment.archived ]);
+  }, [experiment.archived]);
 
   useEffect(() => {
     setIsRunningDelete(experiment.state === RunState.Deleting);
-  }, [ experiment.state ]);
+  }, [experiment.state]);
 
-  const handleDescriptionUpdate = useCallback(async (newValue: string) => {
-    try {
-      await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
-      await fetchExperimentDetails();
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to update experiment description.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-      return e as Error;
-    }
-  }, [ experiment.id, fetchExperimentDetails ]);
+  const handleDescriptionUpdate = useCallback(
+    async (newValue: string) => {
+      try {
+        await patchExperiment({ body: { description: newValue }, experimentId: experiment.id });
+        await fetchExperimentDetails();
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to update experiment description.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+        return e as Error;
+      }
+    },
+    [experiment.id, fetchExperimentDetails],
+  );
 
-  const handleNameUpdate = useCallback(async (newValue: string) => {
-    try {
-      await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
-      await fetchExperimentDetails();
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to update experiment name.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-      return e as Error;
-    }
-  }, [ experiment.id, fetchExperimentDetails ]);
+  const handleNameUpdate = useCallback(
+    async (newValue: string) => {
+      try {
+        await patchExperiment({ body: { name: newValue }, experimentId: experiment.id });
+        await fetchExperimentDetails();
+      } catch (e) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Please try again later.',
+          publicSubject: 'Unable to update experiment name.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+        return e as Error;
+      }
+    },
+    [experiment.id, fetchExperimentDetails],
+  );
 
   const headerOptions = useMemo(() => {
     const options: Partial<Record<Action, Option>> = {
@@ -265,7 +262,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: handleContinueTrialClick,
       },
       [Action.Delete]: {
-        icon: <Icon name="fork" size="small" />,
         isLoading: isRunningDelete,
         key: 'delete',
         label: 'Delete',
@@ -303,7 +299,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: async () => {
           setIsRunningTensorBoard(true);
           try {
-            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [ experiment.id ] });
+            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [experiment.id] });
             openCommand(tensorboard);
             setIsRunningTensorBoard(false);
           } catch (e) {
@@ -327,17 +323,11 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       },
     };
 
-    const availableActions = getActionsForExperiment(
-      experiment,
-      headerActions,
-    ).filter((action) => [ Action.Delete, Action.Move ].includes(action)
-      ? (action === Action.Delete && canDeleteExperiment({ experiment })) ||
-        (action === Action.Move && canMoveExperiment({ experiment }))
-      : true);
+    const availableActions = getActionsForExperiment(experiment, headerActions, expPermissions);
 
     return availableActions.map((action) => options[action]) as Option[];
-  }, [ canDeleteExperiment,
-    canMoveExperiment,
+  }, [
+    expPermissions,
     isRunningArchive,
     handleContinueTrialClick,
     isRunningDelete,
@@ -358,17 +348,13 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     if (!isJobOrderAvailable) return 'Available here';
     if (isFirstJob) return 'No jobs ahead of this one';
     return `${experiment.jobSummary.jobsAhead} jobs ahead of this one`;
-  }, [ experiment.jobSummary ]);
+  }, [experiment.jobSummary]);
 
   return (
     <>
-      <BreadcrumbBar
-        experiment={experiment}
-        id={experiment.id}
-        type="experiment"
-      />
+      <BreadcrumbBar experiment={experiment} id={experiment.id} type="experiment" />
       <PageHeaderFoldable
-        foldableContent={(
+        foldableContent={
           <div className={css.foldableSection}>
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Description:</span>
@@ -395,12 +381,17 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             {experiment.jobSummary && !terminalRunStates.has(experiment.state) && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Job Info:</span>
-                <Link className={css.link} path={paths.jobs()}>{jobInfoLinkText}</Link>
+                <Link className={css.link} path={paths.jobs()}>
+                  {jobInfoLinkText}
+                </Link>
               </div>
             )}
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Auto Restarts:</span>
-              <span>{autoRestarts}{maxRestarts ? `/${maxRestarts}` : ''}</span>
+              <span>
+                {autoRestarts}
+                {maxRestarts ? `/${maxRestarts}` : ''}
+              </span>
             </div>
             <TagList
               disabled={disabled}
@@ -409,14 +400,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               onChange={experimentTags.handleTagListChange(experiment.id)}
             />
           </div>
-        )}
-        leftContent={(
+        }
+        leftContent={
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>
               <div className={classes.join(' ')} style={stateStyle}>
                 {isPausable && (
                   <Button
                     className={css.buttonPause}
+                    disabled={!canPausePlay}
                     icon={<Icon name="pause" size="large" />}
                     shape="circle"
                     onClick={handlePauseClick}
@@ -425,6 +417,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {isPaused && (
                   <Button
                     className={css.buttonPlay}
+                    disabled={!canPausePlay}
                     icon={<Icon name="play" size="large" />}
                     shape="circle"
                     onClick={handlePlayClick}
@@ -433,6 +426,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {!isTerminated && (
                   <Button
                     className={css.buttonStop}
+                    disabled={!canPausePlay}
                     icon={<Icon name="stop" size="large" />}
                     shape="circle"
                     onClick={handleStopClick}
@@ -458,7 +452,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               </>
             ) : null}
           </Space>
-        )}
+        }
         options={headerOptions}
       />
       <ExperimentHeaderProgress experiment={experiment} />

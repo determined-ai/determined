@@ -1,11 +1,11 @@
-import { RouteProps } from 'react-router';
+import { RouteProps } from 'react-router-dom';
 
 export type Primitive = boolean | number | string;
 export type RecordKey = string | number | symbol;
 export type UnknownRecord = Record<RecordKey, unknown>;
 export type NullOrUndefined<T = undefined> = T | null | undefined;
 export type Point = { x: number; y: number };
-export type Range<T = Primitive> = [ T, T ];
+export type Range<T = Primitive> = [T, T];
 export type Eventually<T> = T | Promise<T>;
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export type RawJson = Record<string, any>;
@@ -44,7 +44,7 @@ export interface ApiState<T> {
   /**
    * error, if any, with the last state update.
    * this should be cleared on the next successful update.
-  */
+   */
   error?: Error;
   /**
    * indicates whether the state has been fetched at least once or not.
@@ -60,7 +60,7 @@ export interface SingleEntityParams {
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
-export type EmptyParams = {}
+export type EmptyParams = {};
 
 /**
  * Router Configuration
@@ -68,7 +68,7 @@ export type EmptyParams = {}
  * meaning React will attempt to load the path outside of the internal routing
  * mechanism.
  */
-export interface RouteConfig extends RouteProps {
+export type RouteConfig = {
   icon?: string;
   id: string;
   needAuth?: boolean;
@@ -77,7 +77,7 @@ export interface RouteConfig extends RouteProps {
   redirect?: string;
   suffixIcon?: string;
   title?: string;
-}
+} & RouteProps;
 
 export interface ClassNameProp {
   /** classname to be applied to the base element */
@@ -93,3 +93,5 @@ export interface SemanticVersion {
   minor: number;
   patch: number;
 }
+
+export type ValueOf<T> = T[keyof T];

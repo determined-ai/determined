@@ -1,9 +1,7 @@
 import { ReactNode } from 'react';
 
-import { ColumnDef } from 'components/InteractiveTable';
-import {
-  durationRenderer, relativeTimeRenderer, stateRenderer,
-} from 'components/Table';
+import { ColumnDef } from 'components/Table/InteractiveTable';
+import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'components/Table/Table';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { TrialItem } from 'types';
 

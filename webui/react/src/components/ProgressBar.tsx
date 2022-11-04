@@ -14,11 +14,13 @@ const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
   return (
     <Bar
       barOnly={barOnly}
-      parts={[ {
-        color: getStateColorCssVar(state),
-        label: floatToPercent(percent / 100, 0),
-        percent: percent / 100,
-      } ]}
+      parts={[
+        {
+          color: getStateColorCssVar(state),
+          label: floatToPercent(percent / 100, 0),
+          percent: percent / 100,
+        },
+      ]}
     />
   );
 };

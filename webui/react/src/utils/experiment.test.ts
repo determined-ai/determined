@@ -6,9 +6,11 @@ import * as utils from './experiment';
 describe('Experiment Utilities', () => {
   describe('isExperiment', () => {
     it('should validate experiment tasks', () => {
-      const experimentTask = {
+      const experimentTask: Type.ExperimentItem = {
         archived: false,
-        config: {},
+        config: {} as Type.ExperimentConfig,
+        configRaw: {},
+        hyperparameters: {},
         id: 123,
         jobId: '',
         labels: [],
@@ -30,7 +32,7 @@ describe('Experiment Utilities', () => {
         name: 'Count Active Processed',
         resourcePool: 'cpu-pool',
         startTime: '2021-11-29T00:00:00Z',
-        state: Type.CommandState.Assigned,
+        state: Type.CommandState.Queued,
         type: Type.CommandType.Command,
         userId: 345,
       };
@@ -66,7 +68,7 @@ describe('Experiment Utilities', () => {
   });
 
   describe('trialHParamsToExperimentHParams', () => {
-    const tests: { input: Type.TrialHyperparameters, output: RawJson }[] = [
+    const tests: { input: Type.TrialHyperparameters; output: RawJson }[] = [
       {
         input: {
           'arch.n_filters1': 62,

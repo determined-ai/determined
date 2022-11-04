@@ -10,8 +10,14 @@ import { Scale } from '../../types';
 import { FacetedData, UPlotData } from './types';
 import css from './UPlotScatter.module.scss';
 import {
-  FILL_INDEX, getColorFn, getMinMax, getSize, makeDrawPoints, offsetRange,
-  SIZE_INDEX, STROKE_INDEX,
+  FILL_INDEX,
+  getColorFn,
+  getMinMax,
+  getSize,
+  makeDrawPoints,
+  offsetRange,
+  SIZE_INDEX,
+  STROKE_INDEX,
 } from './UPlotScatter/UPlotScatter.utils';
 import useScatterPointTooltipPlugin from './UPlotScatter/useScatterPointTooltipPlugin';
 
@@ -34,7 +40,7 @@ const UPlotScatter: React.FC<Props> = ({
 }: Props) => {
   const quadtree = useRef<QuadTree>();
   const hRect = useRef<QuadTree | null>();
-  const ranges = useRef<(Range<number>)[]>([]);
+  const ranges = useRef<Range<number>[]>([]);
 
   const tooltipPlugin = useScatterPointTooltipPlugin({ labels: tooltipLabels });
 
@@ -49,11 +55,12 @@ const UPlotScatter: React.FC<Props> = ({
             const fillData = u?.data[seriesIndex][FILL_INDEX];
             if (fillData === null) return yData.map(() => getColor(0, 0, 1));
 
-            const [ minValue, maxValue ] = ranges.current[FILL_INDEX];
+            const [minValue, maxValue] = ranges.current[FILL_INDEX];
             const seriesData = (fillData || []) as unknown as UPlotData[];
             return (
               seriesData.map((value) =>
-                getColor(value, minValue, maxValue, colorScaleDistribution)) || []
+                getColor(value, minValue, maxValue, colorScaleDistribution),
+              ) || []
             );
           },
         },
@@ -64,7 +71,7 @@ const UPlotScatter: React.FC<Props> = ({
             const sizeData = u?.data[seriesIndex][SIZE_INDEX];
             if (sizeData === null) return yData.map(() => getSize(0, 0, 1));
 
-            const [ minValue, maxValue ] = ranges.current[SIZE_INDEX];
+            const [minValue, maxValue] = ranges.current[SIZE_INDEX];
             const seriesData = (sizeData || []) as unknown as UPlotData[];
             return seriesData.map((value) => getSize(value, minValue, maxValue)) || [];
           },
@@ -77,11 +84,12 @@ const UPlotScatter: React.FC<Props> = ({
             const strokeData = u?.data[seriesIndex][STROKE_INDEX];
             if (strokeData === null) return yData.map(() => getColor(0, 0, 1));
 
-            const [ minValue, maxValue ] = ranges.current[STROKE_INDEX];
+            const [minValue, maxValue] = ranges.current[STROKE_INDEX];
             const seriesData = (strokeData || []) as unknown as UPlotData[];
             return (
               seriesData.map((value) =>
-                getColor(value, minValue, maxValue, colorScaleDistribution)) || []
+                getColor(value, minValue, maxValue, colorScaleDistribution),
+              ) || []
             );
           },
         },
@@ -93,18 +101,12 @@ const UPlotScatter: React.FC<Props> = ({
          */
         left -= u.bbox.left;
         top -= u.bbox.top;
-        quadtree.current?.add(new QuadTree(
-          left,
-          top,
-          width,
-          height,
-          undefined,
-          seriesIndex,
-          dataIndex,
-        ));
+        quadtree.current?.add(
+          new QuadTree(left, top, width, height, undefined, seriesIndex, dataIndex),
+        );
       },
     });
-  }, [ colorScaleDistribution ]);
+  }, [colorScaleDistribution]);
 
   const chartOptions = useMemo(() => {
     const seriesOptions = options.series?.[1] || {};
@@ -152,12 +154,13 @@ const UPlotScatter: React.FC<Props> = ({
               const value = (fillData || [])[dataIndex];
               if (value == null) return getColor(0, 0, 1);
 
-              const [ minValue, maxValue ] = ranges.current[FILL_INDEX];
+              const [minValue, maxValue] = ranges.current[FILL_INDEX];
               return getColor(value, minValue, maxValue, colorScaleDistribution);
             },
             size: (u, seriesIndex) => {
               return seriesIndex === hRect.current?.seriesIndex
-                ? hRect.current.w / devicePixelRatio : 0;
+                ? hRect.current.w / devicePixelRatio
+                : 0;
             },
           },
         },
@@ -165,8 +168,8 @@ const UPlotScatter: React.FC<Props> = ({
         hooks: {
           drawClear: [
             (u) => {
-              quadtree.current = quadtree.current
-              || new QuadTree(0, 0, u.bbox.width, u.bbox.height);
+              quadtree.current =
+                quadtree.current || new QuadTree(0, 0, u.bbox.width, u.bbox.height);
               quadtree.current.clear();
 
               // force-clear the path cache to cause drawBars() to rebuild new quadtree
@@ -186,8 +189,8 @@ const UPlotScatter: React.FC<Props> = ({
         },
         legend: { show: false },
         mode: 2,
-        padding: [ 0, 8, 0, 8 ],
-        plugins: [ tooltipPlugin ],
+        padding: [0, 8, 0, 8],
+        plugins: [tooltipPlugin],
         scales: {
           x: { range: offsetRange(), time: false },
           xCategorical: { range: offsetRange(), time: false },
@@ -214,7 +217,7 @@ const UPlotScatter: React.FC<Props> = ({
         ],
       } as Partial<Options>,
     );
-  }, [ colorScaleDistribution, drawPoints, options, tooltipPlugin ]);
+  }, [colorScaleDistribution, drawPoints, options, tooltipPlugin]);
 
   return (
     <div className={css.base}>

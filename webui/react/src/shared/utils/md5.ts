@@ -4,7 +4,10 @@
  */
 /* eslint-disable */
 const md5cycle = (x: number[], k: number[]): void => {
-  let a = x[0], b = x[1], c = x[2], d = x[3];
+  let a = x[0],
+    b = x[1],
+    c = x[2],
+    d = x[3];
 
   a = ff(a, b, c, d, k[0], 7, -680876936);
   d = ff(d, a, b, c, k[1], 12, -389564586);
@@ -85,38 +88,70 @@ const cmn = (q: number, a: number, b: number, x: number, s: number, t: number): 
   return add32((a << s) | (a >>> (32 - s)), b);
 };
 
-const ff = (a: number, b: number, c: number, d: number, x: number, s: number, t: number): number => {
-  return cmn((b & c) | ((~b) & d), a, b, x, s, t);
+const ff = (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  x: number,
+  s: number,
+  t: number,
+): number => {
+  return cmn((b & c) | (~b & d), a, b, x, s, t);
 };
 
-const gg = (a: number, b: number, c: number, d: number, x: number, s: number, t: number): number => {
-  return cmn((b & d) | (c & (~d)), a, b, x, s, t);
+const gg = (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  x: number,
+  s: number,
+  t: number,
+): number => {
+  return cmn((b & d) | (c & ~d), a, b, x, s, t);
 };
 
-const hh = (a: number, b: number, c: number, d: number, x: number, s: number, t: number): number => {
+const hh = (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  x: number,
+  s: number,
+  t: number,
+): number => {
   return cmn(b ^ c ^ d, a, b, x, s, t);
 };
 
-const ii = (a: number, b: number, c: number, d: number, x: number, s: number, t: number): number => {
-  return cmn(c ^ (b | (~d)), a, b, x, s, t);
+const ii = (
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  x: number,
+  s: number,
+  t: number,
+): number => {
+  return cmn(c ^ (b | ~d), a, b, x, s, t);
 };
 
 const add32 = (a: number, b: number): number => {
-  return (a + b) & 0xFFFFFFFF;
+  return (a + b) & 0xffffffff;
 };
 
 const md51 = (s: string): number[] => {
   let txt = '';
   let n = s.length,
-    state = [1732584193, -271733879, -1732584194, 271733878], i;
+    state = [1732584193, -271733879, -1732584194, 271733878],
+    i;
   for (i = 64; i <= s.length; i += 64) {
     md5cycle(state, md5blk(s.substring(i - 64, i)));
   }
   s = s.substring(i - 64);
   let tail = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-  for (i = 0; i < s.length; i++)
-    tail[i >> 2] |= s.charCodeAt(i) << ((i % 4) << 3);
-  tail[i >> 2] |= 0x80 << ((i % 4) << 3);
+  for (i = 0; i < s.length; i++) tail[i >> 2] |= s.charCodeAt(i) << (i % 4 << 3);
+  tail[i >> 2] |= 0x80 << (i % 4 << 3);
   if (i > 55) {
     md5cycle(state, tail);
     for (i = 0; i < 16; i++) tail[i] = 0;
@@ -141,13 +176,16 @@ const md51 = (s: string): number[] => {
  * providing access to strings as preformed UTF-8
  * 8-bit unsigned value arrays.
  */
-const md5blk = (s: string): number[] => { /* I figured global was faster.   */
-  let md5blks = [], i; /* Andy King said do it this way. */
+const md5blk = (s: string): number[] => {
+  /* I figured global was faster.   */
+  let md5blks: number[] = [],
+    i; /* Andy King said do it this way. */
   for (i = 0; i < 64; i += 4) {
-    md5blks[i >> 2] = s.charCodeAt(i)
-      + (s.charCodeAt(i + 1) << 8)
-      + (s.charCodeAt(i + 2) << 16)
-      + (s.charCodeAt(i + 3) << 24);
+    md5blks[i >> 2] =
+      s.charCodeAt(i) +
+      (s.charCodeAt(i + 1) << 8) +
+      (s.charCodeAt(i + 2) << 16) +
+      (s.charCodeAt(i + 3) << 24);
   }
   return md5blks;
 };
@@ -155,15 +193,14 @@ const md5blk = (s: string): number[] => { /* I figured global was faster.   */
 const hex_chr = '0123456789abcdef'.split('');
 
 const rhex = (n: number): string => {
-  let s = '', j = 0;
-  for (; j < 4; j++)
-    s += hex_chr[(n >> (j * 8 + 4)) & 0x0F]
-      + hex_chr[(n >> (j * 8)) & 0x0F];
+  let s = '',
+    j = 0;
+  for (; j < 4; j++) s += hex_chr[(n >> (j * 8 + 4)) & 0x0f] + hex_chr[(n >> (j * 8)) & 0x0f];
   return s;
 };
 
 const hex = (x: number[]): string => {
-  return x.map(r => rhex(r)).join('');
+  return x.map((r) => rhex(r)).join('');
 };
 
 const md5 = (s: string): string => {

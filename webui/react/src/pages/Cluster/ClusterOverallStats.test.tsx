@@ -7,7 +7,9 @@ import { ClusterOverallStats } from './ClusterOverallStats';
 
 const setup = () => {
   const view = render(
-    <StoreProvider><ClusterOverallStats /></StoreProvider>,
+    <StoreProvider>
+      <ClusterOverallStats />
+    </StoreProvider>,
   );
   return { view };
 };
@@ -17,5 +19,4 @@ describe('ClusterOverallStats', () => {
     const { view } = setup();
     expect(view.getByText('Connected Agents')).toBeInTheDocument();
   });
-
 });

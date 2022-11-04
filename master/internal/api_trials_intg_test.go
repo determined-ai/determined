@@ -27,7 +27,7 @@ func createTestTrial(
 ) *model.Trial {
 	exp := createTestExpWithProjectID(t, api, curUser, 1)
 
-	task := &model.Task{TaskType: model.TaskTypeTrial}
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, api.m.db.AddTask(task))
 
 	trial := &model.Trial{
@@ -45,7 +45,7 @@ func createTestTrial(
 }
 
 func TestTrialAuthZ(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 	trial := createTestTrial(t, api, curUser)
 
 	cases := []struct {
@@ -174,24 +174,33 @@ func TestTrialAuthZ(t *testing.T) {
 				TrialId: []int32{int32(id)},
 			}, mockStream[*apiv1.ExpCompareMetricNamesResponse]{ctx})
 		}, false},
+		{"CanGetExperimentArtifacts", func(id int) error {
+			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
+				TrialIds: []int32{int32(id)},
+			})
+			return err
+		}, false},
 	}
 
 	for _, curCase := range cases {
 		require.ErrorIs(t, curCase.IDToReqCall(-999), errTrialNotFound(-999))
 
 		// Can't view trials experiment gives same error.
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, nil).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), errTrialNotFound(trial.ID))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, expectedErr).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 
 		// Action func error returns error in forbidden.
 		expectedErr = status.Error(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-		authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(true, nil).Once()
+		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID), expectedErr)
 	}

@@ -7,7 +7,7 @@ These security features apply only to Determined Enterprise Edition.
 This section covers the following security topics:
 
 +-------------------+----------------------------------------------------------------------------+
-| Security Protocol | Documentation                                                              |
+| Security Feature  | Documentation                                                              |
 +===================+============================================================================+
 | :doc:`oauth`      | Enable, list, and remove OAuth clients.                                    |
 +-------------------+----------------------------------------------------------------------------+
@@ -19,7 +19,9 @@ This section covers the following security topics:
 |                   | single sign-on (SSO) with your organizationidentity provider (IdP).        |
 +-------------------+----------------------------------------------------------------------------+
 | :doc:`scim`       | Integrate System for Cross-domain Identity Management (SCIM) for           |
-|                   | administrators to easily and securely provision users and groups           |
+|                   | administrators to easily and securely provision users and groups.          |
++-------------------+----------------------------------------------------------------------------+
+| :doc:`rbac`       | Configure Role-Based Access Control.                                       |
 +-------------------+----------------------------------------------------------------------------+
 
 .. toctree::
@@ -31,3 +33,4 @@ This section covers the following security topics:
    oidc
    saml
    scim
+   rbac

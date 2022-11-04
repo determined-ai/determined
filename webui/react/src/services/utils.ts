@@ -26,6 +26,7 @@ export const isLoginFailure = (e: unknown): boolean => {
 export const readStream = async <T = unknown>(
   fetchArgs: Api.FetchArgs,
   onEvent?: (event: T) => void,
+  onError?: (e?: Error) => void,
 ): Promise<unknown> => {
   try {
     const options = isObject(fetchArgs.options) ? fetchArgs.options : {};
@@ -37,6 +38,14 @@ export const readStream = async <T = unknown>(
     if (process.env.IS_DEV) options.credentials = 'include';
 
     const response = await fetch(serverAddress(fetchArgs.url), options);
+
+    if (!response.ok) {
+      const body = await response.json();
+      const e = new Error(body?.error?.message);
+      onError?.(e);
+      return;
+    }
+
     if (!response.body) throw new DetError(`Unable to fetch stream from ${fetchArgs.url}.`);
 
     const decoder = new TextDecoder();
@@ -59,12 +68,16 @@ export const readStream = async <T = unknown>(
       if (isCancelled) return;
       try {
         const ndjson = JSON.parse(line);
-        onEvent?.(ndjson.result);
+        if (ndjson.error) {
+          onError?.(ndjson.error);
+        } else {
+          onEvent?.(ndjson.result);
+        }
       } catch {
         // JSON parsing error occurred, no-op.
       }
     };
-    const handleStreamRead = (result: ReadableStreamDefaultReadResult<ArrayBuffer>): unknown => {
+    const handleStreamRead = (result: ReadableStreamReadResult<ArrayBuffer>): unknown => {
       if (isCancelled) return;
       if (result.done) {
         // Process any data buffer remainder.

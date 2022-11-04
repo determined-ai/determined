@@ -50,6 +50,8 @@ type Options struct {
 	// TODO(ilia): switch this to better parsing with `model.Duration` similar to
 	// master config.
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
+
+	Hooks HooksOptions `json:"hooks"`
 }
 
 // Validate validates the state of the Options struct.
@@ -121,4 +123,9 @@ type FluentOptions struct {
 	Image         string `json:"image"`
 	Port          int    `json:"port"`
 	ContainerName string `json:"container_name"`
+}
+
+// HooksOptions contains external commands to be run when specific things happen.
+type HooksOptions struct {
+	OnConnectionLost []string `json:"on_connection_lost"`
 }

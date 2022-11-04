@@ -1,27 +1,37 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import ResponsiveFilters from 'components/ResponsiveFilters';
-import ResponsiveTable from 'components/ResponsiveTable';
 import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
-import { defaultRowClassName, getFullPaginationConfig } from 'components/Table';
-import usePolling from 'hooks/usePolling';
+import ResponsiveTable from 'components/Table/ResponsiveTable';
+import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import { getTrialWorkloads } from 'services/api';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { numericSorter } from 'shared/utils/sort';
 import {
-  CommandTask, ExperimentBase, MetricName,
-  Step, TrialDetails, TrialWorkloadFilter, WorkloadGroup,
+  CommandTask,
+  ExperimentBase,
+  Metric,
+  Step,
+  TrialDetails,
+  TrialWorkloadFilter,
+  WorkloadGroup,
 } from 'types';
 import handleError from 'utils/error';
-import { extractMetricValue } from 'utils/metric';
+import {
+  extractMetricSortValue,
+  extractMetricValue,
+  metricKeyToMetric,
+  metricToKey,
+} from 'utils/metric';
 import { hasCheckpoint, hasCheckpointStep, workloadsToSteps } from 'utils/workload';
 
 import { Settings } from './TrialDetailsOverview.settings';
@@ -30,10 +40,10 @@ import { columns as defaultColumns } from './TrialDetailsWorkloads.table';
 const { Option } = Select;
 
 export interface Props {
-  defaultMetrics: MetricName[];
+  defaultMetrics: Metric[];
   experiment: ExperimentBase;
-  metricNames: MetricName[];
-  metrics: MetricName[];
+  metricNames: Metric[];
+  metrics: Metric[];
   settings: Settings;
   trial?: TrialDetails;
   updateSettings: (newSettings: Partial<Settings>) => void;
@@ -51,7 +61,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     const metricsApplied = !isEqual(metrics, defaultMetrics);
     const checkpointValidationFilterApplied = settings.filter !== TrialWorkloadFilter.All;
     return metricsApplied || checkpointValidationFilterApplied;
-  }, [ defaultMetrics, metrics, settings.filter ]);
+  }, [defaultMetrics, metrics, settings.filter]);
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -72,7 +82,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       return null;
     };
 
-    const metricRenderer = (metricName: MetricName) => {
+    const metricRenderer = (metricName: Metric) => {
       const metricCol = (_: string, record: Step) => {
         const value = extractMetricValue(record, metricName);
         return <HumanReadableNumber num={value} />;
@@ -81,7 +91,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     };
 
     const { metric, smallerIsBetter } = experiment?.config?.searcher || {};
-    const newColumns = [ ...defaultColumns ].map((column) => {
+    const newColumns = [...defaultColumns].map((column) => {
       if (column.key === 'checkpoint') column.render = checkpointRenderer;
       return column;
     });
@@ -89,16 +99,20 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     metrics.forEach((metricName) => {
       const stateIndex = newColumns.findIndex((column) => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
-        defaultSortOrder: metric && metric === metricName.name ?
-          (smallerIsBetter ? 'ascend' : 'descend') : undefined,
-        key: metricName.name,
+        defaultSortOrder:
+          metric && metric === metricName.name
+            ? smallerIsBetter
+              ? 'ascend'
+              : 'descend'
+            : undefined,
+        key: metricToKey(metricName),
         render: metricRenderer(metricName),
         sorter: (a, b) => {
-          const aVal = extractMetricValue(a, metricName),
-            bVal = extractMetricValue(b, metricName);
+          const aVal = extractMetricSortValue(a, metricName),
+            bVal = extractMetricSortValue(b, metricName);
           if (aVal === undefined && bVal !== undefined) {
             return settings.sortDesc ? -1 : 1;
-          } else if (aVal !== undefined && bVal === undefined){
+          } else if (aVal !== undefined && bVal === undefined) {
             return settings.sortDesc ? 1 : -1;
           }
           return numericSorter(aVal, bVal);
@@ -114,10 +128,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
       return column;
     });
-  }, [ metrics, settings, trial, experiment ]);
+  }, [metrics, settings, trial, experiment]);
 
-  const [ workloads, setWorkloads ] = useState<WorkloadGroup[]>([]);
-  const [ workloadCount, setWorkloadCount ] = useState<number>(0);
+  const [workloads, setWorkloads] = useState<WorkloadGroup[]>([]);
+  const [workloadCount, setWorkloadCount] = useState<number>(0);
 
   const fetchWorkloads = useCallback(async () => {
     try {
@@ -126,9 +140,10 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           filter: settings.filter,
           id: trial.id,
           limit: settings.tableLimit,
+          metricType: metricKeyToMetric(settings.sortKey)?.type || undefined,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortKey: settings.sortKey,
+          sortKey: metricKeyToMetric(settings.sortKey)?.name || undefined,
         });
         setWorkloads(wl.workloads);
         setWorkloadCount(wl.pagination.total || 0);
@@ -153,7 +168,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     settings.filter,
   ]);
 
-  usePolling(fetchWorkloads, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchWorkloads, { rerunOnNewFn: true });
 
   const workloadSteps = useMemo(() => {
     const data = workloads ?? [];
@@ -161,37 +176,43 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     return settings.filter === TrialWorkloadFilter.All
       ? workloadSteps
       : workloadSteps.filter((wlStep) => {
-        if (settings.filter === TrialWorkloadFilter.Checkpoint) {
-          return hasCheckpoint(wlStep);
-        } else if (settings.filter === TrialWorkloadFilter.Validation) {
-          return !!wlStep.validation;
-        } else if (settings.filter === TrialWorkloadFilter.CheckpointOrValidation) {
-          return !!wlStep.checkpoint || !!wlStep.validation;
-        }
-        return false;
+          if (settings.filter === TrialWorkloadFilter.Checkpoint) {
+            return hasCheckpoint(wlStep);
+          } else if (settings.filter === TrialWorkloadFilter.Validation) {
+            return !!wlStep.validation;
+          } else if (settings.filter === TrialWorkloadFilter.CheckpointOrValidation) {
+            return !!wlStep.checkpoint || !!wlStep.validation;
+          }
+          return false;
+        });
+  }, [settings.filter, workloads]);
+
+  const handleHasCheckpointOrValidationSelect = useCallback(
+    (value: SelectValue): void => {
+      const newFilter = value as TrialWorkloadFilter;
+      const isValidFilter = Object.values(TrialWorkloadFilter).includes(newFilter);
+      const filter = isValidFilter ? newFilter : undefined;
+      updateSettings({ filter, tableOffset: 0 });
+    },
+    [updateSettings],
+  );
+
+  const handleTableChange = useCallback(
+    (tablePagination, tableFilters, tableSorter) => {
+      if (Array.isArray(tableSorter)) return;
+
+      const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
+      if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
+
+      updateSettings({
+        sortDesc: order === 'descend',
+        sortKey: columnKey as string,
+        tableLimit: tablePagination.pageSize,
+        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
       });
-  }, [ settings.filter, workloads ]);
-
-  const handleHasCheckpointOrValidationSelect = useCallback((value: SelectValue): void => {
-    const newFilter = value as TrialWorkloadFilter;
-    const isValidFilter = Object.values(TrialWorkloadFilter).includes(newFilter);
-    const filter = isValidFilter ? newFilter : undefined;
-    updateSettings({ filter, tableOffset: 0 });
-  }, [ updateSettings ]);
-
-  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
-    if (Array.isArray(tableSorter)) return;
-
-    const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
-    if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
-
-    updateSettings({
-      sortDesc: order === 'descend',
-      sortKey: columnKey as string,
-      tableLimit: tablePagination.pageSize,
-      tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
-    });
-  }, [ columns, updateSettings ]);
+    },
+    [columns, updateSettings],
+  );
 
   const options = (
     <ResponsiveFilters hasFiltersApplied={hasFiltersApplied}>
@@ -201,11 +222,23 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         value={settings.filter}
         onSelect={handleHasCheckpointOrValidationSelect}>
         {Object.values(TrialWorkloadFilter).map((key) => (
-          <Option key={key} value={key}>{key}</Option>
+          <Option key={key} value={key}>
+            {key}
+          </Option>
         ))}
       </SelectFilter>
     </ResponsiveFilters>
   );
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setWorkloads([]);
+      setWorkloadCount(0);
+    };
+  }, [stopPolling]);
 
   return (
     <>
@@ -214,10 +247,13 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
           columns={columns}
           dataSource={workloadSteps}
           loading={!trial}
-          pagination={getFullPaginationConfig({
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          }, workloadCount)}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            workloadCount,
+          )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="batchNum"
           scroll={{ x: 1000 }}

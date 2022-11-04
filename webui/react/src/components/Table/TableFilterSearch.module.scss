@@ -1,0 +1,22 @@
+.base {
+  display: flex;
+  flex-direction: column;
+
+  .search {
+    border: var(--theme-float-border);
+    padding: 6px 0;
+    width: 150px;
+  }
+  .search :global(.ant-input-prefix) {
+    color: var(--theme-float);
+  }
+  .footer {
+    border-top: solid var(--theme-stroke-width) var(--theme-float-border);
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px;
+  }
+  .footer > *:not(:last-child) {
+    margin-right: 8px;
+  }
+}

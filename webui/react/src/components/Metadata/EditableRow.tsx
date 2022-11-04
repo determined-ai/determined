@@ -4,6 +4,7 @@ import { FormListFieldData } from 'antd/lib/form/FormList';
 import React, { useMemo } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 
 import css from './EditableRow.module.scss';
 
@@ -17,33 +18,34 @@ interface Props {
 
 const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
   const menu = useMemo(() => {
-    enum MenuKey {
-      DELETE_METADATA_ROW = 'delete-metadata-row'
-    }
+    const MenuKey = {
+      DeleteMetadataRow: 'delete-metadata-row',
+    } as const;
 
-    const funcs = { [MenuKey.DELETE_METADATA_ROW]: () => { if (onDelete) onDelete(); } };
+    const funcs = {
+      [MenuKey.DeleteMetadataRow]: () => {
+        if (onDelete) onDelete();
+      },
+    };
 
     const onItemClick: MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { danger: true, key: MenuKey.DELETE_METADATA_ROW, label: 'Delete Row' },
+      { danger: true, key: MenuKey.DeleteMetadataRow, label: 'Delete Row' },
     ];
 
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [ onDelete ]);
+  }, [onDelete]);
 
   return (
-    <Form.Item
-      {...field}
-      name={name}
-      noStyle>
+    <Form.Item {...field} name={name} noStyle>
       <Input.Group className={css.row} compact>
-        <Form.Item name={[ name, 'key' ]} noStyle>
+        <Form.Item name={[name, 'key']} noStyle>
           <Input placeholder="Enter metadata label" />
         </Form.Item>
-        <Form.Item name={[ name, 'value' ]} noStyle>
+        <Form.Item name={[name, 'value']} noStyle>
           <Input placeholder="Enter metadata value" />
         </Form.Item>
         {onDelete && (
@@ -51,7 +53,7 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
             className={css.overflow}
             getPopupContainer={(triggerNode) => triggerNode}
             overlay={menu}
-            trigger={[ 'click' ]}>
+            trigger={['click']}>
             <Button aria-label="action" type="text">
               <Icon name="overflow-vertical" size="tiny" />
             </Button>

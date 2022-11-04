@@ -12,7 +12,7 @@ import uPlot from 'uplot';
 interface SyncContext {
   setZoomed: (zoomed: boolean) => void;
   syncRef: MutableRefObject<uPlot.SyncPubSub>;
-  zoomed : boolean
+  zoomed: boolean;
 }
 
 interface SyncableBounds {
@@ -21,11 +21,15 @@ interface SyncableBounds {
   zoomed: boolean;
 }
 
-const SyncContext = createContext<SyncContext|undefined>(undefined);
+interface Props {
+  children: React.ReactNode;
+}
 
-export const SyncProvider: React.FC = ({ children }) => {
+const SyncContext = createContext<SyncContext | undefined>(undefined);
+
+export const SyncProvider: React.FC<Props> = ({ children }) => {
   const syncRef = useRef(uPlot.sync('x'));
-  const [ zoomed, setZoomed ] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
 
   useEffect(() => {
     if (!zoomed) {
@@ -33,19 +37,16 @@ export const SyncProvider: React.FC = ({ children }) => {
         chart.setData(chart.data, true);
       });
     }
-  }, [ zoomed ]);
+  }, [zoomed]);
 
   return (
-    <SyncContext.Provider
-      value={{ setZoomed, syncRef, zoomed }}>
-      {children}
-    </SyncContext.Provider>
+    <SyncContext.Provider value={{ setZoomed, syncRef, zoomed }}>{children}</SyncContext.Provider>
   );
 };
 
 export const useSyncableBounds = (): SyncableBounds => {
-  const [ zoomed, setZoomed ] = useState(false);
-  const mouseX = useRef<number|undefined>(undefined);
+  const [zoomed, setZoomed] = useState(false);
+  const mouseX = useRef<number | undefined>(undefined);
   const syncContext = useContext(SyncContext);
   const zoomSetter = syncContext?.setZoomed ?? setZoomed;
   const syncRef: MutableRefObject<uPlot.SyncPubSub> | undefined = syncContext?.syncRef;
@@ -73,19 +74,18 @@ export const useSyncableBounds = (): SyncableBounds => {
               }
               mouseX.current = undefined;
               return handler(e);
-            } ;
+            };
           },
-
         },
         drag: syncRef ? { dist: 5, uni: 10, x: true } : { dist: 5, uni: 10, x: true, y: true },
         sync: syncRef && {
           key: syncRef.current.key,
-          scales: [ syncRef.current.key, null ],
+          scales: [syncRef.current.key, null],
           setSeries: false,
         },
       },
     };
-  }, [ zoomSetter, syncRef ]) as Partial<uPlot.Options>;
+  }, [zoomSetter, syncRef]) as Partial<uPlot.Options>;
 
   return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, setZoomed, zoomed };
 };

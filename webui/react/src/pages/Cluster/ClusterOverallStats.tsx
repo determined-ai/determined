@@ -10,13 +10,7 @@ import { ResourceType } from 'types';
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
-  const {
-    activeExperiments,
-    activeTasks,
-    agents,
-    cluster: overview,
-    resourcePools,
-  } = useStore();
+  const { activeExperiments, activeTasks, agents, cluster: overview, resourcePools } = useStore();
 
   const auxContainers = useMemo(() => {
     const tally = {
@@ -28,58 +22,43 @@ export const ClusterOverallStats: React.FC = () => {
       tally.running += rp.auxContainersRunning;
     });
     return tally;
-  }, [ resourcePools ]);
+  }, [resourcePools]);
 
   const maxTotalSlots = useMemo(() => {
     return maxClusterSlotCapacity(resourcePools, agents);
-  }, [ resourcePools, agents ]);
+  }, [resourcePools, agents]);
 
   return (
     <Section hideTitle title="Overview Stats">
-      <Grid gap={ShirtSize.medium} minItemWidth={150} mode={GridMode.AutoFill}>
-        <OverviewStats title="Connected Agents">
-          {agents ? agents.length : '?'}
-        </OverviewStats>
-        {[ ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU ].map((resType) => (
-          (maxTotalSlots[resType] > 0) ? (
-            <OverviewStats
-              key={resType}
-              title={`${resType} Slots Allocated`}>
+      <Grid gap={ShirtSize.Medium} minItemWidth={150} mode={GridMode.AutoFill}>
+        <OverviewStats title="Connected Agents">{agents ? agents.length : '?'}</OverviewStats>
+        {[ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
+          maxTotalSlots[resType] > 0 ? (
+            <OverviewStats key={resType} title={`${resType} Slots Allocated`}>
               {overview[resType].total - overview[resType].available}
-              <small>
-                / {maxTotalSlots[resType]}
-              </small>
+              <small>/ {maxTotalSlots[resType]}</small>
             </OverviewStats>
-          ) : null))}
+          ) : null,
+        )}
         {auxContainers.total ? (
           <OverviewStats title="Aux Containers Running">
             {auxContainers.running} <small>/ {auxContainers.total}</small>
           </OverviewStats>
         ) : null}
         {activeExperiments ? (
-          <OverviewStats title="Active Experiments">
-            {activeExperiments}
-          </OverviewStats>
+          <OverviewStats title="Active Experiments">{activeExperiments}</OverviewStats>
         ) : null}
         {activeTasks.notebooks ? (
-          <OverviewStats title="Active JupyterLabs">
-            {activeTasks.notebooks}
-          </OverviewStats>
+          <OverviewStats title="Active JupyterLabs">{activeTasks.notebooks}</OverviewStats>
         ) : null}
         {activeTasks.tensorboards ? (
-          <OverviewStats title="Active TensorBoards">
-            {activeTasks.tensorboards}
-          </OverviewStats>
+          <OverviewStats title="Active TensorBoards">{activeTasks.tensorboards}</OverviewStats>
         ) : null}
         {activeTasks.shells ? (
-          <OverviewStats title="Active Shells">
-            {activeTasks.shells}
-          </OverviewStats>
+          <OverviewStats title="Active Shells">{activeTasks.shells}</OverviewStats>
         ) : null}
         {activeTasks.commands ? (
-          <OverviewStats title="Active Commands">
-            {activeTasks.commands}
-          </OverviewStats>
+          <OverviewStats title="Active Commands">{activeTasks.commands}</OverviewStats>
         ) : null}
       </Grid>
     </Section>

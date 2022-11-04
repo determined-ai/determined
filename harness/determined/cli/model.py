@@ -179,7 +179,7 @@ args_description = [
         "manage models",
         [
             Cmd(
-                "list",
+                "list ls",
                 list_models,
                 "list all models in the registry",
                 [

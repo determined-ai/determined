@@ -1,7 +1,7 @@
 ---
 name: "Link artifacts"
 
-on:
+on:  # yamllint disable-line rule:truthy
   status
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: larsoner/circleci-artifacts-redirector-action@master
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.DETERMINED_TOKEN }}
           artifact-path: 0/webui/react/build-storybook/index.html
           circleci-jobs: build-storybook
           job-title: Check the rendered storybook here!
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: larsoner/circleci-artifacts-redirector-action@master
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.DETERMINED_TOKEN }}
           artifact-path: 0/docs/site/html/index.html
           circleci-jobs: build-docs
           job-title: Check the rendered doc pages here!

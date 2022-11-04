@@ -55,6 +55,12 @@
 |:----------------------------------------------------------------------:|:--------:|:---------:|
 | [protonet\_omniglot\_pytorch](meta_learning/protonet_omniglot_pytorch) | Omniglot | PyTorch   |
 
+## Diffusion
+
+|                                        Example                                        |  Dataset  | Framework |
+|:-------------------------------------------------------------------------------------:|:---------:|:---------:|
+| [textual\_inversion\_stable\_diffusion](diffusion/textual_inversion_stable_diffusion) | det_logos |  PyTorch  |
+
 ## Generative Adversarial Networks (GAN)
 
 | Example                                       | Dataset          | Framework             |
@@ -78,7 +84,12 @@
 
 ## HP Search Constraints
 
-
 | Example                                                                  | Dataset | Framework  |
 |:------------------------------------------------------------------------:|:-------:|:----------:|
 | [hp\_constraints\_mnist\_pytorch](features/hp_constraints_mnist_pytorch) | MNIST   | PyTorch    |
+
+## Custom Search Method
+
+| Example                                                                  | Dataset | Framework  |
+|:------------------------------------------------------------------------:|:-------:|:----------:|
+| [asha\_search\_method](custom_search_method/asha_search_method)          | MNIST   | PyTorch    |

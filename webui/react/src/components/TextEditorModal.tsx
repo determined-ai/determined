@@ -5,7 +5,7 @@ import css from './TextEditorModal.module.scss';
 
 interface Props {
   disabled: boolean;
-  onSave: (newValue: string) => Promise<Error|void>;
+  onSave: (newValue: string) => Promise<Error | void>;
   placeholder: string;
   title: string;
   value: string;
@@ -16,14 +16,14 @@ interface FormInputs {
 }
 
 const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder, value }) => {
-  const [ isModalOpen, setIsModalOpen ] = useState<boolean>(false);
-  const [ isConfirmLoading, setIsConfirmLoading ] = useState<boolean>(false);
-  const [ form ] = Form.useForm<FormInputs>();
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isConfirmLoading, setIsConfirmLoading] = useState<boolean>(false);
+  const [form] = Form.useForm<FormInputs>();
   const classes = useMemo(() => {
-    const classList = [];
+    const classList: string[] = [];
     if (!value) classList.push(css.buttonBlur);
     return classList.join(' ');
-  }, [ value ]);
+  }, [value]);
 
   const onShowModal = () => {
     setIsModalOpen(true);
@@ -37,7 +37,7 @@ const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder
       onHideModal();
       setIsConfirmLoading(false);
     });
-  }, [ form, onSave ]);
+  }, [form, onSave]);
 
   return (
     <>

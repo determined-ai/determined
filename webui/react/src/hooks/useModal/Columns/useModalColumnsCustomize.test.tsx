@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { DEFAULT_COLUMNS } from 'pages/ProjectDetails.settings';
+import { DEFAULT_COLUMNS } from 'pages/OldProjectDetails.settings';
 import {
   camelCaseToSentence,
   generateAlphaNumeric,
@@ -21,7 +21,7 @@ const camelCaseToListItem = (columnName: string) => {
 
 const ColumnsButton: React.FC = () => {
   const columns = useMemo(() => {
-    const arr: string[] = [ ...DEFAULT_COLUMNS ];
+    const arr: string[] = [...DEFAULT_COLUMNS];
     for (let i = 0; i < NUM_GENERATED_COLUMNS; i++) {
       arr.push(generateAlphaNumeric());
     }
@@ -35,7 +35,7 @@ const ColumnsButton: React.FC = () => {
 
   const openModal = useCallback(() => {
     modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
-  }, [ modalOpen ]);
+  }, [modalOpen]);
 
   return (
     <>
@@ -86,8 +86,9 @@ describe('useModalCustomizeColumns', () => {
     const visible = lists[1];
 
     // Waiting for list items to render.
-    expect((await view.findAllByRole('listitem')).length)
-      .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
+    expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
+      DEFAULT_COLUMNS.length,
+    );
 
     const hiddenList = within(hidden).getAllByRole('listitem');
     const visibleList = within(visible).getAllByRole('listitem');
@@ -95,8 +96,9 @@ describe('useModalCustomizeColumns', () => {
     expect(Array.isArray(hiddenList)).toBeTruthy();
     expect(Array.isArray(visibleList)).toBeTruthy();
 
-    expect(visibleList.map((item) => item.textContent))
-      .toContain(camelCaseToListItem(DEFAULT_COLUMNS[0]));
+    expect(visibleList.map((item) => item.textContent)).toContain(
+      camelCaseToListItem(DEFAULT_COLUMNS[0]),
+    );
   });
 
   it('should searche', async () => {
@@ -109,8 +111,9 @@ describe('useModalCustomizeColumns', () => {
     const lists = view.getAllByRole('list');
 
     // Waiting for list items to render.
-    expect((await view.findAllByRole('listitem')).length)
-      .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
+    expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
+      DEFAULT_COLUMNS.length,
+    );
 
     await user.type(view.getByRole('textbox'), searchTerm);
     expect(view.getByRole('textbox')).toHaveValue(searchTerm);
@@ -131,8 +134,9 @@ describe('useModalCustomizeColumns', () => {
     const lists = view.getAllByRole('list');
 
     // Waiting for list items to render.
-    expect((await view.findAllByRole('listitem')).length)
-      .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
+    expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
+      DEFAULT_COLUMNS.length,
+    );
 
     const initialHiddenHeight = parseInt(lists[0].style.height);
     const initialVisibleHeight = parseInt(lists[1].style.height);
@@ -155,8 +159,9 @@ describe('useModalCustomizeColumns', () => {
     const lists = view.getAllByRole('list');
 
     // Waiting for list items to render.
-    expect((await view.findAllByRole('listitem')).length)
-      .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
+    expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
+      DEFAULT_COLUMNS.length,
+    );
 
     const initialHiddenHeight = parseInt(lists[0].style.height);
     const initialVisibleHeight = parseInt(lists[1].style.height);
@@ -179,20 +184,25 @@ describe('useModalCustomizeColumns', () => {
     const lists = view.getAllByRole('list');
 
     // Waiting for list items to render.
-    expect((await view.findAllByRole('listitem')).length)
-      .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
+    expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
+      DEFAULT_COLUMNS.length,
+    );
 
-    expect(within(lists[1]).getAllByRole('listitem')
-      .map((item) => sentenceToCamelCase(item.textContent ?? '')))
-      .toEqual(DEFAULT_COLUMNS);
+    expect(
+      within(lists[1])
+        .getAllByRole('listitem')
+        .map((item) => sentenceToCamelCase(item.textContent ?? '')),
+    ).toEqual(DEFAULT_COLUMNS);
 
     const transferredColumn = within(lists[1]).getAllByRole('listitem')[0];
     await user.click(transferredColumn);
 
     await waitFor(() => {
-      expect(within(lists[1]).getAllByRole('listitem')
-        .map((item) => sentenceToCamelCase(item.textContent ?? '')))
-        .not.toEqual(DEFAULT_COLUMNS);
+      expect(
+        within(lists[1])
+          .getAllByRole('listitem')
+          .map((item) => sentenceToCamelCase(item.textContent ?? '')),
+      ).not.toEqual(DEFAULT_COLUMNS);
     });
 
     const resetButton = await view.findByText('Reset');
@@ -200,9 +210,11 @@ describe('useModalCustomizeColumns', () => {
     await user.click(resetButton);
 
     await waitFor(() => {
-      expect(within(lists[1]).getAllByRole('listitem')
-        .map((item) => sentenceToCamelCase(item.textContent ?? '')))
-        .toEqual(DEFAULT_COLUMNS);
+      expect(
+        within(lists[1])
+          .getAllByRole('listitem')
+          .map((item) => sentenceToCamelCase(item.textContent ?? '')),
+      ).toEqual(DEFAULT_COLUMNS);
     });
 
     expect(resetButton).not.toBeInTheDocument();
@@ -217,8 +229,9 @@ describe('useModalCustomizeColumns', () => {
     const lists = view.getAllByRole('list');
 
     // Waiting for list items to render.
-    expect((await view.findAllByRole('listitem')).length)
-      .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
+    expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
+      DEFAULT_COLUMNS.length,
+    );
 
     const lineHeight = parseInt(within(lists[0]).getAllByRole('listitem')[0].style.height);
 
@@ -226,8 +239,9 @@ describe('useModalCustomizeColumns', () => {
 
     await waitFor(() => {
       expect(parseInt(lists[0].style.height)).toEqual(0);
-      expect(parseInt(lists[1].style.height))
-        .toEqual((NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight);
+      expect(parseInt(lists[1].style.height)).toEqual(
+        (NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight,
+      );
     });
   });
 
@@ -240,17 +254,22 @@ describe('useModalCustomizeColumns', () => {
     const lists = view.getAllByRole('list');
 
     // Waiting for list items to render.
-    expect((await view.findAllByRole('listitem')).length)
-      .toBeGreaterThanOrEqual(DEFAULT_COLUMNS.length);
+    expect((await view.findAllByRole('listitem')).length).toBeGreaterThanOrEqual(
+      DEFAULT_COLUMNS.length,
+    );
 
     const lineHeight = parseInt(within(lists[0]).getAllByRole('listitem')[0].style.height);
 
     await user.click(await view.findByText('Remove All'));
 
+    ///** The reason for the 2 in the line 270 is that the UI never removes all of the options,
+    /* it always returns with the id and name. The line 272 is a reflection of the math done on the line 270.
+     */
     await waitFor(() => {
-      expect(parseInt(lists[0].style.height))
-        .toEqual((NUM_GENERATED_COLUMNS + DEFAULT_COLUMNS.length) * lineHeight);
-      expect(parseInt(lists[1].style.height)).toEqual(0);
+      expect(parseInt(lists[0].style.height)).toEqual(
+        (NUM_GENERATED_COLUMNS + (DEFAULT_COLUMNS.length - 2)) * lineHeight,
+      );
+      expect(parseInt(lists[1].style.height)).toEqual(2 * lineHeight);
     });
   });
 });

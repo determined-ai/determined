@@ -4,7 +4,7 @@ import OverviewStats from './OverviewStats';
 
 export default {
   component: OverviewStats,
-  title: 'OverviewStats',
+  title: 'Determined/OverviewStats',
 };
 
 export const Default = (): React.ReactNode => (

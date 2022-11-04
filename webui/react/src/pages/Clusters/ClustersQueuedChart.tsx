@@ -14,9 +14,8 @@ interface Props {
   poolStats: V1RPQueueStat | undefined;
 }
 
-const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
-
-  const [ viewDays, setViewDays ] = useState(7);
+const ClustersQueuedChart: React.FC<Props> = ({ poolStats }: Props) => {
+  const [viewDays, setViewDays] = useState(7);
 
   const queuedStats = useMemo(() => {
     if (!poolStats || !poolStats.aggregates) return;
@@ -26,11 +25,11 @@ const ClustersQueuedChart: React.FC<Props> = ({ poolStats }:Props) => {
     );
     // If aggregates only has one record of today, then do not display.
     const aggd = agg.length > 1 ? agg : [];
-    return ({
-      hoursAverage: { average: aggd.map((item) => (item.seconds / 60)) },
+    return {
+      hoursAverage: { average: aggd.map((item) => item.seconds / 60) },
       time: aggd.map((item) => item.periodStart),
-    });
-  }, [ poolStats, viewDays ]);
+    };
+  }, [poolStats, viewDays]);
 
   if (!queuedStats) return <div />;
   return (

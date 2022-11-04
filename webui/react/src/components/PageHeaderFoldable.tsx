@@ -9,9 +9,9 @@ import IconButton from './IconButton';
 import css from './PageHeaderFoldable.module.scss';
 
 export interface Option {
-  disabled?: boolean,
-  icon?: React.ReactNode,
-  isLoading?: boolean,
+  disabled?: boolean;
+  icon?: React.ReactNode;
+  isLoading?: boolean;
   key: string;
   label: string;
   onClick?: (ev: React.MouseEvent) => void;
@@ -19,25 +19,26 @@ export interface Option {
 }
 
 interface Props {
-  foldableContent?: React.ReactNode,
-  leftContent: React.ReactNode,
-  options?: Option[],
+  foldableContent?: React.ReactNode;
+  leftContent: React.ReactNode;
+  options?: Option[];
 }
 
-const renderOptionLabel =
-  (option: Option): React.ReactNode => {
-    return option.tooltip
-      ? <Tooltip title={option.tooltip}><span>{option.label}</span></Tooltip>
-      : <span>{option.label}</span>;
-  };
+const renderOptionLabel = (option: Option): React.ReactNode => {
+  return option.tooltip ? (
+    <Tooltip title={option.tooltip}>
+      <span>{option.label}</span>
+    </Tooltip>
+  ) : (
+    <span>{option.label}</span>
+  );
+};
 
-const PageHeaderFoldable: React.FC<Props> = (
-  { foldableContent, leftContent, options }: Props,
-) => {
-  const [ isExpanded, setIsExpanded ] = useState(false);
+const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, options }: Props) => {
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const dropdownClasses = [ css.optionsDropdown ];
-  let dropdownOptions = null;
+  const dropdownClasses = [css.optionsDropdown];
+  let dropdownOptions: React.ReactNode = <></>;
   if (options && options.length > 0) {
     if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
     if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
@@ -57,15 +58,13 @@ const PageHeaderFoldable: React.FC<Props> = (
       label: renderOptionLabel(opt),
     }));
 
-    dropdownOptions = (<Menu items={menuItems} onClick={onItemClick} />);
+    dropdownOptions = <Menu items={menuItems} onClick={onItemClick} />;
   }
 
   return (
     <div className={css.base}>
       <div className={css.header}>
-        <div className={css.left}>
-          {leftContent}
-        </div>
+        <div className={css.left}>{leftContent}</div>
         <div className={css.options}>
           {foldableContent && (
             <IconButton
@@ -85,12 +84,13 @@ const PageHeaderFoldable: React.FC<Props> = (
                 icon={option?.icon}
                 key={option.key}
                 loading={option.isLoading}
-                onClick={option.onClick}>{renderOptionLabel(option)}
+                onClick={option.onClick}>
+                {renderOptionLabel(option)}
               </Button>
             ))}
           </div>
           {dropdownOptions && (
-            <Dropdown overlay={dropdownOptions} placement="bottomRight" trigger={[ 'click' ]}>
+            <Dropdown overlay={dropdownOptions} placement="bottomRight" trigger={['click']}>
               <Button
                 className={dropdownClasses.join(' ')}
                 ghost

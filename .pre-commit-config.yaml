@@ -1,0 +1,26 @@
+repos:
+  - repo: local
+    hooks:
+      - id: web-js-lint-check
+        name: Web JS Lint Check
+        entry: ./pre-commit/web_lint_check.py js
+        language: system
+        files: '^webui/react/src/'
+        types_or: [javascript, jsx, ts, tsx]
+      - id: web-css-lint-check
+        name: Web CSS Lint Check
+        entry: ./pre-commit/web_lint_check.py css
+        language: system
+        files: '^webui/react/src/'
+        types_or: [css, less, scss]
+      - id: web-misc-lint-check
+        name: Web Misc Lint Check
+        entry: ./pre-commit/web_lint_check.py misc
+        language: system
+        files: '^webui/react/'
+        types_or: [markdown, json]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.17.0
+    hooks:
+      - id: yamllint
+        files: '^.github/'

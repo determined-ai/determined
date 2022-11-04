@@ -9,6 +9,8 @@ import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import handleError from 'utils/error';
 
+const FORM_ID = 'new-project-form';
+
 interface FormInputs {
   description?: string;
   projectName: string;
@@ -20,16 +22,17 @@ interface Props {
 }
 
 const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
-  const [ form ] = Form.useForm<FormInputs>();
+  const [form] = Form.useForm<FormInputs>();
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
+  const projectName = Form.useWatch('projectName', form);
 
   const modalContent = useMemo(() => {
     return (
-      <Form autoComplete="off" form={form} layout="vertical">
+      <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
         <Form.Item
           label="Project Name"
           name="projectName"
-          rules={[ { message: 'Name is required ', required: true } ]}>
+          rules={[{ message: 'Name is required', required: true }]}>
           <Input maxLength={80} />
         </Form.Item>
         <Form.Item label="Description" name="description">
@@ -37,7 +40,7 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         </Form.Item>
       </Form>
     );
-  }, [ form ]);
+  }, [form]);
 
   const handleOk = useCallback(async () => {
     const values = await form.validateFields();
@@ -71,30 +74,34 @@ const useModalProjectCreate = ({ onClose, workspaceId }: Props): ModalHooks => {
         });
       }
     }
-  }, [ form, workspaceId ]);
+  }, [form, workspaceId]);
 
-  const getModalProps = useCallback((): ModalFuncProps => {
+  const getModalProps = useMemo((): ModalFuncProps => {
     return {
       closable: true,
       content: modalContent,
       icon: null,
+      okButtonProps: { disabled: !projectName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Create Project',
       onOk: handleOk,
       title: 'New Project',
     };
-  }, [ handleOk, modalContent ]);
+  }, [handleOk, modalContent, projectName]);
 
-  const modalOpen = useCallback((initialModalProps: ModalFuncProps = {}) => {
-    openOrUpdate({ ...getModalProps(), ...initialModalProps });
-  }, [ getModalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    (initialModalProps: ModalFuncProps = {}) => {
+      openOrUpdate({ ...getModalProps, ...initialModalProps });
+    },
+    [getModalProps, openOrUpdate],
+  );
 
   /**
    * When modal props changes are detected, such as modal content
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps());
-  }, [ getModalProps, modalRef, openOrUpdate ]);
+    if (modalRef.current) openOrUpdate(getModalProps);
+  }, [getModalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

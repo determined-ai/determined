@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
--  Slurm: PodMan V4.0+ is now supported in conjunction with the Slurm job scheduler. 
-

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
@@ -59,6 +61,9 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		}
 		expModel.State = terminal
 		telemetry.ReportExperimentStateChanged(m.system, m.db, *expModel)
+		if err := webhooks.ReportExperimentStateChanged(context.TODO(), *expModel); err != nil {
+			log.WithError(err).Error("failed to send experiment state change webhook in restore")
+		}
 		return nil
 	} else if _, ok := model.RunningStates[expModel.State]; !ok {
 		return errors.Errorf(

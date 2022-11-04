@@ -7,13 +7,13 @@ import { getDisplayName } from 'utils/user';
 import { GroupBy } from './ClusterHistoricalUsage.settings';
 
 export interface ResourceAllocationChartSeries {
-  groupedBy: GroupBy,
-  hoursByAgentLabel: Record<string, number[]>,
-  hoursByExperimentLabel: Record<string, number[]>,
-  hoursByResourcePool: Record<string, number[]>,
-  hoursByUsername: Record<string, number[]>,
-  hoursTotal: Record<string, number[]>,
-  time: string[],
+  groupedBy: GroupBy;
+  hoursByAgentLabel: Record<string, number[]>;
+  hoursByExperimentLabel: Record<string, number[]>;
+  hoursByResourcePool: Record<string, number[]>;
+  hoursByUsername: Record<string, number[]>;
+  hoursTotal: Record<string, number[]>;
+  time: string[];
 }
 
 export const mapResourceAllocationApiToChartSeries = (
@@ -26,9 +26,11 @@ export const mapResourceAllocationApiToChartSeries = (
     hoursByAgentLabel: mapToChartSeries(apiRes.map((item) => item.byAgentLabel)),
     hoursByExperimentLabel: mapToChartSeries(apiRes.map((item) => item.byExperimentLabel)),
     hoursByResourcePool: mapToChartSeries(apiRes.map((item) => item.byResourcePool)),
-    hoursByUsername: mapToChartSeries(apiRes.map((item) => {
-      return mapPeriodToDisplayNames(item.byUsername, users);
-    })),
+    hoursByUsername: mapToChartSeries(
+      apiRes.map((item) => {
+        return mapPeriodToDisplayNames(item.byUsername, users);
+      }),
+    ),
     hoursTotal: { total: apiRes.map((item) => secondToHour(item.seconds)) },
     time: apiRes.map((item) => item.periodStart),
   };
@@ -38,7 +40,7 @@ const mapPeriodToDisplayNames = (
   period: Record<string, number>,
   users: DetailedUser[],
 ): Record<string, number> => {
-  const result:Record<string, number> = {};
+  const result: Record<string, number> = {};
   Object.keys(period).forEach((key) => {
     const user = users.find((u) => u.username === key);
     const displayName = getDisplayName(user);
@@ -69,11 +71,12 @@ const mapToChartSeries = (labelByPeriod: Record<string, number>[]): Record<strin
   });
 
   // 3. find top 5 labels
-  const topLabels = Object.keys(periodByLabelIndexedFlat).map((label) => {
-    const hours = periodByLabelIndexedFlat[label].reduce((acc, val) => acc + val, 0);
-    return [ label, hours ];
-  })
-    .sort((a, b) => ((b[1] as number) - (a[1] as number)))
+  const topLabels = Object.keys(periodByLabelIndexedFlat)
+    .map((label) => {
+      const hours = periodByLabelIndexedFlat[label].reduce((acc, val) => acc + val, 0);
+      return [label, hours];
+    })
+    .sort((a, b) => (b[1] as number) - (a[1] as number))
     .slice(0, 5)
     .map((item) => item[0]);
 

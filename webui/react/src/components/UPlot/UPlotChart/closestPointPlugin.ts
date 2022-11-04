@@ -13,12 +13,12 @@ interface Point {
 }
 
 interface Props {
-  distInPx?: number, // max cursor distance from data point to focus it (in pixel)
-  getPointTooltipHTML?: (xVal: number, yVal: number, point: Point) => string,
-  onPointClick?: (e: MouseEvent, point: Point) => void,
-  onPointFocus?: (point: Point|undefined) => void,
-  pointSizeInPx?: number,
-  yScale: string, // y scale to use
+  distInPx?: number; // max cursor distance from data point to focus it (in pixel)
+  getPointTooltipHTML?: (xVal: number, yVal: number, point: Point) => string;
+  onPointClick?: (e: MouseEvent, point: Point) => void;
+  onPointFocus?: (point: Point | undefined) => void;
+  pointSizeInPx?: number;
+  yScale: string; // y scale to use
 }
 
 export const closestPointPlugin = ({
@@ -31,50 +31,53 @@ export const closestPointPlugin = ({
 }: Props): Plugin => {
   let distValX: number; // distInPx transformed to X value
   let distValY: number; // distInPx transformed to Y value
-  let focusedPoint: Point|undefined; // focused data point
+  let focusedPoint: Point | undefined; // focused data point
   let pointEl: HTMLDivElement;
   let tooltipEl: HTMLDivElement;
 
-  const findClosestPoint =
-    (uPlot: uPlot, cursorLeft: number, cursorTop: number): Point|undefined => {
-      let closestDistance: number = Number.MAX_VALUE;
-      let closestPoint: Point|undefined;
+  const findClosestPoint = (
+    uPlot: uPlot,
+    cursorLeft: number,
+    cursorTop: number,
+  ): Point | undefined => {
+    let closestDistance: number = Number.MAX_VALUE;
+    let closestPoint: Point | undefined;
 
-      // find idx range
-      // note: assuming X data to be sorted, uPlot behaves odd if that's false
-      const cursorValX = uPlot.posToVal(cursorLeft, 'x');
-      const idxMax = findInsertionIndex(uPlot.data[0], cursorValX + distValX) - 1;
-      const idxMin = findInsertionIndex(uPlot.data[0], cursorValX - distValX);
+    // find idx range
+    // note: assuming X data to be sorted, uPlot behaves odd if that's false
+    const cursorValX = uPlot.posToVal(cursorLeft, 'x');
+    const idxMax = findInsertionIndex(uPlot.data[0], cursorValX + distValX) - 1;
+    const idxMin = findInsertionIndex(uPlot.data[0], cursorValX - distValX);
 
-      // find y value range
-      const cursorValY = uPlot.posToVal(cursorTop, yScale);
-      const yValMax = cursorValY + distValY;
-      const yValMin = cursorValY - distValY;
+    // find y value range
+    const cursorValY = uPlot.posToVal(cursorTop, yScale);
+    const yValMax = cursorValY + distValY;
+    const yValMin = cursorValY - distValY;
 
-      // cycle on each data point in the idx range found
-      for (let idx = idxMin; idx <= idxMax; idx++) {
-        const posX = uPlot.valToPos(uPlot.data[0][idx], 'x');
+    // cycle on each data point in the idx range found
+    for (let idx = idxMin; idx <= idxMax; idx++) {
+      const posX = uPlot.valToPos(uPlot.data[0][idx], 'x');
 
-        for (let seriesIdx = 1; seriesIdx < uPlot.data.length; seriesIdx++) {
-          const yVal = uPlot.data[seriesIdx][idx];
+      for (let seriesIdx = 1; seriesIdx < uPlot.data.length; seriesIdx++) {
+        const yVal = uPlot.data[seriesIdx][idx];
 
-          // value is inside Y range
-          if (yVal && yVal >= yValMin && yVal <= yValMax) {
-            const posY = uPlot.valToPos(yVal, yScale);
+        // value is inside Y range
+        if (yVal && yVal >= yValMin && yVal <= yValMax) {
+          const posY = uPlot.valToPos(yVal, yScale);
 
-            const yValDistance = distance(posX, posY, cursorLeft, cursorTop);
-            if (yValDistance < closestDistance) {
-              closestDistance = yValDistance;
-              closestPoint = { idx, seriesIdx };
-            }
+          const yValDistance = distance(posX, posY, cursorLeft, cursorTop);
+          if (yValDistance < closestDistance) {
+            closestDistance = yValDistance;
+            closestPoint = { idx, seriesIdx };
           }
         }
       }
+    }
 
-      return closestPoint;
-    };
+    return closestPoint;
+  };
 
-  const focusPoint = (uPlot: uPlot, point: Point|undefined) => {
+  const focusPoint = (uPlot: uPlot, point: Point | undefined) => {
     focusedPoint = point;
 
     if (typeof onPointFocus === 'function') {
@@ -96,8 +99,10 @@ export const closestPointPlugin = ({
 
     // point
     if (pointSizeInPx > 0) {
-      pointEl.style.backgroundColor = typeof series.stroke === 'function'
-        ? series.stroke(uPlot, point.seriesIdx) as string : 'rgba(0, 155, 222, 1)';
+      pointEl.style.backgroundColor =
+        typeof series.stroke === 'function'
+          ? (series.stroke(uPlot, point.seriesIdx) as string)
+          : 'rgba(0, 155, 222, 1)';
       pointEl.style.display = 'block';
       pointEl.style.height = pointSizeInPx + 'px';
       pointEl.style.left = xPos + 'px';
@@ -106,10 +111,10 @@ export const closestPointPlugin = ({
     }
 
     // tooltip
-    const tooltipHtml = typeof getPointTooltipHTML === 'function'
-      && getPointTooltipHTML(xVal, yVal, point);
+    const tooltipHtml =
+      typeof getPointTooltipHTML === 'function' && getPointTooltipHTML(xVal, yVal, point);
     if (tooltipHtml) {
-      const classes = [ css.tooltip ];
+      const classes = [css.tooltip];
       if (xPos > uPlot.bbox.width / 2 / window.devicePixelRatio) classes.push(css.left);
       if (yPos > uPlot.bbox.height / 2 / window.devicePixelRatio) classes.push(css.top);
 
@@ -167,10 +172,11 @@ export const closestPointPlugin = ({
           });
           over.addEventListener('mouseup', (e) => {
             if (
-              (e as MouseEvent).clientX !== mousedownX
-              || (e as MouseEvent).clientY !== mousedownY
-              || !focusedPoint
-            ) return;
+              (e as MouseEvent).clientX !== mousedownX ||
+              (e as MouseEvent).clientY !== mousedownY ||
+              !focusedPoint
+            )
+              return;
 
             onPointClick(e as MouseEvent, focusedPoint);
           });

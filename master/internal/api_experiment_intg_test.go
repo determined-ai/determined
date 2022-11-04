@@ -38,6 +38,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/userv1"
+	"github.com/determined-ai/determined/proto/pkg/utilv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 type mockStream[T any] struct {
@@ -58,10 +60,10 @@ func expNotFoundErr(expID int) error {
 
 var authZExp *mocks.ExperimentAuthZ
 
-func SetupExpAuthTest(t *testing.T) (
+func setupExpAuthTest(t *testing.T) (
 	*apiServer, *mocks.ExperimentAuthZ, *mocks.ProjectAuthZ, model.User, context.Context,
 ) {
-	api, projectAuthZ, _, user, ctx := SetupProjectAuthZTest(t)
+	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t)
 	if authZExp == nil {
 		authZExp = &mocks.ExperimentAuthZ{}
 		expauth.AuthZProvider.Register("mock", authZExp)
@@ -81,28 +83,29 @@ func minExpConfToYaml(t *testing.T) string {
 	return string(bytes)
 }
 
+//nolint: exhaustivestruct
 var minExpConfig = expconf.ExperimentConfig{
 	RawResources: &expconf.ResourcesConfig{
 		RawResourcePool: ptrs.Ptr("kubernetes"),
 	},
-	RawEntrypoint: &expconf.EntrypointV0{"test"},
+	RawEntrypoint: &expconf.EntrypointV0{RawEntrypoint: "test"},
 	RawCheckpointStorage: &expconf.CheckpointStorageConfig{
 		RawSharedFSConfig: &expconf.SharedFSConfig{
 			RawHostPath: ptrs.Ptr("/"),
 		},
 	},
 	RawHyperparameters: expconf.Hyperparameters{},
-	RawReproducibility: &expconf.ReproducibilityConfig{ptrs.Ptr(uint32(42))},
+	RawReproducibility: &expconf.ReproducibilityConfig{RawExperimentSeed: ptrs.Ptr(uint32(42))},
 	RawSearcher: &expconf.SearcherConfig{
 		RawMetric: ptrs.Ptr("loss"),
 		RawSingleConfig: &expconf.SingleConfig{
-			&expconf.Length{Units: 10, Unit: "batches"},
+			RawMaxLength: &expconf.Length{Units: 10, Unit: "batches"},
 		},
 	},
 }
 
 func TestGetExperimentLabels(t *testing.T) {
-	api, curUser, ctx := SetupAPITest(t)
+	api, curUser, ctx := setupAPITest(t)
 	_, p0 := createProjectAndWorkspace(ctx, t, api)
 	_, p1 := createProjectAndWorkspace(ctx, t, api)
 
@@ -114,23 +117,26 @@ func TestGetExperimentLabels(t *testing.T) {
 	// Labels returned in sorted order by frequency.
 	createTestExpWithProjectID(t, api, curUser, p0, labels[0], labels[1])
 	createTestExpWithProjectID(t, api, curUser, p0, labels[0])
-	resp, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
+	resp, err := api.GetExperimentLabels(ctx,
+		&apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
 	require.NoError(t, err)
 	require.Equal(t, labels[:2], resp.Labels)
 
 	// Exact label arrays don't count multiple times
-	// (behaviour is kinda weird since Postgres can save
+	// (behavior is kinda weird since Postgres can save
 	// ["a", "b"] either as ["b", "a"] or ["a", "b"] breaking this distinct).
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
 	createTestExpWithProjectID(t, api, curUser, p0, labels[2])
-	resp, err = api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
+	resp, err = api.GetExperimentLabels(ctx,
+		&apiv1.GetExperimentLabelsRequest{ProjectId: int32(p0)})
 	require.NoError(t, err)
 	require.Equal(t, labels[0], resp.Labels[0])
 
 	// Second project.
 	createTestExpWithProjectID(t, api, curUser, p1, labels[3])
-	resp, err = api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{ProjectId: int32(p1)})
+	resp, err = api.GetExperimentLabels(ctx,
+		&apiv1.GetExperimentLabelsRequest{ProjectId: int32(p1)})
 	require.NoError(t, err)
 	require.Equal(t, []string{labels[3]}, resp.Labels)
 
@@ -140,9 +146,109 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
+//nolint: exhaustivestruct
+func TestCreateExperimentCheckpointStorage(t *testing.T) {
+	api, _, ctx := setupAPITest(t)
+	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
+	defer func() {
+		api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
+	}()
+
+	conf := `
+entrypoint: test
+searcher:
+  metric: loss
+  name: single
+  max_length: 10
+resources:
+  resource_pool: kubernetes`
+	createReq := &apiv1.CreateExperimentRequest{
+		ModelDefinition: []*utilv1.File{{Content: []byte{1}}},
+		Config:          conf,
+		ParentId:        0,
+		Activate:        false,
+		ProjectId:       1,
+	}
+
+	// No checkpoint specified anywhere.
+	_, err := api.CreateExperiment(ctx, createReq)
+	require.ErrorContains(t, err, "checkpoint_storage: type is a required property")
+
+	// Checkpoint specified in workspace.
+	workspaceLevelKey := "secretz"
+	workspaceID, projectID := createProjectAndWorkspace(ctx, t, api)
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: int32(workspaceID),
+		Workspace: &workspacev1.PatchWorkspace{
+			CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+				"type":       "s3",
+				"bucket":     "bucketz",
+				"secret_key": workspaceLevelKey,
+			}),
+		},
+	})
+	require.NoError(t, err)
+
+	createReq.ProjectId = int32(projectID)
+	resp, err := api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected := map[string]any{
+		"type":                 "s3",
+		"bucket":               "bucketz",
+		"secret_key":           workspaceLevelKey, // Key doesn't get censored.
+		"access_key":           nil,
+		"endpoint_url":         nil,
+		"prefix":               nil,
+		"save_experiment_best": 0.0, // These get filled in from some default.
+		"save_trial_best":      1.0, // Not sure why they are floats.
+		"save_trial_latest":    1.0,
+	}
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+
+	// Checkpoint specified in master config.
+	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{
+		RawS3Config: &expconf.S3Config{
+			RawBucket:    ptrs.Ptr("masterbucket"),
+			RawSecretKey: ptrs.Ptr("mastersecret"),
+		},
+	}
+
+	createReq.ProjectId = 1
+	resp, err = api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected["bucket"] = "masterbucket"
+	expected["secret_key"] = "mastersecret"
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+
+	// Checkpoint specified in master config and workspace gives workspace config.
+	createReq.ProjectId = int32(projectID)
+	resp, err = api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected["bucket"] = "bucketz"
+	expected["secret_key"] = workspaceLevelKey
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+
+	// Checkpoint specified in master config, expconf, and workspace gives expconf.
+	createReq.Config += `
+checkpoint_storage:
+  type: s3
+  bucket: "expconfbucket"
+  `
+	resp, err = api.CreateExperiment(ctx, createReq)
+	require.NoError(t, err)
+
+	expected["bucket"] = "expconfbucket"
+	expected["secret_key"] = workspaceLevelKey
+	require.Equal(t, expected, resp.Config.AsMap()["checkpoint_storage"])
+}
+
+//nolint: exhaustivestruct
 func TestGetExperiments(t *testing.T) {
 	// Setup.
-	api, _, ctx := SetupAPITest(t)
+	api, _, ctx := setupAPITest(t)
 
 	workResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: uuid.New().String(),
@@ -185,7 +291,7 @@ func TestGetExperiments(t *testing.T) {
 		Notes:                "notes",
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("12345"),
-			RawName:        expconf.Name{ptrs.Ptr("name")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
 			RawLabels:      expconf.Labels{"l0": true, "l1": true},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(1)),
@@ -238,7 +344,7 @@ func TestGetExperiments(t *testing.T) {
 		ParentID:             ptrs.Ptr(exp0.ID),
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("234"),
-			RawName:        expconf.Name{ptrs.Ptr("longername")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("longername")},
 			RawLabels:      expconf.Labels{"l0": true},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
@@ -271,83 +377,84 @@ func TestGetExperiments(t *testing.T) {
 	}
 
 	// Filtering tests.
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
+	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "12345"}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "234"}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "123456"})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "longername"}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "name"}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "longlongername"})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1"}}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0"}}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1", "l3"}})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(false)}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(true)}, exp1Expected)
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_PAUSED},
 		}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_ERROR},
 		}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{
 				experimentv1.State_STATE_PAUSED,
 				experimentv1.State_STATE_ERROR,
 			},
 		}, exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_CANCELED},
 		})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin"}}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{userResp.User.Username}}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin", userResp.User.Username}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Users: []string{"notarealuser"}})
+	getExperimentsTest(ctx, t, api, pid,
+		&apiv1.GetExperimentsRequest{Users: []string{"notarealuser"}})
 
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1}}, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{userResp.User.Id}}, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1, userResp.User.Id}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
+	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
 
 	// Sort and order by tests.
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy: apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_ASC,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(t, api, ctx, pid,
+	getExperimentsTest(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
@@ -355,21 +462,21 @@ func TestGetExperiments(t *testing.T) {
 
 	// Pagination tests.
 	// No experiments should be returned for Limit -2.
-	getExperimentsTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: -2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Offset: 1},
+	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -2})
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 0, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: 1},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1},
 		&apiv1.Pagination{Offset: 0, Limit: 1, StartIndex: 0, EndIndex: 1, Total: 2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 1, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Offset: 2},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 2},
 		&apiv1.Pagination{Offset: 2, Limit: 0, StartIndex: 2, EndIndex: 2, Total: 2})
 
-	getExperimentsPageTest(t, api, ctx, pid, &apiv1.GetExperimentsRequest{Limit: -1},
+	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -1},
 		&apiv1.Pagination{Offset: 0, Limit: -1, StartIndex: 0, EndIndex: 2, Total: 2})
 }
 
-func getExperimentsPageTest(t *testing.T, api *apiServer, ctx context.Context, pid int32,
+func getExperimentsPageTest(ctx context.Context, t *testing.T, api *apiServer, pid int32,
 	req *apiv1.GetExperimentsRequest, expected *apiv1.Pagination,
 ) {
 	req.ProjectId = pid
@@ -379,7 +486,7 @@ func getExperimentsPageTest(t *testing.T, api *apiServer, ctx context.Context, p
 	require.Equal(t, expected, res.Pagination)
 }
 
-func getExperimentsTest(t *testing.T, api *apiServer, ctx context.Context, pid int32,
+func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid int32,
 	req *apiv1.GetExperimentsRequest, expected ...*experimentv1.Experiment,
 ) {
 	req.ProjectId = pid
@@ -416,13 +523,14 @@ func getExperimentsTest(t *testing.T, api *apiServer, ctx context.Context, pid i
 
 var res *apiv1.GetExperimentsResponse // Avoid compiler optimizing res out.
 
+//nolint: exhaustivestruct
 func benchmarkGetExperiments(b *testing.B, n int) {
 	// This should be fine as long as no error happens. For some
 	// reason passing nil gives an error. In addition this
 	// benchmark won't run when integration tests run
 	// (since it needs the -bench flag) so if this breaks in the
 	// future it won't cause any issues.
-	api, _, ctx := SetupAPITest((*testing.T)(unsafe.Pointer(b)))
+	api, _, ctx := setupAPITest((*testing.T)(unsafe.Pointer(b))) //nolint: gosec
 
 	// Create n records in the database from the new user we created.
 	userResp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
@@ -456,7 +564,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 		State:                model.PausedState,
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("desc"),
-			RawName:        expconf.Name{ptrs.Ptr("name")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
 		}).(expconf.ExperimentConfig),
 		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
 		ProjectID: 1,
@@ -475,7 +583,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 	for i := 0; i < b.N; i++ {
 		var err error
 		res, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{
-			Limit: -1, UserIds: []int32{int32(userResp.User.Id)},
+			Limit: -1, UserIds: []int32{userResp.User.Id},
 		})
 		if err != nil {
 			b.Fatal(err)
@@ -492,6 +600,7 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
+//nolint: exhaustivestruct
 func createTestExpWithProjectID(
 	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
 ) *model.Experiment {
@@ -510,7 +619,7 @@ func createTestExpWithProjectID(
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawLabels:      labelMap,
 			RawDescription: ptrs.Ptr("desc"),
-			RawName:        expconf.Name{ptrs.Ptr("name")},
+			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
 		}).(expconf.ExperimentConfig),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp))
@@ -522,53 +631,56 @@ func createTestExpWithProjectID(
 }
 
 func TestAuthZGetExperiment(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 	exp := createTestExp(t, api, curUser)
 
 	// Not found returns same as permission denied.
 	_, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: -999})
 	require.Equal(t, expNotFoundErr(-999).Error(), err.Error())
 
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(false, nil).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.Equal(t, expNotFoundErr(exp.ID).Error(), err.Error())
 
 	// Error returns error unmodified.
 	expectedErr := fmt.Errorf("canGetExperimentError")
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+		Return(false, expectedErr).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.Equal(t, expectedErr, err)
 
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
 	res, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.NoError(t, err)
 	require.Equal(t, int32(exp.ID), res.Experiment.Id)
 }
 
 func TestAuthZGetExperiments(t *testing.T) {
-	api, authZExp, authZProject, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 	exp0 := createTestExpWithProjectID(t, api, curUser, projectID)
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 	// Error from FilterExperimentsQuery passes through.
-	authZProject.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).
+		Return(true, nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentsQueryError")
-	authZExp.On("FilterExperimentsQuery", curUser, mock.Anything, mock.Anything).
+	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
 	_, err = api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
 	require.Equal(t, expectedErr, err)
 
 	// Filter only to only one experiment ID.
 	resQuery := &bun.SelectQuery{}
-	authZExp.On("FilterExperimentsQuery", curUser, mock.Anything, mock.Anything).
+	authZExp.On("FilterExperimentsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
-		q := args.Get(2).(*bun.SelectQuery)
+		q := args.Get(3).(*bun.SelectQuery)
 		*resQuery = *q.Where("e.id = ?", exp0.ID)
 	})
 	res, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{})
@@ -579,33 +691,34 @@ func TestAuthZGetExperiments(t *testing.T) {
 }
 
 func TestAuthZPreviewHPSearch(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 
 	// Can't preview hp search returns error with PermissionDenied
 	expectedErr := status.Errorf(codes.PermissionDenied, "canPreviewHPSearchError")
-	authZExp.On("CanPreviewHPSearch", curUser).Return(fmt.Errorf("canPreviewHPSearchError")).Once()
+	authZExp.On("CanPreviewHPSearch", mock.Anything, curUser).
+		Return(fmt.Errorf("canPreviewHPSearchError")).Once()
 	_, err := api.PreviewHPSearch(ctx, &apiv1.PreviewHPSearchRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
 func TestAuthZGetExperimentLabels(t *testing.T) {
-	api, authZExp, authZProject, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 	exp0Label := uuid.New().String()
 	exp0 := createTestExpWithProjectID(t, api, curUser, projectID, exp0Label)
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
 
 	// Can't view project gets a 404.
-	authZProject.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{
 		ProjectId: int32(projectID),
 	})
 	require.Equal(t, projectNotFoundErr(projectID).Error(), err.Error())
 
 	// Error from FilterExperimentsLabelsQuery passes through.
-	authZProject.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
+	authZProject.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
 	expectedErr := fmt.Errorf("filterExperimentLabelsQueryError")
-	authZExp.On("FilterExperimentLabelsQuery", curUser, mock.Anything, mock.Anything).
+	authZExp.On("FilterExperimentLabelsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(nil, expectedErr).Once()
 	_, err = api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{
 		ProjectId: int32(projectID),
@@ -614,9 +727,9 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 
 	// Filter only to only one experiment ID.
 	resQuery := &bun.SelectQuery{}
-	authZExp.On("FilterExperimentLabelsQuery", curUser, mock.Anything, mock.Anything).
+	authZExp.On("FilterExperimentLabelsQuery", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(resQuery, nil).Once().Run(func(args mock.Arguments) {
-		q := args.Get(2).(*bun.SelectQuery)
+		q := args.Get(3).(*bun.SelectQuery)
 		*resQuery = *q.Where("id = ?", exp0.ID)
 	})
 	res, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{})
@@ -625,12 +738,12 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 }
 
 func TestAuthZCreateExperiment(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 	forkFrom := createTestExp(t, api, curUser)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
 	// Can't view forked experiment.
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ParentId: int32(forkFrom.ID),
 	})
@@ -638,8 +751,8 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't fork from experiment.
 	expectedErr := status.Errorf(codes.PermissionDenied, "canForkExperimentError")
-	authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanForkFromExperiment", curUser, mock.Anything).
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanForkFromExperiment", mock.Anything, curUser, mock.Anything).
 		Return(fmt.Errorf("canForkExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ParentId: int32(forkFrom.ID),
@@ -647,30 +760,33 @@ func TestAuthZCreateExperiment(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 
 	// Can't view project passed in.
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
 		Config:    minExpConfToYaml(t),
 	})
-	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
+	require.Equal(t, status.Errorf(codes.NotFound,
+		fmt.Sprintf("project (%d) not found", projectID)), err)
 
 	// Can't view project passed in from config.
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(false, nil).Once()
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: Uncategorized\nworkspace: Uncategorized",
 	})
-	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
+	require.Equal(t, status.Errorf(codes.NotFound,
+		"workspace 'Uncategorized' or project 'Uncategorized' not found"), err)
 
-	// Same as passing in a non existant project.
+	// Same as passing in a non existent project.
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Config: minExpConfToYaml(t) + "project: doesntexist123\nworkspace: doesntexist123",
 	})
-	require.Equal(t, status.Errorf(codes.NotFound, errCantFindProject.Error()), err)
+	require.Equal(t, status.Errorf(codes.NotFound,
+		"workspace 'doesntexist123' or project 'doesntexist123' not found"), err)
 
 	// Can't create experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canCreateExperimentError")
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("canCreateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		ProjectId: int32(projectID),
@@ -680,9 +796,10 @@ func TestAuthZCreateExperiment(t *testing.T) {
 
 	// Can't activate experiment deny.
 	expectedErr = status.Errorf(codes.PermissionDenied, "canActivateExperimentError")
-	projectAuthZ.On("CanGetProject", curUser, mock.Anything).Return(true, nil).Once()
-	authZExp.On("CanCreateExperiment", curUser, mock.Anything, mock.Anything).Return(nil).Once()
-	authZExp.On("CanEditExperiment", curUser, mock.Anything, mock.Anything).Return(
+	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(true, nil).Once()
+	authZExp.On("CanCreateExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).
+		Return(nil).Once()
+	authZExp.On("CanEditExperiment", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		fmt.Errorf("canActivateExperimentError")).Once()
 	_, err = api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
 		Activate: true,
@@ -692,7 +809,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 }
 
 func TestAuthZExpCompareTrialsSample(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 
 	exp0 := createTestExp(t, api, curUser)
 	exp1 := createTestExp(t, api, curUser)
@@ -704,23 +821,25 @@ func TestAuthZExpCompareTrialsSample(t *testing.T) {
 
 	// Can't view first experiment gets error.
 	expectedErr := status.Errorf(codes.PermissionDenied, "firstError")
-	authZExp.On("CanGetExperiment", curUser, exp0).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", curUser, exp0).Return(fmt.Errorf("firstError")).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, exp0).Return(true, nil).Once()
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, exp0).
+		Return(fmt.Errorf("firstError")).Once()
 	err := api.ExpCompareTrialsSample(req, mockStream[*apiv1.ExpCompareTrialsSampleResponse]{ctx})
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// Can't view second experiment gets error.
 	expectedErr = status.Errorf(codes.PermissionDenied, "secondError")
-	authZExp.On("CanGetExperiment", curUser, exp0).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", curUser, exp0).Return(nil).Once()
-	authZExp.On("CanGetExperiment", curUser, exp1).Return(true, nil).Once()
-	authZExp.On("CanGetExperimentArtifacts", curUser, exp1).Return(fmt.Errorf("secondError")).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, exp0).Return(true, nil).Once()
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, exp0).Return(nil).Once()
+	authZExp.On("CanGetExperiment", mock.Anything, curUser, exp1).Return(true, nil).Once()
+	authZExp.On("CanGetExperimentArtifacts", mock.Anything, curUser, exp1).
+		Return(fmt.Errorf("secondError")).Once()
 	err = api.ExpCompareTrialsSample(req, mockStream[*apiv1.ExpCompareTrialsSampleResponse]{ctx})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
-	api, authZExp, _, curUser, ctx := SetupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
 	exp := createTestExp(t, api, curUser)
 
 	cases := []struct {
@@ -884,24 +1003,33 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			})
 			return err
 		}},
+		{"CanGetExperimentArtifacts", func(id int) error {
+			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
+				ExperimentIds: []int32{int32(id)},
+			})
+			return err
+		}},
 	}
 
 	for _, curCase := range cases {
 		// Not found returns same as permission denied.
 		require.Equal(t, expNotFoundErr(-999), curCase.IDToReqCall(-999))
 
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, nil).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, nil).Once()
 		require.Equal(t, expNotFoundErr(exp.ID), curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(false, expectedErr).Once()
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(false, expectedErr).Once()
 		require.Equal(t, expectedErr, curCase.IDToReqCall(exp.ID))
 
 		// Deny returns error with PermissionDenied.
 		expectedErr = status.Errorf(codes.PermissionDenied, curCase.DenyFuncName+"Error")
-		authZExp.On("CanGetExperiment", curUser, mock.Anything).Return(true, nil).Once()
-		authZExp.On(curCase.DenyFuncName, curUser, mock.Anything).
+		authZExp.On("CanGetExperiment", mock.Anything, curUser, mock.Anything).
+			Return(true, nil).Once()
+		authZExp.On(curCase.DenyFuncName, mock.Anything, curUser, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Error")).Once()
 		require.Equal(t, expectedErr.Error(), curCase.IDToReqCall(exp.ID).Error())
 	}

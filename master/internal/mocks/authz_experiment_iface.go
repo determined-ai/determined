@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	bun "github.com/uptrace/bun"
 
 	mock "github.com/stretchr/testify/mock"
@@ -17,13 +19,13 @@ type ExperimentAuthZ struct {
 	mock.Mock
 }
 
-// CanCreateExperiment provides a mock function with given fields: curUser, proj, e
-func (_m *ExperimentAuthZ) CanCreateExperiment(curUser model.User, proj *projectv1.Project, e *model.Experiment) error {
-	ret := _m.Called(curUser, proj, e)
+// CanCreateExperiment provides a mock function with given fields: ctx, curUser, proj, e
+func (_m *ExperimentAuthZ) CanCreateExperiment(ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, proj, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project, *model.Experiment) error); ok {
-		r0 = rf(curUser, proj, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, proj, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -31,13 +33,13 @@ func (_m *ExperimentAuthZ) CanCreateExperiment(curUser model.User, proj *project
 	return r0
 }
 
-// CanDeleteExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanDeleteExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
+// CanDeleteExperiment provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanDeleteExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -45,13 +47,13 @@ func (_m *ExperimentAuthZ) CanDeleteExperiment(curUser model.User, e *model.Expe
 	return r0
 }
 
-// CanEditExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanEditExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
+// CanEditExperiment provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanEditExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,13 +61,13 @@ func (_m *ExperimentAuthZ) CanEditExperiment(curUser model.User, e *model.Experi
 	return r0
 }
 
-// CanEditExperimentsMetadata provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanEditExperimentsMetadata(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
+// CanEditExperimentsMetadata provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanEditExperimentsMetadata(ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -73,13 +75,13 @@ func (_m *ExperimentAuthZ) CanEditExperimentsMetadata(curUser model.User, e *mod
 	return r0
 }
 
-// CanForkFromExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanForkFromExperiment(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
+// CanForkFromExperiment provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanForkFromExperiment(ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -87,20 +89,20 @@ func (_m *ExperimentAuthZ) CanForkFromExperiment(curUser model.User, e *model.Ex
 	return r0
 }
 
-// CanGetExperiment provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetExperiment(curUser model.User, e *model.Experiment) (bool, error) {
-	ret := _m.Called(curUser, e)
+// CanGetExperiment provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanGetExperiment(ctx context.Context, curUser model.User, e *model.Experiment) (bool, error) {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) bool); ok {
-		r0 = rf(curUser, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) bool); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.User, *model.Experiment) error); ok {
-		r1 = rf(curUser, e)
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r1 = rf(ctx, curUser, e)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -108,13 +110,13 @@ func (_m *ExperimentAuthZ) CanGetExperiment(curUser model.User, e *model.Experim
 	return r0, r1
 }
 
-// CanGetExperimentArtifacts provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanGetExperimentArtifacts(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
+// CanGetExperimentArtifacts provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanGetExperimentArtifacts(ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -122,13 +124,13 @@ func (_m *ExperimentAuthZ) CanGetExperimentArtifacts(curUser model.User, e *mode
 	return r0
 }
 
-// CanPreviewHPSearch provides a mock function with given fields: curUser
-func (_m *ExperimentAuthZ) CanPreviewHPSearch(curUser model.User) error {
-	ret := _m.Called(curUser)
+// CanPreviewHPSearch provides a mock function with given fields: ctx, curUser
+func (_m *ExperimentAuthZ) CanPreviewHPSearch(ctx context.Context, curUser model.User) error {
+	ret := _m.Called(ctx, curUser)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User) error); ok {
-		r0 = rf(curUser)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User) error); ok {
+		r0 = rf(ctx, curUser)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -136,13 +138,13 @@ func (_m *ExperimentAuthZ) CanPreviewHPSearch(curUser model.User) error {
 	return r0
 }
 
-// CanSetExperimentsCheckpointGCPolicy provides a mock function with given fields: curUser, e
-func (_m *ExperimentAuthZ) CanSetExperimentsCheckpointGCPolicy(curUser model.User, e *model.Experiment) error {
-	ret := _m.Called(curUser, e)
+// CanRunCustomSearch provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanRunCustomSearch(ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment) error); ok {
-		r0 = rf(curUser, e)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -150,13 +152,13 @@ func (_m *ExperimentAuthZ) CanSetExperimentsCheckpointGCPolicy(curUser model.Use
 	return r0
 }
 
-// CanSetExperimentsMaxSlots provides a mock function with given fields: curUser, e, slots
-func (_m *ExperimentAuthZ) CanSetExperimentsMaxSlots(curUser model.User, e *model.Experiment, slots int) error {
-	ret := _m.Called(curUser, e, slots)
+// CanSetExperimentsCheckpointGCPolicy provides a mock function with given fields: ctx, curUser, e
+func (_m *ExperimentAuthZ) CanSetExperimentsCheckpointGCPolicy(ctx context.Context, curUser model.User, e *model.Experiment) error {
+	ret := _m.Called(ctx, curUser, e)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, int) error); ok {
-		r0 = rf(curUser, e, slots)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment) error); ok {
+		r0 = rf(ctx, curUser, e)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -164,13 +166,13 @@ func (_m *ExperimentAuthZ) CanSetExperimentsMaxSlots(curUser model.User, e *mode
 	return r0
 }
 
-// CanSetExperimentsPriority provides a mock function with given fields: curUser, e, priority
-func (_m *ExperimentAuthZ) CanSetExperimentsPriority(curUser model.User, e *model.Experiment, priority int) error {
-	ret := _m.Called(curUser, e, priority)
+// CanSetExperimentsMaxSlots provides a mock function with given fields: ctx, curUser, e, slots
+func (_m *ExperimentAuthZ) CanSetExperimentsMaxSlots(ctx context.Context, curUser model.User, e *model.Experiment, slots int) error {
+	ret := _m.Called(ctx, curUser, e, slots)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, int) error); ok {
-		r0 = rf(curUser, e, priority)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment, int) error); ok {
+		r0 = rf(ctx, curUser, e, slots)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -178,13 +180,13 @@ func (_m *ExperimentAuthZ) CanSetExperimentsPriority(curUser model.User, e *mode
 	return r0
 }
 
-// CanSetExperimentsWeight provides a mock function with given fields: curUser, e, weight
-func (_m *ExperimentAuthZ) CanSetExperimentsWeight(curUser model.User, e *model.Experiment, weight float64) error {
-	ret := _m.Called(curUser, e, weight)
+// CanSetExperimentsPriority provides a mock function with given fields: ctx, curUser, e, priority
+func (_m *ExperimentAuthZ) CanSetExperimentsPriority(ctx context.Context, curUser model.User, e *model.Experiment, priority int) error {
+	ret := _m.Called(ctx, curUser, e, priority)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(model.User, *model.Experiment, float64) error); ok {
-		r0 = rf(curUser, e, weight)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment, int) error); ok {
+		r0 = rf(ctx, curUser, e, priority)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -192,13 +194,27 @@ func (_m *ExperimentAuthZ) CanSetExperimentsWeight(curUser model.User, e *model.
 	return r0
 }
 
-// FilterExperimentLabelsQuery provides a mock function with given fields: curUser, proj, query
-func (_m *ExperimentAuthZ) FilterExperimentLabelsQuery(curUser model.User, proj *projectv1.Project, query *bun.SelectQuery) (*bun.SelectQuery, error) {
-	ret := _m.Called(curUser, proj, query)
+// CanSetExperimentsWeight provides a mock function with given fields: ctx, curUser, e, weight
+func (_m *ExperimentAuthZ) CanSetExperimentsWeight(ctx context.Context, curUser model.User, e *model.Experiment, weight float64) error {
+	ret := _m.Called(ctx, curUser, e, weight)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *model.Experiment, float64) error); ok {
+		r0 = rf(ctx, curUser, e, weight)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// FilterExperimentLabelsQuery provides a mock function with given fields: ctx, curUser, proj, query
+func (_m *ExperimentAuthZ) FilterExperimentLabelsQuery(ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery) (*bun.SelectQuery, error) {
+	ret := _m.Called(ctx, curUser, proj, query)
 
 	var r0 *bun.SelectQuery
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project, *bun.SelectQuery) *bun.SelectQuery); ok {
-		r0 = rf(curUser, proj, query)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project, *bun.SelectQuery) *bun.SelectQuery); ok {
+		r0 = rf(ctx, curUser, proj, query)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*bun.SelectQuery)
@@ -206,8 +222,8 @@ func (_m *ExperimentAuthZ) FilterExperimentLabelsQuery(curUser model.User, proj 
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.User, *projectv1.Project, *bun.SelectQuery) error); ok {
-		r1 = rf(curUser, proj, query)
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, *projectv1.Project, *bun.SelectQuery) error); ok {
+		r1 = rf(ctx, curUser, proj, query)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -215,13 +231,13 @@ func (_m *ExperimentAuthZ) FilterExperimentLabelsQuery(curUser model.User, proj 
 	return r0, r1
 }
 
-// FilterExperimentsQuery provides a mock function with given fields: curUser, proj, query
-func (_m *ExperimentAuthZ) FilterExperimentsQuery(curUser model.User, proj *projectv1.Project, query *bun.SelectQuery) (*bun.SelectQuery, error) {
-	ret := _m.Called(curUser, proj, query)
+// FilterExperimentsQuery provides a mock function with given fields: ctx, curUser, proj, query
+func (_m *ExperimentAuthZ) FilterExperimentsQuery(ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery) (*bun.SelectQuery, error) {
+	ret := _m.Called(ctx, curUser, proj, query)
 
 	var r0 *bun.SelectQuery
-	if rf, ok := ret.Get(0).(func(model.User, *projectv1.Project, *bun.SelectQuery) *bun.SelectQuery); ok {
-		r0 = rf(curUser, proj, query)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, *projectv1.Project, *bun.SelectQuery) *bun.SelectQuery); ok {
+		r0 = rf(ctx, curUser, proj, query)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*bun.SelectQuery)
@@ -229,8 +245,8 @@ func (_m *ExperimentAuthZ) FilterExperimentsQuery(curUser model.User, proj *proj
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(model.User, *projectv1.Project, *bun.SelectQuery) error); ok {
-		r1 = rf(curUser, proj, query)
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, *projectv1.Project, *bun.SelectQuery) error); ok {
+		r1 = rf(ctx, curUser, proj, query)
 	} else {
 		r1 = ret.Error(1)
 	}

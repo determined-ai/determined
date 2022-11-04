@@ -32,8 +32,12 @@
     height: var(--nav-bottom-bar-height);
     padding: 0 16px;
 
-    .icon { padding-right: 16px }
-    .label { font-size: 14px; }
+    .icon {
+      padding-right: 16px;
+    }
+    .label {
+      font-size: 14px;
+    }
     .spacer {
       width: calc(24px + 2 * 16px);
     }
@@ -43,7 +47,9 @@
   display: flex;
   opacity: 0;
 
-  .sheet { bottom: -50%; }
+  .sheet {
+    bottom: -50%;
+  }
 }
 .sheetEnterActive {
   opacity: 1;
@@ -57,13 +63,17 @@
 .sheetEnterDone {
   display: flex;
 
-  .sheet { bottom: 0; }
+  .sheet {
+    bottom: 0;
+  }
 }
 .sheetExit {
   display: flex;
   opacity: 1;
 
-  .sheet { bottom: 0; }
+  .sheet {
+    bottom: 0;
+  }
 }
 .sheetExitActive {
   opacity: 0;
@@ -77,5 +87,7 @@
 .sheetExitDone {
   display: none;
 
-  .sheet { bottom: -50%; }
+  .sheet {
+    bottom: -50%;
+  }
 }

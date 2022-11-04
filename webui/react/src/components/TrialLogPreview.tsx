@@ -3,7 +3,9 @@ import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import LogViewerEntry, {
-  DATETIME_FORMAT, LogEntry, MAX_DATETIME_LENGTH,
+  DATETIME_FORMAT,
+  LogEntry,
+  MAX_DATETIME_LENGTH,
 } from 'components/LogViewer/LogViewerEntry';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import { detApi } from 'services/apiConfig';
@@ -29,9 +31,9 @@ const TrialLogPreview: React.FC<Props> = ({
 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const nonEmptyLogFound = useRef(false);
-  const [ logEntry, setLogEntry ] = useState<LogEntry>();
+  const [logEntry, setLogEntry] = useState<LogEntry>();
 
-  const classes = [ css.base ];
+  const classes = [css.base];
   const charMeasures = useGetCharMeasureInContainer(containerRef);
   const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
 
@@ -66,47 +68,46 @@ const TrialLogPreview: React.FC<Props> = ({
     );
   }, []);
 
-  const fetchLatestTrialLog = useCallback((
-    trialId: number,
-    trialState: RunState,
-    canceler: AbortController,
-  ) => {
-    readStream(
-      detApi.StreamingExperiments.trialLogs(
-        trialId,
-        100,
-        false,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        'ORDER_BY_DESC',
-        undefined,
-        { signal: canceler.signal },
-      ),
-      (event) => {
-        const entry = mapV1LogsResponse(event);
+  const fetchLatestTrialLog = useCallback(
+    (trialId: number, trialState: RunState, canceler: AbortController) => {
+      readStream(
+        detApi.StreamingExperiments.trialLogs(
+          trialId,
+          100,
+          false,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          'ORDER_BY_DESC',
+          undefined,
+          { signal: canceler.signal },
+        ),
+        (event) => {
+          const entry = mapV1LogsResponse(event);
 
-        /*
-         * Hoping within the 100 log lines we are able to find a log
-         * entry that is not empty, so there is something we can show
-         * as a baseline.
-         */
-        if (!nonEmptyLogFound.current && entry.message) {
-          nonEmptyLogFound.current = true;
-          fetchTrialLogs(trialId, entry.time, canceler);
-        }
-      },
-    );
-  }, [ fetchTrialLogs ]);
+          /*
+           * Hoping within the 100 log lines we are able to find a log
+           * entry that is not empty, so there is something we can show
+           * as a baseline.
+           */
+          if (!nonEmptyLogFound.current && entry.message) {
+            nonEmptyLogFound.current = true;
+            fetchTrialLogs(trialId, entry.time, canceler);
+          }
+        },
+      );
+    },
+    [fetchTrialLogs],
+  );
 
   const handleClick = useCallback(() => {
     if (onViewLogs) onViewLogs();
-  }, [ onViewLogs ]);
+  }, [onViewLogs]);
 
   useEffect(() => {
     if (!trial?.id || trial?.state === RunState.Completed) return;
@@ -115,7 +116,7 @@ const TrialLogPreview: React.FC<Props> = ({
     fetchLatestTrialLog(trial.id, trial.state, canceler);
 
     return () => canceler.abort();
-  }, [ fetchLatestTrialLog, trial?.id, trial?.state ]);
+  }, [fetchLatestTrialLog, trial?.id, trial?.state]);
 
   return (
     <div className={classes.join(' ')}>

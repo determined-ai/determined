@@ -2,13 +2,13 @@
   display: flex;
   flex-grow: 1;
 
-  [class*=NavigationSideBar_base_] {
+  [class*='NavigationSideBar_base_'] {
     flex-grow: 0;
     position: relative;
     // Avoid setting anything else with a z-index of 100 or higher  in the non-nav/main content area
     z-index: 100;
   }
-  [class*=NavigationTabbar_base] {
+  [class*='NavigationTabbar_base'] {
     display: none;
     flex-grow: 0;
     // Avoid setting anything else with a z-index of 100 or higher  in the non-nav/main content area
@@ -23,8 +23,12 @@
   @media only screen and (max-width: $breakpoint-mobile) {
     flex-direction: column;
 
-    [class*=NavigationSideBar_base_] { display: none; }
-    [class*=NavigationTabbar_base] { display: flex; }
+    [class*='NavigationSideBar_base_'] {
+      display: none;
+    }
+    [class*='NavigationTabbar_base'] {
+      display: flex;
+    }
     & > main {
       height: calc(var(--vh, 1vh) * 100 - var(--nav-bottom-bar-height));
     }

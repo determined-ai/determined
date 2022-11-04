@@ -1,14 +1,28 @@
 import dataclasses
 import enum
 import json
+import logging
 import pathlib
 import shutil
+import tarfile
 import warnings
 from typing import Any, Dict, List, Optional, cast
 
+from determined import errors
 from determined.common import api, constants, storage
 from determined.common.api import bindings
 from determined.common.storage import shared
+
+
+class DownloadMode(enum.Enum):
+    """A list of supported checkpoint download modes."""
+
+    DIRECT = "direct"  # Download directly from checkpoint storage.
+    MASTER = "master"  # Proxy download through the master.
+    AUTO = "auto"  # Attemp DIRECT and fall back to MASTER.
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class ModelFramework(enum.Enum):
@@ -112,7 +126,7 @@ class Checkpoint:
             "checkpoint storage configuration.".format(self.uuid, potential_paths)
         )
 
-    def download(self, path: Optional[str] = None) -> str:
+    def download(self, path: Optional[str] = None, mode: DownloadMode = DownloadMode.AUTO) -> str:
         """
         Download checkpoint to local storage.
 
@@ -127,6 +141,8 @@ class Checkpoint:
                 checkpoint under. If this parameter is not set, the checkpoint will
                 be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
                 current working directory.
+            mode (DownloadMode): Mode governs how a checkpoint is downloaded. Refer to
+                the definition of DownloadMode for details.
         """
         if path is not None:
             local_ckpt_dir = pathlib.Path(path)
@@ -147,31 +163,17 @@ class Checkpoint:
                 raise NotImplementedError("Non-training checkpoints cannot be downloaded")
 
             checkpoint_storage = self.training.experiment_config["checkpoint_storage"]
-            if checkpoint_storage["type"] == "shared_fs":
-                src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
-                shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
-            else:
-                local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-                manager = storage.build(
-                    checkpoint_storage,
-                    container_path=None,
-                )
-                if not isinstance(
-                    manager,
-                    (
-                        storage.S3StorageManager,
-                        storage.GCSStorageManager,
-                        storage.AzureStorageManager,
-                    ),
-                ):
-                    raise AssertionError(
-                        "Downloading from Azure, S3 or GCS requires the experiment to be "
-                        "configured with Azure, S3 or GCS checkpointing, {} found instead".format(
-                            checkpoint_storage["type"]
-                        )
-                    )
+            if mode == DownloadMode.DIRECT:
+                self._download_direct(checkpoint_storage, local_ckpt_dir)
 
-                manager.download(self.uuid, str(local_ckpt_dir))
+            elif mode == DownloadMode.MASTER:
+                self._download_via_master(self._session, self.uuid, local_ckpt_dir)
+
+            elif mode == DownloadMode.AUTO:
+                self._download_auto(checkpoint_storage, local_ckpt_dir)
+
+            else:
+                raise ValueError(f"Unknown download mode {mode}")
 
         # As of v0.18.0, we write metadata.json once at upload time.  Checkpoints uploaded prior to
         # 0.18.0 will not have a metadata.json present.  Unfortunately, checkpoints earlier than
@@ -183,6 +185,73 @@ class Checkpoint:
             self.write_metadata_file(str(metadata_path))
 
         return str(local_ckpt_dir)
+
+    def _download_auto(
+        self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path
+    ) -> None:
+        try:
+            self._download_direct(checkpoint_storage, local_ckpt_dir)
+
+        except errors.NoDirectStorageAccess:
+            if checkpoint_storage["type"] != "s3":
+                raise
+
+            logging.info("Unable to download directly, proxying download through master")
+            try:
+                self._download_via_master(self._session, self.uuid, local_ckpt_dir)
+            except Exception as e:
+                raise errors.MultipleDownloadsFailed(
+                    "Auto checkpoint download mode was enabled. "
+                    "Attempted direct download and proxied download through master "
+                    "but they both failed."
+                ) from e
+
+    def _download_direct(
+        self, checkpoint_storage: Dict[str, Any], local_ckpt_dir: pathlib.Path
+    ) -> None:
+        if checkpoint_storage["type"] == "shared_fs":
+            src_ckpt_dir = self._find_shared_fs_path(checkpoint_storage)
+            shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
+        else:
+            local_ckpt_dir.mkdir(parents=True, exist_ok=True)
+            manager = storage.build(
+                checkpoint_storage,
+                container_path=None,
+            )
+            if not isinstance(
+                manager,
+                (
+                    storage.S3StorageManager,
+                    storage.GCSStorageManager,
+                    storage.AzureStorageManager,
+                ),
+            ):
+                raise AssertionError(
+                    "Downloading from Azure, S3 or GCS requires the experiment "
+                    "to be configured with Azure, S3 or GCS checkpointing"
+                    ", {} found instead".format(checkpoint_storage["type"])
+                )
+
+            manager.download(self.uuid, str(local_ckpt_dir))
+
+    @staticmethod
+    def _download_via_master(sess: api.Session, uuid: str, local_ckpt_dir: pathlib.Path) -> None:
+        """Downloads a checkpoint through the master.
+        Arguments:
+            sess (api.Session): a session for the download
+            uuid (string): the uuid of the checkpoint to be downloaded
+            local_ckpt_dir (Path-like): the local directory where the checkpoint is downloaded
+        """
+        local_ckpt_dir.mkdir(parents=True, exist_ok=True)
+
+        resp = sess.get(f"/checkpoints/{uuid}", headers={"Accept": "application/gzip"}, stream=True)
+        if not resp.ok:
+            raise errors.ProxiedDownloadFailed(
+                "unable to download checkpoint from master:", resp.status_code, resp.reason
+            )
+        # gunzip and untar. tarfile.open can detect the compression algorithm
+        with tarfile.open(fileobj=resp.raw) as tf:
+            tf.extractall(local_ckpt_dir)
 
     def write_metadata_file(self, path: str) -> None:
         """

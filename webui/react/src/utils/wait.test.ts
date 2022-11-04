@@ -62,7 +62,7 @@ describe('Wait Page Utilities', () => {
     };
 
     it('should convert task to event url', () => {
-      for (const [ type, task ] of Object.entries(COMMAND_TASK)) {
+      for (const [type, task] of Object.entries(COMMAND_TASK)) {
         expect(utils.commandToEventUrl(task)).toMatch(REGEX[type]);
       }
     });
@@ -114,11 +114,13 @@ describe('Wait Page Utilities', () => {
     };
 
     it('should convert task to wait page url', () => {
-      expect(utils.waitPageUrl(COMMAND_TASK[CommandType.JupyterLab]))
-        .toMatch(REGEX[CommandType.JupyterLab]);
+      expect(utils.waitPageUrl(COMMAND_TASK[CommandType.JupyterLab])).toMatch(
+        REGEX[CommandType.JupyterLab],
+      );
 
-      expect(utils.waitPageUrl(COMMAND_TASK[CommandType.TensorBoard]))
-        .toMatch(REGEX[CommandType.TensorBoard]);
+      expect(utils.waitPageUrl(COMMAND_TASK[CommandType.TensorBoard])).toMatch(
+        REGEX[CommandType.TensorBoard],
+      );
     });
 
     it('should throw error for tasks that are not JupyterLabs or TensorBoards', () => {

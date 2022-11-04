@@ -20,18 +20,19 @@ interface Props {
 export const renderRow = ({ label, content, separator }: InfoRowProps): React.ReactNode => {
   if (content == null) return null;
   return (
-    <div
-      className={[ css.info, separator ? css.separator : null ].join(' ')}
-      key={label?.toString()}>
+    <div className={[css.info, separator ? css.separator : null].join(' ')} key={label?.toString()}>
       <dt className={css.label}>{label}</dt>
       {Array.isArray(content) ? (
         <dd className={css.contentList}>
-          {content.map((item, idx) => <div className={css.content} key={idx}>{item}</div>)}
+          {content.map((item, idx) => (
+            <div className={css.content} key={idx}>
+              {item}
+            </div>
+          ))}
         </dd>
       ) : (
         <dd className={css.content}>{content}</dd>
       )}
-
     </div>
   );
 };

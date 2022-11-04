@@ -1,7 +1,7 @@
 ---
 name: "Test det CLI"
 
-on:
+on:  # yamllint disable-line rule:truthy
   pull_request:
     paths-ignore:
       - '*.md'
@@ -35,13 +35,13 @@ jobs:
           python -m pip install --upgrade pip
           pip --version
           # Windows needs special treatment of cryptography for unknown reasons.
-          # LMDB also has special requirements that only apply to windows (patch-ng).
+          # LMDB also has special reqs that only apply to windows (patch-ng).
           pip install wheel cryptography patch-ng
           cd harness; python setup.py bdist_wheel -d ../build
       - name: Install determined
         run: |
           pip install --find-links build determined==${{ env.VERSION }}
-          # Ensure Determined cli can run without installing cli test requirements
+          # Ensure Determined cli can run without installing cli test reqs
           det --help
           pip freeze --all
           # Allow this to fail, but it is useful for debugging.

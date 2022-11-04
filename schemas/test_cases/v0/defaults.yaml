@@ -53,7 +53,6 @@
     registry_auth:
       username: samiam
       password: eggsnham
-    slurm: []
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
@@ -179,3 +178,40 @@
     source_trial_id: null
     source_checkpoint_uuid: null
     stop_once: false
+
+- name: devices defaults, in string and map forms
+  sane_as:
+    - http://determined.ai/schemas/expconf/v0/resources.json
+  default_as:
+    http://determined.ai/schemas/expconf/v0/resources.json
+  case:
+    devices:
+      - host_path: "/h1"
+        container_path: "/c1"
+        mode: "r"
+      - host_path: "/h2"
+        container_path: "/c2"
+      - "/h3:/c3:r"
+      - "/h4:/c4"
+  defaulted:
+    devices:
+      - host_path: "/h1"
+        container_path: "/c1"
+        mode: "r"
+      - host_path: "/h2"
+        container_path: "/c2"
+        mode: "mrw"
+      - host_path: "/h3"
+        container_path: "/c3"
+        mode: "r"
+      - host_path: "/h4"
+        container_path: "/c4"
+        mode: "mrw"
+    agent_label: ''
+    native_parallel: false
+    shm_size: null
+    slots_per_trial: 1
+    weight: 1
+    max_slots: null
+    priority: null
+    resource_pool: ''

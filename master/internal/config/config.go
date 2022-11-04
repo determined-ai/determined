@@ -1,7 +1,9 @@
 package config
 
 import (
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -72,6 +74,12 @@ type DBConfig struct {
 	SSLRootCert string `json:"ssl_root_cert"`
 }
 
+// WebhooksConfig hosts configuration fields for webhook functionality.
+type WebhooksConfig struct {
+	BaseURL    string `json:"base_url"`
+	SigningKey string `json:"signing_key"`
+}
+
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	return &Config{
@@ -112,6 +120,7 @@ func DefaultConfig() *Config {
 		Cache: CacheConfig{
 			CacheDir: "/var/cache/determined",
 		},
+		FeatureSwitches: []string{},
 		HPImportance: HPImportanceConfig{
 			WorkersLimit:   2,
 			QueueLimit:     16,
@@ -144,6 +153,8 @@ type Config struct {
 	HPImportance          HPImportanceConfig                `json:"hyperparameter_importance"`
 	Observability         ObservabilityConfig               `json:"observability"`
 	Cache                 CacheConfig                       `json:"cache"`
+	Webhooks              WebhooksConfig                    `json:"webhooks"`
+	FeatureSwitches       []string                          `json:"feature_switches"`
 	*ResourceConfig
 
 	// Internal contains "hidden" useful debugging configurations.
@@ -221,6 +232,14 @@ func (c *Config) Resolve() error {
 
 	if c.ResourceManager.AgentRM != nil && c.ResourceManager.AgentRM.Scheduler == nil {
 		c.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
+	}
+
+	if c.Webhooks.SigningKey == "" {
+		b := make([]byte, 6)
+		if _, err := rand.Read(b); err != nil {
+			return err
+		}
+		c.Webhooks.SigningKey = hex.EncodeToString(b)
 	}
 
 	if err := c.ResolveResource(); err != nil {
@@ -398,35 +417,17 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 }
 
 // IsAgentRMReattachEnabled returns whether the container reattachment is enabled on AgentRM.
+// Most other checks on Reattachability have been moved to the ResourceManager interface and
+// deligated to RM implementations, however this one is referenced in PreStart without
+// the ability to access the targeted resource manager.
 func IsAgentRMReattachEnabled() bool {
 	config := GetMasterConfig()
+
 	if config.ResourceManager.AgentRM == nil {
 		return false
 	}
 	for _, rpConfig := range config.ResourcePools {
 		if rpConfig.AgentReattachEnabled {
-			return true
-		}
-	}
-	return false
-}
-
-// IsReattachEnabled returns whether the container reattachment is enabled, e.g. for trials
-// to decide whether to try to restore open allocations.
-func IsReattachEnabled() bool {
-	return IsAgentRMReattachEnabled()
-}
-
-// IsReattachEnabledForRP returns whether the container reattachment is enabled for the given
-// resource pool.
-func IsReattachEnabledForRP(rpName string) bool {
-	config := GetMasterConfig()
-	if config.ResourceManager.AgentRM == nil {
-		return false
-	}
-
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.PoolName == rpName && rpConfig.AgentReattachEnabled {
 			return true
 		}
 	}

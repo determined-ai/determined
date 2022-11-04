@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-0.19.1`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.1`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -214,7 +214,7 @@ The master supports the following configuration settings:
 
 .. _cluster-configuration-slurm:
 
-   -  ``type: slurm``: The ``slurm`` resource manager launches tasks on a Slurm cluster. For more
+   -  ``type: slurm`` or ``pbs``: The HPC launcher submits tasks to a Slurm/PBS cluster. For more
       information, see :ref:`using_slurm`.
 
       -  ``master_host``: The hostname for the Determined master by which tasks will communicate
@@ -223,7 +223,7 @@ The master supports the following configuration settings:
       -  ``master_port``: The port for the Determined master.
 
       -  ``host``: The hostname for the Launcher, which Determined communicates with to launch and
-         monitor Slurm jobs.
+         monitor jobs.
 
       -  ``port``: The port for the Launcher.
 
@@ -241,18 +241,29 @@ The master supports the following configuration settings:
                   needed if the certificate is not signed by a well-known CA; cannot be specified if
                   ``skip_verify`` is enabled.
 
-      -  ``container_run_type``: The type of the container runtime to be used when launching on
-         Slurm. The value may be ``singularity`` or ``podman``. The default value is
-         ``singularity``.
+      -  ``container_run_type``: The type of the container runtime to be used when launching tasks.
+         The value may be ``singularity`` or ``podman``. The default value is ``singularity``. The
+         value ``singularity`` is also used when using Apptainer.
 
       -  ``auth_file``: The location of a file which contains an authorization token to communicate
          with the launcher. It is automatically updated by the launcher as needed when the launcher
-         is started.
+         is started. The specified path must be writable by the launcher, and readable by the
+         Determined master.
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
-         in terms of ``slots``. Available values are ``cuda`` and ``cpu``, where 1 ``cuda`` slot is
-         1 GPU and 1 ``cpu`` slot is 1 node. Defaults per partition to ``cuda`` if GPU resources are
-         found within the partition, else ``cpu``.
+         in terms of ``slots``. Defaults to ``cuda``.
+
+         -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Any partitions
+            with GPUs will be represented as a resource pool with slot type ``cuda`` which can be
+            overridden using ``partition_overrides``.
+
+         -  ``slot_type: rocm``: One AMD GPU will be requested per compute slot. Any partitions with
+            GPUs will be represented as a resource pool with slot type ``rocm`` which can be
+            overridden using ``partition_overrides``.
+
+         -  ``slot_type: cpu``: CPU resources will be requested for each compute slot. Partitions
+            that contain no GPUs will default to a resource pool with slot type ``cpu``. One node
+            will be allocated per slot.
 
       -  ``rendezvous_network_interface``: The interface used to bootstrap communication between
          distributed jobs. For example, when using horovod the IP address for the host on this
@@ -275,37 +286,43 @@ The master supports the following configuration settings:
 
       -  ``job_storage_root``: The shared directory where job-related files will be stored. It is
          where the needed Determined executables are copied to when the experiment is run, as well
-         as where the Slurm ``sbatch`` script and log files are created. This directory must be
-         visible to the launcher and from the compute nodes.
+         as where the Slurm/PBS scripts and log files are created. This directory must be writable
+         by the launcher and the compute nodes.
 
-      -  ``path``: The ``PATH`` for the launcher service so that it is able to find the Slurm,
+      -  ``path``: The ``PATH`` for the launcher service so that it is able to find the Slurm, PBS,
          Singularity, Nvidia binaries, etc., in case they are not in a standard location on the
          compute node. For example, ``PATH=/opt/singularity/3.8.5/bin:${PATH}``.
 
       -  ``ld_library_path``: The ``LD_LIBRARY_PATH`` for the launcher service so that it is able to
-         find the Slurm, Singularity, Nvidia libraries, etc., in case they are not in a standard
-         location on the compute node. For example,
+         find the Slurm, PBS, Singularity, Nvidia libraries, etc., in case they are not in a
+         standard location on the compute node. For example,
          ``LD_LIBRARY_PATH=/cm/shared/apps/slurm/21.08.6/lib:/cm/shared/apps/slurm/21.08.6/lib/slurm:${LD_LIBRARY_PATH}``.
 
       -  ``tres_supported``: Indicates if ``SelectType=select/cons_tres`` is set in the Slurm
          configuration. Affects how Determined requests GPUs from Slurm. The default is true.
 
-      -  ``gres_supported``: Indicates if ``GresTypes=gpu`` is set in the Slurm configuration, and
-         nodes with GPUs have properly configured GRES indicating the presence of any GPUs. The
-         default is true. When false, Determined will request slots_per_trial nodes and utilize only
-         GPU 0 on each node. It is the user's responsibility to ensure that GPUs will be available
-         on nodes selected for the job using other configurations such as targeting a specific
-         resource pool with only GPU nodes or specifying a Slurm constraint in the experiment
-         configuration.
+      -  ``gres_supported``: Indicates if GPU resources are properly configured in the HPC workload
+         manager.
 
-      -  ``partition_overrides``: A map of Slurm partition names to partition-level overrides. For
+         For PBS, the ``ngpus`` option can be used to identify the number of GPUs available on a
+         node.
+
+         For Slurm, ``GresTypes=gpu`` is set in the Slurm configuration, and nodes with GPUs have
+         properly configured GRES to indicate the presence of any GPUs. The default is true. When
+         false, Determined will request ``slots_per_trial`` nodes and utilize only GPU 0 on each
+         node. It is the user's responsibility to ensure that GPUs will be available on nodes
+         selected for the job using other configurations, such as targeting a specific resource pool
+         with only GPU nodes or specifying a Slurm constraint in the experiment configuration.
+
+      -  ``partition_overrides``: A map of partition/queue names to partition-level overrides. For
          each configuration, if it is set for a given partition, it overrides the setting at the
          root level.
 
          -  ``rendezvous_network_interface``
          -  ``proxy_network_interface``
          -  ``slot_type``
-         -  ``task_container_defaults``
+         -  ``task_container_defaults`` (See :ref:`top-level setting
+            <master-task-container-defaults>`)
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
@@ -704,6 +721,28 @@ The master supports the following configuration settings:
 
       -  ``rsa_key_size``: Number of bits to use when generating RSA keys for SSH for tasks. Maximum
          size is 16384.
+
+   -  ``authz``: Authorization settings.
+
+         -  ``type``: Authorization system to use. Defaults to ``basic``. See :ref:`RBAC docs
+            <rbac>` for further info.
+
+         -  ``rbac_ui_enabled``: Whether to enable RBAC in WebUI and CLI. When ``type`` is ``rbac``,
+            defaults ``true``, otherwise ``false``.
+
+         -  ``workspace_creator_assign_role``: Assign a role to the user on workspace creation.
+
+               -  ``enabled``: Whether this feature is enabled. Defaults to ``true``.
+               -  ``role_id``: Integer identifier of a role to be assigned. Defaults to ``2``, which
+                  is the role id of ``WorkspaceAdmin`` role.
+
+         -  ``_strict_ntsc_enabled``: Whether to enable strict NTSC access enforcement. Defaults to
+            ``false``. See :ref:`RBAC docs <rbac-ntsc>` for further info.
+
+-  ``webhooks``: Specifies configuration settings related to webhooks.
+
+   -  ``signing_key``: The key used to sign outgoing webhooks.
+   -  ``base_url``: The URL users use to access Determined, for generating hyperlinks.
 
 -  ``telemetry``: Specifies configuration settings related to telemetry collection and tracing.
 

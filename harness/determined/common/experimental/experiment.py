@@ -23,6 +23,10 @@ class ExperimentState(enum.Enum):
     DELETING = bindings.determinedexperimentv1State.STATE_DELETING.value
     DELETE_FAILED = bindings.determinedexperimentv1State.STATE_DELETE_FAILED.value
     STOPPING_KILLED = bindings.determinedexperimentv1State.STATE_STOPPING_KILLED.value
+    QUEUED = bindings.determinedexperimentv1State.STATE_QUEUED.value
+    PULLING = bindings.determinedexperimentv1State.STATE_PULLING.value
+    STARTING = bindings.determinedexperimentv1State.STATE_STARTING.value
+    RUNNING = bindings.determinedexperimentv1State.STATE_RUNNING.value
 
     def _to_bindings(self) -> bindings.determinedexperimentv1State:
         return bindings.determinedexperimentv1State(self.value)
@@ -104,6 +108,16 @@ class ExperimentReference:
         resps = api.read_paginated(get_with_offset)
 
         return [trial.TrialReference(t.id, self._session) for r in resps for t in r.trials]
+
+    def await_first_trial(self, interval: float = 0.1) -> trial.TrialReference:
+        """
+        Wait for the first trial to be started for this experiment.
+        """
+        while True:
+            resp = bindings.get_GetExperimentTrials(self._session, experimentId=self._id)
+            if len(resp.trials) > 0:
+                return trial.TrialReference(resp.trials[0].id, self._session)
+            time.sleep(interval)
 
     def kill(self) -> None:
         bindings.post_KillExperiment(self._session, id=self._id)

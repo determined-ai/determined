@@ -8,13 +8,12 @@ import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
 
 export const TimingMetricChart: React.FC<ChartProps> = ({ trial, getOptionsForMetrics }) => {
-
   const timingMetrics = useFetchProfilerMetrics(trial.id, trial.state, MetricType.Timing);
 
-  const options = useMemo(() => getOptionsForMetrics('seconds', timingMetrics.names), [
-    getOptionsForMetrics,
-    timingMetrics.names,
-  ]);
+  const options = useMemo(
+    () => getOptionsForMetrics('seconds', timingMetrics.names),
+    [getOptionsForMetrics, timingMetrics.names],
+  );
 
   return (
     <Section bodyBorder bodyNoPadding title="Timing Metrics">

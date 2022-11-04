@@ -14,6 +14,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -41,36 +43,88 @@ const (
 var notebooksAddr = actor.Addr("notebooks")
 
 func (a *apiServer) GetNotebooks(
-	_ context.Context, req *apiv1.GetNotebooksRequest,
+	ctx context.Context, req *apiv1.GetNotebooksRequest,
 ) (resp *apiv1.GetNotebooksResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = a.ask(notebooksAddr, req, &resp); err != nil {
 		return nil, err
 	}
+
+	a.filter(&resp.Notebooks, func(i int) bool {
+		if err != nil {
+			return false
+		}
+		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
+			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	a.sort(resp.Notebooks, req.OrderBy, req.SortBy, apiv1.GetNotebooksRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Notebooks, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetNotebook(
-	_ context.Context, req *apiv1.GetNotebookRequest,
+	ctx context.Context, req *apiv1.GetNotebookRequest,
 ) (resp *apiv1.GetNotebookResponse, err error) {
-	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := notebooksAddr.Child(req.NotebookId)
+	if err = a.ask(addr, req, &resp); err != nil {
+		return nil, err
+	}
+
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
+		ctx, *curUser, model.UserID(resp.Notebook.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errActorNotFound(addr)
+	}
+	return resp, nil
 }
 
 func (a *apiServer) IdleNotebook(
-	_ context.Context, req *apiv1.IdleNotebookRequest,
+	ctx context.Context, req *apiv1.IdleNotebookRequest,
 ) (resp *apiv1.IdleNotebookResponse, err error) {
+	if _, err := a.GetNotebook(ctx,
+		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
-	_ context.Context, req *apiv1.KillNotebookRequest,
+	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
+	if _, err := a.GetNotebook(ctx,
+		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) SetNotebookPriority(
-	_ context.Context, req *apiv1.SetNotebookPriorityRequest,
+	ctx context.Context, req *apiv1.SetNotebookPriorityRequest,
 ) (resp *apiv1.SetNotebookPriorityResponse, err error) {
+	if _, err := a.GetNotebook(ctx,
+		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 

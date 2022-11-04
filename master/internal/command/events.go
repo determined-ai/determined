@@ -11,9 +11,13 @@ import (
 	"github.com/labstack/echo/v4"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/context"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const defaultEventBufferSize = 200
@@ -76,6 +80,11 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 
 	case api.WebSocketConnected:
+		if err := canAccessCommandEvents(ctx, msg.Ctx); err != nil {
+			ctx.Respond(err)
+			break
+		}
+
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))
 		if msg.Ctx.QueryParam("follow") == "" {
 			follow = true
@@ -123,6 +132,23 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
+	curUser := c.(*context.DetContext).MustGetUser()
+	taskID := model.TaskID(ctx.Self().Parent().Address().Local())
+	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), taskID)
+	if err != nil {
+		return err
+	}
+
+	reqCtx := c.Request().Context()
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(reqCtx, curUser, ownerID); err != nil {
+		return err
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	}
+	return nil
+}
+
 // validEvent returns true if the given event's Seq value is within the bounds specified
 // by greaterThanSeq and lessThanSeq. Note that these values can be nil, in which case the
 // particular bound is not regarded.
@@ -141,6 +167,11 @@ func validEvent(e sproto.Event, greaterThanSeq, lessThanSeq *int) bool {
 func (e *eventManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
+		if err := canAccessCommandEvents(ctx, apiCtx); err != nil {
+			ctx.Respond(err)
+			return
+		}
+
 		args := struct {
 			GreaterThanID *int `query:"greater_than_id"`
 			LessThanID    *int `query:"less_than_id"`

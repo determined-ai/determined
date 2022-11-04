@@ -24,7 +24,7 @@ import (
 var emptyMetadata = []byte(`{}`)
 
 func TestModels(t *testing.T) {
-	etc.SetRootPath(RootFromDB)
+	require.NoError(t, etc.SetRootPath(RootFromDB))
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
@@ -46,8 +46,8 @@ func TestModels(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			user := RequireMockUser(t, db)
 			exp := RequireMockExperiment(t, db, user)
-			tr := requireMockTrial(t, db, exp)
-			a := requireMockAllocation(t, db, tr.TaskID)
+			tr := RequireMockTrial(t, db, exp)
+			a := RequireMockAllocation(t, db, tr.TaskID)
 
 			// Insert a model.
 			now := time.Now()
@@ -108,7 +108,7 @@ func TestModels(t *testing.T) {
 						BatchMetrics: []*structpb.Struct{},
 					},
 				}
-				err := db.AddValidationMetrics(context.TODO(), m)
+				err = db.AddValidationMetrics(context.TODO(), m)
 				require.NoError(t, err)
 			}
 
@@ -116,7 +116,7 @@ func TestModels(t *testing.T) {
 			err = db.QueryProto("get_checkpoint", &retCkpt, ckpt.UUID.String())
 			require.NoError(t, err)
 
-			requireModelVersionOK := func(expected, actual modelv1.ModelVersion) {
+			requireModelVersionOK := func(expected, actual *modelv1.ModelVersion) {
 				require.Equal(t, expected.Name, actual.Name)
 				require.Equal(t, expected.Model.Name, actual.Model.Name)
 				require.Equal(t, expected.Checkpoint.Uuid, actual.Checkpoint.Uuid)
@@ -132,7 +132,7 @@ func TestModels(t *testing.T) {
 			}
 
 			// Register checkpoint as a model version.
-			expected := modelv1.ModelVersion{
+			expected := &modelv1.ModelVersion{
 				Model:      &pmdl,
 				Checkpoint: &retCkpt,
 				Name:       "some name",
@@ -147,18 +147,18 @@ func TestModels(t *testing.T) {
 				emptyMetadata, strings.Join(expected.Labels, ","), expected.Notes, user.ID,
 			)
 			require.NoError(t, err)
-			requireModelVersionOK(expected, mv)
+			requireModelVersionOK(expected, &mv)
 
 			var retMv modelv1.ModelVersion
 			err = db.QueryProto("get_model_version", &retMv, pmdl.Id, mv.Id)
 			require.NoError(t, err)
-			requireModelVersionOK(expected, mv)
+			requireModelVersionOK(expected, &mv)
 
 			var retMvs []*modelv1.ModelVersion
 			err = db.QueryProto("get_model_versions", &retMvs, pmdl.Id)
 			require.NoError(t, err)
 			require.Len(t, retMvs, 1)
-			requireModelVersionOK(expected, *retMvs[0])
+			requireModelVersionOK(expected, retMvs[0])
 		})
 	}
 }

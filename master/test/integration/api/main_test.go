@@ -4,7 +4,7 @@
 package api
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"testing"
 
@@ -23,12 +23,12 @@ func TestMain(m *testing.M) {
 	var err error
 	pgDB, err = db.ResolveTestPostgres()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 	es, err = testutils.ResolveElastic()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 	os.Exit(m.Run())

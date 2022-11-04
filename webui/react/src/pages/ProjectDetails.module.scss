@@ -1,6 +1,18 @@
-
 .experimentTab {
   padding: 16px;
+}
+.base {
+  flex: 1 1 auto;
+  flex-grow: 1;
+  height: 100%;
+}
+.tabPane {
+  display: flex;
+  flex-direction: column;
+}
+:global(.ant-spin-container) {
+  display: flex;
+  flex-direction: column;
 }
 .tabOptions {
   .actionOverflow {
@@ -16,7 +28,6 @@
 :global(.ant-tabs-nav-list) {
   height: min-content;
 }
-
 @media only screen and (max-width: $breakpoint-tablet) {
   .tabOptions {
     .actionList {
@@ -26,7 +37,27 @@
       cursor: pointer;
       display: block;
 
-      &:hover { color: var(--theme-colors-action-normal); }
+      &:hover {
+        color: var(--theme-colors-action-normal);
+      }
+    }
+  }
+}
+
+.descriptionRenderer {
+  border: hidden !important;
+}
+.descriptionRenderer:focus,
+.descriptionRenderer:hover {
+  border: solid 1px var(--theme-status-active) !important;
+}
+.tagsRenderer {
+  :global([aria-label='new-tag-trigger']) {
+    display: none !important;
+  }
+  &:hover {
+    :global([aria-label='new-tag-trigger']) {
+      display: inherit !important;
     }
   }
 }

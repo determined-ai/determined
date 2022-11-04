@@ -2,15 +2,19 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Link from 'components/Link';
-import ResourcePoolCardLight from 'components/ResourcePoolCardLight';
+import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
-import { useFetchActiveExperiments, useFetchActiveTasks, useFetchAgents,
-  useFetchResourcePools } from 'hooks/useFetch';
-import usePolling from 'hooks/usePolling';
+import {
+  useFetchActiveExperiments,
+  useFetchActiveTasks,
+  useFetchAgents,
+  useFetchResourcePools,
+} from 'hooks/useFetch';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
@@ -28,8 +32,8 @@ import css from './ClustersOverview.module.scss';
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
   if (pool.maxAgents > 0 && pool.slotsPerAgent && pool.slotsPerAgent > 0)
     return pool.maxAgents * pool.slotsPerAgent;
-    // on-premise deployments don't have dynamic agents and we don't know how many
-    // agents might connect.
+  // on-premise deployments don't have dynamic agents and we don't know how many
+  // agents might connect.
   return pool.slotsAvailable;
 };
 
@@ -41,28 +45,33 @@ export const maxClusterSlotCapacity = (
   pools: ResourcePool[],
   agents: Agent[],
 ): { [key in ResourceType]: number } => {
-
   const allPoolsStatic = pools.reduce((acc, pool) => {
     return acc && pool.type === V1ResourcePoolType.STATIC;
   }, true);
 
   if (allPoolsStatic) {
-    return agents.reduce((acc, agent) => {
-      agent.resources.forEach((resource) => {
-        if (!(resource.type in acc)) acc[resource.type] = 0;
-        acc[resource.type] += 1;
-        acc[ResourceType.ALL] += 1;
-      });
-      return acc;
-    }, { ALL: 0 } as { [key in ResourceType]: number });
+    return agents.reduce(
+      (acc, agent) => {
+        agent.resources.forEach((resource) => {
+          if (!(resource.type in acc)) acc[resource.type] = 0;
+          acc[resource.type] += 1;
+          acc[ResourceType.ALL] += 1;
+        });
+        return acc;
+      },
+      { ALL: 0 } as { [key in ResourceType]: number },
+    );
   } else {
-    return pools.reduce((acc, pool) => {
-      if (!(pool.slotType in acc)) acc[pool.slotType] = 0;
-      const maxPoolSlots = maxPoolSlotCapacity(pool);
-      acc[pool.slotType] += maxPoolSlots;
-      acc[ResourceType.ALL] += maxPoolSlots;
-      return acc;
-    }, { ALL: 0 } as { [key in ResourceType]: number });
+    return pools.reduce(
+      (acc, pool) => {
+        if (!(pool.slotType in acc)) acc[pool.slotType] = 0;
+        const maxPoolSlots = maxPoolSlotCapacity(pool);
+        acc[pool.slotType] += maxPoolSlots;
+        acc[ResourceType.ALL] += maxPoolSlots;
+        return acc;
+      },
+      { ALL: 0 } as { [key in ResourceType]: number },
+    );
   }
 };
 
@@ -74,16 +83,16 @@ export const clusterStatusText = (
   if (overview[ResourceType.ALL].allocation === 0) return undefined;
   const totalSlots = maxClusterSlotCapacity(pools, agents)[ResourceType.ALL];
   if (totalSlots === 0) return `${overview[ResourceType.ALL].allocation}%`;
-  return `${percent((overview[ResourceType.ALL].total - overview[ResourceType.ALL].available)
-        / totalSlots)}%`;
+  return `${percent(
+    (overview[ResourceType.ALL].total - overview[ResourceType.ALL].available) / totalSlots,
+  )}%`;
 };
 
 const ClusterOverview: React.FC = () => {
-
   const { resourcePools } = useStore();
-  const [ rpDetail, setRpDetail ] = useState<ResourcePool>();
+  const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
-  const [ canceler ] = useState(new AbortController());
+  const [canceler] = useState(new AbortController());
 
   const fetchActiveExperiments = useFetchActiveExperiments(canceler);
   const fetchActiveTasks = useFetchActiveTasks(canceler);
@@ -93,7 +102,7 @@ const ClusterOverview: React.FC = () => {
   const fetchActiveRunning = useCallback(async () => {
     await fetchActiveExperiments();
     await fetchActiveTasks();
-  }, [ fetchActiveExperiments, fetchActiveTasks ]);
+  }, [fetchActiveExperiments, fetchActiveTasks]);
 
   usePolling(fetchActiveRunning);
   usePolling(fetchResourcePools, { interval: 10000 });
@@ -104,29 +113,23 @@ const ClusterOverview: React.FC = () => {
     fetchAgents();
 
     return () => canceler.abort();
-  }, [ canceler, fetchAgents ]);
+  }, [canceler, fetchAgents]);
 
   return (
     <div className={css.base}>
       <ClusterOverallStats />
       <ClusterOverallBar />
       <Section title="Resource Pools">
-        <Grid gap={ShirtSize.large} minItemWidth={300} mode={GridMode.AutoFill}>
+        <Grid gap={ShirtSize.Large} minItemWidth={300} mode={GridMode.AutoFill}>
           {resourcePools.map((rp, idx) => (
             <Link key={idx} path={paths.resourcePool(rp.name)}>
-              <ResourcePoolCardLight
-                resourcePool={rp}
-              />
+              <ResourcePoolCard resourcePool={rp} />
             </Link>
           ))}
         </Grid>
       </Section>
       {!!rpDetail && (
-        <ResourcePoolDetails
-          finally={hideModal}
-          resourcePool={rpDetail}
-          visible={!!rpDetail}
-        />
+        <ResourcePoolDetails finally={hideModal} resourcePool={rpDetail} visible={!!rpDetail} />
       )}
     </div>
   );

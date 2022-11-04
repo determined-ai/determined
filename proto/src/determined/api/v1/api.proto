@@ -17,12 +17,14 @@ import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
 import "determined/api/v1/project.proto";
+import "determined/api/v1/rbac.proto";
 import "determined/api/v1/task.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
 import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
+import "determined/api/v1/webhook.proto";
 import "determined/api/v1/workspace.proto";
 import "determined/api/v1/resourcepool.proto";
 
@@ -500,6 +502,7 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
+
   // Return downsampled metrics from multiple trials to compare them
   // side-by-side.
   rpc CompareTrials(CompareTrialsRequest) returns (CompareTrialsResponse) {
@@ -507,9 +510,79 @@ service Determined {
       get: "/api/v1/trials/compare"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Trials", "Experiments" ]
+      tags: "Experiments"
     };
   }
+
+  // Return trials matching a set of TrialFilters.
+  rpc QueryTrials(QueryTrialsRequest) returns (QueryTrialsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trial-comparison/query"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
+  // Update tags for trials by IDs or filters.
+  rpc UpdateTrialTags(UpdateTrialTagsRequest)
+      returns (UpdateTrialTagsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trial-comparison/update-trial-tags"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
+  // Return all collectiions for a specific project.
+  rpc GetTrialsCollections(GetTrialsCollectionsRequest)
+      returns (GetTrialsCollectionsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trial-comparison/collections"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
+  // Create a Trial Collection for a set of TrialFilters.
+  rpc CreateTrialsCollection(CreateTrialsCollectionRequest)
+      returns (CreateTrialsCollectionResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/trial-comparison/collections"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
+  // Modify collection attributes: name, filters, etc.
+  rpc PatchTrialsCollection(PatchTrialsCollectionRequest)
+      returns (PatchTrialsCollectionResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/trial-comparison/collections"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
+  // Removes a TrialCollection.
+  rpc DeleteTrialsCollection(DeleteTrialsCollectionRequest)
+      returns (DeleteTrialsCollectionResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/trial-comparison/collections"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: [ "Trial Comparison" ]
+    };
+  }
+
   // Get a single trial.
   rpc GetTrial(GetTrialRequest) returns (GetTrialResponse) {
     option (google.api.http) = {
@@ -519,6 +592,7 @@ service Determined {
       tags: [ "Trials", "Experiments" ]
     };
   }
+
   // Get the list of workloads for a trial.
   rpc GetTrialWorkloads(GetTrialWorkloadsRequest)
       returns (GetTrialWorkloadsResponse) {
@@ -564,6 +638,17 @@ service Determined {
       returns (AllocationReadyResponse) {
     option (google.api.http) = {
       post: "/api/v1/allocations/{allocation_id}/ready"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+  // Set allocation to waiting state.
+  rpc AllocationWaiting(AllocationWaitingRequest)
+      returns (AllocationWaitingResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/waiting"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -1293,6 +1378,29 @@ service Determined {
     };
   }
 
+  // Get the list of custom searcher events with long polling.
+  rpc GetSearcherEvents(GetSearcherEventsRequest)
+      returns (GetSearcherEventsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/experiments/{experiment_id}/searcher_events"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
+  // Submit operations to a custom searcher.
+  rpc PostSearcherOperations(PostSearcherOperationsRequest)
+      returns (PostSearcherOperationsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/experiments/{experiment_id}/searcher_operations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Experiments"
+    };
+  }
+
   // Get the set of metric names recorded for an experiment.
   rpc MetricNames(MetricNamesRequest) returns (stream MetricNamesResponse) {
     option (google.api.http) = {
@@ -1616,7 +1724,49 @@ service Determined {
     };
   }
 
-  // Get a group by id
+  // Get a list of webhooks.
+  rpc GetWebhooks(GetWebhooksRequest) returns (GetWebhooksResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/webhooks"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
+
+  // Create a webhook.
+  // TODO(???): Simplify req/response structs?
+  rpc PostWebhook(PostWebhookRequest) returns (PostWebhookResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/webhooks"
+      body: "webhook"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
+
+  // Delete a webhook.
+  rpc DeleteWebhook(DeleteWebhookRequest) returns (DeleteWebhookResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/webhooks/{id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
+
+  // Test a webhook.
+  rpc TestWebhook(TestWebhookRequest) returns (TestWebhookResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/webhooks/{id}/test"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
+
+  // Get a group by id.
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {
       get: "/api/v1/groups/{group_id}"
@@ -1626,7 +1776,7 @@ service Determined {
     };
   }
 
-  // Search for groups with optional filters
+  // Search for groups with optional filters.
   rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups/search"
@@ -1637,7 +1787,7 @@ service Determined {
     };
   }
 
-  // Create a group with optional members on creation
+  // Create a group with optional members on creation.
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
     option (google.api.http) = {
       post: "/api/v1/groups"
@@ -1648,7 +1798,7 @@ service Determined {
     };
   }
 
-  // Update group info
+  // Update group info.
   rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse) {
     option (google.api.http) = {
       put: "/api/v1/groups/{group_id}"
@@ -1659,13 +1809,119 @@ service Determined {
     };
   }
 
-  // Remove a group
+  // Remove a group.
   rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
     option (google.api.http) = {
       delete: "/api/v1/groups/{group_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
+    };
+  }
+
+  // List all permissions for the logged in user in all scopes.
+  rpc GetPermissionsSummary(GetPermissionsSummaryRequest)
+      returns (GetPermissionsSummaryResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/permissions/summary"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Get groups and users assigned to a given workspace with what roles are
+  // assigned.
+  rpc GetGroupsAndUsersAssignedToWorkspace(
+      GetGroupsAndUsersAssignedToWorkspaceRequest)
+      returns (GetGroupsAndUsersAssignedToWorkspaceResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/workspace/{workspace_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Get a set of roles with the corresponding IDs.
+  rpc GetRolesByID(GetRolesByIDRequest) returns (GetRolesByIDResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search/by-ids"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Get the roles which are assigned to a user.
+  rpc GetRolesAssignedToUser(GetRolesAssignedToUserRequest)
+      returns (GetRolesAssignedToUserResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/search/by-user/{user_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Get the roles which are assigned to a group.
+  rpc GetRolesAssignedToGroup(GetRolesAssignedToGroupRequest)
+      returns (GetRolesAssignedToGroupResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/roles/search/by-group/{group_id}"
+    };
+
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // Search for roles assignable to a given scope.
+  rpc SearchRolesAssignableToScope(SearchRolesAssignableToScopeRequest)
+      returns (SearchRolesAssignableToScopeResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search/by-assignability"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // ListRoles returns roles and groups/users granted that role.
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/search"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // AssignRoles adds a set of role assignments to the system.
+  rpc AssignRoles(AssignRolesRequest) returns (AssignRolesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/add-assignments"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
+    };
+  }
+
+  // RemoveAssignments removes a set of role assignments from the system.
+  rpc RemoveAssignments(RemoveAssignmentsRequest)
+      returns (RemoveAssignmentsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/roles/remove-assignments"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "RBAC"
     };
   }
 }

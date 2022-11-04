@@ -1,13 +1,8 @@
-import history from 'shared/routes/history';
-
 import * as utils from './SamlAuth';
 
 describe('SamlAuth', () => {
   describe('samlUrl', () => {
-    const BASE_PATHS = [
-      '/abc/def-ghi',
-      '/HelloWorld/What%20is%20up?',
-    ];
+    const BASE_PATHS = ['/abc/def-ghi', '/HelloWorld/What%20is%20up?'];
     const QUERIES = [
       {
         default: 'columns=id&columns=user&sortDesc=false&tableLimit=20',
@@ -41,7 +36,7 @@ describe('SamlAuth', () => {
       someKey: 'someValue',
     };
     const QUERIES_OUTPUT = {
-      columns: [ 'id', 'user' ],
+      columns: ['id', 'user'],
       someKey: 'someValue',
       sortDesc: 'false',
       tableLimit: '20',
@@ -53,12 +48,6 @@ describe('SamlAuth', () => {
 
     it('should decode and flatten relayState query param', () => {
       expect(utils.handleRelayState(QUERIES_INPUT)).toStrictEqual(QUERIES_OUTPUT);
-    });
-
-    it('should add to history', () => {
-      const historyLength = history.length;
-      utils.handleRelayState(QUERIES_INPUT);
-      expect(history).toHaveLength(historyLength + 1);
     });
   });
 });

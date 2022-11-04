@@ -6,17 +6,20 @@
     justify-content: space-between;
     margin-bottom: 16px;
   }
+  .disableOverride[disabled] {
+    cursor: default;
+  }
   .emptyBase {
     margin-inline: auto;
     margin-top: 150px;
     max-width: 350px;
     text-align: center;
-  
+
     .icon {
       padding: 16px;
     }
     h4 {
-      margin-bottom: 8
+      margin-bottom: 8;
     }
     .description {
       color: var(--theme-colors-monochrome-9);
@@ -26,5 +29,7 @@
 }
 
 @media only screen and (max-width: $breakpoint-mobile) {
-  .base .controls { flex-wrap: wrap; }
+  .base .controls {
+    flex-wrap: wrap;
+  }
 }

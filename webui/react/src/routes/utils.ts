@@ -25,8 +25,7 @@ export const serverAddress = (path = ''): string => {
   if (!!path && isFullPath(path)) return path;
 
   // Prioritize dynamically set address.
-  const customServer = globalStorage.serverAddress
-    || process.env.SERVER_ADDRESS as string;
+  const customServer = globalStorage.serverAddress || (process.env.SERVER_ADDRESS as string);
 
   return (customServer || reactHostAddress()) + path;
 };
@@ -37,7 +36,7 @@ export const checkServerAlive = async (address?: string): Promise<boolean> => {
   try {
     const clusterApi = new ClusterApi(new Configuration({ basePath: address }));
     const data = await clusterApi.getMaster();
-    const attrs = [ 'version', 'masterId', 'clusterId' ];
+    const attrs = ['version', 'masterId', 'clusterId'];
     for (const attr of attrs) {
       // The server doesn't look like a determined server.
       if (!(attr in data)) return false;
@@ -91,7 +90,7 @@ export const paths = {
     return `/experiments/${experimentId}`;
   },
   experimentFileFromTree: (experimentId: number | string, filePath: string): string => {
-    return `/experiments/${experimentId}/file/download?path=${filePath}`;
+    return `/experiments/${experimentId}/file/download?path=${encodeURIComponent(filePath)}`;
   },
   experimentList: (): string => {
     return '/experiments';
@@ -122,6 +121,9 @@ export const paths = {
     return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
   },
   projectDetails: (projectId: number | string): string => {
+    return `/projects/${projectId}/experiments`;
+  },
+  projectDetailsBasePath: (projectId: number | string): string => {
     return `/projects/${projectId}`;
   },
   reload: (path: string): string => {
@@ -154,13 +156,16 @@ export const paths = {
     return `/experiments/${experimentId}/trials/${trialId}/logs`;
   },
   uncategorized: (): string => {
-    return '/projects/1';
+    return '/projects/1/experiments';
   },
   users: (): string => {
     return '/users';
   },
-  workspaceDetails: (workspaceId: number | string): string => {
-    return `/workspaces/${workspaceId}`;
+  webhooks: (): string => {
+    return '/webhooks';
+  },
+  workspaceDetails: (workspaceId: number | string, tab = 'projects'): string => {
+    return `/workspaces/${workspaceId}/${tab}`;
   },
   workspaceList: (): string => {
     return '/workspaces';
@@ -183,10 +188,10 @@ export const routeAll = (path: string): void => {
 export const handlePath = (
   event: AnyMouseEvent,
   options: {
-    external?: boolean,
-    onClick?: AnyMouseEventHandler,
-    path?: string,
-    popout?: boolean,
+    external?: boolean;
+    onClick?: AnyMouseEventHandler;
+    path?: string;
+    popout?: boolean;
   } = {},
 ): void => {
   // FIXME As of v17, e.persist() doesn’t do anything because the SyntheticEvent is no longer

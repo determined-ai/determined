@@ -13,8 +13,6 @@ from determined.common.api import authentication, request
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
-from .command import CONFIG_DESC, CONTEXT_DESC, parse_config, render_event_stream
-
 
 @authentication.required
 def start_tensorboard(args: Namespace) -> None:
@@ -22,15 +20,14 @@ def start_tensorboard(args: Namespace) -> None:
         print("Either experiment_ids or trial_ids must be specified.")
         sys.exit(1)
 
-    config = parse_config(args.config_file, None, args.config, [])
+    config = command.parse_config(args.config_file, None, args.config, [])
     req_body = {
         "config": config,
         "trial_ids": args.trial_ids,
         "experiment_ids": args.experiment_ids,
     }
 
-    if args.context is not None:
-        req_body["files"] = context.read_legacy_context(args.context)
+    req_body["files"] = context.read_legacy_context(args.context, args.include)
 
     resp = api.post(args.master, "api/v1/tensorboards", json=req_body).json()["tensorboard"]
 
@@ -63,9 +60,9 @@ def start_tensorboard(args: Namespace) -> None:
                     )
 
                 print(colored("TensorBoard is running at: {}".format(url), "green"))
-                render_event_stream(msg)
+                command.render_event_stream(msg)
                 break
-            render_event_stream(msg)
+            command.render_event_stream(msg)
 
 
 @authentication.required
@@ -109,8 +106,16 @@ args_description = [
                      "allowed per TensorBoard instance"),
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
-            Arg("-c", "--context", default=None, type=Path, help=CONTEXT_DESC),
-            Arg("--config", action="append", default=[], help=CONFIG_DESC),
+            Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+            Arg(
+                "-i",
+                "--include",
+                default=[],
+                action="append",
+                type=Path,
+                help=command.INCLUDE_DESC
+            ),
+            Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
             Arg("--no-browser", action="store_true",
                 help="don't open TensorBoard in a browser after startup"),
             Arg("-d", "--detach", action="store_true",

@@ -107,9 +107,6 @@ class TrialController(metaclass=abc.ABCMeta):
     def create_metric_writer(cls: Type["TrialController"]) -> tensorboard.BatchMetricWriter:
         pass
 
-    def initialize_wrapper(self) -> None:
-        pass
-
     def close(self) -> None:
         self.context.close()
 

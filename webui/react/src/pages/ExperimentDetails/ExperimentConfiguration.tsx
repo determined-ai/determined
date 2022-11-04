@@ -31,9 +31,12 @@ const ExperimentConfiguration: React.FC<Props> = ({ experiment }: Props) => {
 
   return (
     <Section bodyNoPadding bodyScroll maxHeight>
-      <React.Suspense fallback={(
-        <div className={css.loading}><Spinner tip="Loading text editor..." /></div>
-      )}>
+      <React.Suspense
+        fallback={
+          <div className={css.loading}>
+            <Spinner tip="Loading text editor..." />
+          </div>
+        }>
         <MonacoEditor
           height="100%"
           options={{

@@ -96,6 +96,22 @@ Some constraints are due to differences in behavior between Docker and Singulari
  PodMan Known Issues
 *********************
 
+   -  Determined uses PodMan in `rootless mode
+      <https://docs.podman.io/en/latest/markdown/podman.1.html#rootless-mode>`__. There are several
+      configuration errors that may be encountered:
+
+      -  ``stat /run/user/NNN: no such file or directory`` likely indicates that the environment
+         variable ``XDG_RUNTIME_DIR`` is referencing a directory that does not exist.
+
+      -  ``stat /run/user/NNN: permission denied`` may indicate a problem with default the
+         ``runroot`` configuration.
+
+      -  ``Error: A network file system with user namespaces is not supported. Please use a
+         mount_program: backing file system is unsupported for this graph driver`` indicates that
+         the ``graphroot`` references a distributed file system.
+
+      Refer to :ref:`podman-config-requirements` for recommendations.
+
    -  On a Slurm cluster, it is common to rely upon ``/etc/hosts`` (instead of DNS) to resolve the
       addresses of the login node and other compute nodes in the cluster. If jobs are unable to
       resolve the address of the Determined master or other compute nodes in the job and you are
@@ -119,6 +135,20 @@ Some constraints are due to differences in behavior between Docker and Singulari
 
       #. Ensure that the names and addresses of the login node, admin node, and all compute nodes
          are consistently available in ``/etc/hosts`` on all nodes.
+
+   -  Podman containers only inherit environment variables that have been explicitly specified.
+      Determined adds Podman arguments to provide any Determined-configured environment variables,
+      and the launcher enables inheritance of the following variables: ``SLURM_*``,
+      ``CUDA_VISIBLE_DEVICES``, ``NVIDIA_VISIBLE_DEVICES``, ``ROCR_VISIBLE_DEVICES``,
+      ``HIP_VISIBLE_DEVICES``. You may enable the inheritance of additional variables from the host
+      environment by specifying the variable name with an empty value in the
+      ``environment_variables`` of your experiment configuration or :ref:`task container defaults
+      <master-task-container-defaults>`.
+
+         .. code:: yaml
+
+            environment_variables:
+              - INHERITED_ENV_VAR=
 
 ***********************
  AMD/ROCm Known Issues
@@ -213,9 +243,9 @@ the GPUs used for the experiment to be evenly distributed among the compute node
 
       .. code:: yaml
 
-         passwd: files
-         shadow: files
-         group: files
+         passwd: files determined
+         shadow: files determined
+         group: files determined
          hosts: files dns
 
    #. Update the Determined cluster configuration to supply a default bind mount to override the
@@ -281,3 +311,19 @@ the GPUs used for the experiment to be evenly distributed among the compute node
 
    For more information on MPS, refer to the `NVIDIA Multi-Process Service (MPS) Documentation
    <https://docs.nvidia.com/deploy/mps>`__.
+
+-  Experiments on CPU-only clusters will fail when the requested slot count exceeds the maximum
+   number of CPUs on any single node. This behavior is due to a limitation of the Slurm workload
+   manager. Slurm does not provide an option to request a certain number of CPUs without specifying
+   the number of nodes/tasks. To overcome this limitation of Slurm, Determined will set a default
+   value of 1 for the number of nodes. With this workaround, when the users launch an experiment on
+   a CPU-only cluster, Slurm tries to identify a single node that can completely satisfy the
+   requested number of slots (CPUs). If such a node is available, Slurm will allocate the resources
+   and continue the execution of the experiment. Otherwise, Slurm will error stating the resource
+   request could not be satisfied, as shown in the below example.
+
+   .. code:: bash
+
+      ERROR: task failed without an associated exit code: sbatch: error: CPU count per node can not
+      be satisfied sbatch: error: Batch job submission failed: Requested node configuration is not
+      available.

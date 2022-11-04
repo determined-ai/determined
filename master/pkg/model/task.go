@@ -124,6 +124,8 @@ type ResourceAggregates struct {
 const (
 	// AllocationStatePending state denotes that the command is awaiting allocation.
 	AllocationStatePending AllocationState = "PENDING"
+	// AllocationStateWaiting state denotes that the command is waiting on data.
+	AllocationStateWaiting AllocationState = "WAITING"
 	// AllocationStateAssigned state denotes that the command has been assigned to an agent but has
 	// not started yet.
 	AllocationStateAssigned AllocationState = "ASSIGNED"
@@ -158,8 +160,9 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 		AllocationStatePulling:     2,
 		AllocationStateStarting:    3,
 		AllocationStateRunning:     4,
-		AllocationStateTerminating: 5,
-		AllocationStateTerminated:  6,
+		AllocationStateWaiting:     5,
+		AllocationStateTerminating: 6,
+		AllocationStateTerminated:  7,
 	}
 	maxOrder, state := statesToOrder[states[0]], states[0]
 	for _, s := range states {
@@ -173,10 +176,8 @@ func MostProgressedAllocationState(states ...AllocationState) AllocationState {
 // Proto returns the proto representation of the task state.
 func (s AllocationState) Proto() taskv1.State {
 	switch s {
-	case AllocationStatePending:
-		return taskv1.State_STATE_PENDING
-	case AllocationStateAssigned:
-		return taskv1.State_STATE_ASSIGNED
+	case AllocationStateWaiting:
+		return taskv1.State_STATE_WAITING
 	case AllocationStatePulling:
 		return taskv1.State_STATE_PULLING
 	case AllocationStateStarting:

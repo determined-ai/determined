@@ -36,7 +36,6 @@ type Environment struct {
 	RegistryAuth   *types.AuthConfig `json:"registry_auth,omitempty"`
 	ForcePullImage bool              `json:"force_pull_image"`
 	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
-	Slurm          []string          `json:"slurm"`
 
 	AddCapabilities  []string `json:"add_capabilities"`
 	DropCapabilities []string `json:"drop_capabilities"`
@@ -152,12 +151,7 @@ func (r *RuntimeItems) For(deviceType device.Type) []string {
 
 // Validate implements the check.Validatable interface.
 func (e Environment) Validate() []error {
-	err := validatePodSpec(e.PodSpec)
-	// Slurm and PodSpec are different targets, so no need to merge results
-	if err != nil {
-		return err
-	}
-	return ValidateSlurm(e.Slurm)
+	return validatePodSpec(e.PodSpec)
 }
 
 func validatePodSpec(podSpec *k8sV1.Pod) []error {

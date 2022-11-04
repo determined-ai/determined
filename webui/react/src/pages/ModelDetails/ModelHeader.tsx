@@ -6,7 +6,7 @@ import React, { useCallback, useMemo } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import { relativeTimeRenderer } from 'components/Table';
+import { relativeTimeRenderer } from 'components/Table/Table';
 import TagList from 'components/TagList';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
@@ -14,6 +14,7 @@ import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import { ModelItem } from 'types';
 import { getDisplayName } from 'utils/user';
@@ -22,7 +23,7 @@ import css from './ModelHeader.module.scss';
 
 interface Props {
   model: ModelItem;
-  onSaveDescription: (editedDescription: string) => Promise<void>
+  onSaveDescription: (editedDescription: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<Error | void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
@@ -40,68 +41,74 @@ const ModelHeader: React.FC<Props> = ({
   const { contextHolder, modalOpen } = useModalModelDelete();
 
   const infoRows: InfoRow[] = useMemo(() => {
-    return [ {
-      content: (
-        <Space>
-          <Avatar userId={model.userId} />
-          {`${getDisplayName(users.find((user) => user.id === model.userId))} on
+    return [
+      {
+        content: (
+          <Space>
+            <Avatar userId={model.userId} />
+            {`${getDisplayName(users.find((user) => user.id === model.userId))} on
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
-        </Space>
-      ),
-      label: 'Created by',
-    },
-    { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
-    {
-      content: (
-        <InlineEditor
-          disabled={model.archived}
-          placeholder={model.archived ? 'Archived' : 'Add description...'}
-          value={model.description ?? ''}
-          onSave={onSaveDescription}
-        />
-      ),
-      label: 'Description',
-    },
-    {
-      content: (
-        <TagList
-          disabled={model.archived}
-          ghost={false}
-          tags={model.labels ?? []}
-          onChange={onUpdateTags}
-        />
-      ),
-      label: 'Tags',
-    } ] as InfoRow[];
-  }, [ model, onSaveDescription, onUpdateTags, users ]);
+          </Space>
+        ),
+        label: 'Created by',
+      },
+      { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
+      {
+        content: (
+          <InlineEditor
+            disabled={model.archived}
+            placeholder={model.archived ? 'Archived' : 'Add description...'}
+            value={model.description ?? ''}
+            onSave={onSaveDescription}
+          />
+        ),
+        label: 'Description',
+      },
+      {
+        content: (
+          <TagList
+            disabled={model.archived}
+            ghost={false}
+            tags={model.labels ?? []}
+            onChange={onUpdateTags}
+          />
+        ),
+        label: 'Tags',
+      },
+    ] as InfoRow[];
+  }, [model, onSaveDescription, onUpdateTags, users]);
 
-  const handleDelete = useCallback(() => modalOpen(model), [ modalOpen, model ]);
+  const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
   const menu = useMemo(() => {
-    enum MenuKey {
-      SWITCH_ARCHIVED = 'switch-archive',
-      DELETE_MODEL = 'delete-model',
-    }
+    const MenuKey = {
+      DeleteModel: 'delete-model',
+      SwitchArchived: 'switch-archive',
+    } as const;
 
     const funcs = {
-      [MenuKey.SWITCH_ARCHIVED]: () => { onSwitchArchive(); },
-      [MenuKey.DELETE_MODEL]: () => { handleDelete(); },
+      [MenuKey.SwitchArchived]: () => {
+        onSwitchArchive();
+      },
+      [MenuKey.DeleteModel]: () => {
+        handleDelete();
+      },
     };
 
-    const onItemClick:MenuProps['onClick'] = (e) => {
-      funcs[e.key as MenuKey]();
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as ValueOf<typeof MenuKey>]();
     };
 
     const menuItems: MenuProps['items'] = [
-      { key: MenuKey.SWITCH_ARCHIVED, label: model.archived ? 'Unarchive' : 'Archive' },
+      { key: MenuKey.SwitchArchived, label: model.archived ? 'Unarchive' : 'Archive' },
     ];
 
     if (canDeleteModel({ model })) {
-      menuItems.push({ danger: true, key: MenuKey.DELETE_MODEL, label: 'Delete' });
+      menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
     return <Menu items={menuItems} onClick={onItemClick} />;
-  }, [ canDeleteModel, handleDelete, model, onSwitchArchive ]);
+  }, [canDeleteModel, handleDelete, model, onSwitchArchive]);
 
   return (
     <header className={css.base}>
@@ -113,12 +120,12 @@ const ModelHeader: React.FC<Props> = ({
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link path={paths.modelList()}>
-              Model Registry
-            </Link>
+            <Link path={paths.modelList()}>Model Registry</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
-          <Breadcrumb.Item>{model.name} ({model.id})</Breadcrumb.Item>
+          <Breadcrumb.Item>
+            {model.name} ({model.id})
+          </Breadcrumb.Item>
         </Breadcrumb>
       </div>
       {model.archived && (
@@ -144,9 +151,7 @@ const ModelHeader: React.FC<Props> = ({
             </h1>
           </Space>
           <Space size="small">
-            <Dropdown
-              overlay={menu}
-              trigger={[ 'click' ]}>
+            <Dropdown overlay={menu} trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>

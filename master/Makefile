@@ -50,14 +50,7 @@ check-gen: force-gen gen
 
 .PHONY: get-deps
 get-deps:
-	go install mvdan.cc/gofumpt@v0.3.1
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
-	go install github.com/bufbuild/buf/cmd/buf@v0.42.1
-	go install golang.org/x/tools/cmd/goimports@v0.1.5
-	go install github.com/goreleaser/goreleaser@v1.1.0
-	go install github.com/ryanbressler/CloudForest/growforest@v0.0.0-20161201194407-d014dc32840a
-	go install github.com/swaggo/swag/cmd/swag@v1.7.0
-	go install github.com/vektra/mockery/v2@v2.13.1
+	./get-deps.sh
 
 .PHONY: build
 build: export DET_SEGMENT_MASTER_KEY ?=
@@ -86,7 +79,7 @@ build-race: gen
 check: check-gen
 	go mod tidy
 	git diff --quiet go.mod go.sum
-	golangci-lint run -v --timeout 10m
+	golangci-lint --build-tags integration run -v --timeout 10m
 
 .PHONY: fmt
 fmt:
@@ -127,7 +120,7 @@ package: gen
 release: export DET_SEGMENT_MASTER_KEY ?=
 release: export DET_SEGMENT_WEBUI_KEY ?=
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc\|v" | grep "$(VERSION)" -A1 | sed -n '2 p')
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release: gen
 	goreleaser --rm-dist
 

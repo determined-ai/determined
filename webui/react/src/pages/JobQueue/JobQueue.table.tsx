@@ -2,15 +2,15 @@ import { Tooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import { ColumnDef } from 'components/InteractiveTable';
 import Link from 'components/Link';
-import { relativeTimeRenderer } from 'components/Table';
+import { ColumnDef } from 'components/Table/InteractiveTable';
+import { relativeTimeRenderer } from 'components/Table/Table';
 import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import { Job, JobType } from 'types';
+import { CommandTask, Job, JobType } from 'types';
 import { jobTypeIconName, jobTypeLabel } from 'utils/job';
 import { openCommand } from 'utils/wait';
 
@@ -23,7 +23,7 @@ export type JobTypeRenderer = Renderer<Job>;
 export const SCHEDULING_VAL_KEY = 'schedulingVal';
 
 const routeToTask = async (taskId: string, jobType: JobType): Promise<void> => {
-  let cmds = [];
+  let cmds: CommandTask[] = [];
   switch (jobType) {
     case JobType.TENSORBOARD:
       cmds = await getTensorBoards({});
@@ -50,9 +50,11 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
     case JobType.NOTEBOOK:
     case JobType.TENSORBOARD:
       return (
-        <Link onClick={() => {
-          routeToTask(job.entityId, job.type);
-        }}>{label}
+        <Link
+          onClick={() => {
+            routeToTask(job.entityId, job.type);
+          }}>
+          {label}
         </Link>
       );
     default:
@@ -62,6 +64,7 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
 
 export const columns: ColumnDef<Job>[] = [
   {
+    align: 'center',
     dataIndex: 'preemptible',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['preemptible'],
     key: 'jobsAhead',
@@ -76,6 +79,7 @@ export const columns: ColumnDef<Job>[] = [
   //   title: 'ID',
   // },
   {
+    align: 'center',
     dataIndex: 'type',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['type'],
     key: 'type',
@@ -101,15 +105,18 @@ export const columns: ColumnDef<Job>[] = [
       switch (record.type) {
         case JobType.EXPERIMENT:
           label = (
-            <div>{record.name}
-              <Tooltip title="Experiment ID">
-                {` (${record.entityId})`}
-              </Tooltip>
+            <div>
+              {record.name}
+              <Tooltip title="Experiment ID">{` (${record.entityId})`}</Tooltip>
             </div>
           );
           break;
         default:
-          label = <span>{jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}</span>;
+          label = (
+            <span>
+              {jobTypeLabel(record.type)} {truncate(record.entityId, 6, '')}
+            </span>
+          );
           break;
       }
 
@@ -124,6 +131,7 @@ export const columns: ColumnDef<Job>[] = [
     title: 'Priority',
   },
   {
+    align: 'right',
     dataIndex: 'submissionTime',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['submissionTime'],
     key: 'submitted',
@@ -132,6 +140,7 @@ export const columns: ColumnDef<Job>[] = [
     title: 'Submitted',
   },
   {
+    align: 'right',
     dataIndex: 'slots',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['slots'],
     key: 'slots',
@@ -148,6 +157,7 @@ export const columns: ColumnDef<Job>[] = [
     title: 'Slots',
   },
   {
+    align: 'center',
     dataIndex: 'status',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['status'],
     key: 'state',
@@ -155,20 +165,22 @@ export const columns: ColumnDef<Job>[] = [
       return (
         <div className={css.state}>
           <Badge state={record.summary.state} type={BadgeType.State} />
-          {(!!record?.progress) && <span> {floatToPercent(record.progress, 1)}</span>}
+          {!!record?.progress && <span> {floatToPercent(record.progress, 1)}</span>}
         </div>
       );
     },
     title: 'Status',
   },
   {
+    align: 'center',
     dataIndex: 'user',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
     key: 'user',
-    render: (_: unknown, record: Job): ReactNode => {
-      const cell = <Avatar userId={record.userId} />;
-      return cell;
-    },
+    render: (_: unknown, record: Job): ReactNode => (
+      <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+        <Avatar userId={record.userId} />
+      </div>
+    ),
     title: 'User',
   },
   {

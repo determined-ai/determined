@@ -18,28 +18,28 @@ export const CHART_HEIGHT = 400;
 const TrialDetailsProfiles: React.FC<Props> = ({ experiment, trial }: Props) => {
   return (
     <div className={css.base}>
-      {(!experiment.config.profiling?.enabled) ? (
+      {!experiment.config.profiling?.enabled ? (
         <Alert
-          description={(
+          description={
             <>
               Learn about&nbsp;
               <Link
                 external
                 path={paths.docs('/training-apis/experiment-config.html#profiling')}
-                popout>how to enable profiling on trials
-              </Link>.
+                popout>
+                how to enable profiling on trials
+              </Link>
+              .
             </>
-          )}
+          }
           message="Profiling was not enabled for this trial."
           type="warning"
         />
-      ) : !trial
-        ? (
-          <Alert
-            message="Waiting for trial to become available."
-            type="warning"
-          />
-        ) : <Profiler trial={trial} />}
+      ) : !trial ? (
+        <Alert message="Waiting for trial to become available." type="warning" />
+      ) : (
+        <Profiler trial={trial} />
+      )}
     </div>
   );
 };

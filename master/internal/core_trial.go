@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/context"
+	detContext "github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 )
@@ -18,7 +18,7 @@ func echoCanGetTrial(c echo.Context, m *Master, trialID string) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "trial ID must be numeric got %s", trialID)
 	}
 
-	curUser := c.(*context.DetContext).MustGetUser()
+	curUser := c.(*detContext.DetContext).MustGetUser()
 	trialNotFound := echo.NewHTTPError(http.StatusNotFound, "trial not found: %d", id)
 	exp, err := m.db.ExperimentWithoutConfigByTrialID(id)
 	if errors.Is(err, db.ErrNotFound) {
@@ -27,13 +27,14 @@ func echoCanGetTrial(c echo.Context, m *Master, trialID string) error {
 		return err
 	}
 	var ok bool
-	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(curUser, exp); err != nil {
+	ctx := c.Request().Context()
+	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
 		return err
 	} else if !ok {
 		return trialNotFound
 	}
 
-	if err = expauth.AuthZProvider.Get().CanGetExperimentArtifacts(curUser, exp); err != nil {
+	if err = expauth.AuthZProvider.Get().CanGetExperimentArtifacts(ctx, curUser, exp); err != nil {
 		return echo.NewHTTPError(http.StatusForbidden, err.Error())
 	}
 	return nil

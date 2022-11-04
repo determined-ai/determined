@@ -2,7 +2,7 @@ import hparams from 'fixtures/hyperparameter-configs.json';
 import experimentResps from 'fixtures/responses/experiment-details/set-a.json';
 import * as ioTypes from 'ioTypes';
 
-type FailReport<T = unknown> = {error: Error; sample: T;}
+type FailReport<T = unknown> = { error: Error; sample: T };
 
 const tryOnSamples = <T = unknown>(samples: T[], fn: (sample: T) => void): FailReport[] => {
   const fails: FailReport[] = [];
@@ -26,17 +26,18 @@ const tryOnSamples = <T = unknown>(samples: T[], fn: (sample: T) => void): FailR
 describe('Decoder', () => {
   it('Should decode seeded hyperparameters', () => {
     const fails = tryOnSamples(hparams, (hparam) => {
-      ioTypes
-        .decode<ioTypes.ioTypeHyperparameters>(ioTypes.ioHyperparameters, hparam);
+      ioTypes.decode<ioTypes.ioTypeHyperparameters>(ioTypes.ioHyperparameters, hparam);
     });
     expect(fails).toHaveLength(0);
   });
 
   it('Should decode experiment configs', () => {
-    const fails = tryOnSamples(experimentResps.map((r) => r.config), (config) => {
-      ioTypes
-        .decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
-    });
+    const fails = tryOnSamples(
+      experimentResps.map((r) => r.config),
+      (config) => {
+        ioTypes.decode<ioTypes.ioTypeExperimentConfig>(ioTypes.ioExperimentConfig, config);
+      },
+    );
     expect(fails).toHaveLength(0);
   });
 });

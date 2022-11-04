@@ -80,6 +80,29 @@ RETURNING id`)
 	return user.ID, nil
 }
 
+// PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
+const PersonalGroupPostfix = "DeterminedPersonalGroup"
+
+func addUserPersonalGroup(tx *sqlx.Tx, userID model.UserID) error {
+	query := `
+INSERT INTO groups(group_name, user_id) 
+SELECT username || $2 AS group_name, id AS user_id FROM users 
+WHERE id = $1`
+	if _, err := tx.Exec(query, userID, PersonalGroupPostfix); err != nil {
+		return errors.WithStack(err)
+	}
+
+	query = `
+INSERT INTO user_group_membership(user_id, group_id)
+SELECT user_id AS user_id, id AS group_id FROM groups 
+WHERE user_id = $1`
+	if _, err := tx.Exec(query, userID); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
 func addAgentUserGroup(tx *sqlx.Tx, userID model.UserID, ug *model.AgentUserGroup) error {
 	next := *ug
 	next.UserID = userID
@@ -127,6 +150,10 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserI
 
 	userID, err := addUser(tx, user)
 	if err != nil {
+		return 0, err
+	}
+
+	if err := addUserPersonalGroup(tx, userID); err != nil {
 		return 0, err
 	}
 

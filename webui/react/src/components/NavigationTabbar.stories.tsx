@@ -7,7 +7,7 @@ import NavigationTabbar from './NavigationTabbar';
 export default {
   component: NavigationTabbar,
   parameters: { layout: 'fullscreen' },
-  title: 'NavigationTabbar',
+  title: 'Determined/Navigation/NavigationTabbar',
 };
 
 const NavigationTabbarLoggedIn = () => {
@@ -15,7 +15,7 @@ const NavigationTabbarLoggedIn = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return <NavigationTabbar />;
 };

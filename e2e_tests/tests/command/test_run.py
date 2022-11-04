@@ -438,7 +438,7 @@ def test_killed_pending_command_terminates() -> None:
     ) as command:
         assert command.task_id is not None
         for _ in range(10):
-            assert cmd.get_command(command.task_id)["state"] == "STATE_PENDING"
+            assert cmd.get_command(command.task_id)["state"] == "STATE_QUEUED"
             time.sleep(1)
 
     # The command is killed when the context is exited; now it should reach TERMINATED soon.
@@ -484,7 +484,7 @@ def test_k8_mount(using_k8s: bool, sidecar: bool) -> None:
     if sidecar:
         sidecar_container = {
             "name": "sidecar",
-            "image": conf.TF1_CPU_IMAGE,
+            "image": conf.TF2_CPU_IMAGE,
             "command": ["/bin/bash"],
             "args": ["-c", "exit 0"],
         }

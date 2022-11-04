@@ -5,6 +5,7 @@ package db
 
 import (
 	"archive/tar"
+	"crypto/rand"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,9 +29,13 @@ import (
 )
 
 const (
-	RootFromDB            = "../../static/srv"
+	// RootFromDB returns the relative path from db to root.
+	RootFromDB = "../../static/srv"
+	// MigrationsFromDB returns the relative path to migrations folder.
 	MigrationsFromDB      = "file://../../static/migrations"
 	defaultSearcherMetric = "okness"
+	// DefaultTestSrcPath returns src to the mnsit_pytorch model example.
+	DefaultTestSrcPath = "../../../examples/tutorials/mnist_pytorch"
 )
 
 // ResolveTestPostgres resolves a connection to a postgres database. To debug tests that use this
@@ -66,6 +71,7 @@ func MustSetupTestPostgres(t *testing.T) *PgDB {
 	return pgDB
 }
 
+// RequireMockTask returns a mock task.
 func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
 	// Add a job.
 	jID := model.NewJobID()
@@ -92,6 +98,7 @@ func RequireMockTask(t *testing.T, db *PgDB, userID *model.UserID) *model.Task {
 	return tIn
 }
 
+// RequireMockUser requires a mock model.
 func RequireMockUser(t *testing.T, db *PgDB) model.User {
 	user := model.User{
 		Username:     uuid.NewString(),
@@ -103,6 +110,8 @@ func RequireMockUser(t *testing.T, db *PgDB) model.User {
 	return user
 }
 
+// RequireMockExperiment returns a mock experiment.
+//nolint: exhaustivestruct
 func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Experiment {
 	cfg := schemas.WithDefaults(expconf.ExperimentConfigV0{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
@@ -135,7 +144,7 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
 		Config:               cfg,
-		ModelDefinitionBytes: readTestModelDefiniton(t),
+		ModelDefinitionBytes: ReadTestModelDefiniton(t, DefaultTestSrcPath),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
@@ -146,8 +155,8 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 	return &exp
 }
 
-func readTestModelDefiniton(t *testing.T) []byte {
-	folderPath := "../../../examples/tutorials/mnist_pytorch"
+// ReadTestModelDefiniton reads a test model definition into a []byte.
+func ReadTestModelDefiniton(t *testing.T, folderPath string) []byte {
 	path, err := filepath.Abs(folderPath)
 	require.NoError(t, err)
 	files, err := ioutil.ReadDir(path)
@@ -158,11 +167,67 @@ func readTestModelDefiniton(t *testing.T) []byte {
 			continue
 		}
 		name := file.Name()
-		bytes, err := ioutil.ReadFile(filepath.Join(path, name))
+		var bytes []byte
+		bytes, err = ioutil.ReadFile(filepath.Join(path, name)) //nolint: gosec
 		require.NoError(t, err)
 		arcs = append(arcs, archive.UserItem(name, bytes, tar.TypeReg, byte(file.Mode()), 0, 0))
 	}
 	targz, err := archive.ToTarGz(archive.Archive(arcs))
 	require.NoError(t, err)
 	return targz
+}
+
+// RequireMockTrial returns a mock trial.
+func RequireMockTrial(t *testing.T, db *PgDB, exp *model.Experiment) *model.Trial {
+	task := RequireMockTask(t, db, exp.OwnerID)
+	rqID := model.NewRequestID(rand.Reader)
+	tr := model.Trial{
+		TaskID:       task.TaskID,
+		RequestID:    &rqID,
+		ExperimentID: exp.ID,
+		State:        model.ActiveState,
+		StartTime:    time.Now(),
+		HParams:      model.JSONObj{"global_batch_size": 1},
+		JobID:        exp.JobID,
+	}
+	err := db.AddTrial(&tr)
+	require.NoError(t, err, "failed to add trial")
+	return &tr
+}
+
+// RequireMockAllocation returns a mock allocation.
+func RequireMockAllocation(t *testing.T, db *PgDB, tID model.TaskID) *model.Allocation {
+	a := model.Allocation{
+		AllocationID: model.AllocationID(fmt.Sprintf("%s-1", tID)),
+		TaskID:       tID,
+		StartTime:    ptrs.Ptr(time.Now().UTC()),
+		State:        ptrs.Ptr(model.AllocationStateTerminated),
+	}
+	err := db.AddAllocation(&a)
+	require.NoError(t, err, "failed to add allocation")
+	return &a
+}
+
+// MockModelCheckpoint returns a mock model checkpoint.
+func MockModelCheckpoint(
+	ckptUUID uuid.UUID, tr *model.Trial, a *model.Allocation,
+) model.CheckpointV2 {
+	stepsCompleted := int32(10)
+	ckpt := model.CheckpointV2{
+		UUID:         ckptUUID,
+		TaskID:       tr.TaskID,
+		AllocationID: a.AllocationID,
+		ReportTime:   time.Now().UTC(),
+		State:        model.CompletedState,
+		Resources: map[string]int64{
+			"ok": 1.0,
+		},
+		Metadata: map[string]interface{}{
+			"framework":          "some framework",
+			"determined_version": "1.0.0",
+			"steps_completed":    float64(stepsCompleted),
+		},
+	}
+
+	return ckpt
 }

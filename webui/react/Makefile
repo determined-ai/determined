@@ -40,32 +40,69 @@ live: check-requirements start
 start:
 	npm start
 
-.PHONY: check-js
-check-js:
-	npm run lint:js
-.PHONY: check-css
-check-css:
-	npm run lint:css
+.PHONY: prettier-check
+prettier:
+	npm run prettier $(PRE_ARGS)
+.PHONY: stylelint
+stylelint:
+	npm run stylelint $(ST_ARGS)
+.PHONY: eslint
+eslint:
+	npm run eslint $(ES_ARGS)
+
+.PHONY: check-eslint
+check-eslint:
+	npm run lint:eslint
+.PHONY: check-stylelint
+check-stylelint:
+	npm run lint:style
+check-prettier-js:
+	npm run format-check:js > /dev/null
+check-prettier-css:
+	npm run format-check:css > /dev/null
+check-prettier-misc:
+	npm run format-check:misc > /dev/null
 .PHONY: check-package-lock
 check-package-lock:
 	if grep 'ssh://' package-lock.json ; then echo "ssh url in package-lock.json, please convert to https url" ; false ; fi
 .PHONY: check-requirements
 check-requirements:
 	node --version | grep -E 'v16\.(1[3-9]|2[0-9])' || (echo "node version >=16.13 <17 is required" ; false)
+.PHONY: check-prettier
+check-prettier: check-prettier-js check-prettier-css check-prettier-misc
 .PHONY: check
-check: check-js check-css check-package-lock
+check: check-eslint check-stylelint check-prettier check-package-lock
 
+
+.PHONY: fmt-js-eslint
+fmt-js-eslint:
+	npm run lint:eslint -- --fix
+.PHONY: fmt-js-prettier
+fmt-js-prettier:
+	npm run format:js > /dev/null
 .PHONY: fmt-js
-fmt-js:
-	npm run lint:js -- --fix
+fmt-js: fmt-js-eslint fmt-js-prettier
+.PHONY: fmt-css-stylelint
+fmt-css-stylelint:
+	npm run lint:style -- --fix
+.PHONY: fmt-css-prettier
+fmt-css-prettier:
+	npm run format:css > /dev/null
 .PHONY: fmt-css
-fmt-css:
-	npm run lint:css -- --fix
+fmt-css: fmt-css-stylelint fmt-css-prettier
+.PHONY: fmt-misc
+fmt-misc:
+	npm run  format:misc > /dev/null
 .PHONY: fmt-package-lock
 fmt-package-lock:
+# check if we're running on MacOS
+ifeq "$(shell uname)" "Darwin"
 	sed -i '' -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
+else
+	sed -i -e 's|git+ssh://git@github.com|https://github.com|' package-lock.json
+endif
 .PHONY: fmt
-fmt: fmt-js fmt-css fmt-package-lock
+fmt: fmt-js fmt-css fmt-misc fmt-package-lock
 
 .PHONY: test
 test:

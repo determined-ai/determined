@@ -19,7 +19,7 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, tri
 
   const options = useMemo(
     () => getOptionsForMetrics('samples_per_second', throughputMetrics.names),
-    [ getOptionsForMetrics, throughputMetrics.names ],
+    [getOptionsForMetrics, throughputMetrics.names],
   );
 
   return (

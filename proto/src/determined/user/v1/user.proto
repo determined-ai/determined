@@ -33,19 +33,25 @@ message PatchUser {
   google.protobuf.BoolValue admin = 1;
   // Bool denoting whether the account is active.
   google.protobuf.BoolValue active = 2;
-  // Name to display in the web UI.
-  google.protobuf.StringValue display_name = 3;
   // The user and group on the agent host machine.
   AgentUserGroup agent_user_group = 4;
+  // The new username.
+  optional string username = 5;
+  // Name to display in the web UI.
+  optional string display_name = 6;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an
 // agent host machine.
 message AgentUserGroup {
   // The user id on the agent.
-  int32 agent_uid = 1;
+  optional int32 agent_uid = 1;
   // The group id on the agent.
-  int32 agent_gid = 2;
+  optional int32 agent_gid = 2;
+  // User name.
+  optional string agent_user = 3;
+  // Group name.
+  optional string agent_group = 4;
 }
 
 // UserWebSetting represents user web setting.

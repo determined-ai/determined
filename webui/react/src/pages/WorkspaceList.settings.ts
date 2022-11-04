@@ -1,7 +1,8 @@
 import { GridListView } from 'components/GridListRadioGroup';
-import { InteractiveTableSettings } from 'components/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
+import { ValueOf } from 'shared/types';
 
 export type WorkspaceColumnName =
   | 'action'
@@ -11,17 +12,15 @@ export type WorkspaceColumnName =
   | 'state'
   | 'userId';
 
-export const DEFAULT_COLUMNS: WorkspaceColumnName[] = [
-  'name',
-  'numProjects',
-  'userId',
-];
+export const DEFAULT_COLUMNS: WorkspaceColumnName[] = ['name', 'numProjects', 'userId'];
 
-export enum WhoseWorkspaces {
-  All = 'ALL_WORKSPACES',
-  Mine = 'MY_WORKSPACES',
-  Others = 'OTHERS_WORKSPACES'
-}
+export const WhoseWorkspaces = {
+  All: 'ALL_WORKSPACES',
+  Mine: 'MY_WORKSPACES',
+  Others: 'OTHERS_WORKSPACES',
+} as const;
+
+export type WhoseWorkspaces = ValueOf<typeof WhoseWorkspaces>;
 
 export const DEFAULT_COLUMN_WIDTHS: Record<WorkspaceColumnName, number> = {
   action: 46,

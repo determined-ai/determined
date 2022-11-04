@@ -2,12 +2,8 @@ import { message } from 'antd';
 import Fuse from 'fuse.js';
 
 import root from 'omnibar/tree-extension/trees/index';
-import {
-  Children, LeafNode, NonLeafNode, TreeNode, TreePath,
-} from 'omnibar/tree-extension/types';
-import {
-  getNodeChildren, isLeafNode, isNLNode, traverseTree,
-} from 'omnibar/tree-extension/utils';
+import { Children, LeafNode, NonLeafNode, TreeNode, TreePath } from 'omnibar/tree-extension/types';
+import { getNodeChildren, isLeafNode, isNLNode, traverseTree } from 'omnibar/tree-extension/utils';
 import { ErrorType } from 'shared/utils/error';
 import { noOp } from 'shared/utils/service';
 import handleError from 'utils/error';
@@ -32,7 +28,7 @@ const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest
   };
 };
 
-const absPathToAddress = (path: TreePath): string[] => (path.map((tn) => tn.title).slice(1));
+const absPathToAddress = (path: TreePath): string[] => path.map((tn) => tn.title).slice(1);
 
 const noResultsNode: LeafNode = {
   closeBar: true,
@@ -45,16 +41,13 @@ const queryTree = async (input: string, root: NonLeafNode): Promise<Children> =>
   const { path, query } = await parseInput(input, root);
   const node = path[path.length - 1];
   const children = await getNodeChildren(node);
-  const fuse = new Fuse(
-    children,
-    {
-      includeScore: false,
-      keys: [ 'title', 'aliases', 'label' ],
-      minMatchCharLength: 1,
-      shouldSort: true,
-      threshold: 0.4,
-    },
-  );
+  const fuse = new Fuse(children, {
+    includeScore: false,
+    keys: ['title', 'aliases', 'label'],
+    minMatchCharLength: 1,
+    shouldSort: true,
+    threshold: 0.4,
+  });
   const matches = query === '' ? children : fuse.search(query).map((r) => r.item);
 
   if (isNLNode(node)) {
@@ -71,7 +64,7 @@ const queryTree = async (input: string, root: NonLeafNode): Promise<Children> =>
 // FIXME when querying async paths in a tree, while the extension is getting queried
 // the previous options are still available and can be executed which means the user
 // could see out of date options.
-export const extension = async(input: string): Promise<Children> => {
+export const extension = async (input: string): Promise<Children> => {
   try {
     // query the default tree.
     return await queryTree(input, root);
@@ -91,8 +84,8 @@ export const onAction = async (
 ): Promise<void> => {
   const { path } = await parseInput(inputEl.value, root);
   // update the omnibar text to reflect the current path
-  inputEl.value = (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '')
-        + item.title;
+  inputEl.value =
+    (path.length > 1 ? absPathToAddress(path).join(SEPARATOR) + SEPARATOR : '') + item.title;
   if (isLeafNode(item)) {
     await item.onAction(item);
     // if we opt to auto close the bar for user in some scenarios this

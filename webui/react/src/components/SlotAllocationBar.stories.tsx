@@ -1,58 +1,29 @@
-import { withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
 import { ShirtSize } from 'themes';
 import { ResourceState } from 'types';
 
-import SlotAllocationBar, { Props as SlotAllocationProps } from './SlotAllocationBar';
+import SlotAllocationBar from './SlotAllocationBar';
 
 export default {
+  argTypes: {
+    resourceStates: { control: { options: ResourceState, type: 'inline-check' } },
+    size: { control: { options: ShirtSize, type: 'select' } },
+  },
   component: SlotAllocationBar,
-  decorators: [ withKnobs ],
-  title: 'SlotAllocationBar',
-};
+  title: 'Determined/Bars/SlotAllocationBar',
+} as Meta<typeof SlotAllocationBar>;
 
-const Wrapper: React.FC<SlotAllocationProps> = (props) => (
+export const Default: ComponentStory<typeof SlotAllocationBar> = (args) => (
   <div style={{ minWidth: 500 }}>
-    <SlotAllocationBar {...props} />
+    <SlotAllocationBar {...args} />
   </div>
 );
 
-export const Default = (): React.ReactNode => (
-  <Wrapper
-    resourceStates={[
-      ResourceState.Pulling, ResourceState.Running,
-    ]}
-    showLegends
-    size={ShirtSize.large}
-    totalSlots={4}
-  />
-);
-
-export const NoLegends = (): React.ReactNode => (
-  <Wrapper
-    resourceStates={[
-      ResourceState.Pulling, ResourceState.Running,
-    ]}
-    size={ShirtSize.large}
-    totalSlots={4}
-  />
-);
-
-export const ZeroTotalSlots = (): React.ReactNode => (
-  <Wrapper
-    resourceStates={[]}
-    showLegends
-    size={ShirtSize.large}
-    totalSlots={0}
-  />
-);
-
-export const ZeroTotalSlotsWithMismatchingProps = (): React.ReactNode => (
-  <Wrapper
-    resourceStates={[ ResourceState.Running ]}
-    showLegends
-    size={ShirtSize.large}
-    totalSlots={0}
-  />
-);
+Default.args = {
+  resourceStates: [ResourceState.Pulling, ResourceState.Running],
+  showLegends: true,
+  size: ShirtSize.Large,
+  totalSlots: 4,
+};

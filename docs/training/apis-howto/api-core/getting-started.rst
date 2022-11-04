@@ -4,7 +4,7 @@
  Getting Started
 #################
 
-As a simple introduction, this example training script increments an single integer in a loop,
+As a simple introduction, this example training script increments a single integer in a loop,
 instead of training a model with machine learning. The changes shown for the example model should be
 similar to the changes you make in your actual model.
 

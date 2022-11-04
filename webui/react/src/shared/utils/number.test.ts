@@ -17,15 +17,13 @@ describe('Number Utilities', () => {
 
   describe('findFactorOfNumber', () => {
     it('should find factors of number', () => {
-      expect(utils.findFactorOfNumber(-12)).toStrictEqual([ 1, 2, 3, 4, 6, 12 ]);
-      expect(utils.findFactorOfNumber(-1)).toStrictEqual([ 1 ]);
-      expect(utils.findFactorOfNumber(0)).toStrictEqual([ ]);
-      expect(utils.findFactorOfNumber(1)).toStrictEqual([ 1 ]);
-      expect(utils.findFactorOfNumber(12)).toStrictEqual([ 1, 2, 3, 4, 6, 12 ]);
-      expect(utils.findFactorOfNumber(1093)).toStrictEqual([ 1, 1093 ]);
-      expect(utils.findFactorOfNumber(12345)).toStrictEqual([
-        1, 3, 5, 15, 823, 2469, 4115, 12345,
-      ]);
+      expect(utils.findFactorOfNumber(-12)).toStrictEqual([1, 2, 3, 4, 6, 12]);
+      expect(utils.findFactorOfNumber(-1)).toStrictEqual([1]);
+      expect(utils.findFactorOfNumber(0)).toStrictEqual([]);
+      expect(utils.findFactorOfNumber(1)).toStrictEqual([1]);
+      expect(utils.findFactorOfNumber(12)).toStrictEqual([1, 2, 3, 4, 6, 12]);
+      expect(utils.findFactorOfNumber(1093)).toStrictEqual([1, 1093]);
+      expect(utils.findFactorOfNumber(12345)).toStrictEqual([1, 3, 5, 15, 823, 2469, 4115, 12345]);
     });
   });
 
@@ -48,7 +46,7 @@ describe('Number Utilities', () => {
 
   describe('percent', () => {
     it('should convert a float to percent', () => {
-      expect(utils.percent(0.523843984, 5)).toBe(52.38440);
+      expect(utils.percent(0.523843984, 5)).toBe(52.3844);
       expect(utils.percent(0.523843984, 4)).toBe(52.3844);
       expect(utils.percent(0.523843984, 3)).toBe(52.384);
       expect(utils.percent(0.523843984, 2)).toBe(52.38);
@@ -87,7 +85,7 @@ describe('Number Utilities', () => {
   describe('roundToPrecision', () => {
     it('should round to specified precision', () => {
       expect(utils.roundToPrecision(0.523843984, 8)).toBe(0.52384398);
-      expect(utils.roundToPrecision(0.523843984, 7)).toBe(0.5238440);
+      expect(utils.roundToPrecision(0.523843984, 7)).toBe(0.523844);
       expect(utils.roundToPrecision(0.523843984, 6)).toBe(0.523844);
       expect(utils.roundToPrecision(0.523843984, 5)).toBe(0.52384);
       expect(utils.roundToPrecision(0.523843984, 4)).toBe(0.5238);

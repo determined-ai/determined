@@ -24,6 +24,10 @@ var masterLogsBatchMissWaitTime = time.Second
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest,
 ) (*apiv1.GetMasterResponse, error) {
+	product := apiv1.GetMasterResponse_PRODUCT_UNSPECIFIED
+	if len(a.m.config.InternalConfig.ExternalSessions.LoginURI) > 1 {
+		product = apiv1.GetMasterResponse_PRODUCT_COMMUNITY
+	}
 	masterResp := &apiv1.GetMasterResponse{
 		Version:           version.Version,
 		MasterId:          a.m.MasterID,
@@ -34,6 +38,8 @@ func (a *apiServer) GetMaster(
 		ExternalLogoutUri: a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:          "determined",
 		RbacEnabled:       config.GetAuthZConfig().IsRBACUIEnabled(),
+		Product:           product,
+		FeatureSwitches:   a.m.config.FeatureSwitches,
 	}
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 

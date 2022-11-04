@@ -10,6 +10,12 @@ const routes: RouteConfig[] = [
   {
     id: 'workspaceDetails',
     needAuth: true,
+    path: '/workspaces/:workspaceId/:tab',
+    title: 'Workspace',
+  },
+  {
+    id: 'workspaceDetails',
+    needAuth: true,
     path: '/workspaces/:workspaceId',
     title: 'Workspace',
   },
@@ -22,14 +28,36 @@ const routes: RouteConfig[] = [
   {
     id: 'projectDetails',
     needAuth: true,
-    path: '/projects/:projectId',
+    path: '/projects/:projectId/:tab',
     title: 'Project',
   },
   {
     icon: 'experiment',
     id: 'uncategorized',
     needAuth: true,
-    path: '/projects/1',
+    path: '/projects/1/experiments',
+    title: 'Uncategorized',
+  },
+  {
+    id: 'projectDetails',
+    needAuth: true,
+    path: '/projects/:projectId',
+    title: 'Project Details',
+  },
+  {
+    icon: 'experiment',
+    id: 'uncategorized',
+    needAuth: true,
+    path: '/projects',
+    redirect: '/projects/1',
+    title: 'Uncategorized',
+  },
+  {
+    icon: 'experiment',
+    id: 'uncategorized',
+    needAuth: true,
+    path: '/',
+    redirect: '/projects/1',
     title: 'Uncategorized',
   },
   {
@@ -69,12 +97,6 @@ const routes: RouteConfig[] = [
     title: 'Experiment',
   },
   {
-    id: 'experimentComparison',
-    needAuth: true,
-    path: '/experiment-compare',
-    title: 'Experiment',
-  },
-  {
     id: 'experimentDetails',
     needAuth: true,
     path: '/experiments/:experimentId',
@@ -93,6 +115,12 @@ const routes: RouteConfig[] = [
     needAuth: true,
     path: '/tasks',
     title: 'Tasks',
+  },
+  {
+    id: 'modelVersionDetails',
+    needAuth: true,
+    path: '/models/:modelId/versions/:versionId/:tab',
+    title: 'Version Details',
   },
   {
     id: 'modelVersionDetails',
@@ -212,6 +240,12 @@ const routes: RouteConfig[] = [
     path: '/settings',
     redirect: '/settings/account',
     title: 'Settings',
+  },
+  {
+    id: 'webhooks',
+    needAuth: true,
+    path: '/webhooks',
+    title: 'Webhooks',
   },
 ];
 

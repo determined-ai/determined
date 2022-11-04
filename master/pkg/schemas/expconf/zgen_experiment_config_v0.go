@@ -281,6 +281,28 @@ func (e *ExperimentConfigV0) SetWorkspace(val string) {
 	e.RawWorkspace = &val
 }
 
+func (e ExperimentConfigV0) SlurmConfig() SlurmConfigV0 {
+	if e.RawSlurmConfig == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .SlurmConfig")
+	}
+	return *e.RawSlurmConfig
+}
+
+func (e *ExperimentConfigV0) SetSlurmConfig(val SlurmConfigV0) {
+	e.RawSlurmConfig = &val
+}
+
+func (e ExperimentConfigV0) PbsConfig() PbsConfigV0 {
+	if e.RawPbsConfig == nil {
+		panic("You must call WithDefaults on ExperimentConfigV0 before .PbsConfig")
+	}
+	return *e.RawPbsConfig
+}
+
+func (e *ExperimentConfigV0) SetPbsConfig(val PbsConfigV0) {
+	e.RawPbsConfig = &val
+}
+
 func (e ExperimentConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedExperimentConfigV0()
 }

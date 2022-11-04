@@ -160,7 +160,7 @@
         },
         "learning_rate_decay": {
           "type": "const",
-          "val": 1e-06
+          "val": 1e-6
         }
       },
       "internal": null,
@@ -390,7 +390,7 @@
         },
         "weight_cost": {
           "type": "const",
-          "val": 1e-05
+          "val": 1e-5
         }
       },
       "internal": null,
@@ -611,7 +611,7 @@
         },
         "weight_cost": {
           "type": "const",
-          "val": 1e-05
+          "val": 1e-5
         }
       },
       "internal": null,
@@ -694,8 +694,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094",
-          "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-9119094"
+          "cpu": "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730",
+          "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730"
         },
         "pod_spec": null,
         "ports": null
@@ -703,7 +703,7 @@
       "hyperparameters": {
         "adam_epsilon": {
           "type": "const",
-          "val": 1e-08
+          "val": 1e-8
         },
         "doc_stride": {
           "type": "const",
@@ -715,7 +715,7 @@
         },
         "learning_rate": {
           "type": "const",
-          "val": 3e-05
+          "val": 3e-5
         },
         "lr_scheduler_epoch_freq": {
           "type": "const",
@@ -838,8 +838,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094",
-          "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-9119094"
+          "cpu": "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730",
+          "gpu": "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730"
         },
         "pod_spec": {
           "metadata": {
@@ -985,9 +985,7 @@
     "experiment": {
       "id": 562,
       "name": "mnist_pytorch_const",
-      "labels": [
-        "asdf"
-      ],
+      "labels": ["asdf"],
       "startTime": "2020-08-03T15:19:43.964371Z",
       "endTime": "2020-08-03T15:24:39.529097Z",
       "state": "STATE_COMPLETED",
@@ -1052,9 +1050,7 @@
         }
       },
       "internal": null,
-      "labels": [
-        "asdf"
-      ],
+      "labels": ["asdf"],
       "max_restarts": 5,
       "min_checkpoint_period": null,
       "min_validation_period": null,
@@ -1477,7 +1473,7 @@
         },
         "learning_rate_decay": {
           "type": "const",
-          "val": 1e-06
+          "val": 1e-6
         }
       },
       "internal": null,
@@ -1602,7 +1598,7 @@
         },
         "learning_rate_decay": {
           "type": "const",
-          "val": 1e-06
+          "val": 1e-6
         }
       },
       "internal": null,
@@ -1838,7 +1834,7 @@
         },
         "weight_cost": {
           "type": "const",
-          "val": 1e-05
+          "val": 1e-5
         }
       },
       "internal": null,
@@ -2238,11 +2234,11 @@
       "hyperparameters": {
         "string_categories": {
           "type": "categorical",
-          "vals": [ "abc", "def", "ghi" ]
+          "vals": ["abc", "def", "ghi"]
         },
         "number_categories": {
           "type": "categorical",
-          "vals": [ 16, 32, 64 ]
+          "vals": [16, 32, 64]
         },
         "dropout1": {
           "type": "const",
@@ -2347,11 +2343,15 @@
       "hyperparameters": {
         "list_categories": {
           "type": "categorical",
-          "vals": [ [ 0, 1 ], [ 2, 3 ], [ 4, 5 ] ]
+          "vals": [
+            [0, 1],
+            [2, 3],
+            [4, 5]
+          ]
         },
         "map_categories": {
           "type": "categorical",
-          "vals": [ { "abc": true }, { "def": false } ]
+          "vals": [{ "abc": true }, { "def": false }]
         },
         "dropout1": {
           "type": "const",
@@ -2456,11 +2456,15 @@
       "hyperparameters": {
         "list_categories": {
           "type": "const",
-          "val": [ [ 0, 1 ], [ 2, 3 ], [ 4, 5 ] ]
+          "val": [
+            [0, 1],
+            [2, 3],
+            [4, 5]
+          ]
         },
         "map_categories": {
           "type": "const",
-          "val": [ { "abc": true }, { "def": false } ]
+          "val": [{ "abc": true }, { "def": false }]
         },
         "dropout1": {
           "type": "const",

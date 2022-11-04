@@ -8,9 +8,7 @@ interface Props {
 
 const FilterCounter: React.FC<Props> = ({ activeFilterCount, onReset }: Props) => {
   if (activeFilterCount === 0) return <></>;
-  return (
-    <Button onClick={onReset}>Clear Filters ({activeFilterCount})</Button>
-  );
+  return <Button onClick={onReset}>Clear Filters ({activeFilterCount})</Button>;
 };
 
 export default FilterCounter;

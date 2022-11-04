@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -38,30 +40,75 @@ const (
 var shellsAddr = actor.Addr("shells")
 
 func (a *apiServer) GetShells(
-	_ context.Context, req *apiv1.GetShellsRequest,
+	ctx context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if err = a.ask(shellsAddr, req, &resp); err != nil {
 		return nil, err
 	}
+
+	a.filter(&resp.Shells, func(i int) bool {
+		if err != nil {
+			return false
+		}
+		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
+			ctx, *curUser, model.UserID(resp.Shells[i].UserId))
+		if serverError != nil {
+			err = serverError
+		}
+		return ok
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	a.sort(resp.Shells, req.OrderBy, req.SortBy, apiv1.GetShellsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Shells, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetShell(
-	_ context.Context, req *apiv1.GetShellRequest,
+	ctx context.Context, req *apiv1.GetShellRequest,
 ) (resp *apiv1.GetShellResponse, err error) {
-	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	addr := shellsAddr.Child(req.ShellId)
+	if err = a.ask(addr, req, &resp); err != nil {
+		return nil, err
+	}
+
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
+		ctx, *curUser, model.UserID(resp.Shell.UserId)); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errActorNotFound(addr)
+	}
+	return resp, nil
 }
 
 func (a *apiServer) KillShell(
-	_ context.Context, req *apiv1.KillShellRequest,
+	ctx context.Context, req *apiv1.KillShellRequest,
 ) (resp *apiv1.KillShellResponse, err error) {
+	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 
 func (a *apiServer) SetShellPriority(
-	_ context.Context, req *apiv1.SetShellPriorityRequest,
+	ctx context.Context, req *apiv1.SetShellPriorityRequest,
 ) (resp *apiv1.SetShellPriorityResponse, err error) {
+	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
+		return nil, err
+	}
+
 	return resp, a.ask(shellsAddr.Child(req.ShellId), req, &resp)
 }
 

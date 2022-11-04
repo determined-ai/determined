@@ -8,11 +8,11 @@ By checkpointing periodically during training and reporting those checkpoints to
 stop and restart training in two different ways: either by pausing and reactivating training using
 the WebUI, or by clicking the Continue Trial button after the experiment completes.
 
-These two types of continues have different behaviors. While you always want to preserve the value
-you are incrementing (the "model weight"), you do not always want to preserve the batch index. When
-you pause and reactivate you want training to continue from the same batch index, but when starting
-a fresh experiment you want training to start with a fresh batch index. You can save the trial ID in
-the checkpoint and use it to distinguish the two types of continues.
+These two types of continuations have different behaviors. While you always want to preserve the
+value you are incrementing (the "model weight"), you do not always want to preserve the batch index.
+When you pause and reactivate you want training to continue from the same batch index, but when
+starting a fresh experiment you want training to start with a fresh batch index. You can save the
+trial ID in the checkpoint and use it to distinguish the two types of continues.
 
 #. Create a new ``2_checkpoints.py`` training script called by copying the ``1_metrics.py`` script
    from :ref:`core-metrics`.
@@ -70,9 +70,9 @@ the checkpoint and use it to distinguish the two types of continues.
       det e create 2_checkpoints.yaml . -f
 
 #. You can navigate to the experiment in the WebUI and pause it mid-training. The trial shuts down
-   and stop producing logs. If you reactivate training it resumes where it stopped. After training
-   is completed, click Continue Trial to see that a fresh training is started but the model weight
-   continues from where the previous one finished.
+   and stops producing logs. If you reactivate training it resumes where it stopped. After training
+   is completed, click Continue Trial to see that fresh training is started but that the model
+   weight continues from where previous training finished.
 
 The complete ``2_checkpoints.py`` and ``2_checkpoints.yaml`` listings used in this example can be
 found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository

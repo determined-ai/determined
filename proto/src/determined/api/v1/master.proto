@@ -30,6 +30,13 @@ message GetMasterResponse {
       required: [ "version", "master_id", "cluster_id", "cluster_name" ]
     }
   };
+  // Different kinds of Determined Cloud offerings
+  enum Product {
+    // Not a Cloud Community offering
+    PRODUCT_UNSPECIFIED = 0;
+    // Determined Cloud, Community Edition
+    PRODUCT_COMMUNITY = 1;
+  }
   // The current version of the master.
   string version = 1;
   // The current instance id of the master.
@@ -50,6 +57,10 @@ message GetMasterResponse {
   string branding = 9;
   // Feature flag for RBAC and user groups.
   bool rbac_enabled = 10;
+  // What kind of product offering the cluster is part of, if any
+  Product product = 11;
+  // List of features that is on.
+  repeated string feature_switches = 12;
 }
 
 // Get telemetry information.

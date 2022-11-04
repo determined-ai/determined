@@ -48,8 +48,16 @@ message AllocationReadyRequest {
   // The id of the allocation.
   string allocation_id = 1;
 }
-// Response to IdleNotebookRequest.
+// Response to AllocationReadyRequest.
 message AllocationReadyResponse {}
+
+// Mark the given task as waiting.
+message AllocationWaitingRequest {
+  // The id of the allocation.
+  string allocation_id = 1;
+}
+// Response to AllocationWaitingRequest.
+message AllocationWaitingResponse {}
 
 // Stream task logs.
 message TaskLogsRequest {

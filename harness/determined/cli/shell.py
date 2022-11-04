@@ -21,28 +21,20 @@ from determined.common.api import authentication, certs
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
-from .command import (
-    CONFIG_DESC,
-    CONTEXT_DESC,
-    VOLUME_DESC,
-    launch_command,
-    parse_config,
-    render_event_stream,
-)
-
 
 @authentication.required
 def start_shell(args: Namespace) -> None:
     data = {}
     if args.passphrase:
         data["passphrase"] = getpass.getpass("Enter new passphrase: ")
-    config = parse_config(args.config_file, None, args.config, args.volume)
-    resp = launch_command(
+    config = command.parse_config(args.config_file, None, args.config, args.volume)
+    resp = command.launch_command(
         args.master,
         "api/v1/shells",
         config,
         args.template,
         context_path=args.context,
+        includes=args.include,
         data=data,
     )["shell"]
 
@@ -56,7 +48,7 @@ def start_shell(args: Namespace) -> None:
             if msg["service_ready_event"]:
                 ready = True
                 break
-            render_event_stream(msg)
+            command.render_event_stream(msg)
     if ready:
         shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
         check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
@@ -201,7 +193,7 @@ def _open_shell(
 
 args_description = [
     Cmd("shell", None, "manage shells", [
-        Cmd("list", partial(command.list_tasks), "list shells", [
+        Cmd("list ls", partial(command.list_tasks), "list shells", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
@@ -217,9 +209,17 @@ args_description = [
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
             Arg("-v", "--volume", action="append", default=[],
-                help=VOLUME_DESC),
-            Arg("-c", "--context", default=None, type=Path, help=CONTEXT_DESC),
-            Arg("--config", action="append", default=[], help=CONFIG_DESC),
+                help=command.VOLUME_DESC),
+            Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
+            Arg(
+                "-i",
+                "--include",
+                default=[],
+                action="append",
+                type=Path,
+                help=command.INCLUDE_DESC
+            ),
+            Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
             Arg("-p", "--passphrase", action="store_true",
                 help="passphrase to encrypt the shell private key"),
             Arg("--template", type=str,

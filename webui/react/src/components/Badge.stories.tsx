@@ -1,25 +1,20 @@
-import { select, text, withKnobs } from '@storybook/addon-knobs';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
-import { enumToOptions } from 'storybook/utils';
 import { CommandState } from 'types';
 
 import Badge, { BadgeType } from './Badge';
 
 export default {
+  argTypes: {
+    children: { name: 'text' },
+    state: { control: 'inline-radio', options: CommandState },
+    type: { control: 'inline-radio', options: BadgeType },
+  },
   component: Badge,
-  decorators: [ withKnobs ],
-  title: 'Badge',
-};
+  title: 'Determined/Badges/Badge',
+} as Meta<typeof Badge>;
 
-const knobTypeOptions = enumToOptions<BadgeType>(BadgeType);
+export const Default: ComponentStory<typeof Badge> = (args) => <Badge {...args} />;
 
-export const Default = (): React.ReactNode => <Badge>a4fdb98</Badge>;
-
-export const Custom = (): React.ReactNode => (
-  <Badge
-    state={select('State', CommandState, CommandState.Assigned)}
-    type={select<BadgeType>('Type', knobTypeOptions, BadgeType.Default)}>
-    {text('Content', 'a4fdb98')}
-  </Badge>
-);
+Default.args = { children: 'a4fdb98', state: CommandState.Running, type: BadgeType.Default };

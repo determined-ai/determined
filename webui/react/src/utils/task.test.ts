@@ -36,8 +36,9 @@ describe('canBeOpened', () => {
     expect(canBeOpened(SampleExperimentTask)).toStrictEqual(true);
   });
   it('Terminated Command Task', () => {
-    expect(canBeOpened({ ...SampleCommandTask, state: 'TERMINATED' as CommandState }))
-      .toStrictEqual(false);
+    expect(
+      canBeOpened({ ...SampleCommandTask, state: 'TERMINATED' as CommandState }),
+    ).toStrictEqual(false);
   });
   it('Command Task without service address', () => {
     expect(canBeOpened(SampleCommandTask)).toStrictEqual(false);

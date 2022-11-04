@@ -97,25 +97,39 @@ class S3StorageManager(storage.CloudStorageManager):
 
     @util.preserve_random_state
     def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+        import botocore
+
         dst = os.fspath(dst)
         prefix = self.get_storage_prefix(src)
         logging.info(f"Downloading {prefix} from S3")
         found = False
-        for obj in self.bucket.objects.filter(Prefix=prefix):
-            found = True
-            _dst = os.path.join(dst, os.path.relpath(obj.key, prefix))
-            dst_dir = os.path.dirname(_dst)
-            os.makedirs(dst_dir, exist_ok=True)
 
-            logging.debug(f"Downloading s3://{self.bucket_name}/{obj.key} to {_dst}")
+        try:
+            for obj in self.bucket.objects.filter(Prefix=prefix):
+                found = True
+                _dst = os.path.join(dst, os.path.relpath(obj.key, prefix))
+                dst_dir = os.path.dirname(_dst)
+                os.makedirs(dst_dir, exist_ok=True)
 
-            # Only create empty directory for keys that end with "/".
-            # See `upload` method for more context.
-            if obj.key.endswith("/"):
-                os.makedirs(_dst, exist_ok=True)
-                continue
+                logging.debug(f"Downloading s3://{self.bucket_name}/{obj.key} to {_dst}")
 
-            self.bucket.download_file(obj.key, _dst)
+                # Only create empty directory for keys that end with "/".
+                # See `upload` method for more context.
+                if obj.key.endswith("/"):
+                    os.makedirs(_dst, exist_ok=True)
+                    continue
+
+                self.bucket.download_file(obj.key, _dst)
+
+        except botocore.exceptions.ClientError as e:
+            if e.response["Error"]["Code"] == "AccessDenied":
+                raise errors.NoDirectStorageAccess(
+                    "Unable to access cloud checkpoint storage"
+                ) from e
+            raise
+
+        except botocore.exceptions.NoCredentialsError as e:
+            raise errors.NoDirectStorageAccess("Unable to access cloud checkpoint storage") from e
 
         if not found:
             raise errors.CheckpointNotFound(f"Did not find {prefix} in S3")

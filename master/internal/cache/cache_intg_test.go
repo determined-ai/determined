@@ -16,7 +16,7 @@ import (
 )
 
 func TestCache(t *testing.T) {
-	etc.SetRootPath(db.RootFromDB)
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
 	dbIns := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, dbIns, db.MigrationsFromDB)
 
@@ -35,7 +35,7 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test fetch to nested tree structure
-	files, err = cache.FileTreeNested(expID)
+	_, err = cache.FileTreeNested(expID)
 	require.NoError(t, err)
 
 	// Test fetch invalid path

@@ -33,7 +33,7 @@ const useGetCharMeasureInContainer = (container: RefObject<HTMLDivElement>): Cha
       height: charRect.height,
       width: charRect.width,
     };
-  }, [ containerInner ]);
+  }, [containerInner]);
 };
 
 export default useGetCharMeasureInContainer;

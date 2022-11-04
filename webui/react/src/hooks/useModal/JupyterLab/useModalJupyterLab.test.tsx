@@ -12,7 +12,7 @@ const MODAL_TITLE = 'Launch JupyterLab';
 const SIMPLE_CONFIG_TEMPLATE_TEXT = 'Template';
 const SHOW_SIMPLE_CONFIG_TEXT = 'Show Simple Config';
 
-const MonacoEditorMock: React.FC = () => (<></>);
+const MonacoEditorMock: React.FC = () => <></>;
 
 jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
@@ -36,7 +36,7 @@ const ModalTrigger: React.FC = () => {
 
   useEffect(() => {
     storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [ storeDispatch ]);
+  }, [storeDispatch]);
 
   return (
     <>
@@ -98,5 +98,4 @@ describe('useModalJupyterLab', () => {
       expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
     });
   });
-
 });

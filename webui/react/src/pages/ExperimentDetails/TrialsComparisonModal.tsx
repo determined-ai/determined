@@ -16,10 +16,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { isNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes } from 'shared/utils/string';
-import {
-  ExperimentBase, MetricName, MetricsWorkload,
-  TrialDetails, TrialWorkloadFilter,
-} from 'types';
+import { ExperimentBase, Metric, MetricsWorkload, TrialDetails, TrialWorkloadFilter } from 'types';
 import handleError from 'utils/error';
 
 import css from './TrialsComparisonModal.module.scss';
@@ -40,58 +37,68 @@ interface TableProps {
   trials: number[];
 }
 
-const TrialsComparisonModal: React.FC<ModalProps> =
-({ experiment, onCancel, onUnselect, trials, visible }: ModalProps) => {
+const TrialsComparisonModal: React.FC<ModalProps> = ({
+  experiment,
+  onCancel,
+  onUnselect,
+  trials,
+  visible,
+}: ModalProps) => {
   const resize = useResize();
 
   useEffect(() => {
     if (trials.length === 0) onCancel();
-  }, [ trials, onCancel ]);
+  }, [trials, onCancel]);
 
   return (
     <Modal
       centered
       footer={null}
-      style={{ height: resize.height * .9 }}
+      style={{ height: resize.height * 0.9 }}
       title={`Experiment ${experiment.id} Trial Comparison`}
       visible={visible}
-      width={resize.width * .9}
+      width={resize.width * 0.9}
       onCancel={onCancel}>
       <TrialsComparisonTable experiment={experiment} trials={trials} onUnselect={onUnselect} />
     </Modal>
   );
 };
 
-const TrialsComparisonTable: React.FC<TableProps> = (
-  { trials, experiment, onUnselect }: TableProps,
-) => {
-  const [ trialsDetails, setTrialsDetails ] = useState<Record<string, TrialDetails>>({});
-  const [ canceler ] = useState(new AbortController());
-  const [ selectedHyperparameters, setSelectedHyperparameters ] = useState<string[]>([]);
-  const [ selectedMetrics, setSelectedMetrics ] = useState<MetricName[]>([]);
+const TrialsComparisonTable: React.FC<TableProps> = ({
+  trials,
+  experiment,
+  onUnselect,
+}: TableProps) => {
+  const [trialsDetails, setTrialsDetails] = useState<Record<string, TrialDetails>>({});
+  const [canceler] = useState(new AbortController());
+  const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
+  const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
 
-  const fetchTrialDetails = useCallback(async (trialId) => {
-    try {
-      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialsDetails((prev) => ({ ...prev, [trialId]: response }));
-    } catch (e) {
-      handleError(e);
-    }
-  }, [ canceler.signal ]);
+  const fetchTrialDetails = useCallback(
+    async (trialId) => {
+      try {
+        const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
+        setTrialsDetails((prev) => ({ ...prev, [trialId]: response }));
+      } catch (e) {
+        handleError(e);
+      }
+    },
+    [canceler.signal],
+  );
 
   useEffect(() => {
     return () => {
       canceler.abort();
     };
-  }, [ canceler ]);
+  }, [canceler]);
 
   useEffect(() => {
     trials.forEach((trial) => {
       fetchTrialDetails(trial);
     });
-  }, [ fetchTrialDetails, trials ]);
+  }, [fetchTrialDetails, trials]);
 
-  const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [ onUnselect ]);
+  const handleTrialUnselect = useCallback((trialId: number) => onUnselect(trialId), [onUnselect]);
 
   const getCheckpointSize = useCallback((trial: TrialDetails) => {
     const totalBytes = trial.totalCheckpointSize;
@@ -99,58 +106,62 @@ const TrialsComparisonTable: React.FC<TableProps> = (
   }, []);
 
   const totalCheckpointsSizes: Record<string, string> = useMemo(
-    () => Object.fromEntries(Object.values(trialsDetails)
-      .map((trial) => [ trial.id, getCheckpointSize(trial) ]))
-    , [ getCheckpointSize, trialsDetails ],
+    () =>
+      Object.fromEntries(
+        Object.values(trialsDetails).map((trial) => [trial.id, getCheckpointSize(trial)]),
+      ),
+    [getCheckpointSize, trialsDetails],
   );
 
-  const [ metricNames, setMetricNames ] = useState<MetricName[]>([]);
-  useMetricNames({
-    errorHandler: () => {
-      handleError({
+  const handleMetricNamesError = useCallback(
+    (e: unknown) => {
+      handleError(e, {
         publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
         publicSubject: 'Experiment metric name stream failed.',
         type: ErrorType.Api,
       });
     },
-    experimentId: experiment.id,
-    metricNames,
-    setMetricNames,
-  });
+    [experiment.id],
+  );
+
+  const metrics = useMetricNames(experiment.id, handleMetricNamesError);
 
   useEffect(() => {
-    setSelectedMetrics(metricNames);
-  }, [ metricNames ]);
+    setSelectedMetrics(metrics);
+  }, [metrics]);
 
-  const onMetricSelect = useCallback((selectedMetrics: MetricName[]) => {
+  const onMetricSelect = useCallback((selectedMetrics: Metric[]) => {
     setSelectedMetrics(selectedMetrics);
   }, []);
 
-  const extractLatestMetrics = useCallback((
-    metricsObj: Record<string, {[key: string]: MetricsWorkload}>,
-    workload: MetricsWorkload,
-    trialId: number,
-  ) => {
-    for (const metricName of
-      Object.keys(workload.metrics || {})) {
-      if (metricsObj[trialId][metricName]) {
-        if ((new Date(workload.endTime || Date())).getTime() -
-        (new Date(metricsObj[trialId][metricName].endTime || Date()).getTime()) > 0) {
+  const extractLatestMetrics = useCallback(
+    (
+      metricsObj: Record<string, { [key: string]: MetricsWorkload }>,
+      workload: MetricsWorkload,
+      trialId: number,
+    ) => {
+      for (const metricName of Object.keys(workload.metrics || {})) {
+        if (metricsObj[trialId][metricName]) {
+          if (
+            new Date(workload.endTime || Date()).getTime() -
+              new Date(metricsObj[trialId][metricName].endTime || Date()).getTime() >
+            0
+          ) {
+            metricsObj[trialId][metricName] = workload;
+          }
+        } else {
           metricsObj[trialId][metricName] = workload;
         }
-      } else {
-        metricsObj[trialId][metricName] = workload;
       }
-    }
-    return metricsObj;
-  }, []);
-
-  const [ latestMetrics, setLatestMetrics ] = useState<Record<string, {[key: string]: number}>>(
-    {},
+      return metricsObj;
+    },
+    [],
   );
 
+  const [latestMetrics, setLatestMetrics] = useState<Record<string, { [key: string]: number }>>({});
+
   useMemo(async () => {
-    const metricsObj: Record<string, {[key: string]: MetricsWorkload}> = {};
+    const metricsObj: Record<string, { [key: string]: MetricsWorkload }> = {};
     for (const trial of Object.values(trialsDetails)) {
       metricsObj[trial.id] = {};
       const data = await getTrialWorkloads({
@@ -168,55 +179,52 @@ const TrialsComparisonTable: React.FC<TableProps> = (
         }
       });
     }
-    const metricValues: Record<string, {[key: string]: number}> = {};
-    for (const [ trialId, metrics ] of Object.entries(metricsObj)) {
+    const metricValues: Record<string, { [key: string]: number }> = {};
+    for (const [trialId, metrics] of Object.entries(metricsObj)) {
       metricValues[trialId] = {};
-      for (const [ metric, workload ] of Object.entries(metrics)) {
-        if (workload.metrics){
+      for (const [metric, workload] of Object.entries(metrics)) {
+        if (workload.metrics) {
           metricValues[trialId][metric] = workload.metrics[metric];
         }
       }
     }
     setLatestMetrics(metricValues);
-  }, [ extractLatestMetrics, trialsDetails ]);
+  }, [extractLatestMetrics, trialsDetails]);
 
   const hyperparameterNames = useMemo(
     () => Object.keys(trialsDetails[trials.first()]?.hyperparameters || {}),
-    [ trials, trialsDetails ],
+    [trials, trialsDetails],
   );
 
   useEffect(() => {
     setSelectedHyperparameters(hyperparameterNames);
-  }, [ hyperparameterNames ]);
+  }, [hyperparameterNames]);
 
   const onHyperparameterSelect = useCallback((selectedHPs) => {
     setSelectedHyperparameters(selectedHPs);
   }, []);
 
   const isLoaded = useMemo(
-    () => trials.every((trialId) => trialsDetails[trialId])
-    , [ trials, trialsDetails ],
+    () => trials.every((trialId) => trialsDetails[trialId]),
+    [trials, trialsDetails],
   );
 
   return (
     <div className={css.base}>
       {isLoaded ? (
         <>
-          <div className={[ css.row, css.header, css.sticky ].join(' ')}>
-            <div className={[ css.cell, css.blank, css.header, css.sticky ].join(' ')} />
+          <div className={[css.row, css.header, css.sticky].join(' ')}>
+            <div className={[css.cell, css.blank, css.header, css.sticky].join(' ')} />
             {trials.map((trialId) => (
               <div className={css.cell} key={trialId}>
-                <Tag
-                  className={css.trialTag}
-                  closable
-                  onClose={() => handleTrialUnselect(trialId)}>
+                <Tag className={css.trialTag} closable onClose={() => handleTrialUnselect(trialId)}>
                   <Link path={paths.trialDetails(trialId, experiment.id)}>Trial {trialId}</Link>
                 </Tag>
               </div>
             ))}
           </div>
           <div className={css.row}>
-            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>State</div>
+            <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>State</div>
             {trials.map((trial) => (
               <div className={css.cell} key={trial}>
                 <Badge state={trialsDetails[trial].state} type={BadgeType.State} />
@@ -224,7 +232,7 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             ))}
           </div>
           <div className={css.row}>
-            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+            <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>
               Batched Processed
             </div>
             {trials.map((trialId) => (
@@ -234,46 +242,48 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             ))}
           </div>
           <div className={css.row}>
-            <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+            <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>
               Total Checkpoint Size
             </div>
             {trials.map((trialId) => (
-              <div className={css.cell} key={trialId}>{totalCheckpointsSizes[trialId]}</div>
+              <div className={css.cell} key={trialId}>
+                {totalCheckpointsSizes[trialId]}
+              </div>
             ))}
           </div>
-          <div className={[ css.row, css.header, css.spanAll ].join(' ')}>
-            <div className={[ css.cell, css.header, css.spanAll ].join(' ')}>
+          <div className={[css.row, css.header, css.spanAll].join(' ')}>
+            <div className={[css.cell, css.header, css.spanAll].join(' ')}>
               Metrics
               <MetricSelectFilter
-                defaultMetricNames={metricNames}
+                defaultMetrics={metrics}
                 label=""
-                metricNames={metricNames}
+                metrics={metrics}
                 multiple
                 value={selectedMetrics}
                 onChange={onMetricSelect}
               />
             </div>
           </div>
-          {metricNames.filter((metric) => selectedMetrics
-            .map((m) => m.name)
-            .includes(metric.name))
+          {metrics
+            .filter((metric) => selectedMetrics.map((m) => m.name).includes(metric.name))
             .map((metric) => (
               <div className={css.row} key={metric.name}>
-                <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>
+                <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>
                   <MetricBadgeTag metric={metric} />
                 </div>
                 {trials.map((trialId) => (
                   <div className={css.cell} key={trialId}>
-                    {latestMetrics[trialId]
-                      ? <HumanReadableNumber num={latestMetrics[trialId][metric.name] || 0} />
-                      : ''}
+                    {latestMetrics[trialId] ? (
+                      <HumanReadableNumber num={latestMetrics[trialId][metric.name] || 0} />
+                    ) : (
+                      ''
+                    )}
                   </div>
                 ))}
               </div>
-            ))
-          }
-          <div className={[ css.row, css.header, css.spanAll ].join(' ')}>
-            <div className={[ css.cell, css.header, css.spanAll ].join(' ')}>
+            ))}
+          <div className={[css.row, css.header, css.spanAll].join(' ')}>
+            <div className={[css.cell, css.header, css.spanAll].join(' ')}>
               Hyperparameters
               <SelectFilter
                 disableTags
@@ -283,19 +293,25 @@ const TrialsComparisonTable: React.FC<TableProps> = (
                 showArrow
                 value={selectedHyperparameters}
                 onChange={onHyperparameterSelect}>
-                {hyperparameterNames.map((hp) => <Option key={hp} value={hp}>{hp}</Option>)}
+                {hyperparameterNames.map((hp) => (
+                  <Option key={hp} value={hp}>
+                    {hp}
+                  </Option>
+                ))}
               </SelectFilter>
             </div>
           </div>
           {selectedHyperparameters.map((hp) => (
             <div className={css.row} key={hp}>
-              <div className={[ css.cell, css.header, css.sticky, css.indent ].join(' ')}>{hp}</div>
+              <div className={[css.cell, css.header, css.sticky, css.indent].join(' ')}>{hp}</div>
               {trials.map((trialId) => {
                 const value = trialsDetails[trialId].hyperparameters[hp];
                 const stringValue = JSON.stringify(value);
                 return (
                   <div className={css.cell} key={trialId}>
-                    {isNumber(value) ? <HumanReadableNumber num={value} /> : (
+                    {isNumber(value) ? (
+                      <HumanReadableNumber num={value} />
+                    ) : (
                       <Tooltip title={stringValue}>{stringValue}</Tooltip>
                     )}
                   </div>
@@ -304,7 +320,9 @@ const TrialsComparisonTable: React.FC<TableProps> = (
             </div>
           ))}
         </>
-      ) : <Spinner spinning={!isLoaded} />}
+      ) : (
+        <Spinner spinning={!isLoaded} />
+      )}
     </div>
   );
 };

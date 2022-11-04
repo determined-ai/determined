@@ -152,7 +152,7 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 			return nil, nil, ErrPermissionDenied
 		}
 		return userModel, session, nil
-	case sql.ErrNoRows:
+	case sql.ErrNoRows, db.ErrNotFound:
 		return nil, nil, ErrInvalidCredentials
 	default:
 		return nil, nil, err

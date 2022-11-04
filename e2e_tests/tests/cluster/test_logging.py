@@ -1,5 +1,6 @@
+import functools
 import re
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Iterable, Optional, Union
 
 import pytest
 
@@ -8,6 +9,11 @@ from determined.common import api
 from determined.common.api import authentication, bindings, certs
 from tests import config as conf
 from tests import experiment as exp
+
+Log = Union[bindings.v1TaskLogsResponse, bindings.v1TrialLogsResponse]
+
+
+LogFields = Union[bindings.v1TaskLogsFieldsResponse, bindings.v1TrialLogsFieldsResponse]
 
 
 @pytest.mark.e2e_cpu
@@ -21,6 +27,7 @@ def test_trial_logs() -> None:
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    session = api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
 
     experiment_id = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
@@ -31,10 +38,20 @@ def test_trial_logs() -> None:
     assert task_id != ""
 
     log_regex = re.compile("^.*New trial runner.*$")
+
     # Trial-specific APIs should work just fine.
-    check_logs(master_url, trial_id, log_regex, api.trial_logs, api.trial_log_fields)
+    check_logs(
+        log_regex,
+        functools.partial(api.trial_logs, session, trial_id),
+        functools.partial(bindings.get_TrialLogsFields, session, trialId=trial_id),
+    )
+
     # And so should new task log APIs.
-    check_logs(master_url, task_id, log_regex, api.task_logs, api.task_log_fields)
+    check_logs(
+        log_regex,
+        functools.partial(api.task_logs, session, task_id),
+        functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
+    )
 
 
 @pytest.mark.e2e_cpu
@@ -52,14 +69,12 @@ def test_trial_logs() -> None:
     ],
 )
 def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) -> None:
-    # TODO: refactor tests to not use cli singleton auth.
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
     authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    session = api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
 
-    rps = bindings.get_GetResourcePools(
-        api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
-    )
+    rps = bindings.get_GetResourcePools(session)
     assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
 
     if (
@@ -67,58 +82,69 @@ def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) 
         and task_type == command.TaskTypeCommand
     ):
         # TODO(DET-6712): Investigate intermittent slowness with K8s command logs.
-        return
+        pytest.skip("DET-6712: Investigate intermittent slowness with K8s command logs")
 
-    body = {}
     if task_type == command.TaskTypeTensorBoard:
         exp_id = exp.run_basic_test(
             conf.fixtures_path("no_op/single.yaml"),
             conf.fixtures_path("no_op"),
             1,
         )
-        body.update({"experiment_ids": [exp_id]})
+        treq = bindings.v1LaunchTensorboardRequest(config=task_config, experimentIds=[exp_id])
+        task_id = bindings.post_LaunchTensorboard(session, body=treq).tensorboard.id
+    elif task_type == command.TaskTypeNotebook:
+        nreq = bindings.v1LaunchNotebookRequest(config=task_config)
+        task_id = bindings.post_LaunchNotebook(session, body=nreq).notebook.id
+    elif task_type == command.TaskTypeCommand:
+        creq = bindings.v1LaunchCommandRequest(config=task_config)
+        task_id = bindings.post_LaunchCommand(session, body=creq).command.id
+    elif task_type == command.TaskTypeShell:
+        sreq = bindings.v1LaunchShellRequest(config=task_config)
+        task_id = bindings.post_LaunchShell(session, body=sreq).shell.id
+    else:
+        raise ValueError("unknown task type: {task_type}")
 
-    resp = command.launch_command(
-        master_url,
-        f"api/v1/{command.RemoteTaskNewAPIs[task_type]}",
-        task_config,
-        "",
-        data={},
-        default_body=body,
-    )
-    task_id = resp[command.RemoteTaskName[task_type]]["id"]
+    def task_logs(**kwargs: Any) -> Iterable[Log]:
+        return api.task_logs(session, task_id, **kwargs)
+
+    def task_log_fields(follow: Optional[bool] = None) -> Iterable[LogFields]:
+        return bindings.get_TaskLogsFields(session, taskId=task_id, follow=follow)
+
     try:
-        check_logs(master_url, task_id, log_regex, api.task_logs, api.task_log_fields)
+        check_logs(
+            log_regex,
+            functools.partial(api.task_logs, session, task_id),
+            functools.partial(bindings.get_TaskLogsFields, session, taskId=task_id),
+        )
     finally:
         command._kill(master_url, task_type, task_id)
 
 
 def check_logs(
-    master_url: str,
-    entity_id: Any,
     log_regex: Any,
-    log_fn: Any,
-    log_fields_fn: Any,
+    log_fn: Callable[..., Iterable[Log]],
+    log_fields_fn: Callable[..., Iterable[LogFields]],
 ) -> None:
     # This is also testing that follow terminates. If we timeout here, that's it.
-    for log in log_fn(master_url, entity_id, follow=True):
-        if log_regex.match(log["message"]):
+    for log in log_fn(follow=True):
+        if log_regex.match(log.message):
             break
     else:
-        dump_logs_stdout(master_url, entity_id, log_fn)
+        for log in log_fn(follow=True):
+            print(log.message)
         pytest.fail("ran out of logs without a match")
 
     # Just make sure these calls 200 and return some logs.
-    assert any(log_fn(master_url, entity_id, tail=10)), "tail returned no logs"
-    assert any(log_fn(master_url, entity_id, head=10)), "head returned no logs"
+    assert any(log_fn(tail=10)), "tail returned no logs"
+    assert any(log_fn(head=10)), "head returned no logs"
 
     # Task log fields should work, follow or no follow.
-    assert any(log_fields_fn(master_url, entity_id, follow=True)), "log fields returned nothing"
-    fields_list = list(log_fields_fn(master_url, entity_id))
+    assert any(log_fields_fn(follow=True)), "log fields returned nothing"
+    fields_list = list(log_fields_fn())
     assert any(fields_list), "no task log fields were returned"
 
     # Convert fields to log_fn filters and check all are valid.
-    fields = fields_list[0]
+    fields = fields_list[0].to_json()
     assert any(fields.values()), "no filter values were returned"
 
     for k, v in fields.items():
@@ -128,8 +154,6 @@ def check_logs(
         # Make sure each filter returns some logs (it should or else it shouldn't be a filter).
         assert any(
             log_fn(
-                master_url,
-                entity_id,
                 **{
                     to_snake_case(k): v[0],
                 },
@@ -137,16 +161,7 @@ def check_logs(
         ), "good filter returned no logs"
 
     # Check nonsense is nonsense.
-    assert not any(log_fn(master_url, entity_id, rank_ids=[-1])), "bad filter returned logs"
-
-
-def dump_logs_stdout(
-    master_url: str,
-    entity_id: Any,
-    log_fn: Any,
-) -> None:
-    for log in log_fn(master_url, entity_id, follow=True):
-        print(log)
+    assert not any(log_fn(rank_ids=[-1])), "bad filter returned logs"
 
 
 def to_snake_case(camel_case: str) -> str:

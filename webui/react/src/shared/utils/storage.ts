@@ -1,18 +1,13 @@
-export interface Store {
-  clear(): void;
-  getItem(key: string): string | null;
-  keys(): string[];
-  removeItem(key: string): void;
-  setItem(key: string, value: string): void;
-}
-
 interface StorageOptions {
   basePath?: string;
   delimiter?: string;
-  store: Store;
+  store: Storage;
 }
 
-export class MemoryStore implements Store {
+export class MemoryStore implements Storage {
+  // MemoryStore is used only in tests, and key/length are not used,
+  // only added for compatibility with localStorage type.
+  length: 0;
   private store: Record<string, string>;
 
   constructor() {
@@ -28,6 +23,10 @@ export class MemoryStore implements Store {
     return null;
   }
 
+  key(index: number): string {
+    return Object.keys(this.store)[index];
+  }
+
   removeItem(key: string): void {
     delete this.store[key];
   }
@@ -41,10 +40,10 @@ export class MemoryStore implements Store {
   }
 }
 
-export class Storage {
+export class StorageManager {
   private delimiter: string;
   private pathKeys: string[];
-  private store: Store;
+  private store: Storage;
 
   constructor(options: StorageOptions) {
     this.delimiter = options.delimiter || '/';
@@ -84,8 +83,9 @@ export class Storage {
   }
 
   keys(): string[] {
-    const prefix = this.pathKeys.length !== 0 ? [ ...this.pathKeys, '' ].join(this.delimiter) : '';
-    return this.store.keys()
+    const prefix = this.pathKeys.length !== 0 ? [...this.pathKeys, ''].join(this.delimiter) : '';
+    return this.store
+      .keys()
       .filter((key) => key.startsWith(prefix))
       .map((key) => key.replace(prefix, ''));
   }
@@ -106,9 +106,9 @@ export class Storage {
     }
   }
 
-  fork(basePath: string): Storage {
-    basePath = [ ...this.pathKeys, basePath ].join(this.delimiter);
-    return new Storage({ basePath, delimiter: this.delimiter, store: this.store });
+  fork(basePath: string): StorageManager {
+    basePath = [...this.pathKeys, basePath].join(this.delimiter);
+    return new StorageManager({ basePath, delimiter: this.delimiter, store: this.store });
   }
 
   reset(): void {
@@ -120,10 +120,10 @@ export class Storage {
   }
 
   private computeKey(key: string): string {
-    return [ ...this.pathKeys, key ].join(this.delimiter);
+    return [...this.pathKeys, key].join(this.delimiter);
   }
 
-  private parsePath (path: string, delimiter: string): string[] {
+  private parsePath(path: string, delimiter: string): string[] {
     return path.split(delimiter).filter((key) => key !== '');
   }
 }

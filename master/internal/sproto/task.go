@@ -36,7 +36,7 @@ type (
 
 		// Resource configuration.
 		SlotsNeeded         int
-		Label               string
+		AgentLabel          string
 		ResourcePool        string
 		FittingRequirements FittingRequirements
 
@@ -228,6 +228,7 @@ type Event struct {
 	IsReady     bool      `json:"is_ready"`
 	State       string    `json:"state"`
 	ContainerID string    `json:"container_id"`
+	Level       *string   `json:"level"`
 
 	ScheduledEvent *model.AllocationID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
@@ -253,7 +254,13 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 	case ev.ScheduledEvent != nil:
 		message = fmt.Sprintf("Scheduling %s (id: %s)", description, ev.ParentID)
 	case ev.ResourcesStartedEvent != nil:
-		message = fmt.Sprintf("Resources for %s have started", description)
+		hpcJobID := ev.ResourcesStartedEvent.HPCJobID
+		if hpcJobID != "" {
+			message = fmt.Sprintf("Resources for %s have started, associated HPC job ID %s",
+				description, hpcJobID)
+		} else {
+			message = fmt.Sprintf("Resources for %s have started", description)
+		}
 	case ev.TerminateRequestEvent != nil:
 		message = fmt.Sprintf("%s was requested to terminate", description)
 	case ev.ExitedEvent != nil:
@@ -272,8 +279,12 @@ func (ev *Event) ToTaskLog() model.TaskLog {
 		message = ""
 	}
 
+	level := ptrs.Ptr(model.LogLevelInfo)
+	if ev.Level != nil {
+		level = ev.Level
+	}
 	return model.TaskLog{
-		Level:       ptrs.Ptr(model.LogLevelInfo),
+		Level:       level,
 		ContainerID: &ev.ContainerID,
 		Timestamp:   &ev.Time,
 		Log:         message,

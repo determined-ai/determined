@@ -63,7 +63,7 @@ class WorkloadSequencer(workload.Source):
     lives in the harness, all master/harness communications are over the new
     push APIs.
 
-    This Workoad stream (and the whole WorkloadSequencer) is only even needed
+    This Workload stream (and the whole WorkloadSequencer) is only even needed
     for reverse-compatibility with the old TrialControllers that we don't care
     to update (TFKerasTrial and EstimatorTrial).
     """

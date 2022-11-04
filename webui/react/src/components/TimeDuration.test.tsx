@@ -2,8 +2,13 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import {
-  DURATION_DAY, DURATION_HOUR, DURATION_MINUTE, DURATION_MONTH,
-  DURATION_SECOND, DURATION_WEEK, DURATION_YEAR,
+  DURATION_DAY,
+  DURATION_HOUR,
+  DURATION_MINUTE,
+  DURATION_MONTH,
+  DURATION_SECOND,
+  DURATION_WEEK,
+  DURATION_YEAR,
 } from 'shared/utils/datetime';
 
 import TimeDuration from './TimeDuration';

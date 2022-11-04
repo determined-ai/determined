@@ -16,7 +16,7 @@ type Unit string
 const (
 	Records     Unit = "records"
 	Batches     Unit = "batches"
-	Epochs      Unit = "epoches"
+	Epochs      Unit = "epochs"
 	Unitless    Unit = "unitless"
 	Unspecified Unit = "unspecified"
 )

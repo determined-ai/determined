@@ -23,6 +23,8 @@ allocs_in_range AS (
                 tstzrange(start_time, end_time) AS range
             FROM
                 allocations
+            WHERE
+                start_time IS NOT NULL
         ) AS a,
         const
     WHERE

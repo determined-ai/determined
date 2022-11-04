@@ -52,7 +52,9 @@
     padding: 4px;
     width: 100%;
 
-    & > * { margin: 4px; }
+    & > * {
+      margin: 4px;
+    }
   }
 }
 .base.maxHeight {
@@ -85,7 +87,9 @@
   }
 }
 .base.bodyNoPadding {
-  .body { padding: 0; }
+  .body {
+    padding: 0;
+  }
 }
 .base.bodyScroll {
   height: 100%;

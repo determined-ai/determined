@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.19.3-dev0
+    default: 0.19.7-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev12
+    default: v1dev14
   gke-version:
     type: string
     default: "1.21.14"
@@ -137,7 +137,8 @@ commands:
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE":webui/react/src HEAD:webui/react/src)"
-            if [ "$DIFF_DIRS" = "shared" ] ; then
+            # check "shared" is in the list of changed directories
+            if [[ "$DIFF_DIRS" == *"shared"* ]]; then
               echo "shared code changed, running downstream test"
             else
               echo "shared code not affected, halting job now"
@@ -178,11 +179,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-9119094
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-096d730
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-9119094
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
 
   login-docker:
     parameters:
@@ -228,14 +229,15 @@ commands:
       - install-protoc
       - restore_cache:
           keys:
-            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+            - det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
       - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
       - save_cache:
-          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
+          key: det-go-deps-<<pipeline.parameters.cache-buster>>-{{ checksum  "master/get-deps.sh" }}-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/get-deps.sh" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/get-deps.sh" }}-{{ checksum  "proto/go.sum" }}
           paths:
-            - "/home/circleci/go/pkg/mod/"
+            - "/home/circleci/go/"
+            - "/home/circleci/.cache/go-build/"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -426,6 +428,9 @@ commands:
       extra-pytest-flags:
         type: string
         default: ""
+      wait-for-master:
+        type: boolean
+        default: true
     steps:
       - run:
           name: Split tests
@@ -444,8 +449,11 @@ commands:
             echo "Running tests from these files:"
             sed 's/^/- /' </tmp/tests-to-run
 
-      - unless:
-          condition: <<parameters.managed-devcluster>>
+      - when:
+          condition:
+            and:
+              - not: <<parameters.managed-devcluster>>
+              - <<parameters.wait-for-master>>
           steps:
             - wait-for-master:
                 scheme: <<parameters.master-scheme>>
@@ -781,7 +789,7 @@ commands:
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
         type: string
     steps:
       - set-cluster-id:
@@ -949,11 +957,18 @@ commands:
             echo "https://console.aws.amazon.com/cloudwatch/home#logsV2:log-groups/log-group/$ENC_LOG_GROUP"
 
   pre-package-and-push-system:
+    parameters:
+      check:
+        type: boolean
+        default: true
     steps:
       - go-get-deps
       - run: make -C proto build
-      - run: make -C master check
-      - run: make -C agent check
+      - when:
+          condition: <<parameters.check>>
+          steps:
+            - run: make -C master check
+            - run: make -C agent check
 
   install-devcluster:
     steps:
@@ -1022,8 +1037,9 @@ jobs:
             - harness/dist
             - model_hub/dist
             - docs/site/html
+      - run: tar czf docs.tgz docs/site/html
       - store_artifacts:
-          path: docs/site/html
+          path: docs.tgz
 
   publish-docs:
     docker:
@@ -1049,8 +1065,9 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
-      - pre-package-and-push-system
+          version: 20.10.18
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -1075,11 +1092,12 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
-      - pre-package-and-push-system
+      - pre-package-and-push-system:
+          check: false
       - run: make package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
@@ -1113,7 +1131,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1143,7 +1161,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1172,6 +1190,17 @@ jobs:
       - run: helm plugin install https://github.com/chartmuseum/helm-push.git
       - login-helm
       - run: make -C helm release
+
+  publish-helm-gh:
+    docker:
+      - image: cimg/go:1.18
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: make -C helm release-gh
 
   publish-python-package:
     parameters:
@@ -1205,6 +1234,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           executor: <<pipeline.parameters.docker-image>>
@@ -1312,7 +1342,7 @@ jobs:
   build-storybook:
     docker:
       - image: cimg/node:16.14.2
-    resource_class: medium+
+    resource_class: large
     steps:
       - checkout-with-sm
       - skip-if-docs-only
@@ -1330,6 +1360,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: sudo apt-get update && sudo apt-get install -y clang-format
       - run: make -C proto build
@@ -1345,6 +1376,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master build
@@ -1377,6 +1409,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - go-get-deps
       - run: make -C proto build
       - run: make -C master test
@@ -1392,6 +1425,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1411,6 +1445,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1429,6 +1464,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - attach_workspace:
           at: .
       - reinstall-go
@@ -1472,6 +1508,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1495,6 +1532,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1516,6 +1554,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           determined: true
           extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
@@ -1535,6 +1574,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1555,6 +1595,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1575,6 +1616,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1596,6 +1638,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: false
@@ -1619,6 +1662,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - setup-python-venv:
           install-python: false
           determined: true
@@ -1637,7 +1681,8 @@ jobs:
     steps:
       - checkout
       - run: python --version
-      - run: pip install --upgrade --user pip
+      # Running the pip executable causes an error with the win/default executor for some reason.
+      - run: python -m pip install --upgrade --user pip
       - run: pip --version
       - run: pip install wheel
       - run: cd harness; python setup.py bdist_wheel -d ../build
@@ -1683,6 +1728,9 @@ jobs:
       extra-pytest-flags:
         type: string
         default: ""
+      wait-for-master:
+        type: boolean
+        default: true
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: large
@@ -1725,6 +1773,7 @@ jobs:
           master-host: localhost
           managed-devcluster: <<parameters.managed-devcluster>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
+          wait-for-master: <<parameters.wait-for-master>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -1764,7 +1813,7 @@ jobs:
     steps:
       - queue/until_front_of_line:
           only-on-branch: master
-          # Basically wait forever -- we would prefer not to fail deploys and
+          # Basically wait forever -- we would prefer not to fail deploys, and
           # we'll likely never be this backed up.
           time: '10000'
       - checkout
@@ -1824,6 +1873,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -1917,6 +1967,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -1986,7 +2037,7 @@ jobs:
         type: string
         default: ""
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
         type: string
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2003,6 +2054,7 @@ jobs:
     steps:
       - checkout
       - skip-if-docs-only
+      - skip-if-webui-only
       - set-slack-user-id
       - setup-python-venv:
           install-python: false
@@ -2102,24 +2154,6 @@ jobs:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
 
-  scan-docker-images:
-    machine:
-      image: <<pipeline.parameters.machine-image>>
-    resource_class: xlarge
-    steps:
-      - checkout
-      - set-slack-user-id
-      - setup-python-venv:
-          executor: <<pipeline.parameters.machine-image>>
-          extras-requires: anchorecli
-      - run: sudo snap install yq && sudo snap install jq
-      - run: (cd tools/scripts; ./scan-docker-images.sh bumpenvs.yaml)
-      - slack/status:
-          fail_only: True
-          only_for_branches: master
-          failure_message: ':thisisfine: A docker image scan on branch \`master\` has failed!'
-          channel: "infra-eng-team"
-
 workflows:
   lint:
     jobs:
@@ -2172,7 +2206,8 @@ workflows:
   test-intg:
     jobs:
       - test-intg-downstream
-      - test-intg-master
+      - test-intg-master:
+          context: storage-unit-tests
       - test-intg-agent
       - go-coverage:
           requires:
@@ -2242,6 +2277,17 @@ workflows:
           target-stage: agent2
 
       - test-e2e:
+          name: test-e2e-cpu-strict-ntsc
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          devcluster-config: strict-ntsc.devcluster.yaml          
+          mark: test_strict_ntsc
+          target-stage: agent2
+          
+      - test-e2e:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
@@ -2294,6 +2340,16 @@ workflows:
           matrix:
             parameters:
               agent-version: ['0.17.10']
+
+      - test-e2e:
+          name: test-e2e-agent-connection-loss
+          requires:
+            - build-go
+          parallelism: 1
+          mark: e2e_cpu_agent_connection_loss
+          devcluster-config: agent-no-connection.devcluster.yaml
+          target-stage: agent
+          wait-for-master: false
 
       - deploy:
           name: deploy-latest-master-cluster
@@ -2462,7 +2518,7 @@ workflows:
             - request-dev-deploy
             - package-and-push-system-dev
 
-      # Dsitributed tests
+      # Distributed tests
       - request-e2e-cpu-distributed:
           type: approval
           filters: *upstream-feature-branch
@@ -2483,12 +2539,12 @@ workflows:
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
 
-      # Deepseed tests
+      # DeepSpeed tests
       - request-deepspeed-tests:
           type: approval
           filters: *upstream-feature-branch
 
-        # DeepSpeed tests do not work on K80s so we need V100 instances.
+        # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-deepspeed
           context: aws
@@ -2584,7 +2640,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2603,7 +2659,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2619,10 +2675,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2641,10 +2697,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
       # Nightly distributed tests
       - request-gpu-distributed-nightly:
@@ -2835,7 +2891,7 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
-        # DeepSpeed tests do not work on K80s so we need V100 instances.
+        # DeepSpeed tests do not work on K80s, so we need V100 instances.
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
           context: aws
@@ -2877,7 +2933,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-cuda-11
@@ -2892,7 +2948,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.1
+                - determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-single-gpu-tfonly
@@ -2904,10 +2960,10 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2922,21 +2978,10 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.1
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.1
-
-  weekly-vuln-scan:
-    triggers:
-      - schedule:
-          cron: "0 0 * * 0"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - scan-docker-images
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
+                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
   release:
     jobs:
@@ -2999,6 +3044,12 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-and-rc-filters
+
+      - publish-helm-gh:
+          requires:
+            - build-helm
+          context: determined-production
+          filters: *release-filters
 
       - upload-try-now-template:
           context: determined-production

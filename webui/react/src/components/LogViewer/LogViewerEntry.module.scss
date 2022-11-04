@@ -5,30 +5,48 @@ $no-wrap-height: 20px;
   position: absolute;
   width: 100%;
 
-  * { white-space: nowrap; }
+  * {
+    white-space: nowrap;
+  }
   .number {
     color: var(--theme-stage-on);
     flex-shrink: 0;
     text-align: right;
     user-select: none;
   }
-  .number::after { content: attr(data-label) '\00a0'; }
+  .number::after {
+    content: attr(data-label) '\00a0';
+  }
   .level {
     color: var(--theme-stage-on);
     flex-shrink: 0;
     padding: 2px;
   }
-  .level > .levelLabel { font-size: 0; }
-  .critical { color: var(--theme-status-critical); }
-  .debug { color: var(--theme-status-active); }
-  .error { color: var(--theme-status-critical); }
-  .trace { color: var(--theme-status-active); }
-  .warning { color: var(--theme-status-warning); }
+  .level > .levelLabel {
+    font-size: 0;
+  }
+  .critical {
+    color: var(--theme-status-critical);
+  }
+  .debug {
+    color: var(--theme-status-active);
+  }
+  .error {
+    color: var(--theme-status-critical);
+  }
+  .trace {
+    color: var(--theme-status-active);
+  }
+  .warning {
+    color: var(--theme-status-warning);
+  }
   .time {
     color: var(--theme-stage-on-weak);
     flex-shrink: 0;
   }
-  .time::after { content: '\00a0'; }
+  .time::after {
+    content: '\00a0';
+  }
   .message {
     flex-grow: 1;
     line-break: anywhere;
@@ -38,9 +56,13 @@ $no-wrap-height: 20px;
 }
 .base.noWrap {
   height: $no-wrap-height;
-  
-  & > * { height: $no-wrap-height; }
-  .time { line-height: $no-wrap-height; }
+
+  & > * {
+    height: $no-wrap-height;
+  }
+  .time {
+    line-height: $no-wrap-height;
+  }
   .message {
     line-break: normal;
     line-height: $no-wrap-height;

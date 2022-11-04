@@ -34,7 +34,7 @@ describe('Error Handling Utilities', () => {
       expect(isError(123)).toBe(false);
       expect(isError('hello')).toBe(false);
       expect(isError(new Date())).toBe(false);
-      expect(isError(new Set([ 1, 2, 3 ]))).toBe(false);
+      expect(isError(new Set([1, 2, 3]))).toBe(false);
     });
   });
 
@@ -51,7 +51,7 @@ describe('Error Handling Utilities', () => {
       expect(isDetError(123)).toBe(false);
       expect(isDetError('hello')).toBe(false);
       expect(isDetError(new Date())).toBe(false);
-      expect(isDetError(new Set([ 1, 2, 3 ]))).toBe(false);
+      expect(isDetError(new Set([1, 2, 3]))).toBe(false);
     });
   });
 
@@ -88,7 +88,7 @@ describe('Error Handling Utilities', () => {
       expect(isDetError(newDetError)).toBe(true);
 
       // Expect each error option value to be preserved in the new DetError.
-      for (const [ key, value ] of Object.entries(DEFAULT_DET_ERROR_OPTIONS)) {
+      for (const [key, value] of Object.entries(DEFAULT_DET_ERROR_OPTIONS)) {
         expect(value).toStrictEqual(newDetError[key as keyof DetErrorOptions]);
       }
     });

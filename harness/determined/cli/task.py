@@ -3,6 +3,7 @@ from argparse import Namespace
 from functools import partial
 from typing import Any, Dict, List, Union, cast
 
+from determined import cli
 from determined.cli import command, render
 from determined.common import api
 from determined.common.api import authentication
@@ -64,8 +65,8 @@ def list_tasks(args: Namespace) -> None:
 @authentication.required
 def logs(args: Namespace) -> None:
     task_id = cast(str, command.expand_uuid_prefixes(args, args.task_id))
-    api.pprint_task_logs(
-        args.master,
+    logs = api.task_logs(
+        cli.setup_session(args),
         task_id,
         head=args.head,
         tail=args.tail,
@@ -75,13 +76,14 @@ def logs(args: Namespace) -> None:
         rank_ids=args.rank_ids,
         sources=args.sources,
         stdtypes=args.stdtypes,
-        level_above=args.level,
+        min_level=args.level,
         timestamp_before=args.timestamp_before,
         timestamp_after=args.timestamp_after,
     )
+    api.pprint_task_logs(task_id, logs)
 
 
-common_log_options = [
+common_log_options: List[Any] = [
     Arg(
         "-f",
         "--follow",
@@ -162,7 +164,7 @@ args_description: List[Any] = [
         "manage tasks (commands, experiments, notebooks, shells, tensorboards)",
         [
             Cmd(
-                "list",
+                "list ls",
                 list_tasks,
                 "list tasks in cluster",
                 [

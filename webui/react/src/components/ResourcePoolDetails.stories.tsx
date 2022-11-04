@@ -1,4 +1,4 @@
-import { number, withKnobs } from '@storybook/addon-knobs';
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
 import resourcePoolResponse from 'fixtures/responses/resource-pools/a.json';
@@ -8,19 +8,21 @@ import ResourcePoolDetails from './ResourcePoolDetails';
 
 const resourcePools = resourcePoolResponse.resourcePools as unknown as ResourcePool[];
 
-export default {
-  component: ResourcePoolDetails,
-  decorators: [ withKnobs ],
-  title: 'ResourcePoolDetails',
-};
+type ResourcePoolDetailsProps = React.ComponentProps<typeof ResourcePoolDetails>;
 
-export const Default = (): React.ReactNode => (
-  <ResourcePoolDetails
-    resourcePool={resourcePools[number(
-      'ResourcePool Index',
-      0,
-      { max: resourcePools.length - 1, min: 0, step: 1 },
-    )]}
-    visible={true}
-  />
-);
+export default {
+  argTypes: {
+    poolNumber: { control: { max: resourcePools.length - 1, min: 0, step: 1, type: 'number' } },
+    resourcePool: { control: { type: null } },
+    visible: { control: { type: null } },
+  },
+  component: ResourcePoolDetails,
+  title: 'Determined/ResourcePoolDetails',
+} as Meta<typeof ResourcePoolDetails>;
+
+export const Default: Story<ResourcePoolDetailsProps & { poolNumber: number }> = ({
+  poolNumber,
+  ...args
+}) => <ResourcePoolDetails {...args} resourcePool={resourcePools[poolNumber]} visible={true} />;
+
+Default.args = { poolNumber: 0 };

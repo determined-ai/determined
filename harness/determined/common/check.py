@@ -1,9 +1,9 @@
 """
 Functions for runtime correctness checks.
 
-These functions are similar to Python's `assert` facility, but when a check
-fails, we print both the expected value and the actual value. Determined code should
-generally prefer using `check` functions over `assert`.
+Please do not use these functions in the new code. Instead, use assert
+with a second argument that explains what was asserted.
+See https://github.com/determined-ai/determined/pull/4424#discussion_r991583690
 
 The module contains similar functionality under two different naming schemes.
 The first is for code that imports function symbols directly, e.g.,

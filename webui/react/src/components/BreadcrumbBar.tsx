@@ -1,10 +1,10 @@
 import { Breadcrumb, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ExperimentBase, Project, TrialDetails, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -23,17 +23,20 @@ interface Props {
   workspace?: Workspace;
 }
 
-const BreadcrumbBar: React.FC<Props> = (
-  {
-    id, type, workspace: workspaceIn, project: projectIn,
-    experiment: experimentIn, trial: trialIn, extra,
-  }: Props,
-) => {
-  const [ workspace, setWorkspace ] = useState<Workspace | undefined>(workspaceIn);
-  const [ project, setProject ] = useState<Project | undefined>(projectIn);
-  const [ experiment, setExperiment ] = useState<ExperimentBase | undefined>(experimentIn);
-  const [ trial, setTrial ] = useState<TrialDetails | undefined>(trialIn);
-  const [ canceler ] = useState(new AbortController());
+const BreadcrumbBar: React.FC<Props> = ({
+  id,
+  type,
+  workspace: workspaceIn,
+  project: projectIn,
+  experiment: experimentIn,
+  trial: trialIn,
+  extra,
+}: Props) => {
+  const [workspace, setWorkspace] = useState<Workspace | undefined>(workspaceIn);
+  const [project, setProject] = useState<Project | undefined>(projectIn);
+  const [experiment, setExperiment] = useState<ExperimentBase | undefined>(experimentIn);
+  const [trial, setTrial] = useState<TrialDetails | undefined>(trialIn);
+  const [canceler] = useState(new AbortController());
 
   const fetchWorkspace = useCallback(async () => {
     if (!project?.workspaceId) return;
@@ -43,7 +46,7 @@ const BreadcrumbBar: React.FC<Props> = (
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch workspace.' });
     }
-  }, [ canceler.signal, project?.workspaceId ]);
+  }, [canceler.signal, project?.workspaceId]);
 
   const fetchProject = useCallback(async () => {
     if (type !== 'project' && experiment?.projectId === undefined) return;
@@ -59,7 +62,7 @@ const BreadcrumbBar: React.FC<Props> = (
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch project.' });
     }
-  }, [ canceler.signal, experiment?.projectId, id, type ]);
+  }, [canceler.signal, experiment?.projectId, id, type]);
 
   const fetchExperiment = useCallback(async () => {
     if (type !== 'experiment' && trial?.experimentId === undefined) return;
@@ -75,7 +78,7 @@ const BreadcrumbBar: React.FC<Props> = (
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiment.' });
     }
-  }, [ canceler.signal, id, trial?.experimentId, type ]);
+  }, [canceler.signal, id, trial?.experimentId, type]);
 
   const fetchTrial = useCallback(async () => {
     if (type !== 'trial') return;
@@ -88,51 +91,62 @@ const BreadcrumbBar: React.FC<Props> = (
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch trial.' });
     }
-  }, [ canceler.signal, id, type ]);
+  }, [canceler.signal, id, type]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([
-      fetchProject(), fetchWorkspace(), fetchExperiment(), fetchTrial() ]);
-  }, [ fetchProject, fetchWorkspace, fetchExperiment, fetchTrial ]);
+    await Promise.allSettled([fetchProject(), fetchWorkspace(), fetchExperiment(), fetchTrial()]);
+  }, [fetchProject, fetchWorkspace, fetchExperiment, fetchTrial]);
 
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
   useEffect(() => {
     fetchWorkspace();
-  }, [ fetchWorkspace ]);
+  }, [fetchWorkspace]);
 
   useEffect(() => {
     fetchProject();
-  }, [ fetchProject ]);
+  }, [fetchProject]);
 
   useEffect(() => {
     fetchExperiment();
-  }, [ fetchExperiment ]);
+  }, [fetchExperiment]);
 
   useEffect(() => {
     fetchTrial();
-  }, [ fetchTrial ]);
+  }, [fetchTrial]);
 
   useEffect(() => {
     setTrial(trialIn);
-  }, [ trialIn ]);
+  }, [trialIn]);
 
   useEffect(() => {
     setExperiment(experimentIn);
-  }, [ experimentIn ]);
+  }, [experimentIn]);
 
   useEffect(() => {
     setProject(projectIn);
-  }, [ projectIn ]);
+  }, [projectIn]);
 
   useEffect(() => {
     setWorkspace(workspaceIn);
-  }, [ workspaceIn ]);
+  }, [workspaceIn]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      stopPolling();
+
+      setWorkspace(undefined);
+      setProject(undefined);
+      setExperiment(undefined);
+      setTrial(undefined);
+    };
+  }, [stopPolling]);
 
   return (
     <div className={css.base}>
       <Breadcrumb separator="">
-        {experiment?.projectId !== 1 && (
+        {experiment?.projectId !== 1 && !project?.immutable && (
           <>
             <Breadcrumb.Item>
               <Link path={project ? paths.workspaceDetails(project.workspaceId) : undefined}>
@@ -196,9 +210,7 @@ const BreadcrumbBar: React.FC<Props> = (
         {type === 'trial' && (
           <>
             <Breadcrumb.Separator />
-            <Breadcrumb.Item>
-              {id ?? '...'}
-            </Breadcrumb.Item>
+            <Breadcrumb.Item>{id ?? '...'}</Breadcrumb.Item>
           </>
         )}
       </Breadcrumb>

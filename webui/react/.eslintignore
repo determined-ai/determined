@@ -1,5 +1,7 @@
 src/serviceWorker.ts
 src/services/api-ts-sdk/
+src/vendor/notebook.js
 !.eslintrc.js
 !.stylelintrc.js
 node_modules
+!.storybook

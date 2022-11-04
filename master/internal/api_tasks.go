@@ -3,8 +3,11 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -12,9 +15,12 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
+	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -30,14 +36,137 @@ var (
 
 	taskLogsBatchMissWaitTime   = time.Second
 	taskLogsFieldsBatchWaitTime = 5 * time.Second
-
-	// Common errors.
-	taskNotFound = status.Error(codes.NotFound, "task not found")
 )
+
+func expFromAllocationID(
+	m *Master, allocationID model.AllocationID,
+) (isExperiment bool, exp *model.Experiment, err error) {
+	resp, err := m.rm.GetAllocationHandler(
+		m.system,
+		sproto.GetAllocationHandler{ID: allocationID},
+	)
+	if err != nil {
+		return false, nil, status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+	}
+
+	parentParent := resp.Parent().Parent()
+	if parentParent.Parent() == nil || parentParent.Parent().Address().Local() != "experiments" {
+		// TaskType not trial.
+		return false, nil, nil
+	}
+
+	expID, err := strconv.Atoi(parentParent.Address().Local())
+	if err != nil {
+		return false, nil, err
+	}
+
+	exp, err = m.db.ExperimentWithoutConfigByID(expID)
+	if err != nil {
+		return false, nil, err
+	}
+	return true, exp, nil
+}
+
+func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
+	taskOwnerID, err := db.GetCommandOwnerID(ctx, taskID)
+	if errors.Is(err, db.ErrNotFound) {
+		// Non NTSC case like checkpointGC case or the task just does not exist.
+		// TODO(nick) eventually control access to checkpointGC.
+		return true, nil
+	} else if err != nil {
+		return false, err
+	}
+	return user.AuthZProvider.Get().CanAccessNTSCTask(ctx, curUser, taskOwnerID)
+}
+
+func (a *apiServer) canDoActionsOnTask(
+	ctx context.Context, taskID model.TaskID,
+	actions ...func(context.Context, model.User, *model.Experiment) error,
+) error {
+	errTaskNotFound := status.Errorf(codes.NotFound, "task not found: %s", taskID)
+	t, err := a.m.db.TaskByID(taskID)
+	if errors.Is(err, db.ErrNotFound) {
+		return errTaskNotFound
+	} else if err != nil {
+		return err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	switch t.TaskType {
+	case model.TaskTypeTrial:
+		exp, err := db.ExperimentWithoutConfigByTaskID(ctx, t.TaskID)
+		if err != nil {
+			return err
+		}
+
+		var ok bool
+		if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+			return err
+		} else if !ok {
+			return errTaskNotFound
+		}
+
+		for _, action := range actions {
+			if err = action(ctx, *curUser, exp); err != nil {
+				return status.Error(codes.PermissionDenied, err.Error())
+			}
+		}
+	default: // NTSC case + checkpointGC.
+		if ok, err := canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+			return err
+		} else if !ok {
+			return errTaskNotFound
+		}
+	}
+	return nil
+}
+
+func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	errAllocationNotFound := status.Errorf(codes.NotFound, "allocation not found: %s", allocationID)
+	isExp, exp, err := expFromAllocationID(a.m, model.AllocationID(allocationID))
+	if err != nil {
+		return err
+	}
+	if !isExp {
+		taskID, _, _ := strings.Cut(allocationID, ".")
+		var ok bool
+		if ok, err = canAccessNTSCTask(ctx, *curUser, model.TaskID(taskID)); err != nil {
+			return err
+		} else if !ok {
+			return errAllocationNotFound
+		}
+		return nil
+	}
+
+	var ok bool
+	if ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+		return err
+	} else if !ok {
+		return errAllocationNotFound
+	}
+	if err = expauth.AuthZProvider.Get().CanEditExperiment(ctx, *curUser, exp); err != nil {
+		return status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	return nil
+}
 
 func (a *apiServer) AllocationReady(
 	ctx context.Context, req *apiv1.AllocationReadyRequest,
 ) (*apiv1.AllocationReadyResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
 	resp, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
@@ -52,11 +181,35 @@ func (a *apiServer) AllocationReady(
 	return &apiv1.AllocationReadyResponse{}, nil
 }
 
+func (a *apiServer) AllocationWaiting(
+	ctx context.Context, req *apiv1.AllocationWaitingRequest,
+) (*apiv1.AllocationWaitingResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
+	resp, err := a.m.rm.GetAllocationHandler(
+		a.m.system,
+		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := a.ask(resp.Address(), task.AllocationWaiting{}, nil); err != nil {
+		return nil, err
+	}
+	return &apiv1.AllocationWaitingResponse{}, nil
+}
+
 func (a *apiServer) AllocationAllGather(
 	ctx context.Context, req *apiv1.AllocationAllGatherRequest,
 ) (*apiv1.AllocationAllGatherResponse, error) {
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
+	}
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
 	}
 
 	handler, err := a.m.rm.GetAllocationHandler(
@@ -99,6 +252,9 @@ func (a *apiServer) PostAllocationProxyAddress(
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
 
 	handler, err := a.m.rm.GetAllocationHandler(
 		a.m.system,
@@ -126,14 +282,6 @@ func (a *apiServer) TaskLogs(
 		return err
 	}
 
-	taskID := model.TaskID(req.TaskId)
-	switch exists, err := a.m.db.CheckTaskExists(taskID); {
-	case err != nil:
-		return err
-	case !exists:
-		return taskNotFound
-	}
-
 	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
@@ -152,10 +300,17 @@ func (a *apiServer) TaskLogs(
 }
 
 func (a *apiServer) GetActiveTasksCount(
-	_ context.Context, req *apiv1.GetActiveTasksCountRequest,
+	ctx context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
-	finalResp := &apiv1.GetActiveTasksCountResponse{}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
 
+	finalResp := &apiv1.GetActiveTasksCountResponse{}
 	req1 := &apiv1.GetNotebooksRequest{}
 	resp1 := &apiv1.GetNotebooksResponse{}
 	if err = a.ask(notebooksAddr, req1, &resp1); err != nil {
@@ -216,7 +371,17 @@ func (a *apiServer) taskLogs(
 	}
 
 	var followState interface{}
+	var timeSinceLastAuth time.Time
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
+		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			if err = a.canDoActionsOnTask(ctx, taskID,
+				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+				return nil, err
+			}
+
+			timeSinceLastAuth = time.Now()
+		}
+
 		switch {
 		case r.Follow, r.Limit > taskLogsBatchSize:
 			r.Limit = taskLogsBatchSize
@@ -314,7 +479,18 @@ func (a *apiServer) TaskLogsFields(
 	req *apiv1.TaskLogsFieldsRequest, resp apiv1.Determined_TaskLogsFieldsServer,
 ) error {
 	taskID := model.TaskID(req.TaskId)
+
+	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
+		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			if err := a.canDoActionsOnTask(resp.Context(), taskID,
+				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+				return nil, err
+			}
+
+			timeSinceLastAuth = time.Now()
+		}
+
 		fields, err := a.m.taskLogBackend.TaskLogsFields(taskID)
 		return api.ToBatchOfOne(fields), err
 	}

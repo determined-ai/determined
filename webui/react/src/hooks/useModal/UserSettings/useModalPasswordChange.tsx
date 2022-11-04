@@ -24,7 +24,7 @@ export const CANCEL_BUTTON_LABEL = 'Cancel';
 export const OK_BUTTON_LABEL = 'Change Password';
 export const INCORRECT_PASSWORD_MESSAGE = 'Incorrect password.';
 export const NEW_PASSWORD_REQUIRED_MESSAGE = 'New password required.';
-export const PASSWORD_TOO_SHORT_MESSAGE = 'Password isn\'t long enough.';
+export const PASSWORD_TOO_SHORT_MESSAGE = "Password isn't long enough.";
 export const PASSWORD_UPPERCASE_MESSAGE = 'Password must include a uppercase letter.';
 export const PASSWORD_LOWERCASE_MESSAGE = 'Password must include a lowercase letter.';
 export const PASSWORD_NUMBER_MESSAGE = 'Password must include a number.';
@@ -47,7 +47,7 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
           },
         },
       ]}
-      validateTrigger={[ 'onSubmit' ]}>
+      validateTrigger={['onSubmit']}>
       <Input.Password />
     </Form.Item>
     <Form.Item
@@ -72,7 +72,7 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
       <Input.Password />
     </Form.Item>
     <Form.Item
-      dependencies={[ NEW_PASSWORD_NAME ]}
+      dependencies={[NEW_PASSWORD_NAME]}
       label={CONFIRM_PASSWORD_LABEL}
       name={CONFIRM_PASSWORD_NAME}
       rules={[
@@ -89,19 +89,19 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
       <Input.Password />
     </Form.Item>
     <Form.Item>
-      Password must be at least 8 characters
-      and contain an uppercase letter, a lowercase letter, and a number.
+      Password must be at least 8 characters and contain an uppercase letter, a lowercase letter,
+      and a number.
     </Form.Item>
   </Form>
 );
 
 const useModalPasswordChange = (): ModalHooks => {
-  const [ form ] = Form.useForm();
+  const [form] = Form.useForm();
   const { auth } = useStore();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
-  const handleCancel = useCallback(() => form.resetFields(), [ form ]);
+  const handleCancel = useCallback(() => form.resetFields(), [form]);
 
   const handleOkay = useCallback(async () => {
     await form.validateFields();
@@ -118,7 +118,7 @@ const useModalPasswordChange = (): ModalHooks => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [ auth.user?.id, form ]);
+  }, [auth.user?.id, form]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
@@ -130,7 +130,7 @@ const useModalPasswordChange = (): ModalHooks => {
       onOk: handleOkay,
       title: <h5>{MODAL_HEADER_LABEL}</h5>,
     });
-  }, [ auth.user?.username, form, handleCancel, handleOkay, openOrUpdate ]);
+  }, [auth.user?.username, form, handleCancel, handleOkay, openOrUpdate]);
 
   return { modalOpen, ...modalHook };
 };

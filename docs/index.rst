@@ -33,6 +33,7 @@
    Workspaces and Projects <cluster-setup-guide/workspaces>
    Logging and Elasticsearch <cluster-setup-guide/elasticsearch-logging-backend>
    Cluster Usage History <cluster-setup-guide/historical-cluster-usage-data>
+   Monitor Experiment Through Webhooks  <integrations/notification/index>
    Upgrade <cluster-setup-guide/upgrade>
    Troubleshooting <cluster-setup-guide/troubleshooting>
 
@@ -46,6 +47,7 @@
    Model Hub Reference <reference/reference-model-hub/index>
    Deployment Reference <reference/reference-deploy/index>
    Job Configuration Reference <reference/reference-interface/job-config-reference>
+   Custom Searcher Reference <reference/reference-searcher/custom-searcher-reference>
 
 .. toctree::
    :caption: Tools

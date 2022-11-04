@@ -28,11 +28,9 @@ interface Props {
   tabs: TabInfo[];
 }
 
-const ProjectDetailsTabs: React.FC<Props> = (
-  { project, tabs, fetchProject, curUser }: Props,
-) => {
-  const [ workspace, setWorkspace ] = useState<Workspace>();
-  const [ activeTab, setActiveTab ] = useState<TabInfo>(tabs[0]);
+const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curUser }: Props) => {
+  const [workspace, setWorkspace] = useState<Workspace>();
+  const [activeTab, setActiveTab] = useState<TabInfo>(tabs[0]);
 
   const fetchWorkspace = useCallback(async () => {
     try {
@@ -41,23 +39,34 @@ const ProjectDetailsTabs: React.FC<Props> = (
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch workspace.' });
     }
-  }, [ project.workspaceId ]);
+  }, [project.workspaceId]);
 
-  const handleTabSwitch = useCallback((tabKey: string) => {
-    setActiveTab(tabs.find((tab) => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
-  }, [ tabs ]);
+  const handleTabSwitch = useCallback(
+    (tabKey: string) => {
+      setActiveTab(tabs.find((tab) => sentenceToCamelCase(tab.title) === tabKey) ?? tabs[0]);
+    },
+    [tabs],
+  );
 
   /**
    * prevents stable tab content, e.g. archived state
    */
-  useEffect(() =>
-    setActiveTab(
-      (curTab) => tabs.find((tab) => tab.title === curTab.title) ?? tabs[0],
-    ), [ tabs ]);
+  useEffect(
+    () => setActiveTab((curTab) => tabs.find((tab) => tab.title === curTab.title) ?? tabs[0]),
+    [tabs],
+  );
 
   useEffect(() => {
     fetchWorkspace();
-  }, [ fetchWorkspace ]);
+  }, [fetchWorkspace]);
+
+  // cleanup
+  useEffect(() => {
+    return () => {
+      setWorkspace(undefined);
+      setActiveTab(tabs[0]);
+    };
+  }, [tabs]);
 
   if (project.immutable) {
     const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
@@ -76,7 +85,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
   return (
     <>
       <BreadcrumbBar
-        extra={(
+        extra={
           <Space>
             {project.description && (
               <Tooltip title={project.description}>
@@ -87,7 +96,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
               curUser={curUser}
               project={project}
               showChildrenIfEmpty={false}
-              trigger={[ 'click' ]}
+              trigger={['click']}
               workspaceArchived={workspace?.archived}
               onComplete={fetchProject}>
               <div style={{ cursor: 'pointer' }}>
@@ -95,7 +104,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
               </div>
             </ProjectActionDropdown>
           </Space>
-        )}
+        }
         id={project.id}
         project={project}
         type="project"
@@ -111,9 +120,7 @@ const ProjectDetailsTabs: React.FC<Props> = (
               className={css.tabPane}
               key={sentenceToCamelCase(tabInfo.title)}
               tab={tabInfo.title}>
-              <div className={css.base}>
-                {tabInfo.body}
-              </div>
+              <div className={css.base}>{tabInfo.body}</div>
             </TabPane>
           );
         })}

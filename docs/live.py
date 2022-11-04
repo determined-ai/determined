@@ -243,7 +243,7 @@ class FSHandler(watchdog.events.FileSystemEventHandler):
             if path.endswith(".html"):
                 self.long_poller.update(path)
                 return
-        elif path.endswith(".rst"):
+        elif path.endswith(".rst") or path.startswith("assets/"):
             self.rebuilder.handle_input_update()
 
 
@@ -251,11 +251,12 @@ if __name__ == "__main__":
     long_poller = LongPoller()
 
     address = ("localhost", 1234)
-    RequestHandler = make_request_handler(long_poller, directory="site")
+    RequestHandler = make_request_handler(long_poller, directory="site/html/")
     server = http.server.ThreadingHTTPServer(address, RequestHandler)
 
     server_thread = threading.Thread(target=server.serve_forever, args=[0.1])
     server_thread.start()
+    print(f"Listening on http://localhost:{address[1]}")
 
     rebuilder = Rebuilder()
     rebuilder.start()

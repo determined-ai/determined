@@ -7,19 +7,17 @@ import Section from 'components/Section';
 import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
+import useUI from 'shared/contexts/stores/UI';
 import { Primitive } from 'shared/types';
 import { flattenObject, isBoolean, isString } from 'shared/utils/data';
-import {
-  ExperimentBase, HyperparameterType, MetricName, metricTypeParamMap, Scale,
-} from 'types';
-import { metricNameToStr } from 'utils/metric';
+import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
+import { metricToStr } from 'utils/metric';
 
 import css from './HpScatterPlots.module.scss';
 
@@ -30,8 +28,8 @@ interface Props {
   selectedBatch: number;
   selectedBatchMargin: number;
   selectedHParams: string[];
-  selectedMetric: MetricName;
-  selectedScale: Scale
+  selectedMetric: Metric;
+  selectedScale: Scale;
 }
 
 interface HpMetricData {
@@ -52,13 +50,13 @@ const ScatterPlots: React.FC<Props> = ({
   selectedMetric,
   selectedScale,
 }: Props) => {
-  const { ui } = useStore();
+  const { ui } = useUI();
   const baseRef = useRef<HTMLDivElement>(null);
-  const [ hasLoaded, setHasLoaded ] = useState(false);
-  const [ chartData, setChartData ] = useState<HpMetricData>();
-  const [ pageError, setPageError ] = useState<Error>();
-  const [ activeHParam, setActiveHParam ] = useState<string>();
-  const [ galleryHeight, setGalleryHeight ] = useState<number>(450);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [chartData, setChartData] = useState<HpMetricData>();
+  const [pageError, setPageError] = useState<Error>();
+  const [activeHParam, setActiveHParam] = useState<string>();
+  const [galleryHeight, setGalleryHeight] = useState<number>(450);
 
   const yScaleKey = selectedScale === Scale.Log ? 'yLog' : 'y';
 
@@ -70,14 +68,15 @@ const ScatterPlots: React.FC<Props> = ({
 
     return selectedHParams.reduce((acc, hParam) => {
       const xLabel = hParam;
-      const yLabel = metricNameToStr(selectedMetric);
+      const yLabel = metricToStr(selectedMetric);
       const title = `${yLabel} (y) vs ${xLabel} (x)`;
       const hpLabels = chartData?.hpLabels[hParam];
       const isLogarithmic = chartData?.hpLogScales[hParam];
       const isCategorical = hpLabels?.length !== 0;
-      const xScaleKey = isCategorical ? 'xCategorical' : (isLogarithmic ? 'xLog' : 'x');
+      const xScaleKey = isCategorical ? 'xCategorical' : isLogarithmic ? 'xLog' : 'x';
       const xSplits = isCategorical
-        ? new Array(hpLabels.length).fill(0).map((x, i) => i) : undefined;
+        ? new Array(hpLabels.length).fill(0).map((x, i) => i)
+        : undefined;
       const xValues = isCategorical ? hpLabels : undefined;
       acc[hParam] = {
         data: [
@@ -103,11 +102,11 @@ const ScatterPlots: React.FC<Props> = ({
           cursor: { drag: { setScale: false, x: false, y: false } },
           title,
         },
-        tooltipLabels: [ xLabel, yLabel, null, null, null, 'trial ID' ],
+        tooltipLabels: [xLabel, yLabel, null, null, null, 'trial ID'],
       };
       return acc;
     }, {} as Record<string, UPlotScatterProps>);
-  }, [ chartData, selectedHParams, selectedMetric, yScaleKey ]);
+  }, [chartData, selectedHParams, selectedMetric, yScaleKey]);
 
   const handleChartClick = useCallback((hParam: string) => setActiveHParam(hParam), []);
 
@@ -121,7 +120,7 @@ const ScatterPlots: React.FC<Props> = ({
       const nextIndex = index === selectedHParams.length - 1 ? 0 : index + 1;
       return selectedHParams[nextIndex];
     });
-  }, [ selectedHParams ]);
+  }, [selectedHParams]);
 
   const handleGalleryPrevious = useCallback(() => {
     setActiveHParam((prev) => {
@@ -131,14 +130,14 @@ const ScatterPlots: React.FC<Props> = ({
       const prevIndex = index === 0 ? selectedHParams.length - 1 : index - 1;
       return selectedHParams[prevIndex];
     });
-  }, [ selectedHParams ]);
+  }, [selectedHParams]);
 
   useEffect(() => {
     if (ui.isPageHidden) return;
 
     const canceler = new AbortController();
     const trialIds: number[] = [];
-    const hpTrialMap: Record<string, Record<number, { hp: Primitive, metric: number| null }>> = {};
+    const hpTrialMap: Record<string, Record<number, { hp: Primitive; metric: number | null }>> = {};
 
     setHasLoaded(false);
 
@@ -216,10 +215,11 @@ const ScatterPlots: React.FC<Props> = ({
         });
         setHasLoaded(true);
       },
-    ).catch((e) => {
-      setPageError(e);
-      setHasLoaded(true);
-    });
+      (e) => {
+        setPageError(e);
+        setHasLoaded(true);
+      },
+    );
 
     return () => canceler.abort();
   }, [
@@ -231,7 +231,7 @@ const ScatterPlots: React.FC<Props> = ({
     ui.isPageHidden,
   ]);
 
-  useEffect(() => setGalleryHeight(resize.height), [ resize ]);
+  useEffect(() => setGalleryHeight(resize.height), [resize]);
 
   if (pageError) {
     return <Message title={pageError.message} />;

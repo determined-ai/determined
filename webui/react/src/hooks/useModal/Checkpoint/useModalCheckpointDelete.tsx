@@ -22,27 +22,26 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 
 const useModalCheckpointDelete = ({ onClose }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
-  const [ checkpoints, setCheckpoints ] = useState<string | string[]>([]);
+  const [checkpoints, setCheckpoints] = useState<string | string[]>([]);
 
   const numCheckpoints = useMemo(() => {
     if (Array.isArray(checkpoints)) return checkpoints.length;
     return 1;
-  }, [ checkpoints ]);
+  }, [checkpoints]);
 
-  const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [ onClose ]);
+  const handleCancel = useCallback(() => onClose?.(ModalCloseReason.Cancel), [onClose]);
 
   const handleDelete = useCallback(() => {
-    readStream(detApi.Checkpoint.deleteCheckpoints({
-      checkpointUuids: Array.isArray(checkpoints) ?
-        checkpoints :
-        [ checkpoints ],
-    }));
+    readStream(
+      detApi.Checkpoint.deleteCheckpoints({
+        checkpointUuids: Array.isArray(checkpoints) ? checkpoints : [checkpoints],
+      }),
+    );
     onClose?.(ModalCloseReason.Ok);
-  }, [ checkpoints, onClose ]);
+  }, [checkpoints, onClose]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
-    const content =
-      `Are you sure you want to request deletion for 
+    const content = `Are you sure you want to request deletion for 
 ${numCheckpoints} ${pluralizer(numCheckpoints, 'checkpoint')}?
 This action may complete or fail without further notification.`;
 
@@ -56,15 +55,15 @@ This action may complete or fail without further notification.`;
       title: 'Confirm Checkpoint Deletion',
       width: 450,
     };
-  }, [ handleCancel, handleDelete, numCheckpoints ]);
+  }, [handleCancel, handleDelete, numCheckpoints]);
 
-  const modalOpen = useCallback(({
-    checkpoints,
-    initialModalProps,
-  }: OpenProps = { checkpoints: [] }) => {
-    setCheckpoints(checkpoints);
-    openOrUpdate({ ...modalProps, ...initialModalProps });
-  }, [ modalProps, openOrUpdate ]);
+  const modalOpen = useCallback(
+    ({ checkpoints, initialModalProps }: OpenProps = { checkpoints: [] }) => {
+      setCheckpoints(checkpoints);
+      openOrUpdate({ ...modalProps, ...initialModalProps });
+    },
+    [modalProps, openOrUpdate],
+  );
 
   /**
    * When modal props changes are detected, such as modal content
@@ -72,7 +71,7 @@ This action may complete or fail without further notification.`;
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(modalProps);
-  }, [ modalProps, modalRef, openOrUpdate ]);
+  }, [modalProps, modalRef, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

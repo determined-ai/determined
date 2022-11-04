@@ -22,8 +22,10 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    
-    :global(.ant-form-item) { margin: 0; }
+
+    :global(.ant-form-item) {
+      margin: 0;
+    }
     :global(.ant-input-number) {
       width: 100%;
     }
@@ -43,7 +45,7 @@
       flex-direction: row;
       flex-wrap: wrap;
       gap: 8px;
-    
+
       & > div {
         flex: 1;
       }
@@ -98,7 +100,9 @@
         margin: 0;
       }
     }
-    p { margin: 0; }
+    p {
+      margin: 0;
+    }
     label:not(:global(.ant-checkbox-wrapper)) {
       width: 100%;
     }
@@ -118,7 +122,7 @@
     flex-direction: row;
     padding-block: 8px;
     padding-inline: 16px;
-    
+
     .spacer {
       flex-grow: 1;
     }

@@ -4,17 +4,15 @@ import { BaseNode } from 'omnibar/tree-extension/types';
 
 import css from './TreeNode.module.scss';
 
-type ResultRenderer<T> = (
-  {
-    item,
-    isSelected,
-    isHighlighted,
-  }: {
-    isHighlighted: boolean;
-    isSelected: boolean;
-    item: T;
-  } & React.HTMLAttributes<HTMLElement>
-) => JSX.Element;
+type ResultRenderer<T> = ({
+  item,
+  isSelected,
+  isHighlighted,
+}: {
+  isHighlighted: boolean;
+  isSelected: boolean;
+  item: T;
+} & React.HTMLAttributes<HTMLElement>) => JSX.Element;
 
 /*
 Renders a single option presented by the Tree Omnibar extention.
@@ -22,7 +20,7 @@ Renders a single option presented by the Tree Omnibar extention.
 const TreeNode: ResultRenderer<BaseNode> = (props) => {
   const { item, isSelected, isHighlighted, ...rest } = props;
 
-  const classes = [ css.base ];
+  const classes = [css.base];
 
   if (isSelected) {
     classes.push(css.selected);
@@ -36,12 +34,8 @@ const TreeNode: ResultRenderer<BaseNode> = (props) => {
 
   return (
     <li className={classes.join(' ')} {...rest} title={textualRepr}>
-      <span>
-        {textualRepr}
-      </span>
-      {isSelected &&
-        <i className={css.shortcut}>↩</i>
-      }
+      <span>{textualRepr}</span>
+      {isSelected && <i className={css.shortcut}>↩</i>}
     </li>
   );
 };

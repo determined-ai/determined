@@ -1,6 +1,7 @@
+import { ValueOf } from 'shared/types';
 import rootLogger from 'shared/utils/Logger';
 
-import { isString } from './data';
+import { isObject, isString } from './data';
 import { LoggerInterface } from './Logger';
 
 export const ERROR_NAMESPACE = 'EH';
@@ -19,22 +20,33 @@ export interface DetErrorOptions {
   type?: ErrorType;
 }
 
-export enum ErrorLevel {
-  Fatal = 'fatal',
-  Error = 'error',
-  Warn = 'warning',
-}
+export const ErrorLevel = {
+  Error: 'error',
+  Fatal: 'fatal',
+  Warn: 'warning',
+} as const;
 
-export enum ErrorType {
-  Server = 'server', // internal apis and server errors.
-  Auth = 'auth',
-  Unknown = 'unknown',
-  Ui = 'ui',
-  Input = 'input', // the issue is caused by unexpected/invalid user input.
-  ApiBadResponse = 'apiBadResponse', // unexpected response structure.
-  Api = 'api', // third-party api
-  Assert = 'assert', // assertion failure.
-}
+export type ErrorLevel = ValueOf<typeof ErrorLevel>;
+
+export const ErrorType = {
+  // unexpected response structure.
+  Api: 'api',
+
+  // the issue is caused by unexpected/invalid user input.
+  ApiBadResponse: 'apiBadResponse',
+
+  // third-party api
+  Assert: 'assert',
+
+  // internal apis and server errors.
+  Auth: 'auth',
+  Input: 'input',
+  Server: 'server',
+  Ui: 'ui',
+  Unknown: 'unknown', // assertion failure.
+} as const;
+
+export type ErrorType = ValueOf<typeof ErrorType>;
 
 const defaultErrOptions: DetErrorOptions = {
   isUserTriggered: false,
@@ -80,22 +92,24 @@ export class DetError extends Error implements DetErrorOptions {
   /** the wrapped error if one was provided. */
   sourceErr: unknown;
 
-  constructor(e?: unknown, options: DetErrorOptions = {}) {
-    const defaultMessage = isError(e) ? e.message : (isString(e) ? e : DEFAULT_ERROR_MESSAGE);
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  constructor(e?: any, options: DetErrorOptions = {}) {
+    const defaultMessage = isError(e) ? e.message : isString(e) ? e : DEFAULT_ERROR_MESSAGE;
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
 
-    const eOpts: DetErrorOptions = isDetError(e) ? {
-      id: e.id,
-      isUserTriggered: e.isUserTriggered,
-      level: e.level,
-      logger: e.logger,
-      payload: e.payload,
-      publicMessage: e.publicMessage,
-      publicSubject: e.publicSubject,
-      silent: e.silent,
-      type: e.type,
-    } : {};
+    const eOpts: Partial<DetErrorOptions> = {};
+    if (isObject(e)) {
+      if ('id' in e && e.id != null) eOpts.id = e.id;
+      if ('isUserTriggered' in e && e.isUserTriggered != null)
+        eOpts.isUserTriggered = e.isUserTriggered;
+      if ('level' in e && e.level != null) eOpts.level = e.level;
+      if ('logger' in e && e.logger != null) eOpts.logger = e.logger;
+      if ('payload' in e && e.payload != null) eOpts.payload = e.payload;
+      if ('publicMessage' in e && e.publicMessage != null) eOpts.publicMessage = e.publicMessage;
+      if ('silent' in e && e.silent != null) eOpts.silent = e.silent;
+      if ('type' in e && e.type != null) eOpts.type = e.type;
+    }
 
     this.loadOptions({ ...defaultErrOptions, ...eOpts, ...options });
     this.isHandled = false;
