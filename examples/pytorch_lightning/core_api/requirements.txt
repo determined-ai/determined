@@ -1,0 +1,6 @@
+attrdict
+lightning-bolts
+pytorch-lightning==1.7.7
+setuptools==58.2.0
+torchmetrics
+torchvision
