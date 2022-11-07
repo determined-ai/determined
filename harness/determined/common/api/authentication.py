@@ -143,8 +143,6 @@ def do_login(
     cert: Optional[certs.Cert] = None,
 ) -> str:
     password = api.salt_and_hash(password)
-    print("in do login")
-    print(username)
     unauth_session = api.Session(user=username, master=master_address, auth=None, cert=cert)
     login = bindings.v1LoginRequest(username=username, password=password, isHashed=True)
     r = bindings.post_Login(session=unauth_session, body=login)

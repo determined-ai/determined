@@ -41,14 +41,9 @@ def log_in_user(parsed_args: Namespace) -> None:
         username = input("Username: ")
     else:
         username = parsed_args.username
-
-    #print("in cli login user")
-    #print(username)    
+    
     message = "Password for user '{}': ".format(username)
-    #print("message in user cli")
-    #print(message)
     password = getpass.getpass(message)
-    print("after password")
 
     token_store = authentication.TokenStore(parsed_args.master)
     token = authentication.do_login(parsed_args.master, username, password)
