@@ -32,8 +32,21 @@ repos:
           - zsh
         args: [-w, -s, -l, -i, '4', -ci, -bn]
 
+      - id: check-python # DISCUSS add for go master and agent?
+        name: Check Python
+        entry: make -C harness check
+        stages:
+          - push # skip commit checks while we add option to run targeted checks
+        language: system
+        files: '^harness/'
+        types:
+          - python
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.17.0
     hooks:
       - id: yamllint
         files: '^.github/'
+  - repo: https://github.com/psf/black
+    rev: '22.10.0'
+    hooks:
+      - id: black
