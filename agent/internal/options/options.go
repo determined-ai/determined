@@ -46,6 +46,11 @@ type AgentOptions struct {
 
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
 
+	AgentReconnectAttempts int `json:"agent_reconnect_attempts"`
+	// TODO(ilia): switch this to better parsing with `model.Duration` similar to
+	// master config.
+	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
+
 	Hooks HooksOptions `json:"hooks"`
 }
 

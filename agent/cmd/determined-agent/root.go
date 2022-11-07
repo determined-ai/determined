@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type options struct {
+type opts struct {
 	logLevel string
 	noColor  bool
 }
@@ -13,7 +13,7 @@ type options struct {
 var version = "dev"
 
 func newRootCmd() *cobra.Command {
-	opts := options{}
+	o := opts{}
 
 	cmd := &cobra.Command{
 		Use:     "determined-agent",
@@ -22,23 +22,26 @@ func newRootCmd() *cobra.Command {
 			if err := bindEnv("DET_", cmd); err != nil {
 				return err
 			}
-			level, err := log.ParseLevel(opts.logLevel)
+			level, err := log.ParseLevel(o.logLevel)
 			if err != nil {
 				return err
 			}
 			log.SetLevel(level)
+			if level == log.TraceLevel {
+				log.SetReportCaller(true)
+			}
 			log.SetFormatter(&log.TextFormatter{
 				FullTimestamp: true,
 				ForceColors:   true,
-				DisableColors: opts.noColor,
+				DisableColors: o.noColor,
 			})
 			return nil
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&opts.logLevel, "log-level", "l", "info",
+	cmd.PersistentFlags().StringVarP(&o.logLevel, "log-level", "l", "info",
 		"set the logging level (can be one of: debug, info, warn, error, or fatal)")
-	cmd.PersistentFlags().BoolVar(&opts.noColor, "no-color", false, "disable colored output")
+	cmd.PersistentFlags().BoolVar(&o.noColor, "no-color", false, "disable colored output")
 
 	cmd.AddCommand(newCompletionCmd())
 	cmd.AddCommand(newVersionCmd())
