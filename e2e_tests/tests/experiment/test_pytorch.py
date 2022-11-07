@@ -7,6 +7,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.parallel
+@pytest.mark.e2e_slurm_gpu
 def test_pytorch_gradient_aggregation() -> None:
     config = conf.load_config(conf.fixtures_path("pytorch_identity/distributed.yaml"))
 

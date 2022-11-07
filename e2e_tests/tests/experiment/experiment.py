@@ -910,12 +910,14 @@ def verify_completed_experiment_metadata(
     # requires terminating the experiment's last container, which might
     # take some time (especially on Slurm where our polling is longer).
     max_secs_to_free_slots = 300
-    for _ in range(max_secs_to_free_slots):
-        if cluster_utils.num_free_slots() == cluster_utils.num_slots():
-            break
-        time.sleep(1)
-    else:
-        raise AssertionError("Slots failed to free after experiment {}".format(experiment_id))
+    shared = os.environ.get("SHARED_CLUSTER", False)
+    if not shared:
+        for _ in range(max_secs_to_free_slots):
+            if cluster_utils.num_free_slots() == cluster_utils.num_slots():
+                break
+            time.sleep(1)
+        else:
+            raise AssertionError("Slots failed to free after experiment {}".format(experiment_id))
 
     # Run a series of CLI tests on the finished experiment, to sanity check
     # that basic CLI commands don't raise errors.

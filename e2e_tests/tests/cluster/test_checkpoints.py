@@ -42,6 +42,7 @@ def wait_for_gc_to_finish(experiment_id: int) -> None:
 
 
 @pytest.mark.e2e_gpu
+@pytest.mark.e2e_slurm_gpu
 def test_set_gc_policy() -> None:
     exp_id = exp.run_basic_test(
         config_file=conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),

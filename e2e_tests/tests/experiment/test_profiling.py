@@ -13,6 +13,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_gpu
+@pytest.mark.e2e_slurm_gpu
 @pytest.mark.timeout(30 * 60)
 @pytest.mark.parametrize(
     "model_def,timings_enabled",
