@@ -19,6 +19,18 @@ repos:
         language: system
         files: '^webui/react/'
         types_or: [markdown, json]
+      - id: shell-fmt-docker
+        name: shfmt
+        description: Format shell scripts with shfmt
+        entry: mvdan/shfmt:v3
+        language: docker_image
+        types:
+          - file
+          - shell
+        exclude_types:
+          - zsh
+        args: [-w, -s, -l, -i, '2']
+
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.17.0
     hooks:
