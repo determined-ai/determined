@@ -10,10 +10,12 @@ from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+import random
 
 import tabulate
 
 import determined as det
+from determined.common.api.errors import APIException
 import determined.experimental
 import determined.load
 from determined import cli
@@ -530,9 +532,31 @@ def kill_experiment(args: Namespace) -> None:
 @authentication.required
 def wait(args: Namespace) -> None:
     while True:
-        r = bindings.get_GetExperiment(
-            cli.setup_session(args), experimentId=args.experiment_id
-        ).experiment
+        r: Optional[bindings.v1Experiment] = None
+        try:
+            r = bindings.get_GetExperiment(
+                cli.setup_session(args), experimentId=args.experiment_id
+            ).experiment
+        except APIException as e:
+            is_transient = e.status_code in (
+                429,  # Too Many Requests
+                502,  # Bad Gateway
+                503,  # Service Unavailable
+                504,  # Gateway timeout
+                408,  # Request Timeout
+            )
+            if is_transient:
+                # calculate exponential backoff with jitter?
+                # https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+                backoff = random.uniform(0.5, 5)
+                time.sleep(backoff)
+                # REMOVEME: or maybe check if there is retyr-after header
+                # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
+                continue
+            raise e
+
+        # QUESTION: assert fits better than a conditional here right?
+        assert r is not None
 
         state_val = r.state.value.replace("STATE_", "")
         if state_val in constants.TERMINAL_STATES:
