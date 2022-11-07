@@ -153,11 +153,7 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
 ) error {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/logs", req.TrialId),
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
+	ctx := context.TODO()
 
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
@@ -349,11 +345,7 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer,
 ) error {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/logs/fields", req.TrialId),
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
+	ctx := context.TODO()
 
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
@@ -803,11 +795,6 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	req *apiv1.GetTrialProfilerMetricsRequest,
 	resp apiv1.Determined_GetTrialProfilerMetricsServer,
 ) error {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/profiler/metrics", req.Labels.TrialId),
-		"method":   audit.GetMethod,
-	}
-
 	labelsJSON, err := protojson.Marshal(req.Labels)
 	if err != nil {
 		return fmt.Errorf("failed to marshal labels: %w", err)
@@ -816,7 +803,7 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
+			ctx := context.TODO()
 			if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx,
 				int(req.Labels.TrialId),
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
@@ -860,15 +847,10 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	req *apiv1.GetTrialProfilerAvailableSeriesRequest,
 	resp apiv1.Determined_GetTrialProfilerAvailableSeriesServer,
 ) error {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/profiler/available_series", req.TrialId),
-		"method":   audit.GetMethod,
-	}
-
 	var timeSinceLastAuth time.Time
 	fetch := func(_ api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
+			ctx := context.TODO()
 			if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx,
 				int(req.TrialId),
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {

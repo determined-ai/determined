@@ -180,7 +180,12 @@ func streamAuthInterceptor(db *db.PgDB,
 		// Don't cache the result of the stream auth interceptor because
 		// we can't easily modify ss's context and
 		// we would have to worry about the user session expiring in the context.
-		_, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
+		user, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
+		fields := log.Fields{
+			"endpoint": info,
+			"user": user.ID,
+		}
+		log.WithFields(fields).Info("RBAC Audit Logs (streaming)")
 		if err != nil {
 			return err
 		}

@@ -1190,12 +1190,6 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 		period = defaultMetricsStreamPeriod
 	}
 
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/metric-names", experimentID),
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
 	var tStartTime time.Time
@@ -1206,6 +1200,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	var searcherMetric string
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			ctx := context.TODO()
 			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
 				false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
@@ -1274,12 +1269,6 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesRequest,
 	resp apiv1.Determined_ExpCompareMetricNamesServer,
 ) error {
-	fields := logrus.Fields{
-		"endpoint": "/api/v1/trials/metrics-stream/metric-names",
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	seenTrain := make(map[string]bool)
 	seenValid := make(map[string]bool)
 	var tStartTime time.Time
@@ -1299,6 +1288,7 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			for _, trialID := range req.TrialId {
+				ctx := context.TODO()
 				if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
 					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 					return err
@@ -1347,12 +1337,6 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	resp apiv1.Determined_MetricBatchesServer,
 ) error {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/batches", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	experimentID := int(req.ExperimentId)
 	metricName := req.MetricName
 	if metricName == "" {
@@ -1372,6 +1356,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	var startTime time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			ctx := context.TODO()
 			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
@@ -1431,13 +1416,6 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	resp apiv1.Determined_TrialsSnapshotServer,
 ) error {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/trials-snapshot",
-			req.ExperimentId),
-		"method": audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	experimentID := int(req.ExperimentId)
 	metricName := req.MetricName
 	if metricName == "" {
@@ -1470,6 +1448,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	var startTime time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			ctx := context.TODO()
 			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
@@ -1681,12 +1660,6 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	resp apiv1.Determined_TrialsSampleServer,
 ) error {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/metrics-stream/trials-sample", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	experimentID := int(req.ExperimentId)
 	maxTrials := int(req.MaxTrials)
 	if maxTrials == 0 {
@@ -1722,6 +1695,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	currentTrials := make(map[int32]bool)
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			ctx := context.TODO()
 			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
@@ -1805,12 +1779,6 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequest,
 	resp apiv1.Determined_ExpCompareTrialsSampleServer,
 ) error {
-	fields := logrus.Fields{
-		"endpoint": "/api/v1/experiments-compare",
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	experimentIDs := req.ExperimentIds
 	maxTrials := int(req.MaxTrials)
 	if maxTrials == 0 {
@@ -1845,6 +1813,7 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			for _, expID := range experimentIDs {
+				ctx := context.TODO()
 				if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID), false,
 					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 					return err
@@ -1966,12 +1935,6 @@ func protoMetricHPI(metricHpi model.MetricHPImportance,
 func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	resp apiv1.Determined_GetHPImportanceServer,
 ) error {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/hyperparameter-importance", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	experimentID := int(req.ExperimentId)
 	period := time.Duration(req.PeriodSeconds) * time.Second
 	if period == 0 {
@@ -1981,6 +1944,7 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	var timeSinceLastAuth time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
+			ctx := context.TODO()
 			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err

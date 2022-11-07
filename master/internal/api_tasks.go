@@ -277,12 +277,6 @@ func (a *apiServer) PostAllocationProxyAddress(
 func (a *apiServer) TaskLogs(
 	req *apiv1.TaskLogsRequest, resp apiv1.Determined_TaskLogsServer,
 ) error {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/tasks/%s/logs", req.TaskId),
-		"method":   audit.GetMethod,
-	}
-	ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
-
 	if err := grpcutil.ValidateRequest(
 		grpcutil.ValidateLimit(req.Limit),
 		grpcutil.ValidateFollow(req.Limit, req.Follow),
@@ -290,6 +284,7 @@ func (a *apiServer) TaskLogs(
 		return err
 	}
 
+	ctx := context.TODO()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -486,17 +481,12 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 func (a *apiServer) TaskLogsFields(
 	req *apiv1.TaskLogsFieldsRequest, resp apiv1.Determined_TaskLogsFieldsServer,
 ) error {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/tasks/%s/logs/fields", req.TaskId),
-		"method":   audit.GetMethod,
-	}
-
 	taskID := model.TaskID(req.TaskId)
 
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.WithValue(resp.Context(), audit.LogKey{}, fields)
+			ctx := context.TODO()
 			if err := a.canDoActionsOnTask(ctx, taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
