@@ -39,16 +39,10 @@ func (a *apiServer) Login(
 		return nil, status.Error(codes.InvalidArgument, "missing argument: username")
 	}
 
-	fmt.Println("Login")
-	fmt.Println(req.Username)
-	fmt.Println(req.Password)
 	userModel, err := user.UserByUsername(req.Username)
 	switch err {
 	case nil:
 	case db.ErrNotFound:
-		fmt.Println("DB err login")
-		fmt.Println(req.Username)
-		fmt.Println(req.Password)
 		return nil, grpcutil.ErrInvalidCredentials
 	default:
 		return nil, err
