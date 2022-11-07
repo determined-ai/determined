@@ -3,66 +3,66 @@
 docker_args=()
 
 mkdir -p /usr/local/determined
-echo {{.StartupScriptBase64}} | base64 --decode > /usr/local/determined/startup_script
+echo {{.StartupScriptBase64}} | base64 --decode >/usr/local/determined/startup_script
 echo "#### PRINTING STARTUP SCRIPT START ####"
 cat /usr/local/determined/startup_script
 echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
-echo {{.ConfigFileBase64}} | base64 --decode > /usr/local/determined/agent.yaml
+echo {{.ConfigFileBase64}} | base64 --decode >/usr/local/determined/agent.yaml
 echo "#### PRINTING CONFIG FILE START ####"
 cat /usr/local/determined/agent.yaml
 echo "#### PRINTING CONFIG FILE END ####"
 
 slot_type="{{.SlotType}}"
 if [ $slot_type == "cuda" ] || [ $slot_type == "gpu" ]; then
-    echo "#### Starting agent with NVIDIA GPUs"
-    docker_args+=(--gpus all)
-    docker_args+=(-e DET_SLOT_TYPE=cuda)
+  echo "#### Starting agent with NVIDIA GPUs"
+  docker_args+=(--gpus all)
+  docker_args+=(-e DET_SLOT_TYPE=cuda)
 elif [ $slot_type == "cpu" ]; then
-    echo "#### Starting agent with cpu slots"
-    docker_args+=(-e DET_SLOT_TYPE=cpu)
+  echo "#### Starting agent with cpu slots"
+  docker_args+=(-e DET_SLOT_TYPE=cpu)
 else
-    echo "#### Starting agent w/o slots"
-    docker_args+=(-e DET_SLOT_TYPE=none)
+  echo "#### Starting agent w/o slots"
+  docker_args+=(-e DET_SLOT_TYPE=none)
 fi
 
 cert_b64={{.MasterCertBase64}}
 if [ -n "$cert_b64" ]; then
-    echo "$cert_b64" | base64 --decode > /usr/local/determined/master.crt
-    echo "#### PRINTING MASTER CERT START ####"
-    cat /usr/local/determined/master.crt
-    echo "#### PRINTING MASTER CERT END ####"
-    docker_args+=(-v /usr/local/determined/master.crt:/usr/local/determined/master.crt)
-    docker_args+=(-e DET_SECURITY_TLS_ENABLED=true)
-    docker_args+=(-e DET_SECURITY_TLS_MASTER_CERT=/usr/local/determined/master.crt)
+  echo "$cert_b64" | base64 --decode >/usr/local/determined/master.crt
+  echo "#### PRINTING MASTER CERT START ####"
+  cat /usr/local/determined/master.crt
+  echo "#### PRINTING MASTER CERT END ####"
+  docker_args+=(-v /usr/local/determined/master.crt:/usr/local/determined/master.crt)
+  docker_args+=(-e DET_SECURITY_TLS_ENABLED=true)
+  docker_args+=(-e DET_SECURITY_TLS_MASTER_CERT=/usr/local/determined/master.crt)
 fi
 
-echo {{.ContainerStartupScriptBase64}} | base64 --decode > /usr/local/determined/container_startup_script
+echo {{.ContainerStartupScriptBase64}} | base64 --decode >/usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT START ####"
 cat /usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT END ####"
 
 docker run --init --name determined-agent {{.LogOptions}} \
-    --privileged \
-    --restart always \
-    --network {{.AgentNetwork}} \
-    --runtime={{.AgentDockerRuntime}} \
-    -e DET_AGENT_ID="{{.AgentID}}" \
-    -e DET_MASTER_HOST="{{.MasterHost}}" \
-    -e DET_MASTER_PORT="{{.MasterPort}}" \
-    -e DET_SECURITY_TLS_MASTER_CERT_NAME="{{.MasterCertName}}" \
-    -e DET_RESOURCE_POOL="{{.ResourcePool}}" \
-    -e DET_FLUENT_IMAGE="{{.AgentFluentImage}}" \
-    -e DET_AGENT_RECONNECT_ATTEMPTS="{{.AgentReconnectAttempts}}" \
-    -e DET_AGENT_RECONNECT_BACKOFF="{{.AgentReconnectBackoff}}" \
-    -v /usr/sbin/shutdown:/usr/sbin/shutdown \
-    -v /run/systemd/system:/run/systemd/system \
-    -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
-    -v /sys/fs/cgroup:/sys/fs/cgroup \
-    -v /var/run/docker.sock:/var/run/docker.sock \
-    -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
-    -v /usr/local/determined/agent.yaml:/etc/determined/agent.yaml \
-    "${docker_args[@]}" \
-    "{{.AgentDockerImage}}"
+  --privileged \
+  --restart always \
+  --network {{.AgentNetwork}} \
+  --runtime={{.AgentDockerRuntime}} \
+  -e DET_AGENT_ID="{{.AgentID}}" \
+  -e DET_MASTER_HOST="{{.MasterHost}}" \
+  -e DET_MASTER_PORT="{{.MasterPort}}" \
+  -e DET_SECURITY_TLS_MASTER_CERT_NAME="{{.MasterCertName}}" \
+  -e DET_RESOURCE_POOL="{{.ResourcePool}}" \
+  -e DET_FLUENT_IMAGE="{{.AgentFluentImage}}" \
+  -e DET_AGENT_RECONNECT_ATTEMPTS="{{.AgentReconnectAttempts}}" \
+  -e DET_AGENT_RECONNECT_BACKOFF="{{.AgentReconnectBackoff}}" \
+  -v /usr/sbin/shutdown:/usr/sbin/shutdown \
+  -v /run/systemd/system:/run/systemd/system \
+  -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket \
+  -v /sys/fs/cgroup:/sys/fs/cgroup \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /usr/local/determined/container_startup_script:/usr/local/determined/container_startup_script \
+  -v /usr/local/determined/agent.yaml:/etc/determined/agent.yaml \
+  "${docker_args[@]}" \
+  "{{.AgentDockerImage}}"

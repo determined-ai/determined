@@ -2,6 +2,6 @@
 set -e
 # Automatically added by dh_installsystemd/11.1.6ubuntu2
 if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
-	deb-systemd-invoke stop 'determined-master.service' >/dev/null || true
+  deb-systemd-invoke stop 'determined-master.service' >/dev/null || true
 fi
 # End automatically added section

@@ -5,7 +5,7 @@ test_cmd=${1:-"npm run test -- --watchAll=false"}
 c=0
 
 while true; do
-  c=$((c+1))
+  c=$((c + 1))
   echo "run #$c"
   ${test_cmd}
 done

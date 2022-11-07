@@ -13,7 +13,7 @@ rootca="$(openssl genrsa 2048)"
 
 # Self-sign rootca, store cert as file.
 echo "$rootca" | openssl req -x509 -new -nodes -sha512 -days "$days" \
-    -config ca.cnf -key /dev/stdin -out "$ca"
+  -config ca.cnf -key /dev/stdin -out "$ca"
 
 # Create key.
 openssl genrsa -out "$key" 2048
@@ -23,10 +23,10 @@ openssl req -new -config server.cnf -key "$key" -out "$csr"
 
 # Sign with rootca.
 echo "$rootca" | openssl x509 -req -days "$days" -sha512 -CAcreateserial \
-    -in "$csr" -CA "$ca" -CAkey /dev/stdin -out "$cert"
+  -in "$csr" -CA "$ca" -CAkey /dev/stdin -out "$cert"
 
 # Turn the certificate into a proper chain.
-cat "$ca" >> "$cert"
+cat "$ca" >>"$cert"
 
 rm *.srl *.csr
 
