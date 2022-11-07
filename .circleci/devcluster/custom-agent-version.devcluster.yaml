@@ -47,5 +47,5 @@ stages:
         - /var/run/docker.sock:/var/run/docker.sock
         - --net
         - host
-        - determinedai/hpe-mlde-agent:$DET_AGENT_VERSION
+        - determinedai/determined-agent:$DET_AGENT_VERSION
         - run

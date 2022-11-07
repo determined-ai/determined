@@ -2032,43 +2032,48 @@ jobs:
       mark:
         type: string
         default: e2e_slurm
+      runner_class:
+        type: string
+        default: determined-ai/znode-cluster
       master_config:
         type: string
         default: |
           task_container_defaults:
             image:
-              cpu: determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5
-            bind_mounts:
-            - host_path: /home/launcher/default-nsswitch.conf
-              container_path: /etc/nsswitch.conf
+              cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c
+              cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c
+            environment:
+              environment_variables:
+                 # Some ports are not working, disable them so distributed jobs work.
+                 - NCCL_IB_HCA=mlx6_0:0
           checkpoint_storage:
             type: shared_fs
-            host_path: /home/launcher/determinedai/checkpoints
+            host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
             storage_path: determined-checkpoint
             save_experiment_best: 0
             save_trial_best: 1
             save_trial_latest: 1
           db:
             user: postgres
-            host: 127.0.0.1
+            host: localhost
             port: 5432
             name: determined
-            password: initial0
+            password: launcher
           resource_manager:
             type: slurm
-            master_host: el8kb3-C2
+            master_host: $HOSTNAME
             master_port: 8080
-            host: 127.0.0.1
+            host: localhost
             port: 8181
             protocol: http
-            slot_type: cpu
+            slot_type: cuda
             user_name: launcher
-            group_name: launcher
-            singularity_image_root: /home/launcher/images/determinedai
-            job_storage_root: /home/launcher/.capsules
-            auth_file: /root/.launcher.token
-            path: /opt/singularity-3.7.3/bin:/usr/local/bin:${PATH}
-            ld_library_path: /usr/local/lib:/usr/local/lib/slurm:${LD_LIBRARY_PATH}
+            group_name: hpcd
+            singularity_image_root: /lustre/hdd/foundation_engineering/images
+            job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+            auth_file: /home/launcher/.launcher.$HOSTNAME.token
+            path: /opt/singularity/bin:/usr/local/bin:${PATH}
+            ld_library_path:
       determined_master_host:
         type: string
         default: localhost:8080
@@ -2086,7 +2091,9 @@ jobs:
         default: ""
     # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
     machine: true
-    resource_class: determined-ai/local-cluster
+    resource_class: <<parameters.runner_class>>
+    environment:
+      SHARED_CLUSTER: True
     steps:
       - checkout
       - attach_workspace:
@@ -2111,7 +2118,7 @@ jobs:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           install-python: false
-          executor: determined-ai/local-cluster
+          executor: <<parameters.runner_class>>
 
       - run: |
           id <<parameters.cluster_unix_user>> || sudo useradd <<parameters.cluster_unix_user>>
@@ -2972,11 +2979,6 @@ workflows:
                 - main
 
       - test-e2e-slurm:
-          name: test-e2e-slurm
-          requires:
-            - package-and-push-system-local
-
-      - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
           requires:
             - package-and-push-system-local
@@ -2984,40 +2986,51 @@ workflows:
           master_config: |
             task_container_defaults:
               image:
-                cpu: determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.18.5
-              bind_mounts:
-              - host_path: /home/launcher/default-nsswitch.conf
-                container_path: /etc/nsswitch.conf
+                cpu: determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-55a3e1c
+                cuda: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-55a3e1c
+              environment:
+                environment_variables:
+                   # Some ports are not working, disable them so distributed jobs work.
+                   - NCCL_IB_HCA=mlx6_0:0
             checkpoint_storage:
               type: shared_fs
-              host_path: /home/launcher/determinedai/checkpoints
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
               storage_path: determined-checkpoint
               save_experiment_best: 0
               save_trial_best: 1
               save_trial_latest: 1
             db:
               user: postgres
-              host: 127.0.0.1
+              host: localhost
               port: 5432
               name: determined
-              password: initial0
+              password: launcher
             resource_manager:
               type: slurm
-              master_host: 127.0.0.1
+              master_host: junkmaster
               master_port: 8080
-              host: 127.0.0.1
+              host: localhost
               port: 8181
               protocol: http
-              slot_type: cpu
-              rendezvous_network_interface:
-              proxy_network_interface:
+              slot_type: cuda
               user_name: launcher
-              group_name: launcher
-              singularity_image_root: /home/launcher/images/determinedai
-              job_storage_root: /home/launcher/.capsules
-              auth_file: /root/.launcher.token
-              path: /opt/singularity-3.7.3/bin:/usr/local/bin:${PATH}
-              ld_library_path: /usr/local/lib:/usr/local/lib/slurm:${LD_LIBRARY_PATH}
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm
+          requires:
+            - package-and-push-system-local
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-gpu
+          mark: "e2e_slurm_gpu"
+          requires:
+            - package-and-push-system-local
 
       - test-e2e:
           name: test-e2e-cpu
