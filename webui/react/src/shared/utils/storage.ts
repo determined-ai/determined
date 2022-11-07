@@ -86,8 +86,8 @@ export class StorageManager {
     const prefix = this.pathKeys.length !== 0 ? [...this.pathKeys, ''].join(this.delimiter) : '';
     return this.store
       .keys()
-      .filter((key) => key.startsWith(prefix))
-      .map((key) => key.replace(prefix, ''));
+      .filter((key: string) => key.startsWith(prefix))
+      .map((key: string) => key.replace(prefix, ''));
   }
 
   toString(): string {
