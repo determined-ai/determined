@@ -142,8 +142,6 @@ class SharedFSStorageManager(storage.StorageManager):
 
             def ignore(ign_dir: str, names: List[str]) -> List[str]:
                 out: List[str] = []
-                if selector is None:
-                    return out
                 # rel_dir would be "subdir" instead of "/determined_shared_fs/UUID/subdir"
                 rel_dir = os.path.relpath(ign_dir, src)
                 for name in names:

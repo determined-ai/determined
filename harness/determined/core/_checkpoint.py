@@ -6,7 +6,7 @@ import os
 import pathlib
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterator, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, Optional, Tuple, Union, List, Callable
 
 from determined import core, tensorboard
 from determined.common import api, storage
@@ -139,16 +139,16 @@ class CheckpointContext:
                     "cannot call .upload(ckpt_dir=None, shard=False), which would result in doing "
                     "nothing at all"
                 )
-            storage_id = str(uuid.uuid4())
-            return self._upload_single(ckpt_dir, storage_id, metadata)
+            return self._upload_single(ckpt_dir, metadata)
         else:
+            storage_id = None
             if self._dist.rank == 0:
                 storage_id = str(uuid.uuid4())
             storage_id = self._dist.broadcast(storage_id)
             return self._upload_sharded(ckpt_dir, storage_id, metadata)
 
     def _upload_single(
-        self, ckpt_dir: str, storage_id: str, metadata: Optional[Dict[str, Any]] = None
+        self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None
     ) -> str:
         storage_id = str(uuid.uuid4())
         resources = self._storage_manager._list_directory(ckpt_dir)
@@ -161,7 +161,7 @@ class CheckpointContext:
         return storage_id
 
     def _upload_sharded(
-        self, ckpt_dir: Optional[str], metadata: Optional[Dict[str, Any]] = None
+        self, ckpt_dir: Optional[str], storage_id: str, metadata: Optional[Dict[str, Any]] = None
     ) -> str:
         ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
         if not any(ckpt_dir_mask):
@@ -179,6 +179,7 @@ class CheckpointContext:
             file_uid = (st.st_dev, st.st_ino)
         all_file_uids = self._dist.allgather(file_uid)
         # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
+        # Q: can every worker try to upload a different dir?!
         want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
 
         # Decide what we are going to upload.
@@ -202,10 +203,10 @@ class CheckpointContext:
             ]
             raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
 
-        # The lowest-ranked worker with a non-None ckpt_dir wirtes to the metadata file.
+        # The lowest-ranked worker with a non-None ckpt_dir writes to the metadata file.
         metadata_writer_rank = ckpt_dir_mask.index(True)
         if self._dist.rank == metadata_writer_rank:
-            assert ckpt_dir is not None:
+            assert ckpt_dir is not None
             # We don't need to synchronize workers at this point because the metadata_writer_rank
             # will also be the uploader for its own directory.
             assert want_upload
@@ -229,6 +230,8 @@ class CheckpointContext:
         storage_id: str,
         ckpt_dir: Union[str, os.PathLike],
         download_mode: DownloadMode = DownloadMode.LocalWorkersShareDownload,
+        *,
+        selector: Optional[Callable[[str], bool]] = None,
     ) -> None:
         """
         Download the contents of a checkpoint from checkpoint storage into a directory specified by
@@ -244,17 +247,38 @@ class CheckpointContext:
         download_mode = DownloadMode(download_mode)
 
         if download_mode == DownloadMode.NoSharedDownload:
+            # what if there is a selector?
+            # we can use raw selector
             self._storage_manager.download(src=storage_id, dst=ckpt_dir)
             return
 
+        want_filter = any(self._dist.allgather(selector is not None))
+
         # LocalWorkersShareDownload case.
         if self._dist.local_rank == 0:
-            self._storage_manager.download(src=storage_id, dst=ckpt_dir)
+
+            def _selector(path: str) -> bool:
+                if not want_filter:
+                    return True
+                # If anyone has a selector, coordinate every filename across workers' filters.
+                # Functions can't be reliably serialized, so instead we pass each filename between
+                # all workers.  But because this traffic is local (unix sockets by default) it
+                # should be far faster than any download.
+                _ = self._dist.broadcast_local(path)
+                return any(self._dist.gather_local(selector(path) if selector is not None else True))
+
+            self._storage_manager.download(src=storage_id, dst=ckpt_dir, selector=_selector)
             # Tell local workers we finished.
             _ = self._dist.broadcast_local(None)
         else:
-            # Wait for chief to finish.
-            _ = self._dist.broadcast_local(None)
+            while True:
+                name = self._dist.broadcast_local(None)
+                if name is None:
+                    # Chief is done downloading files.
+                    break
+                assert want_filter, "want_filter is not set but name was not None"
+                _ = self._dist.gather_local(selector(name) if selector is not None else True)
+
 
     def get_metadata(self, storage_id: str) -> Dict[str, Any]:
         """
@@ -365,7 +389,7 @@ class CheckpointContext:
         # The lowest-ranked worker with a non-None ckpt_dir wirtes to the metadata file.
         metadata_writer_rank = ckpt_dir_mask.index(True)
         if self._dist.rank == metadata_writer_rank:
-            assert ckpt_dir is not None:
+            assert ckpt_dir is not None
             # We don't need to synchronize workers at this point because the metadata_writer_rank
             # will also be the uploader for its own directory.
             assert want_upload
