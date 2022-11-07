@@ -33,9 +33,10 @@ class DownloadMode(enum.Enum):
     LocalWorkersShareDownload = "LOCAL_WORKERS_SHARE_DOWNLOAD"
     NoSharedDownload = "NO_SHARED_DOWNLOAD"
 
+
 def merge_resources(
     all_resources: List[List[Tuple[str, int]]], rank: int
-) -> Tuple[List[Tuple[str, int]], Dict[str, List[int]]]:
+) -> Tuple[Dict[str, int], Dict[str, List[int]]]:
     """
     Given a list of all resources, return:
       - a merged list of resources
@@ -48,7 +49,6 @@ def merge_resources(
     uploaders = {}
     merged = {}
     for rank, rscs in enumerate(all_resources):
-        files_this_rank = []
         for name, size in rscs:
             if name.endswith(os.sep):
                 # Dir name.
@@ -176,10 +176,11 @@ class CheckpointContext:
             file_uid = None
         else:
             st = os.stat(ckpt_dir)
+            # st_dev = represents the identifier of the device on which this file resides.
+            # st_ino = represents the inode number (identification number) on Unix
             file_uid = (st.st_dev, st.st_ino)
         all_file_uids = self._dist.allgather(file_uid)
         # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
-        # Q: can every worker try to upload a different dir?!
         want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
 
         # Decide what we are going to upload.
@@ -212,6 +213,7 @@ class CheckpointContext:
             assert want_upload
             # Add metadata pre-upload but without counting it among resources.
             self._write_metadata_file(ckpt_dir, metadata or {})
+            # TODO: merge metadata
 
         if want_upload:
             assert ckpt_dir
@@ -331,20 +333,30 @@ class CheckpointContext:
                 f"(rank={self._dist.rank})"
             )
 
+        # Why making the change from:
+        # storage_id = str(uuid.uuid4())
+        # with self._storage_manager.store_path(storage_id) as path:
+        #     yield path, storage_id
+        #     resources = self._storage_manager._list_directory(path)
+        #     self._write_metadata_file(os.fspath(path), metadata or {})
+        #
+        # self._report_checkpoint(storage_id, resources, metadata)
+
         storage_id = str(uuid.uuid4())
         path = self._storage_manager.pre_store_path(storage_id)
         yield path, storage_id
         resources = self._storage_manager._list_directory(path)
         self._write_metadata_file(os.fspath(path), metadata or {})
-        self._storage_manager.post_store_path(path, dst)
+        self._storage_manager.post_store_path(path, storage_id)
 
         self._report_checkpoint(storage_id, resources, metadata)
-
 
     @contextlib.contextmanager
     def _store_path_sharded(
         self, metadata: Optional[Dict[str, Any]] = None
     ) -> Iterator[Tuple[pathlib.Path, str]]:
+
+        storage_id = None
         if self._dist.rank == 0:
             storage_id = str(uuid.uuid4())
         storage_id = self._dist.broadcast(storage_id)
@@ -353,6 +365,10 @@ class CheckpointContext:
         yield path, storage_id
 
         if self._storage_manager.store_path_is_direct_access():
+            # TODO: "Direct access means sharded uploads can't detect upload conflicts"
+            # Shouldn't we still do this:
+            # self._write_metadata_file(os.fspath(path), metadata or {})
+            # self._storage_manager.post_store_path(path, storage_id)
             return
 
         ckpt_dir = os.fspath(path)
@@ -363,7 +379,7 @@ class CheckpointContext:
         file_uid = (st.st_dev, st.st_ino)
         all_file_uids = self._dist.allgather(file_uid)
         # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
-        want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
+        want_upload = all_file_uids.index(file_uid) == self._dist.rank
 
         # Decide what we are going to upload.
         if want_upload:
@@ -386,8 +402,8 @@ class CheckpointContext:
             ]
             raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
 
-        # The lowest-ranked worker with a non-None ckpt_dir wirtes to the metadata file.
-        metadata_writer_rank = ckpt_dir_mask.index(True)
+        # the lowest existing rank is 0, so it will upload metadata
+        metadata_writer_rank = 0
         if self._dist.rank == metadata_writer_rank:
             assert ckpt_dir is not None
             # We don't need to synchronize workers at this point because the metadata_writer_rank
@@ -395,7 +411,7 @@ class CheckpointContext:
             assert want_upload
             # Add metadata pre-upload but without counting it among resources.
             self._write_metadata_file(ckpt_dir, metadata or {})
-            # XXX: merge metadata too
+            # TODO: merge metadata too
 
         if want_upload:
             assert ckpt_dir

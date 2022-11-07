@@ -126,7 +126,8 @@ class StorageManager(metaclass=abc.ABCMeta):
     ) -> None:
         """
         `selector` should be a callable accepting a string parameter, ending in an os.sep if it is a
-        directory, and should return
+        directory, and should return bool: True for files/directories that should be downloaded; False
+        otherwise.
         """
         pass
 
