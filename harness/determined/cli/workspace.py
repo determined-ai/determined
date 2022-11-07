@@ -5,7 +5,7 @@ from typing import Any, List, Optional, Sequence
 
 from determined import cli
 from determined.cli.user import AGENT_USER_GROUP_ARGS
-from determined.common import api
+from determined.common import api, util
 from determined.common.api import authentication, bindings, errors
 from determined.common.declarative_argparse import Arg, Cmd
 
@@ -240,9 +240,9 @@ def edit_workspace(args: Namespace) -> None:
         render_workspaces([w])
 
 
-def json_file_arg(val: str) -> Any:
+def yaml_file_arg(val: str) -> Any:
     with open(val) as f:
-        return json.load(f)
+        return util.safe_load_yaml_with_exceptions(f)
 
 
 CHECKPOINT_STORAGE_WORKSPACE_ARGS = [
@@ -253,8 +253,8 @@ CHECKPOINT_STORAGE_WORKSPACE_ARGS = [
     ),
     Arg(
         "--checkpoint-storage-config-file",
-        type=json_file_arg,
-        help="Storage config (path to JSON-formatted file)",
+        type=yaml_file_arg,
+        help="Storage config (path to YAML or JSON formatted file)",
     ),
 ]
 

@@ -1,3 +1,5 @@
+import os
+import tempfile
 import uuid
 from typing import List
 
@@ -10,6 +12,7 @@ from tests.cluster.test_users import ADMIN_CREDENTIALS
 from tests.experiment import determined_test_session, run_basic_test, wait_for_experiment_state
 
 from .test_agent_user_group import _delete_workspace_and_check
+from .test_groups import det_cmd, det_cmd_json
 
 
 @pytest.mark.e2e_cpu
@@ -359,6 +362,37 @@ def test_workspace_org() -> None:
         # Clean out workspaces and all dependencies.
         for w in test_workspaces:
             bindings.delete_DeleteWorkspace(sess, id=w.id)
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize("file_type", ["json", "yaml"])
+def test_workspace_checkpoint_storage_file(file_type: str) -> None:
+    sess = determined_test_session(admin=True)
+    w_name = uuid.uuid4().hex[:8]
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = os.path.join(tmpdir, "config")
+        with open(path, "w") as f:
+            if file_type == "json":
+                f.write('{"type":"shared_fs","host_path":"/tmp/json"}')
+            else:
+                f.write(
+                    """
+type: shared_fs
+host_path: /tmp/yaml"""
+                )
+
+        det_cmd(
+            ["workspace", "create", w_name, "--checkpoint-storage-config-file", path], check=True
+        )
+
+    try:
+        w_id = det_cmd_json(["workspace", "describe", w_name, "--json"])["id"]
+        w = bindings.get_GetWorkspace(sess, id=w_id).workspace
+        assert w.checkpointStorageConfig is not None
+        assert w.checkpointStorageConfig["type"] == "shared_fs"
+        assert w.checkpointStorageConfig["host_path"] == "/tmp/" + file_type
+    finally:
+        _delete_workspace_and_check(sess, w)
 
 
 @pytest.mark.e2e_cpu
