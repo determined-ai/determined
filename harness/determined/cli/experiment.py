@@ -1,5 +1,4 @@
 import base64
-from urllib3.util.retry import Retry
 import distutils.util
 import io
 import json
@@ -532,17 +531,13 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
-    retry = Retry(
-        total=args.max_retries,
-        backoff_factor=0.5,
-    )
     iteration = -1
     while True:
         r: Optional[bindings.v1Experiment] = None
         iteration += 1
         try:
             r = bindings.get_GetExperiment(
-                cli.setup_session(args, max_retries=retry), experimentId=args.experiment_id
+                cli.setup_session(args), experimentId=args.experiment_id
             ).experiment
         except APIException as e:
             is_transient = e.status_code in (
@@ -1104,12 +1099,6 @@ main_cmd = Cmd(
                     type=int,
                     default=5,
                     help="the interval (in seconds) to poll for updated state",
-                ),
-                Arg(
-                    "--max-retries",
-                    type=int,
-                    default=5,
-                    help="the maximum number of failed transitory errors to tolerate",
                 ),
             ],
         ),
