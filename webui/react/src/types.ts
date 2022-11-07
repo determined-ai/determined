@@ -730,14 +730,17 @@ export const LogLevel = {
 
 export type LogLevel = ValueOf<typeof LogLevel>;
 
+// Disable `sort-keys` to sort LogLevel by higher severity levels
 export const LogLevelFromApi = {
   Critical: 'LOG_LEVEL_CRITICAL',
-  Debug: 'LOG_LEVEL_DEBUG',
   Error: 'LOG_LEVEL_ERROR',
+  Warning: 'LOG_LEVEL_WARNING',
+  // eslint-disable-next-line sort-keys-fix/sort-keys-fix
   Info: 'LOG_LEVEL_INFO',
+  // eslint-disable-next-line sort-keys-fix/sort-keys-fix
+  Debug: 'LOG_LEVEL_DEBUG',
   Trace: 'LOG_LEVEL_TRACE',
   Unspecified: 'LOG_LEVEL_UNSPECIFIED',
-  Warning: 'LOG_LEVEL_WARNING',
 } as const;
 
 export type LogLevelFromApi = ValueOf<typeof LogLevelFromApi>;
