@@ -8,19 +8,19 @@ if [ ! -z "$added_migrations" ]; then
         if [[ ! $val =~ $regex ]]; then
             done=1
             echo "migration $val is not in a valid format (does not pass $regex)"
-        fi        
+        fi
     done
     if [[ $done == 1 ]]; then
         exit 1
     fi
-    
+
     echo "Migrations passed validation regex"
-    
+
     # Get highest timestamp of migrations from branch you are trying to merge into.
     git checkout origin/$GITHUB_BASE_REF
     highest_before=$(find ./master/static/migrations/*.sql -printf "%f\n" | sort -n -t _ -k 1 -s | tail -1)
     git checkout $GITHUB_SHA
-    
+
     # Check that the highest timestamp from before is lower than every added timestamp.
     highest=$(echo $added_migrations $highest_before | xargs -n1 | sort -n -t _ -k 1 -s | head -1)
     if [ "$highest_before" != "$highest" ]; then

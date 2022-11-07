@@ -25,63 +25,63 @@ mkfifo $DET_LOG_WAIT_FIFO
 exec {ORIGINAL_STDOUT}>&1 {ORIGINAL_STDERR}>&2
 
 if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
-	# To do logging with a sidecar in Kubernetes, we need to log to files that
-	# can then be read from the sidecar. To avoid a disk explosion, we need to
-	# layer on some rotation. multilog is a tool that automatically writes its
-	# stdin to rotated log files; the following line pipes stdout and stderr of
-	# this process to separate multilog invocations. "n2" means to only store
-	# one old log file -- the logs are being streamed out by Fluent Bit, so we
-	# don't need to keep any more old ones around. Create the dirs ahead of time
-	# so they are 0755 (when they don't exist, multilog makes them 0700 and
-	# Fluent Bit can't access them with the non-root user).
-	STDOUT_ROTATE_DIR="$STDOUT_FILE-rotate"
-	STDERR_ROTATE_DIR="$STDERR_FILE-rotate"
-	mkdir -p -m 755 $STDOUT_ROTATE_DIR
-	mkdir -p -m 755 $STDERR_ROTATE_DIR
+    # To do logging with a sidecar in Kubernetes, we need to log to files that
+    # can then be read from the sidecar. To avoid a disk explosion, we need to
+    # layer on some rotation. multilog is a tool that automatically writes its
+    # stdin to rotated log files; the following line pipes stdout and stderr of
+    # this process to separate multilog invocations. "n2" means to only store
+    # one old log file -- the logs are being streamed out by Fluent Bit, so we
+    # don't need to keep any more old ones around. Create the dirs ahead of time
+    # so they are 0755 (when they don't exist, multilog makes them 0700 and
+    # Fluent Bit can't access them with the non-root user).
+    STDOUT_ROTATE_DIR="$STDOUT_FILE-rotate"
+    STDERR_ROTATE_DIR="$STDERR_FILE-rotate"
+    mkdir -p -m 755 $STDOUT_ROTATE_DIR
+    mkdir -p -m 755 $STDERR_ROTATE_DIR
 
-	exec 1> >(
-		multilog n2 "$STDOUT_ROTATE_DIR"
-		printf x >$DET_LOG_WAIT_FIFO
-	) \
-	2> >(
-		multilog n2 "$STDERR_ROTATE_DIR"
-		printf x >$DET_LOG_WAIT_FIFO
-	)
+    exec 1> >(
+        multilog n2 "$STDOUT_ROTATE_DIR"
+        printf x >$DET_LOG_WAIT_FIFO
+    ) \
+    2> >(
+        multilog n2 "$STDERR_ROTATE_DIR"
+        printf x >$DET_LOG_WAIT_FIFO
+    )
 
-	((DET_LOG_WAIT_COUNT += 2))
+    ((DET_LOG_WAIT_COUNT += 2))
 fi
 
 if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
-	export PATH="/run/determined/pythonuserbase/bin:$PATH"
-	if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
-		export DET_PYTHON_EXECUTABLE="python3"
-	fi
+    export PATH="/run/determined/pythonuserbase/bin:$PATH"
+    if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
+        export DET_PYTHON_EXECUTABLE="python3"
+    fi
 
-	if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1; then
-		echo "{\"log\": \"error: unable to find python3 as '$DET_PYTHON_EXECUTABLE'\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
-		echo "{\"log\": \"please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3\n\", \"timestamp\": "$(date --rfc-3339=seconds)"}" >&2
-		exit 1
-	fi
+    if ! /bin/which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1; then
+        echo "{\"log\": \"error: unable to find python3 as '$DET_PYTHON_EXECUTABLE'\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
+        echo "{\"log\": \"please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3\n\", \"timestamp\": "$(date --rfc-3339=seconds)"}" >&2
+        exit 1
+    fi
 
-	if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
-		"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
-	else
-		if ! "$DET_PYTHON_EXECUTABLE" -c "import determined" >/dev/null 2>&1; then
-			echo "{\"log\": \"error: unable run without determined package\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
-			exit 1
-		fi
-	fi
+    if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
+        "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+    else
+        if ! "$DET_PYTHON_EXECUTABLE" -c "import determined" >/dev/null 2>&1; then
+            echo "{\"log\": \"error: unable run without determined package\n\", \"timestamp\": \"$(date --rfc-3339=seconds)\"}" >&2
+            exit 1
+        fi
+    fi
 
-	exec 1> >(
-		"$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
-		printf x >$DET_LOG_WAIT_FIFO
-	) \
-	2> >(
-		"$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr >&2
-		printf x >$DET_LOG_WAIT_FIFO
-	)
+    exec 1> >(
+        "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stdout >&1
+        printf x >$DET_LOG_WAIT_FIFO
+    ) \
+    2> >(
+        "$DET_PYTHON_EXECUTABLE" /run/determined/enrich_task_logs.py --stdtype stderr >&2
+        printf x >$DET_LOG_WAIT_FIFO
+    )
 
-	((DET_LOG_WAIT_COUNT += 2))
+    ((DET_LOG_WAIT_COUNT += 2))
 fi
 
 # A task may output carriage return characters (\r) to do something mildly fancy
@@ -94,11 +94,11 @@ fi
 # effect in those cases. This must be after the multilog exec, since exec
 # redirections are applied in reverse order.
 exec > >(
-	stdbuf -o0 tr '\r' '\n'
-	printf x >$DET_LOG_WAIT_FIFO
+    stdbuf -o0 tr '\r' '\n'
+    printf x >$DET_LOG_WAIT_FIFO
 ) 2> >(
-	stdbuf -o0 tr '\r' '\n' >&2
-	printf x >$DET_LOG_WAIT_FIFO
+    stdbuf -o0 tr '\r' '\n' >&2
+    printf x >$DET_LOG_WAIT_FIFO
 )
 
 ((DET_LOG_WAIT_COUNT += 2))

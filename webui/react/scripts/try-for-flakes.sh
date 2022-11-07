@@ -5,9 +5,9 @@ test_cmd=${1:-"npm run test -- --watchAll=false"}
 c=0
 
 while true; do
-  c=$((c+1))
-  echo "run #$c"
-  ${test_cmd}
+    c=$((c + 1))
+    echo "run #$c"
+    ${test_cmd}
 done
 
 echo "result: test failure at run #$c of $(git rev-parse --short HEAD)"

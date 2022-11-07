@@ -19,7 +19,7 @@ if [ ! -d data/omniglot ]; then
     mkdir tmp/omniglot
     for name in images_background images_evaluation; do
         echo "Fetching omniglot/$name ..."
-        curl -# "$OMNIGLOT_URL/$name.zip" > "tmp/$name.zip"
+        curl -# "$OMNIGLOT_URL/$name.zip" >"tmp/$name.zip"
         echo "Extracting omniglot/$name ..."
         unzip -q "tmp/$name.zip" -d tmp
         rm "tmp/$name.zip"
@@ -27,4 +27,3 @@ if [ ! -d data/omniglot ]; then
     done
     mv tmp/omniglot data/omniglot
 fi
-

@@ -7,10 +7,10 @@ set -e
 
 STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"
-if [ -z "$DET_PYTHON_EXECUTABLE" ] ; then
+if [ -z "$DET_PYTHON_EXECUTABLE" ]; then
     export DET_PYTHON_EXECUTABLE="python3"
 fi
-if ! which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1 ; then
+if ! which "$DET_PYTHON_EXECUTABLE" >/dev/null 2>&1; then
     echo "error: unable to find python3 as \"$DET_PYTHON_EXECUTABLE\"" >&2
     echo "please install python3 or set the environment variable DET_PYTHON_EXECUTABLE=/path/to/python3" >&2
     exit 1
@@ -21,7 +21,7 @@ fi
 # by sshd at a later time.
 
 if [ -z "$DET_SKIP_PIP_INSTALL" ]; then
-	"$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
+    "$DET_PYTHON_EXECUTABLE" -m pip install -q --user /opt/determined/wheels/determined*.whl
 fi
 
 "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --resources --proxy
@@ -45,7 +45,7 @@ test -f "${STARTUP_HOOK}" && source "${STARTUP_HOOK}"
 # only support ubuntu >= 20.04), we can use the more obvious SetEnv option and
 # skip this awkwardness.
 #
-# For HPC systems, bash module support uses variables that store functions 
+# For HPC systems, bash module support uses variables that store functions
 # of the form below (with embedded parenthesis or %% in the name).
 #   BASH_FUNC_ml()=() {  eval $($LMOD_DIR/ml_cmd "$@")
 #   BASH_FUNC_module%%=() {  eval `/opt/lib/modulecmd bash $*`
@@ -61,19 +61,19 @@ mapfile -d '' -t kvps < <(env -0)
 
 # iterate through each key-value pair in the array
 options="$(
-    for kvp in "${kvps[@]}" ; do
+    for kvp in "${kvps[@]}"; do
         # Variable name is what comes before the first '='
         var="${kvp/=*/}"
         # Variable content starts after the first '='
         val="${kvp/#+([^=])=/}"
 
         # Filter names we shouldn't forward
-        if [[ "$var" =~ ^(_|HOME|TERM|LANG|LC_.*)$ ]] ; then
+        if [[ $var =~ ^(_|HOME|TERM|LANG|LC_.*)$ ]]; then
             continue
         fi
 
         # For slurm: filter variables with %% or () in the name
-        if [[ "$var" =~ (%%|\(\)) ]] ; then
+        if [[ $var =~ (%%|\(\)) ]]; then
             continue
         fi
 
@@ -94,7 +94,7 @@ options="$(
 # unable to edit authorized_keys in place.
 unmodified="/run/determined/ssh/authorized_keys_unmodified"
 modified="/run/determined/ssh/authorized_keys"
-sed -e "s/^/$options /" "$unmodified" > "$modified"
+sed -e "s/^/$options /" "$unmodified" >"$modified"
 
 READINESS_REGEX="Server listening on"
 
