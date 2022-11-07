@@ -35,7 +35,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"

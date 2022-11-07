@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"

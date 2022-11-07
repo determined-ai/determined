@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
@@ -24,7 +22,6 @@ import (
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/lttb"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
