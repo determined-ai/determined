@@ -536,11 +536,7 @@ def wait(args: Namespace) -> None:
 
         state_val = r.state.value.replace("STATE_", "")
         if state_val in constants.TERMINAL_STATES:
-            print(
-                "Experiment {} terminated with state {}".format(
-                    args.experiment_id, state_val
-                )
-            )
+            print("Experiment {} terminated with state {}".format(args.experiment_id, state_val))
             if state_val == constants.COMPLETED:
                 sys.exit(0)
             else:
