@@ -238,10 +238,11 @@ func (a *apiServer) GetUserByUsername(
 		return nil, err
 	}
 
-	var ok bool
-	if ok, err = user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); err != nil {
+	ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser())
+	if err != nil {
 		return nil, err
-	} else if !ok {
+	}
+	if !ok {
 		return nil, errUserNotFound
 	}
 	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
@@ -433,20 +434,9 @@ func (a *apiServer) PatchUser(
 		insertColumns = append(insertColumns, "username")
 	}
 
-<<<<<<< HEAD
 	if req.User.DisplayName != nil && *req.User.DisplayName != targetUser.DisplayName.ValueOrZero() {
 		if err = user.AuthZProvider.Get().
 			CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
-=======
-	if req.User.Password != nil {
-		if err = user.AuthZProvider.Get().CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
-			if ok, canGetErr := user.AuthZProvider.
-				Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
-				return nil, canGetErr
-			} else if !ok {
-				return nil, errUserNotFound
-			}
->>>>>>> 7ff07795c (add ctx)
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 

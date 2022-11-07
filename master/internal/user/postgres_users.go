@@ -58,9 +58,13 @@ func UserByUsername(username string) (*model.User, error) {
 }
 
 // Set DisplayName in User.
-func SetDisplayName(userID int32, displayName string) error {
-	var user model.User
-	_, err := db.Bun().NewUpdate().Model(&user).Set("display_name = ?", displayName).Where("id = ?", userID).Exec(context.TODO())
+func SetDisplayName(userID int32, displayName *string) error {
+	var err error
+	if displayName == nil {
+		_, err = db.Bun().NewUpdate().Model((*model.User)(nil)).Set("display_name = ?", displayName).Where("id = ?", userID).Exec(context.TODO())
+	} else {
+		_, err = db.Bun().NewUpdate().Model((*model.User)(nil)).Set("display_name = ?", displayName).Where("id = ?", userID).Exec(context.TODO())
+	}
 	return err
 }
 

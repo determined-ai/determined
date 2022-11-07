@@ -42,8 +42,13 @@ def log_in_user(parsed_args: Namespace) -> None:
     else:
         username = parsed_args.username
 
+    #print("in cli login user")
+    #print(username)    
     message = "Password for user '{}': ".format(username)
+    #print("message in user cli")
+    #print(message)
     password = getpass.getpass(message)
+    print("after password")
 
     token_store = authentication.TokenStore(parsed_args.master)
     token = authentication.do_login(parsed_args.master, username, password)
@@ -52,7 +57,6 @@ def log_in_user(parsed_args: Namespace) -> None:
 
 
 @authentication.optional
-@login_sdk_client
 def log_out_user(parsed_args: Namespace) -> None:
     auth = authentication.cli_auth
     if auth is None:
@@ -128,7 +132,6 @@ def link_with_agent_user(parsed_args: Namespace) -> None:
 
 @login_sdk_client
 def create_user(parsed_args: Namespace) -> None:
-    print("in create user cli")
     username = parsed_args.username
     admin = bool(parsed_args.admin)
     client.create_user(username=username, admin=admin)

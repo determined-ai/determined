@@ -3,9 +3,7 @@ import json
 import logging
 import os
 import pathlib
-import random
 import shutil
-import string
 import subprocess
 import time
 import uuid
@@ -15,7 +13,6 @@ import appdirs
 import pexpect
 import pytest
 from pexpect import spawn
-from torch import randint
 
 from determined.common import api, constants, yaml
 from determined.common.api import authentication, bindings, certs, errors
@@ -57,10 +54,10 @@ def login_admin() -> None:
 
 @contextlib.contextmanager
 def logged_in_user(credentials: authentication.Credentials) -> Generator:
-    assert log_in_user(credentials) == 0
+    log_in_user(credentials)
     print(f"logged in user{credentials.username}")
     yield
-    assert log_out_user() == 0
+    log_out_user()
 
 
 def get_random_string() -> str:
@@ -76,18 +73,18 @@ def det_run(args: List[str]) -> str:
     return cast(str, pexpect.run(f"det -m {conf.make_master_url()} {' '.join(args)}").decode())
 
 
-def log_in_user(credentials: authentication.Credentials) -> int:
+def log_in_user(credentials: authentication.Credentials) -> None:
+    import re
     username, password = credentials
     child = det_spawn(["user", "login", username])
     child.setecho(True)
-    expected = f"Password for user '{username}':"
-    child.expect(expected, timeout=EXPECT_TIMEOUT)
+    expected = re.escape(f"Password for user '{username}': ")
+    
+    child.expect(expected, EXPECT_TIMEOUT)
     child.sendline(password)
     child.read()
     child.wait()
     child.close()
-    return cast(int, child.exitstatus)
-
 
 def create_test_user(add_password: bool = False) -> authentication.Credentials:
     n_username = get_random_string()
@@ -128,7 +125,7 @@ def change_user_password(
     return cast(int, child.exitstatus)
 
 
-def log_out_user(username: Optional[str] = None) -> int:
+def log_out_user(username: Optional[str] = None) -> None:
     if username is not None:
         args = ["-u", username, "user", "logout"]
     else:
@@ -137,7 +134,7 @@ def log_out_user(username: Optional[str] = None) -> int:
     child = det_spawn(args)
     child.read()
     child.wait()
-    return cast(int, child.exitstatus)
+    child.close()
 
 
 def activate_deactivate_user(active: bool, target_user: str) -> int:
@@ -276,10 +273,10 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user(True)
 
     # Make sure we can log in as the user.
-    assert log_in_user(creds) == 0
+    log_in_user(creds)
 
     # Log out.
-    assert log_out_user() == 0
+    log_out_user() 
 
     # login admin again.
     log_in_user(ADMIN_CREDENTIALS)
@@ -288,13 +285,13 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     assert activate_deactivate_user(False, creds.username) == 0
 
     # Attempt to log in again.
-    assert log_in_user(creds) != 0
+    log_in_user(creds)
 
     # Activate user.
     assert activate_deactivate_user(True, creds.username) == 0
 
     # Now log in again.
-    assert log_in_user(creds) == 0
+    log_in_user(creds)
 
     # SDK testing for activating and deactivating.
     log_in_user(ADMIN_CREDENTIALS)
@@ -304,7 +301,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     assert user.activate().user.active
 
     # Now log in again.
-    assert log_in_user(creds) == 0
+    log_in_user(creds)
 
 
 @pytest.mark.e2e_cpu
@@ -314,45 +311,42 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user(False)
 
     # Attempt to log in.
-    assert log_in_user(creds) == 0
+    log_in_user(creds)
 
     # Log out.
-    assert log_out_user() == 0
+    log_out_user()
 
     # login admin
     log_in_user(ADMIN_CREDENTIALS)
 
-    newPassword = get_random_string()
-    assert change_user_password(creds.username, newPassword) == 0
-    assert log_in_user(authentication.Credentials(creds.username, newPassword)) == 0
+    new_password = get_random_string()
+    assert change_user_password(creds.username, new_password) == 0
+    log_in_user(authentication.Credentials(creds.username, new_password))
 
-    newPasswordSdk = get_random_string()
+    new_password_sdk = get_random_string()
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
-    assert user.change_password(new_password=newPasswordSdk)
-    assert log_in_user(authentication.Credentials(creds.username, newPasswordSdk)) == 0
+    assert user.change_password(new_password=new_password_sdk)
+    log_in_user(authentication.Credentials(creds.username, new_password_sdk))
 
 
 @pytest.mark.e2e_cpu
 def test_change_username(clean_auth: None, login_admin: None):
     creds = create_test_user()
-    new_username = "renameuser4"
-    print("new username")
-    print(creds.username)
-    print(new_username)
+    new_username = 'rename-user-64'
     command = ["det", "-m", conf.make_master_url(), "user", "rename", creds.username, new_username]
     assert subprocess.call(command) == 0
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=new_username)
     assert user.username == new_username
-    assert log_in_user(authentication.Credentials(new_username, "")) == 0
+    log_in_user(authentication.Credentials(new_username, ""))
 
     # Test SDK
-    new_username = "renameuser5"
+    new_username = "rename-user-$64"
     user.rename(new_username)
     user = det_obj.get_user_by_name(user_name=new_username)
     assert user.username == new_username
-    assert log_in_user(authentication.Credentials(new_username, "")) == 0
+    log_in_user(authentication.Credentials(new_username, ""))
 
 
 @pytest.mark.e2e_cpu
@@ -435,7 +429,7 @@ def test_login_as_non_existent_user(clean_auth: None, login_admin: None) -> None
 def test_login_with_environment_variables(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user(True)
     # logout admin
-    assert log_out_user() == 0
+    log_out_user()
 
     os.environ["DET_USER"] = creds.username
     os.environ["DET_PASS"] = creds.password
@@ -989,13 +983,13 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
     assert current_user is not None and current_user.id
 
     # Rename user using display name
-    patch_user = bindings.v1PatchUser(displayName="renamed")
+    patch_user = bindings.v1PatchUser(displayName="renamed display-name")
     patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
     bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
-    assert modded_user.displayName == "renamed"
+    assert modded_user.displayName == "renamed display-name"
 
     # Rename user display name using SDK
     det_obj = Determined(master=conf.make_master_url())
