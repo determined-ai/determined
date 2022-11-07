@@ -57,6 +57,7 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer, enablePrometheus boo
 			},
 		)),
 		unaryAuthInterceptor(db, extConfig),
+		authZInterceptor(),
 	}
 
 	if enablePrometheus {
