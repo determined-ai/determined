@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task/taskmodel"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 

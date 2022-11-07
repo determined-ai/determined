@@ -216,7 +216,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{
-			ContainerID: ptrs.Ptr(string(msg.Container.ID)),
+			ContainerID: ptrs.Ptr(string(msg.ContainerID)),
 			Log:         msg.Message(),
 			Level:       msg.Level,
 		}); err != nil {

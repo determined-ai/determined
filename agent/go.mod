@@ -11,7 +11,6 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/labstack/echo/v4 v4.6.3
@@ -25,9 +24,12 @@ require (
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
+	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3
 	github.com/stretchr/testify v1.8.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.29.0
+	go.uber.org/atomic v1.10.0
 	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
 )
 
@@ -50,7 +52,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/containerd/containerd v1.5.8 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0 // indirect
@@ -137,10 +138,10 @@ require (
 	go.opentelemetry.io/otel/sdk v1.6.1 // indirect
 	go.opentelemetry.io/otel/trace v1.6.1 // indirect
 	go.opentelemetry.io/proto/otlp v0.12.1 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect

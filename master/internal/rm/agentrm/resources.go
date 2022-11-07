@@ -65,10 +65,10 @@ func (c containerResources) Start(
 		TaskActor: c.req.AllocationRef,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
-				Parent:  c.req.AllocationRef.Address(),
-				ID:      c.containerID,
-				State:   cproto.Assigned,
-				Devices: c.devices,
+				ID:          c.containerID,
+				State:       cproto.Assigned,
+				Devices:     c.devices,
+				Description: c.req.AllocationRef.Address().String(),
 			},
 			Spec: spec.ToDockerSpec(),
 		},
