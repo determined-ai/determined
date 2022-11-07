@@ -439,12 +439,6 @@ func (a *apiServer) TrialLogsFields(
 func (a *apiServer) GetTrialCheckpoints(
 	ctx context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/checkpoints", req.Id),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -508,12 +502,6 @@ func (a *apiServer) GetTrialCheckpoints(
 func (a *apiServer) KillTrial(
 	ctx context.Context, req *apiv1.KillTrialRequest,
 ) (*apiv1.KillTrialResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/kill", req.Id),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -537,12 +525,6 @@ func (a *apiServer) KillTrial(
 func (a *apiServer) GetExperimentTrials(
 	ctx context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (resp *apiv1.GetExperimentTrialsResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/trials", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
 		false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -633,12 +615,6 @@ func (a *apiServer) GetExperimentTrials(
 func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d", req.TrialId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -727,12 +703,6 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 func (a *apiServer) SummarizeTrial(ctx context.Context,
 	req *apiv1.SummarizeTrialRequest,
 ) (*apiv1.SummarizeTrialResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/summarize", req.TrialId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -757,12 +727,6 @@ func (a *apiServer) SummarizeTrial(ctx context.Context,
 func (a *apiServer) CompareTrials(ctx context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/trials/compare",
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	trials := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
 		if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
@@ -793,12 +757,6 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,
 ) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/workloads", req.TrialId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -950,12 +908,6 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	ctx context.Context,
 	req *apiv1.PostTrialProfilerMetricsBatchRequest,
 ) (*apiv1.PostTrialProfilerMetricsBatchResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/trials/profiler/metrics",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	var errs *multierror.Error
 	existingTrials := map[int]bool{}
 	for _, batch := range req.Batches {
@@ -1000,12 +952,6 @@ func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
 ) (*apiv1.AllocationPreemptionSignalResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/signals/preemption", req.AllocationId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -1041,12 +987,6 @@ func (a *apiServer) AllocationPreemptionSignal(
 func (a *apiServer) AckAllocationPreemptionSignal(
 	ctx context.Context, req *apiv1.AckAllocationPreemptionSignalRequest,
 ) (*apiv1.AckAllocationPreemptionSignalResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/signals/ack_preemption", req.AllocationId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -1072,12 +1012,6 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPendingPreemptionSignalRequest,
 ) (*apiv1.AllocationPendingPreemptionSignalResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/signals/pending_preemption", req.AllocationId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -1095,13 +1029,6 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 func (a *apiServer) MarkAllocationResourcesDaemon(
 	ctx context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
 ) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/resources/%s/daemon",
-			req.AllocationId, req.ResourcesId),
-		"method": audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -1127,12 +1054,6 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 func (a *apiServer) GetCurrentTrialSearcherOperation(
 	ctx context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
 ) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/searcher/operation", req.TrialId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -1163,12 +1084,6 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 func (a *apiServer) CompleteTrialSearcherValidation(
 	ctx context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
 ) (*apiv1.CompleteTrialSearcherValidationResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/searcher/completed_operation", req.TrialId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -1192,12 +1107,6 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 func (a *apiServer) ReportTrialSearcherEarlyExit(
 	ctx context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/early_exit", req.TrialId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -1220,12 +1129,6 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 func (a *apiServer) ReportTrialProgress(
 	ctx context.Context, req *apiv1.ReportTrialProgressRequest,
 ) (*apiv1.ReportTrialProgressResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/progress", req.TrialId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -1248,12 +1151,6 @@ func (a *apiServer) ReportTrialProgress(
 func (a *apiServer) ReportTrialTrainingMetrics(
 	ctx context.Context, req *apiv1.ReportTrialTrainingMetricsRequest,
 ) (*apiv1.ReportTrialTrainingMetricsResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/training_metrics", req.TrainingMetrics.TrialId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrainingMetrics.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -1267,13 +1164,6 @@ func (a *apiServer) ReportTrialTrainingMetrics(
 func (a *apiServer) ReportTrialValidationMetrics(
 	ctx context.Context, req *apiv1.ReportTrialValidationMetricsRequest,
 ) (*apiv1.ReportTrialValidationMetricsResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/validation_metrics",
-			req.ValidationMetrics.TrialId),
-		"method": audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.ValidationMetrics.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -1287,12 +1177,6 @@ func (a *apiServer) ReportTrialValidationMetrics(
 func (a *apiServer) ReportCheckpoint(
 	ctx context.Context, req *apiv1.ReportCheckpointRequest,
 ) (*apiv1.ReportCheckpointResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/checkpoints",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.Checkpoint.TaskId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -1351,13 +1235,6 @@ func checkpointV2FromProtoWithDefaults(p *checkpointv1.Checkpoint) (*model.Check
 func (a *apiServer) AllocationRendezvousInfo(
 	ctx context.Context, req *apiv1.AllocationRendezvousInfoRequest,
 ) (*apiv1.AllocationRendezvousInfoResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/resources/%s/rendezvous",
-			req.AllocationId, req.ResourcesId),
-		"method": audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
@@ -1400,12 +1277,6 @@ func (a *apiServer) AllocationRendezvousInfo(
 func (a *apiServer) PostTrialRunnerMetadata(
 	ctx context.Context, req *apiv1.PostTrialRunnerMetadataRequest,
 ) (*apiv1.PostTrialRunnerMetadataResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/trials/%d/runner/metadata", req.TrialId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err

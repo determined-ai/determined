@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"strconv"
 
-	log "github.com/sirupsen/logrus"
-
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 
@@ -17,7 +15,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -45,12 +42,6 @@ var shellsAddr = actor.Addr("shells")
 func (a *apiServer) GetShells(
 	ctx context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/shells",
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -82,14 +73,6 @@ func (a *apiServer) GetShells(
 func (a *apiServer) GetShell(
 	ctx context.Context, req *apiv1.GetShellRequest,
 ) (resp *apiv1.GetShellResponse, err error) {
-	fields := audit.ExtractLogFields(ctx)
-	if len(fields) == 0 {
-		fields["endpoint"] = fmt.Sprintf("/api/v1/shells/%s", req.ShellId)
-		fields["method"] = audit.GetMethod
-	}
-
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -112,12 +95,6 @@ func (a *apiServer) GetShell(
 func (a *apiServer) KillShell(
 	ctx context.Context, req *apiv1.KillShellRequest,
 ) (resp *apiv1.KillShellResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/shells/%s/kill", req.ShellId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
 		return nil, err
 	}
@@ -128,12 +105,6 @@ func (a *apiServer) KillShell(
 func (a *apiServer) SetShellPriority(
 	ctx context.Context, req *apiv1.SetShellPriorityRequest,
 ) (resp *apiv1.SetShellPriorityResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/shells/%s/set_priority", req.ShellId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
 		return nil, err
 	}
@@ -144,12 +115,6 @@ func (a *apiServer) SetShellPriority(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/shells",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,

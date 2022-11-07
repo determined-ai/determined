@@ -198,12 +198,6 @@ func (a *apiServer) getExperimentAndCheckCanDoActions(
 func (a *apiServer) GetSearcherEvents(
 	ctx context.Context, req *apiv1.GetSearcherEventsRequest,
 ) (*apiv1.GetSearcherEventsResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/searcher_events", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -255,12 +249,6 @@ func (a *apiServer) PostSearcherOperations(
 ) (
 	resp *apiv1.PostSearcherOperationsResponse, err error,
 ) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/searcher_operations", req.ExperimentId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	_, _, err = a.getExperimentAndCheckCanDoActions(
 		ctx, int(req.ExperimentId), false, expauth.AuthZProvider.Get().CanRunCustomSearch,
 	)
@@ -281,12 +269,6 @@ func (a *apiServer) PostSearcherOperations(
 func (a *apiServer) GetExperiment(
 	ctx context.Context, req *apiv1.GetExperimentRequest,
 ) (*apiv1.GetExperimentResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
@@ -336,12 +318,6 @@ func (a *apiServer) GetExperiment(
 func (a *apiServer) DeleteExperiment(
 	ctx context.Context, req *apiv1.DeleteExperimentRequest,
 ) (*apiv1.DeleteExperimentResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d", req.ExperimentId),
-		"method":   audit.DeleteMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	e, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanDeleteExperiment)
 	if err != nil {
@@ -453,12 +429,6 @@ func protoStateDBCaseString(
 func (a *apiServer) GetExperiments(
 	ctx context.Context, req *apiv1.GetExperimentsRequest,
 ) (*apiv1.GetExperimentsResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": "/api/v1/experiments",
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	resp := &apiv1.GetExperimentsResponse{Experiments: []*experimentv1.Experiment{}}
 	query := db.Bun().NewSelect().
 		Model(&resp.Experiments).
@@ -659,12 +629,6 @@ func runPagedBunExperimentsQuery(
 func (a *apiServer) GetExperimentLabels(ctx context.Context,
 	req *apiv1.GetExperimentLabelsRequest,
 ) (*apiv1.GetExperimentLabelsResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": "/api/v1/experiment/labels",
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
@@ -720,12 +684,6 @@ func (a *apiServer) GetExperimentLabels(ctx context.Context,
 func (a *apiServer) GetExperimentValidationHistory(
 	ctx context.Context, req *apiv1.GetExperimentValidationHistoryRequest,
 ) (*apiv1.GetExperimentValidationHistoryResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/validation-history", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -745,12 +703,6 @@ func (a *apiServer) GetExperimentValidationHistory(
 func (a *apiServer) PreviewHPSearch(
 	ctx context.Context, req *apiv1.PreviewHPSearchRequest,
 ) (*apiv1.PreviewHPSearchResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": "/api/v1/preview-hp-search",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -843,12 +795,6 @@ func (a *apiServer) PreviewHPSearch(
 func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
 ) (resp *apiv1.ActivateExperimentResponse, err error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/activate", req.Id),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -868,12 +814,6 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/pause", req.Id),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -893,12 +833,6 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/cancel", req.Id),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -915,12 +849,6 @@ func (a *apiServer) CancelExperiment(
 func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (resp *apiv1.KillExperimentResponse, err error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/kill", req.Id),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.Id), false,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
@@ -937,12 +865,6 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/archive", req.Id),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	id := int(req.Id)
 	dbExp, _, err := a.getExperimentAndCheckCanDoActions(ctx, id, false,
 		expauth.AuthZProvider.Get().CanEditExperimentsMetadata)
@@ -971,12 +893,6 @@ func (a *apiServer) ArchiveExperiment(
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/unarchive", req.Id),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	id := int(req.Id)
 	dbExp, _, err := a.getExperimentAndCheckCanDoActions(ctx, id, false,
 		expauth.AuthZProvider.Get().CanEditExperimentsMetadata)
@@ -1006,12 +922,6 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d", req.Experiment.Id),
-		"method":   "patch",
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -1100,12 +1010,6 @@ func (a *apiServer) PatchExperiment(
 func (a *apiServer) GetExperimentCheckpoints(
 	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/checkpoints", req.Id),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	experimentID := int(req.Id)
 	useSearcherSortBy := req.SortBy == apiv1.GetExperimentCheckpointsRequest_SORT_BY_SEARCHER_METRIC
 	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, useSearcherSortBy,
@@ -1190,12 +1094,6 @@ func (a *apiServer) GetExperimentCheckpoints(
 func (a *apiServer) CreateExperiment(
 	ctx context.Context, req *apiv1.CreateExperimentRequest,
 ) (*apiv1.CreateExperimentResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": "/api/v1/experiments",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
@@ -2021,12 +1919,6 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 func (a *apiServer) ComputeHPImportance(ctx context.Context,
 	req *apiv1.ComputeHPImportanceRequest,
 ) (*apiv1.ComputeHPImportanceResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/hyperparameter-importance", req.ExperimentId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	experimentID := int(req.ExperimentId)
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
@@ -2152,13 +2044,6 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 func (a *apiServer) GetBestSearcherValidationMetric(
 	ctx context.Context, req *apiv1.GetBestSearcherValidationMetricRequest,
 ) (*apiv1.GetBestSearcherValidationMetricResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/searcher/best_searcher_validation_metric",
-			req.ExperimentId),
-		"method": audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -2180,12 +2065,6 @@ func (a *apiServer) GetBestSearcherValidationMetric(
 func (a *apiServer) GetModelDef(
 	ctx context.Context, req *apiv1.GetModelDefRequest,
 ) (*apiv1.GetModelDefResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/model_def", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -2205,12 +2084,6 @@ func (a *apiServer) GetModelDef(
 func (a *apiServer) MoveExperiment(
 	ctx context.Context, req *apiv1.MoveExperimentRequest,
 ) (*apiv1.MoveExperimentResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/move", req.ExperimentId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	// get experiment info
 	exp, curUser, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false)
 	if err != nil {
@@ -2261,12 +2134,6 @@ func (a *apiServer) MoveExperiment(
 func (a *apiServer) GetModelDefTree(
 	ctx context.Context, req *apiv1.GetModelDefTreeRequest,
 ) (*apiv1.GetModelDefTreeResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/file_tree", req.ExperimentId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
@@ -2283,12 +2150,6 @@ func (a *apiServer) GetModelDefTree(
 func (a *apiServer) GetModelDefFile(
 	ctx context.Context, req *apiv1.GetModelDefFileRequest,
 ) (*apiv1.GetModelDefFileResponse, error) {
-	fields := logrus.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/experiments/%d/file", req.ExperimentId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId), false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err

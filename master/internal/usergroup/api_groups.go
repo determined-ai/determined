@@ -2,12 +2,7 @@ package usergroup
 
 import (
 	"context"
-	"fmt"
 	"strings"
-
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -27,12 +22,6 @@ type UserGroupAPIServer struct{}
 // CreateGroup creates a group and adds members to it, if any.
 func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateGroupRequest,
 ) (resp *apiv1.CreateGroupResponse, err error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/groups",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if strings.Contains(req.Name, db.PersonalGroupPostfix) {
 		return nil, status.Error(codes.InvalidArgument,
 			"group name cannot contain 'DeterminedPersonalGroup'")
@@ -74,12 +63,6 @@ func (a *UserGroupAPIServer) CreateGroup(ctx context.Context, req *apiv1.CreateG
 // GetGroups searches for groups that fulfills the criteria given by the user.
 func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroupsRequest,
 ) (resp *apiv1.GetGroupsResponse, err error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/groups/search",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err, nil, nil)
@@ -130,12 +113,6 @@ func (a *UserGroupAPIServer) GetGroups(ctx context.Context, req *apiv1.GetGroups
 // GetGroup finds and returns details of the group specified.
 func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRequest,
 ) (resp *apiv1.GetGroupResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err, nil, nil)
@@ -179,12 +156,6 @@ func (a *UserGroupAPIServer) GetGroup(ctx context.Context, req *apiv1.GetGroupRe
 // UpdateGroup updates the group and returns the newly updated group details.
 func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateGroupRequest,
 ) (resp *apiv1.UpdateGroupResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err, nil, nil)
@@ -231,12 +202,6 @@ func (a *UserGroupAPIServer) UpdateGroup(ctx context.Context, req *apiv1.UpdateG
 // DeleteGroup deletes the database entry for the group.
 func (a *UserGroupAPIServer) DeleteGroup(ctx context.Context, req *apiv1.DeleteGroupRequest,
 ) (resp *apiv1.DeleteGroupResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/groups/%d", req.GroupId),
-		"method":   audit.DeleteMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
 		err = apiutils.MapAndFilterErrors(err, nil, nil)

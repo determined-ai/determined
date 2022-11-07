@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
 
@@ -17,7 +15,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -133,12 +130,6 @@ func userShouldBeAdmin(ctx context.Context, a *apiServer) error {
 func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/users",
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	sortColMap := map[apiv1.GetUsersRequest_SortBy]string{
 		apiv1.GetUsersRequest_SORT_BY_UNSPECIFIED:   "id",
 		apiv1.GetUsersRequest_SORT_BY_DISPLAY_NAME:  "display_name",
@@ -194,12 +185,6 @@ func (a *apiServer) GetUsers(
 func (a *apiServer) GetUser(
 	ctx context.Context, req *apiv1.GetUserRequest,
 ) (*apiv1.GetUserResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/users/%d", req.UserId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -222,12 +207,6 @@ func (a *apiServer) GetUser(
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest,
 ) (*apiv1.PostUserResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/users",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if req.User == nil {
 		return nil, status.Error(codes.InvalidArgument, "must specify user to create")
 	}
@@ -294,12 +273,6 @@ func (a *apiServer) PostUser(
 func (a *apiServer) SetUserPassword(
 	ctx context.Context, req *apiv1.SetUserPasswordRequest,
 ) (*apiv1.SetUserPasswordResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/users/%d/password", req.UserId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	// TODO if ExternalSessions is there, don't even allow this
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
@@ -337,12 +310,6 @@ func (a *apiServer) SetUserPassword(
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest,
 ) (*apiv1.PatchUserResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/users/%d", req.UserId),
-		"method":   "patch",
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -492,12 +459,6 @@ func (a *apiServer) PatchUser(
 func (a *apiServer) GetUserSetting(
 	ctx context.Context, req *apiv1.GetUserSettingRequest,
 ) (*apiv1.GetUserSettingResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/users/setting",
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -513,12 +474,6 @@ func (a *apiServer) GetUserSetting(
 func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest,
 ) (*apiv1.PostUserSettingResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/users/setting",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if req.Setting == nil {
 		return nil, status.Error(codes.InvalidArgument, "must specify setting")
 	}
@@ -545,12 +500,6 @@ func (a *apiServer) PostUserSetting(
 func (a *apiServer) ResetUserSetting(
 	ctx context.Context, req *apiv1.ResetUserSettingRequest,
 ) (*apiv1.ResetUserSettingResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/users/setting/reset",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err

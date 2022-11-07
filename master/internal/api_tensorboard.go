@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -27,7 +25,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -73,14 +70,6 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
-	fields := audit.ExtractLogFields(ctx)
-	if len(fields) == 0 {
-		fields["endpoint"] = "/api/v1/tensorboards"
-		fields["method"] = audit.GetMethod
-	}
-
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -112,12 +101,6 @@ func (a *apiServer) GetTensorboards(
 func (a *apiServer) GetTensorboard(
 	ctx context.Context, req *apiv1.GetTensorboardRequest,
 ) (resp *apiv1.GetTensorboardResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/tensorboards/%s", req.TensorboardId),
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -140,12 +123,6 @@ func (a *apiServer) GetTensorboard(
 func (a *apiServer) KillTensorboard(
 	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/tensorboards/%s/kill", req.TensorboardId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, err := a.GetTensorboard(ctx,
 		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
 		return nil, err
@@ -157,12 +134,6 @@ func (a *apiServer) KillTensorboard(
 func (a *apiServer) SetTensorboardPriority(
 	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/tensorboards/%s/set_priority", req.TensorboardId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if _, err := a.GetTensorboard(ctx,
 		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
 		return nil, err
@@ -174,12 +145,6 @@ func (a *apiServer) SetTensorboardPriority(
 func (a *apiServer) LaunchTensorboard(
 	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
 ) (*apiv1.LaunchTensorboardResponse, error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/tensorboards",
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	var err error
 
 	// Validate the request.

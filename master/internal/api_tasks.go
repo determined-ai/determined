@@ -165,12 +165,6 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 func (a *apiServer) AllocationReady(
 	ctx context.Context, req *apiv1.AllocationReadyRequest,
 ) (*apiv1.AllocationReadyResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/ready", req.AllocationId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -192,12 +186,6 @@ func (a *apiServer) AllocationReady(
 func (a *apiServer) AllocationWaiting(
 	ctx context.Context, req *apiv1.AllocationWaitingRequest,
 ) (*apiv1.AllocationWaitingResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/waiting", req.AllocationId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
 		return nil, err
 	}
@@ -219,12 +207,6 @@ func (a *apiServer) AllocationWaiting(
 func (a *apiServer) AllocationAllGather(
 	ctx context.Context, req *apiv1.AllocationAllGatherRequest,
 ) (*apiv1.AllocationAllGatherResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/all_gather", req.AllocationId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
@@ -269,12 +251,6 @@ func (a *apiServer) AllocationAllGather(
 func (a *apiServer) PostAllocationProxyAddress(
 	ctx context.Context, req *apiv1.PostAllocationProxyAddressRequest,
 ) (*apiv1.PostAllocationProxyAddressResponse, error) {
-	fields := log.Fields{
-		"endpoint": fmt.Sprintf("/api/v1/allocations/%s/proxy_address", req.AllocationId),
-		"method":   audit.PostMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	if req.AllocationId == "" {
 		return nil, status.Error(codes.InvalidArgument, "allocation ID missing")
 	}
@@ -334,12 +310,6 @@ func (a *apiServer) TaskLogs(
 func (a *apiServer) GetActiveTasksCount(
 	ctx context.Context, req *apiv1.GetActiveTasksCountRequest,
 ) (resp *apiv1.GetActiveTasksCountResponse, err error) {
-	fields := log.Fields{
-		"endpoint": "/api/v1/tasks/count",
-		"method":   audit.GetMethod,
-	}
-	ctx = context.WithValue(ctx, audit.LogKey{}, fields)
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err

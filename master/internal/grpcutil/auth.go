@@ -214,7 +214,7 @@ func authZInterceptor() grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		fields := log.Fields{"endpoint": info.FullMethod, "req": req}
+		fields := log.Fields{"endpoint": info.FullMethod}
 		ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 		return handler(ctx, req)
