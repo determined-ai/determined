@@ -2,6 +2,6 @@
 set -e
 # Automatically added by dh_installsystemd/11.1.6ubuntu2
 if [ -d /run/systemd/system ]; then
-  systemctl --system daemon-reload >/dev/null || true
+	systemctl --system daemon-reload >/dev/null || true
 fi
 # End automatically added section

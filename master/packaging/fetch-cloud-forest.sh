@@ -11,8 +11,8 @@ source /dev/stdin <<<"$(go env)"
 
 # Find the appropriate binary for packaging and output the path.
 if [ "$GOOS" == "$GOHOSTOS" ] && [ "$GOARCH" == "$GOHOSTARCH" ]; then
-  # Package is installed for local use.
-  echo "$GOPATH/bin/growforest"
+    # Package is installed for local use.
+    echo "$GOPATH/bin/growforest"
 else
-  echo "$GOPATH/bin/${GOOS}_${GOARCH}/growforest"
+    echo "$GOPATH/bin/${GOOS}_${GOARCH}/growforest"
 fi

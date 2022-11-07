@@ -8,6 +8,7 @@ function list_dirs() {
   cd src && find . -type d -depth 1 | sed 's/^\.\///'
 }
 
+
 # find relative import patterns with top level dir names
 function rel_pattern() {
   # echo "from '.*${1}"
@@ -31,3 +32,4 @@ wait $(jobs -p)
 # export -f rel_pattern
 # export -f cmd
 # list_dirs | xargs -n1 -I{} bash -c 'cmd {}' | xargs -n1 -P1 -I{} sh -c {}
+
