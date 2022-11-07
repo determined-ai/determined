@@ -534,13 +534,14 @@ def wait(args: Namespace) -> None:
             cli.setup_session(args), experimentId=args.experiment_id
         ).experiment
 
-        if r.state.value.replace("STATE_", "") in constants.TERMINAL_STATES:
+        state_val = r.state.value.replace("STATE_", "")
+        if state_val in constants.TERMINAL_STATES:
             print(
                 "Experiment {} terminated with state {}".format(
-                    args.experiment_id, r.state.value.replace("STATE_", "")
+                    args.experiment_id, state_val
                 )
             )
-            if r.state.value.replace("STATE_", "") == constants.COMPLETED:
+            if state_val == constants.COMPLETED:
                 sys.exit(0)
             else:
                 sys.exit(1)
