@@ -218,6 +218,7 @@ const WorkspaceDetails: React.FC = () => {
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
             <WorkspaceMembers
               assignments={workspaceAssignments}
+              fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
               groupsAssignedDirectly={groupsAssignedDirectly}
               pageRef={pageRef}
               rolesAssignableToScope={rolesAssignableToScope}

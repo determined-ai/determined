@@ -29,6 +29,7 @@ import settingsConfig, {
 
 interface Props {
   assignments: V1RoleWithAssignments[];
+  fetchMembers: () => void;
   groupsAssignedDirectly: V1Group[];
   onFilterUpdate: (name: string | undefined) => void;
   pageRef: React.RefObject<HTMLElement>;
@@ -38,6 +39,7 @@ interface Props {
 }
 
 interface GroupOrMemberActionDropdownProps {
+  fetchMembers: () => void;
   name: string;
   roleId: number;
   userOrGroup: UserOrGroup;
@@ -49,12 +51,14 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   roleId,
   userOrGroup,
   workspace,
+  fetchMembers,
 }) => {
   const {
     modalOpen: openWorkspaceRemoveMemberModal,
     contextHolder: openWorkspaceRemoveMemberContextHolder,
   } = useModalWorkspaceRemoveMember({
     name,
+    onClose: fetchMembers,
     roleIds: [roleId],
     scopeWorkspaceId: workspace.id,
     userOrGroup,
@@ -89,6 +93,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   pageRef,
   rolesAssignableToScope,
   workspace,
+  fetchMembers,
 }: Props) => {
   const { canAssignRoles } = usePermissions();
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
@@ -243,6 +248,7 @@ const WorkspaceMembers: React.FC<Props> = ({
 
       return userCanAssignRoles && assignedRole?.role.roleId ? (
         <GroupOrMemberActionDropdown
+          fetchMembers={fetchMembers}
           name={getName(record)}
           roleId={assignedRole.role.roleId}
           userOrGroup={record}
@@ -285,6 +291,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     tableSearchIcon,
     userCanAssignRoles,
     workspace,
+    fetchMembers,
   ]);
 
   return (
