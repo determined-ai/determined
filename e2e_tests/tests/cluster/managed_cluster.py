@@ -29,12 +29,11 @@ class ManagedCluster(Cluster):
     # This utility wrapper uses double agent yaml configurations,
     # but provides helpers to run/kill a single agent setup.
 
-    def __init__(self, config: Union[str, Dict[str, Any]], reattach: bool) -> None:
+    def __init__(self, config: Union[str, Dict[str, Any]]) -> None:
         # Strategically only import devcluster on demand to avoid having it as a hard dependency.
         from devcluster import Devcluster
 
         self.dc = Devcluster(config=config)
-        self.reattach = reattach
 
     def __enter__(self) -> "ManagedCluster":
         self.old_cd = os.getcwd()
@@ -75,6 +74,7 @@ class ManagedCluster(Cluster):
             return
 
         if wait_for_amnesia:
+            print(f"Agent is in state {agent_data}, waiting for amnesia")
             # Currently, we've got to wait for master to "forget" the agent before reconnecting.
             WAIT_FOR_AMNESIA = 60
             for _i in range(WAIT_FOR_AMNESIA):
@@ -144,15 +144,10 @@ class ManagedCluster(Cluster):
         return float(s.rstrip("s"))
 
 
-@pytest.fixture(scope="session", params=[True, False], ids=["reattach-on", "reattach-off"])
+@pytest.fixture(scope="session")
 def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
-    reattach = cast(bool, request.param)
-    if reattach:
-        config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
-    else:
-        config = str(DEVCLUSTER_REATTACH_OFF_CONFIG_PATH)
-
-    with ManagedCluster(config, reattach=reattach) as mc:
+    config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
+    with ManagedCluster(config) as mc:
         mc.initial_startup()
         yield mc
 
@@ -160,8 +155,7 @@ def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
 @pytest.fixture(scope="session")
 def managed_cluster_session_priority_scheduler(request: Any) -> Iterator[ManagedCluster]:
     config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
-
-    with ManagedCluster(config, reattach=False) as mc:
+    with ManagedCluster(config) as mc:
         mc.initial_startup()
         yield mc
 
@@ -191,3 +185,17 @@ def managed_cluster_restarts(
     managed_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session
     managed_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} teardown\n")
+
+
+@pytest.fixture
+def restartable_managed_cluster(
+    managed_cluster_restarts: ManagedCluster,
+) -> Iterator[ManagedCluster]:
+    managed_cluster_restarts.wait_for_agent_ok(20)
+    try:
+        yield managed_cluster_restarts
+        managed_cluster_restarts.wait_for_agent_ok(20)
+    except Exception:
+        managed_cluster_restarts.restart_master()
+        managed_cluster_restarts.restart_agent()
+        raise

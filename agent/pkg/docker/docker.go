@@ -42,6 +42,8 @@ const (
 	ContainerIDLabel = "ai.determined.container.id"
 	// ContainerDevicesLabel describes the devices allocated to the container.
 	ContainerDevicesLabel = "ai.determined.container.devices"
+	// ContainerDescriptionLabel describes the container.
+	ContainerDescriptionLabel = "ai.determined.container.description"
 	// AgentLabel gives the agent the container is managed by.
 	AgentLabel = "ai.determined.container.agent"
 	// ClusterLabel gives the cluster the container is managed by.

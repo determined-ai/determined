@@ -45,37 +45,34 @@ type agents struct {
 func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		reattachEnabled := config.IsAgentRMReattachEnabled()
-		if reattachEnabled {
-			// TODO(ilia): only restore the agents which have some non-zero state.
-			// Currently, if an agent tries to reconnect and it was not restored here,
-			// then it'd be told it must restart and do a fresh connection.
-			agentStates, err := retrieveAgentStates()
+		// TODO(ilia): only restore the agents which have some non-zero state.
+		// Currently, if an agent tries to reconnect and it was not restored here,
+		// then it'd be told it must restart and do a fresh connection.
+		agentStates, err := retrieveAgentStates()
+		if err != nil {
+			ctx.Log().WithError(err).Warnf("failed to retrieve agent states")
+		}
+
+		ctx.Log().Debugf("agent states to restore: %d", len(agentStates))
+		badAgentIds := []agentID{}
+
+		for agentID := range agentStates {
+			state := agentStates[agentID]
+			agentRef, err := a.createAgentActor(
+				ctx, agentID, state.resourcePoolName, a.opts, &state)
 			if err != nil {
-				ctx.Log().WithError(err).Warnf("failed to retrieve agent states")
+				ctx.Log().WithError(err).Warnf("failed to create agent %s", agentID)
+				badAgentIds = append(badAgentIds, agentID)
+				continue
 			}
+			ctx.Ask(agentRef, actor.Ping{}).Get()
+			ctx.Log().Debugf("restored agent state: %s", agentID)
+		}
 
-			ctx.Log().Debugf("agent states to restore: %d", len(agentStates))
-			badAgentIds := []agentID{}
-
-			for agentID := range agentStates {
-				state := agentStates[agentID]
-				agentRef, err := a.createAgentActor(
-					ctx, agentID, state.resourcePoolName, a.opts, &state)
-				if err != nil {
-					ctx.Log().WithError(err).Warnf("failed to create agent %s", agentID)
-					badAgentIds = append(badAgentIds, agentID)
-					continue
-				}
-				ctx.Ask(agentRef, actor.Ping{}).Get()
-				ctx.Log().Debugf("restored agent state: %s", agentID)
-			}
-
-			if len(badAgentIds) > 0 {
-				ctx.Log().Debugf("cleaning %d bad agent states", len(badAgentIds))
-				if err := clearAgentStates(badAgentIds); err != nil {
-					ctx.Log().WithError(err).Warnf("failed to clean bad agent states")
-				}
+		if len(badAgentIds) > 0 {
+			ctx.Log().Debugf("cleaning %d bad agent states", len(badAgentIds))
+			if err := clearAgentStates(badAgentIds); err != nil {
+				ctx.Log().WithError(err).Warnf("failed to clean bad agent states")
 			}
 		}
 	case api.WebSocketConnected:
@@ -94,49 +91,39 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		}
 
 		id := msg.Ctx.QueryParam("id")
-		resourcePool := msg.Ctx.QueryParam("resource_pool")
+		existingRef := ctx.Child(id)
 		reconnect, err := msg.IsReconnect()
 		if err != nil {
 			ctx.Respond(errors.Wrapf(err, "parsing reconnect query param"))
 			return nil
 		}
 
-		// Handle agent reconnecting after a network failure.
-		if reconnect {
-			if ctx.Child(id) != nil {
-				// If the agent actor is still alive on our side when an
-				// agent tries to reconnect, accept it.
-				ctx.Respond(ctx.Ask(ctx.Child(id), msg).Get())
-			} else {
-				// In the event it has closed and the agent is trying to reconnect,
-				// continue to deny it. This case is nearly impossible (master waits
-				// longer than agent tries, to avoid it).
-				ctx.Respond(aproto.ErrAgentMustReconnect)
-			}
-			return nil
-		}
-
-		// Handle agent reconnecting within the timeout after a crash/restart.
-		// Based on ResourcePoolConfig AgentReattachEnabled, it will clear existing
-		// containers or will try to reattach them.
+		// If the agent actor is still alive on our side when an agent tries to reconnect,
+		// accept it. Whether it is a network failure or a crash/restart, we will just try
+		// to reattach whatever containers still exist.
 		// That logic is located in agent.receive(ws.WebSocketConnected).
-		if existingRef := ctx.Child(id); existingRef != nil {
-			ctx.Log().Infof("restoring agent id: %s", id)
+		if existingRef != nil {
+			ctx.Log().WithField("reconnect", reconnect).Infof("restoring agent id: %s", id)
 			ctx.Respond(ctx.Ask(existingRef, msg).Get())
 			return nil
 		}
 
-		if ref, err := a.createAgentActor(
-			ctx,
-			agentID(id),
-			resourcePool,
-			a.opts,
-			nil,
-		); err != nil {
+		// If the agent actor is _not_ alive on our side and the agent is trying to reconnect,
+		// continue to deny it. This case is nearly impossible (master waits longer than agent
+		// tries, to avoid it).
+		if reconnect {
+			ctx.Respond(aproto.ErrAgentMustReconnect)
+			return nil
+		}
+
+		// Finally, this must not be a recovery flow, so just create the agent actor.
+		resourcePool := msg.Ctx.QueryParam("resource_pool")
+		if ref, err := a.createAgentActor(ctx, agentID(id), resourcePool, a.opts, nil); err != nil {
 			ctx.Respond(err)
 		} else {
 			ctx.Respond(ctx.Ask(ref, msg).Get())
 		}
+
 	case *apiv1.GetAgentsRequest:
 		response := &apiv1.GetAgentsResponse{}
 		for _, a := range a.summarize(ctx) {
@@ -182,7 +169,6 @@ func (a *agents) createAgentActor(
 		resourcePoolName:      resourcePool,
 		maxZeroSlotContainers: rpConfig.MaxZeroSlotContainers,
 		agentReconnectWait:    time.Duration(rpConfig.AgentReconnectWait),
-		agentReattachEnabled:  rpConfig.AgentReattachEnabled,
 		opts:                  opts,
 		agentState:            restoredAgentState,
 	})

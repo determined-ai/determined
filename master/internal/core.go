@@ -686,6 +686,10 @@ func (m *Master) Run(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
+
+	// Must happen before recovery. If tasks can't recover their allocations, they need an end time.
+	cluster.InitTheLastBootClusterHeartbeat()
+
 	cert, err := m.config.Security.TLS.ReadCertificate()
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
@@ -877,7 +881,6 @@ func (m *Master) Run(ctx context.Context) error {
 	// The below function call is intentionally made after the call to CloseOpenAllocations.
 	// This ensures that in the scenario where a cluster fails all open allocations are
 	// set to the last cluster heartbeat when the cluster was running.
-	cluster.InitTheLastBootClusterHeartbeat()
 	go updateClusterHeartbeat(ctx, m.db)
 
 	// Docs and WebUI.

@@ -25,7 +25,7 @@ import (
 func overwriteSpec(
 	spec cproto.Spec,
 	cont cproto.Container,
-	opts options.AgentOptions,
+	opts options.Options,
 	mopts aproto.MasterSetAgentOptions,
 ) (cproto.Spec, error) {
 	spec.RunSpec.ContainerConfig.Env = addProxyInfo(spec.RunSpec.ContainerConfig.Env, opts)
@@ -60,7 +60,7 @@ func overwriteSpec(
 	return spec, nil
 }
 
-func addProxyInfo(env []string, opts options.AgentOptions) []string {
+func addProxyInfo(env []string, opts options.Options) []string {
 	addVars := map[string]string{
 		"HTTP_PROXY":  opts.HTTPProxy,
 		"HTTPS_PROXY": opts.HTTPSProxy,
@@ -170,6 +170,7 @@ func makeContainerDockerLabels(cont cproto.Container) map[string]string {
 	labels := map[string]string{}
 	labels[docker.ContainerVersionLabel] = docker.ContainerVersionValue
 	labels[docker.ContainerIDLabel] = cont.ID.String()
+	labels[docker.ContainerDescriptionLabel] = cont.Description
 	var slotIds []string
 	for _, d := range cont.Devices {
 		slotIds = append(slotIds, strconv.Itoa(int(d.ID)))
@@ -208,13 +209,14 @@ func (m *Manager) unmakeContainerDockerLabels(cont types.Container) (
 	}
 
 	return &cproto.Container{
-		ID:      cproto.ID(cont.Labels[docker.ContainerIDLabel]),
-		Devices: devices,
-		State:   state,
+		ID:          cproto.ID(cont.Labels[docker.ContainerIDLabel]),
+		Devices:     devices,
+		State:       state,
+		Description: cont.Labels[docker.ContainerDescriptionLabel],
 	}, nil
 }
 
-func makeGlobalEnvVars(opts options.AgentOptions, mopts aproto.MasterSetAgentOptions) []string {
+func makeGlobalEnvVars(opts options.Options, mopts aproto.MasterSetAgentOptions) []string {
 	masterScheme := httpInsecureScheme
 	if opts.Security.TLS.Enabled {
 		masterScheme = httpSecureScheme
@@ -243,7 +245,7 @@ func makeGlobalEnvVars(opts options.AgentOptions, mopts aproto.MasterSetAgentOpt
 	return globalEnvVars
 }
 
-func makeLabels(opts options.AgentOptions, mopts aproto.MasterSetAgentOptions) map[string]string {
+func makeLabels(opts options.Options, mopts aproto.MasterSetAgentOptions) map[string]string {
 	return map[string]string{
 		docker.ContainerTypeLabel: docker.ContainerTypeValue,
 		docker.AgentLabel:         opts.AgentID,

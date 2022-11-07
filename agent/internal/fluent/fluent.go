@@ -45,7 +45,7 @@ var fluentLogLineRegexp = regexp.MustCompile(`\[[^]]*\] \[ *([^]]*)\] (.*)`)
 // the purpose of forwarding container logs.
 type Fluent struct {
 	// Configuration details.
-	opts  options.AgentOptions
+	opts  options.Options
 	mopts aproto.MasterSetAgentOptions
 
 	// System dependencies.
@@ -63,7 +63,7 @@ type Fluent struct {
 // Start constructs and runs a Fluent Bit daemon, and returns a handle to interact with it.
 func Start(
 	ctx context.Context,
-	opts options.AgentOptions,
+	opts options.Options,
 	mopts aproto.MasterSetAgentOptions,
 	dclient *docker.Client,
 ) (*Fluent, error) {

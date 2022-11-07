@@ -111,7 +111,9 @@ func (rp *resourcePool) allocateRequest(ctx *actor.Context, msg sproto.AllocateR
 	rp.notifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
 		AllocationRef: msg.AllocationRef,
 	})
-	log := ctx.Log().WithField("allocation-id", msg.AllocationID)
+	log := ctx.Log().
+		WithField("allocation-id", msg.AllocationID).
+		WithField("restoring", msg.Restore)
 
 	if len(msg.AllocationID) == 0 {
 		msg.AllocationID = model.AllocationID(uuid.New().String())
@@ -516,7 +518,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(aproto.GetRPResponse{
 			AgentReconnectWait:    rp.config.AgentReconnectWait,
-			AgentReattachEnabled:  rp.config.AgentReattachEnabled,
 			MaxZeroSlotContainers: rp.config.MaxAuxContainersPerAgent,
 		})
 
