@@ -2205,7 +2205,8 @@ workflows:
 
   test-intg:
     jobs:
-      - test-intg-downstream
+      # https://determined-ai.slack.com/archives/C03H5KZPU30/p1667241463073989
+      # - test-intg-downstream
       - test-intg-master:
           context: storage-unit-tests
       - test-intg-agent
