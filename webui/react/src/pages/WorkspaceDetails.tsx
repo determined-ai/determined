@@ -132,7 +132,7 @@ const WorkspaceDetails: React.FC = () => {
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, id]);
+  }, [canceler.signal, id, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
