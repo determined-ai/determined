@@ -157,7 +157,7 @@ def do_request(
         except Exception:
             return ""
 
-    if r.status_code == 403 or r.status_code == 401:
+    if r.status_code == 403:
         username = ""
         if auth is not None:
             username = auth.get_session_user()

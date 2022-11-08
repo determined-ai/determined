@@ -126,6 +126,7 @@ def change_user_password(
 
 
 def log_out_user(username: Optional[str] = None) -> None:
+    print("in logiut")
     if username is not None:
         args = ["-u", username, "user", "logout"]
     else:
@@ -134,7 +135,7 @@ def log_out_user(username: Optional[str] = None) -> None:
     child = det_spawn(args)
     child.read()
     child.wait()
-    child.close()
+    #child.close()
 
 
 def activate_deactivate_user(active: bool, target_user: str) -> int:
@@ -229,20 +230,24 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
 
     # Log in as new user.
-    with logged_in_user(creds):
-        # Now we should be able to list experiments.
-        child = det_spawn(["e", "list"])
-        child.read()
-        child.wait()
-        child.close()
-        assert child.status == 0
-
-        # Exiting the logged_in_user context logs out and asserts that the exit code is 0.
-
-    # Now trying to list experiments should result in an error.
+    log_in_user(creds)
+    # Now we should be able to list experiments.
     child = det_spawn(["e", "list"])
-    child.expect(".*Unauthenticated.*", timeout=EXPECT_TIMEOUT)
     child.read()
+    child.wait()
+    child.close()
+    assert child.status == 0
+
+    # Exiting the logged_in_user context logs out and asserts that the exit code is 0.
+    log_out_user()
+    # Now trying to list experiments should result in an error.
+    child = det_spawn(["user", "whoami"])
+    print(creds.username)
+    print("stdout")
+    print(child.read())
+    #child = det_spawn(["e", "list"])
+    #expected = "Unauthenticated"
+    #assert expected in str(child.read())
     child.wait()
     assert child.exitstatus != 0
 
@@ -253,7 +258,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     log_in_user(creds)
 
     # Now log out as determined.
-    assert log_out_user(constants.DEFAULT_DETERMINED_USER) == 0
+    log_out_user(constants.DEFAULT_DETERMINED_USER)
 
     # Should still be able to list experiments because new user is logged in.
     child = det_spawn(["e", "list"])
