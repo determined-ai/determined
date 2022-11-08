@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"go.uber.org/atomic"
+	"golang.org/x/exp/slices"
 
 	"github.com/sirupsen/logrus"
 
@@ -169,9 +170,9 @@ func (c *Container) run(parent context.Context) (err error) {
 	ctx, cancel := context.WithCancel(parent) // run-scoped cancellable context.
 	defer cancel()
 
-	killed := atomic.NewBool(false)
+	killedBeforeRun := atomic.NewBool(false)
 	defer func() {
-		if killed.Load() {
+		if killedBeforeRun.Load() {
 			if err != nil {
 				c.log.WithError(err).Debug("exit of container killed before run")
 			}
@@ -191,7 +192,7 @@ func (c *Container) run(parent context.Context) (err error) {
 				switch signal {
 				case syscall.SIGKILL:
 					c.log.Tracef("signal %s, canceling run-scoped context", signal)
-					killed.Store(true)
+					killedBeforeRun.Store(true)
 					cancel()
 					return
 				default:
@@ -231,7 +232,7 @@ func (c *Container) run(parent context.Context) (err error) {
 	// shimming them to context cancellations.
 	c.log.Trace("joining signal-to-context shimmer")
 	siggroup.Close()
-	if killed.Load() {
+	if killedBeforeRun.Load() {
 		c.log.Trace("ensuring cleanup of container (canceled prior to the monitoring loop)")
 		if remove {
 			if sErr := c.docker.RemoveContainer(ctx, dockerID, true); sErr != nil {
@@ -240,7 +241,7 @@ func (c *Container) run(parent context.Context) (err error) {
 		}
 		return errors.New("kill raced with pre-run cancel finalize")
 	}
-	killed.Store(false)
+	killedBeforeRun.Store(false)
 
 	c.log.Trace("running container")
 	dc, err := c.docker.RunContainer(ctx, dockerID)
@@ -333,12 +334,10 @@ func (c *Container) finalize(ctx context.Context, err error) {
 }
 
 func (c *Container) summary() cproto.Container {
-	devices := make([]device.Device, len(c.devices))
-	copy(devices, c.devices)
 	return cproto.Container{
 		ID:      c.containerID,
 		State:   c.state,
-		Devices: devices,
+		Devices: slices.Clone(c.devices),
 	}
 }
 

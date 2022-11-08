@@ -80,7 +80,6 @@ func (c ContainerLog) String() string {
 // ToEvent converts a container log to a container event.
 func (c ContainerLog) ToEvent() Event {
 	return Event{
-		// State:       string(c.Container.State), // TODO(???)
 		ContainerID: c.ContainerID.String(),
 		Time:        c.Timestamp.UTC(),
 		LogEvent:    ptrs.Ptr(c.Message()),
