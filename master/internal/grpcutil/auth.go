@@ -182,7 +182,7 @@ func streamAuthInterceptor(db *db.PgDB,
 		// we can't easily modify ss's context and
 		// we would have to worry about the user session expiring in the context.
 		_, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
-		fields := log.Fields{"endpoint": info}
+		fields := log.Fields{"endpoint": info.FullMethod}
 		wrappedSS := grpc_middleware.WrappedServerStream{
 			ServerStream:   ss,
 			WrappedContext: context.WithValue(ss.Context(), audit.LogKey{}, fields),
