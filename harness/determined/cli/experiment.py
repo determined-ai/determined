@@ -531,10 +531,8 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
-    iteration = -1
     while True:
         r: Optional[bindings.v1Experiment] = None
-        iteration += 1
         try:
             r = bindings.get_GetExperiment(
                 cli.setup_session(args), experimentId=args.experiment_id
@@ -547,7 +545,7 @@ def wait(args: Namespace) -> None:
                 504,  # Gateway timeout
                 408,  # Request Timeout
             )
-            if is_transient and iteration > 0:
+            if is_transient:
                 # calculate exponential backoff with jitter?
                 # https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
                 backoff = random.uniform(0.5, 5)
