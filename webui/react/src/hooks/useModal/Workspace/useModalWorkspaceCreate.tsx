@@ -61,6 +61,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
 
   useEffect(() => {
     if (workspace) {
+      form.resetFields();
       const { name, checkpointStorageConfig, agentUserGroup } = workspace;
       form.setFieldsValue({
         checkpointStorageConfig: yaml.dump(checkpointStorageConfig),
@@ -294,7 +295,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
   }, [getModalProps, modalRef, openOrUpdate]);
 
   useEffect(() => {
-    modalRef.current && !workspace && fetchWorkspace();
+    modalRef.current && workspaceID !== workspace?.id && fetchWorkspace();
   });
 
   return { modalOpen, modalRef, ...modalHook };
