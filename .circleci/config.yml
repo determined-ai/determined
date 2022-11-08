@@ -45,6 +45,9 @@ parameters:
   gke-version:
     type: string
     default: "1.21.14"
+  master-build-resource-class:
+    type: string
+    default: large
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -1086,7 +1089,7 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: medium+
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
       - attach_workspace:
@@ -1125,7 +1128,7 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: medium+
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
       - attach_workspace:
@@ -1155,7 +1158,7 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: medium+
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
       - attach_workspace:
@@ -2283,10 +2286,10 @@ workflows:
           parallelism: 1
           tf1: false
           tf2: true
-          devcluster-config: strict-ntsc.devcluster.yaml          
+          devcluster-config: strict-ntsc.devcluster.yaml
           mark: test_strict_ntsc
           target-stage: agent2
-          
+
       - test-e2e:
           name: test-e2e-managed-devcluster
           requires:
