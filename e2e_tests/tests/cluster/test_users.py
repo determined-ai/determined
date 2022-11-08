@@ -243,14 +243,17 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     # Now trying to list experiments should result in an error.
     child = det_spawn(["user", "whoami"])
     #print(creds.username)
-    #print("stdout")
-    #print(child.read())
+    print("stdout of child process user whoami")
+    print(child.read())
     #child = det_spawn(["e", "list"])
-    expected = "Unauthenticated"
-    assert expected in str(child.read())
+    #expected = "Unauthenticated"
+    #assert expected in str(child.read())
     child.wait()
     child.close()
-    assert child.status == 0
+    assert child.status != 0
+
+    #command = ["det", "-m", conf.make_master_url(), "user", "whoami"]
+    #assert subprocess.call(command) == 0
 
     # Log in as determined.
     log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))

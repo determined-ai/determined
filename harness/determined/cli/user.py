@@ -134,6 +134,7 @@ def create_user(parsed_args: Namespace) -> None:
 
 @login_sdk_client
 def whoami(parsed_args: Namespace) -> None:
+    print("whoami user cli method")
     user = client.whoami()
     print("You are logged in as user '{}'".format(user.username))
 
