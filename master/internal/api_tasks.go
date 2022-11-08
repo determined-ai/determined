@@ -483,8 +483,7 @@ func (a *apiServer) TaskLogsFields(
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.TODO()
-			if err := a.canDoActionsOnTask(ctx, taskID,
+			if err := a.canDoActionsOnTask(resp.Context(), taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
