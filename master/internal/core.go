@@ -968,7 +968,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	webuiGroup := m.echo.Group(webuiBaseRoute)
 	webuiGroup.File("/", reactIndex)
-	webuiGroup.GET("/*", func(c echo.Context) error {
+	webuiGroup.GET("*", func(c echo.Context) error {
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")
 		requestedFile := filepath.Join(reactRoot, groupPath)
 		// We do a simple check against directory traversal attacks.
