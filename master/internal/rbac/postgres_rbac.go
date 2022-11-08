@@ -357,6 +357,13 @@ func AddGroupAssignmentsTx(ctx context.Context, idb bun.IDB, groups []*rbacv1.Gr
 		idb = db.Bun()
 	}
 
+	valid, err := enforceGlobalOnly(ctx, idb, groups)
+	if err != nil {
+		return err
+	} else if !valid {
+		return ErrGlobalAssignedLocally
+	}
+
 	for _, group := range groups {
 		s, err := getOrCreateRoleAssignmentScopeTx(ctx, idb, group.RoleAssignment)
 		if err != nil {
@@ -553,4 +560,49 @@ func GetAssignedRoles(ctx context.Context, curUser model.UserID) ([]int32, error
 		return nil, err
 	}
 	return roles, nil
+}
+
+func enforceGlobalOnly(ctx context.Context, idb bun.IDB,
+	assignments []*rbacv1.GroupRoleAssignment) (bool, error) {
+	var toBeLocallyAssigned []int32
+	for _, a := range assignments {
+		if a.RoleAssignment.ScopeWorkspaceId != nil {
+			toBeLocallyAssigned = append(toBeLocallyAssigned, a.RoleAssignment.Role.RoleId)
+		}
+	}
+
+	globalOnly, err := whichAreGlobalOnly(ctx, idb, toBeLocallyAssigned)
+	if err != nil {
+		return false, errors.Wrap(db.MatchSentinelError(err),
+			"error checking global-only permissions were only being assigned globally")
+	}
+
+	if len(globalOnly) > 0 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func whichAreGlobalOnly(ctx context.Context, idb bun.IDB, roles []int32) ([]int32, error) {
+	if len(roles) < 1 {
+		return nil, nil
+	}
+
+	if idb == nil {
+		idb = db.Bun()
+	}
+
+	var results []int32
+	err := idb.NewSelect().Distinct().
+		Column("role_id").
+		TableExpr("permission_assignments AS pa").
+		Join("JOIN permissions AS p ON pa.permission_id=p.id").
+		Where("p.global_only AND pa.role_id IN (?)", bun.In(roles)).
+		Scan(ctx, &results)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }

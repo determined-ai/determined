@@ -5,12 +5,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -35,7 +34,7 @@ func (a *RBACAPIServerImpl) GetPermissionsSummary(
 ) (resp *apiv1.GetPermissionsSummaryResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -82,7 +81,7 @@ func (a *RBACAPIServerImpl) GetGroupsAndUsersAssignedToWorkspace(
 ) (resp *apiv1.GetGroupsAndUsersAssignedToWorkspaceResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -160,7 +159,7 @@ func (a *RBACAPIServerImpl) GetRolesByID(ctx context.Context, req *apiv1.GetRole
 ) (resp *apiv1.GetRolesByIDResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -179,7 +178,7 @@ func (a *RBACAPIServerImpl) GetRolesByID(ctx context.Context, req *apiv1.GetRole
 	}
 
 	if len(roles) != len(req.RoleIds) {
-		return nil, errNotFound
+		return nil, apiutils.ErrNotFound
 	}
 
 	response := apiv1.GetRolesByIDResponse{
@@ -196,11 +195,11 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToUser(ctx context.Context,
 ) (resp *apiv1.GetRolesAssignedToUserResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	if req.UserId == 0 {
-		return nil, errBadRequest
+		return nil, apiutils.ErrBadRequest
 	}
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -240,11 +239,11 @@ func (a *RBACAPIServerImpl) GetRolesAssignedToGroup(ctx context.Context,
 ) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	if req.GroupId == 0 {
-		return nil, errBadRequest
+		return nil, apiutils.ErrBadRequest
 	}
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -295,7 +294,7 @@ func (a *RBACAPIServerImpl) SearchRolesAssignableToScope(ctx context.Context,
 ) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -313,7 +312,7 @@ func (a *RBACAPIServerImpl) SearchRolesAssignableToScope(ctx context.Context,
 	}
 
 	if req.Limit == 0 {
-		req.Limit = maxLimit
+		req.Limit = apiutils.MaxLimit
 	}
 
 	roles, tableTotal, err := GetAllRoles(ctx, req.WorkspaceId != nil, int(req.Offset), int(req.Limit))
@@ -338,11 +337,11 @@ func (a *RBACAPIServerImpl) ListRoles(ctx context.Context, req *apiv1.ListRolesR
 ) (resp *apiv1.ListRolesResponse, err error) {
 	// Detect whether we're returning special errors and convert to gRPC error
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	if req.Limit == 0 {
-		req.Limit = maxLimit
+		req.Limit = apiutils.MaxLimit
 	}
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -385,7 +384,7 @@ func (a *RBACAPIServerImpl) AssignRoles(ctx context.Context, req *apiv1.AssignRo
 	}
 
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -422,7 +421,7 @@ func (a *RBACAPIServerImpl) RemoveAssignments(ctx context.Context,
 	}
 
 	defer func() {
-		err = mapAndFilterErrors(err)
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
 	}()
 
 	u, _, err := grpcutil.GetUser(ctx)
@@ -452,7 +451,11 @@ func (a *RBACAPIServerImpl) RemoveAssignments(ctx context.Context,
 // AssignWorkspaceAdminToUserTx assigns workspace admin to a given user.
 func (a *RBACAPIServerImpl) AssignWorkspaceAdminToUserTx(
 	ctx context.Context, idb bun.IDB, workspaceID int, userID model.UserID,
-) error {
+) (err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, errorMapping)
+	}()
+
 	workspaceCreatorConfig := config.GetMasterConfig().Security.AuthZ.AssignWorkspaceCreator
 	if !workspaceCreatorConfig.Enabled {
 		return nil
@@ -487,48 +490,6 @@ func dbRolesToAPISummary(roles []Role) []*rbacv1.Role {
 	return apiRoles
 }
 
-const (
-	maxLimit = 500
-)
-
-var (
-	errBadRequest   = status.Error(codes.InvalidArgument, "bad request")
-	errInvalidLimit = status.Errorf(codes.InvalidArgument,
-		"Bad request: limit is required and must be <= %d", maxLimit)
-	errNotFound        = status.Error(codes.NotFound, "not found")
-	errDuplicateRecord = status.Error(codes.AlreadyExists, "duplicate record")
-	errInternal        = status.Error(codes.Internal, "internal server error")
-	errPassthroughMap  = map[error]bool{
-		nil:                true,
-		errBadRequest:      true,
-		errInvalidLimit:    true,
-		errNotFound:        true,
-		errDuplicateRecord: true,
-		errInternal:        true,
-	}
-)
-
-func mapAndFilterErrors(err error) error {
-	if _, ok := err.(authz.PermissionDeniedError); ok {
-		return status.Error(codes.PermissionDenied, err.Error())
-	}
-
-	if allowed := errPassthroughMap[err]; allowed {
-		return err
-	}
-
-	switch {
-	case errors.Is(err, db.ErrNotFound):
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, db.ErrDuplicateRecord):
-		return status.Error(codes.AlreadyExists, err.Error())
-	}
-
-	logrus.WithError(err).Debug("suppressing error at API boundary")
-
-	return errInternal
-}
-
 func ensureGroupsAreNotPersonal(ctx context.Context,
 	assignments []*rbacv1.GroupRoleAssignment,
 ) error {
@@ -545,7 +506,7 @@ func ensureGroupsAreNotPersonal(ctx context.Context,
 			return err
 		}
 		if group.OwnerID != 0 {
-			return errBadRequest
+			return apiutils.ErrBadRequest
 		}
 	}
 
@@ -558,4 +519,14 @@ func groupIDsFromAssignments(assignments []*rbacv1.GroupRoleAssignment) []int32 
 		groupIDs = append(groupIDs, ra.GroupId)
 	}
 	return groupIDs
+}
+
+var errorMapping = map[error]error{}
+
+func init() {
+	for k, v := range apiutils.ErrorMapping {
+		errorMapping[k] = v
+	}
+
+	errorMapping[ErrGlobalAssignedLocally] = ErrGlobalAssignedLocally
 }
