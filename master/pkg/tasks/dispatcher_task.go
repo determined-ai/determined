@@ -174,17 +174,22 @@ func (t *TaskSpec) ToDispatcherManifest(
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
 	slurmArgs = append(slurmArgs, resourceOpts...)
 	logrus.Debugf("Custom slurm arguments: %s", slurmArgs)
-	customParams["slurmArgs"] = slurmArgs
-	errList := model.ValidateSlurm(slurmArgs)
+	errList := ValidateSlurm(slurmArgs)
 	if len(errList) > 0 {
 		logrus.WithError(errList[0]).Error("Forbidden slurm option specified")
 		return nil, "", "", errList[0]
 	}
+	customParams["slurmArgs"] = slurmArgs
 
 	var pbsArgs []string
 	pbsArgs = append(pbsArgs, t.TaskContainerDefaults.Pbs...)
 	pbsArgs = append(pbsArgs, t.PbsConfig.SbatchArgs()...)
 	logrus.Debugf("Custom pbs arguments: %s", pbsArgs)
+	errList = ValidatePbs(pbsArgs)
+	if len(errList) > 0 {
+		logrus.WithError(errList[0]).Error("Forbidden PBS option specified")
+		return nil, "", "", errList[0]
+	}
 	customParams["pbsArgs"] = pbsArgs
 
 	if containerRunType == podman {
