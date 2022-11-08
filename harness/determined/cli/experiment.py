@@ -1,4 +1,5 @@
 import base64
+import urllib3
 import distutils.util
 import io
 import json
@@ -531,32 +532,21 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
-    while True:
-        r: Optional[bindings.v1Experiment] = None
-        try:
-            r = bindings.get_GetExperiment(
-                cli.setup_session(args), experimentId=args.experiment_id
-            ).experiment
-        except APIException as e:
-            is_transient = e.status_code in (
-                429,  # Too Many Requests
-                502,  # Bad Gateway
-                503,  # Service Unavailable
-                504,  # Gateway timeout
-                408,  # Request Timeout
-            )
-            if is_transient:
-                # calculate exponential backoff with jitter?
-                # https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
-                backoff = random.uniform(0.5, 5)
-                time.sleep(backoff)
-                # REMOVEME: or maybe check if there is retyr-after header
-                # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After
-                continue
-            raise e
+    retry = urllib3.util.retry.Retry(
+        raise_on_status=False,
+        total=10,
+        status=10,
+        backoff_factor=2,
+        status_forcelist=[413, 429, 502, 503, 504],
+    )
 
-        # QUESTION: assert fits better than a conditional here right?
-        assert r is not None
+    def __getattribute__(self, name):
+        raise NotImplementedError("Retry object is not pickleable")
+
+    while True:
+        r = bindings.get_GetExperiment(
+            cli.setup_session(args, max_retries=retry), experimentId=args.experiment_id
+        ).experiment
 
         state_val = r.state.value.replace("STATE_", "")
         if state_val in constants.TERMINAL_STATES:
