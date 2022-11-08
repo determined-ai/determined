@@ -172,20 +172,13 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
                   .then((blob) => {
                     if (blob.size < 1000) {
                       // consistent with an error message (usually Access Denied)
-                      setIsDownloading(false);
-                      handleError(null, {
-                        publicSubject: 'Unable to download checkpoint.',
-                        silent: false,
-                        type: ErrorType.Api,
-                      });
-                      return;
+                      throw new Error('Checkpoint file size too small');
                     }
                     const file = window.URL.createObjectURL(blob);
                     window.location.assign(file);
                     setIsDownloading(false);
                   })
                   .catch(() => {
-                    setIsDownloading(false);
                     handleError(null, {
                       publicSubject: 'Unable to download checkpoint.',
                       silent: false,
