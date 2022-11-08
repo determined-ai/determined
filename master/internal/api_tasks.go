@@ -282,8 +282,7 @@ func (a *apiServer) TaskLogs(
 		return err
 	}
 
-	ctx := context.TODO()
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(resp.Context())
 	defer cancel()
 
 	res := make(chan api.BatchResult, taskLogsChanBuffer)

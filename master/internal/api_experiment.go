@@ -1199,8 +1199,7 @@ func (a *apiServer) MetricNames(req *apiv1.MetricNamesRequest,
 	var searcherMetric string
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.TODO()
-			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID,
 				false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
@@ -1287,8 +1286,7 @@ func (a *apiServer) ExpCompareMetricNames(req *apiv1.ExpCompareMetricNamesReques
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			for _, trialID := range req.TrialId {
-				ctx := context.TODO()
-				if err := a.canGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+				if err := a.canGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(trialID),
 					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 					return err
 				}
@@ -1355,8 +1353,7 @@ func (a *apiServer) MetricBatches(req *apiv1.MetricBatchesRequest,
 	var startTime time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.TODO()
-			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
@@ -1447,8 +1444,7 @@ func (a *apiServer) TrialsSnapshot(req *apiv1.TrialsSnapshotRequest,
 	var startTime time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.TODO()
-			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
@@ -1694,8 +1690,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 	currentTrials := make(map[int32]bool)
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.TODO()
-			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
@@ -1812,8 +1807,7 @@ func (a *apiServer) ExpCompareTrialsSample(req *apiv1.ExpCompareTrialsSampleRequ
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
 			for _, expID := range experimentIDs {
-				ctx := context.TODO()
-				if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID), false,
+				if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), int(expID), false,
 					expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 					return err
 				}
@@ -1943,8 +1937,7 @@ func (a *apiServer) GetHPImportance(req *apiv1.GetHPImportanceRequest,
 	var timeSinceLastAuth time.Time
 	for {
 		if time.Now().Sub(timeSinceLastAuth) >= recheckAuthPeriod {
-			ctx := context.TODO()
-			if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, experimentID, false,
+			if _, _, err := a.getExperimentAndCheckCanDoActions(resp.Context(), experimentID, false,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return err
 			}
