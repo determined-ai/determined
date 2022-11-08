@@ -11,7 +11,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_slurm
-@pytest.mark.timeout(10 * 60)
+@pytest.mark.timeout(20 * 60)
 def test_noop_pause_hpc() -> None:
     # The original configuration file, which we will need to modify for HPC
     # clusters. We choose a configuration file that will create an experiment
@@ -75,9 +75,9 @@ def test_noop_pause_hpc() -> None:
     exp.pause_experiment(experiment_id)
     exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_PAUSED)
 
-    # Wait at most 240 seconds for the experiment to clear all workloads (each
+    # Wait at most 420 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
-    for _ in range(240):
+    for _ in range(420):
         workload_active = exp.experiment_has_active_workload(experiment_id)
         if not workload_active:
             break
@@ -85,7 +85,7 @@ def test_noop_pause_hpc() -> None:
             time.sleep(1)
     check.true(
         not workload_active,
-        "The experiment cannot be paused within 240 seconds.",
+        "The experiment cannot be paused within 420 seconds.",
     )
 
     # Resume the experiment and wait for completion.
