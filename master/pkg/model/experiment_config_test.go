@@ -130,38 +130,6 @@ func TestOverrideMasterEnvironmentVariables(t *testing.T) {
 	})
 }
 
-// Helper function to setup and verify slurm option test cases.
-func testEnvironmentSlurm(t *testing.T, slurmOptions []string, expected ...string) {
-	err := ValidateSlurm(slurmOptions)
-	if len(expected) == 0 {
-		assert.Equal(t, len(err), 0)
-	} else {
-		for i, msg := range expected {
-			assert.ErrorContains(t, err[i], msg)
-		}
-	}
-}
-
-func TestValidateSlurmOptions(t *testing.T) {
-	// No slurm args, not error
-	testEnvironmentSlurm(t, []string{})
-	// Forbidden -G option
-	testEnvironmentSlurm(t, []string{"-G1"}, "slurm option -G is not configurable")
-	// Forbidden --grpus=#
-	testEnvironmentSlurm(t, []string{"--gpus=2"}, "slurm option --gpus= is not configurable")
-	// OK --gpus-per-task=#
-	testEnvironmentSlurm(t, []string{"--gpus-per-task=2"})
-	// OK option containing letters of forbidden option (-n)
-	testEnvironmentSlurm(t, []string{"--nice=3"})
-	// Forbidden -n option intermixed with OK options
-	testEnvironmentSlurm(t, []string{"--nice=7", "-n3", "-lname"},
-		"slurm option -n is not configurable")
-	// Multiple failures
-	testEnvironmentSlurm(t, []string{"--nice=7", " -N2", "-Dmydir", "--partion=pname"},
-		"slurm option -N is not configurable",
-		"slurm option -D is not configurable")
-}
-
 func TestDeviceConfig(t *testing.T) {
 	// Devices can be strings or maps, and merging device lists is additive.
 	var actual DevicesConfig
