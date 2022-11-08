@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -180,17 +181,17 @@ func streamAuthInterceptor(db *db.PgDB,
 		// Don't cache the result of the stream auth interceptor because
 		// we can't easily modify ss's context and
 		// we would have to worry about the user session expiring in the context.
-		user, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
-		fields := log.Fields{
-			"endpoint": info,
-			"userID":   user.ID,
+		_, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
+		fields := log.Fields{"endpoint": info}
+		wrappedSS := grpc_middleware.WrappedServerStream{
+			ServerStream:   ss,
+			WrappedContext: context.WithValue(ss.Context(), audit.LogKey{}, fields),
 		}
-		log.WithFields(fields).Info("RBAC Audit Logs (streaming endpoint)")
 		if err != nil {
 			return err
 		}
 
-		return handler(srv, ss)
+		return handler(srv, &wrappedSS)
 	}
 }
 
