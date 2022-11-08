@@ -407,7 +407,7 @@ def test_login_wrong_password(clean_auth: None, login_admin: None) -> None:
     child.setecho(True)
     child.expect(passwd_prompt, timeout=EXPECT_TIMEOUT)
     child.sendline("this is the wrong password")
-    unauth_error = "invalid credentials"
+    unauth_error = "Unauthenticated"
     assert unauth_error in str(child.read())
     child.wait()
     child.close()
