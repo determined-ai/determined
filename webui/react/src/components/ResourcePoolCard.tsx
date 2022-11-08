@@ -1,23 +1,24 @@
-import React, { useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
-import { V1RPQueueStat } from 'services/api-ts-sdk';
-import { V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';
 import k8sLogo from 'shared/assets/images/k8s-logo.svg';
 import staticLogo from 'shared/assets/images/on-prem-logo.svg';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 import { clone } from 'shared/utils/data';
+import { useAgents } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { isDeviceType, ResourcePool } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
+import { Loadable } from 'utils/loadable';
 
 import Json from './Json';
 import css from './ResourcePoolCard.module.scss';
@@ -125,13 +126,15 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
           {pool.description && <Icon name="info" title={pool.description} />}
         </div>
       </div>
-      <div className={css.body}>
-        <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
-        <section className={css.details}>
-          <Json hideDivider json={shortDetails} />
-        </section>
-        <div />
-      </div>
+      <Suspense fallback={<Spinner center />}>
+        <div className={css.body}>
+          <RenderAllocationBarResourcePool resourcePool={pool} size={ShirtSize.Medium} />
+          <section className={css.details}>
+            <Json hideDivider json={shortDetails} />
+          </section>
+          <div />
+        </div>
+      </Suspense>
     </div>
   );
 };
@@ -141,7 +144,7 @@ export const RenderAllocationBarResourcePool: React.FC<Props> = ({
   resourcePool: pool,
   size = ShirtSize.Large,
 }: Props) => {
-  const { agents } = useStore();
+  const agents = Loadable.waitFor(useAgents());
   const isAux = useMemo(() => {
     return pool.auxContainerCapacityPerAgent > 0;
   }, [pool]);

@@ -1,11 +1,10 @@
 import { Divider, Tabs } from 'antd';
-import React, { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
 import Page from 'components/Page';
-import { PoolLogo } from 'components/ResourcePoolCard';
-import { RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
+import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
@@ -14,16 +13,18 @@ import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
+import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { camelCaseToSentence } from 'shared/utils/string';
-import { floatToPercent } from 'shared/utils/string';
+import { camelCaseToSentence, floatToPercent } from 'shared/utils/string';
+import { useAgents } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { JobState, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
@@ -47,9 +48,10 @@ type TabType = ValueOf<typeof TabType>;
 
 export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
-const ResourcepoolDetail: React.FC = () => {
+const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
-  const { agents, resourcePools } = useStore();
+  const { resourcePools } = useStore();
+  const agents = Loadable.getOrElse([], useAgents());
 
   const pool = useMemo(() => {
     return resourcePools.find((pool) => pool.name === poolname);
@@ -196,5 +198,11 @@ const ResourcepoolDetail: React.FC = () => {
     </Page>
   );
 };
+
+const ResourcepoolDetail: React.FC = () => (
+  <Suspense fallback={<Spinner />}>
+    <ResourcepoolDetailInner />
+  </Suspense>
+);
 
 export default ResourcepoolDetail;
