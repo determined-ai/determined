@@ -32,7 +32,7 @@ const useModalWorkspaceAddMember = ({
   workspaceId,
 }: Props): ModalHooks => {
   let knownRoles = rolesAssignableToScope;
-  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
@@ -113,6 +113,7 @@ const useModalWorkspaceAddMember = ({
             });
         form.resetFields();
         setSelectedOption(undefined);
+        onClose?.();
         message.success(`${getName(selectedOption)} added to workspace,`);
       }
     } catch (e) {
@@ -134,7 +135,7 @@ const useModalWorkspaceAddMember = ({
         });
       }
     }
-  }, [form, selectedOption, workspaceId]);
+  }, [form, selectedOption, workspaceId, onClose]);
 
   const modalContent = useMemo(() => {
     return (
@@ -177,7 +178,7 @@ const useModalWorkspaceAddMember = ({
         </Form>
       </div>
     );
-  }, [addableUsersAndGroups, form, handleFilter, handleSelect, knownRoles, rolesAssignableToScope]);
+  }, [addableUsersAndGroups, form, handleFilter, handleSelect, rolesAssignableToScope]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
