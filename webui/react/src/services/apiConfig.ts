@@ -1270,7 +1270,11 @@ export const patchWorkspace: DetApi<
     return decoder.mapV1Workspace(response.workspace);
   },
   request: (params, options) => {
-    return detApi.Workspaces.patchWorkspace(params.id, { name: params.name?.trim() }, options);
+    return detApi.Workspaces.patchWorkspace(
+      params.id,
+      { name: params.name?.trim(), ...params },
+      options,
+    );
   },
 };
 
