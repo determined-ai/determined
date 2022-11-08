@@ -183,7 +183,7 @@ func streamAuthInterceptor(db *db.PgDB,
 		user, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
 		fields := log.Fields{
 			"endpoint": info,
-			"userID":     user.ID,
+			"userID":   user.ID,
 		}
 		log.WithFields(fields).Info("RBAC Audit Logs (streaming endpoint)")
 		if err != nil {
