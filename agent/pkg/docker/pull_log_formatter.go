@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/sirupsen/logrus"
 )
@@ -104,8 +105,7 @@ func (f *pullLogFormatter) backoffOrRenderProgress() *string {
 	}
 	f.Backoff = now.Add(1 * time.Second)
 
-	progress := f.RenderProgress()
-	return &progress
+	return ptrs.Ptr(f.RenderProgress())
 }
 
 // Update returns nil or a rendered progress update for the end user.

@@ -33,12 +33,12 @@ func TestPullImage(t *testing.T) {
 	t.Log("building client")
 	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	require.NoError(t, err)
-	cl := docker.NewClient(rawCl)
 	defer func() {
-		if cErr := cl.Close(); cErr != nil {
+		if cErr := rawCl.Close(); cErr != nil {
 			t.Logf("closing docker client: %s", cErr)
 		}
 	}()
+	cl := docker.NewClient(rawCl)
 
 	t.Log("removing image")
 	switch _, err = rawCl.ImageRemove(ctx, testImage, types.ImageRemoveOptions{Force: true}); {
@@ -128,12 +128,13 @@ func TestRunContainer(t *testing.T) {
 	t.Log("building client")
 	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	require.NoError(t, err)
-	cl := docker.NewClient(rawCl)
 	defer func() {
-		if cErr := cl.Close(); cErr != nil {
+		if cErr := rawCl.Close(); cErr != nil {
 			t.Logf("closing docker client: %s", cErr)
 		}
 	}()
+	cl := docker.NewClient(rawCl)
+
 	t.Log("pull test image")
 	evs := make(chan docker.Event, 1024)
 	pub := events.ChannelPublisher(evs)
@@ -204,12 +205,13 @@ func TestRunContainerWithService(t *testing.T) {
 	t.Log("building client")
 	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	require.NoError(t, err)
-	cl := docker.NewClient(rawCl)
 	defer func() {
-		if cErr := cl.Close(); cErr != nil {
+		if cErr := rawCl.Close(); cErr != nil {
 			t.Logf("closing docker client: %s", cErr)
 		}
 	}()
+	cl := docker.NewClient(rawCl)
+
 	t.Log("pull test image")
 	evs := make(chan docker.Event, 1024)
 	pub := events.ChannelPublisher(evs)

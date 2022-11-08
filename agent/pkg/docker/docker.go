@@ -75,26 +75,27 @@ type Client struct {
 	authConfigs      map[string]types.AuthConfig
 
 	// System dependencies. Also set during initialization, never modified afterwards.
-	cl     *client.Client
-	logger *logrus.Entry
+	cl  *client.Client
+	log *logrus.Entry
 }
 
-// NewClient populates credentials from the Docker config and returns a new Client that uses them.
+// NewClient populates credentials from the Docker Daemon config and returns a new Client that uses
+// them.
 func NewClient(cl *client.Client) *Client {
 	d := &Client{
-		cl:     cl,
-		logger: logrus.WithField("component", "docker-client"),
+		cl:  cl,
+		log: logrus.WithField("component", "docker-client"),
 	}
 
 	stores, auths, err := processDockerConfig()
 	if err != nil {
-		d.logger.Infof("couldn't process ~/.docker/config.json %v", err)
+		d.log.Infof("couldn't process ~/.docker/config.json %v", err)
 	}
 	if len(stores) == 0 {
-		d.logger.Info("can't find any docker credential stores, continuing without them")
+		d.log.Info("can't find any docker credential stores, continuing without them")
 	}
 	if len(auths) == 0 {
-		d.logger.Info("can't find any auths in ~/.docker/config.json, continuing without them")
+		d.log.Info("can't find any auths in ~/.docker/config.json, continuing without them")
 	}
 	d.credentialStores, d.authConfigs = stores, auths
 
@@ -102,14 +103,9 @@ func NewClient(cl *client.Client) *Client {
 }
 
 // Inner returns the underlying Docker client, to be used sparingly.
-// TODO(???): Consolidate around usage of the wrapper client, remove this.
+// TODO(DET-8628): Consolidate around usage of the wrapper client, remove this.
 func (d *Client) Inner() *client.Client {
 	return d.cl
-}
-
-// Close closes the underlying Docker client.
-func (d *Client) Close() error {
-	return d.cl.Close()
 }
 
 // ReattachContainer looks for a single running or terminated container that matches the given
@@ -128,7 +124,7 @@ func (d *Client) ReattachContainer(
 	}
 
 	for _, cont := range containers {
-		// Subscribe to termination notifications first.
+		// Subscribe to termination notifications first, to not miss immediately exits.
 		waiter, errs := d.cl.ContainerWait(ctx, cont.ID, dcontainer.WaitConditionNextExit)
 
 		// Restore containerInfo.
@@ -204,7 +200,7 @@ func (d *Client) PullImage(ctx context.Context, req PullImage, p events.Publishe
 	}
 	defer func() {
 		if scErr := p.Publish(ctx, NewEndStatsEvent(ImagePullStatsKind)); scErr != nil {
-			d.logger.WithError(scErr).Warn("did not send image pull done stats")
+			d.log.WithError(scErr).Warn("did not send image pull done stats")
 		}
 	}()
 
@@ -227,7 +223,7 @@ func (d *Client) PullImage(ctx context.Context, req PullImage, p events.Publishe
 	}
 	defer func() {
 		if err = logs.Close(); err != nil {
-			d.logger.WithError(err).Error("error closing log stream")
+			d.log.WithError(err).Error("error closing log stream")
 		}
 	}()
 
@@ -287,12 +283,13 @@ func (d *Client) RunContainer(ctx context.Context, id string) (*Container, error
 		return nil, fmt.Errorf("starting container: %w", err)
 	}
 
-	// If we specified a port to expose but not the host port to bind, Docker assigns an arbitrary host
-	// port, which we ask for here. (If we did specify a host port, this gives the same one back.)
 	containerInfo, err := d.cl.ContainerInspect(ctx, id)
 	if err != nil {
 		if cErr := d.RemoveContainer(ctx, id, true); cErr != nil {
-			d.logger.WithError(cErr).Errorf("removing container %s after inspect failure", id)
+			d.log.
+				WithError(cErr).
+				WithField("dcl-container-id", id).
+				Errorf("removing container %s after inspect failure", id)
 		}
 		return nil, fmt.Errorf("inspecting, container may be orphaned: %w", err)
 	}
@@ -333,7 +330,7 @@ func (d *Client) ListRunningContainers(ctx context.Context, fs filters.Args) (
 		if ok {
 			result[cproto.ID(containerID)] = cont
 		} else {
-			d.logger.Warnf("container %v has agent label but no container ID", cont.ID)
+			d.log.Warnf("container %v has agent label but no container ID", cont.ID)
 		}
 	}
 	return result, nil
@@ -399,12 +396,14 @@ func (d *Client) getDockerAuths(
 		return nil, fmt.Errorf("error invalid docker repo name: %w", err)
 	}
 	reg := registry.ResolveAuthConfig(d.authConfigs, index)
-	if reg != (types.AuthConfig{}) {
-		if err := p.Publish(ctx, NewLogEvent(model.LogLevelInfo, fmt.Sprintf(
-			"domain '%s' found in 'auths' ~/.docker/config.json", imageDomain,
-		))); err != nil {
-			return nil, err
-		}
+	if reg == (types.AuthConfig{}) {
+		return &reg, nil
+	}
+
+	if err := p.Publish(ctx, NewLogEvent(model.LogLevelInfo, fmt.Sprintf(
+		"domain '%s' found in 'auths' ~/.docker/config.json", imageDomain,
+	))); err != nil {
+		return nil, err
 	}
 	return &reg, nil
 }
