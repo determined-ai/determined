@@ -55,7 +55,6 @@ def login_admin() -> None:
 @contextlib.contextmanager
 def logged_in_user(credentials: authentication.Credentials) -> Generator:
     log_in_user(credentials)
-    print(f"logged in user{credentials.username}")
     yield
     log_out_user()
 
@@ -126,7 +125,6 @@ def change_user_password(
 
 
 def log_out_user(username: Optional[str] = None) -> None:
-    print("in logiut")
     if username is not None:
         args = ["-u", username, "user", "logout"]
     else:
@@ -420,7 +418,7 @@ def test_login_as_non_existent_user(clean_auth: None, login_admin: None) -> None
     username = "doesNotExist"
 
     passwd_prompt = f"Password for user '{username}':"
-    unauth_error = "invalid credentials"
+    unauth_error = "Unauthenticated"
 
     child = det_spawn(["user", "login", username])
     child.setecho(True)
@@ -993,8 +991,7 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
 
     # Rename user using display name
     patch_user = bindings.v1PatchUser(displayName="renamed display-name")
-    patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
-    bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
@@ -1012,13 +1009,11 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
     # Avoid display name of 'admin'
     patch_user.displayName = "Admin"
     with pytest.raises(errors.APIException):
-        patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
-        bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
+        bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
     # Clear display name (UI will show username)
     patch_user.displayName = ""
-    patch_user_req = bindings.v1PatchUserRequest(userId=current_user.id, user=patch_user)
-    bindings.patch_PatchUser(sess, body=patch_user_req, userId=current_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user, userId=current_user.id)
 
     modded_user = bindings.get_GetUser(sess, userId=current_user.id).user
     assert modded_user is not None
@@ -1039,8 +1034,7 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     )
     test_user = _fetch_user_by_username(sess, test_username)
     assert test_user.id
-    patch_user_req = bindings.v1PatchUserRequest(userId=test_user.id, user=patch_user)
-    bindings.patch_PatchUser(sess, body=patch_user_req, userId=test_user.id)
+    bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)
     patched_user = bindings.get_GetUser(sess, userId=test_user.id).user
     assert patched_user is not None and patched_user.agentUserGroup is not None
     assert patched_user.agentUserGroup.agentUser == "username"
@@ -1050,9 +1044,7 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     patch_user = bindings.v1PatchUser(
         agentUserGroup=bindings.v1AgentUserGroup(agentGid=1000, agentUid=1000)
     )
-    patch_user_req = bindings.v1PatchUserRequest(userId=test_user.id, user=patch_user)
-
     test_user = _fetch_user_by_username(sess, test_username)
     assert test_user.id
     with pytest.raises(errors.APIException):
-        bindings.patch_PatchUser(sess, body=patch_user_req, userId=test_user.id)
+        bindings.patch_PatchUser(sess, body=patch_user, userId=test_user.id)

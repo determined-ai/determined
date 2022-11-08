@@ -161,12 +161,12 @@ def do_request(
             return ""
     
     if r.status_code == 403: 
-        username = None
+        username = ""
         if auth is not None:
             username = auth.get_session_user()
         raise errors.ForbiddenException(username=username, message=_get_error_str(r))
     if r.status_code == 401: 
-        username = None
+        username = ""
         if auth is not None: 
             username = auth.get_session_user()
         raise errors.UnauthenticatedException(username=username)

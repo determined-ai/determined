@@ -202,7 +202,7 @@ service Determined {
   rpc PatchUser(PatchUserRequest) returns (PatchUserResponse) {
     option (google.api.http) = {
       patch: "/api/v1/users/{user_id}",
-      body: "*"
+      body: "user"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"

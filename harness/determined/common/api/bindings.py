@@ -6770,48 +6770,6 @@ class v1PatchUser:
             out["username"] = self.username
         return out
 
-class v1PatchUserRequest:
-    isHashed: "typing.Optional[bool]" = None
-    user: "typing.Optional[v1PatchUser]" = None
-    userId: "typing.Optional[int]" = None
-
-    def __init__(
-        self,
-        *,
-        isHashed: "typing.Union[bool, None, Unset]" = _unset,
-        user: "typing.Union[v1PatchUser, None, Unset]" = _unset,
-        userId: "typing.Union[int, None, Unset]" = _unset,
-    ):
-        if not isinstance(isHashed, Unset):
-            self.isHashed = isHashed
-        if not isinstance(user, Unset):
-            self.user = user
-        if not isinstance(userId, Unset):
-            self.userId = userId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PatchUserRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "isHashed" in obj:
-            kwargs["isHashed"] = obj["isHashed"]
-        if "user" in obj:
-            kwargs["user"] = v1PatchUser.from_json(obj["user"]) if obj["user"] is not None else None
-        if "userId" in obj:
-            kwargs["userId"] = obj["userId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "isHashed" in vars(self):
-            out["isHashed"] = self.isHashed
-        if not omit_unset or "user" in vars(self):
-            out["user"] = None if self.user is None else self.user.to_json(omit_unset)
-        if not omit_unset or "userId" in vars(self):
-            out["userId"] = self.userId
-        return out
-
 class v1PatchUserResponse:
 
     def __init__(
@@ -14342,7 +14300,7 @@ def patch_PatchTrialsCollection(
 def patch_PatchUser(
     session: "api.Session",
     *,
-    body: "v1PatchUserRequest",
+    body: "v1PatchUser",
     userId: int,
 ) -> "v1PatchUserResponse":
     _params = None

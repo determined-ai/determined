@@ -157,7 +157,7 @@ export const patchUser: DetApi<
 > = {
   name: 'patchUser',
   postProcess: (response) => decoder.mapV1User(response.user),
-  request: (params) => detApi.Users.patchUser(params.userId, { user: params.userParams, userId: params.userId }),
+  request: (params) => detApi.Users.patchUser(params.userId, params.userParams),
 };
 
 export const getUserSetting: DetApi<

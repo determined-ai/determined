@@ -49,42 +49,33 @@ class User:
         patch_user = bindings.v1PatchUser(
             username=username, password=password, active=active, agentUserGroup=v1agent_user_group
         )
-
-        patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
-        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
         return resp
 
     def rename(self, new_username: str) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(username=new_username)
-        patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
-        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
         return resp
 
     def activate(self) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(active=True)
-        patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
-        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
         return resp
 
     def deactivate(self) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(active=False)
-        patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
-        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
         return resp
 
     def change_display_name(self, display_name: str) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(displayName=display_name)
-        patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
-        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
         return resp
 
     def change_password(self, new_password: str) -> bindings.v1PatchUserResponse:
         new_password = api.salt_and_hash(new_password)
-        patch_user = bindings.v1PatchUser(password=new_password)
-        patch_user_req = bindings.v1PatchUserRequest(
-            userId=self.user_id, user=patch_user, isHashed=True
-        )
-        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
         return resp
 
     def link_with_agent(
@@ -97,6 +88,5 @@ class User:
             agentUser=agent_user,
         )
         patch_user = bindings.v1PatchUser(agentUserGroup=v1agent_user_group)
-        patch_user_req = bindings.v1PatchUserRequest(userId=self.user_id, user=patch_user)
-        resp = bindings.patch_PatchUser(self.session, body=patch_user_req, userId=self.user_id)
+        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
         return resp

@@ -5567,6 +5567,7 @@ export interface V1PatchUser {
      * @memberof V1PatchUser
      */
     agentUserGroup?: V1AgentUserGroup;
+<<<<<<< HEAD
     /**
      * Indicate whether the provided password is pre-salted & hashed or not.
      * @type {boolean}
@@ -5593,10 +5594,12 @@ export interface V1PatchUserRequest {
      * @memberof V1PatchUserRequest
      */
     user?: V1PatchUser;
+=======
+>>>>>>> 03bfb691c (reset back to prev PatchUserReq and api add isHashed to PatchUser)
     /**
      * Indicate whether the provided password is pre-salted & hashed or not.
      * @type {boolean}
-     * @memberof V1PatchUserRequest
+     * @memberof V1PatchUser
      */
     isHashed?: boolean;
 }
@@ -25381,11 +25384,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * 
          * @summary Patch a user's fields.
          * @param {number} userId The id of the user.
-         * @param {V1PatchUserRequest} body 
+         * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUserRequest, options: any = {}): FetchArgs {
+        patchUser(userId: number, body: V1PatchUser, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
                 throw new RequiredError('userId','Required parameter userId was null or undefined when calling patchUser.');
@@ -25415,7 +25418,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
             localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1PatchUserRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            const needsSerialization = (<any>"V1PatchUser" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
             localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
 
             return {
@@ -25689,11 +25692,11 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch a user's fields.
          * @param {number} userId The id of the user.
-         * @param {V1PatchUserRequest} body 
+         * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUserRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
+        patchUser(userId: number, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(userId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -25845,11 +25848,11 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * 
          * @summary Patch a user's fields.
          * @param {number} userId The id of the user.
-         * @param {V1PatchUserRequest} body 
+         * @param {V1PatchUser} body The updated user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(userId: number, body: V1PatchUserRequest, options?: any) {
+        patchUser(userId: number, body: V1PatchUser, options?: any) {
             return UsersApiFp(configuration).patchUser(userId, body, options)(fetch, basePath);
         },
         /**
@@ -25967,12 +25970,12 @@ export class UsersApi extends BaseAPI {
      * 
      * @summary Patch a user's fields.
      * @param {number} userId The id of the user.
-     * @param {V1PatchUserRequest} body 
+     * @param {V1PatchUser} body The updated user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public patchUser(userId: number, body: V1PatchUserRequest, options?: any) {
+    public patchUser(userId: number, body: V1PatchUser, options?: any) {
         return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath);
     }
 

@@ -113,11 +113,9 @@ message SetUserPasswordResponse {
 // Edit fields for a user.
 message PatchUserRequest {
   // The id of the user.
-  int32 user_id = 3;
+  int32 user_id = 2;
   // The updated user.
-  determined.user.v1.PatchUser user = 2;
-  // Indicate whether the provided password is pre-salted & hashed or not.
-  bool is_hashed = 1;
+  determined.user.v1.PatchUser user = 1;
 }
 // Response to PatchUserRequest.
 message PatchUserResponse {
