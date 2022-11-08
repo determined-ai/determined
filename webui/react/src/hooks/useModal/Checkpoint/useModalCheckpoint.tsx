@@ -152,37 +152,50 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
-        {checkpoint.uuid && config.checkpointStorage?.type === CheckpointStorageType.S3 && (
-          <Button
-            disabled={isDownloading}
-            onClick={() => {
-              setIsDownloading(true);
-              const info = downloadCheckpoint(checkpoint.uuid || '');
-              const url =
-                window.location.host === 'localhost:3000'
-                  ? 'http://latest-master.determined.ai:8080' + info.url
-                  : info.url;
-              fetch(url, { headers: { ...info.options.headers, Accept: 'application/zip' } })
-                .then((res) => res.blob())
-                .then((blob) => {
-                  if (blob.size < 1000) {
-                    // consistent with an error message (usually Access Denied)
+        {checkpoint.uuid &&
+          config.checkpointStorage?.type === CheckpointStorageType.S3 &&
+          renderRow(
+            'Try Download',
+            <Button
+              disabled={isDownloading}
+              onClick={() => {
+                setIsDownloading(true);
+                const info = downloadCheckpoint(checkpoint.uuid || '');
+                fetch(info.url, { headers: { ...info.options.headers, Accept: 'application/zip' } })
+                  .then((res) => {
+                    if (res.ok) {
+                      return res.blob();
+                    } else {
+                      throw new Error('Failed to download');
+                    }
+                  })
+                  .then((blob) => {
+                    if (blob.size < 1000) {
+                      // consistent with an error message (usually Access Denied)
+                      setIsDownloading(false);
+                      handleError(null, {
+                        publicSubject: 'Unable to download checkpoint.',
+                        silent: false,
+                        type: ErrorType.Api,
+                      });
+                      return;
+                    }
+                    const file = window.URL.createObjectURL(blob);
+                    window.location.assign(file);
+                    setIsDownloading(false);
+                  })
+                  .catch(() => {
                     setIsDownloading(false);
                     handleError(null, {
                       publicSubject: 'Unable to download checkpoint.',
                       silent: false,
                       type: ErrorType.Api,
                     });
-                    return;
-                  }
-                  const file = window.URL.createObjectURL(blob);
-                  window.location.assign(file);
-                  setIsDownloading(false);
-                });
-            }}>
-            Download
-          </Button>
-        )}
+                  });
+              }}>
+              Download
+            </Button>,
+          )}
         {searcherMetric &&
           renderRow(
             'Validation Metric',
