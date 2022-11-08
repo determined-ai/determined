@@ -79,7 +79,7 @@ type Client struct {
 	logger *logrus.Entry
 }
 
-// NewClient populates credentials from the Daemon config returns a new Client that uses them.
+// NewClient populates credentials from the Docker config and returns a new Client that uses them.
 func NewClient(cl *client.Client) *Client {
 	d := &Client{
 		cl:     cl,
@@ -126,8 +126,6 @@ func (d *Client) ReattachContainer(
 	if len(containers) > 1 {
 		return nil, nil, errors.New("reattach filters matched more than one container")
 	}
-
-	context.Background()
 
 	for _, cont := range containers {
 		// Subscribe to termination notifications first.
@@ -323,7 +321,7 @@ func (d *Client) ListRunningContainers(ctx context.Context, fs filters.Args) (
 	map[cproto.ID]types.Container, error,
 ) {
 	// List "our" running containers, based on `dockerAgentLabel`.
-	// This doesn't affect fluentbit, or containers spawned by other agents.
+	// This doesn't include Fluent Bit or containers spawned by other agents.
 	containers, err := d.cl.ContainerList(ctx, types.ContainerListOptions{All: false, Filters: fs})
 	if err != nil {
 		return nil, err
@@ -335,7 +333,7 @@ func (d *Client) ListRunningContainers(ctx context.Context, fs filters.Args) (
 		if ok {
 			result[cproto.ID(containerID)] = cont
 		} else {
-			d.logger.Warnf("container %v has agent label but no container id", cont.ID)
+			d.logger.Warnf("container %v has agent label but no container ID", cont.ID)
 		}
 	}
 	return result, nil
@@ -360,7 +358,7 @@ func (d *Client) getDockerAuths(
 		if didNotPassServerAddress {
 			if err := p.Publish(ctx, NewLogEvent(model.LogLevelWarning,
 				"setting registry_auth without registry_auth.serveraddress is deprecated "+
-					"and will soon be required")); err != nil {
+					"and the latter will soon be required")); err != nil {
 				return nil, err
 			}
 		}
@@ -386,7 +384,7 @@ func (d *Client) getDockerAuths(
 		}
 
 		if err := p.Publish(ctx, NewLogEvent(model.LogLevelInfo, fmt.Sprintf(
-			"domain '%s' found in 'credHelpers' config. Using credentials helper.",
+			"domain '%s' found in 'credHelpers' config, using credentials helper",
 			imageDomain,
 		))); err != nil {
 			return nil, err
@@ -395,7 +393,7 @@ func (d *Client) getDockerAuths(
 		return &creds, nil
 	}
 
-	// Finally try using auths section of users ~/.docker/config.json.
+	// Finally try using auths section of user's ~/.docker/config.json.
 	index, err := registry.ParseSearchIndexInfo(image.String())
 	if err != nil {
 		return nil, fmt.Errorf("error invalid docker repo name: %w", err)

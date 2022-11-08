@@ -29,7 +29,7 @@ func getDockerConfigPath() (string, error) {
 	return path.Join(homeDir, ".docker", "config.json"), nil
 }
 
-// processDockerConfig reads a users ~/.docker/config.json and returns
+// processDockerConfig reads a user's ~/.docker/config.json and returns
 // credential helpers configured and the "auths" section of the config.
 func processDockerConfig() (map[string]*credentialStore, map[string]types.AuthConfig, error) {
 	dockerConfigFile, err := getDockerConfigPath()
@@ -39,7 +39,7 @@ func processDockerConfig() (map[string]*credentialStore, map[string]types.AuthCo
 
 	b, err := os.ReadFile(dockerConfigFile) // #nosec: G304
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "can't read docker config")
+		return nil, nil, errors.Wrap(err, "can't read Docker config")
 	}
 
 	var config struct {

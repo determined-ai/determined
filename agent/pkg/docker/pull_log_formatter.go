@@ -55,7 +55,7 @@ func (f *pullLogFormatter) RenderProgress() string {
 		extracted += info.Extracted
 		switch {
 		case !info.DownloadStarted:
-			// no progress on this layer
+			// No progress on this layer.
 		case info.Extracted == info.Total:
 			// this layer is complete
 			progress += 1.0
@@ -70,7 +70,7 @@ func (f *pullLogFormatter) RenderProgress() string {
 	// Normalize by layer count.
 	progress /= float64(len(f.Known))
 
-	// 40-character progress bar
+	// 40-character progress bar.
 	prog := int(40.0 * progress)
 
 	bar := ""
@@ -97,7 +97,7 @@ func (f *pullLogFormatter) RenderProgress() string {
 }
 
 func (f *pullLogFormatter) backoffOrRenderProgress() *string {
-	// log at most one line every 1 second
+	// Log at most one line every 1 second.
 	now := time.Now().UTC()
 	if now.Before(f.Backoff) {
 		return nil
@@ -119,9 +119,7 @@ func (f *pullLogFormatter) Update(msg jsonmessage.JSONMessage) *string {
 	var ok bool
 
 	switch msg.Status {
-	case "Pulling fs layer":
-		fallthrough
-	case "Waiting":
+	case "Pulling fs layer", "Waiting":
 		if _, ok = f.Known[msg.ID]; !ok {
 			// New layer!
 			f.Known[msg.ID] = &pullInfo{}
