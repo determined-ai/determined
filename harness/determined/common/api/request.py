@@ -127,9 +127,9 @@ def do_request(
         data = det.util.json_encode(json)
 
     try:
-        print("method and path in do_request")
-        print(method)
-        print(path)
+        #print("method and path in do_request")
+        #print(method)
+        #print(path)
         r = determined.common.requests.request(
             method,
             make_url(host, path),
