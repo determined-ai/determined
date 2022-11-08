@@ -9479,6 +9479,43 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
     return {
         /**
          * 
+         * @summary Check for access to a checkpoint's files for download.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        checkCheckpoint(checkpointUuid: string, options: any = {}): FetchArgs {
+            // verify required parameter 'checkpointUuid' is not null or undefined
+            if (checkpointUuid === null || checkpointUuid === undefined) {
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling checkCheckpoint.');
+            }
+            const localVarPath = `/checkpoints/{checkpoint_uuid}/access`
+                .replace(`{${"checkpoint_uuid"}}`, encodeURIComponent(String(checkpointUuid)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Delete Checkpoints.
          * @param {V1DeleteCheckpointsRequest} body 
          * @param {*} [options] Override http request option.
@@ -9648,6 +9685,25 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Check for access to a checkpoint's files for download.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        checkCheckpoint(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).checkCheckpoint(checkpointUuid, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Delete Checkpoints.
          * @param {V1DeleteCheckpointsRequest} body 
          * @param {*} [options] Override http request option.
@@ -9734,6 +9790,16 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
     return {
         /**
          * 
+         * @summary Check for access to a checkpoint's files for download.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        checkCheckpoint(checkpointUuid: string, options?: any) {
+            return CheckpointsApiFp(configuration).checkCheckpoint(checkpointUuid, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Delete Checkpoints.
          * @param {V1DeleteCheckpointsRequest} body 
          * @param {*} [options] Override http request option.
@@ -9783,6 +9849,18 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
  * @extends {BaseAPI}
  */
 export class CheckpointsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Check for access to a checkpoint's files for download.
+     * @param {string} checkpointUuid Checkpoint UUID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CheckpointsApi
+     */
+    public checkCheckpoint(checkpointUuid: string, options?: any) {
+        return CheckpointsApiFp(this.configuration).checkCheckpoint(checkpointUuid, options)(this.fetch, this.basePath);
+    }
+
     /**
      * 
      * @summary Delete Checkpoints.

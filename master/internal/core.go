@@ -1027,6 +1027,7 @@ func (m *Master) Run(ctx context.Context) error {
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 
 	checkpointsGroup := m.echo.Group("/checkpoints")
+	checkpointsGroup.GET("/:checkpoint_uuid/access", m.checkCheckpoint)
 	checkpointsGroup.GET("/:checkpoint_uuid", m.getCheckpoint)
 
 	searcherGroup := m.echo.Group("/searcher")

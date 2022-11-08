@@ -6,12 +6,11 @@ import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
-import { downloadCheckpoint } from 'services/apiConfig';
+import { checkCheckpoint, downloadCheckpoint } from 'services/apiConfig';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { formatDatetime } from 'shared/utils/datetime';
-import { ErrorType } from 'shared/utils/error';
 import { humanReadableBytes } from 'shared/utils/string';
 import {
   CheckpointStorageType,
@@ -19,7 +18,6 @@ import {
   CoreApiGenericCheckpoint,
   ExperimentConfig,
 } from 'types';
-import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
 
 import css from './useModalCheckpoint.module.scss';
@@ -32,6 +30,13 @@ export interface Props {
   searcherValidation?: number;
   title: string;
 }
+
+const DownloadState = {
+  Initial: 0,
+  InProgress: 1,
+  MadeDownload: 2,
+  NoAccess: 3,
+};
 
 const getStorageLocation = (
   config: ExperimentConfig,
@@ -90,7 +95,7 @@ const useModalCheckpoint = ({
 
   const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [onClose]);
 
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadState, setDownloadState] = useState(DownloadState.Initial);
 
   const handleDelete = useCallback(() => {
     if (!checkpoint.uuid) return;
@@ -116,6 +121,15 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
   const onClickDelete = useCallback(() => {
     openOrUpdate(deleteCPModalProps);
   }, [openOrUpdate, deleteCPModalProps]);
+
+  useMemo(async () => {
+    if (checkpoint?.uuid) {
+      const u = await checkCheckpoint(checkpoint.uuid);
+      if (!u) {
+        setDownloadState(DownloadState.NoAccess);
+      }
+    }
+  }, [checkpoint?.uuid]);
 
   const content = useMemo(() => {
     if (!checkpoint?.experimentId || !checkpoint?.resources) return null;
@@ -153,42 +167,35 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
         {checkpoint.uuid &&
+          [DownloadState.Initial, DownloadState.InProgress].includes(downloadState) &&
           config.checkpointStorage?.type === CheckpointStorageType.S3 &&
           renderRow(
             'Try Download',
             <Button
-              disabled={isDownloading}
+              disabled={downloadState === 1}
               onClick={() => {
-                setIsDownloading(true);
+                setDownloadState(DownloadState.InProgress);
                 const info = downloadCheckpoint(checkpoint.uuid || '');
-                fetch(info.url, { headers: { ...info.options.headers, Accept: 'application/zip' } })
-                  .then((res) => {
-                    if (res.ok) {
-                      return res.blob();
-                    } else {
-                      throw new Error('Failed to download');
-                    }
-                  })
-                  .then((blob) => {
-                    if (blob.size < 1000) {
-                      // consistent with an error message (usually Access Denied)
-                      throw new Error('Checkpoint file size too small');
-                    }
-                    const file = window.URL.createObjectURL(blob);
-                    window.location.assign(file);
-                    setIsDownloading(false);
-                  })
-                  .catch(() => {
-                    handleError(null, {
-                      publicSubject: 'Unable to download checkpoint.',
-                      silent: false,
-                      type: ErrorType.Api,
-                    });
-                  });
+                window.location.assign(info.url);
+                setTimeout(() => {
+                  setDownloadState(DownloadState.MadeDownload);
+                }, 2000);
               }}>
               Download
             </Button>,
           )}
+        {downloadState === DownloadState.MadeDownload && (
+          <div>
+            <span>If download fails, use the CLI:</span>
+            <pre>det checkpoint download {checkpoint.uuid}</pre>
+          </div>
+        )}
+        {downloadState === DownloadState.NoAccess && (
+          <div>
+            <span>CLI download command:</span>
+            <pre>det checkpoint download {checkpoint.uuid}</pre>
+          </div>
+        )}
         {searcherMetric &&
           renderRow(
             'Validation Metric',
@@ -220,7 +227,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
           )}
       </div>
     );
-  }, [checkpoint, config, props.searcherValidation, onClickDelete, isDownloading]);
+  }, [checkpoint, config, props.searcherValidation, onClickDelete, downloadState]);
 
   const modalProps: ModalFuncProps = useMemo(
     () => ({

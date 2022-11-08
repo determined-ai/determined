@@ -26,6 +26,7 @@ const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
   return {
     Auth: new Api.AuthenticationApi(config),
     Checkpoint: Api.CheckpointsApiFetchParamCreator(config),
+    Checkpoints: new Api.CheckpointsApi(config),
     Cluster: new Api.ClusterApi(config),
     Commands: new Api.CommandsApi(config),
     Experiments: new Api.ExperimentsApi(config),
@@ -1625,4 +1626,9 @@ export const updateJobQueue: DetApi<
 
 export const downloadCheckpoint = (uuid: string): Api.FetchArgs => {
   return detApi.Checkpoint.getCheckpoint_1(uuid);
+};
+
+export const checkCheckpoint = async (uuid: string): Promise<boolean> => {
+  const resp = await detApi.Checkpoints.checkCheckpoint(uuid);
+  return !!resp;
 };
