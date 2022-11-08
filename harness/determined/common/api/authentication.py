@@ -93,6 +93,8 @@ class Authentication:
             raise api.errors.UnauthenticatedException(username=session_user)
 
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
+        print("fallback to default")
+        print(fallback_to_default)
         if fallback_to_default:
             password = constants.DEFAULT_DETERMINED_PASSWORD
         elif session_user is None:
@@ -102,11 +104,17 @@ class Authentication:
             password = getpass.getpass("Password for user '{}': ".format(session_user))
 
         try:
+            print("in do login token authentication")
             token = do_login(self.master_address, session_user, password, cert)
         except api.errors.ForbiddenException:
             if fallback_to_default:
                 raise api.errors.UnauthenticatedException(username=session_user)
             raise
+        except Exception as e:
+            if "invalid credentials" in str(e): 
+                raise  api.errors.UnauthenticatedException(username=session_user)
+            raise
+            #raise ValueError("fuck my life")'''
 
         self.token_store.set_token(session_user, token)
 

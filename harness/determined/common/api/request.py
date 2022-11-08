@@ -127,6 +127,9 @@ def do_request(
         data = det.util.json_encode(json)
 
     try:
+        print("method and path in do_request")
+        print(method)
+        print(path)
         r = determined.common.requests.request(
             method,
             make_url(host, path),
@@ -156,9 +159,8 @@ def do_request(
             return str(json_resp.get("error").get("error"))
         except Exception:
             return ""
-
-    if r.status_code == 403:
-        username = ""
+    
+    if r.status_code == 403: 
         if auth is not None:
             username = auth.get_session_user()
         raise errors.ForbiddenException(username=username, message=_get_error_str(r))

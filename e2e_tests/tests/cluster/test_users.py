@@ -242,14 +242,15 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     log_out_user()
     # Now trying to list experiments should result in an error.
     child = det_spawn(["user", "whoami"])
-    print(creds.username)
-    print("stdout")
-    print(child.read())
+    #print(creds.username)
+    #print("stdout")
+    #print(child.read())
     #child = det_spawn(["e", "list"])
-    #expected = "Unauthenticated"
-    #assert expected in str(child.read())
+    expected = "Unauthenticated"
+    assert expected in str(child.read())
     child.wait()
-    assert child.exitstatus != 0
+    child.close()
+    assert child.status == 0
 
     # Log in as determined.
     log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))
