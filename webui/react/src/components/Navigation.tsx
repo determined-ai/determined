@@ -2,11 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
-import {
-  useFetchMyRoles,
-  useFetchPinnedWorkspaces,
-  useFetchResourcePools,
-} from 'hooks/useFetch';
+import { useFetchMyRoles, useFetchPinnedWorkspaces, useFetchResourcePools } from 'hooks/useFetch';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
