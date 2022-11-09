@@ -8,8 +8,8 @@ class User:
     def __init__(
         self,
         user_id: int,
-        username: str,
-        admin: bool,
+        username: Optional[str],
+        admin: Optional[bool],
         session: api.Session,
         active: Optional[bool] = True,
         display_name: Optional[str] = None,
@@ -28,29 +28,6 @@ class User:
         self.agent_group = agent_group
         self.session = session
         self.display_name = display_name
-
-    def update(
-        self,
-        username: Optional[str] = None,
-        active: Optional[bool] = None,
-        password: Optional[str] = None,
-        agent_uid: Optional[int] = None,
-        agent_gid: Optional[int] = None,
-        agent_user: Optional[str] = None,
-        agent_group: Optional[str] = None,
-        admin: Optional[bool] = None,
-    ) -> bindings.v1PatchUserResponse:
-        v1agent_user_group = bindings.v1AgentUserGroup(
-            agentGid=agent_gid,
-            agentGroup=agent_group,
-            agentUid=agent_uid,
-            agentUser=agent_user,
-        )
-        patch_user = bindings.v1PatchUser(
-            username=username, password=password, active=active, agentUserGroup=v1agent_user_group
-        )
-        resp = bindings.patch_PatchUser(self.session, body=patch_user, userId=self.user_id)
-        return resp
 
     def rename(self, new_username: str) -> bindings.v1PatchUserResponse:
         patch_user = bindings.v1PatchUser(username=new_username)
@@ -79,7 +56,11 @@ class User:
         return resp
 
     def link_with_agent(
-        self, agent_gid, agent_group, agent_uid, agent_user
+        self,
+        agent_uid: Optional[int] = None,
+        agent_gid: Optional[int] = None,
+        agent_user: Optional[str] = None,
+        agent_group: Optional[str] = None,
     ) -> bindings.v1PatchUserResponse:
         v1agent_user_group = bindings.v1AgentUserGroup(
             agentGid=agent_gid,

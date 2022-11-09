@@ -64,6 +64,7 @@ class Determined:
         self._session = api.Session(master, user, auth, cert)
 
     def _from_bindings(self, raw: bindings.v1User) -> user.User:
+        assert raw.id is not None
         if raw.agentUserGroup is not None:
             return user.User(
                 user_id=raw.id,
@@ -89,13 +90,17 @@ class Determined:
 
     def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
         create_user = bindings.v1User(username=username, admin=admin, active=True)
-        hashedPassword = api.salt_and_hash(password)
+        hashedPassword = None
+        if password is not None:
+            hashedPassword = api.salt_and_hash(password)
         req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
         resp = bindings.post_PostUser(self._session, body=req)
+        assert resp.user is not None
         return self._from_bindings(resp.user)
 
     def get_user_by_id(self, user_id: int) -> user.User:
         resp = bindings.get_GetUser(session=self._session, userId=user_id)
+        assert user_id is not None
         return self._from_bindings(resp.user)
 
     def get_user_by_name(self, user_name: str) -> user.User:
@@ -111,7 +116,9 @@ class Determined:
 
     def list_users(self) -> Sequence[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
-        users = []
+        users: List[user.User] = []
+        if users_bindings is None:
+            return users
         for user_b in users_bindings:
             user_obj = self._from_bindings(user_b)
             users.append(user_obj)
