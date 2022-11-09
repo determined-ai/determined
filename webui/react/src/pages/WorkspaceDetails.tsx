@@ -132,7 +132,7 @@ const WorkspaceDetails: React.FC = () => {
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, id]);
+  }, [canceler.signal, id, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
@@ -218,6 +218,7 @@ const WorkspaceDetails: React.FC = () => {
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
             <WorkspaceMembers
               assignments={workspaceAssignments}
+              fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
               groupsAssignedDirectly={groupsAssignedDirectly}
               pageRef={pageRef}
               rolesAssignableToScope={rolesAssignableToScope}

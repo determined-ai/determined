@@ -744,15 +744,8 @@ export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.Resourc
 
 export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
   return {
-    archived: data.archived,
-    id: data.id,
-    immutable: data.immutable,
-    name: data.name,
-    numExperiments: data.numExperiments,
-    numProjects: data.numProjects,
-    pinned: data.pinned,
+    ...data,
     state: mapWorkspaceState(data.state),
-    userId: data.userId,
   };
 };
 

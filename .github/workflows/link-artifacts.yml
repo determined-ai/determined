@@ -1,7 +1,7 @@
 ---
 name: "Link artifacts"
 
-on:
+on:  # yamllint disable-line rule:truthy
   status
 
 jobs:

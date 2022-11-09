@@ -19,7 +19,9 @@ import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
+import { useAgents, useClusterOverview } from 'stores/agents';
 import { BrandingType } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -107,8 +109,16 @@ export const NavigationItem: React.FC<ItemProps> = ({
 const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
-  const { agents, auth, cluster: overview, resourcePools, info, pinnedWorkspaces } = useStore();
+
+  const { auth, resourcePools, info, pinnedWorkspaces } = useStore();
   const { ui } = useUI();
+  const agents = useAgents();
+  const overview = useClusterOverview();
+  const clusterStatus = Loadable.match(Loadable.all([agents, overview]), {
+    Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
+    NotLoaded: () => undefined, // TODO show spinner when this is loading
+  });
+
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab();
@@ -227,11 +237,7 @@ const NavigationSideBar: React.FC = () => {
             {menuConfig.top.map((config) => (
               <NavigationItem
                 key={config.icon}
-                status={
-                  config.icon === 'cluster'
-                    ? clusterStatusText(overview, resourcePools, agents)
-                    : undefined
-                }
+                status={config.icon === 'cluster' ? clusterStatus : undefined}
                 tooltip={settings.navbarCollapsed}
                 {...config}
               />

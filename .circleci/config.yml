@@ -45,6 +45,9 @@ parameters:
   gke-version:
     type: string
     default: "1.21.14"
+  master-build-resource-class:
+    type: string
+    default: large
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -1065,7 +1068,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - pre-package-and-push-system:
           check: false
       - run: make package
@@ -1086,13 +1089,13 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: medium+
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1125,13 +1128,13 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: medium+
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -1155,13 +1158,13 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: medium+
+    resource_class: <<pipeline.parameters.master-build-resource-class>>
     steps:
       - checkout
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 19.03.12
+          version: 20.10.18
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
@@ -2205,7 +2208,8 @@ workflows:
 
   test-intg:
     jobs:
-      - test-intg-downstream
+      # https://determined-ai.slack.com/archives/C03H5KZPU30/p1667241463073989
+      # - test-intg-downstream
       - test-intg-master:
           context: storage-unit-tests
       - test-intg-agent
@@ -2283,10 +2287,10 @@ workflows:
           parallelism: 1
           tf1: false
           tf2: true
-          devcluster-config: strict-ntsc.devcluster.yaml          
+          devcluster-config: strict-ntsc.devcluster.yaml
           mark: test_strict_ntsc
           target-stage: agent2
-          
+
       - test-e2e:
           name: test-e2e-managed-devcluster
           requires:

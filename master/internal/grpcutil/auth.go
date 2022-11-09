@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -180,11 +182,16 @@ func streamAuthInterceptor(db *db.PgDB,
 		// we can't easily modify ss's context and
 		// we would have to worry about the user session expiring in the context.
 		_, _, err := auth(ss.Context(), db, info.FullMethod, extConfig)
+		fields := log.Fields{"endpoint": info.FullMethod}
+		wrappedSS := grpc_middleware.WrappedServerStream{
+			ServerStream:   ss,
+			WrappedContext: context.WithValue(ss.Context(), audit.LogKey{}, fields),
+		}
 		if err != nil {
 			return err
 		}
 
-		return handler(srv, ss)
+		return handler(srv, &wrappedSS)
 	}
 }
 
@@ -204,6 +211,17 @@ func unaryAuthInterceptor(db *db.PgDB,
 		if session != nil {
 			ctx = context.WithValue(ctx, userSessionContextKey{}, session)
 		}
+
+		return handler(ctx, req)
+	}
+}
+
+func authZInterceptor() grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+	) (resp interface{}, err error) {
+		fields := log.Fields{"endpoint": info.FullMethod}
+		ctx = context.WithValue(ctx, audit.LogKey{}, fields)
 
 		return handler(ctx, req)
 	}

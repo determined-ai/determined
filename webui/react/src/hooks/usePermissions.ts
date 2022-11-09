@@ -61,6 +61,8 @@ interface PermissionsHook {
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyUsers: boolean;
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyWorkspaceAgentUserGroup: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyWorkspaceCheckpointStorage: (arg0: WorkspacePermissionsArgs) => boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveExperimentsTo: (arg0: MovePermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
@@ -124,6 +126,10 @@ const usePermissions = (): PermissionsHook => {
       canModifyUsers: canAdministrateUsers(rbacOpts),
       canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspace(rbacOpts, args.workspace),
+      canModifyWorkspaceAgentUserGroup: (args: WorkspacePermissionsArgs) =>
+        canModifyWorkspaceAgentUserGroup(rbacOpts, args.workspace),
+      canModifyWorkspaceCheckpointStorage: (args: WorkspacePermissionsArgs) =>
+        canModifyWorkspaceCheckpointStorage(rbacOpts, args.workspace),
       canMoveExperiment: (args: ExperimentPermissionsArgs) =>
         canMoveExperiment(rbacOpts, args.experiment),
       canMoveExperimentsTo: (args: MovePermissionsArgs) =>
@@ -427,6 +433,32 @@ const canModifyWorkspace = (
       (rbacEnabled
         ? permitted.has(V1PermissionType.UPDATEWORKSPACE)
         : user.isAdmin || user.id === workspace.userId))
+  );
+};
+
+const canModifyWorkspaceAgentUserGroup = (
+  { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    rbacAllPermission ||
+    (!!user &&
+      (rbacEnabled ? permitted.has(V1PermissionType.SETWORKSPACEAGENTUSERGROUP) : user.isAdmin))
+  );
+};
+
+const canModifyWorkspaceCheckpointStorage = (
+  { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    rbacAllPermission ||
+    (!!user &&
+      (rbacEnabled
+        ? permitted.has(V1PermissionType.SETWORKSPACECHECKPOINTSTORAGECONFIG)
+        : user.isAdmin))
   );
 };
 

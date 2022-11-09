@@ -28,7 +28,7 @@ const useModalWorkspaceRemoveMember = ({
   scopeWorkspaceId,
   userOrGroupId,
 }: Props): ModalHooks => {
-  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const modalContent = useMemo(() => {
@@ -48,6 +48,7 @@ const useModalWorkspaceRemoveMember = ({
       isUser(userOrGroup)
         ? await removeRolesFromUser({ roleIds, scopeWorkspaceId, userId: userOrGroupId })
         : await removeRolesFromGroup({ groupId: userOrGroupId, roleIds, scopeWorkspaceId });
+      onClose?.();
       message.success(`${name} removed from workspace`);
     } catch (e) {
       setIsDeleting(false);
@@ -69,7 +70,7 @@ const useModalWorkspaceRemoveMember = ({
         });
       }
     }
-  }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId]);
+  }, [name, roleIds, scopeWorkspaceId, userOrGroup, userOrGroupId, onClose]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {
@@ -81,7 +82,7 @@ const useModalWorkspaceRemoveMember = ({
       onOk: handleOk,
       title: `Remove ${name}`,
     };
-  }, [handleOk, modalContent, name]);
+  }, [handleOk, modalContent, name, isDeleting]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {

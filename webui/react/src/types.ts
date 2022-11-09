@@ -1,5 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
-import { V1Group, V1Trigger } from 'services/api-ts-sdk';
+import { V1AgentUserGroup, V1Group, V1Trigger } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
 
 interface WithPagination {
@@ -791,7 +791,9 @@ export type JobAction = ValueOf<typeof JobAction>;
 /* End of Jobs */
 
 export interface Workspace {
+  agentUserGroup?: V1AgentUserGroup;
   archived: boolean;
+  checkpointStorageConfig?: any;
   id: number;
   immutable: boolean;
   name: string;

@@ -185,7 +185,7 @@ args_description = [
             Cmd(
                 "create",
                 create_group,
-                "creates a user group",
+                "create a user group",
                 [
                     Arg("group_name", help="name of user group to be created"),
                     Arg(
@@ -200,7 +200,7 @@ args_description = [
             Cmd(
                 "delete",
                 delete_group,
-                "deletes a user group",
+                "delete a user group",
                 [
                     Arg("group_name", help="name of user group to be deleted"),
                     Arg("--yes", action="store_true", help="skip prompt asking for confirmation"),
@@ -220,7 +220,7 @@ args_description = [
             Cmd(
                 "describe",
                 describe_group,
-                "describes a user group",
+                "describe a user group",
                 [
                     Arg("group_name", help="name of user group to describe"),
                     Arg("--json", action="store_true", help="print as JSON"),
@@ -238,7 +238,7 @@ args_description = [
             Cmd(
                 "remove-user",
                 remove_user_from_group,
-                "removes user from a group",
+                "remove user from a group",
                 [
                     Arg("group_name", help="name of user group to remove users from"),
                     Arg("usernames", help="a comma seperated list of usernames"),
@@ -247,7 +247,7 @@ args_description = [
             Cmd(
                 "change-name",
                 change_group_name,
-                "changes name of a user group",
+                "change name of a user group",
                 [
                     Arg("old_group_name", help="name of user group to be updated"),
                     Arg("new_group_name", help="name of user group to change to"),
