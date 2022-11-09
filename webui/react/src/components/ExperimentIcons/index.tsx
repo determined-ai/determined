@@ -2,14 +2,7 @@ import { Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 
 import { runStateToLabel } from 'constants/states';
-import cancel_dark from 'shared/assets/images/cancel-dark.svg';
-import cancel_light from 'shared/assets/images/cancel-light.svg';
-import complete from 'shared/assets/images/complete.svg';
-import error from 'shared/assets/images/error.svg';
-import pause_dark from 'shared/assets/images/pause-dark.svg';
-import pause_light from 'shared/assets/images/pause-light.svg';
-import useUI from 'shared/contexts/stores/UI';
-import { DarkLight } from 'shared/themes';
+import Icon from 'shared/components/Icon/Icon';
 import { RunState } from 'types';
 
 import Active from './Active';
@@ -21,8 +14,6 @@ interface Props {
 }
 
 const ExperimentIcons: React.FC<Props> = ({ state }) => {
-  const { ui } = useUI();
-  const isDark = useMemo(() => ui.darkLight === DarkLight.Dark, [ui]);
   const icon = useMemo(() => {
     switch (state) {
       case RunState.Queued:
@@ -33,21 +24,21 @@ const ExperimentIcons: React.FC<Props> = ({ state }) => {
       case RunState.Running:
         return <Spinner type="half" />;
       case RunState.Paused:
-        return <img src={isDark ? pause_dark : pause_light} />;
+        return <Icon name="pause" style={{ color: 'var(--theme-ix-cancel)' }} />;
       case RunState.Completed:
-        return <img src={complete} />;
+        return <Icon name="checkmark" style={{ color: 'var(--theme-status-success)' }} />;
       case RunState.Error:
       case RunState.Deleted:
       case RunState.Deleting:
       case RunState.DeleteFailed:
-        return <img src={error} />;
+        return <Icon name="error" style={{ color: 'var(--theme-status-error)' }} />;
       case RunState.Active:
       case RunState.Unspecified:
         return <Active />;
       default:
-        return <img src={isDark ? cancel_dark : cancel_light} />;
+        return <Icon name="cancelled" style={{ color: 'var(--theme-ix-cancel)' }} />;
     }
-  }, [state, isDark]);
+  }, [state]);
   return (
     <Tooltip title={runStateToLabel[state]}>
       <span>{icon}</span>

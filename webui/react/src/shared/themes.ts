@@ -126,6 +126,7 @@ const themeBase = {
   statusCriticalOn: 'rgba(255, 255, 255, 1.0)',
   statusCriticalOnStrong: undefined,
   statusCriticalOnWeak: undefined,
+  statusError: 'rgb(247, 140, 140)',
   statusInactive: 'rgba(102, 102, 102, 1.0)',
   statusInactiveStrong: undefined,
   statusInactiveWeak: undefined,
@@ -151,6 +152,9 @@ const themeBase = {
   statusWarningOn: 'rgba(255, 255, 255, 1.0)',
   statusWarningOnStrong: undefined,
   statusWarningOnWeak: undefined,
+
+  breathButton: 'rgba(143, 143, 143, 0.4)',
+  breathButtonOverlay: 'rgba(143, 143, 143, 0.2)',
 };
 
 const themeLight = {
@@ -185,6 +189,7 @@ const themeLight = {
   ixBorder: 'rgba(217, 217, 217, 1.0)',
   ixBorderActive: 'rgba(0, 155, 222, 1.0)',
   ixBorderInactive: 'rgba(217, 217, 217, 1.0)',
+  ixCancel: 'rgba(89,89,89,1)',
 
   // Specialized and unique styles.
   overlay: 'rgba(255, 255, 255, 0.75)',
@@ -193,9 +198,6 @@ const themeLight = {
   elevation: '0px 6px 12px rgba(0, 0, 0, 0.12)',
   elevationStrong: '0px 12px 24px rgba(0, 0, 0, 0.12)',
   elevationWeak: '0px 2px 4px rgba(0, 0, 0, 0.24)',
-
-  breathButton: 'rgba(143, 143, 143, 0.4)',
-  breathButtonOverlay: 'rgba(143, 143, 143, 0.2)',
 };
 
 const themeDark = {
@@ -230,6 +232,7 @@ const themeDark = {
   ixBorder: 'rgba(67, 67, 67, 1.0)',
   ixBorderActive: 'rgba(23, 125, 220, 1.0)',
   ixBorderInactive: 'rgba(80, 80, 80, 1.0)',
+  ixCancel: 'rgba(115,115,115,1)',
 
   // Specialized and unique styles.
   overlay: 'rgba(0, 0, 0, 0.75)',
@@ -238,9 +241,6 @@ const themeDark = {
   elevation: '0px 6px 12px rgba(255, 255, 255, 0.06)',
   elevationStrong: '0px 12px 24px rgba(255, 255, 255, 0.06)',
   elevationWeak: '0px 2px 4px rgba(255, 255, 255, 0.12)',
-
-  breathButton: 'rgba(205, 158, 234, 0.6)',
-  breathButtonOverlay: 'rgba(205, 158, 234, 0.3)',
 };
 
 export const themeLightDetermined: Theme = generateStrongWeak(
