@@ -369,6 +369,9 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 				},
 			},
 		},
+		MetadataOptions: &ec2.InstanceMetadataOptionsRequest{
+			HttpTokens: aws.String(ec2.HttpTokensStateRequired),
+		},
 		UserData: aws.String(base64.StdEncoding.EncodeToString(c.ec2UserData)),
 	}
 
