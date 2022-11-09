@@ -11,7 +11,9 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -57,8 +59,42 @@ func UserByUsername(username string) (*model.User, error) {
 
 // AddUserExec execs an INSERT to create a new user.
 func AddUserExec(user *model.User) error {
-	_, err := db.Bun().NewInsert().Model(user).ExcludeColumn("id").Returning("*").Exec(context.TODO())
-	return err
+	ctx := context.TODO()
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		txErr := tx.Rollback()
+		if txErr != nil && txErr != sql.ErrTxDone {
+			logrus.WithError(txErr).Error("error rolling back transaction in AddUserExec")
+		}
+	}()
+
+	_, err = tx.NewInsert().Model(user).ExcludeColumn("id").Returning("*").Exec(ctx)
+	if err != nil {
+		return errors.Wrap(err, "error inserting user")
+	}
+
+	personalGroup := struct { // Duped definition to avoid import cycle. TODO redesign this.
+		bun.BaseModel `bun:"table:groups,alias:groups"`
+
+		ID      int          `bun:"id,pk,autoincrement" json:"id"`
+		Name    string       `bun:"group_name,notnull"  json:"name"`
+		OwnerID model.UserID `bun:"user_id,nullzero"    json:"userId,omitempty"`
+	}{
+		Name:    user.Username + db.PersonalGroupPostfix,
+		OwnerID: user.ID,
+	}
+	if _, err = tx.NewInsert().Model(&personalGroup).Exec(ctx); err != nil {
+		return errors.Wrap(err, "error inserting personal group")
+	}
+
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, "error committing changes in AddUserExec")
+	}
+
+	return nil
 }
 
 // UserByExternalToken returns a user session derived from an external authentication token.

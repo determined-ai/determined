@@ -4,16 +4,18 @@
 package user
 
 import (
+	stdContext "context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 
 	"github.com/pkg/errors"
 
@@ -50,6 +52,25 @@ func setup(t *testing.T) (*Service, *mocks.UserAuthZ, echo.Context) {
 
 	InitService(pgDB, nil, nil)
 	return GetService(), userAuthzSingleton, ctx
+}
+
+func TestAddUserExec(t *testing.T) {
+	setup(t)
+	ctx := stdContext.TODO()
+	u := &model.User{Username: uuid.New().String()}
+	err := AddUserExec(u)
+	require.NoError(t, err)
+
+	actual := &model.User{}
+	require.NoError(t, db.Bun().NewSelect().Model(actual).Where("id = ?", u.ID).Scan(ctx))
+	require.Equal(t, u.Username, actual.Username)
+
+	actualGroup := &struct {
+		bun.BaseModel `bun:"table:groups,alias:groups"`
+		Name          string `bun:"group_name,notnull"  json:"name"`
+	}{}
+	require.NoError(t, db.Bun().NewSelect().Model(actualGroup).Where("user_id = ?", u.ID).Scan(ctx))
+	require.Equal(t, u.Username+db.PersonalGroupPostfix, actualGroup.Name)
 }
 
 func TestAuthzUserList(t *testing.T) {
