@@ -61,6 +61,9 @@ def log_out_user(parsed_args: Namespace) -> None:
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e
+    
+    except api.errors.UnauthenticatedException:
+       pass
 
     token_store = authentication.TokenStore(parsed_args.master)
     token_store.drop_user(auth.get_session_user())
@@ -134,7 +137,6 @@ def create_user(parsed_args: Namespace) -> None:
 
 @login_sdk_client
 def whoami(parsed_args: Namespace) -> None:
-    print("whoami user cli method")
     user = client.whoami()
     print("You are logged in as user '{}'".format(user.username))
 

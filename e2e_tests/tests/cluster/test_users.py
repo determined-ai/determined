@@ -84,6 +84,7 @@ def log_in_user(credentials: authentication.Credentials) -> None:
     child.read()
     child.wait()
     child.close()
+    assert child.exitstatus == 0
 
 def create_test_user(add_password: bool = False) -> authentication.Credentials:
     n_username = get_random_string()
@@ -133,7 +134,8 @@ def log_out_user(username: Optional[str] = None) -> None:
     child = det_spawn(args)
     child.read()
     child.wait()
-    #child.close()
+    child.close()
+    assert child.exitstatus == 0
 
 
 def activate_deactivate_user(active: bool, target_user: str) -> int:
@@ -239,20 +241,13 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     # Exiting the logged_in_user context logs out and asserts that the exit code is 0.
     log_out_user()
     # Now trying to list experiments should result in an error.
-    child = det_spawn(["user", "whoami"])
-    #print(creds.username)
-    print("stdout of child process user whoami")
-    print(child.read())
-    #child = det_spawn(["e", "list"])
-    #expected = "Unauthenticated"
-    #assert expected in str(child.read())
+    child = det_spawn(["e", "list"])
+    expected = "Unauthenticated"
+    assert expected in str(child.read())
     child.wait()
     child.close()
     assert child.status != 0
-
-    #command = ["det", "-m", conf.make_master_url(), "user", "whoami"]
-    #assert subprocess.call(command) == 0
-
+    
     # Log in as determined.
     log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))
 
