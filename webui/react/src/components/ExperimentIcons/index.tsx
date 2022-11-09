@@ -6,6 +6,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { RunState } from 'types';
 
 import Active from './Active';
+import Loader from './Loader';
 import Queue from './Queue';
 import Spinner from './Spinner';
 
@@ -22,7 +23,7 @@ const ExperimentIcons: React.FC<Props> = ({ state }) => {
       case RunState.Pulling:
         return <Spinner type="bowtie" />;
       case RunState.Running:
-        return <Spinner type="half" />;
+        return <Loader />;
       case RunState.Paused:
         return <Icon name="pause" style={{ color: 'var(--theme-ix-cancel)' }} />;
       case RunState.Completed:
