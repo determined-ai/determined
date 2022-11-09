@@ -107,10 +107,6 @@ class Authentication:
             if fallback_to_default:
                 raise api.errors.UnauthenticatedException(username=session_user)
             raise
-        '''except Exception as e:
-            if "invalid credentials" in str(e): 
-                raise api.errors.UnauthenticatedException(username=session_user)
-            raise'''
 
         self.token_store.set_token(session_user, token)
 

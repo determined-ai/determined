@@ -41,7 +41,7 @@ def log_in_user(parsed_args: Namespace) -> None:
         username = input("Username: ")
     else:
         username = parsed_args.username
-    
+
     message = "Password for user '{}': ".format(username)
     password = getpass.getpass(message)
 
@@ -61,9 +61,9 @@ def log_out_user(parsed_args: Namespace) -> None:
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e
-    
+
     except api.errors.UnauthenticatedException:
-       pass
+        pass
 
     token_store = authentication.TokenStore(parsed_args.master)
     token_store.drop_user(auth.get_session_user())

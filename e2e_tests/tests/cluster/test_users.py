@@ -72,19 +72,21 @@ def det_run(args: List[str]) -> str:
     return cast(str, pexpect.run(f"det -m {conf.make_master_url()} {' '.join(args)}").decode())
 
 
-def log_in_user(credentials: authentication.Credentials) -> None:
+def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0) -> None:
     import re
+
     username, password = credentials
     child = det_spawn(["user", "login", username])
     child.setecho(True)
     expected = re.escape(f"Password for user '{username}': ")
-    
+
     child.expect(expected, EXPECT_TIMEOUT)
     child.sendline(password)
     child.read()
     child.wait()
     child.close()
-    assert child.exitstatus == 0
+    assert child.exitstatus == expectedStatus
+
 
 def create_test_user(add_password: bool = False) -> authentication.Credentials:
     n_username = get_random_string()
@@ -247,7 +249,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     child.wait()
     child.close()
     assert child.status != 0
-    
+
     # Log in as determined.
     log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))
 
@@ -278,7 +280,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     log_in_user(creds)
 
     # Log out.
-    log_out_user() 
+    log_out_user()
 
     # login admin again.
     log_in_user(ADMIN_CREDENTIALS)
@@ -286,13 +288,13 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     # Deactivate user.
     assert activate_deactivate_user(False, creds.username) == 0
 
-    # Attempt to log in again.
-    log_in_user(creds)
+    # Attempt to log in again. It should have a non-zero exit status.
+    log_in_user(creds, 1)
 
     # Activate user.
     assert activate_deactivate_user(True, creds.username) == 0
 
-    # Now log in again.
+    # Now log in again. It should have a non-zero exit status.
     log_in_user(creds)
 
     # SDK testing for activating and deactivating.
@@ -333,9 +335,9 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_change_username(clean_auth: None, login_admin: None):
+def test_change_username(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user()
-    new_username = 'rename-user-64'
+    new_username = "rename-user-64"
     command = ["det", "-m", conf.make_master_url(), "user", "rename", creds.username, new_username]
     assert subprocess.call(command) == 0
     det_obj = Determined(master=conf.make_master_url())
