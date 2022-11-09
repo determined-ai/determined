@@ -71,8 +71,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const handleOnCloseCheckpointRegister = useCallback(
     (reason?: ModalCloseReason, checkpoints?: string[]) => {
       if (checkpoints) openModalCreateModel({ checkpoints });
+      updateSettings({ row: undefined });
     },
-    [openModalCreateModel],
+    [openModalCreateModel, updateSettings],
   );
 
   // Has to use var to hoist openModalCheckpointRegister for use above
