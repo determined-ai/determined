@@ -2,11 +2,13 @@ package usergroup
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
@@ -31,6 +33,18 @@ func (a *UserGroupAuthZRBAC) CanGetGroup(ctx context.Context, curUser model.User
 func (a *UserGroupAuthZRBAC) FilterGroupsList(ctx context.Context, curUser model.User,
 	query *bun.SelectQuery,
 ) (*bun.SelectQuery, error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+			},
+			SubjectType: "group",
+		},
+	}
+	audit.Log(fields)
+
 	err := db.DoPermissionsExist(ctx, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
@@ -50,6 +64,18 @@ func (a *UserGroupAuthZRBAC) FilterGroupsList(ctx context.Context, curUser model
 
 // CanUpdateGroups checks if a user can create, delete, or update groups.
 func (a *UserGroupAuthZRBAC) CanUpdateGroups(ctx context.Context, curUser model.User) error {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_GROUP,
+			},
+			SubjectType: "group",
+		},
+	}
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_GROUP)
 }
@@ -57,6 +83,19 @@ func (a *UserGroupAuthZRBAC) CanUpdateGroups(ctx context.Context, curUser model.
 // CanViewGroup checks if a user has the ability to view the group by checking whether
 // user has the assign roles permission or belongs to the group.
 func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) error {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = userBelongsTo
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+			},
+			SubjectType: "group",
+			SubjectIDs:  []string{fmt.Sprint(gid)},
+		},
+	}
+	audit.Log(fields)
+
 	err := db.DoPermissionsExist(ctx, userBelongsTo,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {

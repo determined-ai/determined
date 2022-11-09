@@ -2,12 +2,13 @@ package rbac
 
 import (
 	"context"
-
-	"github.com/determined-ai/determined/master/internal/authz"
+	"fmt"
 
 	"github.com/uptrace/bun"
 
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 )
@@ -15,10 +16,32 @@ import (
 // RBACAuthZRBAC is RBAC controls.
 type RBACAuthZRBAC struct{}
 
+func intSliceToStringSlice(ids ...int32) []string {
+	stringIDs := make([]string, 0, len(ids))
+	for _, id := range ids {
+		stringIDs = append(stringIDs, fmt.Sprint(id))
+	}
+	return stringIDs
+}
+
 // CanGetRoles checks if a user can get all the roles specified.
 func (a *RBACAuthZRBAC) CanGetRoles(ctx context.Context, curUser model.User,
 	roleIDs []int32,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+				rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES,
+			},
+			SubjectType: "role",
+			SubjectIDs:  intSliceToStringSlice(roleIDs...),
+		},
+	}
+	audit.Log(fields)
+
 	err := db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES)
 	if err == nil {
@@ -56,6 +79,19 @@ func (a *RBACAuthZRBAC) FilterRolesQuery(ctx context.Context, curUser model.User
 	query *bun.SelectQuery) (
 	*bun.SelectQuery, error,
 ) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+				rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES,
+			},
+			SubjectType: "role",
+		},
+	}
+	audit.Log(fields)
+
 	err := db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES)
 	if err == nil {
@@ -79,6 +115,19 @@ func (a *RBACAuthZRBAC) FilterRolesQuery(ctx context.Context, curUser model.User
 func (a *RBACAuthZRBAC) CanGetUserRoles(ctx context.Context, curUser model.User,
 	userID int32,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+			},
+			SubjectType: "user",
+			SubjectIDs:  intSliceToStringSlice(userID),
+		},
+	}
+	audit.Log(fields)
+
 	if int32(curUser.ID) == userID {
 		return nil
 	}
@@ -89,6 +138,20 @@ func (a *RBACAuthZRBAC) CanGetUserRoles(ctx context.Context, curUser model.User,
 func (a *RBACAuthZRBAC) CanGetGroupRoles(ctx context.Context, curUser model.User,
 	groupID int32,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_GROUP,
+				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+			},
+			SubjectType: "group",
+			SubjectIDs:  intSliceToStringSlice(groupID),
+		},
+	}
+	audit.Log(fields)
+
 	err := db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return nil
@@ -121,6 +184,24 @@ func (a *RBACAuthZRBAC) CanGetGroupRoles(ctx context.Context, curUser model.User
 func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 	workspaceID *int32,
 ) error {
+	var subjectIDs []string
+	if workspaceID != nil {
+		subjectIDs = append(subjectIDs, fmt.Sprint(*workspaceID))
+	}
+
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE,
+			},
+			SubjectType: "workspace",
+			SubjectIDs:  subjectIDs,
+		},
+	}
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 }
@@ -129,6 +210,19 @@ func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 func (a *RBACAuthZRBAC) CanGetWorkspaceMembership(
 	ctx context.Context, curUser model.User, workspaceID int32,
 ) (bool, error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE,
+			},
+			SubjectType: "workspace",
+			SubjectIDs:  intSliceToStringSlice(workspaceID),
+		},
+	}
+	audit.Log(fields)
+
 	if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE); err != nil {
 		if _, ok := err.(authz.PermissionDeniedError); ok {
@@ -165,6 +259,19 @@ func (a *RBACAuthZRBAC) CanAssignRoles(
 				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 		}
 	}
+
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+			},
+			SubjectType: "workspace",
+			SubjectIDs:  intSliceToStringSlice(workspaces...),
+		},
+	}
+	audit.Log(fields)
 
 	return db.DoesPermissionMatchAll(ctx, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES, workspaces...)
