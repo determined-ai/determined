@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
-	"go.uber.org/atomic"
 	"golang.org/x/exp/slices"
 
 	"github.com/sirupsen/logrus"
@@ -18,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/groupx/errgroupx"
 	"github.com/determined-ai/determined/master/pkg/groupx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -66,7 +66,7 @@ func Start(
 		docker:  cl,
 		pub:     pub,
 		state:   req.Container.State,
-		signals: make(chan syscall.Signal, 32),
+		signals: make(chan syscall.Signal),
 		done:    make(chan struct{}),
 
 		wg: waitgroupx.WithContext(context.Background()),
@@ -137,8 +137,8 @@ func (c *Container) Detach() {
 	c.Wait()
 }
 
-// Close the Docker container by killing it and awaiting its exit.
-func (c *Container) Close() {
+// Stop the Docker container by killing it and awaiting its exit.
+func (c *Container) Stop() {
 	c.log.Trace("close called")
 	c.Signal(context.TODO(), syscall.SIGKILL)
 	c.Wait()
@@ -148,10 +148,10 @@ func (c *Container) Close() {
 func (c *Container) Signal(ctx context.Context, s syscall.Signal) {
 	select {
 	case c.signals <- s:
+	case <-c.done:
+		c.log.Warnf("ignoring signal on exited container: %v", s)
 	case <-ctx.Done():
 		c.log.Warnf("ignoring signal on container due to cancellation: %v", s)
-	default:
-		c.log.Warnf("ignoring signal on container with too many pending signals: %v", s)
 	}
 }
 
@@ -161,98 +161,107 @@ func (c *Container) Wait() *aproto.ContainerStateChanged {
 	return c.exit
 }
 
-// run the container. If the context is canceled, the container is detached (as is) and
-// the context error is returned. If the container is killed, the container is cleaned up if
-// necessary and a termination with a stack trace or kill result is returned. If the container is
-// started successful, both the termination and error returns will be nil.
+// run the container. If the context is canceled, the container is detached (as is) and the context
+// error is returned. If the container is killed, the container is cleaned up and a termination with
+// a stack trace or kill result is returned. If the container succeeds, the error will be nil.
 func (c *Container) run(parent context.Context) (err error) {
-	c.log.Trace("entering run")
-	ctx, cancel := context.WithCancel(parent) // run-scoped cancellable context.
-	defer cancel()
+	c.log.Trace("starting container launch")
+	launchgroup := errgroupx.WithContext(parent)
 
-	killedBeforeRun := atomic.NewBool(false)
-	defer func() {
-		if killedBeforeRun.Load() {
-			if err != nil {
-				c.log.WithError(err).Debug("exit of container killed before run")
-			}
-			c.log.Trace("converting error to container aborted, since we were killed")
-			err = ErrKilledBeforeRun
-		}
-	}()
-
-	// Until the container image is pulled, just catch kill signals, note it, and cancel run.
-	c.log.Trace("launching signal-to-context shimmer")
-	siggroup := waitgroupx.WithContext(ctx)
-	siggroup.Go(func(ctx context.Context) {
-		defer siggroup.Cancel()
+	c.log.Trace("kicking off goroutine shim SIGKILL to cancellations, until we have launched")
+	launchgroup.Go(func(ctx context.Context) error {
 		for {
 			select {
 			case signal := <-c.signals:
 				switch signal {
 				case syscall.SIGKILL:
 					c.log.Tracef("signal %s, canceling run-scoped context", signal)
-					killedBeforeRun.Store(true)
-					cancel()
-					return
+					launchgroup.Cancel()
+					return ErrKilledBeforeRun
 				default:
 					c.log.Warnf("ignoring signal other than SIGKILL %s before running", signal)
 				}
 			case <-ctx.Done():
 				c.log.Trace("signal-to-context shimmer exited")
-				return
+				return nil
 			}
 		}
 	})
 
-	c.log.Trace("pulling image")
-	if err = c.transition(ctx, cproto.Pulling, nil, nil); err != nil {
-		return err
-	}
-	if err = c.docker.PullImage(ctx, docker.PullImage{
-		Name:      c.spec.RunSpec.ContainerConfig.Image,
-		Registry:  c.spec.PullSpec.Registry,
-		ForcePull: c.spec.PullSpec.ForcePull,
-	}, c.shimDockerEvents()); err != nil {
-		return err
-	}
+	c.log.Trace("kicking off goroutine to launch the container")
+	var dockerContainer *docker.Container
+	launchgroup.Go(func(ctx context.Context) (err error) {
+		defer launchgroup.Cancel()
 
-	c.log.Trace("creating container, copying files, initializing watches, etc")
-	if err = c.transition(ctx, cproto.Starting, nil, nil); err != nil {
-		return err
-	}
-	dockerID, err := c.docker.CreateContainer(ctx, c.spec.RunSpec, c.shimDockerEvents())
-	if err != nil {
-		return err
-	}
-	remove := c.spec.RunSpec.HostConfig.AutoRemove
-	c.spec = nil // Evict the spec from memory due to their potential memory consumption.
-
-	// Ensure we don't miss kill signals that received after RunContainer but before we stopped
-	// shimming them to context cancellations.
-	c.log.Trace("joining signal-to-context shimmer")
-	siggroup.Close()
-	if killedBeforeRun.Load() {
-		c.log.Trace("ensuring cleanup of container (canceled prior to the monitoring loop)")
-		if remove {
-			if sErr := c.docker.RemoveContainer(ctx, dockerID, true); sErr != nil {
-				c.log.WithError(sErr).Debug("couldn't cleanup container")
-			}
+		c.log.Trace("pulling image")
+		if err = c.transition(ctx, cproto.Pulling, nil, nil); err != nil {
+			return err
 		}
-		return errors.New("kill raced with pre-run cancel finalize")
-	}
-	killedBeforeRun.Store(false)
+		if err = c.docker.PullImage(ctx, docker.PullImage{
+			Name:      c.spec.RunSpec.ContainerConfig.Image,
+			Registry:  c.spec.PullSpec.Registry,
+			ForcePull: c.spec.PullSpec.ForcePull,
+		}, c.shimDockerEvents()); err != nil {
+			return fmt.Errorf("pulling container image: %w", err)
+		}
 
-	c.log.Trace("running container")
-	dc, err := c.docker.RunContainer(ctx, dockerID)
-	if err != nil {
+		c.log.Trace("creating container, copying files, etc")
+		if err = c.transition(ctx, cproto.Starting, nil, nil); err != nil {
+			return err
+		}
+		dockerID, err := c.docker.CreateContainer(ctx, c.spec.RunSpec, c.shimDockerEvents())
+		if err != nil {
+			return fmt.Errorf("creating container: %w", err)
+		}
+		remove := c.spec.RunSpec.HostConfig.AutoRemove
+		c.spec = nil // Evict the spec from memory due to their potential memory consumption.
+		defer func() {
+			if err != nil {
+				c.log.Trace("ensuring cleanup of container (canceled prior to the monitoring loop)")
+				if remove {
+					if rErr := c.docker.RemoveContainer(ctx, dockerID, true); rErr != nil {
+						c.log.WithError(rErr).Debug("couldn't cleanup container")
+					}
+				}
+				return
+			}
+		}()
+
+		c.log.Trace("starting container")
+		dc, err := c.docker.RunContainer(ctx, parent, dockerID)
+		if err != nil {
+			return fmt.Errorf("starting container: %w", err)
+		}
+		dockerContainer = dc
+		return nil
+	})
+
+	c.log.Trace("waiting for launch to complete")
+	switch err := launchgroup.Wait(); {
+	case err != nil && dockerContainer != nil:
+		// There is a chance the launchgroup handled a signal, but that it happened after we
+		// successfully ran the container. In this case, just pretend we didn't handle the signal,
+		// give it back to the container, and continue.
+		c.log.Trace("requeuing signal that was shimmed but unacknowledged")
+		c.wg.Go(func(ctx context.Context) {
+			select {
+			case c.signals <- syscall.SIGKILL:
+			case <-ctx.Done():
+				c.log.Warnf("unable to re-enqueue signal due to cancellation")
+			}
+		})
+	case err != nil:
 		return err
 	}
-	if err := c.running(ctx, aproto.ContainerStarted{ContainerInfo: dc.ContainerInfo}); err != nil {
+
+	c.log.Trace("transitioning to running state")
+	if err := c.running(parent, aproto.ContainerStarted{
+		ContainerInfo: dockerContainer.ContainerInfo,
+	}); err != nil {
 		return err
 	}
 
-	return c.wait(ctx, dc)
+	return c.wait(parent, dockerContainer)
 }
 
 func (c *Container) reattach(ctx context.Context) error {
@@ -268,7 +277,7 @@ func (c *Container) reattach(ctx context.Context) error {
 	case exitCode != nil:
 		return aproto.NewContainerExit(*exitCode)
 	case dc == nil:
-		return aproto.NewContainerFailure(aproto.RestoreError, errors.New("container unknown to docker"))
+		return ErrMissing
 	default:
 		return c.wait(ctx, dc)
 	}
@@ -360,7 +369,10 @@ func (c *Container) transition(
 	}
 	c.mu.Unlock()
 
-	return c.pub.Publish(ctx, Event{StateChange: csc})
+	if err := c.pub.Publish(ctx, Event{StateChange: csc}); err != nil {
+		return fmt.Errorf("publishing %s event: %w", state, err)
+	}
+	return nil
 }
 
 func (c *Container) running(ctx context.Context, start aproto.ContainerStarted) error {

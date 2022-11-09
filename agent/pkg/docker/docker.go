@@ -274,10 +274,17 @@ func (d *Client) CreateContainer(
 }
 
 // RunContainer runs a container by docker container ID. It takes a caller-provided channel on which
-// docker events are sent. Slow receivers will block the call.
-func (d *Client) RunContainer(ctx context.Context, id string) (*Container, error) {
+// docker events are sent. Slow receivers will block the call. RunContainer takes two contexts: one
+// to govern cancellation of running the container, and another to govern the lifetime of the waiter
+// returned.
+// nolint: golint // Both contexts can't both be first.
+func (d *Client) RunContainer(
+	ctx context.Context,
+	waitCtx context.Context,
+	id string,
+) (*Container, error) {
 	// Wait before start to not miss immediate exits.
-	waiter, errs := d.cl.ContainerWait(ctx, id, dcontainer.WaitConditionNextExit)
+	waiter, errs := d.cl.ContainerWait(waitCtx, id, dcontainer.WaitConditionNextExit)
 
 	if err := d.cl.ContainerStart(ctx, id, types.ContainerStartOptions{}); err != nil {
 		return nil, fmt.Errorf("starting container: %w", err)

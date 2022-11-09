@@ -90,8 +90,8 @@ func TestContainer(t *testing.T) {
 			entrypoint:    []string{"echo", "hello"},
 			detachAtState: cproto.Pulling,
 			failure: &aproto.ContainerFailure{
-				FailureType: aproto.RestoreError,
-				ErrMsg:      "container unknown to docker",
+				FailureType: aproto.ContainerMissing,
+				ErrMsg:      "container is gone on reattachment",
 			},
 		},
 		{
@@ -151,7 +151,7 @@ func TestContainer(t *testing.T) {
 					},
 				},
 			}, cl, events.NilPublisher[container.Event]{})
-			defer c.Close()
+			defer c.Stop()
 
 			t.Log("setup canceler")
 			subg := errgroupx.WithContext(ctx)
@@ -211,9 +211,6 @@ func TestContainer(t *testing.T) {
 			}
 
 			require.NotNil(t, failure)
-			// TODO(???):
-			// -(aproto.FailureType) (len=40) "container failed with non-zero exit code"
-			// +(aproto.FailureType) (len=39) "container was aborted before it started"
 			require.Equal(t, tt.failure.FailureType, failure.FailureType, failure.Error())
 			require.Equal(t, tt.failure.ExitCode, failure.ExitCode)
 			require.Contains(t, failure.ErrMsg, tt.failure.ErrMsg)
