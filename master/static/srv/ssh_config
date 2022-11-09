@@ -1,3 +1,4 @@
 Host *
     StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
     IdentityFile /run/determined/ssh/id_rsa
