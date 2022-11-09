@@ -53,6 +53,7 @@ const config: SettingsConfig<WorkspaceListSettings> = {
     },
     columns: {
       defaultValue: DEFAULT_COLUMNS,
+      skipUrlEncoding: true,
       storageKey: 'columns',
       type: array(
         union([
