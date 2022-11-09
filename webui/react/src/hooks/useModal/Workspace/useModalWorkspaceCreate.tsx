@@ -85,7 +85,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
   const modalContent = useMemo(() => {
     if (workspaceID && !workspace) return <Spinner />;
     return (
-      <Form autoComplete="off" form={form} id={FORM_ID} labelCol={{ span: 10 }} layout="horizontal">
+      <Form autoComplete="off" form={form} id={FORM_ID} labelCol={{ span: 10 }} layout="vertical">
         <Form.Item
           label="Workspace Name"
           name="workspaceName"
@@ -226,8 +226,12 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           body['agentUserGroup'] = agentUserGroup;
         }
 
-        if (canModifyWorkspaceCheckpointStorage({ workspace }) && checkpointStorageConfig) {
-          body['checkpointStorageConfig'] = yaml.load(checkpointStorageConfig);
+        if (canModifyWorkspaceCheckpointStorage({ workspace })) {
+          if (useCheckpointStorage && checkpointStorageConfig) {
+            body['checkpointStorageConfig'] = yaml.load(checkpointStorageConfig);
+          } else {
+            body['checkpointStorageConfig'] = {};
+          }
         }
 
         if (workspaceID) {
