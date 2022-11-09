@@ -3,8 +3,8 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
+import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
-import useModalWorkspaceEdit from 'hooks/useModal/Workspace/useModalWorkspaceEdit';
 import usePermissions from 'hooks/usePermissions';
 import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -39,7 +39,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
     useModalWorkspaceDelete({ onClose: onComplete, workspace });
   const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
-    useModalWorkspaceEdit({ onClose: onComplete, workspace });
+    useModalWorkspaceCreate({ onClose: onComplete, workspaceID: workspace.id });
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
