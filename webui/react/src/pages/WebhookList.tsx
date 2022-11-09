@@ -94,8 +94,15 @@ const WebhooksView: React.FC = () => {
         [MenuKey.DeleteWebhook]: () => {
           showConfirmDelete(record);
         },
-        [MenuKey.TestWebhook]: () => {
-          testWebhook({ id: record.id });
+        [MenuKey.TestWebhook]: async () => {
+          try {
+            await testWebhook({ id: record.id });
+          } catch (e) {
+            handleError(e, {
+              publicSubject: 'Webhook Request Failed',
+              silent: false,
+            });
+          }
         },
       };
 
