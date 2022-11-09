@@ -2,13 +2,16 @@ package workspace
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -30,6 +33,18 @@ type WorkspaceAuthZRBAC struct{}
 func (r *WorkspaceAuthZRBAC) FilterWorkspaceProjects(
 	ctx context.Context, curUser model.User, projects []*projectv1.Project,
 ) ([]*projectv1.Project, error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT,
+			},
+			SubjectType: "projects",
+		},
+	}
+	audit.Log(fields)
+
 	workspaceIDs, err := workspacesUserHasPermissionOn(ctx, curUser.ID,
 		workspaceIDsFromProjects(projects), rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT)
 	if err != nil {
@@ -50,6 +65,18 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaceProjects(
 func (r *WorkspaceAuthZRBAC) FilterWorkspaces(
 	ctx context.Context, curUser model.User, workspaces []*workspacev1.Workspace,
 ) ([]*workspacev1.Workspace, error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT,
+			},
+			SubjectType: "workspaces",
+		},
+	}
+	audit.Log(fields)
+
 	workspaceIDs := idsFromWorkspaces(workspaces)
 
 	ids, err := workspacesUserHasPermissionOn(ctx, curUser.ID, workspaceIDs,
@@ -75,6 +102,11 @@ func (r *WorkspaceAuthZRBAC) FilterWorkspaces(
 func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) (canGetWorkspace bool, serverError error) {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
+	audit.Log(fields)
+
 	can, err := hasPermissionOnWorkspace(ctx, curUser.ID, workspace,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
 	if err != nil {
@@ -86,6 +118,11 @@ func (r *WorkspaceAuthZRBAC) CanGetWorkspace(
 
 // CanCreateWorkspace determines whether a user can create workspaces.
 func (r *WorkspaceAuthZRBAC) CanCreateWorkspace(ctx context.Context, curUser model.User) error {
+	fields := audit.ExtractLogFields(ctx)
+	addInfoWithoutWorkspace(curUser, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
 }
@@ -94,6 +131,11 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspace(ctx context.Context, curUser mod
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesName(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
@@ -102,6 +144,11 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesName(
 func (r *WorkspaceAuthZRBAC) CanDeleteWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_WORKSPACE)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_WORKSPACE)
 }
@@ -110,6 +157,11 @@ func (r *WorkspaceAuthZRBAC) CanDeleteWorkspace(
 func (r *WorkspaceAuthZRBAC) CanArchiveWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
@@ -118,6 +170,11 @@ func (r *WorkspaceAuthZRBAC) CanArchiveWorkspace(
 func (r *WorkspaceAuthZRBAC) CanUnarchiveWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_WORKSPACE)
 }
@@ -126,6 +183,9 @@ func (r *WorkspaceAuthZRBAC) CanUnarchiveWorkspace(
 func (r *WorkspaceAuthZRBAC) CanPinWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields)
+	audit.Log(fields)
 	return nil
 }
 
@@ -133,6 +193,9 @@ func (r *WorkspaceAuthZRBAC) CanPinWorkspace(
 func (r *WorkspaceAuthZRBAC) CanUnpinWorkspace(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields)
+	audit.Log(fields)
 	return nil
 }
 
@@ -141,6 +204,11 @@ func (r *WorkspaceAuthZRBAC) CanUnpinWorkspace(
 func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithAgentUserGroup(
 	ctx context.Context, curUser model.User,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addInfoWithoutWorkspace(curUser, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
 }
@@ -149,6 +217,11 @@ func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithAgentUserGroup(
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesAgentUserGroup(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP)
 }
@@ -157,6 +230,11 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesAgentUserGroup(
 func (r *WorkspaceAuthZRBAC) CanSetWorkspacesCheckpointStorageConfig(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addWorkspaceInfo(curUser, workspace, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG)
 }
@@ -166,6 +244,11 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesCheckpointStorageConfig(
 func (r *WorkspaceAuthZRBAC) CanCreateWorkspaceWithCheckpointStorageConfig(
 	ctx context.Context, curUser model.User,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addInfoWithoutWorkspace(curUser, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
+	audit.Log(fields)
+
 	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_WORKSPACE)
 }
@@ -246,4 +329,35 @@ func workspaceIDsFromProjects(projects []*projectv1.Project) []int32 {
 		result = append(result, p.WorkspaceId)
 	}
 	return result
+}
+
+func addInfoWithoutWorkspace(
+	curUser model.User,
+	logFields log.Fields,
+	permission rbacv1.PermissionType,
+) {
+	logFields["userID"] = curUser.ID
+	logFields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{permission},
+			SubjectType:     "workspace",
+			SubjectIDs:      []string{},
+		},
+	}
+}
+
+func addWorkspaceInfo(
+	curUser model.User,
+	workspace *workspacev1.Workspace,
+	logFields log.Fields,
+	permissions ...rbacv1.PermissionType,
+) {
+	logFields["userID"] = curUser.ID
+	logFields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: permissions,
+			SubjectType:     "workspace",
+			SubjectIDs:      []string{fmt.Sprint(workspace.Id)},
+		},
+	}
 }

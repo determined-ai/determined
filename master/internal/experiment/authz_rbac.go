@@ -2,12 +2,15 @@ package experiment
 
 import (
 	"context"
+	"fmt"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac"
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -24,10 +27,30 @@ func getWorkspaceFromExperiment(ctx context.Context, e *model.Experiment,
 	return workspaceID, err
 }
 
+func addExpInfo(
+	curUser model.User,
+	e *model.Experiment,
+	logFields log.Fields,
+	permission rbacv1.PermissionType,
+) {
+	logFields["userID"] = curUser.ID
+	logFields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{permission},
+			SubjectType:     "experiment",
+			SubjectIDs:      []string{fmt.Sprint(e.ID)},
+		},
+	}
+}
+
 // CanGetExperiment checks if a user has permission to view an experiment.
 func (a *ExperimentAuthZRBAC) CanGetExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
 ) (canGetExp bool, serverError error) {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
+	audit.Log(fields)
+
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return false, err
@@ -47,6 +70,10 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
 	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS)
+	audit.Log(fields)
+
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -60,6 +87,10 @@ func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
 func (a *ExperimentAuthZRBAC) CanDeleteExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT)
+	audit.Log(fields)
+
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -73,6 +104,19 @@ func (a *ExperimentAuthZRBAC) CanDeleteExperiment(
 func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
 ) (*bun.SelectQuery, error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
+			},
+			SubjectType: "experiments",
+		},
+	}
+
+	audit.Log(fields)
+
 	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
 	if err != nil {
 		return query, err
@@ -109,6 +153,19 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
 ) (*bun.SelectQuery, error) {
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA,
+			},
+			SubjectType: "experiment",
+		},
+	}
+
+	audit.Log(fields)
+
 	if proj != nil {
 		// if proj is not nil, there is already a filter in place
 		return query, nil
@@ -157,6 +214,17 @@ func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
 func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(ctx context.Context, curUser model.User) error {
 	// TODO: does this require any specific permission if you already have the config?
 	// Maybe permission to submit the experiment?
+	fields := audit.ExtractLogFields(ctx)
+	fields["userID"] = curUser.ID
+	fields["permissionsRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{},
+			SubjectType:     "preview HP Search",
+		},
+	}
+
+	audit.Log(fields)
+
 	return nil
 }
 
@@ -164,6 +232,10 @@ func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(ctx context.Context, curUser mo
 func (a *ExperimentAuthZRBAC) CanEditExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT)
+	audit.Log(fields)
+
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -177,6 +249,10 @@ func (a *ExperimentAuthZRBAC) CanEditExperiment(
 func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA)
+	audit.Log(fields)
+
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -190,6 +266,10 @@ func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 func (a *ExperimentAuthZRBAC) CanCreateExperiment(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_CREATE_EXPERIMENT)
+	audit.Log(fields)
+
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
@@ -203,6 +283,10 @@ func (a *ExperimentAuthZRBAC) CanCreateExperiment(
 func (a *ExperimentAuthZRBAC) CanForkFromExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
 ) error {
+	fields := audit.ExtractLogFields(ctx)
+	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
+	audit.Log(fields)
+
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
