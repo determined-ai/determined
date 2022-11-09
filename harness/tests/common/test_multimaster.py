@@ -23,17 +23,11 @@ CERTS2 = {
 }
 
 
-UrlPath = str
-Handler = Optional[Callable[..., Dict[str, Any]]]
-Extension = Dict[UrlPath, Handler]
-
-
 @contextlib.contextmanager
 def run_api_server(
     address: Tuple[str, int] = ("localhost", 12345),
     credentials: Tuple[str, str, str] = ("user1", "password1", "token1"),
     ssl_keys: Dict[str, Path] = CERTS1,
-    extensions: Optional[Dict[str, Extension]] = None,  # method to extensions
 ) -> Iterator[str]:
     user, password, token = credentials
 
@@ -66,7 +60,7 @@ def run_api_server(
                 },
             }
 
-        def do_core(self, fn: Handler) -> None:
+        def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
                 self.send_error(404, f"path not handled: {self.path}")
                 return None
@@ -75,22 +69,18 @@ def run_api_server(
             self._send_result(result)
 
         def do_GET(self) -> None:
-            default_handlers: Extension = {
+            fn = {
                 "/info": self._info,
                 "/users/me": self._users_me,
                 "/api/v1/models": self._api_v1_models,
-            }
-            if extensions is not None:
-                default_handlers.update(extensions.get("GET", {}))
-            self.do_core(default_handlers.get(self.path.split("?")[0]))
+            }.get(self.path.split("?")[0])
+            self.do_core(fn)
 
         def do_POST(self) -> None:
-            default_handlers: Extension = {
+            fn = {
                 "/login": self._login,
-            }
-            if extensions is not None:
-                default_handlers.update(extensions.get("POST", {}))
-            self.do_core(default_handlers.get(self.path))
+            }.get(self.path)
+            self.do_core(fn)
 
         def _send_result(self, result: Dict[str, Any]) -> None:
             response = json.dumps(result).encode("utf8")
