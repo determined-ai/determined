@@ -30,6 +30,6 @@ DNS.1 = determined-master-ci
 EOF
 
 openssl req -new -x509 -sha256 -newkey rsa:2048 -nodes -days 365 \
-  -config /tmp/openssl.conf \
-  -out "$prefix".crt \
-  -keyout "$prefix".key
+    -config /tmp/openssl.conf \
+    -out "$prefix".crt \
+    -keyout "$prefix".key

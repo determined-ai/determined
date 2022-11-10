@@ -6,6 +6,3 @@ cp -r -n /gpt-neox/data /run/determined/workdir/shared_fs/
 
 cd /run/determined/workdir
 cp gpt_neox_config/determined_cluster.yml /gpt-neox/configs
-
-
-
