@@ -8,7 +8,7 @@ import pytest
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from tests import config as conf
-from tests.cluster.test_users import ADMIN_CREDENTIALS
+from tests.cluster.test_users import ADMIN_CREDENTIALS, change_user_password, logged_in_user
 from tests.experiment import determined_test_session, run_basic_test, wait_for_experiment_state
 
 from .test_agent_user_group import _delete_workspace_and_check
@@ -18,6 +18,9 @@ from .test_groups import det_cmd, det_cmd_json
 @pytest.mark.e2e_cpu
 def test_workspace_org() -> None:
     master_url = conf.make_master_url()
+    # Ensure determined creds are the default values.
+    with logged_in_user(ADMIN_CREDENTIALS):
+        change_user_password("determined", "")
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
     sess = api.Session(master_url, None, None, None)
     admin_auth = authentication.Authentication(
