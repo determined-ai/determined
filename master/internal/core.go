@@ -855,11 +855,10 @@ func (m *Master) Run(ctx context.Context) error {
 
 	// Add resistance to common HTTP attacks.
 	secureConfig := middleware.SecureConfig{
-		ContentSecurityPolicy: "default-src 'self'",
-		Skipper:               middleware.DefaultSkipper,
-		XSSProtection:         "1; mode=block",
-		ContentTypeNosniff:    "nosniff",
-		XFrameOptions:         "SAMEORIGIN",
+		Skipper:            middleware.DefaultSkipper,
+		XSSProtection:      "1; mode=block",
+		ContentTypeNosniff: "nosniff",
+		XFrameOptions:      "SAMEORIGIN",
 	}
 	m.echo.Use(middleware.SecureWithConfig(secureConfig))
 
