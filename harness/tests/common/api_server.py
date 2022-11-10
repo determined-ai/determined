@@ -18,6 +18,7 @@ CERTS2 = {
     "keyfile": CERTS_DIR / "key2.pem",
     "certfile": CERTS_DIR / "cert2.pem",
 }
+FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
 @contextlib.contextmanager
@@ -27,6 +28,8 @@ def run_api_server(
     ssl_keys: Dict[str, Path] = CERTS1,
 ) -> Iterator[str]:
     user, password, token = credentials
+    lock = threading.RLock()
+    state = {}
 
     class RequestHandler(SimpleHTTPRequestHandler):
         def _info(self) -> Dict[str, Any]:
@@ -57,6 +60,20 @@ def run_api_server(
                 },
             }
 
+        def flaky_get_experiment(self):
+            """
+            fails for FAIL_FOR times before succeeding
+            """
+            key = "flaky_get_experiment_fail_count"
+            FAIL_FOR = 2
+            with lock:
+                state[key] = state.get(key, 0) + 1
+                if state[key] <= FAIL_FOR:
+                    self.send_error(504)
+                    return
+            with open(FIXTURES_DIR / "experiment.json") as f:
+                return json.load(f)
+
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
                 self.send_error(404, f"path not handled: {self.path}")
@@ -70,6 +87,7 @@ def run_api_server(
                 "/info": self._info,
                 "/users/me": self._users_me,
                 "/api/v1/models": self._api_v1_models,
+                "/api/v1/experiments/1": self.flaky_get_experiment,
             }.get(self.path.split("?")[0])
             self.do_core(fn)
 
