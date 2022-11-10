@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable max-len */
 
-import { getAllByText, screen, waitFor } from '@testing-library/dom';
+import { findAllByText, screen, waitFor } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -103,7 +103,7 @@ const setup = (
 
 const getElements = async () => {
   const tree = await screen.findByTestId('fileTree');
-  const treeNodes = getAllByText(tree, /[a-zA-Z\-_]{1,}\./);
+  const treeNodes = await findAllByText(tree, /[a-zA-Z\-_]{1,}\./);
 
   return { treeNodes };
 };

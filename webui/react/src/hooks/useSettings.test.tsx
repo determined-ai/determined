@@ -298,6 +298,7 @@ describe('useSettings', () => {
     const newQuery = queryString.stringify(newQueryParams);
 
     await waitFor(() => result.current.resetSettings());
+    await new Promise((r) => setTimeout(r, 2000));
 
     act(() => history.replace(`${history.location.pathname}?${newQuery}`));
 

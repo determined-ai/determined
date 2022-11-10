@@ -65,6 +65,6 @@ describe('BadgeTag', () => {
   it('content displays tooltip on hover', async () => {
     const { view } = setup({ label: LABEL });
     userEvent.hover(view.getByText(CONTENT));
-    expect((await view.getByRole('tooltip')).textContent).toEqual(CONTENT_TOOLTIP);
+    expect((await view.findByRole('tooltip')).textContent).toEqual(CONTENT_TOOLTIP);
   });
 });
