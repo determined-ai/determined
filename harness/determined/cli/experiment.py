@@ -1,22 +1,21 @@
 import base64
-import urllib3
 import distutils.util
 import io
 import json
 import numbers
 import pathlib
+import random
 import sys
 import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
-import random
 
 import tabulate
+import urllib3
 
 import determined as det
-from determined.common.api.errors import APIException
 import determined.experimental
 import determined.load
 from determined import cli
@@ -24,6 +23,7 @@ from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
+from determined.common.api.errors import APIException
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
@@ -530,8 +530,7 @@ def kill_experiment(args: Namespace) -> None:
     print("Killed experiment {}".format(args.experiment_id))
 
 
-@authentication.required
-def wait(args: Namespace) -> None:
+def _wait(session: api.Session, experiment_id: int, polling_interval: int) -> None:
     retry = urllib3.util.retry.Retry(
         raise_on_status=False,
         total=10,
@@ -539,24 +538,25 @@ def wait(args: Namespace) -> None:
         backoff_factor=2,
         status_forcelist=[413, 429, 502, 503, 504],
     )
-
-    def __getattribute__(self, name):
-        raise NotImplementedError("Retry object is not pickleable")
+    session._max_retries = retry
 
     while True:
-        r = bindings.get_GetExperiment(
-            cli.setup_session(args, max_retries=retry), experimentId=args.experiment_id
-        ).experiment
+        r = bindings.get_GetExperiment(session=session, experimentId=experiment_id).experiment
 
         state_val = r.state.value.replace("STATE_", "")
         if state_val in constants.TERMINAL_STATES:
-            print("Experiment {} terminated with state {}".format(args.experiment_id, state_val))
+            print("Experiment {} terminated with state {}".format(experiment_id, state_val))
             if state_val == constants.COMPLETED:
                 sys.exit(0)
             else:
                 sys.exit(1)
 
-        time.sleep(args.polling_interval)
+        time.sleep(polling_interval)
+
+
+@authentication.required
+def wait(args: Namespace) -> None:
+    _wait(cli.setup_session(args), args.experiment_id, args.polling_interval)
 
 
 @authentication.required
