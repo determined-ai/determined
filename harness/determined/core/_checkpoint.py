@@ -34,8 +34,20 @@ class DownloadMode(enum.Enum):
     NoSharedDownload = "NO_SHARED_DOWNLOAD"
 
 
+def merge_metadata(all_metadata: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], Dict[str, List]]:
+    merged = {}
+    conflicts = {}
+    for rank, metadata in enumerate(all_metadata):
+        for _key in metadata:
+            conflicts.setdefault(_key, []).append(rank)
+            merged[_key] = metadata[_key]
+
+    conflicts = {k: v for (k, v) in conflicts.items() if len(v) > 1}
+    return merged, conflicts
+
+
 def merge_resources(
-    all_resources: List[List[Tuple[str, int]]], rank: int
+    all_resources: List[List[Tuple[str, int]]]
 ) -> Tuple[Dict[str, int], Dict[str, List[int]]]:
     """
     Given a list of all resources, return:
@@ -193,27 +205,23 @@ class CheckpointContext:
         # Merge resources, detect conflicts
         all_resources = self._dist.allgather(resources)
 
-        merged_resources, conflicts = merge_resources(all_resources, self._dist.rank)
+        merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            # Try to keep the logs easier to read; print the whole failure only on the chief.
-            if self._dist.rank > 0:
-                raise RuntimeError("refusing to upload with file conflicts")
-            msgs = [
-                f"    {f} uploaded by ranks {ranks}"
-                for f, ranks in sorted(conflicts.items())
-            ]
-            raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
+            self.print_conflict_error(conflicts, "file")
 
         # The lowest-ranked worker with a non-None ckpt_dir writes to the metadata file.
-        metadata_writer_rank = ckpt_dir_mask.index(True)
+        # metadata_writer_rank = ckpt_dir_mask.index(True)
+        # Chief is responsible for collecting metadata across workers and saving it
+        metadata_writer_rank = 0
         if self._dist.rank == metadata_writer_rank:
             assert ckpt_dir is not None
-            # We don't need to synchronize workers at this point because the metadata_writer_rank
-            # will also be the uploader for its own directory.
-            assert want_upload
-            # Add metadata pre-upload but without counting it among resources.
+            # Gather metadata across nodes
+            all_metadata = self._dist.gather(metadata)
+            # Merge metadata. If a metadata key repeats, raise error.
+            all_metadata, conflicts = merge_metadata(all_metadata)
+            if conflicts:
+                self.print_conflict_error(conflicts, "metadata")
             self._write_metadata_file(ckpt_dir, metadata or {})
-            # TODO: merge metadata
 
         if want_upload:
             assert ckpt_dir
@@ -226,6 +234,16 @@ class CheckpointContext:
             self._report_checkpoint(storage_id, merged_resources, metadata)
 
         return storage_id
+
+    def print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
+        # Try to keep the logs easier to read; print the whole failure only on the chief.
+        if self._dist.rank > 0:
+            raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts")
+        msgs = [
+            f"    {f} uploaded by ranks {ranks}"
+            for f, ranks in sorted(conflicts.items())
+        ]
+        raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts:\n" + "\n".join(msgs))
 
     def download(
         self,
@@ -281,7 +299,6 @@ class CheckpointContext:
                 assert want_filter, "want_filter is not set but name was not None"
                 _ = self._dist.gather_local(selector(name) if selector is not None else True)
 
-
     def get_metadata(self, storage_id: str) -> Dict[str, Any]:
         """
         Returns the current metadata associated with the checkpoint.
@@ -333,21 +350,11 @@ class CheckpointContext:
                 f"(rank={self._dist.rank})"
             )
 
-        # Why making the change from:
-        # storage_id = str(uuid.uuid4())
-        # with self._storage_manager.store_path(storage_id) as path:
-        #     yield path, storage_id
-        #     resources = self._storage_manager._list_directory(path)
-        #     self._write_metadata_file(os.fspath(path), metadata or {})
-        #
-        # self._report_checkpoint(storage_id, resources, metadata)
-
         storage_id = str(uuid.uuid4())
-        path = self._storage_manager.pre_store_path(storage_id)
-        yield path, storage_id
-        resources = self._storage_manager._list_directory(path)
-        self._write_metadata_file(os.fspath(path), metadata or {})
-        self._storage_manager.post_store_path(path, storage_id)
+        with self._storage_manager.store_path(storage_id) as path:
+            yield path, storage_id
+            resources = self._storage_manager._list_directory(path)
+            self._write_metadata_file(os.fspath(path), metadata or {})
 
         self._report_checkpoint(storage_id, resources, metadata)
 
@@ -391,7 +398,7 @@ class CheckpointContext:
         # Merge resources, detect conflicts
         all_resources = self._dist.allgather(resources)
 
-        merged_resources, conflicts = merge_resources(all_resources, self._dist.rank)
+        merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
             # Try to keep the logs easier to read; print the whole failure only on the chief.
             if self._dist.rank > 0:
@@ -402,16 +409,17 @@ class CheckpointContext:
             ]
             raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
 
-        # the lowest existing rank is 0, so it will upload metadata
+        # Chief is responsible for collecting metadata across workers and saving it
         metadata_writer_rank = 0
         if self._dist.rank == metadata_writer_rank:
             assert ckpt_dir is not None
-            # We don't need to synchronize workers at this point because the metadata_writer_rank
-            # will also be the uploader for its own directory.
-            assert want_upload
-            # Add metadata pre-upload but without counting it among resources.
+            # Gather metadata across nodes
+            all_metadata = self._dist.gather(metadata)
+            # Merge metadata. If a metadata key repeats, raise error.
+            all_metadata, conflicts = merge_metadata(all_metadata)
+            if conflicts:
+                self.print_conflict_error(conflicts, "metadata")
             self._write_metadata_file(ckpt_dir, metadata or {})
-            # TODO: merge metadata too
 
         if want_upload:
             assert ckpt_dir
