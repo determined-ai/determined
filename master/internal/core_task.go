@@ -27,6 +27,7 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 			} else if !ok {
 				delete(summary, allocationID)
 			}
+			continue
 		}
 
 		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
