@@ -267,8 +267,7 @@ class CheckpointContext:
         download_mode = DownloadMode(download_mode)
 
         if download_mode == DownloadMode.NoSharedDownload:
-            # what if there is a selector?
-            # we can use raw selector
+            #TODO add selector
             self._storage_manager.download(src=storage_id, dst=ckpt_dir)
             return
 
@@ -438,6 +437,8 @@ class CheckpointContext:
         self,
         storage_id: str,
         download_mode: DownloadMode = DownloadMode.LocalWorkersShareDownload,
+        *,
+        selector: Optional[Callable[[str], bool]] = None,
     ) -> Iterator[pathlib.Path]:
         """
         ``restore_path()`` is a context manager which downloads a checkpoint (if required by the
@@ -457,13 +458,29 @@ class CheckpointContext:
         download_mode = DownloadMode(download_mode)
 
         if download_mode == DownloadMode.NoSharedDownload:
+            #TODO add selector?
             with self._storage_manager.restore_path(storage_id) as path:
                 yield path
             return
 
+        want_filter = any(self._dist.allgather(selector is not None))
+
         # LocalWorkersShareDownload case.
         if self._dist.local_rank == 0:
-            with self._storage_manager.restore_path(storage_id) as path:
+
+            def _selector(path: str) -> bool:
+                if not want_filter:
+                    return True
+                # If anyone has a selector, coordinate every filename across workers' filters.
+                # Functions can't be reliably serialized, so instead we pass each filename between
+                # all workers. But because this traffic is local (unix sockets by default) it
+                # should be far faster than any download.
+                _ = self._dist.broadcast_local(path)
+                return any(self._dist.gather_local(selector(path) if selector is not None else True))
+
+            with self._storage_manager.restore_path(storage_id, _selector) as path:
+                # tell local workers that download is finished
+                _ = self._dist.broadcast_local(None)
                 # Broadcast to local workers.
                 _ = self._dist.broadcast_local(path)
                 try:
@@ -472,6 +489,15 @@ class CheckpointContext:
                     # Wait for local workers to finish.
                     _ = self._dist.gather_local(None)
         else:
+            while True:
+                name = self._dist.broadcast_local(None)
+                if name is None:
+                    # Chief is done downloading files.
+                    break
+                assert want_filter, "want_filter is not set but name was not None"
+                _ = self._dist.gather_local(selector(name) if selector is not None else True)
+
+            # old code
             # Wait for local chief to broadcast.
             path = self._dist.broadcast_local(None)
             try:
