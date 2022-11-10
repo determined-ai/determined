@@ -24,7 +24,7 @@ repos:
         description: Format shell scripts with shfmt
         entry: mvdan/shfmt:v3
         language: docker_image
-        exclude: ^(webui/react/src/services/api-ts-sdk/|other/folder/)
+        exclude: ^(webui/react/src/services/api-ts-sdk/)
         types:
           - file
           - shell
