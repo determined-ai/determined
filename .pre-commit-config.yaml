@@ -30,7 +30,7 @@ repos:
           - shell
         exclude_types:
           - zsh
-        args: [-w, -s, -l, -i, '4']
+        args: [-w, -s, -l, -i, '4', -ci, -bn]
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.17.0

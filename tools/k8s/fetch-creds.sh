@@ -61,61 +61,61 @@ account=""
 # Manually parse args since getopt varies across unices.
 while test -n "$1"; do
     case "$1" in
-    # flags
-    --help) print_help && exit 0 ;;
-    -h) print_help && exit 0 ;;
-    --context)
-        context="$2"
-        shift
-        shift
-        ;;
-    -c)
-        context="$2"
-        shift
-        shift
-        ;;
-    --static)
-        static=y
-        shift
-        ;;
-    -s)
-        static=y
-        shift
-        ;;
-    --period)
-        period="$2"
-        shift
-        shift
-        ;;
-    -p)
-        period="$2"
-        shift
-        shift
-        ;;
-    --verbose)
-        verbose=y
-        shift
-        ;;
-    -v)
-        verbose=y
-        shift
-        ;;
+        # flags
+        --help) print_help && exit 0 ;;
+        -h) print_help && exit 0 ;;
+        --context)
+            context="$2"
+            shift
+            shift
+            ;;
+        -c)
+            context="$2"
+            shift
+            shift
+            ;;
+        --static)
+            static=y
+            shift
+            ;;
+        -s)
+            static=y
+            shift
+            ;;
+        --period)
+            period="$2"
+            shift
+            shift
+            ;;
+        -p)
+            period="$2"
+            shift
+            shift
+            ;;
+        --verbose)
+            verbose=y
+            shift
+            ;;
+        -v)
+            verbose=y
+            shift
+            ;;
 
-    -*) echo "unrecognized flag: $1" >&2 && exit 1 ;;
+        -*) echo "unrecognized flag: $1" >&2 && exit 1 ;;
 
-    # positional arguments
-    *)
-        if [ -z "$outdir" ]; then
-            outdir="$1"
-        elif [ -z "$account" ]; then
-            account="$1"
-        else
-            echo "too many positional arguments!" >&2
-            print_help >&2
-            exit 1
-        fi
-        shift
-        ;;
+        # positional arguments
+        *)
+            if [ -z "$outdir" ]; then
+                outdir="$1"
+            elif [ -z "$account" ]; then
+                account="$1"
+            else
+                echo "too many positional arguments!" >&2
+                print_help >&2
+                exit 1
+            fi
+            shift
+            ;;
     esac
 done
 
@@ -144,14 +144,14 @@ fi
 
 # first extract server information from the kubectl config
 server_info="$(
-    kubectl config view --raw -o json |
-        jq -r '.clusters[] | select(.name=="'"$context"'")'
+    kubectl config view --raw -o json \
+        | jq -r '.clusters[] | select(.name=="'"$context"'")'
 )"
 server_url="$(echo "$server_info" | jq -r '.cluster.server')"
 ca_crt="$(
-    echo "$server_info" |
-        jq -r '.cluster."certificate-authority-data"' |
-        base64 -d
+    echo "$server_info" \
+        | jq -r '.cluster."certificate-authority-data"' \
+        | base64 -d
 )"
 
 mkdir -p "$outdir"
@@ -205,8 +205,8 @@ if [ "$static" = "y" ]; then
     fi
 
     # Write the token to OUTDIR.
-    kubectl --context "$context" get secrets "$secret_name" -o json |
-        jq -r '.data."token"' | base64 -d \
+    kubectl --context "$context" get secrets "$secret_name" -o json \
+        | jq -r '.data."token"' | base64 -d \
         >"$outdir/token"
 
     echo "$prog: success!"
@@ -231,8 +231,8 @@ dump_token() {
     payload="$(echo "$payload" | sed -e 's/\+/-/; s/_/\//')"
     # Add standard b64 padding, which b64url encoding skips.
     padding="$(
-        echo "$payload" |
-            sed -e 's/....//g ; s/^.$/===/; s/^..$/==/; s/^[^=]../=/'
+        echo "$payload" \
+            | sed -e 's/....//g ; s/^.$/===/; s/^..$/==/; s/^[^=]../=/'
     )"
     echo "Got token:"
     echo "$payload$padding" | base64 -d | jq -C
