@@ -21,17 +21,18 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		var ok bool
 		if !isExp {
-			if ok, err := canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID); err != nil {
-				return nil, err
-			} else if !ok {
-				delete(summary, allocationID)
-			}
+			ok, err = canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID)
+		} else {
+			ok, err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp)
+		}
+		if err != nil {
+			return nil, err
 		}
 
-		if ok, err := expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp); err != nil {
-			return nil, err
-		} else if !ok {
+		if !ok {
 			delete(summary, allocationID)
 		}
 	}
