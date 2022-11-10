@@ -98,9 +98,8 @@ module.exports = {
       }),
       new CspHtmlWebpackPlugin(
         {
-          'default-src': 'self',
-          'object-src': 'none',
-          'script-src': "'self' 'https://cdn.segment.com'",
+          'object-src': "'none'",
+          'script-src': "'self' cdn.segment.com",
           'style-src': "'self' 'unsafe-inline'",
         },
         {
