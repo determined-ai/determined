@@ -28,4 +28,8 @@
       margin-right: 10px;
     }
   }
+
+  @media only screen and (max-width: $breakpoint-tablet) {
+    display: block;
+  }
 }
