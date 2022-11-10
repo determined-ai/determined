@@ -71,6 +71,15 @@ func TestAddUserExec(t *testing.T) {
 	}{}
 	require.NoError(t, db.Bun().NewSelect().Model(actualGroup).Where("user_id = ?", u.ID).Scan(ctx))
 	require.Equal(t, u.Username+db.PersonalGroupPostfix, actualGroup.Name)
+
+	groupMember := &struct {
+		bun.BaseModel `bun:"table:user_group_membership"`
+		UserID        model.UserID `bun:"user_id,notnull"`
+	}{
+		UserID: u.ID,
+	}
+	require.NoError(t, db.Bun().NewSelect().Model(groupMember).Where("user_id = ?", u.ID).Scan(ctx))
+	require.Equal(t, u.ID, groupMember.UserID)
 }
 
 func TestAuthzUserList(t *testing.T) {
