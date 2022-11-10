@@ -90,6 +90,19 @@ func AddUserExec(user *model.User) error {
 		return errors.Wrap(err, "error inserting personal group")
 	}
 
+	groupMembership := struct {
+		bun.BaseModel `bun:"table:user_group_membership"`
+
+		UserID  model.UserID `bun:"user_id,notnull"`
+		GroupID int          `bun:"group_id,notnull"`
+	}{
+		UserID:  user.ID,
+		GroupID: personalGroup.ID,
+	}
+	if _, err = tx.NewInsert().Model(&groupMembership).Exec(ctx); err != nil {
+		return errors.Wrap(err, "error adding user to personal group")
+	}
+
 	if err = tx.Commit(); err != nil {
 		return errors.Wrap(err, "error committing changes in AddUserExec")
 	}
