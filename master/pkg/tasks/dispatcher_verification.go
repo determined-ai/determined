@@ -4,12 +4,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
 const (
-	wlmSlurm = "slurm"
-	wlmPbs   = "PBS"
+	wlmSlurm            = "slurm"
+	wlmPbs              = "PBS"
+	optEllRequiresValue = "PBS option -l requires a value: resource=value,... or place=..."
 )
 
 // ValidatePbs checks that the specified PBS options are allowed.
@@ -17,10 +20,50 @@ const (
 func ValidatePbs(pbsOptions []string) []error {
 	// Ref: https://connect.us.cray.com/confluence/display/AT/Use+of+pbsbatch_args
 	forbiddenPbsOptions := []string{
-		"--version", "--", "-c", "-C", "-e", "-G", "-h", "-I", "-j", "-J", "-k", "-l",
+		"--version", "--", "-c", "-C", "-e", "-G", "-h", "-I", "-j", "-J", "-k",
 		"-o", "-q", "-r", "-R", "-S", "-u", "-v", "-V", "-W", "-X", "-z",
 	}
-	return validateWlmOptions(wlmPbs, pbsOptions, forbiddenPbsOptions)
+	validationErrors := validateWlmOptions(wlmPbs, pbsOptions, forbiddenPbsOptions)
+
+	for _, option := range pbsOptions {
+		if option = strings.TrimSpace(option); strings.HasPrefix(strings.TrimSpace(option), "-l") {
+			validationErrors = validateResourceAndPlacementRequests(option, validationErrors)
+		}
+	}
+	return validationErrors
+}
+
+func validateResourceAndPlacementRequests(option string, validationErrors []error) []error {
+	switch {
+	case isResourceRequest(option):
+	case isPlacementRequest(option):
+	case isResourceSelect(option):
+		validationErrors = append(validationErrors,
+			errors.Errorf("PBS option -l select is not configurable"))
+	default:
+		// If we fall through to here then we have a -l value we don't accept.
+		validationErrors = append(validationErrors, errors.Errorf(optEllRequiresValue))
+	}
+	return validationErrors
+}
+
+// isResourceSelect returns true if the option is the disallowed -l select=<anything>.
+func isResourceSelect(option string) bool {
+	match, _ := regexp.MatchString("^-l\\s+select=.*$", option)
+	return match
+}
+
+// isPlacementRequest returns true if the option is a placement request: -l place=...
+func isPlacementRequest(option string) bool {
+	match, _ := regexp.MatchString("^-l\\s+place=.*$", option)
+	return match
+}
+
+// isResourceRequest returns true if the opion is a resource request:
+// -l <resource name>=<value>[:<resource name>=<value> ...].
+func isResourceRequest(option string) bool {
+	match, _ := regexp.MatchString("^-l\\s+\\w+=\\w+(,\\w+=\\w+)*$", option)
+	return match
 }
 
 // ValidateSlurm checks that the specified slurm options are allowed.

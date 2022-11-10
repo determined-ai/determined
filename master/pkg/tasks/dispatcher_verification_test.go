@@ -18,9 +18,9 @@ func testEnvironmentPbs(t *testing.T, options []string, expected ...string) {
 
 func validateEnvironmentResult(expected []string, t *testing.T, err []error) {
 	if len(expected) == 0 {
-		assert.Equal(t, len(err), 0)
+		assert.Equal(t, len(err), 0, "Got unexpected errors", err)
 	} else {
-		assert.Assert(t, len(err) > 0)
+		assert.Assert(t, len(err) > 0, "Expected some errors", expected)
 		for i, msg := range expected {
 			assert.ErrorContains(t, err[i], msg)
 		}
@@ -63,6 +63,12 @@ func TestValidatePbsOptions(t *testing.T) {
 		"-N job-name",
 		"-p priority",
 		"-P project",
+		"-l name=value",
+		"-l name=value,name2=value",
+		"-l place=arrangement",
+		"-l place=arrangement:sharing",
+		"-l place=arrangement:sharing:grouping",
+		"-l place=pack:group=arch",
 	})
 
 	// These are not allowed
@@ -76,7 +82,18 @@ func TestValidatePbsOptions(t *testing.T) {
 	testEnvironmentPbs(t, []string{"-j join"}, "PBS option -j is not configurable")
 	testEnvironmentPbs(t, []string{"-J range"}, "PBS option -J is not configurable")
 	testEnvironmentPbs(t, []string{"-k discard"}, "PBS option -k is not configurable")
-	testEnvironmentPbs(t, []string{"-l"}, "PBS option -l is not configurable")
+	testEnvironmentPbs(t, []string{"-l"},
+		"PBS option -l requires a value: resource=value,... or place=...")
+	testEnvironmentPbs(t, []string{"-l badValue"},
+		"PBS option -l requires a value: resource=value,... or place=...")
+	testEnvironmentPbs(t, []string{"-l select=1:ngpus=1"}, "PBS option -l select is not configurable")
+
+	// test multiple instances of -l, some allowed, some not.
+	testEnvironmentPbs(t, []string{
+		"-l name=value",
+		"-l select=1:ngpus=1",
+	},
+		"PBS option -l select is not configurable")
 	testEnvironmentPbs(t, []string{"-o path"}, "PBS option -o is not configurable")
 	testEnvironmentPbs(t, []string{"-q queue"}, "PBS option -q is not configurable")
 	testEnvironmentPbs(t, []string{"-r yn"}, "PBS option -r is not configurable")
