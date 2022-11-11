@@ -1,9 +1,9 @@
 # test requests with retry
 
 import pytest
+import requests
 import requests.adapters
 import requests.sessions
-import requests
 import requests_mock as mock
 import urllib3
 
@@ -13,6 +13,8 @@ retry = urllib3.util.retry.Retry(
     status_forcelist=[502, 503, 504],
 )
 adapter = requests.adapters.HTTPAdapter(max_retries=retry)
+
+# we can't use requests_mock, it doesn't support retry :(
 
 
 def test_direct_retry(requests_mock: mock.Mocker):
@@ -26,7 +28,7 @@ def test_direct_retry(requests_mock: mock.Mocker):
         session.mount("http://", adapter)
         session.mount("https://", adapter)
 
-        with pytest.raises(urllib3.util.retry.MaxRetryError) as e:
+        with pytest.raises(urllib3.util.retry.MaxRetryError) as _:
             session.get(url)
         assert requests_mock.call_count > 1
 
