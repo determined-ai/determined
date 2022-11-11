@@ -1,5 +1,5 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Tooltip } from 'antd';
+import { Button, Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 type TextOptions = 'Copy to Clipboard' | 'Copied!';
@@ -23,7 +23,7 @@ const CopyButton: React.FC<Props> = ({ onCopy }: Props) => {
 
   return (
     <Tooltip title={text}>
-      <CopyOutlined onClick={handleCopy} />
+      <Button icon={<CopyOutlined />} type="ghost" onClick={handleCopy} />
     </Tooltip>
   );
 };
