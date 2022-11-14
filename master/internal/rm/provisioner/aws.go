@@ -371,6 +371,10 @@ func (c *awsCluster) launchInstances(instanceNum int, dryRun bool) (*ec2.Reserva
 		},
 		MetadataOptions: &ec2.InstanceMetadataOptionsRequest{
 			HttpTokens: aws.String(ec2.HttpTokensStateRequired),
+			// We need the additional hop due to running in a Docker container
+			// with a bridge network. This adds an extra hop causing the put requests to fail
+			// with the default limit of 1.
+			HttpPutResponseHopLimit: aws.Int64(2),
 		},
 		UserData: aws.String(base64.StdEncoding.EncodeToString(c.ec2UserData)),
 	}

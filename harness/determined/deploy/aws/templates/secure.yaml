@@ -728,10 +728,10 @@ Resources:
   IMDSV2LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: IMDSV2LaunchTemplate
       LaunchTemplateData:
         MetadataOptions:
           HttpTokens: required
+          HttpPutResponseHopLimit: 2
         
   MasterInstance:
     Type: AWS::EC2::Instance
