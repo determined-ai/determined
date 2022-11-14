@@ -28,12 +28,19 @@ Version 0.19.7
    Hugging Face's Diffusers.
 
 -  Python SDK now supports reading logs from trials, via the new
-   :meth:`~determined.experimental.client.TrialReference.logs` method.  Additionally, the Python SDK
+   :meth:`~determined.experimental.client.TrialReference.logs` method. Additionally, the Python SDK
    also supports a new blocking call on an experiment to get the first trial created for an
-   experiment via the :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()`
-   method.  Users who have been writing automation around the ``det e create --follow-first-trial``
-   CLI command may now use the python SDK instead, by combining ``.await_first_trial()`` and
-   ``.logs()``.
+   experiment via the
+   :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method. Users who
+   have been writing automation around the ``det e create --follow-first-trial`` CLI command may now
+   use the python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
+
+-  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
+   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+   has added preliminary support for Role-Based Access Control. Administrators can now configure
+   which users or user groups can administer users, create or configure workspaces, run or view
+   experiments in particular workspaces, or perform other actions. See :ref:`rbac` for more
+   information.
 
 **Bug Fixes**
 
