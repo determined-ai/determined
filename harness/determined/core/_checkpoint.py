@@ -209,19 +209,8 @@ class CheckpointContext:
         if conflicts:
             self.print_conflict_error(conflicts, "file")
 
-        # The lowest-ranked worker with a non-None ckpt_dir writes to the metadata file.
-        # metadata_writer_rank = ckpt_dir_mask.index(True)
-        # Chief is responsible for collecting metadata across workers and saving it
-        metadata_writer_rank = 0
-        if self._dist.rank == metadata_writer_rank:
-            assert ckpt_dir is not None
-            # Gather metadata across nodes
-            all_metadata = self._dist.gather(metadata)
-            # Merge metadata. If a metadata key repeats, raise error.
-            all_metadata, conflicts = merge_metadata(all_metadata)
-            if conflicts:
-                self.print_conflict_error(conflicts, "metadata")
-            self._write_metadata_file(ckpt_dir, metadata or {})
+        # Chief gathers metadata across workers, checks for conflicts and saves metadata
+        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata)
 
         if want_upload:
             assert ckpt_dir
@@ -231,7 +220,7 @@ class CheckpointContext:
         _ = self._dist.allgather(None)
 
         if self._dist.rank == 0:
-            self._report_checkpoint(storage_id, merged_resources, metadata)
+            self._report_checkpoint(storage_id, merged_resources, all_metadata)
 
         return storage_id
 
@@ -333,13 +322,11 @@ class CheckpointContext:
                    print(f"done saving checkpoint {storage_id}")
                print(f"done uploading checkpoint {storage_id}")
         """
-
         if not shard:
             return self._store_path_single(metadata)
         else:
             return self._store_path_sharded(metadata)
 
-    @contextlib.contextmanager
     def _store_path_single(
         self, metadata: Optional[Dict[str, Any]] = None
     ) -> Iterator[Tuple[pathlib.Path, str]]:
@@ -357,11 +344,9 @@ class CheckpointContext:
 
         self._report_checkpoint(storage_id, resources, metadata)
 
-    @contextlib.contextmanager
     def _store_path_sharded(
         self, metadata: Optional[Dict[str, Any]] = None
     ) -> Iterator[Tuple[pathlib.Path, str]]:
-
         storage_id = None
         if self._dist.rank == 0:
             storage_id = str(uuid.uuid4())
@@ -370,16 +355,19 @@ class CheckpointContext:
         path = self._storage_manager.pre_store_path(storage_id)
         yield path, storage_id
 
-        if self._storage_manager.store_path_is_direct_access():
-            # TODO: "Direct access means sharded uploads can't detect upload conflicts"
-            # list_dirs returns the same list of files
-            # Shouldn't we still do this:
-            # self._write_metadata_file(os.fspath(path), metadata or {})
-            # self._report_checkpoint(storage_id, resources, metadata)
-            # we need to only gather resources and report the checkpoint; there is nothing to upload
-            return
-
         ckpt_dir = os.fspath(path)
+
+        if self._storage_manager.store_path_is_direct_access():
+            # Ranks save files directly to ckpt_dir which means there is no conflict
+            # detection on upload. Metadata still needs to be merged and saved,
+            # and checkpoint has to be reported.
+            all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata or {})
+
+            if self._dist.rank == 0:
+                resources = self._storage_manager._list_directory(ckpt_dir)
+                self._report_checkpoint(storage_id, resources, all_metadata)
+
+            return
 
         # Deconflict locally-shared directories; if every worker uploads /tmp/ckpt, then only
         # the lowest rank on each node will actually upload this directory.
@@ -410,29 +398,35 @@ class CheckpointContext:
             ]
             raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
 
-        # Chief is responsible for collecting metadata across workers and saving it
-        metadata_writer_rank = 0
-        if self._dist.rank == metadata_writer_rank:
-            assert ckpt_dir is not None
-            # Gather metadata across nodes
-            all_metadata = self._dist.gather(metadata)
-            # Merge metadata. If a metadata key repeats, raise error.
-            all_metadata, conflicts = merge_metadata(all_metadata)
-            if conflicts:
-                self.print_conflict_error(conflicts, "metadata")
-            self._write_metadata_file(ckpt_dir, metadata or {})
+        # Chief gathers metadata across workers, checks for conflicts and saves metadata
+        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata)
 
         if want_upload:
             assert ckpt_dir
             self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
 
         if self._dist.rank == 0:
-            self._report_checkpoint(storage_id, merged_resources, metadata)
+            self._report_checkpoint(storage_id, merged_resources, all_metadata)
 
         # synchronize workers
         _ = self._dist.allgather(None)
 
         return storage_id
+
+    def _merge_and_save_metadata(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        assert ckpt_dir is not None
+        # Gather metadata across nodes to the chief.
+        # Chief is responsible for merging and conflict resolution.
+        all_metadata = self._dist.gather(metadata)
+        # Merge metadata. If a metadata key repeats, raise error.
+        if self._dist.rank == 0:
+            logging.info(f'Metadata from all ranks: {all_metadata}')
+            all_metadata, conflicts = merge_metadata(all_metadata)
+            logging.info(f'conflicts {conflicts}')
+            if conflicts:
+                self.print_conflict_error(conflicts, "metadata")
+            self._write_metadata_file(ckpt_dir, all_metadata or {})
+        return all_metadata
 
     @contextlib.contextmanager
     def restore_path(
