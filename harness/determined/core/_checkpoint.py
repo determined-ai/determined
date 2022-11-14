@@ -119,7 +119,7 @@ class CheckpointContext:
         ckpt_dir: Optional[Union[str, os.PathLike]],
         metadata: Optional[Dict[str, Any]] = None,
         *,
-        shard: bool=False,
+        shard: bool = False,
     ) -> str:
         """
         ``upload()`` chooses a random ``storage_id``, then uploads the contents of ``ckpt_dir`` to
@@ -372,9 +372,11 @@ class CheckpointContext:
 
         if self._storage_manager.store_path_is_direct_access():
             # TODO: "Direct access means sharded uploads can't detect upload conflicts"
+            # list_dirs returns the same list of files
             # Shouldn't we still do this:
             # self._write_metadata_file(os.fspath(path), metadata or {})
-            # self._storage_manager.post_store_path(path, storage_id)
+            # self._report_checkpoint(storage_id, resources, metadata)
+            # we need to only gather resources and report the checkpoint; there is nothing to upload
             return
 
         ckpt_dir = os.fspath(path)
