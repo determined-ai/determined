@@ -78,7 +78,7 @@ def test_auth_user_from_env(
             with open(auth_json_path, "w") as f:
                 json.dump(AUTH_JSON, f)
 
-        requests_mock.get("/users/me", status_code=200, json={"username": "alice"})
+        requests_mock.get("/api/v1/me", status_code=200, json={"username": "alice"})
 
         authentication = Authentication(MOCK_MASTER_URL, user)
         if has_token_store:
