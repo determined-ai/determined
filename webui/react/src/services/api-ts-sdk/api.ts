@@ -7877,12 +7877,6 @@ export interface V1TaskLogsFieldsResponse {
      */
     containerIds?: Array<string>;
     /**
-     * The distinct rank IDs present in the logs.
-     * @type {Array<number>}
-     * @memberof V1TaskLogsFieldsResponse
-     */
-    rankIds?: Array<number>;
-    /**
      * The distinct stdtypes present in the logs.
      * @type {Array<string>}
      * @memberof V1TaskLogsFieldsResponse
@@ -7894,6 +7888,12 @@ export interface V1TaskLogsFieldsResponse {
      * @memberof V1TaskLogsFieldsResponse
      */
     sources?: Array<string>;
+    /**
+     * The distinct rank IDs present in the logs.
+     * @type {Array<string>}
+     * @memberof V1TaskLogsFieldsResponse
+     */
+    rankIds?: Array<string>;
 }
 
 /**
@@ -8293,12 +8293,6 @@ export interface V1TrialLogsFieldsResponse {
      */
     containerIds?: Array<string>;
     /**
-     * The distinct rank IDs present in the logs.
-     * @type {Array<number>}
-     * @memberof V1TrialLogsFieldsResponse
-     */
-    rankIds?: Array<number>;
-    /**
      * The distinct stdtypes present in the logs.
      * @type {Array<string>}
      * @memberof V1TrialLogsFieldsResponse
@@ -8310,6 +8304,12 @@ export interface V1TrialLogsFieldsResponse {
      * @memberof V1TrialLogsFieldsResponse
      */
     sources?: Array<string>;
+    /**
+     * The distinct rank IDs present in the logs.
+     * @type {Array<string>}
+     * @memberof V1TrialLogsFieldsResponse
+     */
+    rankIds?: Array<string>;
 }
 
 /**

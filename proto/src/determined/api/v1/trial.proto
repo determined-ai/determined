@@ -422,12 +422,12 @@ message TrialLogsFieldsResponse {
   repeated string agent_ids = 1;
   // The distinct container IDs present in the logs.
   repeated string container_ids = 2;
-  // The distinct rank IDs present in the logs.
-  repeated int32 rank_ids = 3;
   // The distinct stdtypes present in the logs.
   repeated string stdtypes = 4;
   // The distinct sources present in the logs.
   repeated string sources = 5;
+  // The distinct rank IDs present in the logs.
+  repeated string rank_ids = 6;
 }
 
 // Get a list of checkpoints for a trial.

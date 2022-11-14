@@ -488,10 +488,10 @@ type intAggResult struct {
 	} `json:"buckets"`
 }
 
-func (r intAggResult) toKeysInt32() []int32 {
-	var keys []int32
+func (r intAggResult) toKeysInt32() []string {
+	var keys []string
 	for _, b := range r.Buckets {
-		keys = append(keys, int32(b.Key))
+		keys = append(keys, string(b.Key))
 	}
 	return keys
 }

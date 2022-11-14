@@ -9593,7 +9593,7 @@ class v1TaskLogsFieldsResponse:
     agentIds: "typing.Optional[typing.Sequence[str]]" = None
     allocationIds: "typing.Optional[typing.Sequence[str]]" = None
     containerIds: "typing.Optional[typing.Sequence[str]]" = None
-    rankIds: "typing.Optional[typing.Sequence[int]]" = None
+    rankIds: "typing.Optional[typing.Sequence[str]]" = None
     sources: "typing.Optional[typing.Sequence[str]]" = None
     stdtypes: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -9603,7 +9603,7 @@ class v1TaskLogsFieldsResponse:
         agentIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         allocationIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         containerIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        rankIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        rankIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         sources: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         stdtypes: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
@@ -10140,7 +10140,7 @@ class v1TrialFilters:
 class v1TrialLogsFieldsResponse:
     agentIds: "typing.Optional[typing.Sequence[str]]" = None
     containerIds: "typing.Optional[typing.Sequence[str]]" = None
-    rankIds: "typing.Optional[typing.Sequence[int]]" = None
+    rankIds: "typing.Optional[typing.Sequence[str]]" = None
     sources: "typing.Optional[typing.Sequence[str]]" = None
     stdtypes: "typing.Optional[typing.Sequence[str]]" = None
 
@@ -10149,7 +10149,7 @@ class v1TrialLogsFieldsResponse:
         *,
         agentIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         containerIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
-        rankIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        rankIds: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         sources: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         stdtypes: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):

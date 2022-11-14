@@ -394,11 +394,11 @@ func (a *apiServer) TrialLogsFields(
 
 			fields, err := a.m.taskLogBackend.TaskLogsFields(trial.TaskID)
 			return api.ToBatchOfOne(&apiv1.TrialLogsFieldsResponse{
-				AgentIds:     fields.AgentIds,
-				ContainerIds: fields.ContainerIds,
-				RankIds:      fields.RankIds,
-				Stdtypes:     fields.Stdtypes,
-				Sources:      fields.Sources,
+				AgentIds:     minOne(fields.AgentIds),
+				ContainerIds: minOne(fields.ContainerIds),
+				RankIds:      minOne(fields.RankIds),
+				Stdtypes:     minOne(fields.Stdtypes),
+				Sources:      minOne(fields.Sources),
 			}), err
 		},
 		a.isTaskTerminalFunc(trial.TaskID, a.m.taskLogBackend.MaxTerminationDelay()),
@@ -414,7 +414,7 @@ func (a *apiServer) TrialLogsFields(
 		return resp.Send(&apiv1.TrialLogsFieldsResponse{
 			AgentIds:     setString(append(r1.AgentIds, r2.AgentIds...)...),
 			ContainerIds: setString(append(r1.ContainerIds, r2.ContainerIds...)...),
-			RankIds:      setInt32(append(r1.RankIds, r2.RankIds...)...),
+			RankIds:      setString(append(r1.RankIds, r2.RankIds...)...),
 			Stdtypes:     setString(append(r1.Stdtypes, r2.Stdtypes...)...),
 			Sources:      setString(append(r1.Sources, r2.Sources...)...),
 		})
@@ -1289,6 +1289,13 @@ func setInt32(xs ...int32) []int32 {
 	return nxs
 }
 
+func minOne(results []string) []string {
+	if len(results) == 0 {
+		return []string{""}
+	}
+	return results
+}
+
 func setString(xs ...string) []string {
 	s := map[string]bool{}
 	for _, x := range xs {
@@ -1299,5 +1306,5 @@ func setString(xs ...string) []string {
 	for x := range s {
 		nxs = append(nxs, x)
 	}
-	return nxs
+	return minOne(nxs)
 }
