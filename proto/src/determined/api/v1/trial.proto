@@ -369,8 +369,6 @@ message TrialLogsRequest {
   repeated string agent_ids = 6;
   // Limit the trial logs to a subset of containers.
   repeated string container_ids = 7;
-  // Limit the trial logs to a subset of ranks.
-  repeated int32 rank_ids = 8;
   // Limit the trial logs to a subset of agents.
   repeated determined.log.v1.LogLevel levels = 9;
   // Limit the trial logs to a subset of output streams.
@@ -385,6 +383,8 @@ message TrialLogsRequest {
   OrderBy order_by = 14;
   // Search the logs by whether the text contains a substring.
   string search_text = 15;
+  // Limit the trial logs to a subset of ranks.
+  repeated string rank_ids = 16;
 }
 
 // Response to TrialLogsRequest.
