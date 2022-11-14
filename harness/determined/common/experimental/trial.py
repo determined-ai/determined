@@ -65,6 +65,12 @@ class TrialReference:
             raise ValueError(f"head must be non-negative, got {head}")
         if tail is not None and tail < 0:
             raise ValueError(f"tail must be non-negative, got {tail}")
+
+        def str_map(nums: Optional[List[int]]) -> Optional[List[str]]:
+            if nums and len(nums) > 0:
+                return map(nums, lambda n: str(n))
+            return None
+
         for log in logs.trial_logs(
             session=self._session,
             trial_id=self.id,
@@ -74,7 +80,7 @@ class TrialReference:
             # TODO: Rename this to "node_id" and support it in the python sdk.
             agent_ids=None,
             container_ids=container_ids,
-            rank_ids=rank_ids,
+            rank_ids=str_map(rank_ids),
             # sources would be something like "originated from master" or "originated from task".
             sources=None,
             stdtypes=stdtypes,
