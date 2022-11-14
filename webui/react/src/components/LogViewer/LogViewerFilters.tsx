@@ -20,7 +20,7 @@ export interface Filters {
   allocationIds?: string[];
   containerIds?: string[];
   levels?: LogLevelFromApi[];
-  rankIds?: number[];
+  rankIds?: string[];
   searchText?: string;
   // sources?: string[],
   // stdtypes?: string[],
@@ -152,7 +152,7 @@ const LogViewerFilters: React.FC<Props> = ({
             placeholder={`All ${LABELS.rankIds}`}
             style={{ width: 150 }}
             value={values.rankIds}
-            onChange={handleChange('rankIds', Number)}>
+            onChange={handleChange('rankIds', String)}>
             {selectOptions?.rankIds?.map((id, index) => (
               <Option key={id ?? `no-id-${index}`} value={id}>
                 {id ?? 'No Rank'}

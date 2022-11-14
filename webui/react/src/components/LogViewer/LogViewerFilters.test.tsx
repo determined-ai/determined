@@ -11,9 +11,9 @@ const DEFAULT_FILTER_OPTIONS = {
   agentIds: new Array(3).fill('').map(() => `i-${generateAlphaNumeric(17)}`),
   allocationIds: new Array(2).fill('').map((_, i) => `${generateUUID()}.${i}`),
   containerIds: ['', ...new Array(2).fill('').map(() => generateUUID())],
-  rankIds: [0, 1, 2],
-  sources: ['agent', 'master'],
-  stdtypes: ['stdout', 'stderr'],
+  rankIds: ['0', '1', '2', ''],
+  sources: ['agent', 'master', ''],
+  stdtypes: ['stdout', 'stderr', ''],
 };
 
 const setup = (filterOptions: Filters, filterValues: Filters) => {
