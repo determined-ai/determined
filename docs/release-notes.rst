@@ -10,6 +10,27 @@
  Version 0.19
 **************
 
+Version 0.19.7
+==============
+
+**Release Date:** November 14, 2022
+
+**New Features**
+
+-  WebUI: Adds support for creating and managing webhooks to enable receiving updates regarding
+   experiment state changes.
+
+-  Checkpoint storage can now be configured at a workspace level. Experiments created in projects
+   will now inherit checkpoint storage configuration from the project's workspace if set. Experiment
+   configuration can override the workspace level checkpoint storage configuration.
+
+-  Example: Textual Inversion training and generation using Stable Diffusion with Core API and
+   Hugging Face's Diffusers.
+
+**Bug Fixes**
+
+-  Master: Correctly handle pending allocations in historical resource allocation aggregation.
+
 Version 0.19.6
 ==============
 
