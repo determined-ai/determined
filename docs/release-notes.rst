@@ -27,6 +27,14 @@ Version 0.19.7
 -  Example: Textual Inversion training and generation using Stable Diffusion with Core API and
    Hugging Face's Diffusers.
 
+-  Python SDK now supports reading logs from trials, via the new
+   :meth:`~determined.experimental.client.TrialReference.logs` method.  Additionally, the Python SDK
+   also supports a new blocking call on an experiment to get the first trial created for an
+   experiment via the :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()`
+   method.  Users who have been writing automation around the ``det e create --follow-first-trial``
+   CLI command may now use the python SDK instead, by combining ``.await_first_trial()`` and
+   ``.logs()``.
+
 **Bug Fixes**
 
 -  Master: Correctly handle pending allocations in historical resource allocation aggregation.
