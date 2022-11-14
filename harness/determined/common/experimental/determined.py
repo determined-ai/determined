@@ -1,11 +1,11 @@
 import pathlib
 import warnings
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Union, Sequence
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import checkpoint, experiment, model, trial, user
-
+from determined.common.experimental import checkpoint, experiment, model, trial, oauth2_scim_client
+from determined.cli.errors import EnterpriseOnlyError
 
 class _CreateExperimentResponse:
     def __init__(self, raw: Any):
@@ -322,3 +322,33 @@ class Determined:
         Get a list of labels used on any models, sorted from most-popular to least-popular.
         """
         return list(bindings.get_GetModelLabels(self._session).labels)
+    
+    def list_clients(self) -> Sequence[oauth2_scim_client.Oauth2ScimCient]:
+        try:
+            oauth2_scim_clients: List[oauth2_scim_client.Oauth2ScimCient] = []
+            clients = api.get(self.master, "oauth2/clients").json()
+            for client in clients: 
+                osc  = oauth2_scim_client.Oauth2ScimCient(name=client["name"],id=client["id"], domain=client["domain"])
+                oauth2_scim_clients.append(osc)
+            return clients
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")
+    
+    def add_client(self, domain: str, name: str) ->  oauth2_scim_client.Oauth2ScimCient:
+        try:
+            client = api.post(
+               self.master,
+                "oauth2/clients",
+                json={"domain": domain, "name": name},
+            ).json()
+            
+            return oauth2_scim_client.Oauth2ScimCient(id = str(client["id"]), secret=str(client["secret"]), domain=domain, name=name)
+
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")
+    
+    def remove_client(self,client_id: str) -> None:
+        try:
+            api.delete(self.master, "oauth2/clients/{}".format(client_id))
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")
