@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union, Sequence
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
 from determined.common.experimental import checkpoint, experiment, model, trial, oauth2_scim_client
-from determined.cli.errors import EnterpriseOnlyError
+from .errors import EnterpriseOnlyError
 
 class _CreateExperimentResponse:
     def __init__(self, raw: Any):
