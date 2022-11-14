@@ -120,7 +120,6 @@
     "babel-plugin-import": "^1.13.5",
     "craco-less": "^1.20.0",
     "craco-sass-resources-loader": "^1.1.0",
-    "csp-html-webpack-plugin": "^5.1.0",
     "eslint": "^7.25.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-react": "^1.1.7",
