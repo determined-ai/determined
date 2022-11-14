@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -429,10 +430,33 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 		}
 	}
 
-	addInFilter("allocation_id", req.AllocationIds, len(req.AllocationIds))
-	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
+	addNumFilter := func(field string, values []string) {
+		if values != nil {
+			if slices.Contains(values, "") {
+				cleanVals := make([]string, 0, len(values)-1)
+				for _, v := range values {
+					if v != "" {
+						cleanVals = append(cleanVals, v)
+					}
+				}
+				filters = append(filters, api.Filter{
+					Field:     field,
+					Operation: api.FilterOperationInOrNull,
+					Values:    cleanVals,
+				})
+			} else {
+				addInFilter(field, values, len(values))
+			}
+		}
+	}
+
+	// convert potential string values to ints and nulls for query
+	addNumFilter("agent_id", req.AgentIds)
+	addNumFilter("allocation_id", req.AllocationIds)
+	addNumFilter("rank_id", req.RankIds)
+
+	// string values
 	addInFilter("container_id", req.ContainerIds, len(req.ContainerIds))
-	addInFilter("rank_id", req.RankIds, len(req.RankIds))
 	addInFilter("stdtype", req.Stdtypes, len(req.Stdtypes))
 	addInFilter("source", req.Sources, len(req.Sources))
 	addInFilter("level", func() interface{} {

@@ -6,6 +6,8 @@ type FilterOperation int
 const (
 	// FilterOperationIn checks set membership.
 	FilterOperationIn FilterOperation = iota
+	// FilterOperationInOrNull checks set membership or value is NULL.
+	FilterOperationInOrNull
 	// FilterOperationGreaterThan checks if the field is greater than a value.
 	FilterOperationGreaterThan
 	// FilterOperationLessThanEqual checks if the field is less than or equal to a value.
