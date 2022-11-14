@@ -158,7 +158,7 @@ def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert])
     """
     headers = {"Authorization": "Bearer {}".format(token)}
     try:
-        r = api.get(master_address, "users/me", headers=headers, authenticated=False, cert=cert)
+        r = api.get(master_address, "api/v1/me", headers=headers, authenticated=False, cert=cert)
     except (api.errors.UnauthenticatedException, api.errors.APIException):
         return False
 
