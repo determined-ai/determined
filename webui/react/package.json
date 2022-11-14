@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
+    "@tanstack/react-table": "^8.5.13",
     "ansi_up": "^5.1.0",
     "ansi-to-html": "^0.7.1",
     "antd": "^4.21.4",

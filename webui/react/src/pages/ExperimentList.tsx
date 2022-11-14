@@ -1,4 +1,14 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import {
+  ColumnDef,
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+
+} from '@tanstack/react-table';
 import { Input, MenuProps, Typography } from 'antd';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
@@ -11,7 +21,7 @@ import FilterCounter from 'components/FilterCounter';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
-  ColumnDef,
+  // ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
@@ -401,23 +411,23 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    const tagsRenderer = (value: string, record: ExperimentItem) => (
-      <div className={css.tagsRenderer}>
-        <Typography.Text
-          ellipsis={{
-            tooltip: <TagList disabled tags={record.labels} />,
-          }}>
-          <div>
-            <TagList
-              compact
-              disabled={record.archived || project?.archived || !canEditExperiment}
-              tags={record.labels}
-              onChange={experimentTags.handleTagListChange(record.id)}
-            />
-          </div>
-        </Typography.Text>
-      </div>
-    );
+    // const tagsRenderer = (value: string, record: ExperimentItem) => (
+    //   <div className={css.tagsRenderer}>
+    //     <Typography.Text
+    //       ellipsis={{
+    //         tooltip: <TagList disabled tags={record.labels} />,
+    //       }}>
+    //       <div>
+    //         <TagList
+    //           compact
+    //           disabled={record.archived || project?.archived || !canEditExperiment}
+    //           tags={record.labels}
+    //           onChange={experimentTags.handleTagListChange(record.id)}
+    //         />
+    //       </div>
+    //     </Typography.Text>
+    //   </div>
+    // );
 
     const actionRenderer: ExperimentRenderer = (_, record: ExperimentItem) => {
       return <ContextMenu record={record} />;
@@ -443,157 +453,159 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
     return [
       {
-        align: 'right',
-        dataIndex: 'id',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
-        key: V1GetExperimentsRequestSortBy.ID,
-        onCell: onRightClickableCell,
-        render: experimentNameRenderer,
-        sorter: true,
-        title: 'ID',
+        accessorKey: 'id',
+        // align: 'right',
+        // cell: experimentNameRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
+        header: 'ID',
+        // key: V1GetExperimentsRequestSortBy.ID,
+        // onCell: onRightClickableCell,
+        // sorter: true,
       },
       {
-        dataIndex: 'name',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
-        filterDropdown: nameFilterSearch,
-        filterIcon: tableSearchIcon,
-        isFiltered: (settings: ExperimentListSettings) => !!settings.search,
-        key: V1GetExperimentsRequestSortBy.NAME,
-        onCell: onRightClickableCell,
-        render: experimentNameRenderer,
-        sorter: true,
-        title: 'Name',
+        accessorKey: 'name',
+        // cell: experimentNameRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
+        // filterDropdown: nameFilterSearch,
+        // filterIcon: tableSearchIcon,
+        header: 'Name',
+        // isFiltered: (settings: ExperimentListSettings) => !!settings.search,
+        // key: V1GetExperimentsRequestSortBy.NAME,
+        // onCell: onRightClickableCell,
+        // sorter: true,
       },
       {
-        dataIndex: 'description',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
-        onCell: onRightClickableCell,
-        render: descriptionRenderer,
-        title: 'Description',
+        accessorKey: 'description',
+        // cell: descriptionRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
+        header: 'Description',
+        // onCell: onRightClickableCell,
       },
       {
-        dataIndex: 'tags',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
-        filterDropdown: labelFilterDropdown,
-        filters: labels.map((label) => ({ text: label, value: label })),
-        isFiltered: (settings: ExperimentListSettings) => !!settings.label,
-        key: 'labels',
-        render: tagsRenderer,
-        title: 'Tags',
+        accessorKey: 'tags',
+        // cell: tagsRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
+        // filterDropdown: labelFilterDropdown,
+        // filters: labels.map((label) => ({ text: label, value: label })),
+        header: 'Tags',
+        // isFiltered: (settings: ExperimentListSettings) => !!settings.label,
+        // key: 'labels',
       },
       {
-        align: 'right',
-        dataIndex: 'forkedFrom',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
-        key: V1GetExperimentsRequestSortBy.FORKEDFROM,
-        onCell: onRightClickableCell,
-        render: forkedFromRenderer,
-        sorter: true,
-        title: 'Forked From',
+        accessorKey: 'forkedFrom',
+        // align: 'right',
+        // cell: forkedFromRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
+        header: 'Forked From',
+        // key: V1GetExperimentsRequestSortBy.FORKEDFROM,
+        // onCell: onRightClickableCell,
+        // sorter: true,
       },
       {
-        align: 'right',
-        dataIndex: 'startTime',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
-        key: V1GetExperimentsRequestSortBy.STARTTIME,
-        onCell: onRightClickableCell,
-        render: (_: number, record: ExperimentItem): React.ReactNode =>
-          relativeTimeRenderer(new Date(record.startTime)),
-        sorter: true,
-        title: 'Start Time',
+        accessorKey: 'startTime',
+        // align: 'right',
+        // cell: (_: number, record: ExperimentItem): React.ReactNode =>
+        //   relativeTimeRenderer(new Date(record.startTime)),
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
+        header: 'Start Time',
+        // key: V1GetExperimentsRequestSortBy.STARTTIME,
+        // onCell: onRightClickableCell,
+        // sorter: true,
       },
       {
-        align: 'right',
-        dataIndex: 'duration',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
-        key: 'duration',
-        onCell: onRightClickableCell,
-        render: experimentDurationRenderer,
-        title: 'Duration',
+        accessorKey: 'duration',
+        // align: 'right',
+        // cell: experimentDurationRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
+        header: 'Duration',
+        // key: 'duration',
+        // onCell: onRightClickableCell,
       },
       {
-        align: 'right',
-        dataIndex: 'numTrials',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['numTrials'],
-        key: V1GetExperimentsRequestSortBy.NUMTRIALS,
-        onCell: onRightClickableCell,
-        sorter: true,
-        title: 'Trials',
+        accessorKey: 'numTrials',
+        // align: 'right',
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['numTrials'],
+        header: 'Trials',
+        // key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+        // onCell: onRightClickableCell,
+        // sorter: true,
       },
       {
-        dataIndex: 'state',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
-        filterDropdown: stateFilterDropdown,
-        filters: [
-          RunState.Active,
-          RunState.Paused,
-          RunState.Canceled,
-          RunState.Completed,
-          RunState.Error,
-        ].map((value) => ({
-          text: <Badge state={value} type={BadgeType.State} />,
-          value,
-        })),
-        isFiltered: () => !!settings.state,
-        key: V1GetExperimentsRequestSortBy.STATE,
-        render: stateRenderer,
-        sorter: true,
-        title: 'State',
+        accessorKey: 'state',
+        cell: (props) => stateRenderer(props.getValue() as string, props.row.original, props.row.original.id),
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
+        // filterDropdown: stateFilterDropdown,
+        // filters: [
+        //   RunState.Active,
+        //   RunState.Paused,
+        //   RunState.Canceled,
+        //   RunState.Completed,
+        //   RunState.Error,
+        // ].map((value) => ({
+        //   text: <Badge state={value} type={BadgeType.State} />,
+        //   value,
+        // })),
+        header: 'State',
+        // isFiltered: () => !!settings.state,
+        // key: V1GetExperimentsRequestSortBy.STATE,
+        // sorter: true,
       },
       {
-        dataIndex: 'searcherType',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
-        key: 'searcherType',
-        onCell: onRightClickableCell,
-        title: 'Searcher Type',
+        accessorKey: 'searcherType',
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
+        header: 'Searcher Type',
+        // key: 'searcherType',
+        // onCell: onRightClickableCell,
       },
       {
-        dataIndex: 'resourcePool',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
-        key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
-        onCell: onRightClickableCell,
-        sorter: true,
-        title: 'Resource Pool',
+        accessorKey: 'resourcePool',
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
+        header: 'Resource Pool',
+        // key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
+        // onCell: onRightClickableCell,
+        // sorter: true,
       },
       {
-        align: 'right',
-        dataIndex: 'progress',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
-        key: V1GetExperimentsRequestSortBy.PROGRESS,
-        render: experimentProgressRenderer,
-        sorter: true,
-        title: 'Progress',
+        accessorKey: 'progress',
+        // align: 'right',
+        // cell: experimentProgressRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
+        header: 'Progress',
+        // key: V1GetExperimentsRequestSortBy.PROGRESS,
+        // sorter: true,
       },
       {
-        align: 'right',
-        dataIndex: 'archived',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
-        key: 'archived',
-        render: checkmarkRenderer,
-        title: 'Archived',
+        accessorKey: 'archived',
+        // align: 'right',
+        // cell: checkmarkRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
+        header: 'Archived',
+        // key: 'archived',
       },
       {
-        dataIndex: 'user',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
-        filterDropdown: userFilterDropdown,
-        filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
-        isFiltered: (settings: ExperimentListSettings) => !!settings.user,
-        key: V1GetExperimentsRequestSortBy.USER,
-        render: userRenderer,
-        sorter: true,
-        title: 'User',
+        accessorKey: 'user',
+        // cell: userRenderer,
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
+        // filterDropdown: userFilterDropdown,
+        // filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
+        header: 'User',
+        // isFiltered: (settings: ExperimentListSettings) => !!settings.user,
+        // key: V1GetExperimentsRequestSortBy.USER,
+        // sorter: true,
       },
       {
-        align: 'right',
-        className: 'fullCell',
-        dataIndex: 'action',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-        fixed: 'right',
-        key: 'action',
-        onCell: onRightClickableCell,
-        render: actionRenderer,
-        title: '',
-        width: DEFAULT_COLUMN_WIDTHS['action'],
+        accessorKey: 'action',
+
+        // cell: actionRenderer,
+
+        header: '',
+        // align: 'right',
+        // className: 'fullCell',
+        // defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+        // fixed: 'right',
+        // key: 'action',
+        // onCell: onRightClickableCell,
+        // width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ] as ColumnDef<ExperimentItem>[];
   }, [
@@ -612,34 +624,51 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     users,
   ]);
 
-  useLayoutEffect(() => {
-    // This is the failsafe for when column settings get into a bad shape.
-    if (!settings.columns?.length || !settings.columnWidths?.length) {
-      updateSettings({
-        columns: DEFAULT_COLUMNS,
-        columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
-      });
-    } else {
-      const columnNames = columns.map((column) => column.dataIndex as ExperimentColumnName);
-      const actualColumns = settings.columns.filter((name) => columnNames.includes(name));
-      const newSettings: Partial<ExperimentListSettings> = {};
-      if (actualColumns.length < settings.columns.length) {
-        newSettings.columns = actualColumns;
-      }
-      if (settings.columnWidths.length !== actualColumns.length) {
-        newSettings.columnWidths = actualColumns.map((name) => DEFAULT_COLUMN_WIDTHS[name]);
-      }
-      if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
-    }
-  }, [settings.columns, settings.columnWidths, columns, resetSettings, updateSettings]);
+  const [columnVisibility, setColumnVisibility] = React.useState({});
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+
+  const table = useReactTable({
+    columns,
+    data: experiments,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
+    state: {
+      columnVisibility,
+      sorting,
+    },
+  });
+
+  // useLayoutEffect(() => {
+  // This is the failsafe for when column settings get into a bad shape.
+  // if (!settings.columns?.length || !settings.columnWidths?.length) {
+  //   updateSettings({
+  //     columns: DEFAULT_COLUMNS,
+  //     columnWidths: DEFAULT_COLUMNS.map((columnName) => DEFAULT_COLUMN_WIDTHS[columnName]),
+  //   });
+  // } else {
+  //   const columnNames = columns.map((column) => column.id as ExperimentColumnName);
+  //   const actualColumns = settings.columns.filter((name) => columnNames.includes(name));
+  //   const newSettings: Partial<ExperimentListSettings> = {};
+  //   if (actualColumns.length < settings.columns.length) {
+  //     newSettings.columns = actualColumns;
+  //   }
+  //   if (settings.columnWidths.length !== actualColumns.length) {
+  //     newSettings.columnWidths = actualColumns.map((name) => DEFAULT_COLUMN_WIDTHS[name]);
+  //   }
+  //   if (Object.keys(newSettings).length !== 0) updateSettings(newSettings);
+  // }
+  // }, [settings.columns, settings.columnWidths, columns, resetSettings, updateSettings]);
 
   const transferColumns = useMemo(() => {
-    return columns
+    return table.getVisibleLeafColumns()
       .filter(
-        (column) => column.title !== '' && column.title !== 'Action' && column.title !== 'Archived',
+        (column) => column.columnDef.header !== '' && column.columnDef.header !== 'Action' && column.columnDef.header !== 'Archived',
       )
-      .map((column) => column.dataIndex?.toString() ?? '');
-  }, [columns]);
+      .map((column) => {
+        return column.id?.toString() ?? '';
+      });
+  }, [table]);
 
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
     useModalExperimentMove({ onClose: handleActionComplete, user });
@@ -780,6 +809,20 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     },
     [updateSettings],
   );
+
+  useEffect(() => {
+    if (settings.columns.length) {
+      const visibility = {};
+      table.getAllLeafColumns().forEach((c) => {
+        if (settings.columns.includes(c.id as ExperimentColumnName)) {
+          visibility[c.id] = true;
+        } else {
+          visibility[c.id] = false;
+        }
+      });
+      setColumnVisibility(visibility);
+    }
+  }, [settings.columns, table]);
 
   const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
     useModalColumnsCustomize({
@@ -936,6 +979,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   ]);
 
   useSetDynamicTabBar(tabBarContent);
+
   return (
     <Page
       bodyNoPadding
@@ -944,44 +988,49 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
       <div className={css.experimentTab}>
-        <TableBatch
-          actions={batchActions.map((action) => ({
-            disabled: !availableBatchActions.includes(action),
-            label: action,
-            value: action,
-          }))}
-          selectedRowCount={(settings.row ?? []).length}
-          onAction={handleBatchAction}
-          onClear={clearSelected}
-        />
-        <InteractiveTable
-          areRowsSelected={!!settings.row}
-          columns={columns}
-          containerRef={pageRef}
-          ContextMenu={ContextMenu}
-          dataSource={experiments}
-          loading={isLoading}
-          numOfPinned={(settings.pinned?.[id] ?? []).length}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            total,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="id"
-          rowSelection={{
-            onChange: handleTableRowSelect,
-            preserveSelectedRowKeys: true,
-            selectedRowKeys: settings.row ?? [],
-          }}
-          scroll={{ y: `calc(100vh - ${availableBatchActions.length === 0 ? '230' : '280'}px)` }}
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-        />
+        <div className="p-2">
+          <table>
+            <thead className="ant-table-thead">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th className="ant-table-cell" key={header.id}>
+                      {header.isPlaceholder ? null : (
+                        <div
+                          {...{
+                            className: header.column.getCanSort()
+                              ? 'cursor-pointer select-none'
+                              : '',
+                            onClick: header.column.getToggleSortingHandler(),
+                          }}>
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          {{
+                            asc: ' 🔼',
+                            desc: ' 🔽',
+                          }[header.column.getIsSorted() as string] ?? null}
+                        </div>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="ant-table-tbody">
+              {table.getRowModel().rows.map((row) => (
+                <tr className="ant-table-row ant-table-row-level-0" key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <td className="ant-table-cell" key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {modalColumnsCustomizeContextHolder}
       {modalExperimentMoveContextHolder}
