@@ -1,10 +1,11 @@
+from typing import Optional
 class Oauth2ScimCient: 
     def __init__(
         self, 
         id: str, 
-        secret: Optional[str] = None, 
         domain: str, 
-        name: str
+        name: str,
+        secret: Optional[str] = None, 
     ): 
 
         self.id = id
