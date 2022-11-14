@@ -47,7 +47,7 @@ def test_auth_with_store(requests_mock: requests_mock.Mocker, user: Optional[str
         expected_user = "determined" if user == "determined" else "bob"
         expected_token = "det.token" if user == "determined" else "bob.token"
         requests_mock.get(
-            "/users/me",
+            "/api/v1/me",
             status_code=200,
             json={"username": expected_user},
         )

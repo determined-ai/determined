@@ -45,7 +45,7 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 
     requests_mock.get(
-        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
+        "/api/v1/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
     )
 
     fake_user = {"username": "fakeuser", "admin": True, "active": True}
@@ -79,7 +79,7 @@ def test_uuid_prefix(requests_mock: requests_mock.Mocker) -> None:
 
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
     requests_mock.get(
-        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
+        "/api/v1/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
     )
 
     fake_user = {"username": "fakeuser", "admin": True, "active": True}
@@ -116,7 +116,7 @@ def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 
     requests_mock.get(
-        "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
+        "/api/v1/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
     )
 
     requests_mock.post(
