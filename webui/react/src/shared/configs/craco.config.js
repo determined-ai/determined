@@ -6,6 +6,7 @@ const { when } = require('@craco/craco');
 const AntdDayjsWebpackPlugin = require('antd-dayjs-webpack-plugin');
 const CracoLessPlugin = require('craco-less');
 const CracoSassResoucesPlugin = require('craco-sass-resources-loader');
+const CspHtmlWebpackPlugin = require('csp-html-webpack-plugin');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 const IS_DEV = process.env.DET_NODE_ENV === 'development';
@@ -95,6 +96,25 @@ module.exports = {
         ],
         languages: ['markdown', 'yaml', 'python'],
       }),
+      new CspHtmlWebpackPlugin(
+        {
+          'frame-src': "'none'",
+          'object-src': "'none'",
+          'script-src': "'self' cdn.segment.com",
+          'style-src': "'self' 'unsafe-inline'",
+        },
+        {
+          enabled: true,
+          hashEnabled: {
+            'script-src': true,
+            'style-src': false,
+          },
+          nonceEnabled: {
+            'script-src': false,
+            'style-src': false,
+          },
+        },
+      ),
     ],
   },
 };
