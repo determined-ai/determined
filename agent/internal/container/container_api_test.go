@@ -20,9 +20,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/groupx/errgroupx"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 func TestContainer(t *testing.T) {
@@ -31,12 +31,12 @@ func TestContainer(t *testing.T) {
 	t.Log("building client")
 	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	require.NoError(t, err)
-	cl := docker.NewClient(rawCl)
 	defer func() {
-		if cErr := cl.Close(); cErr != nil {
+		if cErr := rawCl.Close(); cErr != nil {
 			t.Logf("closing docker client: %s", cErr)
 		}
 	}()
+	cl := docker.NewClient(rawCl)
 
 	tests := []struct {
 		name string
@@ -154,8 +154,8 @@ func TestContainer(t *testing.T) {
 			defer c.Stop()
 
 			t.Log("setup canceler")
-			subg := errgroupx.WithContext(ctx)
-			subg.Go(func(ctx context.Context) error {
+			subg := waitgroupx.WithContext(ctx)
+			subg.Go(func(ctx context.Context) {
 				defer subg.Cancel()
 
 				tck := time.NewTicker(10 * time.Millisecond)
@@ -165,23 +165,21 @@ func TestContainer(t *testing.T) {
 					case summary.State == tt.detachAtState:
 						t.Log("detaching container")
 						c.Detach()
-						return nil
+						return
 					case summary.State == tt.signalAtState:
 						t.Logf("signaling container: %s", tt.signal.String())
 						c.Signal(ctx, tt.signal)
-						return nil
+						return
 					}
 
 					select {
 					case <-tck.C:
 					case <-ctx.Done():
-						return nil
+						return
 					}
 				}
 			})
-			defer func() {
-				require.NoError(t, subg.Wait())
-			}()
+			defer subg.Wait()
 			defer subg.Cancel()
 
 			t.Log("waiting on container")
@@ -192,7 +190,7 @@ func TestContainer(t *testing.T) {
 
 				t.Log("join canceler")
 				subg.Cancel()
-				require.NoError(t, subg.Wait())
+				subg.Wait()
 
 				t.Log("reattaching container")
 				c = container.Reattach(c.Summary(), cl, events.NilPublisher[container.Event]{})

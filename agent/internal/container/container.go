@@ -17,9 +17,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/groupx/errgroupx"
-	"github.com/determined-ai/determined/master/pkg/groupx/waitgroupx"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 // Container is a layer for managing a single Docker container. It can be constructed by launching
