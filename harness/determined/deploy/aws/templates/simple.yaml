@@ -580,7 +580,7 @@ Resources:
       KeyName: !Ref Keypair
       IamInstanceProfile: !Ref MasterInstanceProfile
       LaunchTemplate:
-        LaunchTemplateName: !Ref IMDSV2LaunchTemplate
+        LaunchTemplateId: !Ref IMDSV2LaunchTemplate
         Version: !GetAtt IMDSV2LaunchTemplate.LatestVersionNumber
       SecurityGroupIds:
         - !Ref MasterSecurityGroup
