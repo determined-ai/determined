@@ -123,8 +123,8 @@ class SharedFSStorageManager(storage.StorageManager):
                     if ckpt_path not in paths_set:
                         out.append(name)
                 return out
-
-        shutil.copytree(src, os.path.join(self._base_path, dst), ignore=ignore)
+         # TODO revisit this
+        shutil.copytree(src, os.path.join(self._base_path, dst), ignore=ignore, dirs_exist_ok=dirs_exist_ok)
 
     def download(
         self,

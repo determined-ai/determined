@@ -47,7 +47,7 @@ def merge_metadata(all_metadata: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], 
 
 
 def merge_resources(
-    all_resources: List[List[Tuple[str, int]]]
+    all_resources: List[Dict[str, int]]
 ) -> Tuple[Dict[str, int], Dict[str, List[int]]]:
     """
     Given a list of all resources, return:
@@ -61,7 +61,9 @@ def merge_resources(
     uploaders = {}
     merged = {}
     for rank, rscs in enumerate(all_resources):
-        for name, size in rscs:
+        logging.info(rscs)
+        for name in rscs:
+            size = rscs[name]
             if name.endswith(os.sep):
                 # Dir name.
                 stripped = name.rstrip("/")
@@ -204,7 +206,7 @@ class CheckpointContext:
 
         # Merge resources, detect conflicts
         all_resources = self._dist.allgather(resources)
-
+        logging.info(f'All Resources {all_resources}')
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
             self.print_conflict_error(conflicts, "file")
