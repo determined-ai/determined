@@ -302,7 +302,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     user.deactivate()
     assert user.active is not True
     user.activate()
-    assert user.active is True 
+    assert user.active is True
 
     # Now log in again.
     log_in_user(creds)

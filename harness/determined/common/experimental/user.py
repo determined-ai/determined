@@ -29,7 +29,7 @@ class User:
         self._session = session
         self.display_name = display_name
 
-    def reload(self, raw: Optional[bindings.v1User] = None):
+    def reload(self, raw: Optional[bindings.v1User] = None) -> None:
         if raw is None:
             raw = bindings.get_GetUser(session=self._session, userId=self.user_id).user
         assert raw.id is not None
