@@ -6,8 +6,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import { relativeTimeRenderer } from 'components/Table/Table';
 import TagList from 'components/TagList';
+import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
@@ -69,8 +69,8 @@ const ModelVersionHeader: React.FC<Props> = ({
         label: 'Created by',
       },
       {
-        content: relativeTimeRenderer(
-          new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime),
+        content: (
+          <TimeAgo datetime={new Date(modelVersion.lastUpdatedTime ?? modelVersion.creationTime)} />
         ),
         label: 'Updated',
       },
