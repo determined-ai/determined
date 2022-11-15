@@ -71,7 +71,7 @@ describe('LogViewerFilter', () => {
       allocationIds: [],
       containerIds: [],
       levels: [],
-      rankIds: [0, undefined],
+      rankIds: ['0', ''],
     };
     const { user } = setup(values, { ...values, rankIds: [] });
 

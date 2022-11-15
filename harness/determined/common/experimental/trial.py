@@ -4,7 +4,6 @@ from typing import Any, Iterable, List, Optional
 from determined.common import api
 from determined.common.api import bindings, logs
 from determined.common.experimental import checkpoint
-from determined.common.util import str_map
 
 
 class LogLevel(enum.Enum):
@@ -76,7 +75,7 @@ class TrialReference:
             # TODO: Rename this to "node_id" and support it in the python sdk.
             agent_ids=None,
             container_ids=container_ids,
-            rank_ids=str_map(rank_ids),
+            rank_ids=rank_ids,
             # sources would be something like "originated from master" or "originated from task".
             sources=None,
             stdtypes=stdtypes,

@@ -190,5 +190,8 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
 # Convert a list of ints to a list of strings.
 def str_map(nums: Optional[List[int]]) -> Optional[List[str]]:
     if nums and len(nums) > 0:
-        return map(nums, lambda n: str(n))
+        op: List[str] = []
+        for num in nums:
+            op.append(str(num))
+        return op
     return None

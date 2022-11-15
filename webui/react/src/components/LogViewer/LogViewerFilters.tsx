@@ -155,7 +155,7 @@ const LogViewerFilters: React.FC<Props> = ({
             onChange={handleChange('rankIds', String)}>
             {selectOptions?.rankIds?.map((id, index) => (
               <Option key={id || `no-id-${index}`} value={id}>
-                {id || 'No Rank'}
+                {!!id || id === '0' ? id : 'No Rank'}
               </Option>
             ))}
           </Select>
