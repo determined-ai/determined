@@ -275,7 +275,8 @@ class CheckpointContext:
                 # all workers.  But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
-                return any(self._dist.gather_local(selector(path) if selector is not None else True))
+                # If selector is None return False == do not download the file
+                return any(self._dist.gather_local(selector(path) if selector is not None else False))
 
             self._storage_manager.download(src=storage_id, dst=ckpt_dir, selector=_selector)
             # Tell local workers we finished.
@@ -287,7 +288,7 @@ class CheckpointContext:
                     # Chief is done downloading files.
                     break
                 assert want_filter, "want_filter is not set but name was not None"
-                _ = self._dist.gather_local(selector(name) if selector is not None else True)
+                _ = self._dist.gather_local(selector(name) if selector is not None else False)
 
     def get_metadata(self, storage_id: str) -> Dict[str, Any]:
         """
@@ -474,7 +475,7 @@ class CheckpointContext:
                 # all workers. But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
-                return any(self._dist.gather_local(selector(path) if selector is not None else True))
+                return any(self._dist.gather_local(selector(path) if selector is not None else False))
 
             with self._storage_manager.restore_path(storage_id, _selector) as path:
                 # tell local workers that download is finished
@@ -493,7 +494,7 @@ class CheckpointContext:
                     # Chief is done downloading files.
                     break
                 assert want_filter, "want_filter is not set but name was not None"
-                _ = self._dist.gather_local(selector(name) if selector is not None else True)
+                _ = self._dist.gather_local(selector(name) if selector is not None else False)
 
             # old code
             # Wait for local chief to broadcast.
