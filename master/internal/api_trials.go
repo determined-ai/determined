@@ -1276,19 +1276,6 @@ func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.T
 	}
 }
 
-func setInt32(xs ...int32) []int32 {
-	s := map[int32]bool{}
-	for _, x := range xs {
-		s[x] = true
-	}
-
-	var nxs []int32
-	for x := range s {
-		nxs = append(nxs, x)
-	}
-	return nxs
-}
-
 func setString(xs ...string) []string {
 	s := map[string]bool{}
 	for _, x := range xs {

@@ -4,6 +4,7 @@ from typing import Any, Iterable, List, Optional
 from determined.common import api
 from determined.common.api import bindings, logs
 from determined.common.experimental import checkpoint
+from determined.common.util import str_map
 
 
 class LogLevel(enum.Enum):
@@ -65,11 +66,6 @@ class TrialReference:
             raise ValueError(f"head must be non-negative, got {head}")
         if tail is not None and tail < 0:
             raise ValueError(f"tail must be non-negative, got {tail}")
-
-        def str_map(nums: Optional[List[int]]) -> Optional[List[str]]:
-            if nums and len(nums) > 0:
-                return map(nums, lambda n: str(n))
-            return None
 
         for log in logs.trial_logs(
             session=self._session,

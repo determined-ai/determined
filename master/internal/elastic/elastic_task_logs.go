@@ -491,7 +491,7 @@ type intAggResult struct {
 func (r intAggResult) toKeysInt32() []string {
 	var keys []string
 	for _, b := range r.Buckets {
-		keys = append(keys, string(b.Key))
+		keys = append(keys, fmt.Sprint(b.Key))
 	}
 	return keys
 }
