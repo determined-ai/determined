@@ -299,8 +299,10 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     log_in_user(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
-    assert not user.active
-    assert user.active
+    user.deactivate()
+    assert user.active is not True
+    user.activate()
+    assert user.active is True 
 
     # Now log in again.
     log_in_user(creds)
@@ -328,7 +330,7 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     new_password_sdk = get_random_string()
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
-    assert user.change_password(new_password=new_password_sdk)
+    user.change_password(new_password=new_password_sdk)
     log_in_user(authentication.Credentials(creds.username, new_password_sdk))
 
 
