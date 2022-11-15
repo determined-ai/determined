@@ -128,8 +128,6 @@ def create_experiment(
     activate: bool = True,
     additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:
-
-    print("in create experiment")
     body = {
         "activate": False,
         "experiment_config": yaml.safe_dump(config),

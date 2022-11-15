@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import time
@@ -73,8 +74,6 @@ def det_run(args: List[str]) -> str:
 
 
 def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0) -> None:
-    import re
-
     username, password = credentials
     child = det_spawn(["user", "login", username])
     child.setecho(True)
@@ -91,8 +90,7 @@ def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0
 def create_test_user(add_password: bool = False) -> authentication.Credentials:
     n_username = get_random_string()
     command = ["det", "-m", conf.make_master_url(), "user", "create", n_username]
-    output = subprocess.check_call(command)
-    assert output == 0
+    subprocess.run(command, check=True)
     # Now we activate the user.
     child = det_spawn(["user", "activate", n_username])
     child.expect(pexpect.EOF, timeout=EXPECT_TIMEOUT)
@@ -140,7 +138,7 @@ def log_out_user(username: Optional[str] = None) -> None:
     assert child.exitstatus == 0
 
 
-def activate_deactivate_user(active: bool, target_user: str) -> int:
+def activate_deactivate_user(active: bool, target_user: str) -> None:
     command = [
         "det",
         "-m",
@@ -149,7 +147,7 @@ def activate_deactivate_user(active: bool, target_user: str) -> int:
         "activate" if active else "deactivate",
         target_user,
     ]
-    return subprocess.call(command)
+    subprocess.run(command, check=True)
 
 
 def extract_columns(output: str, column_indices: List[int]) -> List[Tuple[str, ...]]:
@@ -286,13 +284,13 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     log_in_user(ADMIN_CREDENTIALS)
 
     # Deactivate user.
-    assert activate_deactivate_user(False, creds.username) == 0
+    activate_deactivate_user(False, creds.username)
 
     # Attempt to log in again. It should have a non-zero exit status.
     log_in_user(creds, 1)
 
     # Activate user.
-    assert activate_deactivate_user(True, creds.username) == 0
+    activate_deactivate_user(True, creds.username)
 
     # Now log in again. It should have a non-zero exit status.
     log_in_user(creds)
@@ -301,8 +299,8 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     log_in_user(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
-    assert not user.deactivate().user.active
-    assert user.activate().user.active
+    assert not user.active
+    assert user.active
 
     # Now log in again.
     log_in_user(creds)
@@ -339,7 +337,7 @@ def test_change_username(clean_auth: None, login_admin: None) -> None:
     creds = create_test_user()
     new_username = "rename-user-64"
     command = ["det", "-m", conf.make_master_url(), "user", "rename", creds.username, new_username]
-    assert subprocess.call(command) == 0
+    subprocess.run(command, check=True)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=new_username)
     assert user.username == new_username
@@ -509,7 +507,7 @@ def test_login_as_non_active_user(clean_auth: None, login_admin: None) -> None:
     passwd_prompt = f"Password for user '{creds.username}':"
     unauth_error = "user is not active"
     command = ["det", "-m", conf.make_master_url(), "user", "deactivate", creds.username]
-    assert subprocess.call(command) == 0
+    subprocess.run(command, check=True)
 
     child = det_spawn(["user", "login", creds.username])
     child.setecho(True)
