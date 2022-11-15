@@ -5533,6 +5533,18 @@ export interface V1PatchUser {
      * @memberof V1PatchUser
      */
     displayName?: string;
+    /**
+     * Password of user.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    password?: string;
+    /**
+     * Indicates if the password is pre-salted or not.
+     * @type {boolean}
+     * @memberof V1PatchUser
+     */
+    isHashed?: boolean;
 }
 
 /**
