@@ -6657,6 +6657,8 @@ class v1PatchUser:
     admin: "typing.Optional[bool]" = None
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     displayName: "typing.Optional[str]" = None
+    isHashed: "typing.Optional[bool]" = None
+    password: "typing.Optional[str]" = None
     username: "typing.Optional[str]" = None
 
     def __init__(
@@ -6666,6 +6668,8 @@ class v1PatchUser:
         admin: "typing.Union[bool, None, Unset]" = _unset,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
+        isHashed: "typing.Union[bool, None, Unset]" = _unset,
+        password: "typing.Union[str, None, Unset]" = _unset,
         username: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(active, Unset):
@@ -6676,6 +6680,10 @@ class v1PatchUser:
             self.agentUserGroup = agentUserGroup
         if not isinstance(displayName, Unset):
             self.displayName = displayName
+        if not isinstance(isHashed, Unset):
+            self.isHashed = isHashed
+        if not isinstance(password, Unset):
+            self.password = password
         if not isinstance(username, Unset):
             self.username = username
 
@@ -6691,6 +6699,10 @@ class v1PatchUser:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "displayName" in obj:
             kwargs["displayName"] = obj["displayName"]
+        if "isHashed" in obj:
+            kwargs["isHashed"] = obj["isHashed"]
+        if "password" in obj:
+            kwargs["password"] = obj["password"]
         if "username" in obj:
             kwargs["username"] = obj["username"]
         return cls(**kwargs)
@@ -6706,6 +6718,10 @@ class v1PatchUser:
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
+        if not omit_unset or "isHashed" in vars(self):
+            out["isHashed"] = self.isHashed
+        if not omit_unset or "password" in vars(self):
+            out["password"] = self.password
         if not omit_unset or "username" in vars(self):
             out["username"] = self.username
         return out
