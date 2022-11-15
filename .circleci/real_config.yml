@@ -2089,6 +2089,12 @@ jobs:
       determined_admin_password:
         type: string
         default: ""
+      database_username:
+        type: string
+        default: postgres
+      database_password:
+        type: string
+        default: launcher
     # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
     machine: true
     resource_class: <<parameters.runner_class>>
@@ -2100,51 +2106,68 @@ jobs:
           at: .
 
       - run: sudo yum install -y xmlsec1
-      - run: |
-          export DET_PKG_NAME=$(rpm -qp --queryformat "%{NAME}" master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm)
-          if rpm -q $DET_PKG_NAME; then
-            sudo rpm -e $DET_PKG_NAME
-          fi
-      - run: |
-          sudo rpm -i master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm
-          cat \<< EOF > ./master.yaml
-          <<parameters.master_config>>
-          EOF
-          sudo cp ./master.yaml /etc/determined/master.yaml
-          sudo systemctl daemon-reload
-          sudo systemctl restart determined-master
+      - run:
+          name: Remove previous HPE MLDE Master RPM
+          command: |
+            export DET_PKG_NAME=$(rpm -qp --queryformat "%{NAME}" master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm)
+            if rpm -q $DET_PKG_NAME; then
+              sudo rpm -e $DET_PKG_NAME
+            fi
+      - run:
+          name: Recreate Fresh Database
+          command: |
+            sudo systemctl stop determined-master
+            PGPASSWORD=<<parameters.database_password>> dropdb --host=localhost --port=5432 --username=<<parameters.database_username>> --if-exists determined
+            PGPASSWORD=<<parameters.database_password>> createdb --host=localhost --port=5432 --username=<<parameters.database_username>> determined
+
+      - run:
+          name: Install/Configure HPE MLDE Master
+          command: |
+            sudo rpm -i master/dist/hpe-mlde-master_*-ee_linux_amd64.rpm
+            cat \<< EOF > ./master.yaml
+            <<parameters.master_config>>
+            EOF
+            sudo cp ./master.yaml /etc/determined/master.yaml
+            sudo systemctl daemon-reload
+            sudo systemctl start determined-master
+
+      - wait-for-master:
+          host: localhost
+
+      - run:
+          name: Populate determined user agent values
+          command: |
+            id <<parameters.cluster_unix_user>> || sudo useradd <<parameters.cluster_unix_user>>
+            TOKEN=$(
+              curl "<<parameters.determined_master_host>>/api/v1/auth/login" \
+                -f \
+                -X POST \
+                --data-binary @- \<< EOF | jq -r '.token'
+              {
+                  "username": "<<parameters.determined_admin_username>>",
+                  "password": "<<parameters.determined_admin_password>>"
+              }
+            EOF
+            )
+            curl "<<parameters.determined_master_host>>/api/v1/users/2" \
+              -f \
+              -X PATCH \
+              -H "Authorization: Bearer ${TOKEN}" \
+              --data-binary @- \<< EOF
+              {"agentUserGroup": {
+                "agentUid": $(id -u <<parameters.cluster_unix_user>>),
+                "agentUser": "<<parameters.cluster_unix_user>>",
+                "agentGid": $(id -g <<parameters.cluster_unix_user>>),
+                "agentGroup": "$(id -gn <<parameters.cluster_unix_user>>)"
+                }
+              }
+            EOF
 
       - setup-python-venv:
           determined: True
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           install-python: false
           executor: <<parameters.runner_class>>
-
-      - run: |
-          id <<parameters.cluster_unix_user>> || sudo useradd <<parameters.cluster_unix_user>>
-          TOKEN=$(
-            curl "<<parameters.determined_master_host>>/api/v1/auth/login" \
-              -f \
-              -X POST \
-              --data-binary @- \<< EOF | jq -r '.token'
-            {
-                "username": "<<parameters.determined_admin_username>>",
-                "password": "<<parameters.determined_admin_password>>"
-            }
-          EOF
-          )
-          curl "<<parameters.determined_master_host>>/users/<<parameters.determined_admin_username>>" \
-            -f \
-            -X PATCH \
-            -H "Authorization: Bearer ${TOKEN}" \
-            --data-binary @- \<< EOF
-            {
-              "uid": $(id -u <<parameters.cluster_unix_user>>),
-              "user": "<<parameters.cluster_unix_user>>",
-              "gid": $(id -g <<parameters.cluster_unix_user>>),
-              "group": "$(id -gn <<parameters.cluster_unix_user>>)"
-            }
-          EOF
 
       - run-e2e-tests:
           mark: <<parameters.mark>>
