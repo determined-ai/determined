@@ -624,6 +624,9 @@ commands:
         type: string
       master-cert-name:
         type: string
+      webhooks-base-url:
+        type: string
+        default: ""
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
