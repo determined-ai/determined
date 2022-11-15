@@ -340,7 +340,7 @@ func (a *apiServer) PatchUser(
 		return nil, errUserNotFound
 	}
 
-	var updatedUser *model.User
+	updatedUser := &model.User{ID: targetUser.ID}
 	var insertColumns []string
 	if req.User.Admin != nil {
 		if err = user.AuthZProvider.Get().
@@ -348,7 +348,7 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		targetUser.Admin = req.User.Admin.Value
+		updatedUser.Admin = req.User.Admin.Value
 		insertColumns = append(insertColumns, "admin")
 	}
 
@@ -358,7 +358,7 @@ func (a *apiServer) PatchUser(
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		targetUser.Active = req.User.Active.Value
+		updatedUser.Active = req.User.Active.Value
 		insertColumns = append(insertColumns, "active")
 	}
 
@@ -393,21 +393,40 @@ func (a *apiServer) PatchUser(
 			return nil, err
 		}
 
-		// OKAY SKIP if empty or nil
-		// Im not really sure why we need this empty check!
-		// TODO check for confusable users...? !?!?!
-		// TODO lower for users and lower for display name...
+		if *displayName != "" {
+			lowerDisplayName := strings.ToLower(*displayName)
+			if ok, err := db.Bun().NewSelect().Model(&model.User{}).
+				WhereOr("LOWER(username) = ?", lowerDisplayName).
+				WhereOr("LOWER(display_name) = ?", lowerDisplayName).
+				Exists(ctx); err != nil {
+				return nil, errors.Wrap(err, "error finding similar display names")
+			} else if ok {
+				return nil, status.Errorf(codes.InvalidArgument, "can not change display name "+
+					"to %s found a similar username or display name", *displayName)
+			}
+		}
 		updatedUser.DisplayName = null.StringFromPtr(displayName)
 		insertColumns = append(insertColumns, "display_name")
 	}
 
-	var ug *model.AgentUserGroup
-	if aug := req.User.AgentUserGroup; aug != nil {
+	if req.User.Password != nil {
 		if err = user.AuthZProvider.Get().
-			CanSetUsersAgentUserGroup(ctx, *curUser, targetUser, *ug); err != nil {
+			CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
+		hashedPassword := *req.User.Password
+		if !req.User.IsHashed {
+			hashedPassword = replicateClientSideSaltAndHash(hashedPassword)
+		}
+		if err := updatedUser.UpdatePasswordHash(hashedPassword); err != nil {
+			return nil, errors.Wrap(err, "error hashing password")
+		}
+		insertColumns = append(insertColumns, "password_hash")
+	}
+
+	var ug *model.AgentUserGroup
+	if aug := req.User.AgentUserGroup; aug != nil {
 		if err = validateProtoAgentUserGroup(aug); err != nil {
 			return nil, err
 		}
@@ -416,6 +435,11 @@ func (a *apiServer) PatchUser(
 			GID:   int(*req.User.AgentUserGroup.AgentGid),
 			User:  *req.User.AgentUserGroup.AgentUser,
 			Group: *req.User.AgentUserGroup.AgentGroup,
+		}
+
+		if err = user.AuthZProvider.Get().
+			CanSetUsersAgentUserGroup(ctx, *curUser, targetUser, *ug); err != nil {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
 
