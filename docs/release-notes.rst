@@ -10,6 +10,42 @@
  Version 0.19
 **************
 
+Version 0.19.7
+==============
+
+**Release Date:** November 14, 2022
+
+**New Features**
+
+-  WebUI: Adds support for creating and managing webhooks to enable receiving updates regarding
+   experiment state changes.
+
+-  Checkpoint storage can now be configured at a workspace level. Experiments created in projects
+   will now inherit checkpoint storage configuration from the project's workspace if set. Experiment
+   configuration can override the workspace level checkpoint storage configuration.
+
+-  Example: Textual Inversion training and generation using Stable Diffusion with Core API and
+   Hugging Face's Diffusers.
+
+-  Python SDK now supports reading logs from trials, via the new
+   :meth:`~determined.experimental.client.TrialReference.logs` method. Additionally, the Python SDK
+   also supports a new blocking call on an experiment to get the first trial created for an
+   experiment via the
+   :meth:`~determined.experimental.client.ExperimentReference.await_first_trial()` method. Users who
+   have been writing automation around the ``det e create --follow-first-trial`` CLI command may now
+   use the python SDK instead, by combining ``.await_first_trial()`` and ``.logs()``.
+
+-  RBAC: the enterprise edition of Determined (`HPE Machine Learning Development Environment
+   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+   has added preliminary support for Role-Based Access Control. Administrators can now configure
+   which users or user groups can administer users, create or configure workspaces, run or view
+   experiments in particular workspaces, or perform other actions. See :ref:`rbac` for more
+   information.
+
+**Bug Fixes**
+
+-  Master: Correctly handle pending allocations in historical resource allocation aggregation.
+
 Version 0.19.6
 ==============
 
