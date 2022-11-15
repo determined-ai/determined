@@ -520,6 +520,14 @@ Resources:
       Roles:
         - !Ref MasterRole
 
+  IMDSV2LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+          HttpPutResponseHopLimit: 2
+          
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -530,6 +538,9 @@ Resources:
         - Master
       KeyName: !Ref Keypair
       IamInstanceProfile: !Ref MasterInstanceProfile
+      LaunchTemplate:
+        LaunchTemplateId: !Ref IMDSV2LaunchTemplate
+        Version: !GetAtt IMDSV2LaunchTemplate.LatestVersionNumber
       SecurityGroupIds:
         - !Ref MasterSecurityGroup
       BlockDeviceMappings:
