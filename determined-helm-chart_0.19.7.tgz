@@ -1,5 +1,5 @@
 ---
 permalink: /determined-helm-chart_0.19.7.tgz
 redirect_to:
-  - https://github.com/determined-ai/determined/releases/download/0.19.7/determined-helm-chart_0.19.7.tgz
+  - https://github.com/determined-ai/determined/releases/download/0.19.7-ee/determined-helm-chart_0.19.7.tgz
 ---
