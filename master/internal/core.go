@@ -854,8 +854,6 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	// Add resistance to common HTTP attacks.
-	//
-	// TODO(DET-1696): Enable Content Security Policy (CSP).
 	secureConfig := middleware.SecureConfig{
 		Skipper:            middleware.DefaultSkipper,
 		XSSProtection:      "1; mode=block",
