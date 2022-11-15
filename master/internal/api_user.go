@@ -404,8 +404,8 @@ func (a *apiServer) PatchUser(
 				return nil, status.Errorf(codes.InvalidArgument, "can not change display name "+
 					"to %s found a similar username or display name", *displayName)
 			}
+			updatedUser.DisplayName = null.StringFromPtr(displayName)
 		}
-		updatedUser.DisplayName = null.StringFromPtr(displayName)
 		insertColumns = append(insertColumns, "display_name")
 	}
 
