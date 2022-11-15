@@ -1834,6 +1834,9 @@ jobs:
       reattach-enabled:
         type: boolean
         default: false
+      webhooks-base-url:
+        type: string
+        default: ""
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
