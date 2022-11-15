@@ -37,6 +37,7 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.AGENT_RECONNECT_ATTEMPTS,
         constants.cloudformation.AGENT_RECONNECT_BACKOFF,
         constants.cloudformation.AGENT_CONFIG_FILE_CONTENTS,
+        constants.cloudformation.WEBHOOKS_BASE_URL,
     ]
 
     def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:
