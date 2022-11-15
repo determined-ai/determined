@@ -19,8 +19,8 @@ from .test_groups import det_cmd, det_cmd_json
 def test_workspace_org() -> None:
     master_url = conf.make_master_url()
     # Ensure determined creds are the default values.
-   # with logged_in_user(ADMIN_CREDENTIALS):
-        #change_user_password("determined", "")
+    # with logged_in_user(ADMIN_CREDENTIALS):
+    # change_user_password("determined", "")
     authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
     sess = api.Session(master_url, None, None, None)
     admin_auth = authentication.Authentication(

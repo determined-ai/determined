@@ -5,6 +5,7 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import clean_auth
 
+
 @pytest.mark.e2e_cpu
 def test_model_registry(clean_auth: None) -> None:
     exp_id = exp.run_basic_test(

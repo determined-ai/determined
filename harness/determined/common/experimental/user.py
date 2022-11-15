@@ -31,7 +31,7 @@ class User:
 
     def reload(self, raw: Optional[bindings.v1User] = None):
         if raw is None:
-            raw = bindings.get_GetUser(userId=self.id).user
+            raw = bindings.get_GetUser(session=self._session, userId=self.user_id).user
         assert raw.id is not None
         self.user_id = raw.id
         self.username = raw.username
@@ -54,17 +54,17 @@ class User:
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
         self.reload(resp.user)
 
-    def deactivate(self) -> bindings.v1PatchUserResponse:
+    def deactivate(self) -> None:
         patch_user = bindings.v1PatchUser(active=False)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
         self.reload(resp.user)
 
-    def change_display_name(self, display_name: str) -> bindings.v1PatchUserResponse:
+    def change_display_name(self, display_name: str) -> None:
         patch_user = bindings.v1PatchUser(displayName=display_name)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
         self.reload(resp.user)
 
-    def change_password(self, new_password: str) -> bindings.v1PatchUserResponse:
+    def change_password(self, new_password: str) -> None:
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
@@ -76,7 +76,7 @@ class User:
         agent_gid: Optional[int] = None,
         agent_user: Optional[str] = None,
         agent_group: Optional[str] = None,
-    ) -> bindings.v1PatchUserResponse:
+    ) -> None:
         v1agent_user_group = bindings.v1AgentUserGroup(
             agentGid=agent_gid,
             agentGroup=agent_group,
