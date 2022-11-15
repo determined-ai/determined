@@ -83,6 +83,19 @@ describe('LogViewerFilter', () => {
     });
   });
 
+  it('should render filters with no rank', () => {
+    const values: Filters = {
+      agentIds: [],
+      allocationIds: [],
+      containerIds: [],
+      levels: [],
+      rankIds: undefined,
+    };
+    setup(values, { ...values, rankIds: [] });
+
+    expect(screen.queryByText(new RegExp('rank', 'i'))).not.toBeInTheDocument();
+  });
+
   it('should call onChange when options are selected', async () => {
     const { handleOnChange, user } = setup(DEFAULT_FILTER_OPTIONS, {});
 
