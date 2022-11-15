@@ -321,7 +321,7 @@ func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest,
 ) (*apiv1.PatchUserResponse, error) {
 	if req.User == nil {
-		return nil, status.Error(codes.InvalidArgument, "must provider user")
+		return nil, status.Error(codes.InvalidArgument, "must provide user")
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)

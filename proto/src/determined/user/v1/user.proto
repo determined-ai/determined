@@ -41,7 +41,7 @@ message PatchUser {
   optional string display_name = 6;
   // Password of user.
   optional string password = 7;
-  // Indicates if the password is pre-salted or not.
+  // Indicates if the password field is sent salted and client side hashed.
   bool is_hashed = 8;
 }
 

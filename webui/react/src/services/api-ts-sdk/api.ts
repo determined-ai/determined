@@ -5540,7 +5540,7 @@ export interface V1PatchUser {
      */
     password?: string;
     /**
-     * Indicates if the password is pre-salted or not.
+     * Indicates if the password field is sent salted and client side hashed.
      * @type {boolean}
      * @memberof V1PatchUser
      */
