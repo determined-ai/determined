@@ -361,7 +361,7 @@ def test_experiment_creation_and_listing(clean_auth: None, login_admin: None) ->
     creds2 = create_test_user(True)
 
     # Ensure determined creds are the default values.
-    change_user_password("determined", "")
+    #change_user_password("determined", "")
 
     # Create an experiment as first user.
     with logged_in_user(creds1):
@@ -810,10 +810,10 @@ def test_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
     expected_output = "someuser:200:somegroup:300"
     check_link_with_agent_output(user, expected_output)
 
-    log_in_user(ADMIN_CREDENTIALS)
-    user_sdk = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
-    expected_output = "anyuser:210:anygroup:310"
-    check_link_with_agent_output(user_sdk, expected_output)
+    with logged_in_user(ADMIN_CREDENTIALS): 
+        user_sdk = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
+        expected_output = "anyuser:210:anygroup:310"
+        check_link_with_agent_output(user_sdk, expected_output)
 
 
 @pytest.mark.e2e_cpu
