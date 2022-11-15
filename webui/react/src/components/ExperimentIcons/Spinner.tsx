@@ -3,7 +3,7 @@ import React from 'react';
 import css from './Spinner.module.scss';
 
 interface Props {
-  type: 'bowtie' | 'half';
+  type: 'bowtie' | 'half' | 'split' | 'shadow';
 }
 
 const Spinner: React.FC<Props> = ({ type }) => {
