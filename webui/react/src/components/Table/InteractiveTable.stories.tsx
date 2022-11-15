@@ -67,8 +67,8 @@ export const Default: Story<InteractiveTableProps & { numRows: number }> = ({
   const { settings, updateSettings } = useSettings<InteractiveTableSettings>(config);
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: React.Key[]) => {
+      updateSettings({ row: rowKeys.map(String) });
     },
     [updateSettings],
   );

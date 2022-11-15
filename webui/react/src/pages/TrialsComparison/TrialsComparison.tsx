@@ -66,7 +66,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const { setSelectedTrials } = actions;
   const handleTrialClick = useCallback(
-    (_, trialId) => {
+    (_: MouseEvent, trialId: number) => {
       setSelectedTrials((ids) => {
         const otherIds = ids.filter((id) => id !== trialId);
         const trialIncluded = ids.includes(trialId);

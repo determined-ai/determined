@@ -103,8 +103,8 @@ const TrialDetailsComp: React.FC = () => {
   }, [canceler, trialDetails.error, trialId]);
 
   const handleTabChange = useCallback(
-    (key) => {
-      setTabKey(key);
+    (key: string) => {
+      setTabKey(key as TabType);
       navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],

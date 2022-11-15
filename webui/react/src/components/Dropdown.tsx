@@ -121,7 +121,7 @@ const Dropdown: React.FC<Props> = ({
   if (showArrow) classes.push(css.arrow);
 
   const handleClick = useCallback(
-    (event) => {
+    (event: any) => {
       if (!event || !event.target) return;
 
       event.stopPropagation();

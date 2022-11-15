@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { createWorkspace, getWorkspace, patchWorkspace } from 'services/api';
+import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -221,7 +222,13 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           useAgentGroup,
           checkpointStorageConfig,
         } = values;
-        const body = {
+        const body: {
+          agentUserGroup?: V1AgentUserGroup;
+          checkpointStorageConfig?: unknown;
+          name: string;
+        } = {
+          agentUserGroup: {},
+          checkpointStorageConfig: undefined,
           name: workspaceName,
         };
 

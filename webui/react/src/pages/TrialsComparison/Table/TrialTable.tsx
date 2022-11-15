@@ -470,7 +470,7 @@ const TrialTable: React.FC<Props> = ({
       defaultWidth: 110,
       fixed: 'right',
       key: 'action',
-      render: (_, record) => <TrialActionDropdown id={record.trialId} />,
+      render: (_: string, record: V1AugmentedTrial) => <TrialActionDropdown id={record.trialId} />,
 
       title: '',
       width: 80,

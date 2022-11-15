@@ -75,7 +75,7 @@ const extraConfig: hook.SettingsConfig = {
 describe('useSettings helper functions', () => {
   describe('validateBaseType', () => {
     it('should validate base types for settings', () => {
-      const tests = [
+      const tests: { type: hook.BaseType | hook.BaseType[]; value: number | boolean | string }[] = [
         { type: hook.BaseType.Boolean, value: false },
         { type: hook.BaseType.Boolean, value: true },
         { type: hook.BaseType.Float, value: 3.14159 },
@@ -195,7 +195,10 @@ describe('useSettings', () => {
   let extraResult: RenderResult<hook.SettingsHook<ExtraSettings>>;
 
   beforeEach(() => {
-    const RouterWrapper: React.FC = ({ children }) => (
+    interface Props {
+      children: React.ReactNode;
+    }
+    const RouterWrapper: React.FC<Props> = ({ children }: Props) => (
       <StoreProvider>
         <HistoryRouter history={history}>{children}</HistoryRouter>
       </StoreProvider>

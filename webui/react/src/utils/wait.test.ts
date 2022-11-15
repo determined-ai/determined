@@ -23,7 +23,7 @@ const COMMAND_TASK: Record<RecordKey, CommandTask> = {
     resourcePool: 'compute-pool',
     serviceAddress: `/proxy/${UUID[CommandType.JupyterLab]}`,
     startTime: '2022-08-01T00:12:24Z',
-    state: CommandState.Pending,
+    state: CommandState.Queued,
     type: CommandType.JupyterLab,
     userId: 34,
   },

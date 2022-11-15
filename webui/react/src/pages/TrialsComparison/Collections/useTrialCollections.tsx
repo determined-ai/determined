@@ -146,7 +146,7 @@ export const useTrialCollections = (
   );
 
   const setPreviousCollection = useCallback(
-    (c) => previousCollectionStorage.set('collection', c),
+    (c: TrialsCollection) => previousCollectionStorage.set('collection', c),
     [previousCollectionStorage],
   );
 

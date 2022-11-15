@@ -47,9 +47,9 @@ const SettingsContent: React.FC = () => {
   const { canViewUsers } = usePermissions();
 
   const handleTabChange = useCallback(
-    (key) => {
+    (key: string) => {
       updateSettings({});
-      setTabKey(key);
+      setTabKey(key as TabType);
       navigate(paths.settings(key), { replace: true });
     },
     [navigate, updateSettings],

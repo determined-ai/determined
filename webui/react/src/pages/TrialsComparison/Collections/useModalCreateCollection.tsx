@@ -108,7 +108,8 @@ const useModalTrialCollection = ({ projectId, onConfirm }: Props): ModalHooks =>
   }, [form, trials, handleOk]);
 
   const getModalProps = useCallback(
-    (trials): ModalFuncProps => {
+    (trials?: TrialsSelectionOrCollection): ModalFuncProps => {
+      if (!trials) throw Error('trials should not be undefined');
       const actionText = isTrialsSelection(trials) ? 'Tag and Collect' : 'Create Collection for';
       const props = {
         closable: true,

@@ -169,11 +169,11 @@ const GroupManagement: React.FC = () => {
   const onExpandedRowsChange = (keys: readonly React.Key[]) => setExpandedKeys(keys);
 
   const onRemoveUser = useCallback(
-    async (record: V1GroupSearchResult, userId) => {
+    async (record: V1GroupSearchResult, userId?: number) => {
       const {
         group: { groupId },
       } = record;
-      if (!groupId) return;
+      if (!groupId || !userId) return;
       try {
         await updateGroup({ groupId, removeUsers: [userId] });
         message.success('User has been deleted.');

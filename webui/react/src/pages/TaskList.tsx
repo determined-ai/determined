@@ -1,6 +1,11 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Space } from 'antd';
-import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import {
+  FilterDropdownProps,
+  FilterValue,
+  SorterResult,
+  TablePaginationConfig,
+} from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -40,7 +45,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { ShirtSize } from 'themes';
-import { ExperimentAction as Action, CommandState, CommandTask, CommandType } from 'types';
+import { ExperimentAction as Action, AnyTask, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
@@ -476,7 +481,11 @@ const TaskList: React.FC = () => {
   );
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<CommandTask> | SorterResult<CommandTask>[],
+    ) => {
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
@@ -485,7 +494,7 @@ const TaskList: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : ALL_SORTKEY[0],
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -494,8 +503,8 @@ const TaskList: React.FC = () => {
   );
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: React.Key[]) => {
+      updateSettings({ row: rowKeys as string[] });
     },
     [updateSettings],
   );
@@ -507,7 +516,15 @@ const TaskList: React.FC = () => {
   }, [canceler]);
 
   const TaskActionDropdownCM = useCallback(
-    ({ record, onVisibleChange, children }) => (
+    ({
+      record,
+      onVisibleChange,
+      children,
+    }: {
+      children: React.ReactNode;
+      onVisibleChange?: (visible: boolean) => void;
+      record: AnyTask;
+    }) => (
       <TaskActionDropdown
         curUser={user}
         task={record}

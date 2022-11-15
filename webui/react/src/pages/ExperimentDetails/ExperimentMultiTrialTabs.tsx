@@ -60,7 +60,7 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
   const basePath = paths.experimentDetails(experiment.id);
 
   const handleTabChange = useCallback(
-    (key) => {
+    (key: string) => {
       navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],

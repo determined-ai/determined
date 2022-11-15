@@ -1,6 +1,11 @@
 import { Button, Dropdown, Menu, Space, Typography } from 'antd';
 import type { MenuProps } from 'antd';
-import { FilterDropdownProps, SorterResult } from 'antd/lib/table/interface';
+import {
+  FilterDropdownProps,
+  FilterValue,
+  SorterResult,
+  TablePaginationConfig,
+} from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import FilterCounter from 'components/FilterCounter';
@@ -158,7 +163,7 @@ const ModelRegistry: React.FC = () => {
   );
 
   const setModelTags = useCallback(
-    async (modelName, tags) => {
+    async (modelName: string, tags: string[]) => {
       try {
         await patchModel({ body: { labels: tags, name: modelName }, modelName });
         await fetchModels();
@@ -462,7 +467,11 @@ const ModelRegistry: React.FC = () => {
   ]);
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<ModelItem> | SorterResult<ModelItem>[],
+    ) => {
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelItem>;
@@ -472,7 +481,7 @@ const ModelRegistry: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -523,7 +532,15 @@ const ModelRegistry: React.FC = () => {
   );
 
   const ModelActionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => (
+    ({
+      record,
+      onVisibleChange,
+      children,
+    }: {
+      children: React.ReactNode;
+      onVisibleChange?: (visible: boolean) => void;
+      record: ModelItem;
+    }) => (
       <Dropdown
         overlay={() => ModelActionMenu(record)}
         trigger={['contextMenu']}

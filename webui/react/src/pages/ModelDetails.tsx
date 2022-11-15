@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import { SorterResult } from 'antd/lib/table/interface';
+import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -38,7 +38,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import { ModelVersion, ModelVersions } from 'types';
+import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
 import css from './ModelDetails.module.scss';
@@ -110,7 +110,7 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveModelVersionTags = useCallback(
-    async (modelName, versionId, tags) => {
+    async (modelName: string, versionId: number, tags: string[]) => {
       try {
         await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
         await fetchModel();
@@ -233,7 +233,11 @@ const ModelDetails: React.FC = () => {
   }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription]);
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<ModelVersion> | SorterResult<ModelVersion>[],
+    ) => {
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
@@ -243,7 +247,7 @@ const ModelDetails: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelVersionsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -252,7 +256,7 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveMetadata = useCallback(
-    async (editedMetadata) => {
+    async (editedMetadata: Metadata) => {
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -338,7 +342,7 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveModelTags = useCallback(
-    async (editedTags) => {
+    async (editedTags: string[]) => {
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -371,7 +375,15 @@ const ModelDetails: React.FC = () => {
   }, [model?.model.archived, model?.model.name]);
 
   const actionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => (
+    ({
+      record,
+      onVisibleChange,
+      children,
+    }: {
+      children: React.ReactNode;
+      onVisibleChange?: (visible: boolean) => void;
+      record: ModelVersion;
+    }) => (
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
         onDelete={() => deleteModelVersion(record)}

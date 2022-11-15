@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
@@ -7,13 +8,13 @@ import { LogLevelFromApi } from 'types';
 
 import LogViewerFilters, { ARIA_LABEL_RESET, Filters, LABELS } from './LogViewerFilters';
 
-const DEFAULT_FILTER_OPTIONS = {
+const DEFAULT_FILTER_OPTIONS: Filters = {
   agentIds: new Array(3).fill('').map(() => `i-${generateAlphaNumeric(17)}`),
   allocationIds: new Array(2).fill('').map((_, i) => `${generateUUID()}.${i}`),
   containerIds: ['', ...new Array(2).fill('').map(() => generateUUID())],
   rankIds: ['0', '1', '2', ''],
-  sources: ['agent', 'master', ''],
-  stdtypes: ['stdout', 'stderr', ''],
+  // sources: ['agent', 'master', ''],
+  // stdtypes: ['stdout', 'stderr', ''],
 };
 
 const setup = (filterOptions: Filters, filterValues: Filters) => {
@@ -38,7 +39,7 @@ describe('LogViewerFilter', () => {
 
     await waitFor(() => {
       Object.values(LABELS).forEach((label) => {
-        if (!DEFAULT_FILTER_OPTIONS[label]) return;
+        if (!DEFAULT_FILTER_OPTIONS[label as keyof typeof DEFAULT_FILTER_OPTIONS]) return;
         const regex = new RegExp(`All ${label}`, 'i');
         expect(screen.queryByText(regex)).toBeInTheDocument();
       });
@@ -47,11 +48,11 @@ describe('LogViewerFilter', () => {
 
   it('should render select filters with selected options', async () => {
     const values: Filters = {
-      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]],
-      allocationIds: [DEFAULT_FILTER_OPTIONS.allocationIds[1]],
-      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds[1]],
+      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds![1]],
+      allocationIds: [DEFAULT_FILTER_OPTIONS.allocationIds![1]],
+      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds![1]],
       levels: [LogLevelFromApi.Info],
-      rankIds: [DEFAULT_FILTER_OPTIONS.rankIds[1]],
+      rankIds: [DEFAULT_FILTER_OPTIONS.rankIds![1]],
     };
     setup(DEFAULT_FILTER_OPTIONS, values);
 
@@ -65,7 +66,7 @@ describe('LogViewerFilter', () => {
     });
   });
 
-  it('should render filters with rank 0 and no rank', async () => {
+  it('should render filters with rank 0 and 1', async () => {
     const values: Filters = {
       agentIds: [],
       allocationIds: [],
@@ -79,7 +80,6 @@ describe('LogViewerFilter', () => {
     await user.click(agentOption1);
     await waitFor(async () => {
       expect(await screen.findAllByText('0')).toHaveLength(2);
-      expect(screen.queryByText('No Rank')).toBeInTheDocument();
     });
   });
 
@@ -87,8 +87,8 @@ describe('LogViewerFilter', () => {
     const { handleOnChange, user } = setup(DEFAULT_FILTER_OPTIONS, {});
 
     const agentRegex = new RegExp(`All ${LABELS.agentIds}`, 'i');
-    const agentOptionText1 = DEFAULT_FILTER_OPTIONS.agentIds[1];
-    const agentOptionText2 = DEFAULT_FILTER_OPTIONS.agentIds[2];
+    const agentOptionText1 = DEFAULT_FILTER_OPTIONS.agentIds![1];
+    const agentOptionText2 = DEFAULT_FILTER_OPTIONS.agentIds![2];
 
     const agent = screen.getByText(agentRegex);
     await user.click(agent);
@@ -113,15 +113,15 @@ describe('LogViewerFilter', () => {
 
   it('should show reset button when filters are set', () => {
     const values = {
-      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]],
-      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds[1]],
+      agentIds: [DEFAULT_FILTER_OPTIONS.agentIds![1]],
+      containerIds: [DEFAULT_FILTER_OPTIONS.containerIds![1]],
     };
     setup(DEFAULT_FILTER_OPTIONS, values);
     expect(screen.queryByText(ARIA_LABEL_RESET)).toBeInTheDocument();
   });
 
   it('should call onReset when reset button is clicked', async () => {
-    const values = { agentIds: [DEFAULT_FILTER_OPTIONS.agentIds[1]] };
+    const values = { agentIds: [DEFAULT_FILTER_OPTIONS.agentIds![1]] };
     const { handleOnReset, user } = setup(DEFAULT_FILTER_OPTIONS, values);
 
     await user.click(screen.getByText(ARIA_LABEL_RESET));

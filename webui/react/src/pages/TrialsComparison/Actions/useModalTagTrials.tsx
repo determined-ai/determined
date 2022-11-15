@@ -52,7 +52,7 @@ const useModalTrialTag = ({ onClose, onConfirm }: Props): ModalHooks => {
   }, [tags]);
 
   const handleOk = useCallback(
-    async (trials) => {
+    async (trials: TrialsSelectionOrCollection) => {
       const patch = {
         addTag: tags.map((tag) => {
           return { key: tag };
@@ -60,7 +60,7 @@ const useModalTrialTag = ({ onClose, onConfirm }: Props): ModalHooks => {
       };
       const target = isTrialsCollection(trials)
         ? { filters: encodeFilters(trials.filters) }
-        : { trial: { ids: encodeIdList(trials.trialIds) } };
+        : { trial: { ids: encodeIdList(trials.trialIds.map(String)) } };
       try {
         await updateTrialTags({ patch, ...target });
       } catch (e) {

@@ -75,7 +75,7 @@ const NavigationTabbar: React.FC = () => {
     openJupyterLabModal();
   }, [openJupyterLabModal]);
 
-  const handlePathUpdate = useCallback((e, path) => {
+  const handlePathUpdate = useCallback((e: AnyMouseEvent, path?: string) => {
     handlePath(e, { path });
     setIsShowingOverflow(false);
     setIsShowingPinnedWorkspaces(false);

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./src",
     "module": "esnext",
-    "noImplicitAny": false
+    "skipLibCheck": true
   },
   "include": ["src/**/*", "typings/**/*.ts"]
 }

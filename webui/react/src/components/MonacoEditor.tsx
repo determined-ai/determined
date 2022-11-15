@@ -20,7 +20,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   const resize = useResize(containerRef);
   const { ui } = useUI();
 
-  const handleEditorDidMount = useCallback((editor) => editor.focus(), []);
+  const handleEditorDidMount = useCallback((editor: any) => editor.focus(), []);
 
   useEffect(() => {
     editorRef.current?.editor?.layout();
