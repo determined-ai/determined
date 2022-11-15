@@ -362,7 +362,7 @@ func (a *apiServer) PatchUser(
 		insertColumns = append(insertColumns, "active")
 	}
 
-	if req.User.Username != nil {
+	if req.User.Username != nil && *req.User.Username != targetUser.Username {
 		if err = user.AuthZProvider.Get().CanSetUsersUsername(ctx, *curUser, targetUser); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
@@ -382,7 +382,7 @@ func (a *apiServer) PatchUser(
 		insertColumns = append(insertColumns, "username")
 	}
 
-	if req.User.DisplayName != nil {
+	if req.User.DisplayName != nil && *req.User.DisplayName != targetUser.DisplayName.ValueOrZero() {
 		if err = user.AuthZProvider.Get().
 			CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
