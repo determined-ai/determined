@@ -564,6 +564,7 @@ def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
         "--json",
     ]
     output = subprocess.check_output(command).decode()
+
     slots = json.loads(output)
     assert len(slots) == 1
     slot_id = slots[0]["slot_id"]
