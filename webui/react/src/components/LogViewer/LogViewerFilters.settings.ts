@@ -6,7 +6,7 @@ export interface Settings {
   allocationId?: string[];
   containerId?: string[];
   level?: LogLevelFromApi[];
-  rankId?: number[];
+  rankId?: string[];
   searchText?: string;
 }
 
@@ -36,7 +36,7 @@ const config: SettingsConfig = {
     {
       key: 'rankId',
       type: {
-        baseType: BaseType.Integer,
+        baseType: BaseType.String,
         isArray: true,
       },
     },

@@ -65,6 +65,7 @@ class TrialReference:
             raise ValueError(f"head must be non-negative, got {head}")
         if tail is not None and tail < 0:
             raise ValueError(f"tail must be non-negative, got {tail}")
+
         for log in logs.trial_logs(
             session=self._session,
             trial_id=self.id,

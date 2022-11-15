@@ -7,7 +7,7 @@ import pathlib
 import platform
 import random
 import sys
-from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Union, overload
+from typing import IO, Any, Callable, Iterator, List, Optional, Sequence, TypeVar, Union, overload
 
 import urllib3
 
@@ -185,3 +185,13 @@ def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
     if ts.endswith("Z"):
         ts = ts[:-1] + "+00:00"
     return datetime.datetime.fromisoformat(ts)
+
+
+# Convert a list of ints to a list of strings.
+def str_map(nums: Optional[List[int]]) -> Optional[List[str]]:
+    if nums and len(nums) > 0:
+        op: List[str] = []
+        for num in nums:
+            op.append(str(num))
+        return op
+    return None

@@ -414,7 +414,7 @@ func (a *apiServer) TrialLogsFields(
 		return resp.Send(&apiv1.TrialLogsFieldsResponse{
 			AgentIds:     setString(append(r1.AgentIds, r2.AgentIds...)...),
 			ContainerIds: setString(append(r1.ContainerIds, r2.ContainerIds...)...),
-			RankIds:      setInt32(append(r1.RankIds, r2.RankIds...)...),
+			RankIds:      setString(append(r1.RankIds, r2.RankIds...)...),
 			Stdtypes:     setString(append(r1.Stdtypes, r2.Stdtypes...)...),
 			Sources:      setString(append(r1.Sources, r2.Sources...)...),
 		})
@@ -1274,19 +1274,6 @@ func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.T
 		}
 		return false, nil
 	}
-}
-
-func setInt32(xs ...int32) []int32 {
-	s := map[int32]bool{}
-	for _, x := range xs {
-		s[x] = true
-	}
-
-	var nxs []int32
-	for x := range s {
-		nxs = append(nxs, x)
-	}
-	return nxs
 }
 
 func setString(xs ...string) []string {

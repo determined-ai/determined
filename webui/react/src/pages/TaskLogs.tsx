@@ -102,7 +102,6 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         settings.allocationId,
         settings.agentId,
         settings.containerId,
-        settings.rankId,
         settings.level,
         undefined,
         undefined,
@@ -110,6 +109,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
         settings.searchText,
+        settings.rankId,
         { signal: config.canceler.signal },
       );
     },
