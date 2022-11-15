@@ -341,23 +341,30 @@ class protobufAny:
         return out
 
 class protobufFieldMask:
+    paths: "typing.Optional[typing.Sequence[str]]" = None
+
     def __init__(
         self,
         *,
-        paths: "typing.Optional[typing.Sequence[str]]" = None,
+        paths: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
     ):
-        self.paths = paths
+        if not isinstance(paths, Unset):
+            self.paths = paths
 
     @classmethod
     def from_json(cls, obj: Json) -> "protobufFieldMask":
-        return cls(
-            paths=obj.get("paths", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "paths": self.paths if self.paths is not None else None,
+        kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "paths" in obj:
+            kwargs["paths"] = obj["paths"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "paths" in vars(self):
+            out["paths"] = self.paths
+        return out
 
 class protobufNullValue(enum.Enum):
     NULL_VALUE = "NULL_VALUE"
@@ -1699,6 +1706,7 @@ class v1Container:
 class v1CreateExperimentRequest:
     activate: "typing.Optional[bool]" = None
     config: "typing.Optional[str]" = None
+    groupId: "typing.Optional[int]" = None
     modelDefinition: "typing.Optional[typing.Sequence[v1File]]" = None
     parentId: "typing.Optional[int]" = None
     projectId: "typing.Optional[int]" = None
@@ -1709,6 +1717,7 @@ class v1CreateExperimentRequest:
         *,
         activate: "typing.Union[bool, None, Unset]" = _unset,
         config: "typing.Union[str, None, Unset]" = _unset,
+        groupId: "typing.Union[int, None, Unset]" = _unset,
         modelDefinition: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         parentId: "typing.Union[int, None, Unset]" = _unset,
         projectId: "typing.Union[int, None, Unset]" = _unset,
@@ -1718,6 +1727,8 @@ class v1CreateExperimentRequest:
             self.activate = activate
         if not isinstance(config, Unset):
             self.config = config
+        if not isinstance(groupId, Unset):
+            self.groupId = groupId
         if not isinstance(modelDefinition, Unset):
             self.modelDefinition = modelDefinition
         if not isinstance(parentId, Unset):
@@ -1735,6 +1746,8 @@ class v1CreateExperimentRequest:
             kwargs["activate"] = obj["activate"]
         if "config" in obj:
             kwargs["config"] = obj["config"]
+        if "groupId" in obj:
+            kwargs["groupId"] = obj["groupId"]
         if "modelDefinition" in obj:
             kwargs["modelDefinition"] = [v1File.from_json(x) for x in obj["modelDefinition"]] if obj["modelDefinition"] is not None else None
         if "parentId" in obj:
@@ -1752,6 +1765,8 @@ class v1CreateExperimentRequest:
             out["activate"] = self.activate
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
+        if not omit_unset or "groupId" in vars(self):
+            out["groupId"] = self.groupId
         if not omit_unset or "modelDefinition" in vars(self):
             out["modelDefinition"] = None if self.modelDefinition is None else [x.to_json(omit_unset) for x in self.modelDefinition]
         if not omit_unset or "parentId" in vars(self):
@@ -2355,6 +2370,8 @@ class v1Experiment:
     displayName: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
+    groupId: "typing.Optional[int]" = None
+    groupName: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     notes: "typing.Optional[str]" = None
     parentArchived: "typing.Optional[bool]" = None
@@ -2386,6 +2403,8 @@ class v1Experiment:
         displayName: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        groupId: "typing.Union[int, None, Unset]" = _unset,
+        groupName: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
@@ -2418,6 +2437,10 @@ class v1Experiment:
             self.endTime = endTime
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(groupId, Unset):
+            self.groupId = groupId
+        if not isinstance(groupName, Unset):
+            self.groupName = groupName
         if not isinstance(labels, Unset):
             self.labels = labels
         if not isinstance(notes, Unset):
@@ -2464,6 +2487,10 @@ class v1Experiment:
             kwargs["endTime"] = obj["endTime"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "groupId" in obj:
+            kwargs["groupId"] = obj["groupId"]
+        if "groupName" in obj:
+            kwargs["groupName"] = obj["groupName"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
         if "notes" in obj:
@@ -2510,6 +2537,10 @@ class v1Experiment:
             out["endTime"] = self.endTime
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "groupId" in vars(self):
+            out["groupId"] = self.groupId
+        if not omit_unset or "groupName" in vars(self):
+            out["groupName"] = self.groupName
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
         if not omit_unset or "notes" in vars(self):
@@ -2530,6 +2561,40 @@ class v1Experiment:
             out["workspaceId"] = self.workspaceId
         if not omit_unset or "workspaceName" in vars(self):
             out["workspaceName"] = self.workspaceName
+        return out
+
+class v1ExperimentGroup:
+
+    def __init__(
+        self,
+        *,
+        id: int,
+        name: str,
+        numExperiments: int,
+        projectId: int,
+    ):
+        self.id = id
+        self.name = name
+        self.numExperiments = numExperiments
+        self.projectId = projectId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExperimentGroup":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "id": obj["id"],
+            "name": obj["name"],
+            "numExperiments": obj["numExperiments"],
+            "projectId": obj["projectId"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "id": self.id,
+            "name": self.name,
+            "numExperiments": self.numExperiments,
+            "projectId": self.projectId,
+        }
         return out
 
 class v1ExperimentInactive:
@@ -3015,6 +3080,7 @@ class v1GetExperimentCheckpointsResponse:
         return out
 
 class v1GetExperimentGroupsResponse:
+
     def __init__(
         self,
         *,
@@ -3024,14 +3090,16 @@ class v1GetExperimentGroupsResponse:
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetExperimentGroupsResponse":
-        return cls(
-            groups=[v1ExperimentGroup.from_json(x) for x in obj["groups"]],
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "groups": [x.to_json() for x in self.groups],
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "groups": [v1ExperimentGroup.from_json(x) for x in obj["groups"]],
         }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "groups": [x.to_json(omit_unset) for x in self.groups],
+        }
+        return out
 
 class v1GetExperimentLabelsResponse:
     labels: "typing.Optional[typing.Sequence[str]]" = None
@@ -6441,6 +6509,7 @@ class v1Pagination:
 
 class v1PatchExperiment:
     description: "typing.Optional[str]" = None
+    groupId: "typing.Optional[int]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     name: "typing.Optional[str]" = None
     notes: "typing.Optional[str]" = None
@@ -6450,6 +6519,7 @@ class v1PatchExperiment:
         *,
         id: int,
         description: "typing.Union[str, None, Unset]" = _unset,
+        groupId: "typing.Union[int, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
@@ -6457,6 +6527,8 @@ class v1PatchExperiment:
         self.id = id
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(groupId, Unset):
+            self.groupId = groupId
         if not isinstance(labels, Unset):
             self.labels = labels
         if not isinstance(name, Unset):
@@ -6471,6 +6543,8 @@ class v1PatchExperiment:
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "groupId" in obj:
+            kwargs["groupId"] = obj["groupId"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
         if "name" in obj:
@@ -6485,6 +6559,8 @@ class v1PatchExperiment:
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "groupId" in vars(self):
+            out["groupId"] = self.groupId
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
         if not omit_unset or "name" in vars(self):
@@ -6494,25 +6570,33 @@ class v1PatchExperiment:
         return out
 
 class v1PatchExperimentGroup:
+    name: "typing.Optional[str]" = None
+
     def __init__(
         self,
         *,
-        name: "typing.Optional[str]" = None,
+        name: "typing.Union[str, None, Unset]" = _unset,
     ):
-        self.name = name
+        if not isinstance(name, Unset):
+            self.name = name
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchExperimentGroup":
-        return cls(
-            name=obj.get("name", None),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "name": self.name if self.name is not None else None,
+        kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        return out
 
 class v1PatchExperimentGroupResponse:
+
     def __init__(
         self,
         *,
@@ -6522,14 +6606,16 @@ class v1PatchExperimentGroupResponse:
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchExperimentGroupResponse":
-        return cls(
-            group=v1ExperimentGroup.from_json(obj["group"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "group": self.group.to_json(),
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "group": v1ExperimentGroup.from_json(obj["group"]),
         }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "group": self.group.to_json(omit_unset),
+        }
+        return out
 
 class v1PatchExperimentResponse:
     experiment: "typing.Optional[v1Experiment]" = None
@@ -7162,29 +7248,37 @@ class v1PostCheckpointMetadataResponse:
         return out
 
 class v1PostExperimentGroupRequest:
+    projectId: "typing.Optional[int]" = None
+
     def __init__(
         self,
         *,
         name: str,
-        projectId: "typing.Optional[int]" = None,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
     ):
-        self.projectId = projectId
         self.name = name
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostExperimentGroupRequest":
-        return cls(
-            projectId=obj.get("projectId", None),
-            name=obj["name"],
-        )
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "name": obj["name"],
+        }
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        return cls(**kwargs)
 
-    def to_json(self) -> typing.Any:
-        return {
-            "projectId": self.projectId if self.projectId is not None else None,
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
             "name": self.name,
         }
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        return out
 
 class v1PostExperimentGroupResponse:
+
     def __init__(
         self,
         *,
@@ -7194,14 +7288,16 @@ class v1PostExperimentGroupResponse:
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostExperimentGroupResponse":
-        return cls(
-            group=v1ExperimentGroup.from_json(obj["group"]),
-        )
-
-    def to_json(self) -> typing.Any:
-        return {
-            "group": self.group.to_json(),
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "group": v1ExperimentGroup.from_json(obj["group"]),
         }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "group": self.group.to_json(omit_unset),
+        }
+        return out
 
 class v1PostModelRequest:
     description: "typing.Optional[str]" = None
@@ -14488,7 +14584,7 @@ def patch_PatchExperimentGroup(
         method="PATCH",
         path=f"/api/v1/projects/{projectId}/groups/{groupId}",
         params=_params,
-        json=body.to_json(),
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -14717,7 +14813,7 @@ def post_PostExperimentGroup(
         method="POST",
         path=f"/api/v1/projects/{projectId}/groups",
         params=_params,
-        json=body.to_json(),
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,

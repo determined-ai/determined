@@ -546,13 +546,13 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	if params.GroupID == nil {
 		if config.Group() != "" {
 			tmpGroupID := 0
-			tmpGroupID, err = m.db.ExperimentGroupByName(int32(projectID), config.Group())
+			tmpGroupID, err = m.db.ExperimentGroupByName(project.Id, config.Group())
 			g.Id = int32(tmpGroupID)
 			if errors.Is(err, db.ErrNotFound) {
-				err = m.db.QueryProto("insert_experiment_group", &g, config.Group(), projectID)
+				err = m.db.QueryProto("insert_experiment_group", &g, config.Group(), int(project.Id))
 			}
 			if err != nil {
-				return nil, false, nil, errors.Wrapf(
+				return nil, nil, false, nil, errors.Wrapf(
 					err, errors.Errorf("unable to find or create group").Error())
 			}
 		}
