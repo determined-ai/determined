@@ -638,6 +638,7 @@ commands:
           master-cert-name: <<parameters.master-cert-name>>
           log-group-prefix: determined-ci
           retain-log-group: true
+          webhooks-base-url: ${WEBHOOKS_BASE_URL}
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
           master-tls-cert: <<parameters.master-tls-cert>>
@@ -1852,6 +1853,7 @@ jobs:
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
           enable-cors: <<parameters.enable-cors>>
           reattach-enabled: <<parameters.reattach-enabled>>
+          webhooks-base-url: <<parameters.webhooks-base-url>>
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'

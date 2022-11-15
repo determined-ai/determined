@@ -513,6 +513,7 @@ args_description = Cmd(
                 ),
                 Arg(
                     "--webhooks-base-url",
+                    default="",
                     type=str,
                     help="the base url that webhook messages will link to",
                 ),
