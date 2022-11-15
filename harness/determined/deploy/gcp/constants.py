@@ -21,4 +21,3 @@ class defaults:
     REGION = "us-west1"
     SCHEDULER_TYPE = "fair_share"
     PREEMPTION_ENABLED = False
-    WEBHOOKS_BASE_URL = ""

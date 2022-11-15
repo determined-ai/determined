@@ -63,7 +63,6 @@ class cloudformation:
     AGENT_RECONNECT_ATTEMPTS = "AgentReconnectAttempts"
     AGENT_RECONNECT_BACKOFF = "AgentReconnectBackoff"
     AGENT_CONFIG_FILE_CONTENTS = "AgentConfigFileContents"
-    WEBHOOKS_BASE_URL = "WebhooksBaseUrl"
 
 
 class misc:

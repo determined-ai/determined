@@ -417,11 +417,6 @@ args_description = Cmd(
                             help="use the GCS bucket to store the terraform state "
                             "instead of a local directory",
                         ),
-                        Arg(
-                            "--webhooks-base-url",
-                            type=str,
-                            help="the base url that webhook messages will link to",
-                        ),
                     ],
                 ),
             ],
