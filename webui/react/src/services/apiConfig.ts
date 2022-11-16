@@ -4,7 +4,7 @@ import { globalStorage } from 'globalStorage';
 import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
 import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
-import * as Api from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk/api';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
