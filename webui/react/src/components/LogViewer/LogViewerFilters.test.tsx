@@ -66,7 +66,7 @@ describe('LogViewerFilter', () => {
     });
   });
 
-  it('should render filters with rank 0 and 1', async () => {
+  it('should render filters with rank 0 and no rank', async () => {
     const values: Filters = {
       agentIds: [],
       allocationIds: [],
@@ -80,6 +80,7 @@ describe('LogViewerFilter', () => {
     await user.click(agentOption1);
     await waitFor(async () => {
       expect(await screen.findAllByText('0')).toHaveLength(2);
+      expect(screen.queryByText('No Rank')).toBeInTheDocument();
     });
   });
 
