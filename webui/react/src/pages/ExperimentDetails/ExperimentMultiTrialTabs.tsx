@@ -13,7 +13,6 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { ExperimentBase } from 'types';
 import handleError from 'utils/error';
 
-import ExperimentCheckpoints from './ExperimentCheckpoints';
 import { ExperimentVisualizationType } from './ExperimentVisualization';
 
 const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
@@ -120,9 +119,6 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
       </TabPane>
       {showExperimentArtifacts ? (
         <>
-          <TabPane key={TabType.Checkpoints} tab="Checkpoints">
-            <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-          </TabPane>
           <TabPane key={TabType.Code} tab="Code">
             <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
               <CodeViewer
