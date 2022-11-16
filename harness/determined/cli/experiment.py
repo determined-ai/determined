@@ -530,7 +530,7 @@ def kill_experiment(args: Namespace) -> None:
     print("Killed experiment {}".format(args.experiment_id))
 
 
-def _wait(session: api.Session, experiment_id: int, polling_interval: int) -> None:
+def _wait(session: api.Session, experiment_id: int, polling_interval=5) -> None:
     retry = urllib3.util.retry.Retry(
         raise_on_status=False,
         total=10,
