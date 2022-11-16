@@ -138,19 +138,19 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     setModalState((prev) => ({ ...prev, expandDetails: true }));
   }, []);
 
-  const handleMetadataChange = useCallback((value) => {
+  const handleMetadataChange = useCallback((value: Metadata) => {
     setModalState((prev) => ({ ...prev, metadata: value }));
   }, []);
 
-  const handleTagsChange = useCallback((value) => {
+  const handleTagsChange = useCallback((value: string[]) => {
     setModalState((prev) => ({ ...prev, tags: value }));
   }, []);
 
-  const handleNameChange = useCallback((e) => {
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setModalState((prev) => ({ ...prev, modelName: e.target.value }));
   }, []);
 
-  const handleDescriptionChange = useCallback((e) => {
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 

@@ -53,7 +53,7 @@ const TagList: React.FC<Props> = ({
   const editInputRef = useRef<InputRef>(null);
 
   const handleClose = useCallback(
-    (removedTag) => {
+    (removedTag: string) => {
       onAction?.(TagAction.Remove, removedTag);
       onChange?.(tags.filter((tag) => tag !== removedTag));
     },

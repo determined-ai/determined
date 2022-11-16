@@ -211,7 +211,7 @@ describe('ResponsiveTable', () => {
     );
   });
 
-  it('sorts by table column, both ascending and descending', () => {
+  it('sorts by table column, both ascending and descending', async () => {
     const { handlers } = setup();
 
     for (const column of columns) {
@@ -229,7 +229,7 @@ describe('ResponsiveTable', () => {
       );
 
       // Click on the column sorter again to get reverse order.
-      screen.getByText(column.title).click();
+      await userEvent.click(screen.getByText(column.title));
 
       expect(handlers.onChange).toHaveBeenCalledWith(
         expect.objectContaining({}),
@@ -251,9 +251,9 @@ describe('ResponsiveTable', () => {
      * This hack required to override animation style properties in antd.
      * Waiting for the animation to complete does not work.
      */
-    const dropdown = screen
-      .getByLabelText(ARIA_LABEL_CONTAINER)
-      .closest('.ant-dropdown') as HTMLElement;
+    const dropdown = (await screen.findByLabelText(ARIA_LABEL_CONTAINER)).closest(
+      '.ant-dropdown',
+    ) as HTMLElement;
     dropdown.style.removeProperty('opacity');
     dropdown.style.removeProperty('pointer-events');
     expect(dropdown).not.toHaveStyle({ opacity: 0, pointerEvents: 'none' });

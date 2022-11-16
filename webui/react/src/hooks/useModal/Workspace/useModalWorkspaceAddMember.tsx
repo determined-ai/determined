@@ -57,7 +57,7 @@ const useModalWorkspaceAddMember = ({
   );
 
   const handleFilter = useCallback(
-    (search: string, option): boolean => {
+    (search: string, option: any): boolean => {
       const label = option.label as string;
       const userOrGroup = addableUsersAndGroups.find((u) => {
         if (isUser(u)) {
@@ -81,7 +81,7 @@ const useModalWorkspaceAddMember = ({
   );
 
   const handleSelect = useCallback(
-    (value) => {
+    (value: string) => {
       const userOrGroup = addableUsersAndGroups.find((u) => {
         if (isUser(u) && value.substring(0, 2) === 'u_') {
           const user = u as User;

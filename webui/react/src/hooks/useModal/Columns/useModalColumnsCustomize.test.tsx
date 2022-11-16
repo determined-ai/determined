@@ -34,7 +34,7 @@ const ColumnsButton: React.FC = () => {
   });
 
   const openModal = useCallback(() => {
-    modalOpen({ initialVisibleColumns: DEFAULT_COLUMNS });
+    modalOpen({});
   }, [modalOpen]);
 
   return (

@@ -1,5 +1,5 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
@@ -310,8 +310,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [canceler, stopPolling]);
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys?: Key[]) => {
+      updateSettings({ row: rowKeys?.map(String) });
     },
     [updateSettings],
   );

@@ -155,7 +155,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [fetchProjects, modalRef]);
 
   const renderRow = useCallback(
-    ({ index, style }) => {
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const disabled = projects[index].archived || projects[index].id === sourceProjectId;
       const selected = projects[index].id === destSettings.projectId;
       return (
@@ -291,7 +291,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [closeNotification, destSettings.projectId, experimentIds, projects]);
 
   const getModalProps = useCallback(
-    (experimentIds, destinationProjectId): ModalFuncProps => {
+    (experimentIds?: number[], destinationProjectId?: number): ModalFuncProps => {
       const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';
       return {
         closable: true,

@@ -42,7 +42,7 @@ const EditableTagList: React.FC<Props> = ({
   const editInputRef = useRef<InputRef>(null);
 
   const handleClose = useCallback(
-    (removedTag) => {
+    (removedTag: string) => {
       onChange?.(tags.filter((tag) => tag !== removedTag));
     },
     [onChange, tags],

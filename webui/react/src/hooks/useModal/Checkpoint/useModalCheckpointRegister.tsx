@@ -59,7 +59,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
   const prevModalState = usePrevious(modalState, undefined);
 
   const handleClose = useCallback(
-    (reason) => {
+    (reason?: ModalCloseReason) => {
       setModalState(INITIAL_MODAL_STATE);
       onClose?.(reason);
     },
@@ -158,15 +158,15 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
     [registerModelVersion],
   );
 
-  const updateModel = useCallback((value) => {
+  const updateModel = useCallback((value?: string) => {
     setModalState((prev) => ({ ...prev, selectedModelName: value }));
   }, []);
 
-  const updateVersionName = useCallback((e) => {
+  const updateVersionName = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setModalState((prev) => ({ ...prev, versionName: e.target.value }));
   }, []);
 
-  const updateVersionDescription = useCallback((e) => {
+  const updateVersionDescription = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setModalState((prev) => ({ ...prev, versionDescription: e.target.value }));
   }, []);
 
@@ -174,11 +174,11 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
     setModalState((prev) => ({ ...prev, expandDetails: true }));
   }, []);
 
-  const updateMetadata = useCallback((value) => {
+  const updateMetadata = useCallback((value: Metadata) => {
     setModalState((prev) => ({ ...prev, metadata: value }));
   }, []);
 
-  const updateTags = useCallback((value) => {
+  const updateTags = useCallback((value: string[]) => {
     setModalState((prev) => ({ ...prev, tags: value }));
   }, []);
 

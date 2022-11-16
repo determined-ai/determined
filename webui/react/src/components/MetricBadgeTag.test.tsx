@@ -39,7 +39,7 @@ const setup = (metric: Metric) => {
 };
 
 describe('MetricBadgeTag', () => {
-  const sampleMetric = {
+  const sampleMetric: Metric = {
     name: 'accuracy',
     type: 'validation',
   };

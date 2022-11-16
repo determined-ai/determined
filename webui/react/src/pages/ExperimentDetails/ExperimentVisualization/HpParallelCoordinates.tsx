@@ -344,7 +344,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
     [sendBatchActions],
   );
 
-  const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
+  const handleTableRowSelect = useCallback(
+    (rowKeys: unknown) => setSelectedRowKeys(rowKeys as number[]),
+    [],
+  );
 
   const handleTrialUnselect = useCallback((trialId: number) => {
     setSelectedRowKeys((rowKeys) => rowKeys.filter((id) => id !== trialId));

@@ -10,7 +10,7 @@ const tryOnSamples = <T = unknown>(samples: T[], fn: (sample: T) => void): FailR
     try {
       fn(sample);
     } catch (e) {
-      fails.push({ error: e, sample });
+      fails.push({ error: e as Error, sample });
     }
   });
   if (fails.length > 0) {

@@ -18,7 +18,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
-import { ModelVersion } from 'types';
+import { Metadata, ModelVersion } from 'types';
 import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
 
@@ -74,7 +74,7 @@ const ModelVersionDetails: React.FC = () => {
   usePolling(fetchModelVersion);
 
   const handleTabChange = useCallback(
-    (key) => {
+    (key: string) => {
       navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],
@@ -93,7 +93,7 @@ const ModelVersionDetails: React.FC = () => {
   }, [basePath, navigate, tab, tabKey]);
 
   const saveMetadata = useCallback(
-    async (editedMetadata) => {
+    async (editedMetadata: Metadata) => {
       try {
         await patchModelVersion({
           body: { metadata: editedMetadata, modelName: modelId },
@@ -171,7 +171,7 @@ const ModelVersionDetails: React.FC = () => {
   );
 
   const saveVersionTags = useCallback(
-    async (newTags) => {
+    async (newTags: string[]) => {
       try {
         await patchModelVersion({
           body: { labels: newTags, modelName: modelId },

@@ -1,7 +1,13 @@
 import { Table } from 'antd';
 import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
-import { ColumnsType, ColumnType, SorterResult } from 'antd/es/table/interface';
+import {
+  ColumnsType,
+  ColumnType,
+  FilterValue,
+  SorterResult,
+  TablePaginationConfig,
+} from 'antd/es/table/interface';
 import React, {
   createContext,
   CSSProperties,
@@ -444,12 +450,16 @@ const InteractiveTable: InteractiveTable = ({
   const spinning = !!(loading as SpinProps)?.spinning || loading === true;
 
   const handleChange = useCallback(
-    (tablePagination, tableFilters, tableSorter): void => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<any> | SorterResult<any>[],
+    ): void => {
       if (Array.isArray(tableSorter)) return;
 
       const newSettings: Partial<InteractiveTableSettings> = {
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
       };
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
@@ -468,7 +478,7 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const moveColumn = useCallback(
-    (fromIndex, toIndex) => {
+    (fromIndex: number, toIndex: number) => {
       const reorderedColumns = [...settings.columns];
       const reorderedWidths = [...settings.columnWidths];
       const col = reorderedColumns.splice(fromIndex, 1)[0];
@@ -482,7 +492,7 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const handleResize = useCallback(
-    (resizeIndex) => {
+    (resizeIndex: number) => {
       return (e: Event, { x }: DraggableData) => {
         if (timeout.current) clearTimeout(timeout.current);
         const column = settings.columns[resizeIndex];
@@ -528,7 +538,7 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const handleResizeStart = useCallback(
-    (index) =>
+    (index: number) =>
       (e: Event, { x }: DraggableData) => {
         setIsResizing(true);
 
@@ -551,7 +561,7 @@ const InteractiveTable: InteractiveTable = ({
   }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(
-    (index, columnDef) => {
+    (index: number, columnDef: any) => {
       return () => {
         const filterActive = !!columnDef?.isFiltered?.(settings);
         return {

@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import { LabeledValue, SelectValue } from 'antd/es/select';
+import { DefaultOptionType, LabeledValue, SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -36,7 +36,7 @@ const HpSelectFilter: React.FC<Props> = ({
   }, [hpImportance, fullHParams]);
 
   const handleSelect = useCallback(
-    (selected: SelectValue, option) => {
+    (selected: SelectValue, option: DefaultOptionType | DefaultOptionType[]) => {
       if (!onChange) return;
 
       if (selected === ALL_VALUE) {
@@ -55,7 +55,7 @@ const HpSelectFilter: React.FC<Props> = ({
   );
 
   const handleDeselect = useCallback(
-    (selected: SelectValue, option) => {
+    (selected: SelectValue, option: DefaultOptionType | DefaultOptionType[]) => {
       if (!onChange) return;
 
       const selectedValue = isObject(selected) ? (selected as LabeledValue).value : selected;

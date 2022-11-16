@@ -1,5 +1,6 @@
 import { Select, Tag, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
+import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -75,7 +76,7 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
 
   const fetchTrialDetails = useCallback(
-    async (trialId) => {
+    async (trialId: number) => {
       try {
         const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
         setTrialsDetails((prev) => ({ ...prev, [trialId]: response }));
@@ -200,8 +201,8 @@ const TrialsComparisonTable: React.FC<TableProps> = ({
     setSelectedHyperparameters(hyperparameterNames);
   }, [hyperparameterNames]);
 
-  const onHyperparameterSelect = useCallback((selectedHPs) => {
-    setSelectedHyperparameters(selectedHPs);
+  const onHyperparameterSelect = useCallback((selectedHPs: SelectValue) => {
+    setSelectedHyperparameters(selectedHPs as string[]);
   }, []);
 
   const isLoaded = useMemo(

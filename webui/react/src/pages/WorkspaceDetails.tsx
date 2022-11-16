@@ -155,7 +155,7 @@ const WorkspaceDetails: React.FC = () => {
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   const handleTabChange = useCallback(
-    (activeTab) => {
+    (activeTab: string) => {
       const tab = activeTab as WorkspaceDetailsTab;
       navigate(paths.workspaceDetails(workspaceId, tab), { replace: true });
       setTabKey(tab);

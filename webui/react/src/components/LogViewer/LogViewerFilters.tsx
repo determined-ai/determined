@@ -88,7 +88,8 @@ const LogViewerFilters: React.FC<Props> = ({
   );
 
   const handleSearch = useCallback(
-    (e) => onChange?.({ ...values, searchText: e.target.value }),
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      onChange?.({ ...values, searchText: e.target.value }),
     [onChange, values],
   );
 
