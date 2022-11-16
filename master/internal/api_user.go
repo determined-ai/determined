@@ -320,51 +320,66 @@ func (a *apiServer) SetUserPassword(
 func (a *apiServer) PatchUser(
 	ctx context.Context, req *apiv1.PatchUserRequest,
 ) (*apiv1.PatchUserResponse, error) {
-	if req.User == nil {
-		return nil, status.Error(codes.InvalidArgument, "must provide user")
-	}
-
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	targetFullUser, err := getFullModelUser(model.UserID(req.UserId))
+	uid := model.UserID(req.UserId)
+	targetFullUser, err := getFullModelUser(uid)
 	if err != nil {
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, errUserNotFound
+	if err = user.AuthZProvider.Get().CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
+		if ok, canGetErr := user.AuthZProvider.Get().
+			CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
+			return nil, canGetErr
+		} else if !ok {
+			return nil, errUserNotFound
+		}
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	updatedUser := &model.User{ID: targetUser.ID}
-	var insertColumns []string
-	if req.User.Admin != nil {
-		if err = user.AuthZProvider.Get().
-			CanSetUsersAdmin(ctx, *curUser, targetUser, req.User.Admin.Value); err != nil {
+	if req.User.DisplayName != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 
-		updatedUser.Admin = req.User.Admin.Value
-		insertColumns = append(insertColumns, "admin")
-	}
+		u := &userv1.User{}
 
-	if req.User.Active != nil {
-		if err = user.AuthZProvider.Get().
-			CanSetUsersActive(ctx, *curUser, targetUser, req.User.Active.Value); err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
+		displayName, err2 := clearUsername(targetUser, *req.User.DisplayName, 0)
+		if err2 != nil {
+			return nil, err2
 		}
 
-		updatedUser.Active = req.User.Active.Value
-		insertColumns = append(insertColumns, "active")
+		if displayName == nil || *displayName == "" {
+			// Set empty display name to null.
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, nil)
+		} else {
+			err = a.m.db.QueryProto("set_user_display_name", u, req.UserId, displayName)
+		}
+		if err == db.ErrNotFound {
+			return nil, errUserNotFound
+		} else if err != nil {
+			return nil, err
+		}
 	}
 
-	if req.User.Username != nil && *req.User.Username != targetUser.Username {
+	if req.User.Username != nil {
 		if err = user.AuthZProvider.Get().CanSetUsersUsername(ctx, *curUser, targetUser); err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
+			if ok, findErr := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetUser); err != nil {
+				return nil, findErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, err
 		}
 
 		// Reject SSO and SCIM
@@ -373,56 +388,48 @@ func (a *apiServer) PatchUser(
 				"Cannot change username of SSO/SCIM user through this API.")
 		}
 
-		username, err := clearUsername(targetUser, *req.User.Username, 2)
-		if err != nil {
-			return nil, err
+		username, err3 := clearUsername(targetUser, *req.User.Username, 2)
+		if err3 != nil {
+			return nil, err3
 		}
 
-		updatedUser.Username = *username
-		insertColumns = append(insertColumns, "username")
+		err = a.m.db.UpdateUsername(&targetUser.ID, *username)
+		if err == db.ErrNotFound {
+			return nil, errUserNotFound
+		} else if err != nil {
+			return nil, err
+		}
 	}
 
-	if req.User.DisplayName != nil && *req.User.DisplayName != targetUser.DisplayName.ValueOrZero() {
+	var toUpdate []string
+	if req.User.Active != nil {
 		if err = user.AuthZProvider.Get().
-			CanSetUsersDisplayName(ctx, *curUser, targetUser); err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		}
-
-		displayName, err := clearUsername(targetUser, *req.User.DisplayName, 0)
-		if err != nil {
-			return nil, err
-		}
-
-		if *displayName != "" {
-			lowerDisplayName := strings.ToLower(*displayName)
-			if ok, err := db.Bun().NewSelect().Model(&model.User{}).
-				WhereOr("LOWER(username) = ?", lowerDisplayName).
-				WhereOr("LOWER(display_name) = ?", lowerDisplayName).
-				Exists(ctx); err != nil {
-				return nil, errors.Wrap(err, "error finding similar display names")
-			} else if ok {
-				return nil, status.Errorf(codes.InvalidArgument, "can not change display name "+
-					"to %s found a similar username or display name", *displayName)
+			CanSetUsersActive(ctx, *curUser, targetUser, req.User.Active.Value); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
 			}
-			updatedUser.DisplayName = null.StringFromPtr(displayName)
-		}
-		insertColumns = append(insertColumns, "display_name")
-	}
-
-	if req.User.Password != nil {
-		if err = user.AuthZProvider.Get().
-			CanSetUsersPassword(ctx, *curUser, targetUser); err != nil {
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
+		targetUser.Active = req.User.Active.Value
+		toUpdate = append(toUpdate, "active")
+	}
 
-		hashedPassword := *req.User.Password
-		if !req.User.IsHashed {
-			hashedPassword = replicateClientSideSaltAndHash(hashedPassword)
+	if req.User.Admin != nil {
+		if err = user.AuthZProvider.Get().CanSetUsersAdmin(ctx, *curUser, targetUser,
+			req.User.Admin.Value); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
+			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
-		if err := updatedUser.UpdatePasswordHash(hashedPassword); err != nil {
-			return nil, errors.Wrap(err, "error hashing password")
-		}
-		insertColumns = append(insertColumns, "password_hash")
+		targetUser.Admin = req.User.Admin.Value
+		toUpdate = append(toUpdate, "admin")
 	}
 
 	var ug *model.AgentUserGroup
@@ -436,18 +443,26 @@ func (a *apiServer) PatchUser(
 			User:  *req.User.AgentUserGroup.AgentUser,
 			Group: *req.User.AgentUserGroup.AgentGroup,
 		}
-
 		if err = user.AuthZProvider.Get().
 			CanSetUsersAgentUserGroup(ctx, *curUser, targetUser, *ug); err != nil {
+			if ok, canGetErr := user.AuthZProvider.Get().
+				CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
+				return nil, canGetErr
+			} else if !ok {
+				return nil, errUserNotFound
+			}
 			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
 	}
 
-	if err := a.m.db.UpdateUser(updatedUser, insertColumns, ug); err != nil {
+	switch err = a.m.db.UpdateUser(&targetUser, toUpdate, ug); {
+	case err == db.ErrNotFound:
+		return nil, errUserNotFound
+	case err != nil:
 		return nil, err
 	}
 
-	fullUser, err := getUser(a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(a.m.db, uid)
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
 
