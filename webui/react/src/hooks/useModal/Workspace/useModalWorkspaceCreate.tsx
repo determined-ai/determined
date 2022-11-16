@@ -7,7 +7,7 @@ import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { createWorkspace, getWorkspace, patchWorkspace } from 'services/api';
 import Spinner from 'shared/components/Spinner';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
+import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { Workspace } from 'types';
@@ -42,8 +42,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
   const useAgentUser = Form.useWatch('useAgentUser', form);
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
-
-  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
+  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
 
   const [canceler] = useState(new AbortController());
   const [workspace, setWorkspace] = useState<Workspace>();
@@ -59,28 +58,35 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
     }
   }, [workspaceID, canceler.signal]);
 
-  useEffect(() => {
-    if (workspace) {
-      form.resetFields();
-      const { name, checkpointStorageConfig, agentUserGroup } = workspace;
-      form.setFieldsValue({
-        checkpointStorageConfig: yaml.dump(checkpointStorageConfig),
-        useCheckpointStorage: !!checkpointStorageConfig,
-        workspaceName: name,
-      });
-      if (agentUserGroup) {
-        const { agentUid, agentGid, agentGroup, agentUser } = agentUserGroup;
+  const initFields = useCallback(
+    (ws?: Workspace) => {
+      if (ws) {
+        form.resetFields();
+        const { name, checkpointStorageConfig, agentUserGroup } = ws;
         form.setFieldsValue({
-          agentGid,
-          agentGroup,
-          agentUid,
-          agentUser,
-          useAgentGroup: !!agentGid && !!agentGroup,
-          useAgentUser: !!agentUid && !!agentUser,
+          checkpointStorageConfig: yaml.dump(checkpointStorageConfig),
+          useCheckpointStorage: !!checkpointStorageConfig,
+          workspaceName: name,
         });
+        if (agentUserGroup) {
+          const { agentUid, agentGid, agentGroup, agentUser } = agentUserGroup;
+          form.setFieldsValue({
+            agentGid,
+            agentGroup,
+            agentUid,
+            agentUser,
+            useAgentGroup: !!agentGid && !!agentGroup,
+            useAgentUser: !!agentUid && !!agentUser,
+          });
+        }
       }
-    }
-  }, [workspace, form]);
+    },
+    [form],
+  );
+
+  useEffect(() => {
+    initFields(workspace);
+  }, [workspace, initFields]);
 
   const modalContent = useMemo(() => {
     if (workspaceID && !workspace) return <Spinner />;
@@ -227,7 +233,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
         }
 
         if (canModifyWorkspaceCheckpointStorage({ workspace })) {
-          if (useCheckpointStorage && checkpointStorageConfig) {
+          if (checkpointStorageConfig) {
             body['checkpointStorageConfig'] = yaml.load(checkpointStorageConfig);
           } else {
             body['checkpointStorageConfig'] = {};
@@ -277,11 +283,15 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
       icon: null,
       okButtonProps: { disabled: !workspaceName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Save Workspace',
+      onCancel: () => {
+        initFields(workspace);
+        modalClose(ModalCloseReason.Cancel);
+      },
       onOk: handleOk,
       title: `${workspaceID ? 'Edit' : 'New'} Workspace`,
       width: 600,
     };
-  }, [handleOk, modalContent, workspaceName, workspaceID]);
+  }, [handleOk, modalContent, workspaceName, workspaceID, workspace, modalClose, initFields]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
@@ -302,7 +312,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
     modalRef.current && workspaceID !== workspace?.id && fetchWorkspace();
   });
 
-  return { modalOpen, modalRef, ...modalHook };
+  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalWorkspaceCreate;
