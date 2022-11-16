@@ -62,7 +62,7 @@ $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
   animation: none;
   border: none;
   box-shadow: inset 0 0 0 2px;
-  color: red;
+  color: var(--theme-stage-on);
   position: relative;
   transform: scale(3);
 
