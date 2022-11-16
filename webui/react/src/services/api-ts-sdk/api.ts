@@ -5567,35 +5567,6 @@ export interface V1PatchUser {
      * @memberof V1PatchUser
      */
     agentUserGroup?: V1AgentUserGroup;
-<<<<<<< HEAD
-    /**
-     * Indicate whether the provided password is pre-salted & hashed or not.
-     * @type {boolean}
-     * @memberof V1PatchUser
-     */
-    isHashed?: boolean;
-}
-
-/**
- * Edit fields for a user.
- * @export
- * @interface V1PatchUserRequest
- */
-export interface V1PatchUserRequest {
-    /**
-     * The id of the user.
-     * @type {number}
-     * @memberof V1PatchUserRequest
-     */
-    userId?: number;
-    /**
-     * The updated user.
-     * @type {V1PatchUser}
-     * @memberof V1PatchUserRequest
-     */
-    user?: V1PatchUser;
-=======
->>>>>>> 03bfb691c (reset back to prev PatchUserReq and api add isHashed to PatchUser)
     /**
      * Indicate whether the provided password is pre-salted & hashed or not.
      * @type {boolean}

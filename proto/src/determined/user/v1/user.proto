@@ -29,7 +29,7 @@ message User {
 
 // Request to edit fields for a user.
 message PatchUser {
-   // String denoting the username of the user.
+  // String denoting the username of the user.
   optional string username = 1;
   // String denoting the password of the user.
   optional string password = 2;
