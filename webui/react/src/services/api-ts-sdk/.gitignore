@@ -1,3 +1,7 @@
 wwwroot/*.js
 node_modules
 typings
+apis/
+models/
+index.ts
+.openapi-generator/FILES
