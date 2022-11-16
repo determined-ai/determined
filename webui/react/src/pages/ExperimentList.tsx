@@ -22,9 +22,9 @@ import {
   experimentNameRenderer,
   experimentProgressRenderer,
   ExperimentRenderer,
+  expStateRenderer,
   getFullPaginationConfig,
   relativeTimeRenderer,
-  stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -536,7 +536,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         })),
         isFiltered: () => !!settings.state,
         key: V1GetExperimentsRequestSortBy.STATE,
-        render: stateRenderer,
+        render: expStateRenderer,
         sorter: true,
         title: 'State',
       },
