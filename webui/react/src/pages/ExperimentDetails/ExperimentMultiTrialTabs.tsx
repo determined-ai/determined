@@ -20,7 +20,6 @@ const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
 const { TabPane } = Tabs;
 
 const TabType = {
-  Checkpoints: 'checkpoints',
   Code: 'code',
   Notes: 'notes',
   Trials: 'trials',
