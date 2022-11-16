@@ -1,7 +1,9 @@
 import { Empty } from 'antd';
+import { EChartsOption } from 'echarts';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
+import ReactECharts from 'components/Echarts/ReactEcharts';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
@@ -145,18 +147,119 @@ const TrialChart: React.FC<Props> = ({
     </ResponsiveFilters>
   );
 
+  const option = useMemo((): EChartsOption => {
+    const xValues: number[] = [];
+    const yValues: Record<string, Record<string, number | null>> = {};
+
+    metrics.forEach((metric, index) => {
+      yValues[index] = {};
+
+      const mWrapper = trialSumm.find(
+        (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
+      );
+      if (!mWrapper || !mWrapper.data) {
+        return;
+      }
+
+      mWrapper.data.forEach((pt) => {
+        if (!xValues.includes(pt.batches)) {
+          xValues.push(pt.batches);
+        }
+        yValues[index][pt.batches] = Number.isFinite(pt.value) ? pt.value : null;
+      });
+    });
+
+    xValues.sort((a, b) => a - b);
+
+    const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) =>
+      xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null)),
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const series: EChartsOption['series'] = yValuesArray.map((y, i) => ({
+      connectNulls: true,
+      data: y.map((x) => (x == null ? '' : x)),
+      emphasis: {
+        focus: 'series',
+      },
+      name: metrics[i].name,
+      type: 'line',
+    }));
+
+    const seriesSimilar: EChartsOption['series'] = yValuesArray.map((y, i) => ({
+      connectNulls: true,
+      data: y.map((x) => (x == null ? '' : x)).map((x, ii) => [xValues[ii], x]),
+      emphasis: {
+        focus: 'series',
+      },
+      name: metrics[i].name,
+      type: 'line',
+    }));
+
+    return {
+      animation: false,
+      dataZoom: [
+        {
+          realtime: true,
+          show: true,
+          type: 'slider',
+        },
+        {
+          realtime: true,
+          show: true,
+          type: 'inside',
+          zoomLock: true,
+        },
+      ],
+      legend: {
+        data: metrics.map((metric) => metric.name),
+        type: 'scroll',
+      },
+      series: seriesSimilar,
+      toolbox: {
+        feature: {
+          dataView: {
+            readOnly: true,
+          },
+          magicType: { type: ['line', 'bar'] },
+          restore: {},
+          saveAsImage: {},
+        },
+      },
+      tooltip: {
+        axisPointer: {
+          type: 'cross',
+        },
+        position: ['30%', '100%'],
+        trigger: 'axis',
+      },
+      xAxis: {
+        boundaryGap: false,
+        // data: xValues,
+        name: 'Batches',
+        type: 'value',
+      },
+      yAxis: {
+        minorSplitLine: {
+          show: true,
+        },
+        name: 'Metric Value',
+        type: scale === Scale.Log ? 'log' : 'value',
+      },
+    };
+  }, [metrics, scale, trialSumm]);
+
   return (
     <Section bodyBorder options={options} title="Metrics">
       <div className={css.base}>
-        {
-          <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
-            {chartData[0].length === 0 ? (
-              <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              <UPlotChart data={chartData} options={chartOptions} />
-            )}
-          </Spinner>
-        }
+        <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
+          {chartData[0].length === 0 ? (
+            <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          ) : (
+            <UPlotChart data={chartData} options={chartOptions} />
+          )}
+        </Spinner>
+        <ReactECharts option={option} style={{ height: '50%' }} />
       </div>
     </Section>
   );

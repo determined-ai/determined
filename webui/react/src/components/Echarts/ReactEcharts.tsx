@@ -1,37 +1,64 @@
-import { getInstanceByDom, init } from 'echarts';
-import type { ECharts, EChartsOption, SetOptionOpts } from 'echarts';
+import type { EChartsOption, SetOptionOpts } from 'echarts';
+import { BarChart, LineChart } from 'echarts/charts';
+import {
+  DatasetComponent,
+  DataZoomComponent,
+  GridComponent,
+  LegendComponent,
+  TitleComponent,
+  ToolboxComponent,
+  TooltipComponent,
+  TransformComponent,
+} from 'echarts/components';
+import * as echarts from 'echarts/core';
+import { LabelLayout, UniversalTransition } from 'echarts/features';
+import { CanvasRenderer } from 'echarts/renderers';
 import React, { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 
 import useResize from 'hooks/useResize';
+import useUI from 'shared/contexts/stores/UI';
+
+echarts.use([
+  TitleComponent,
+  TooltipComponent,
+  ToolboxComponent,
+  DataZoomComponent,
+  LegendComponent,
+  GridComponent,
+  DatasetComponent,
+  TransformComponent,
+  BarChart,
+  LineChart,
+  LabelLayout,
+  UniversalTransition,
+  CanvasRenderer,
+]);
 
 export interface Props {
-  loading?: boolean;
-  onClick?: (param) => void;
+  onClick?: (param: any) => void;
   option: EChartsOption;
   rendererType?: 'canvas' | 'svg';
   settings?: SetOptionOpts;
   style?: CSSProperties;
-  theme?: 'light' | 'dark';
 }
 
 const ReactECharts: React.FC<Props> = ({
   option,
   style,
-  settings,
-  loading,
-  theme,
+  settings = {},
   rendererType = 'canvas',
   onClick,
 }: Props) => {
+  const { ui } = useUI();
   const chartRef = useRef<HTMLDivElement>(null);
   const resize = useResize(chartRef);
 
   useEffect(() => {
     // Initialize chart
-    const echart: ECharts | undefined = (() => {
+    const echart: echarts.ECharts | undefined = (() => {
       if (chartRef.current) {
-        const chart = init(chartRef.current, theme, {
+        const chart = echarts.init(chartRef.current, ui.darkLight, {
           height: resize.height,
           renderer: rendererType,
           useDirtyRect: false,
@@ -45,38 +72,26 @@ const ReactECharts: React.FC<Props> = ({
     })();
 
     // Add chart resize listener
-    const resizeChart = () => {
-      echart?.resize();
-    };
-    document.addEventListener('resize', resizeChart);
+    echart?.resize();
 
     return () => {
       echart?.dispose();
-      document.removeEventListener('resize', resizeChart);
     };
-  }, [onClick, rendererType, resize.height, resize.width, theme]);
+  }, [onClick, rendererType, resize.height, resize.width, ui.darkLight]);
 
   useEffect(() => {
     // Update chart
     if (chartRef.current) {
-      const echart = getInstanceByDom(chartRef.current);
-      echart?.setOption(option, settings);
+      const echart = echarts.getInstanceByDom(chartRef.current);
+      echart?.setOption(option, { ...settings, notMerge: true }); // notMerge should be true
     }
-  }, [option, settings, theme]);
-
-  useEffect(() => {
-    // Update chart
-    if (chartRef.current) {
-      const echart = getInstanceByDom(chartRef.current);
-      loading === true ? echart?.showLoading() : echart?.hideLoading();
-    }
-  }, [loading, theme]);
+  }, [option, settings]);
 
   return (
     <div
       ref={chartRef}
       style={{
-        height: '50vh',
+        height: '100%',
         padding: '12px',
         position: 'relative',
         width: '100%',
