@@ -81,11 +81,7 @@ export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
 };
 
 export const relativeTimeRenderer = (date: Date): React.ReactNode => {
-  return (
-    <Tooltip title={date?.toLocaleString()}>
-      <TimeAgo datetime={date} />
-    </Tooltip>
-  );
+  return <TimeAgo className={css.timeAgo} datetime={date} />;
 };
 
 export const stateRenderer: Renderer<{ state: StateOfUnion }> = (_, record) => (

@@ -50,7 +50,7 @@ describe('TimeAgo', () => {
     const customClassName = 'customClassName';
     const view = render(<TimeAgo className={customClassName} datetime={datetime} />);
     const element = view.getByText(daysMatch);
-    expect(element.className).toBe(customClassName);
+    expect(element.className).toBe(`base ${customClassName}`);
   });
 
   it('should render "Just Now" when < 1 minute', () => {

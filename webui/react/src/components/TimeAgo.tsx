@@ -14,6 +14,8 @@ import {
 } from 'shared/utils/datetime';
 import { capitalize, capitalizeWord } from 'shared/utils/string';
 
+import css from './TimeAgo.module.scss';
+
 export const TimeAgoCase = {
   Lower: 'lower',
   Sentence: 'sentence',
@@ -47,7 +49,7 @@ const TimeAgo: React.FC<Props> = ({
   units = 1,
 }: Props) => {
   const [now, setNow] = useState(() => Date.now());
-  const classes: string[] = [];
+  const classes: string[] = [css.base];
 
   if (className) classes.push(className);
 
