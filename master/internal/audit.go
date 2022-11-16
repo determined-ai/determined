@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"github.com/determined-ai/determined/master/internal/rbac/audit"
+	"golang.org/x/net/context"
 	"net/http"
 	"strings"
 
@@ -79,6 +81,23 @@ func auditLogMiddleware() echo.MiddlewareFunc {
 
 			logFn("%s %s %d", req.Method, req.URL.Path, res.Status)
 
+			return
+		}
+	})
+}
+
+func authzAuditLogMiddleware() echo.MiddlewareFunc {
+	return echo.MiddlewareFunc(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) (err error) {
+			if !strings.HasPrefix(c.Request().RequestURI, "/api/v1") {
+				fields := log.Fields{"endpoint": c.Request().RequestURI}
+				newCtx := context.WithValue(c.Request().Context(), audit.LogKey{}, fields)
+				c.SetRequest(c.Request().WithContext(newCtx))
+			}
+
+			if err = next(c); err != nil {
+				c.Error(err)
+			}
 			return
 		}
 	})
