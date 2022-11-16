@@ -3,5 +3,7 @@ node_modules
 typings
 apis/
 models/
-index.ts
 .openapi-generator/FILES
+api_test.spec.ts
+index.ts
+runtime.ts
