@@ -39,6 +39,10 @@ message PatchUser {
   optional string username = 5;
   // Name to display in the web UI.
   optional string display_name = 6;
+  // Password of user.
+  optional string password = 7;
+  // Indicates if the password field is sent salted and client side hashed.
+  bool is_hashed = 8;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an
