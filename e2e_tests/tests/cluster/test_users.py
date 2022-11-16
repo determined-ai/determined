@@ -363,7 +363,7 @@ def test_experiment_creation_and_listing(clean_auth: None, login_admin: None) ->
     creds2 = create_test_user(True)
 
     # Ensure determined creds are the default values.
-    # change_user_password("determined", "")
+    change_user_password("determined", "")
 
     # Create an experiment as first user.
     with logged_in_user(creds1):

@@ -5,6 +5,7 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import log_out_user
 
+
 @pytest.mark.e2e_cpu
 def test_model_registry() -> None:
     exp_id = exp.run_basic_test(
@@ -13,7 +14,7 @@ def test_model_registry() -> None:
         None,
     )
 
-    log_out_user() # Ensure that we use determined credentials. 
+    log_out_user()  # Ensure that we use determined credentials.
 
     d = Determined(conf.make_master_url())
     mnist = None
