@@ -11,6 +11,7 @@ import (
 const (
 	singularity = "singularity"
 	podman      = "podman"
+	enroot      = "enroot"
 )
 
 // DispatcherResourceManagerConfig is the object that stores the values of
@@ -48,8 +49,10 @@ type DispatcherSecurityConfig struct {
 
 // Validate performs validation.
 func (c DispatcherResourceManagerConfig) Validate() []error {
-	// Allowed values for the container run type are either 'singularity' or 'podman'
-	if !(c.LauncherContainerRunType == singularity || c.LauncherContainerRunType == podman) {
+	// Allowed values for the container run type are either 'singularity', 'podman' or 'enroot'
+	if !(c.LauncherContainerRunType == singularity ||
+		c.LauncherContainerRunType == podman ||
+		c.LauncherContainerRunType == enroot) {
 		return []error{fmt.Errorf("invalid launch container run type: '%s'", c.LauncherContainerRunType)}
 	}
 	return nil

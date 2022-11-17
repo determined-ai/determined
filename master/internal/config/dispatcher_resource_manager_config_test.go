@@ -30,6 +30,11 @@ func TestDispatcherResourceManagerConfig_Validate(t *testing.T) {
 			fields: fields{LauncherContainerRunType: "podman"},
 			want:   nil,
 		},
+		{
+			name:   "enroot case",
+			fields: fields{LauncherContainerRunType: "enroot"},
+			want:   nil,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

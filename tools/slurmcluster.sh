@@ -29,8 +29,7 @@
 #   you must have sudo access on the cluster, and authenticate the sudo that will be
 #   exectued to retrieve the .launcher.token.
 
-HELPEND=$(($LINENO - 1))
-
+HELPEND=$((LINENO - 1))
 
 INTUNNEL=1
 TUNNEL=1
@@ -38,67 +37,71 @@ DEVLAUNCHER=
 USERNAME=$USER
 DEBUGLEVEL=debug
 
-
 while [[ $# -gt 0 ]]; do
-  case $1 in
-    -n)
-        INTUNNEL=
-        shift
-        ;;
-    -x)
-        TUNNEL=
-        shift
-        ;;
-    -t)
-        DEBUGLEVEL=trace
-        shift
-        ;;
-    -i)
-        DEBUGLEVEL=info
-        shift
-        ;;
-    -p)
-        PODMAN=1
-        shift
-        ;;
-    -d)
-        DEVLAUNCHER=1
-        shift
-        ;;
-    -u)
-        USERNAME=$2
-        shift 2
-        ;;
-    -a)
-        PULL_AUTH=1
-        shift
-        ;;
-    -h|--help)
-        echo "Usage: $0 [-anxtpdi] [-u {username}]  {cluster}"
-        echo "  -h     This help message & documentation."
-        echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
-        echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
-        echo "  -t     Force debug level to trace regardless of cluster configuration value."
-        echo "  -i     Force debug level to INFO regardless of cluster configuration value."
-        echo "  -p     Use podman as a container host (otherwise singlarity)."
-        echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
-        echo "  -u     Use provided {username} to lookup the per-user port number."
-        echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
-        echo
-        echo "Documentation:"
-        head -n $HELPEND $0 | tail -n $(($HELPEND  - 1))
-        exit 1
-        ;;
-    -*|--*)
-        echo >&2 "$0: Illegal option $1"
-        echo >&2 "Usage: $0 [-anxtpd] [-u {username}]  {cluster}"
-        exit 1
-        ;;
-    *) # Non Option args
-        CLUSTER=$1
-        shift
-        ;;
-  esac
+    case $1 in
+        -n)
+            INTUNNEL=
+            shift
+            ;;
+        -x)
+            TUNNEL=
+            shift
+            ;;
+        -t)
+            DEBUGLEVEL=trace
+            shift
+            ;;
+        -i)
+            DEBUGLEVEL=info
+            shift
+            ;;
+        -p)
+            PODMAN=1
+            shift
+            ;;
+        -e)
+            ENROOT=1
+            shift
+            ;;
+        -d)
+            DEVLAUNCHER=1
+            shift
+            ;;
+        -u)
+            USERNAME=$2
+            shift 2
+            ;;
+        -a)
+            PULL_AUTH=1
+            shift
+            ;;
+        -h | --help)
+            echo "Usage: $0 [-anxtpdi] [-u {username}]  {cluster}"
+            echo "  -h     This help message & documentation."
+            echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
+            echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
+            echo "  -t     Force debug level to trace regardless of cluster configuration value."
+            echo "  -i     Force debug level to INFO regardless of cluster configuration value."
+            echo "  -p     Use podman as a container host (otherwise singlarity)."
+            echo "  -e     Use enroot as a container host (otherwise singlarity)."
+            echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
+            echo "  -u     Use provided {username} to lookup the per-user port number."
+            echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
+            echo
+            echo "Documentation:"
+            head -n $HELPEND $0 | tail -n $((HELPEND - 1))
+            exit 1
+            ;;
+        -* | --*)
+            echo >&2 "$0: Illegal option $1"
+            echo >&2 "Usage: $0 [-anxtpd] [-u {username}]  {cluster}"
+            exit 1
+            ;;
+        *) # Non Option args
+            CLUSTER=$1
+            shift
+            ;;
+    esac
 done
 
 # Evaluate a dynamically constructed env variable name
@@ -130,13 +133,13 @@ function pull_auth_token() {
     HOST=$1
     CLUSTER=$2
 
-    echo  "Attempting to access /opt/launcher/jetty/base/etc/.launcher.token from $HOST"
+    echo "Attempting to access /opt/launcher/jetty/base/etc/.launcher.token from $HOST"
     rm -f ~/.token.log
     ssh -t $HOST 'sudo cat /opt/launcher/jetty/base/etc/.launcher.token' | tee ~/.token.log
     # Token is the last line of the output (no newline)
     TOKEN=$(tail -n 1 ~/.token.log)
-    if [[ ! "${TOKEN}" = *" "* ]] ; then
-        echo -n "${TOKEN}" > ~/.${CLUSTER}.token
+    if [[ ${TOKEN} != *" "* ]]; then
+        echo -n "${TOKEN}" >~/.${CLUSTER}.token
         echo "INFO: Saved token as  ~/.${CLUSTER}.token"
     else
         echo "WARNING: No token retieved: ${TOKEN}" >&2
@@ -161,11 +164,11 @@ fi
 
 # Re-map names that include - as variables with embedded - are treated as math expressions
 if [[ $CLUSTER == "casablanca-login" ]]; then
-   CLUSTER=casablanca_login
+    CLUSTER=casablanca_login
 elif [[ $CLUSTER == "casablanca-mgmt1" ]]; then
-   CLUSTER=casablanca
+    CLUSTER=casablanca
 elif [[ $CLUSTER == "casablanca-login2" ]]; then
-   CLUSTER=casablanca_login2
+    CLUSTER=casablanca_login2
 fi
 
 # Update your JETTY HTTP username/port pair from loadDevLauncher.sh
@@ -179,7 +182,6 @@ DEV_LAUNCHER_PORT_jerryharrow=18090
 DEV_LAUNCHER_PORT_canmingcobble=18092
 DEV_LAUNCHER_PORT=$(lookup "DEV_LAUNCHER_PORT_$USERNAME")
 
-
 # Configuration for atlas
 OPT_name_atlas=atlas.us.cray.com
 OPT_LAUNCHERHOST_atlas=localhost
@@ -190,7 +192,6 @@ OPT_MASTERPORT_atlas=$USERPORT
 OPT_TRESSUPPORTED_atlas=false
 OPT_GRESSUPPORTED_atlas=false
 OPT_PROTOCOL_atlas=http
-
 
 # Configuration for casablanca (really casablanca-mgmt1)
 OPT_name_casablanca=casablanca-mgmt1.us.cray.com
@@ -246,7 +247,8 @@ OPT_GRESSUPPORTED_sawmill=false
 OPT_PROTOCOL_sawmill=http
 OPT_DEFAULTIMAGE_sawmill=/scratch2/karlon/new/detAI-cuda-11.3-pytorch-1.10-tf-2.8-gpu-nccl-0.19.4.sif
 # Indentation of task_container_defaults must match devcluster-slurm.yaml
-OPT_TASKCONTAINERDEFAULTS_sawmill=$(cat <<EOF
+OPT_TASKCONTAINERDEFAULTS_sawmill=$(
+    cat <<EOF
           environment_variables:
             - USE_HOST_LIBFABRIC=y
             - NCCL_DEBUG=INFO
@@ -254,7 +256,8 @@ OPT_TASKCONTAINERDEFAULTS_sawmill=$(cat <<EOF
 EOF
 )
 # Indentation of partition_overrides must match devcluster-slurm.yaml
-OPT_PARTITIONOVERRIDES_sawmill=$(cat <<EOF
+OPT_PARTITIONOVERRIDES_sawmill=$(
+    cat <<EOF
              grizzly:
                 slot_type: cuda
 EOF
@@ -337,7 +340,6 @@ OPT_GRESSUPPORTED_o184i023=false
 OPT_PROTOCOL_o184i023=http
 OPT_SLOTTYPE_o184i023=rocm
 
-
 # This is the list of options that can be injected into devcluster-slurm.yaml
 # If a value is not configured for a specific target cluster, it will be
 # blank and get the default value.   OPT_TASKCONTAINERDEFAULTS & OPT_PARTITIONOVERRIDES
@@ -359,7 +361,6 @@ export OPT_DEFAULTIMAGE=$(lookup "OPT_DEFAULTIMAGE_$CLUSTER")
 export OPT_TASKCONTAINERDEFAULTS=$(lookup "OPT_TASKCONTAINERDEFAULTS_$CLUSTER")
 export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
 
-
 if [[ -z $OPT_GRESSUPPORTED ]]; then
     export OPT_GRESSUPPORTED="true"
 fi
@@ -374,11 +375,13 @@ if [[ -n $DEVLAUNCHER ]]; then
     OPT_LAUNCHERPROTOCOL=http
 fi
 
-
 SLURMCLUSTER=$(lookup "OPT_name_$CLUSTER")
 if [[ -z $SLURMCLUSTER ]]; then
     echo >&2 "$0: Cluster name $CLUSTER does not have a configuration. Specify one of:"
-    echo >&2 "$(set -o posix; set | grep OPT_name | cut -f 1 -d = | cut -c 10-)"
+    echo >&2 "$(
+        set -o posix
+        set | grep OPT_name | cut -f 1 -d = | cut -c 10-
+    )"
     exit 1
 fi
 
@@ -386,7 +389,6 @@ if [[ -z $OPT_LAUNCHERPORT ]]; then
     echo >&2 "$0: Cluster name $CLUSTER does not have an installed launcher, specify -d to utilize a dev launcher."
     exit 1
 fi
-
 
 if [[ -z $INTUNNEL ]]; then
     OPT_LAUNCHERHOST=$SLURMCLUSTER
@@ -402,35 +404,38 @@ if [[ -n $PODMAN ]]; then
     export OPT_CONTAINER_RUN_TYPE='podman'
 fi
 
+if [[ -n $ENROOT ]]; then
+    export OPT_CONTAINER_RUN_TYPE='enroot'
+fi
+
 if [[ -r ~/.${CLUSTER}.token ]]; then
     export OPT_AUTHFILE=~/.${CLUSTER}.token
 fi
 
 echo
 echo "Configuration Used:"
-printenv |grep OPT_
+printenv | grep OPT_
 echo
 
 # Terminate our tunnels on exit
 trap "kill 0" EXIT
 if [[ -n $INTUNNEL || -n $TUNNEL ]]; then
     # Terminate any tunnels (non-interactive sshd proceses for the user)
-    ssh $OPT_MASTERHOST pkill -u '$USER' -x -f  '"^sshd: $USER[ ]*$"'
+    ssh $OPT_MASTERHOST pkill -u '$USER' -x -f '"^sshd: $USER[ ]*$"'
 fi
 if [[ -n $INTUNNEL ]]; then
-   mkintunnel  $OPT_MASTERHOST $OPT_LAUNCHERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
+    mkintunnel $OPT_MASTERHOST $OPT_LAUNCHERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
 fi
 if [[ -n $TUNNEL ]]; then
-   mktunnel $OPT_MASTERHOST $OPT_MASTERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
+    mktunnel $OPT_MASTERHOST $OPT_MASTERPORT ${OPT_REMOTEUSER}$SLURMCLUSTER &
 fi
 # Give a little time for the tunnels to setup before using
 sleep 3
-
 
 # Although devcluster supports variables, numeric values fail to load, so
 # Manually apply those into a temp file.
 TEMPYAML=/tmp/devcluster-$CLUSTER.yaml
 rm -f $TEMPYAML
-envsubst <  tools/devcluster-slurm.yaml  > $TEMPYAML
+envsubst <tools/devcluster-slurm.yaml >$TEMPYAML
 echo "INFO: Generated devcluster file: $TEMPYAML"
 devcluster -c $TEMPYAML --oneshot

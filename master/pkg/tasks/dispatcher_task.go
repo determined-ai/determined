@@ -21,8 +21,10 @@ import (
 )
 
 const (
-	trueValue = "true"
-	podman    = "podman"
+	trueValue   = "true"
+	singularity = "singularity"
+	podman      = "podman"
+	enroot      = "enroot"
 	// dispatcherEntrypointScriptResource is the script to handle container initialization
 	// before transferring to the defined entrypoint script.
 	dispatcherEntrypointScriptResource = "dispatcher-wrapper.sh"
@@ -34,6 +36,7 @@ const (
 	containerTmpDeterminedDir = "/determined/"
 	singularityCarrierSlurm   = "com.cray.analytics.capsules.carriers.hpc.slurm.SingularityOverSlurm"
 	podmanCarrierSlurm        = "com.cray.analytics.capsules.carriers.hpc.slurm.PodmanOverSlurm"
+	enrootCarrierSlurm        = "com.cray.analytics.capsules.carriers.hpc.slurm.EnrootOverSlurm"
 	singularityCarrierPbs     = "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs"
 	podmanCarrierPbs          = "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs"
 	unspecifiedSlotsPerNode   = 0
@@ -117,18 +120,20 @@ func (t *TaskSpec) ToDispatcherManifest(
 	payload.SetId("com.cray.analytics.capsules.generic.container")
 	payload.SetVersion("latest")
 
-	if containerRunType == podman {
-		if isPbsLauncher {
-			payload.SetCarriers([]string{podmanCarrierPbs})
-		} else {
-			payload.SetCarriers([]string{podmanCarrierSlurm})
-		}
-	} else {
-		if isPbsLauncher {
-			payload.SetCarriers([]string{singularityCarrierPbs})
-		} else {
-			payload.SetCarriers([]string{singularityCarrierSlurm})
-		}
+	// will add case for enroot over pbs
+	switch {
+	case isPbsLauncher && containerRunType == podman:
+		payload.SetCarriers([]string{podmanCarrierPbs})
+	case !isPbsLauncher && containerRunType == podman:
+		payload.SetCarriers([]string{podmanCarrierSlurm})
+	case isPbsLauncher && containerRunType == singularity:
+		payload.SetCarriers([]string{singularityCarrierPbs})
+	case !isPbsLauncher && containerRunType == singularity:
+		payload.SetCarriers([]string{singularityCarrierSlurm})
+	case containerRunType == enroot:
+		payload.SetCarriers([]string{enrootCarrierSlurm})
+	default:
+		payload.SetCarriers([]string{singularityCarrierSlurm})
 	}
 
 	// Create payload launch parameters
@@ -219,7 +224,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	launchParameters.SetData(mounts)
 
 	envVars, err := getEnvVarsForLauncherManifest(
-		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp, slotType)
+		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp, slotType, containerRunType)
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -450,7 +455,7 @@ func encodeArchiveParameters(
 // Gets the environment variables that are to be added to the Launcher's manifest.
 func getEnvVarsForLauncherManifest(
 	taskSpec *TaskSpec, masterHost string, masterPort int, certificateName string,
-	tmpMount bool, slotType device.Type,
+	tmpMount bool, slotType device.Type, containerRunType string,
 ) (map[string]string, error) {
 	// Hash map containing the environment variables.
 	m := make(map[string]string)
@@ -520,7 +525,7 @@ func getEnvVarsForLauncherManifest(
 
 	// If the user has not configured a bind mount of /tmp trigger
 	// dispatcher-wrapper.sh to make it local to the container.
-	if !tmpMount {
+	if !tmpMount && containerRunType != enroot {
 		m["DET_CONTAINER_LOCAL_TMP"] = "1"
 	}
 

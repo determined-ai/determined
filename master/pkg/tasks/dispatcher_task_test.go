@@ -743,7 +743,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	}
 
 	envVars, err := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA)
+		"masterHost", 8888, "certName", false, device.CUDA, "singularity")
 
 	assert.NilError(t, err)
 	assert.Assert(t, len(envVars) > 0)
@@ -766,6 +766,16 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 
 	assert.Equal(t, envVars["cpu"], "default")
 	assert.Equal(t, envVars["myenv"], "xyz")
+
+	envVarsPodman, _ := getEnvVarsForLauncherManifest(ts,
+		"masterHost", 8888, "certName", false, device.CUDA, "podman")
+	assert.Equal(t, envVarsPodman["DET_CONTAINER_LOCAL_TMP"], "1")
+
+	// test DET_CONTAINER_LOCAL_TMP is not in ENVs
+	envVarsEnroot, _ := getEnvVarsForLauncherManifest(ts,
+		"masterHost", 8888, "certName", false, device.CUDA, "enroot")
+	_, ok := envVarsEnroot["DET_CONTAINER_LOCAL_TMP"]
+	assert.Equal(t, ok, false)
 }
 
 func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
@@ -787,7 +797,8 @@ func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
 		Environment: environment,
 	}
 
-	_, err := getEnvVarsForLauncherManifest(ts, "masterHost", 8888, "certName", false, device.CUDA)
+	_, err := getEnvVarsForLauncherManifest(ts, "masterHost", 8888, "certName", false,
+		device.CUDA, "podman")
 	assert.ErrorContains(t, err, "invalid user-defined environment variable 'cpudefault'")
 }
 
