@@ -165,8 +165,6 @@ def init(
 
     distributed = distributed or core.DummyDistributedContext()
 
-    preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
-
     # At present, we only support tensorboards in Trial tasks.
     tbd_writer = None
 
@@ -221,6 +219,8 @@ def init(
             tensorboard_manager,
         )
 
+        preempt = core.PreemptContext(session, info.allocation_id, distributed, preempt_mode)
+
     else:
         # TODO: support checkpointing for non-trial tasks.
         if storage_manager is None:
@@ -228,6 +228,7 @@ def init(
             logger.info("no storage_manager provided; storing checkpoints in {base_path}")
             storage_manager = storage.SharedFSStorageManager(base_path)
         checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
+        preempt = core.DummyPreemptContext(distributed, preempt_mode)
 
     _install_stacktrace_on_sigusr1()
 
