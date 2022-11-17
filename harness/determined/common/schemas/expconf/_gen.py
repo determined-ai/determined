@@ -1522,6 +1522,13 @@ schemas = {
             "minimum": 1,
             "default": null
         },
+        "gpu_type": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
         "sbatch_args": {
             "type": [
                 "array",
