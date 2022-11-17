@@ -4,7 +4,14 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import checkpoint, experiment, model, oauth2_scim_client, trial
+from determined.common.experimental import (
+    checkpoint,
+    experiment,
+    model,
+    oauth2_scim_client,
+    trial,
+    user,
+)
 from determined.errors import EnterpriseOnlyError
 
 
