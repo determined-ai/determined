@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,22 +32,20 @@ const (
 // thread-safe API by specializing for JSON encoding/decoding and using channels for read/write. The
 // Close method must be called or resources will be leaked.
 type Websocket[TIn, TOut any] struct {
-	// System dependencies.
 	log  *logrus.Entry
 	conn *websocket.Conn
 
-	// Internal state.
 	cancel    context.CancelFunc
 	errLock   sync.Mutex
 	err       error
 	closeOnce sync.Once
-	closeErr  error
-	// Done signals the websocket is finished when it is closed. Even if it has exited, call Close.
-	Done <-chan struct{}
+
 	// Inbox is a channel for incoming messages.
 	Inbox <-chan TIn
 	// Outbox is a channel for outgoing messages.
 	Outbox chan<- TOut
+	// Done notifies when the Websocket is closed. A read on Done blocks until this condition.
+	Done <-chan struct{}
 }
 
 // Wrap the given, underlying *websocket.Conn and returns a higher level, thread-safe wrapper.
@@ -69,21 +65,19 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *Websocket[TIn, TOut
 		conn: conn,
 
 		cancel: cancel,
-		Done:   done,
 		Inbox:  inbox,
 		Outbox: outbox,
+		Done:   done,
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
 	go func() {
 		defer wg.Done()
 		if err := s.runWriteLoop(ctx, outbox); err != nil {
 			s.setError(fmt.Errorf("write loop: %w", err))
 		}
 	}()
-
-	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		if err := s.runReadLoop(ctx, inbox); err != nil {
@@ -97,39 +91,6 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *Websocket[TIn, TOut
 	}()
 
 	return s
-}
-
-// Error returns an error if the Websocket has encountered one. Errors from closing are excluded.
-func (s *Websocket[TIn, TOut]) Error() error {
-	s.errLock.Lock()
-	defer s.errLock.Unlock()
-	return s.err
-}
-
-// Close closes the websocket by performing the close handshake and closing the underlying
-// connection, rendering it unusable.
-func (s *Websocket[TIn, TOut]) Close() error {
-	s.closeOnce.Do(func() {
-		initialErr := s.Error()
-
-		var err *multierror.Error
-		s.log.Trace("attempting graceful close")
-		if hErr := s.closeGraceful(); hErr != nil {
-			err = multierror.Append(err, fmt.Errorf("gracefully closing: %w", hErr))
-			s.log.Trace("attempting forceful close")
-			if fErr := s.closeForced(); fErr != nil {
-				err = multierror.Append(err, fmt.Errorf("forcibly closing: %w", hErr))
-			}
-		}
-		s.log.Trace("socket closed")
-
-		if endingErr := s.Error(); initialErr == nil && endingErr != nil {
-			err = multierror.Append(err, endingErr)
-		}
-
-		s.closeErr = err.ErrorOrNil()
-	})
-	return s.closeErr
 }
 
 func (s *Websocket[TIn, TOut]) runReadLoop(ctx context.Context, inbox chan<- TIn) error {
@@ -180,17 +141,15 @@ func (s *Websocket[TIn, TOut]) runWriteLoop(ctx context.Context, outbox <-chan T
 	for {
 		select {
 		case msg := <-outbox:
-			var buf bytes.Buffer
-			if err := json.NewEncoder(&buf).Encode(msg); err != nil {
-				return fmt.Errorf("encoding outbound message: %w", err)
-			}
-
-			if cur, max := buf.Len(), maxMessageSize; cur > max {
-				return fmt.Errorf("message size %d exceeds maximum size %d", cur, max)
-			}
-
-			err := s.conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+			bs, err := json.Marshal(&msg)
 			switch {
+			case err != nil:
+				return fmt.Errorf("encoding outbound message: %w", err)
+			case len(bs) > maxMessageSize:
+				return fmt.Errorf("message size %d exceeds maximum size %d", len(bs), maxMessageSize)
+			}
+
+			switch err := s.conn.WriteMessage(websocket.TextMessage, bs); {
 			case err == websocket.ErrCloseSent:
 				return nil
 			case err != nil:
@@ -211,6 +170,23 @@ func (s *Websocket[TIn, TOut]) runWriteLoop(ctx context.Context, outbox <-chan T
 			return nil
 		}
 	}
+}
+
+// Close closes the websocket by performing the close handshake and closing the underlying
+// connection, rendering it unusable.
+func (s *Websocket[TIn, TOut]) Close() error {
+	s.closeOnce.Do(func() {
+		s.log.Trace("attempting graceful close")
+		if hErr := s.closeGraceful(); hErr != nil {
+			s.setError(fmt.Errorf("gracefully closing: %w", hErr))
+			s.log.Trace("attempting forceful close")
+			if fErr := s.closeForced(); fErr != nil {
+				s.log.WithError(fErr).Error("failed to forcibly close socket")
+			}
+		}
+		s.log.Trace("socket closed")
+	})
+	return s.Error()
 }
 
 func (s *Websocket[TIn, TOut]) closeGraceful() error {
@@ -252,8 +228,17 @@ func (s *Websocket[TIn, TOut]) closeForced() error {
 	return nil
 }
 
+// Error returns an error if the Websocket has encountered one. Errors from closing are excluded.
+func (s *Websocket[TIn, TOut]) Error() error {
+	s.errLock.Lock()
+	defer s.errLock.Unlock()
+	return s.err
+}
+
 func (s *Websocket[TIn, TOut]) setError(err error) {
 	s.errLock.Lock()
 	defer s.errLock.Unlock()
-	s.err = multierror.Append(s.err, err)
+	if err == nil {
+		s.err = err
+	}
 }
