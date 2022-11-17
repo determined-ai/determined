@@ -209,10 +209,11 @@ class CheckpointContext:
         logging.info(f'All Resources {all_resources}')
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            self.print_conflict_error(conflicts, "file")
+            self.print_conflict_error(conflicts, "files")
 
         # Chief gathers metadata across workers, checks for conflicts and saves metadata
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata)
+        metadata_writer_rank = ckpt_dir_mask.index(True)
+        all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {})
 
         if want_upload:
             assert ckpt_dir
@@ -220,7 +221,6 @@ class CheckpointContext:
 
         # synchronize workers
         _ = self._dist.allgather(None)
-
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)
 
@@ -228,8 +228,9 @@ class CheckpointContext:
 
     def print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
         # Try to keep the logs easier to read; print the whole failure only on the chief.
+        logging.info(f'{self._dist.rank}')
         if self._dist.rank > 0:
-            raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts")
+            raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts: {conflicts}")
         msgs = [
             f"    {f} uploaded by ranks {ranks}"
             for f, ranks in sorted(conflicts.items())
@@ -258,8 +259,7 @@ class CheckpointContext:
         download_mode = DownloadMode(download_mode)
 
         if download_mode == DownloadMode.NoSharedDownload:
-            #TODO add selector
-            self._storage_manager.download(src=storage_id, dst=ckpt_dir)
+            self._storage_manager.download(src=storage_id, dst=ckpt_dir, selector=selector)
             return
 
         want_filter = any(self._dist.allgather(selector is not None))
@@ -364,7 +364,7 @@ class CheckpointContext:
             # Ranks save files directly to ckpt_dir which means there is no conflict
             # detection on upload. Metadata still needs to be merged and saved,
             # and checkpoint has to be reported.
-            all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata or {})
+            all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=0, metadata=metadata or {})
 
             if self._dist.rank == 0:
                 resources = self._storage_manager._list_directory(ckpt_dir)
@@ -392,17 +392,10 @@ class CheckpointContext:
 
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            # Try to keep the logs easier to read; print the whole failure only on the chief.
-            if self._dist.rank > 0:
-                raise RuntimeError("refusing to upload with file conflicts")
-            msgs = [
-                f"    {f} uploaded by ranks {ranks}"
-                for f, ranks in sorted(conflicts.items())
-            ]
-            raise RuntimeError("refusing to upload with file conflicts:\n" + "\n".join(msgs))
+            self.print_conflict_error(conflicts, "file")
 
         # Chief gathers metadata across workers, checks for conflicts and saves metadata
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata)
+        all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=0, metadata=metadata or {})
 
         if want_upload:
             assert ckpt_dir
@@ -416,18 +409,15 @@ class CheckpointContext:
 
         return storage_id
 
-    def _merge_and_save_metadata(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        assert ckpt_dir is not None
-        # Gather metadata across nodes to the chief.
-        # Chief is responsible for merging and conflict resolution.
-        all_metadata = self._dist.gather(metadata)
+    def _merge_and_save_metadata(self, ckpt_dir: str, writer_rank: int = 0, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        # Gather metadata across nodes.
+        all_metadata = self._dist.allgather(metadata or {})
         # Merge metadata. If a metadata key repeats, raise error.
-        if self._dist.rank == 0:
-            logging.info(f'Metadata from all ranks: {all_metadata}')
-            all_metadata, conflicts = merge_metadata(all_metadata)
-            logging.info(f'conflicts {conflicts}')
-            if conflicts:
-                self.print_conflict_error(conflicts, "metadata")
+        all_metadata, conflicts = merge_metadata(all_metadata)
+        if conflicts:
+            self.print_conflict_error(conflicts, "metadata")
+        if self._dist.rank == writer_rank:
+            assert ckpt_dir is not None
             self._write_metadata_file(ckpt_dir, all_metadata or {})
         return all_metadata
 
@@ -457,8 +447,7 @@ class CheckpointContext:
         download_mode = DownloadMode(download_mode)
 
         if download_mode == DownloadMode.NoSharedDownload:
-            #TODO add selector?
-            with self._storage_manager.restore_path(storage_id) as path:
+            with self._storage_manager.restore_path(storage_id, selector=selector) as path:
                 yield path
             return
 
@@ -496,7 +485,6 @@ class CheckpointContext:
                 assert want_filter, "want_filter is not set but name was not None"
                 _ = self._dist.gather_local(selector(name) if selector is not None else False)
 
-            # old code
             # Wait for local chief to broadcast.
             path = self._dist.broadcast_local(None)
             try:
