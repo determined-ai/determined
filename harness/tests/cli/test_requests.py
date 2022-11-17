@@ -1,5 +1,4 @@
 import dataclasses
-import json
 
 import pytest
 import requests_mock as mock
@@ -21,14 +20,8 @@ class CliArgs:
     polling_interval: int = 1
 
 
-@pytest.fixture
-def experiment_json():
-    with open(api_server.FIXTURES_DIR / "experiment.json") as f:
-        return json.load(f)["experiment"]
-
-
 # https://docs.pytest.org/en/latest/example/parametrize.html#apply-indirect-on-particular-arguments
-def det_session(user="test", master_url="http://localhost:8888"):
+def det_session(user: str = "test", master_url: str = "http://localhost:8888") -> Session:
     with mock.Mocker() as mocker:
         mocker.post(master_url + "/login", status_code=200, json={"token": "fake-token"})
         mocker.get("/info", status_code=200, json={"version": "1.0"})
@@ -47,7 +40,7 @@ def det_session(user="test", master_url="http://localhost:8888"):
         return session
 
 
-def test_wait_transient_network():
+def test_wait_transient_network() -> None:
     user = "user1"
     with api_server.run_api_server(
         credentials=(user, "password1", "token1"),
@@ -58,10 +51,10 @@ def test_wait_transient_network():
         assert e.value.code == 0
 
 
-def test_wait_stable_network(requests_mock: mock.Mocker, experiment_json) -> None:
+def test_wait_stable_network(requests_mock: mock.Mocker) -> None:
     session = det_session()
     experiment_id = 1
-    exp = bindings.v1Experiment.from_json(experiment_json)
+    exp = api_server.sample_get_experiment().experiment
 
     exp.state = bindings.determinedexperimentv1State.STATE_COMPLETED
     requests_mock.get(

@@ -4,7 +4,6 @@ import io
 import json
 import numbers
 import pathlib
-import random
 import sys
 import time
 from argparse import FileType, Namespace
@@ -23,7 +22,6 @@ from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.common import api, constants, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
-from determined.common.api.errors import APIException
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.common.experimental import Determined
 
@@ -530,7 +528,7 @@ def kill_experiment(args: Namespace) -> None:
     print("Killed experiment {}".format(args.experiment_id))
 
 
-def _wait(session: api.Session, experiment_id: int, polling_interval=5) -> None:
+def _wait(session: api.Session, experiment_id: int, polling_interval: int = 5) -> None:
     retry = urllib3.util.retry.Retry(
         raise_on_status=False,
         total=10,

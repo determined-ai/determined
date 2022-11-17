@@ -3,7 +3,7 @@ import requests
 from tests.common.api_server import run_api_server
 
 
-def test_flaky_endpoint():
+def test_flaky_endpoint() -> None:
     for _ in range(2):  # no state is shared between runs
         with run_api_server() as master_url:
             with requests.Session() as session:

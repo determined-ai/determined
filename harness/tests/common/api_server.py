@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, Optional, Tuple
 
 import determined
+from determined.common.api import bindings
 from determined.common.api.authentication import salt_and_hash
 
 CERTS_DIR = Path(__file__).parent / "multimaster-certs"
@@ -21,6 +22,11 @@ CERTS2 = {
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
+def sample_get_experiment() -> bindings.v1GetExperimentResponse:
+    with open(FIXTURES_DIR / "experiment.json") as f:
+        return bindings.v1GetExperimentResponse.from_json(json.load(f))
+
+
 @contextlib.contextmanager
 def run_api_server(
     address: Tuple[str, int] = ("localhost", 12345),
@@ -29,7 +35,7 @@ def run_api_server(
 ) -> Iterator[str]:
     user, password, token = credentials
     lock = threading.RLock()
-    state = {}
+    state: Dict[str, Any] = {}
 
     class RequestHandler(SimpleHTTPRequestHandler):
         def _info(self) -> Dict[str, Any]:
@@ -60,7 +66,7 @@ def run_api_server(
                 },
             }
 
-        def flaky_get_experiment(self):
+        def flaky_get_experiment(self) -> Any:
             """
             fails for FAIL_FOR times before succeeding
             """
@@ -70,9 +76,8 @@ def run_api_server(
                 state[key] = state.get(key, 0) + 1
                 if state[key] <= FAIL_FOR:
                     self.send_error(504)
-                    return
-            with open(FIXTURES_DIR / "experiment.json") as f:
-                return json.load(f)
+                    return {}
+            return sample_get_experiment().to_json()
 
         def do_core(self, fn: Optional[Callable[..., Dict[str, Any]]]) -> None:
             if fn is None:
