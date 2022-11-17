@@ -47,28 +47,28 @@ class User:
     def rename(self, new_username: str) -> None:
         patch_user = bindings.v1PatchUser(username=new_username)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self.reload(resp.user)
+        self._reload(resp.user)
 
     def activate(self) -> None:
         patch_user = bindings.v1PatchUser(active=True)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self.reload(resp.user)
+        self._reload(resp.user)
 
     def deactivate(self) -> None:
         patch_user = bindings.v1PatchUser(active=False)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self.reload(resp.user)
+        self._reload(resp.user)
 
     def change_display_name(self, display_name: str) -> None:
         patch_user = bindings.v1PatchUser(displayName=display_name)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self.reload(resp.user)
+        self._reload(resp.user)
 
     def change_password(self, new_password: str) -> None:
         new_password = api.salt_and_hash(new_password)
         patch_user = bindings.v1PatchUser(password=new_password, isHashed=True)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self.reload(resp.user)
+        self._reload(resp.user)
 
     def link_with_agent(
         self,
@@ -85,4 +85,4 @@ class User:
         )
         patch_user = bindings.v1PatchUser(agentUserGroup=v1agent_user_group)
         resp = bindings.patch_PatchUser(self._session, body=patch_user, userId=self.user_id)
-        self.reload(resp.user)
+        self._reload(resp.user)
