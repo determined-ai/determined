@@ -308,6 +308,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         {children}
       </ProjectActionDropdown>
     ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [user, workspace?.archived],
   );
 
