@@ -221,7 +221,6 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 				return err
 			}
 		}
-
 	}
 
 	if err = tx.Commit(); err != nil {
