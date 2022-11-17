@@ -325,12 +325,7 @@ export interface SetUserPasswordParams {
 
 export interface PatchUserParams {
   userId: number;
-  userParams: {
-    active?: boolean;
-    admin?: boolean;
-    displayName?: string;
-    username?: string;
-  };
+  userParams: Api.V1PatchUser;
 }
 
 export interface CreateGroupsParams {

@@ -113,7 +113,7 @@ const UserManagement: React.FC = () => {
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
 
   const rbacEnabled = useFeature().isOn('rbac');
-  const { canModifyUsers, canViewUsers } = usePermissions();
+  const { canModifyUsers } = usePermissions();
 
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
@@ -278,7 +278,7 @@ const UserManagement: React.FC = () => {
         </Space>
       }
       title={USER_TITLE}>
-      {canViewUsers && <div className={css.usersTable}>{table}</div>}
+      <div className={css.usersTable}>{table}</div>
       {modalCreateUserContextHolder}
     </Page>
   );

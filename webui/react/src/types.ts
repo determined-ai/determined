@@ -15,6 +15,7 @@ export interface User {
 }
 
 export interface DetailedUser extends User {
+  agentUserGroup?: V1AgentUserGroup;
   id: number;
   isActive: boolean;
   isAdmin: boolean;
