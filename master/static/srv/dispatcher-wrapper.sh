@@ -24,7 +24,6 @@
 set -eE
 trap 'echo >&2 "FATAL: Unexpected error terminated dispatcher-wrapper container initialization.  See error messages above."' ERR
 
-
 # Controls debug logging for this method
 DEBUG=0
 
@@ -38,10 +37,9 @@ unset -f $(declare -Ffx | cut -f 3 -d ' ')
 # Args: {Level} {Message}...
 log_debug() {
     if [ $DEBUG == 1 ]; then
-       echo -e "$*" >&2
+        echo -e "$*" >&2
     fi
 }
-
 
 # Unconditional log method
 # Args: {Level} {Message}...
@@ -64,12 +62,12 @@ log() {
 # TODO: Need to handle Multi Instance GPU (MIG) Format.
 # Refer: https://docs.nvidia.com/datacenter/tesla/pdf/NVIDIA_MIG_User_Guide.pdf Section 9.6.1 for
 # further information on MIG format
-convert_to_gpu_numbers(){
+convert_to_gpu_numbers() {
     # Process the value of CUDA_VISIBLE_DEVICES and store the values in an array.
     # IFS flag is set to "," to process the string as a comma separated list.
-    IFS=',' read -r -a cuda_device_ids <<< "$CUDA_VISIBLE_DEVICES"
+    IFS=',' read -r -a cuda_device_ids <<<"$CUDA_VISIBLE_DEVICES"
     # Check if the first element is a number.
-    if [[ "${cuda_device_ids[0]}" =~ ^[[:digit:]]+$ ]]; then
+    if [[ ${cuda_device_ids[0]} =~ ^[[:digit:]]+$ ]]; then
         # Return the value as it is, if it is already in simple number format.
         echo "${CUDA_VISIBLE_DEVICES}"
     else
@@ -77,12 +75,11 @@ convert_to_gpu_numbers(){
         cuda_devices_string=""
         error_flag=0
         # Below for loop will creates a string in the format "0,1,2,"
-        for gpu_id in "${cuda_device_ids[@]}"
-        do
+        for gpu_id in "${cuda_device_ids[@]}"; do
             # Retrieve gpu id in the simple number format using the nvidia-smi command.
             simple_gpu_id=$(nvidia-smi --query-gpu=index --format=csv,noheader -i ${gpu_id})
             # If the command failed log warning and return the existing value as it is.
-            if [ $? -ne 0 ];then
+            if [ $? -ne 0 ]; then
                 log "ERROR: Failed to retrieve index for GID ${gpu_id} using nvidia-smi." 1>&2
                 error_flag=1
                 break
@@ -104,6 +101,11 @@ convert_to_gpu_numbers(){
 # With --writable-tmpfs option / is writable by the user
 # and private to the container instance.
 LOCALTMP=/
+if [ ! -w $LOCALTMP ]; then
+    # If / is not writable (Enroot), then /tmp is
+    # container-private and we can just use that.
+    LOCALTMP=/tmp
+fi
 # Source volume of all archives to be cloned
 ROOT="/determined_local_fs"
 # Base of the per-proc copy of tree
@@ -112,10 +114,10 @@ PROCDIR_ROOT="$ROOT/procs"
 PROCDIR="$PROCDIR_ROOT/$SLURM_PROCID"
 
 # Create clone of any directories under /dispatcher for this process and setup links
-if [ -d $ROOT/run ] ; then
+if [ -d $ROOT/run ]; then
     mkdir -p $PROCDIR
     for dir in $ROOT/*; do
-        if [[ -d $dir && $dir != $PROCDIR_ROOT ]] ; then
+        if [[ -d $dir && $dir != $PROCDIR_ROOT ]]; then
             log_debug "INFO: Clone $dir -> $PROCDIR"
             cp -p -R $dir $PROCDIR >&2
         fi
@@ -143,7 +145,7 @@ if [ -d $ROOT/run ] ; then
 fi
 
 # Localize /tmp as a private folder in the container, if requested.
-if  [ "$DET_CONTAINER_LOCAL_TMP" == "1" ]; then
+if [ "$DET_CONTAINER_LOCAL_TMP" == "1" ]; then
     # Create a per-container tmp
     mkdir -p $PROCDIR/tmp
     # Replace /tmp with a link to our private
@@ -172,13 +174,13 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
 
             if [ ! -z "$CUDA_VISIBLE_DEVICES" ]; then
                 # Test if "nvidia-smi" exists in the PATH before trying to invoking it.
-                if type nvidia-smi > /dev/null 2>&1 ; then
+                if type nvidia-smi >/dev/null 2>&1; then
                     # For Nvidia GPUS, the slot IDs are the device index. Replace the
                     # newline characters with commas and enclose in square brackets.
                     # But only include GPUS that are in the CUDA_VISIBLE_DEVICES=0,1,...
                     VISIBLE_SLOTS="$(nvidia-smi --query-gpu=index --format=csv,noheader | sed -z 's/\n/,/g;s/,$/\n/')"
-                    for device in ${CUDA_VISIBLE_DEVICES//,/ } ; do
-                        if [[ ! "$VISIBLE_SLOTS" == *"$device"* ]]; then
+                    for device in ${CUDA_VISIBLE_DEVICES//,/ }; do
+                        if [[ $VISIBLE_SLOTS != *"$device"* ]]; then
                             log "WARNING: nvidia-smi reports visible CUDA devices as ${VISIBLE_SLOTS} but does not contain ${device}.  May be unable to perform CUDA operations." 1>&2
                         fi
                     done
@@ -208,7 +210,7 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
             if [[ -x /usr/bin/rocm-smi ]]; then
                 if grep -s /usr/libexec/platform-python /usr/bin/rocm-smi; then
                     mkdir -p /run/determined/pythonuserbase/bin/
-                    echo -e '#!/bin/bash\npython3 /usr/bin/rocm-smi $*' > /run/determined/pythonuserbase/bin/rocm-smi
+                    echo -e '#!/bin/bash\npython3 /usr/bin/rocm-smi $*' >/run/determined/pythonuserbase/bin/rocm-smi
                     chmod +x /run/determined/pythonuserbase/bin/rocm-smi
                     log "INFO: Adding rocm-smi wrapper script /run/determined/pythonuserbase/bin/rocm-smi." 1>&2
                 fi
@@ -216,7 +218,7 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
 
             if [ ! -z "$ROCR_VISIBLE_DEVICES" ]; then
                 # Test if "rocm-smi" exists in the PATH before trying to invoking it.
-                if [ ! type rocm-smi > /dev/null 2>&1 ]; then
+                if [ ! type rocm-smi ] >/dev/null 2>&1; then
                     log "WARNING: rocm-smi not found.  May be unable to perform ROCM operations." 1>&2
                 fi
             else
@@ -253,7 +255,7 @@ fi
 # result in:
 # cat  /run/determined/etc/passwd
 #     username:x:0:0::/run/determined/workdir:/bin/bash
-if [ $(whoami) == "root" ]  && [ -r /run/determined/etc/passwd ]; then
+if [ $(whoami) == "root" ] && [ -r /run/determined/etc/passwd ]; then
     log_debug "DEBUG: Running as root inside container, changing agent user passwd entry to uid/gid 0/0."
     sed -i "s/\([a-zA-Z0-9]\+\):x:[0-9]\+:[0-9]\+:/\1:x:0:0:/" /run/determined/etc/passwd
 fi
