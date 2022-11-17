@@ -60,6 +60,15 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
+  const {
+    contextHolder: modalCheckpointRegisterContextHolder,
+    modalOpen: openModalCheckpointRegister,
+  } = useModalCheckpointRegister({
+    onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
+      if (checkpoints) openModalCreateModel({ checkpoints });
+    },
+  });
+
   const handleOnCloseCreateModel = useCallback(
     (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
       if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
@@ -69,20 +78,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
     useModalModelCreate({ onClose: handleOnCloseCreateModel });
-
-  const handleOnCloseCheckpointRegister = useCallback(
-    (reason?: ModalCloseReason, checkpoints?: string[]) => {
-      if (checkpoints) openModalCreateModel({ checkpoints });
-    },
-    [openModalCreateModel],
-  );
-
-  // Has to use var to hoist openModalCheckpointRegister for use above
-  /* eslint-disable-next-line no-var */
-  var {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: openModalCheckpointRegister,
-  } = useModalCheckpointRegister({ onClose: handleOnCloseCheckpointRegister });
 
   const {
     contextHolder: modalCheckpointDeleteContextHolder,
