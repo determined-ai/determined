@@ -102,7 +102,7 @@ func (s *Websocket[TIn, TOut]) Wait() error {
 	return s.Error()
 }
 
-// Error returns an error is the websocket has encountered one. Errors from closing are excluded.
+// Error returns an error if the Websocket has encountered one. Errors from closing are excluded.
 func (s *Websocket[TIn, TOut]) Error() error {
 	s.errLock.Lock()
 	defer s.errLock.Unlock()
