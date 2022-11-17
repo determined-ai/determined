@@ -6213,6 +6213,86 @@ class v1Notebook:
             out["userId"] = self.userId
         return out
 
+class v1NotifyContainerRunningRequest:
+    nodeName: "typing.Optional[str]" = None
+    numPeers: "typing.Optional[int]" = None
+    rank: "typing.Optional[int]" = None
+    requestUuid: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        allocationId: str,
+        data: "typing.Dict[str, typing.Any]",
+        nodeName: "typing.Union[str, None, Unset]" = _unset,
+        numPeers: "typing.Union[int, None, Unset]" = _unset,
+        rank: "typing.Union[int, None, Unset]" = _unset,
+        requestUuid: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.allocationId = allocationId
+        self.data = data
+        if not isinstance(nodeName, Unset):
+            self.nodeName = nodeName
+        if not isinstance(numPeers, Unset):
+            self.numPeers = numPeers
+        if not isinstance(rank, Unset):
+            self.rank = rank
+        if not isinstance(requestUuid, Unset):
+            self.requestUuid = requestUuid
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1NotifyContainerRunningRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocationId": obj["allocationId"],
+            "data": obj["data"],
+        }
+        if "nodeName" in obj:
+            kwargs["nodeName"] = obj["nodeName"]
+        if "numPeers" in obj:
+            kwargs["numPeers"] = obj["numPeers"]
+        if "rank" in obj:
+            kwargs["rank"] = obj["rank"]
+        if "requestUuid" in obj:
+            kwargs["requestUuid"] = obj["requestUuid"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "allocationId": self.allocationId,
+            "data": self.data,
+        }
+        if not omit_unset or "nodeName" in vars(self):
+            out["nodeName"] = self.nodeName
+        if not omit_unset or "numPeers" in vars(self):
+            out["numPeers"] = self.numPeers
+        if not omit_unset or "rank" in vars(self):
+            out["rank"] = self.rank
+        if not omit_unset or "requestUuid" in vars(self):
+            out["requestUuid"] = self.requestUuid
+        return out
+
+class v1NotifyContainerRunningResponse:
+
+    def __init__(
+        self,
+        *,
+        data: "typing.Sequence[typing.Dict[str, typing.Any]]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1NotifyContainerRunningResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "data": obj["data"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "data": self.data,
+        }
+        return out
+
 class v1OrderBy(enum.Enum):
     ORDER_BY_UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
     ORDER_BY_ASC = "ORDER_BY_ASC"
@@ -14101,6 +14181,27 @@ def post_MoveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveProject", _resp)
+
+def post_NotifyContainerRunning(
+    session: "api.Session",
+    *,
+    allocationId: str,
+    body: "v1NotifyContainerRunningRequest",
+) -> "v1NotifyContainerRunningResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/notify_container_running",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1NotifyContainerRunningResponse.from_json(_resp.json())
+    raise APIHttpError("post_NotifyContainerRunning", _resp)
 
 def patch_PatchExperiment(
     session: "api.Session",

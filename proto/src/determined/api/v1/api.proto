@@ -821,6 +821,23 @@ service Determined {
     };
   }
 
+  // NotifyContainterRunning is used to notify the master that the container
+  // is running.  On HPC, the launcher will report a state of "Running" as
+  // soon as Slurm starts the job, but the container may be in the process
+  // of getting pulled down from the Internet, so the experiment is not
+  // really considered to be in a "Running" state until all the containers
+  // that are part of the experiment are running and not being pulled.
+  rpc NotifyContainerRunning(NotifyContainerRunningRequest)
+      returns (NotifyContainerRunningResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/notify_container_running"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get the current searcher operation.
   rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
       returns (GetCurrentTrialSearcherOperationResponse) {
