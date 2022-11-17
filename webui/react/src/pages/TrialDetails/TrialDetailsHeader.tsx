@@ -68,7 +68,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
 
     if (!trialNeverData) {
       options.push({
-        icon: <Icon name="tensorboard" size="small" />,
+        icon: <Icon name="tensor-board" size="small" />,
         isLoading: isRunningTensorBoard,
         key: Action.OpenTensorBoard,
         label: 'TensorBoard',

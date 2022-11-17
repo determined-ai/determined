@@ -23,6 +23,11 @@
   line-height: 1;
   text-transform: none;
 }
+
+/*
+    This part should be copied from style.css once unzipped
+ */
+
 .icon-dai-logo::before {
   content: '\e901';
 }
@@ -92,7 +97,7 @@
 .icon-learning::before {
   content: '\e92c';
 }
-.icon-heatmap::before {
+.icon-heat::before {
   content: '\e92d';
 }
 .icon-scatter-plot::before {
@@ -170,7 +175,7 @@
 .icon-user::before {
   content: '\e916';
 }
-.icon-jupyter::before {
+.icon-jupyter-lab::before {
   content: '\e915';
 }
 .icon-lock::before {
@@ -224,7 +229,7 @@
 .icon-star::before {
   content: '\e926';
 }
-.icon-tensorflow::before {
+.icon-tensor-board::before {
   content: '\e92b';
 }
 .icon-searcher-random::before {
@@ -235,4 +240,21 @@
 }
 .icon-searcher-adaptive::before {
   content: '\e93c';
+}
+
+/*
+    This part contains same icon being used as different name
+ */
+
+.icon-critical::before {
+  // same as error
+  content: '\e904';
+}
+.icon-trace::before {
+  // same as dai-logo
+  content: '\e901';
+}
+.icon-webhooks::before {
+  // same as searcher-random
+  content: '\e93e';
 }
