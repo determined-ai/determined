@@ -308,7 +308,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         {children}
       </ProjectActionDropdown>
     ),
-    [fetchProjects, user, workspace?.archived],
+    [user, workspace?.archived],
   );
 
   const projectsList = useMemo(() => {
