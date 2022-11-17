@@ -193,6 +193,7 @@ const TrialChart: React.FC<Props> = ({
         focus: 'series',
       },
       name: metrics[i].name,
+      symbolSize: 8,
       type: 'line',
     }));
 

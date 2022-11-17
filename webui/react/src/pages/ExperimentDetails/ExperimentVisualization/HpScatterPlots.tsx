@@ -1,6 +1,9 @@
 import { Alert } from 'antd';
+import type { EChartsOption } from 'echarts';
+import { CallbackDataParams, TopLevelFormatterParams } from 'echarts/types/dist/shared';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import ReactECharts from 'components/Echarts/ReactEcharts';
 import GalleryModal from 'components/GalleryModal';
 import Grid, { GridMode } from 'components/Grid';
 import Section from 'components/Section';
@@ -233,6 +236,101 @@ const ScatterPlots: React.FC<Props> = ({
 
   useEffect(() => setGalleryHeight(resize.height), [resize]);
 
+  const option = useCallback(
+    (hParam: string): EChartsOption => {
+      const data: EChartsOption['series'] = [];
+      for (let i = 0; i < (chartData?.hpValues[hParam] ?? []).length; i++) {
+        data.push({
+          // color: 'inherit',
+          data: [[chartData?.hpValues[hParam][i] ?? '', chartData?.metricValues[hParam][i] ?? '']],
+          name: chartData?.trialIds[i] ?? '',
+          symbolSize: 10,
+          type: 'scatter',
+        });
+      }
+
+      return {
+        dataZoom: [
+          {
+            realtime: true,
+            show: true,
+            type: 'slider',
+          },
+          {
+            realtime: true,
+            show: true,
+            type: 'inside',
+            zoomLock: true,
+          },
+        ],
+        series: data.sort((a, b) => ((a.name ?? '') > (b.name ?? '') ? 1 : -1)),
+        title: {
+          left: 'center',
+          subtext: `${metricToStr(selectedMetric)} (y) vs ${hParam} (x)`,
+        },
+        tooltip: {
+          axisPointer: {
+            type: 'cross',
+          },
+          formatter: (params: TopLevelFormatterParams) => {
+            const data = params as CallbackDataParams;
+            const axises = data.data as number[];
+            const tooltip = `
+              <div>
+                <div>${hParam}: ${Number(axises[0]).toFixed(2)}</div>
+                <div>${metricToStr(selectedMetric)}: ${Number(axises[1]).toFixed(2)}</div>
+                <div>Trial ID: ${data.seriesName}</div>
+              </div>
+            `;
+            return tooltip;
+          },
+        },
+        visualMap: {
+          calculable: true,
+          dimension: 1,
+          inRange: {
+            color: ['#f2c31a', '#24b7f2'],
+          },
+          max: Math.max(
+            ...(chartData?.metricValues[hParam].map((x) => (x !== null ? x : 0)) ?? []),
+          ),
+          min: Math.min(
+            ...(chartData?.metricValues[hParam].map((x) =>
+              x !== null ? x : Number.MAX_SAFE_INTEGER,
+            ) ?? []),
+          ),
+          orient: 'vertical',
+          right: 10,
+          text: ['HIGH', 'LOW'],
+          top: 'center',
+        },
+        xAxis: {
+          max: Math.max(...(chartData?.hpValues[hParam] ?? [])) + 0.01,
+          min: Math.min(...(chartData?.hpValues[hParam] ?? [])) - 0.01,
+        },
+        yAxis: {
+          max:
+            Math.max(...(chartData?.metricValues[hParam].map((x) => (x !== null ? x : 0)) ?? [])) +
+            0.01,
+          min:
+            Math.min(
+              ...(chartData?.metricValues[hParam].map((x) =>
+                x !== null ? x : Number.MAX_SAFE_INTEGER,
+              ) ?? []),
+            ) - 0.01,
+          type: chartData?.hpLogScales[hParam] ?? false ? 'log' : 'value',
+        },
+      };
+    },
+    [
+      chartData?.hpLogScales,
+      chartData?.hpValues,
+      chartData?.metricValues,
+      chartData?.trialIds,
+      selectedMetric,
+    ],
+  );
+
   if (pageError) {
     return <Message title={pageError.message} />;
   } else if (hasLoaded && !chartData) {
@@ -259,20 +357,32 @@ const ScatterPlots: React.FC<Props> = ({
         loading={!hasLoaded || !chartData}>
         <div className={css.container}>
           {chartProps ? (
-            <Grid
-              border={true}
-              minItemWidth={resize.width > 320 ? 350 : 270}
-              mode={GridMode.AutoFill}>
-              {selectedHParams.map((hParam) => (
-                <div key={hParam} onClick={() => handleChartClick(hParam)}>
-                  <UPlotScatter
-                    data={chartProps[hParam].data}
-                    options={chartProps[hParam].options}
-                    tooltipLabels={chartProps[hParam].tooltipLabels}
-                  />
-                </div>
-              ))}
-            </Grid>
+            <>
+              <Grid
+                border={true}
+                minItemWidth={resize.width > 320 ? 350 : 270}
+                mode={GridMode.AutoFill}>
+                {selectedHParams.map((hParam) => (
+                  <div key={hParam} onClick={() => handleChartClick(hParam)}>
+                    <UPlotScatter
+                      data={chartProps[hParam].data}
+                      options={chartProps[hParam].options}
+                      tooltipLabels={chartProps[hParam].tooltipLabels}
+                    />
+                  </div>
+                ))}
+              </Grid>
+              <Grid
+                border={true}
+                minItemWidth={resize.width > 320 ? 350 : 270}
+                mode={GridMode.AutoFill}>
+                {selectedHParams.map((hParam) => (
+                  <div key={hParam}>
+                    <ReactECharts option={option(hParam)} style={{ height: '360px' }} />
+                  </div>
+                ))}
+              </Grid>
+            </>
           ) : (
             <Message title="No data to plot." type={MessageType.Empty} />
           )}

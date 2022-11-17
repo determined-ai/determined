@@ -1,5 +1,5 @@
 import type { EChartsOption, SetOptionOpts } from 'echarts';
-import { BarChart, LineChart } from 'echarts/charts';
+import { BarChart, LineChart, ScatterChart } from 'echarts/charts';
 import {
   DatasetComponent,
   DataZoomComponent,
@@ -9,6 +9,7 @@ import {
   ToolboxComponent,
   TooltipComponent,
   TransformComponent,
+  VisualMapComponent,
 } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import { LabelLayout, UniversalTransition } from 'echarts/features';
@@ -30,9 +31,11 @@ echarts.use([
   TransformComponent,
   BarChart,
   LineChart,
+  ScatterChart,
   LabelLayout,
   UniversalTransition,
   CanvasRenderer,
+  VisualMapComponent,
 ]);
 
 export interface Props {
