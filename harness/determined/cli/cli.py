@@ -51,7 +51,8 @@ from determined.common.util import (
     safe_load_yaml_with_exceptions,
 )
 
-from .errors import EnterpriseOnlyError, FeatureFlagDisabled
+from determined.errors import EnterpriseOnlyError
+from .errors import FeatureFlagDisabled
 
 
 @authentication.required

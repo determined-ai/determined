@@ -9,7 +9,7 @@ from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 
-from .errors import EnterpriseOnlyError
+from determined.errors import EnterpriseOnlyError
 
 CLI_REDIRECT_PORT = 49176
 
