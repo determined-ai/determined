@@ -30,7 +30,9 @@ const (
 	maxMessageSize = 128 * 1024 * 1024
 )
 
-// Websocket provides a higher level websocket library on top of "github.com/gorilla/websocket".
+// Websocket is a facade that wraps a Gorilla websocket and provides a higher-level, type-safe, and
+// thread-safe API by specializing for JSON encoding/decoding and using channels for read/write. The
+// Close method must be called or resources will be leaked.
 type Websocket[TIn, TOut any] struct {
 	// System dependencies.
 	log  *logrus.Entry
@@ -95,11 +97,6 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *Websocket[TIn, TOut
 	}()
 
 	return s
-}
-
-func (s *Websocket[TIn, TOut]) Wait() error {
-	<-s.Done
-	return s.Error()
 }
 
 // Error returns an error if the Websocket has encountered one. Errors from closing are excluded.
