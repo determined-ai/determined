@@ -308,7 +308,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         {children}
       </ProjectActionDropdown>
     ),
-    [fetchProjects, user, workspace?.archived],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user, workspace?.archived],
   );
 
   const projectsList = useMemo(() => {
