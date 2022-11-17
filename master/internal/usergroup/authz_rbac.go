@@ -32,7 +32,7 @@ func (a *UserGroupAuthZRBAC) CanGetGroup(ctx context.Context, curUser model.User
 // FilterGroupsList returns the list it was given and a nil error.
 func (a *UserGroupAuthZRBAC) FilterGroupsList(ctx context.Context, curUser model.User,
 	query *bun.SelectQuery,
-) (*bun.SelectQuery, error) {
+) (selectQuery *bun.SelectQuery, err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -43,9 +43,11 @@ func (a *UserGroupAuthZRBAC) FilterGroupsList(ctx context.Context, curUser model
 			SubjectType: "group",
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
-	err := db.DoPermissionsExist(ctx, curUser.ID,
+	err = db.DoPermissionsExist(ctx, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return query, nil
@@ -63,7 +65,7 @@ func (a *UserGroupAuthZRBAC) FilterGroupsList(ctx context.Context, curUser model
 }
 
 // CanUpdateGroups checks if a user can create, delete, or update groups.
-func (a *UserGroupAuthZRBAC) CanUpdateGroups(ctx context.Context, curUser model.User) error {
+func (a *UserGroupAuthZRBAC) CanUpdateGroups(ctx context.Context, curUser model.User) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -74,7 +76,9 @@ func (a *UserGroupAuthZRBAC) CanUpdateGroups(ctx context.Context, curUser model.
 			SubjectType: "group",
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_GROUP)
@@ -82,7 +86,7 @@ func (a *UserGroupAuthZRBAC) CanUpdateGroups(ctx context.Context, curUser model.
 
 // CanViewGroup checks if a user has the ability to view the group by checking whether
 // user has the assign roles permission or belongs to the group.
-func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) error {
+func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = userBelongsTo
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -94,9 +98,11 @@ func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) erro
 			SubjectIDs:  []string{fmt.Sprint(gid)},
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
-	err := db.DoPermissionsExist(ctx, userBelongsTo,
+	err = db.DoPermissionsExist(ctx, userBelongsTo,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return nil

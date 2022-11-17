@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -29,8 +30,7 @@ func noPermissionRequired(ctx context.Context, curUserID, targetUserID model.Use
 	audit.Log(fields)
 }
 
-func logCanAdministrateUser(ctx context.Context, curUserID model.UserID) {
-	fields := audit.ExtractLogFields(ctx)
+func logCanAdministrateUser(fields log.Fields, curUserID model.UserID) {
 	fields["userID"] = curUserID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
 		{
@@ -40,11 +40,14 @@ func logCanAdministrateUser(ctx context.Context, curUserID model.UserID) {
 			SubjectType: "user",
 		},
 	}
-	audit.Log(fields)
 }
 
-func canAdministrateUser(ctx context.Context, curUserID model.UserID) error {
-	logCanAdministrateUser(ctx, curUserID)
+func canAdministrateUser(ctx context.Context, curUserID model.UserID) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateUser(fields, curUserID)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return db.DoesPermissionMatch(ctx, curUserID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
@@ -94,10 +97,14 @@ func (a *UserAuthZRBAC) CanCreateUser(
 // permissions when trying to set another user's password.
 func (a *UserAuthZRBAC) CanSetUsersPassword(
 	ctx context.Context, curUser, targetUser model.User,
-) error {
-	logCanAdministrateUser(ctx, curUser.ID)
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateUser(fields, curUser.ID)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
-	err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
+	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 	if err != nil && curUser.ID != targetUser.ID {
 		return errors.New("only admin privileged users can change other user's passwords")
@@ -137,14 +144,18 @@ func (a *UserAuthZRBAC) CanSetUsersUsername(
 // permissions when trying to set another user's display name.
 func (a *UserAuthZRBAC) CanSetUsersDisplayName(
 	ctx context.Context, curUser, targetUser model.User,
-) error {
-	logCanAdministrateUser(ctx, curUser.ID)
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateUser(fields, curUser.ID)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	if curUser == targetUser {
 		return nil
 	}
 
-	err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
+	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 	if err != nil && curUser.ID != targetUser.ID {
 		return errors.New("only admin privileged users can set another user's display name")
@@ -185,8 +196,13 @@ func (a *UserAuthZRBAC) CanResetUsersOwnSettings(ctx context.Context, curUser mo
 }
 
 // CanGetActiveTasksCount returns an error if a user can't administrate users.
-func (a *UserAuthZRBAC) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
-	logCanAdministrateUser(ctx, curUser.ID)
+func (a *UserAuthZRBAC) CanGetActiveTasksCount(ctx context.Context, curUser model.User,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateUser(fields, curUser.ID)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 }
@@ -194,8 +210,12 @@ func (a *UserAuthZRBAC) CanGetActiveTasksCount(ctx context.Context, curUser mode
 // CanAccessNTSCTask returns false if a user can't administrate users and it is not their task.
 func (a *UserAuthZRBAC) CanAccessNTSCTask(
 	ctx context.Context, curUser model.User, ownerID model.UserID,
-) (bool, error) {
-	logCanAdministrateUser(ctx, curUser.ID)
+) (canAccess bool, err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateUser(fields, curUser.ID)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	if curUser.ID == ownerID {
 		return true, nil

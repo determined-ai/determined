@@ -563,7 +563,8 @@ func GetAssignedRoles(ctx context.Context, curUser model.UserID) ([]int32, error
 }
 
 func enforceGlobalOnly(ctx context.Context, idb bun.IDB,
-	assignments []*rbacv1.GroupRoleAssignment) (bool, error) {
+	assignments []*rbacv1.GroupRoleAssignment,
+) (bool, error) {
 	var toBeLocallyAssigned []int32
 	for _, a := range assignments {
 		if a.RoleAssignment.ScopeWorkspaceId != nil {
