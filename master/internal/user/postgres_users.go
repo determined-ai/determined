@@ -57,6 +57,13 @@ func UserByUsername(username string) (*model.User, error) {
 	return &user, nil
 }
 
+// SetDisplayName in User.
+func SetDisplayName(userID int32, displayName *string) error {
+	_, err := db.Bun().NewUpdate().Model((*model.User)(nil)).Set("display_name = ?", displayName).
+		Where("id = ?", userID).Exec(context.TODO())
+	return err
+}
+
 // AddUserExec execs an INSERT to create a new user.
 func AddUserExec(user *model.User) error {
 	ctx := context.TODO()

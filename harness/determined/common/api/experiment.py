@@ -142,6 +142,7 @@ def create_experiment(
         body.update(additional_body_fields)
 
     r = req.post(master_url, "experiments", json=body)
+
     if not hasattr(r, "headers"):
         raise Exception(r)
 

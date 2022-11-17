@@ -43,13 +43,38 @@ message GetUsersResponse {
   Pagination pagination = 2;
 }
 
-// Get the requested user.
+// Get the requested user by user id.
 message GetUserRequest {
   // The id of the user.
-  int32 user_id = 2;
+  int32 user_id = 1;
 }
 // Response to GetUserRequest.
 message GetUserResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user" ] }
+  };
+  // The requested user.
+  determined.user.v1.User user = 1;
+}
+
+// Get the requested user by username.
+message GetUserByUsernameRequest {
+  // The string of the username.
+  string username = 1;
+}
+// Response to GetUserByUsernameRequest.
+message GetUserByUsernameResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "user" ] }
+  };
+  // The requested user.
+  determined.user.v1.User user = 1;
+}
+
+// Get the requested current user.
+message GetMeRequest {}
+// Response to GetMeRequest.
+message GetMeResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "user" ] }
   };
@@ -63,6 +88,8 @@ message PostUserRequest {
   determined.user.v1.User user = 1;
   // The password of the user.
   string password = 2;
+  // Indicate whether the provided password is pre-salted & hashed or not.
+  bool is_hashed = 3;
 }
 // Response to PostUserRequest.
 message PostUserResponse {
@@ -86,9 +113,9 @@ message SetUserPasswordResponse {
 // Edit fields for a user.
 message PatchUserRequest {
   // The id of the user.
-  int32 user_id = 3;
+  int32 user_id = 2;
   // The updated user.
-  determined.user.v1.PatchUser user = 2;
+  determined.user.v1.PatchUser user = 1;
 }
 // Response to PatchUserRequest.
 message PatchUserResponse {

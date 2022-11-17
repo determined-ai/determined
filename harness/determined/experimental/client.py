@@ -46,7 +46,7 @@ See :ref:`use-trained-models` for more ideas on what to do next.
 import functools
 import pathlib
 import warnings
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common.api import Session  # noqa: F401
 from determined.common.experimental.checkpoint import (  # noqa: F401
@@ -65,6 +65,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialReference,
     TrialSortBy,
 )
+from determined.common.experimental.user import User
 
 _determined = None  # type: Optional[Determined]
 
@@ -171,6 +172,76 @@ def get_experiment(experiment_id: int) -> ExperimentReference:
     """
     assert _determined is not None
     return _determined.get_experiment(experiment_id)
+
+
+@_require_singleton
+def create_user(username: str, admin: bool, password: Optional[str] = None) -> User:
+    """
+    Creates an user with username and password, admin. The function returns a
+    :class:`~determined.experimental.client.User` of the User.
+
+    Arguments:
+        username (string): username of the user.
+        password (string): password of the user.
+        admin (bool): indicates whether the user is an admin.
+    """
+    assert _determined is not None
+    return _determined.create_user(username, admin, password)
+
+
+@_require_singleton
+def get_user_by_id(user_id: int) -> User:
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    User with the provided user id.
+
+    Arguments:
+        user_id (int): The user ID.
+    """
+    assert _determined is not None
+    return _determined.get_user_by_id(user_id)
+
+
+@_require_singleton
+def get_user_by_name(user_name: str) -> User:
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    User with the provided user name.
+
+    Arguments:
+        user_name (string): The user name.
+    """
+    assert _determined is not None
+    return _determined.get_user_by_name(user_name)
+
+
+@_require_singleton
+def whoami() -> User:
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    current user.
+    """
+    assert _determined is not None
+    return _determined.whoami()
+
+
+@_require_singleton
+def logout() -> None:
+    """
+    Get the :class:`~determined.experimental.client.User` representing the
+    current user.
+    """
+    assert _determined is not None
+    return _determined.logout()
+
+
+@_require_singleton
+def list_users() -> Sequence[User]:
+    """
+    Get the list :class:`~determined.experimental.client.User` of all Users.
+    """
+    assert _determined is not None
+    return _determined.list_users()
 
 
 @_require_singleton

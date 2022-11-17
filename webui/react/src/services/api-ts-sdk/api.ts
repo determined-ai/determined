@@ -3166,6 +3166,20 @@ export interface V1GetMasterResponse {
 }
 
 /**
+ * Response to GetMeRequest.
+ * @export
+ * @interface V1GetMeResponse
+ */
+export interface V1GetMeResponse {
+    /**
+     * The requested user.
+     * @type {V1User}
+     * @memberof V1GetMeResponse
+     */
+    user: V1User;
+}
+
+/**
  * Request to get a file of model definition.
  * @export
  * @interface V1GetModelDefFileRequest
@@ -3839,6 +3853,20 @@ export interface V1GetTrialsCollectionsResponse {
      * @memberof V1GetTrialsCollectionsResponse
      */
     collections?: Array<V1TrialsCollection>;
+}
+
+/**
+ * Response to GetUserByUsernameRequest.
+ * @export
+ * @interface V1GetUserByUsernameResponse
+ */
+export interface V1GetUserByUsernameResponse {
+    /**
+     * The requested user.
+     * @type {V1User}
+     * @memberof V1GetUserByUsernameResponse
+     */
+    user: V1User;
 }
 
 /**
@@ -5562,6 +5590,18 @@ export interface V1PatchTrialsCollectionResponse {
  */
 export interface V1PatchUser {
     /**
+     * String denoting the username of the user.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    username?: string;
+    /**
+     * String denoting the password of the user.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    password?: string;
+    /**
      * Bool denoting whether the account is an admin account.
      * @type {boolean}
      * @memberof V1PatchUser
@@ -5574,31 +5614,19 @@ export interface V1PatchUser {
      */
     active?: boolean;
     /**
-     * The user and group on the agent host machine.
-     * @type {V1AgentUserGroup}
-     * @memberof V1PatchUser
-     */
-    agentUserGroup?: V1AgentUserGroup;
-    /**
-     * The new username.
-     * @type {string}
-     * @memberof V1PatchUser
-     */
-    username?: string;
-    /**
      * Name to display in the web UI.
      * @type {string}
      * @memberof V1PatchUser
      */
     displayName?: string;
     /**
-     * Password of user.
-     * @type {string}
+     * The user and group on the agent host machine.
+     * @type {V1AgentUserGroup}
      * @memberof V1PatchUser
      */
-    password?: string;
+    agentUserGroup?: V1AgentUserGroup;
     /**
-     * Indicates if the password field is sent salted and client side hashed.
+     * Indicate whether the provided password is pre-salted & hashed or not.
      * @type {boolean}
      * @memberof V1PatchUser
      */
@@ -6025,6 +6053,12 @@ export interface V1PostUserRequest {
      * @memberof V1PostUserRequest
      */
     password?: string;
+    /**
+     * Indicate whether the provided password is pre-salted & hashed or not.
+     * @type {boolean}
+     * @memberof V1PostUserRequest
+     */
+    isHashed?: boolean;
 }
 
 /**
@@ -25280,6 +25314,37 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
+         * @summary Get the current user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMe(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/me`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
@@ -25292,6 +25357,43 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the requested user with username.
+         * @param {string} username The string of the username.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserByUsername(username: string, options: any = {}): FetchArgs {
+            // verify required parameter 'username' is not null or undefined
+            if (username === null || username === undefined) {
+                throw new RequiredError('username','Required parameter username was null or undefined when calling getUserByUsername.');
+            }
+            const localVarPath = `/api/v1/users/{username}/by-username`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -25611,6 +25713,24 @@ export const UsersApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Get the current user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMe(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
@@ -25618,6 +25738,25 @@ export const UsersApiFp = function(configuration?: Configuration) {
          */
         getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the requested user with username.
+         * @param {string} username The string of the username.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25775,6 +25914,15 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
+         * @summary Get the current user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMe(options?: any) {
+            return UsersApiFp(configuration).getMe(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
@@ -25782,6 +25930,16 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         getUser(userId: number, options?: any) {
             return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the requested user with username.
+         * @param {string} username The string of the username.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserByUsername(username: string, options?: any) {
+            return UsersApiFp(configuration).getUserByUsername(username, options)(fetch, basePath);
         },
         /**
          * 
@@ -25868,6 +26026,17 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
 export class UsersApi extends BaseAPI {
     /**
      * 
+     * @summary Get the current user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getMe(options?: any) {
+        return UsersApiFp(this.configuration).getMe(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
      * @summary Get the requested user.
      * @param {number} userId The id of the user.
      * @param {*} [options] Override http request option.
@@ -25876,6 +26045,18 @@ export class UsersApi extends BaseAPI {
      */
     public getUser(userId: number, options?: any) {
         return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get the requested user with username.
+     * @param {string} username The string of the username.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUserByUsername(username: string, options?: any) {
+        return UsersApiFp(this.configuration).getUserByUsername(username, options)(this.fetch, this.basePath);
     }
 
     /**

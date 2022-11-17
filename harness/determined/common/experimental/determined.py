@@ -1,10 +1,10 @@
 import pathlib
 import warnings
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import checkpoint, experiment, model, trial
+from determined.common.experimental import checkpoint, experiment, model, trial, user
 
 
 class _CreateExperimentResponse:
@@ -61,8 +61,68 @@ class Determined:
         # where the default credentials are available from the master and could be discovered by
         # a REST API call against the master.
         auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
-
         self._session = api.Session(master, user, auth, cert)
+
+    def _from_bindings(self, raw: bindings.v1User) -> user.User:
+        assert raw.id is not None
+        if raw.agentUserGroup is not None:
+            return user.User(
+                user_id=raw.id,
+                username=raw.username,
+                admin=raw.admin,
+                session=self._session,
+                active=raw.active,
+                display_name=raw.displayName,
+                agent_uid=raw.agentUserGroup.agentUid,
+                agent_gid=raw.agentUserGroup.agentGid,
+                agent_user=raw.agentUserGroup.agentUser,
+                agent_group=raw.agentUserGroup.agentGroup,
+            )
+        else:
+            return user.User(
+                user_id=raw.id,
+                username=raw.username,
+                admin=raw.admin,
+                session=self._session,
+                active=raw.active,
+                display_name=raw.displayName,
+            )
+
+    def create_user(self, username: str, admin: bool, password: Optional[str]) -> user.User:
+        create_user = bindings.v1User(username=username, admin=admin, active=True)
+        hashedPassword = None
+        if password is not None:
+            hashedPassword = api.salt_and_hash(password)
+        req = bindings.v1PostUserRequest(password=hashedPassword, user=create_user, isHashed=True)
+        resp = bindings.post_PostUser(self._session, body=req)
+        assert resp.user is not None
+        return self._from_bindings(resp.user)
+
+    def get_user_by_id(self, user_id: int) -> user.User:
+        resp = bindings.get_GetUser(session=self._session, userId=user_id)
+        assert user_id is not None
+        return self._from_bindings(resp.user)
+
+    def get_user_by_name(self, user_name: str) -> user.User:
+        resp = bindings.get_GetUserByUsername(session=self._session, username=user_name)
+        return self._from_bindings(resp.user)
+
+    def whoami(self) -> user.User:
+        resp = bindings.get_GetMe(self._session)
+        return self._from_bindings(resp.user)
+
+    def logout(self) -> None:
+        bindings.post_Logout(self._session)
+
+    def list_users(self) -> Sequence[user.User]:
+        users_bindings = bindings.get_GetUsers(session=self._session).users
+        users: List[user.User] = []
+        if users_bindings is None:
+            return users
+        for user_b in users_bindings:
+            user_obj = self._from_bindings(user_b)
+            users.append(user_obj)
+        return users
 
     def create_experiment(
         self,
@@ -78,8 +138,8 @@ class Determined:
             config(string, pathlib.Path, dictionary): experiment config filename (.yaml)
                 or a dict.
             model_dir(string): directory containing model definition.
-            iterables (Iterable[Union[str, pathlib.Path]], optional): Additional files or
-                directories to include in the model definition.  (default: ``None``)
+            includes (Iterable[Union[str, pathlib.Path]], optional): Additional files or
+            directories to include in the model definition.  (default: ``None``)
         """
         if isinstance(config, str):
             with open(config) as f:

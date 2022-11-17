@@ -3482,6 +3482,28 @@ class v1GetMasterResponse:
             out["telemetryEnabled"] = self.telemetryEnabled
         return out
 
+class v1GetMeResponse:
+
+    def __init__(
+        self,
+        *,
+        user: "v1User",
+    ):
+        self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetMeResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "user": v1User.from_json(obj["user"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "user": self.user.to_json(omit_unset),
+        }
+        return out
+
 class v1GetModelDefFileRequest:
     experimentId: "typing.Optional[int]" = None
     path: "typing.Optional[str]" = None
@@ -4476,6 +4498,28 @@ class v1GetTrialsCollectionsResponse:
         }
         if not omit_unset or "collections" in vars(self):
             out["collections"] = None if self.collections is None else [x.to_json(omit_unset) for x in self.collections]
+        return out
+
+class v1GetUserByUsernameResponse:
+
+    def __init__(
+        self,
+        *,
+        user: "v1User",
+    ):
+        self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserByUsernameResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "user": v1User.from_json(obj["user"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "user": self.user.to_json(omit_unset),
+        }
         return out
 
 class v1GetUserResponse:
@@ -7329,15 +7373,19 @@ class v1PostTrialProfilerMetricsBatchRequest:
         return out
 
 class v1PostUserRequest:
+    isHashed: "typing.Optional[bool]" = None
     password: "typing.Optional[str]" = None
     user: "typing.Optional[v1User]" = None
 
     def __init__(
         self,
         *,
+        isHashed: "typing.Union[bool, None, Unset]" = _unset,
         password: "typing.Union[str, None, Unset]" = _unset,
         user: "typing.Union[v1User, None, Unset]" = _unset,
     ):
+        if not isinstance(isHashed, Unset):
+            self.isHashed = isHashed
         if not isinstance(password, Unset):
             self.password = password
         if not isinstance(user, Unset):
@@ -7347,6 +7395,8 @@ class v1PostUserRequest:
     def from_json(cls, obj: Json) -> "v1PostUserRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "isHashed" in obj:
+            kwargs["isHashed"] = obj["isHashed"]
         if "password" in obj:
             kwargs["password"] = obj["password"]
         if "user" in obj:
@@ -7356,6 +7406,8 @@ class v1PostUserRequest:
     def to_json(self, omit_unset: bool = False) -> typing.Any:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "isHashed" in vars(self):
+            out["isHashed"] = self.isHashed
         if not omit_unset or "password" in vars(self):
             out["password"] = self.password
         if not omit_unset or "user" in vars(self):
@@ -12768,6 +12820,24 @@ def get_GetMasterConfig(
         return v1GetMasterConfigResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMasterConfig", _resp)
 
+def get_GetMe(
+    session: "api.Session",
+) -> "v1GetMeResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/me",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetMeResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetMe", _resp)
+
 def get_GetModel(
     session: "api.Session",
     *,
@@ -13583,6 +13653,26 @@ def get_GetUser(
     if _resp.status_code == 200:
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
+
+def get_GetUserByUsername(
+    session: "api.Session",
+    *,
+    username: str,
+) -> "v1GetUserByUsernameResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/{username}/by-username",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserByUsernameResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserByUsername", _resp)
 
 def get_GetUserSetting(
     session: "api.Session",

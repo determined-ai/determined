@@ -155,6 +155,28 @@ service Determined {
       tags: "Users"
     };
   }
+
+  // Get the requested user with username.
+  rpc GetUserByUsername(GetUserByUsernameRequest)
+      returns (GetUserByUsernameResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{username}/by-username"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Get the current user.
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/me"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
   // Create a new user.
   rpc PostUser(PostUserRequest) returns (PostUserResponse) {
     option (google.api.http) = {

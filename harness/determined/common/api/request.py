@@ -162,6 +162,11 @@ def do_request(
         if auth is not None:
             username = auth.get_session_user()
         raise errors.ForbiddenException(username=username, message=_get_error_str(r))
+    if r.status_code == 401:
+        username = ""
+        if auth is not None:
+            username = auth.get_session_user()
+        raise errors.UnauthenticatedException(username=username)
     elif r.status_code == 404:
         raise errors.NotFoundException(r)
     elif r.status_code >= 300:

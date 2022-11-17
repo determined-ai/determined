@@ -29,20 +29,20 @@ message User {
 
 // Request to edit fields for a user.
 message PatchUser {
+  // String denoting the username of the user.
+  optional string username = 1;
+  // String denoting the password of the user.
+  optional string password = 2;
   // Bool denoting whether the account is an admin account.
-  google.protobuf.BoolValue admin = 1;
+  google.protobuf.BoolValue admin = 3;
   // Bool denoting whether the account is active.
-  google.protobuf.BoolValue active = 2;
-  // The user and group on the agent host machine.
-  AgentUserGroup agent_user_group = 4;
-  // The new username.
-  optional string username = 5;
+  google.protobuf.BoolValue active = 4;
   // Name to display in the web UI.
-  optional string display_name = 6;
-  // Password of user.
-  optional string password = 7;
-  // Indicates if the password field is sent salted and client side hashed.
-  bool is_hashed = 8;
+  optional string display_name = 5;
+  // The user and group on the agent host machine.
+  AgentUserGroup agent_user_group = 6;
+  // Indicate whether the provided password is pre-salted & hashed or not.
+  bool is_hashed = 7;
 }
 
 // AgentUserGroup represents a username and primary group for a user on an

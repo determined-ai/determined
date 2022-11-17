@@ -98,6 +98,15 @@ func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	}
 }
 
+func getFullModelUserByUsername(username string) (*model.FullUser, error) {
+	userModel, err := user.UserByUsername(username)
+	if errors.Is(err, db.ErrNotFound) {
+		return nil, errUserNotFound
+	}
+	fullUser, err := user.UserByID(userModel.ID)
+	return fullUser, err
+}
+
 func getFullModelUser(userID model.UserID) (*model.FullUser, error) {
 	userModel, err := user.UserByID(userID)
 	if errors.Is(err, db.ErrNotFound) {
@@ -193,7 +202,6 @@ func (a *apiServer) GetUser(
 	if err != nil {
 		return nil, err
 	}
-
 	var ok bool
 	if ok, err = user.AuthZProvider.Get().CanGetUser(
 		ctx, *curUser, targetFullUser.ToUser()); err != nil {
@@ -202,6 +210,42 @@ func (a *apiServer) GetUser(
 		return nil, errUserNotFound
 	}
 	return &apiv1.GetUserResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
+}
+
+func (a *apiServer) GetMe(
+	ctx context.Context, req *apiv1.GetMeRequest,
+) (*apiv1.GetMeResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	curFullUser, err := getFullModelUser(curUser.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.GetMeResponse{User: toProtoUserFromFullUser(*curFullUser)}, err
+}
+
+func (a *apiServer) GetUserByUsername(
+	ctx context.Context, req *apiv1.GetUserByUsernameRequest,
+) (*apiv1.GetUserByUsernameResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	targetFullUser, err := getFullModelUserByUsername(req.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	ok, err := user.AuthZProvider.Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser())
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errUserNotFound
+	}
+	return &apiv1.GetUserByUsernameResponse{User: toProtoUserFromFullUser(*targetFullUser)}, err
 }
 
 func (a *apiServer) PostUser(
@@ -265,7 +309,15 @@ func (a *apiServer) PostUser(
 	); err != nil {
 		return nil, err
 	}
-	if err = userToAdd.UpdatePasswordHash(replicateClientSideSaltAndHash(req.Password)); err != nil {
+
+	var hashedPassword string
+	if req.IsHashed {
+		hashedPassword = req.Password
+	} else {
+		hashedPassword = replicateClientSideSaltAndHash(req.Password)
+	}
+
+	if err = userToAdd.UpdatePasswordHash(hashedPassword); err != nil {
 		return nil, err
 	}
 
