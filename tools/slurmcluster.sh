@@ -36,6 +36,8 @@ TUNNEL=1
 DEVLAUNCHER=
 USERNAME=$USER
 DEBUGLEVEL=debug
+# Variables that can be set before invoking the script (to change the default)
+DEFAULTIMAGE=${DEFAULTIMAGE-}
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -75,8 +77,12 @@ while [[ $# -gt 0 ]]; do
             PULL_AUTH=1
             shift
             ;;
+        -c)
+            DEFAULTIMAGE=$2
+            shift 2
+            ;;
         -h | --help)
-            echo "Usage: $0 [-anxtpdi] [-u {username}]  {cluster}"
+            echo "Usage: $0 [-anxtpedi] [-c {image}] [-u {username}]  {cluster}"
             echo "  -h     This help message & documentation."
             echo "  -n     Disable start of the inbound tunnel (when using Cisco AnyConnect)."
             echo "  -x     Disable start of personal tunnel back to master (if you have done so manually)."
@@ -85,6 +91,7 @@ while [[ $# -gt 0 ]]; do
             echo "  -p     Use podman as a container host (otherwise singlarity)."
             echo "  -e     Use enroot as a container host (otherwise singlarity)."
             echo "  -d     Use a developer launcher (port assigned for the user in loadDevLauncher.sh)."
+            echo "  -c     Use the specified {image} as the default image.  Useful with -d and for enroot."
             echo "  -u     Use provided {username} to lookup the per-user port number."
             echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
             echo
@@ -94,7 +101,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -* | --*)
             echo >&2 "$0: Illegal option $1"
-            echo >&2 "Usage: $0 [-anxtpd] [-u {username}]  {cluster}"
+            echo >&2 "Usage: $0 [-anxtpde] [-c {image}] [-u {username}]  {cluster}"
             exit 1
             ;;
         *) # Non Option args
@@ -363,6 +370,10 @@ export OPT_PARTITIONOVERRIDES=$(lookup "OPT_PARTITIONOVERRIDES_$CLUSTER")
 
 if [[ -z $OPT_GRESSUPPORTED ]]; then
     export OPT_GRESSUPPORTED="true"
+fi
+
+if [[ -n $DEFAULTIMAGE ]]; then
+    OPT_DEFAULTIMAGE=$DEFAULTIMAGE
 fi
 
 if [[ -n $DEVLAUNCHER ]]; then
