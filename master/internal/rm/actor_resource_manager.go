@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -203,6 +205,19 @@ func (r *ActorResourceManager) ExternalPreemptionPending(
 	msg sproto.PendingPreemption,
 ) error {
 	return r.ask(ctx, msg, nil)
+}
+
+// NotifyContainerRunning receives a notification from the container to let
+// the master know that the container is running.
+func (r *ActorResourceManager) NotifyContainerRunning(
+	ctx actor.Messenger,
+	msg sproto.NotifyContainerRunning,
+) error {
+	// Actor Resource Manager does not implement a handler for the
+	// NotifyContainerRunning message, as it is only used on HPC
+	// (High Performance Computing).
+	return errors.New(
+		"the NotifyContainerRunning message is unsupported for ActorResourceManager")
 }
 
 // IsReattachEnabled is a default implementation (not Reattachable).

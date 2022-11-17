@@ -5207,6 +5207,64 @@ export interface V1Notebook {
 }
 
 /**
+ * Arguments to a notify container running.
+ * @export
+ * @interface V1NotifyContainerRunningRequest
+ */
+export interface V1NotifyContainerRunningRequest {
+    /**
+     * The ID of the allocation.
+     * @type {string}
+     * @memberof V1NotifyContainerRunningRequest
+     */
+    allocationId: string;
+    /**
+     * The UUID of the participant in a notify container running message.
+     * @type {string}
+     * @memberof V1NotifyContainerRunningRequest
+     */
+    requestUuid?: string;
+    /**
+     * The number of process to wait for.
+     * @type {number}
+     * @memberof V1NotifyContainerRunningRequest
+     */
+    numPeers?: number;
+    /**
+     * The container's rank.
+     * @type {number}
+     * @memberof V1NotifyContainerRunningRequest
+     */
+    rank?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1NotifyContainerRunningRequest
+     */
+    nodeName?: string;
+    /**
+     * The data from this process.
+     * @type {any}
+     * @memberof V1NotifyContainerRunningRequest
+     */
+    data: any;
+}
+
+/**
+ * 
+ * @export
+ * @interface V1NotifyContainerRunningResponse
+ */
+export interface V1NotifyContainerRunningResponse {
+    /**
+     * The data for all the processes.
+     * @type {Array<any>}
+     * @memberof V1NotifyContainerRunningResponse
+     */
+    data: Array<any>;
+}
+
+/**
  * Order records in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
  * @export
  * @enum {string}
@@ -15760,6 +15818,52 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1NotifyContainerRunningRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'allocationId' is not null or undefined
+            if (allocationId === null || allocationId === undefined) {
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling notifyContainerRunning.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling notifyContainerRunning.');
+            }
+            const localVarPath = `/api/v1/allocations/{allocationId}/notify_container_running`
+                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1NotifyContainerRunningRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -16932,6 +17036,26 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1NotifyContainerRunningRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning(allocationId, body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -17503,6 +17627,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
+         * @param {string} allocationId The ID of the allocation.
+         * @param {V1NotifyContainerRunningRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
+            return InternalApiFp(configuration).notifyContainerRunning(allocationId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -18019,6 +18154,19 @@ export class InternalApi extends BaseAPI {
      */
     public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
+     * @param {string} allocationId The ID of the allocation.
+     * @param {V1NotifyContainerRunningRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
+        return InternalApiFp(this.configuration).notifyContainerRunning(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**

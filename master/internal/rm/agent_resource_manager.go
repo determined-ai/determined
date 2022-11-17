@@ -674,3 +674,16 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 	})
 	return res, nil
 }
+
+// NotifyContainerRunning receives a notification from the container to let
+// the master know that the container is running.
+func (a AgentResourceManager) NotifyContainerRunning(
+	ctx actor.Messenger,
+	msg sproto.NotifyContainerRunning,
+) error {
+	// Agent Resource Manager does not implement a handler for the
+	// NotifyContainerRunning message, as it is only used on HPC
+	// (High Performance Computing).
+	return errors.New(
+		"the NotifyContainerRunning message is unsupported for AgentResourceManager")
+}

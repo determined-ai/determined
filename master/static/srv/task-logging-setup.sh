@@ -82,6 +82,16 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     )
 
     ((DET_LOG_WAIT_COUNT += 2))
+
+    # Each container sends the Determined Master a notification that it's
+    # running, so that the Determined Master knows whether to set the state
+    # of the experiment to "Pulling", meaning some nodes are pulling down
+    # the image, or "Running", meaning that all containers are running.
+    #
+    # Note: This is not related to logging, but since task-logging-setup.sh
+    # gets called by all the entrypoint scripts, it seemed like the logical
+    # place to add it, without having to modify each entrypoint script.
+    "$DET_PYTHON_EXECUTABLE" -m determined.exec.prep_container --notify_container_running
 fi
 
 # A task may output carriage return characters (\r) to do something mildly fancy

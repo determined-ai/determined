@@ -831,6 +831,33 @@ message AllocationAllGatherResponse {
   repeated google.protobuf.Struct data = 1;
 }
 
+// Arguments to a notify container running.
+message NotifyContainerRunningRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "allocation_id", "global_recv_count", "data" ] }
+  };
+  // The ID of the allocation.
+  string allocation_id = 1;
+  // The UUID of the participant in a notify container running message.
+  string request_uuid = 2;
+  // The number of process to wait for.
+  int32 num_peers = 3;
+  // The container's rank.
+  int32 rank = 4;
+  // The name of the node who sent the request
+  string node_name = 5;
+  // The data from this process.
+  google.protobuf.Struct data = 6;
+}
+// Response to NotifyContainerRunningResponse
+message NotifyContainerRunningResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data" ] }
+  };
+  // The data for all the processes.
+  repeated google.protobuf.Struct data = 1;
+}
+
 // Retrieves the current searcher operation.
 message GetCurrentTrialSearcherOperationRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
