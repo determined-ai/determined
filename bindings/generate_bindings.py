@@ -343,7 +343,7 @@ class Class(TypeDef):
             out += [f'            kwargs["{k}"] = {parsed}']
         out += ["        return cls(**kwargs)"]
         out += [""]
-        out += ['    def to_json(self, omit_unset: bool = False) -> typing.Any:']
+        out += ['    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:']
         out += ['        out: "typing.Dict[str, typing.Any]" = {']
         for k in required:
             v = self.params[k]
