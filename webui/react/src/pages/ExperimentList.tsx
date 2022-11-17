@@ -1,13 +1,13 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import {
   ColumnDef,
+  ColumnOrderState,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
-
 } from '@tanstack/react-table';
 import { Input, MenuProps, Typography } from 'antd';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
@@ -411,23 +411,23 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const columns = useMemo(() => {
-    // const tagsRenderer = (value: string, record: ExperimentItem) => (
-    //   <div className={css.tagsRenderer}>
-    //     <Typography.Text
-    //       ellipsis={{
-    //         tooltip: <TagList disabled tags={record.labels} />,
-    //       }}>
-    //       <div>
-    //         <TagList
-    //           compact
-    //           disabled={record.archived || project?.archived || !canEditExperiment}
-    //           tags={record.labels}
-    //           onChange={experimentTags.handleTagListChange(record.id)}
-    //         />
-    //       </div>
-    //     </Typography.Text>
-    //   </div>
-    // );
+    const tagsRenderer = (value: string, record: ExperimentItem) => (
+      <div className={css.tagsRenderer}>
+        <Typography.Text
+          ellipsis={{
+            tooltip: <TagList disabled tags={record.labels} />,
+          }}>
+          <div>
+            <TagList
+              compact
+              disabled={record.archived || project?.archived || !canEditExperiment}
+              tags={record.labels}
+              onChange={experimentTags.handleTagListChange(record.id)}
+            />
+          </div>
+        </Typography.Text>
+      </div>
+    );
 
     const actionRenderer: ExperimentRenderer = (_, record: ExperimentItem) => {
       return <ContextMenu record={record} />;
@@ -451,24 +451,27 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     const forkedFromRenderer = (value: string | number | undefined): React.ReactNode =>
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
+    type cellValue = string | number | undefined;
+
     return [
       {
         accessorKey: 'id',
         // align: 'right',
-        // cell: experimentNameRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
+        cell: (props) => experimentNameRenderer(props.getValue() as cellValue, props.row.original),
         header: 'ID',
+        size: DEFAULT_COLUMN_WIDTHS['id'],
         // key: V1GetExperimentsRequestSortBy.ID,
         // onCell: onRightClickableCell,
         // sorter: true,
       },
       {
         accessorKey: 'name',
-        // cell: experimentNameRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
+        cell: (props) => experimentNameRenderer(props.getValue() as cellValue, props.row.original),
         // filterDropdown: nameFilterSearch,
         // filterIcon: tableSearchIcon,
         header: 'Name',
+
+        size: DEFAULT_COLUMN_WIDTHS['name'],
         // isFiltered: (settings: ExperimentListSettings) => !!settings.search,
         // key: V1GetExperimentsRequestSortBy.NAME,
         // onCell: onRightClickableCell,
@@ -476,27 +479,28 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       },
       {
         accessorKey: 'description',
-        // cell: descriptionRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
+        cell: (props) => descriptionRenderer(props.getValue() as string, props.row.original),
         header: 'Description',
+        size: DEFAULT_COLUMN_WIDTHS['description'],
         // onCell: onRightClickableCell,
       },
       {
         accessorKey: 'tags',
-        // cell: tagsRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
+        cell: (props) => tagsRenderer(props.getValue() as string, props.row.original),
         // filterDropdown: labelFilterDropdown,
         // filters: labels.map((label) => ({ text: label, value: label })),
         header: 'Tags',
+
+        size: DEFAULT_COLUMN_WIDTHS['tags'],
         // isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         // key: 'labels',
       },
       {
         accessorKey: 'forkedFrom',
         // align: 'right',
-        // cell: forkedFromRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
+        cell: (props) => forkedFromRenderer(props.getValue() as cellValue),
         header: 'Forked From',
+        size: DEFAULT_COLUMN_WIDTHS['forkedFrom'],
         // key: V1GetExperimentsRequestSortBy.FORKEDFROM,
         // onCell: onRightClickableCell,
         // sorter: true,
@@ -504,10 +508,9 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       {
         accessorKey: 'startTime',
         // align: 'right',
-        // cell: (_: number, record: ExperimentItem): React.ReactNode =>
-        //   relativeTimeRenderer(new Date(record.startTime)),
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
+        cell: (props) => relativeTimeRenderer(new Date(props.getValue() as string | number | Date)),
         header: 'Start Time',
+        size: DEFAULT_COLUMN_WIDTHS['startTime'],
         // key: V1GetExperimentsRequestSortBy.STARTTIME,
         // onCell: onRightClickableCell,
         // sorter: true,
@@ -515,17 +518,18 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       {
         accessorKey: 'duration',
         // align: 'right',
-        // cell: experimentDurationRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['duration'],
+        cell: (props) => experimentDurationRenderer(props.getValue() as string, props.row.original, props.row.index),
         header: 'Duration',
+        size: DEFAULT_COLUMN_WIDTHS['duration'],
         // key: 'duration',
         // onCell: onRightClickableCell,
       },
       {
         accessorKey: 'numTrials',
-        // align: 'right',
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['numTrials'],
+
         header: 'Trials',
+        // align: 'right',
+        size: DEFAULT_COLUMN_WIDTHS['numTrials'],
         // key: V1GetExperimentsRequestSortBy.NUMTRIALS,
         // onCell: onRightClickableCell,
         // sorter: true,
@@ -533,7 +537,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       {
         accessorKey: 'state',
         cell: (props) => stateRenderer(props.getValue() as string, props.row.original, props.row.original.id),
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         // filterDropdown: stateFilterDropdown,
         // filters: [
         //   RunState.Active,
@@ -546,21 +549,23 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         //   value,
         // })),
         header: 'State',
+
+        size: DEFAULT_COLUMN_WIDTHS['state'],
         // isFiltered: () => !!settings.state,
         // key: V1GetExperimentsRequestSortBy.STATE,
         // sorter: true,
       },
       {
         accessorKey: 'searcherType',
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
         header: 'Searcher Type',
+        size: DEFAULT_COLUMN_WIDTHS['searcherType'],
         // key: 'searcherType',
         // onCell: onRightClickableCell,
       },
       {
         accessorKey: 'resourcePool',
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['resourcePool'],
         header: 'Resource Pool',
+        size: DEFAULT_COLUMN_WIDTHS['resourcePool'],
         // key: V1GetExperimentsRequestSortBy.RESOURCEPOOL,
         // onCell: onRightClickableCell,
         // sorter: true,
@@ -568,27 +573,28 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       {
         accessorKey: 'progress',
         // align: 'right',
-        // cell: experimentProgressRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['progress'],
+        cell: (props) => experimentProgressRenderer(props.getValue() as string, props.row.original, props.row.index),
         header: 'Progress',
+        size: DEFAULT_COLUMN_WIDTHS['progress'],
         // key: V1GetExperimentsRequestSortBy.PROGRESS,
         // sorter: true,
       },
       {
         accessorKey: 'archived',
         // align: 'right',
-        // cell: checkmarkRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
+        cell: (props) => checkmarkRenderer(props.getValue() as boolean),
         header: 'Archived',
+        size: DEFAULT_COLUMN_WIDTHS['archived'],
         // key: 'archived',
       },
       {
         accessorKey: 'user',
-        // cell: userRenderer,
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
+        cell: (props) => userRenderer(props.getValue() as string, props.row.original, props.row.index),
         // filterDropdown: userFilterDropdown,
         // filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         header: 'User',
+
+        size: DEFAULT_COLUMN_WIDTHS['user'],
         // isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         // key: V1GetExperimentsRequestSortBy.USER,
         // sorter: true,
@@ -596,12 +602,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       {
         accessorKey: 'action',
 
-        // cell: actionRenderer,
+        cell: (props) => actionRenderer(props.getValue() as string, props.row.original, props.row.index),
 
         header: '',
         // align: 'right',
         // className: 'fullCell',
-        // defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
+        size: DEFAULT_COLUMN_WIDTHS['action'],
         // fixed: 'right',
         // key: 'action',
         // onCell: onRightClickableCell,
@@ -625,6 +631,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   ]);
 
   const [columnVisibility, setColumnVisibility] = React.useState({});
+  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([]);
+  const [columnSizing, setColumnSizing] = React.useState({});
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
   const table = useReactTable({
@@ -634,6 +642,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
     state: {
+      columnOrder,
+      columnSizing,
       columnVisibility,
       sorting,
     },
@@ -812,17 +822,28 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   useEffect(() => {
     if (settings.columns.length) {
-      const visibility = {};
+      const visibility = {
+        action: true,
+      };
       table.getAllLeafColumns().forEach((c) => {
         if (settings.columns.includes(c.id as ExperimentColumnName)) {
           visibility[c.id] = true;
-        } else {
+        } else if (c.id !== 'action') {
           visibility[c.id] = false;
         }
       });
       setColumnVisibility(visibility);
+      setColumnOrder(settings.columns.filter((c) => visibility[c]));
     }
   }, [settings.columns, table]);
+
+  useEffect(() => {
+    const sizing = {};
+    columnOrder.forEach((c, i) => {
+      sizing[c] = settings.columnWidths[i];
+    });
+    setColumnSizing(sizing);
+  }, [settings.columnWidths, columnOrder]);
 
   const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
     useModalColumnsCustomize({
@@ -989,12 +1010,18 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       id="projectDetails">
       <div className={css.experimentTab}>
         <div className="p-2">
-          <table>
+          <table style={{ width: '100%' }}>
             <thead className="ant-table-thead">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <th className="ant-table-cell" key={header.id}>
+                    <th
+                      className="ant-table-cell"
+                      key={header.id}
+                      style={{
+                        maxWidth: header.getSize(),
+                        minWidth: header.getSize(),
+                      }}>
                       {header.isPlaceholder ? null : (
                         <div
                           {...{
@@ -1020,9 +1047,21 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             </thead>
             <tbody className="ant-table-tbody">
               {table.getRowModel().rows.map((row) => (
-                <tr className="ant-table-row ant-table-row-level-0" key={row.id}>
+                <tr
+                  className="ant-table-row ant-table-row-level-0"
+                  key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <td className="ant-table-cell" key={cell.id}>
+                    <td
+                      className="ant-table-cell"
+                      key={cell.id}
+                      style={{
+                        height: 60,
+                        maxWidth: cell.column.getSize(),
+                        minWidth: cell.column.getSize(),
+                        overflow: 'hidden',
+                        paddingBottom: 0,
+                        paddingTop: 0,
+                      }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
