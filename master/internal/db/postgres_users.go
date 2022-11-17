@@ -158,6 +158,7 @@ func (db *PgDB) AddUser(user *model.User, ug *model.AgentUserGroup) (model.UserI
 	}
 
 	if ug != nil {
+		log.Infoln("addAgentUserGroup")
 		if err := addAgentUserGroup(tx, userID, ug); err != nil {
 			return 0, err
 		}
@@ -211,15 +212,17 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 			return errors.Wrap(err, "error deleting user sessions")
 		}
 	}
-
+	log.Infof("user group is %v", ug)
 	if ug != nil {
 		if err = deleteAgentUserGroup(tx, updated.ID); err != nil {
 			return err
 		}
-
-		if err = addAgentUserGroup(tx, updated.ID, ug); err != nil {
-			return err
+		if *ug != (model.AgentUserGroup{}) {
+			if err = addAgentUserGroup(tx, updated.ID, ug); err != nil {
+				return err
+			}
 		}
+
 	}
 
 	if err = tx.Commit(); err != nil {

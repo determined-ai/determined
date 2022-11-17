@@ -50,6 +50,10 @@ func clearUsername(targetUser model.User, name string, minLength int) (*string, 
 	return &clearName, nil
 }
 
+func checkEmptyProtoAgentUserGroup(aug *userv1.AgentUserGroup) bool {
+	return aug.AgentUid == nil && aug.AgentGid == nil && aug.AgentUser == nil && aug.AgentGroup == nil
+}
+
 func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
 	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
 		return status.Error(
@@ -274,7 +278,7 @@ func (a *apiServer) PostUser(
 	}
 
 	var agentUserGroup *model.AgentUserGroup
-	if req.User.AgentUserGroup != nil {
+	if req.User.AgentUserGroup != nil && !checkEmptyProtoAgentUserGroup(req.User.AgentUserGroup) {
 		aug := req.User.AgentUserGroup
 		if err := validateProtoAgentUserGroup(aug); err != nil {
 			return nil, err
@@ -479,19 +483,23 @@ func (a *apiServer) PatchUser(
 
 	var ug *model.AgentUserGroup
 	if aug := req.User.AgentUserGroup; aug != nil {
-		if err = validateProtoAgentUserGroup(aug); err != nil {
-			return nil, err
-		}
-		ug = &model.AgentUserGroup{
-			UID:   int(*req.User.AgentUserGroup.AgentUid),
-			GID:   int(*req.User.AgentUserGroup.AgentGid),
-			User:  *req.User.AgentUserGroup.AgentUser,
-			Group: *req.User.AgentUserGroup.AgentGroup,
-		}
+		if checkEmptyProtoAgentUserGroup(req.User.AgentUserGroup) {
+			ug = &model.AgentUserGroup{}
+		} else {
+			if err = validateProtoAgentUserGroup(aug); err != nil {
+				return nil, err
+			}
+			ug = &model.AgentUserGroup{
+				UID:   int(*req.User.AgentUserGroup.AgentUid),
+				GID:   int(*req.User.AgentUserGroup.AgentGid),
+				User:  *req.User.AgentUserGroup.AgentUser,
+				Group: *req.User.AgentUserGroup.AgentGroup,
+			}
 
-		if err = user.AuthZProvider.Get().
-			CanSetUsersAgentUserGroup(ctx, *curUser, targetUser, *ug); err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
+			if err = user.AuthZProvider.Get().
+				CanSetUsersAgentUserGroup(ctx, *curUser, targetUser, *ug); err != nil {
+				return nil, status.Error(codes.PermissionDenied, err.Error())
+			}
 		}
 	}
 

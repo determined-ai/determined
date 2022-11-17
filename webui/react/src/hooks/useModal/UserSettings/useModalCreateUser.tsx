@@ -233,17 +233,14 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
       const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
       const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
-
+      const agentUserGroup = {};
       if (formData.useAgent) {
-        const agentUserGroup = {};
         agentUserGroup['agentUid'] = formData.agentUid;
         agentUserGroup['agentUser'] = formData.agentUser;
         agentUserGroup['agentGid'] = formData.agentGid;
         agentUserGroup['agentGroup'] = formData.agentGroup;
-        formData['agentUserGroup'] = agentUserGroup;
-      } else {
-        formData['agentUserGroup'] = null;
       }
+      formData['agentUserGroup'] = agentUserGroup;
 
       try {
         if (user) {
