@@ -61,7 +61,7 @@ def merge_resources(
     uploaders = {}
     merged = {}
     for rank, rscs in enumerate(all_resources):
-        logging.info(rscs)
+
         for name in rscs:
             size = rscs[name]
             if name.endswith(os.sep):
