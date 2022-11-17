@@ -58,3 +58,15 @@ func ExtractLogFields(ctx context.Context) logrus.Fields {
 func Log(fields logrus.Fields) {
 	logrus.WithFields(fields).Info("RBAC Audit Logs")
 }
+
+// LogFromErr is a convenience function that interprets the error to determined whether
+// permission was granted.
+func LogFromErr(fields logrus.Fields, err error) {
+	if err != nil {
+		fields["permissionGranted"] = false
+	} else {
+		fields["permissionGranted"] = true
+	}
+
+	Log(fields)
+}

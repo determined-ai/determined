@@ -55,7 +55,10 @@ func (a *ProjectAuthZRBAC) CanGetProject(
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT,
 		project.Id)
-	audit.Log(fields)
+	defer func() {
+		fields["permissionGranted"] = canGetProject
+		audit.Log(fields)
+	}()
 
 	if err := permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_PROJECT); err != nil {
@@ -71,10 +74,12 @@ func (a *ProjectAuthZRBAC) CanGetProject(
 // or on the target workspace.
 func (a *ProjectAuthZRBAC) CanCreateProject(
 	ctx context.Context, curUser model.User, willBeInWorkspace *workspacev1.Workspace,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser, rbacv1.PermissionType_PERMISSION_TYPE_CREATE_PROJECT)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return permCheck(ctx, curUser, willBeInWorkspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_PROJECT)
@@ -84,11 +89,13 @@ func (a *ProjectAuthZRBAC) CanCreateProject(
 // or on the target project's workspace.
 func (a *ProjectAuthZRBAC) CanSetProjectNotes(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, project.Id)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
@@ -98,11 +105,13 @@ func (a *ProjectAuthZRBAC) CanSetProjectNotes(
 // or on the target project's workspace.
 func (a *ProjectAuthZRBAC) CanSetProjectName(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, project.Id)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
@@ -112,11 +121,13 @@ func (a *ProjectAuthZRBAC) CanSetProjectName(
 // or on the target project's workspace.
 func (a *ProjectAuthZRBAC) CanSetProjectDescription(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, project.Id)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
@@ -126,11 +137,13 @@ func (a *ProjectAuthZRBAC) CanSetProjectDescription(
 // or on the target project's workspace.
 func (a *ProjectAuthZRBAC) CanDeleteProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_PROJECT, project.Id)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_PROJECT)
@@ -144,7 +157,7 @@ func (a *ProjectAuthZRBAC) CanMoveProject(
 	curUser model.User,
 	project *projectv1.Project,
 	from, to *workspacev1.Workspace,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionsRequired"] = []audit.PermissionWithSubject{
@@ -163,7 +176,9 @@ func (a *ProjectAuthZRBAC) CanMoveProject(
 			SubjectIDs:  []string{fmt.Sprint(to.Id)},
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	if err := permCheck(ctx, curUser, from.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_PROJECT); err != nil {
@@ -177,7 +192,7 @@ func (a *ProjectAuthZRBAC) CanMoveProject(
 // doesn't have "CREATE_EXPERIMENT" globally or on the to workspace.
 func (a *ProjectAuthZRBAC) CanMoveProjectExperiments(
 	ctx context.Context, curUser model.User, exp *model.Experiment, from, to *projectv1.Project,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionsRequired"] = []audit.PermissionWithSubject{
@@ -196,7 +211,9 @@ func (a *ProjectAuthZRBAC) CanMoveProjectExperiments(
 			SubjectIDs:  []string{fmt.Sprint(to.Id)},
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	if err := permCheck(ctx, curUser, from.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT); err != nil {
@@ -210,11 +227,13 @@ func (a *ProjectAuthZRBAC) CanMoveProjectExperiments(
 // or on the target project's workspace.
 func (a *ProjectAuthZRBAC) CanArchiveProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, project.Id)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
@@ -224,11 +243,13 @@ func (a *ProjectAuthZRBAC) CanArchiveProject(
 // or on the target project's workspace.
 func (a *ProjectAuthZRBAC) CanUnarchiveProject(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logEntryWithProjectTarget(fields, curUser,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, project.Id)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)

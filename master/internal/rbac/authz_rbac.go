@@ -27,7 +27,7 @@ func intSliceToStringSlice(ids ...int32) []string {
 // CanGetRoles checks if a user can get all the roles specified.
 func (a *RBACAuthZRBAC) CanGetRoles(ctx context.Context, curUser model.User,
 	roleIDs []int32,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionsRequired"] = []audit.PermissionWithSubject{
@@ -40,9 +40,11 @@ func (a *RBACAuthZRBAC) CanGetRoles(ctx context.Context, curUser model.User,
 			SubjectIDs:  intSliceToStringSlice(roleIDs...),
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
-	err := db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+	err = db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES)
 	if err == nil {
 		return nil
@@ -77,7 +79,7 @@ func (a *RBACAuthZRBAC) CanGetRoles(ctx context.Context, curUser model.User,
 // FilterRolesQuery filters for roles that the user has access to.
 func (a *RBACAuthZRBAC) FilterRolesQuery(ctx context.Context, curUser model.User,
 	query *bun.SelectQuery) (
-	*bun.SelectQuery, error,
+	selectQury *bun.SelectQuery, err error,
 ) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
@@ -90,9 +92,11 @@ func (a *RBACAuthZRBAC) FilterRolesQuery(ctx context.Context, curUser model.User
 			SubjectType: "role",
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
-	err := db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
+	err = db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_ROLES)
 	if err == nil {
 		return query, nil
@@ -114,7 +118,7 @@ func (a *RBACAuthZRBAC) FilterRolesQuery(ctx context.Context, curUser model.User
 // CanGetUserRoles checks if the user can access a specific user's roles.
 func (a *RBACAuthZRBAC) CanGetUserRoles(ctx context.Context, curUser model.User,
 	userID int32,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -126,7 +130,9 @@ func (a *RBACAuthZRBAC) CanGetUserRoles(ctx context.Context, curUser model.User,
 			SubjectIDs:  intSliceToStringSlice(userID),
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	if int32(curUser.ID) == userID {
 		return nil
@@ -137,7 +143,7 @@ func (a *RBACAuthZRBAC) CanGetUserRoles(ctx context.Context, curUser model.User,
 // CanGetGroupRoles checks if the user can access a specific group's roles.
 func (a *RBACAuthZRBAC) CanGetGroupRoles(ctx context.Context, curUser model.User,
 	groupID int32,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -150,9 +156,11 @@ func (a *RBACAuthZRBAC) CanGetGroupRoles(ctx context.Context, curUser model.User
 			SubjectIDs:  intSliceToStringSlice(groupID),
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
-	err := db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
+	err = db.DoPermissionsExist(ctx, curUser.ID, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 	if err == nil {
 		return nil
 	} else if _, ok := err.(authz.PermissionDeniedError); !ok {
@@ -183,7 +191,7 @@ func (a *RBACAuthZRBAC) CanGetGroupRoles(ctx context.Context, curUser model.User
 // CanSearchScope checks if a user can search for roles on a specific scope.
 func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 	workspaceID *int32,
-) error {
+) (err error) {
 	var subjectIDs []string
 	if workspaceID != nil {
 		subjectIDs = append(subjectIDs, fmt.Sprint(*workspaceID))
@@ -200,7 +208,9 @@ func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 			SubjectIDs:  subjectIDs,
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return db.DoesPermissionMatch(ctx, curUser.ID, workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE)
@@ -209,7 +219,7 @@ func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 // CanGetWorkspaceMembership checks if a user can get membership on a workspace.
 func (a *RBACAuthZRBAC) CanGetWorkspaceMembership(
 	ctx context.Context, curUser model.User, workspaceID int32,
-) (bool, error) {
+) (canGetWorkspace bool, err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -221,7 +231,9 @@ func (a *RBACAuthZRBAC) CanGetWorkspaceMembership(
 			SubjectIDs:  intSliceToStringSlice(workspaceID),
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	if err := db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE); err != nil {
@@ -239,7 +251,7 @@ func (a *RBACAuthZRBAC) CanAssignRoles(
 	curUser model.User,
 	groupRoleAssignments []*rbacv1.GroupRoleAssignment,
 	userRoleAssignments []*rbacv1.UserRoleAssignment,
-) error {
+) (err error) {
 	var workspaces []int32
 
 	for _, v := range groupRoleAssignments {
@@ -271,7 +283,9 @@ func (a *RBACAuthZRBAC) CanAssignRoles(
 			SubjectIDs:  intSliceToStringSlice(workspaces...),
 		},
 	}
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return db.DoesPermissionMatchAll(ctx, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES, workspaces...)

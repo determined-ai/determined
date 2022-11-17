@@ -49,7 +49,10 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 ) (canGetExp bool, serverError error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
-	audit.Log(fields)
+	defer func() {
+		fields["permissionGranted"] = canGetExp
+		audit.Log(fields)
+	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
@@ -69,10 +72,12 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 // CanGetExperimentArtifacts checks if a user has permission to view experiment artifacts.
 func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
@@ -86,10 +91,12 @@ func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
 // CanDeleteExperiment checks if a user has permission to delete an experiment.
 func (a *ExperimentAuthZRBAC) CanDeleteExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
@@ -103,7 +110,7 @@ func (a *ExperimentAuthZRBAC) CanDeleteExperiment(
 // FilterExperimentsQuery filters a query for what experiments a user can view.
 func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
-) (*bun.SelectQuery, error) {
+) (selectQuery *bun.SelectQuery, err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -115,7 +122,9 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 		},
 	}
 
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	assignmentsMap, err := rbac.GetPermissionSummary(ctx, curUser.ID)
 	if err != nil {
@@ -152,7 +161,7 @@ func (a *ExperimentAuthZRBAC) FilterExperimentsQuery(
 // FilterExperimentLabelsQuery filters a query for what experiment metadata a user can view.
 func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
-) (*bun.SelectQuery, error) {
+) (selectQuery *bun.SelectQuery, err error) {
 	fields := audit.ExtractLogFields(ctx)
 	fields["userID"] = curUser.ID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
@@ -164,7 +173,9 @@ func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
 		},
 	}
 
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	if proj != nil {
 		// if proj is not nil, there is already a filter in place
@@ -211,7 +222,8 @@ func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
 }
 
 // CanPreviewHPSearch always returns a nil error.
-func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(ctx context.Context, curUser model.User) error {
+func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(ctx context.Context, curUser model.User,
+) (err error) {
 	// TODO: does this require any specific permission if you already have the config?
 	// Maybe permission to submit the experiment?
 	fields := audit.ExtractLogFields(ctx)
@@ -223,7 +235,9 @@ func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(ctx context.Context, curUser mo
 		},
 	}
 
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	return nil
 }
@@ -231,10 +245,12 @@ func (a *ExperimentAuthZRBAC) CanPreviewHPSearch(ctx context.Context, curUser mo
 // CanEditExperiment checks if a user can edit an experiment.
 func (a *ExperimentAuthZRBAC) CanEditExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
@@ -248,10 +264,12 @@ func (a *ExperimentAuthZRBAC) CanEditExperiment(
 // CanEditExperimentsMetadata checks if a user can edit an experiment's metadata.
 func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
@@ -265,10 +283,12 @@ func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 // CanCreateExperiment checks if a user can create an experiment.
 func (a *ExperimentAuthZRBAC) CanCreateExperiment(
 	ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Experiment,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_CREATE_EXPERIMENT)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
@@ -282,10 +302,12 @@ func (a *ExperimentAuthZRBAC) CanCreateExperiment(
 // CanForkFromExperiment checks if a user can create an experiment.
 func (a *ExperimentAuthZRBAC) CanForkFromExperiment(
 	ctx context.Context, curUser model.User, e *model.Experiment,
-) error {
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addExpInfo(curUser, e, fields, rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
-	audit.Log(fields)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
 
 	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
 	if err != nil {
