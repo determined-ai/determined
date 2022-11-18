@@ -3498,7 +3498,7 @@ class v1GetMeResponse:
         }
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "user": self.user.to_json(omit_unset),
         }
@@ -4516,7 +4516,7 @@ class v1GetUserByUsernameResponse:
         }
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "user": self.user.to_json(omit_unset),
         }
@@ -6300,7 +6300,7 @@ class v1NotifyContainerRunningRequest:
             kwargs["requestUuid"] = obj["requestUuid"]
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "allocationId": self.allocationId,
             "data": self.data,
@@ -6331,7 +6331,7 @@ class v1NotifyContainerRunningResponse:
         }
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "data": self.data,
         }
