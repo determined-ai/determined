@@ -76,6 +76,8 @@ message TaskLogsRequest {
   repeated string agent_ids = 7;
   // Limit the trial logs to a subset of containers.
   repeated string container_ids = 8;
+  // Limit the trial logs to a subset of ranks.
+  repeated int32 rank_ids = 9;
   // Limit the trial logs to a subset of agents.
   repeated determined.log.v1.LogLevel levels = 10;
   // Limit the trial logs to a subset of output streams.
@@ -90,8 +92,6 @@ message TaskLogsRequest {
   OrderBy order_by = 15;
   // Search the logs by whether the text contains a substring.
   string search_text = 16;
-  // Limit the trial logs to a subset of ranks.
-  repeated string rank_ids = 17;
 }
 
 // Response to TaskLogsRequest.
@@ -131,12 +131,12 @@ message TaskLogsFieldsResponse {
   repeated string agent_ids = 2;
   // The distinct container IDs present in the logs.
   repeated string container_ids = 3;
+  // The distinct rank IDs present in the logs.
+  repeated int32 rank_ids = 4;
   // The distinct stdtypes present in the logs.
   repeated string stdtypes = 5;
   // The distinct sources present in the logs.
   repeated string sources = 6;
-  // The distinct rank IDs present in the logs.
-  repeated string rank_ids = 7;
 }
 
 // Report the given checkpoint for the task.

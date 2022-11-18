@@ -4,7 +4,6 @@ from termcolor import colored
 
 from determined.common import api
 from determined.common.api import bindings
-from determined.common.util import str_map
 
 
 def pprint_task_logs(task_id: str, logs: Iterable[bindings.v1TaskLogsResponse]) -> None:
@@ -65,7 +64,7 @@ def trial_logs(
         levels=levels_at_or_above(min_level),
         limit=head or tail,
         orderBy=tail is not None and bindings.v1OrderBy.ORDER_BY_DESC or None,
-        rankIds=str_map(rank_ids),
+        rankIds=rank_ids,
         searchText=None,
         sources=sources,
         stdtypes=stdtypes,
@@ -103,7 +102,7 @@ def task_logs(
         levels=levels_at_or_above(min_level),
         limit=head or tail,
         orderBy=tail is not None and bindings.v1OrderBy.ORDER_BY_DESC or None,
-        rankIds=str_map(rank_ids),
+        rankIds=rank_ids,
         searchText=None,
         sources=sources,
         stdtypes=stdtypes,

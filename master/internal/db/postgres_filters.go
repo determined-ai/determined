@@ -56,19 +56,6 @@ func filterToSQL(
 		_, _ = fragment.WriteString(strings.Join(paramFragments, ","))
 		_, _ = fragment.WriteString(")")
 		return fmt.Sprintf(fragment.String(), field)
-	case api.FilterOperationInOrNull:
-		var fragment strings.Builder
-		_, _ = fragment.WriteString("AND %s IS NULL OR %s IN (NULL")
-		if len(values) > 0 {
-			fragment.WriteString(",")
-		}
-		var paramFragments []string
-		for i := range values {
-			paramFragments = append(paramFragments, fmt.Sprintf("$%d", paramID+i))
-		}
-		_, _ = fragment.WriteString(strings.Join(paramFragments, ","))
-		_, _ = fragment.WriteString(")")
-		return fmt.Sprintf(fragment.String(), field, field)
 	case api.FilterOperationGreaterThan:
 		return fmt.Sprintf("AND %s > $%d", field, paramID)
 	case api.FilterOperationLessThanEqual:

@@ -134,6 +134,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         options.follow,
         settings.agentId,
         settings.containerId,
+        settings.rankId,
         settings.level,
         undefined,
         undefined,
@@ -141,7 +142,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         options.timestampAfter ? new Date(options.timestampAfter) : undefined,
         options.orderBy as OrderBy,
         settings.searchText,
-        settings.rankId,
         { signal: config.canceler.signal },
       );
     },

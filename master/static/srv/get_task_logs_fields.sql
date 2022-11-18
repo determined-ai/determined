@@ -1,6 +1,6 @@
 SELECT
     array_to_json(
-        array_replace(
+        array_remove(
             array(
                 SELECT
                     DISTINCT allocation_id
@@ -9,12 +9,11 @@ SELECT
                 WHERE
                     task_id = $1
             ),
-            NULL,
-            ''
+            NULL
         )
     ) AS allocation_ids,
     array_to_json(
-        array_replace(
+        array_remove(
             array(
                 SELECT
                     DISTINCT agent_id
@@ -23,12 +22,11 @@ SELECT
                 WHERE
                     task_id = $1
             ),
-            NULL,
-            ''
+            NULL
         )
     ) AS agent_ids,
     array_to_json(
-        array_replace(
+        array_remove(
             array(
                 SELECT
                     DISTINCT container_id
@@ -37,26 +35,24 @@ SELECT
                 WHERE
                     task_id = $1
             ),
-            NULL,
-            ''
+            NULL
         )
     ) AS container_ids,
     array_to_json(
-        array_replace(
+        array_remove(
             array(
                 SELECT
-                    DISTINCT rank_id::text
+                    DISTINCT rank_id
                 FROM
                     task_logs
                 WHERE
                     task_id = $1
             ),
-            NULL,
-            ''
+            NULL
         )
     ) AS rank_ids,
     array_to_json(
-        array_replace(
+        array_remove(
             array(
                 SELECT
                     DISTINCT stdtype
@@ -65,12 +61,11 @@ SELECT
                 WHERE
                     task_id = $1
             ),
-            NULL,
-            ''
+            NULL
         )
     ) AS stdtypes,
     array_to_json(
-        array_replace(
+        array_remove(
             array(
                 SELECT
                     DISTINCT source
@@ -79,7 +74,6 @@ SELECT
                 WHERE
                     task_id = $1
             ),
-            NULL,
-            ''
+            NULL
         )
     ) AS sources;
