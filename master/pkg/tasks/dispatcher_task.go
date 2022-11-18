@@ -22,6 +22,8 @@ import (
 
 const (
 	trueValue   = "true"
+	tmp         = "/tmp"
+	varTmp      = "/var/tmp"
 	singularity = "singularity"
 	podman      = "podman"
 	enroot      = "enroot"
@@ -39,6 +41,7 @@ const (
 	enrootCarrierSlurm        = "com.cray.analytics.capsules.carriers.hpc.slurm.EnrootOverSlurm"
 	singularityCarrierPbs     = "com.cray.analytics.capsules.carriers.hpc.pbs.SingularityOverPbs"
 	podmanCarrierPbs          = "com.cray.analytics.capsules.carriers.hpc.pbs.PodmanOverPbs"
+	enrootCarrierPbs          = "com.cray.analytics.capsules.carriers.hpc.pbs.EnrootOverPbs"
 	unspecifiedSlotsPerNode   = 0
 )
 
@@ -130,7 +133,9 @@ func (t *TaskSpec) ToDispatcherManifest(
 		payload.SetCarriers([]string{singularityCarrierPbs})
 	case !isPbsLauncher && containerRunType == singularity:
 		payload.SetCarriers([]string{singularityCarrierSlurm})
-	case containerRunType == enroot:
+	case isPbsLauncher && containerRunType == enroot:
+		payload.SetCarriers([]string{enrootCarrierPbs})
+	case !isPbsLauncher && containerRunType == enroot:
 		payload.SetCarriers([]string{enrootCarrierSlurm})
 	default:
 		payload.SetCarriers([]string{singularityCarrierSlurm})
@@ -142,6 +147,19 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	mounts, userWantsDirMountedOnTmp := getDataVolumes(t.Mounts)
 
+	/*
+	 * We need a per-container-private link directory to host /run/determined.
+	 * This is the target of a number of softlinks that are remapped to per-container
+	 * disk location for each rank.
+	 * Singularity/PodMan now use /var/tmp
+	 * On Enroot, use /tmp (/var/tmp is not writable by default -- we could enable this,
+	 * but will require a custom tmpfs mount)
+	 */
+	localTmp := varTmp
+	if containerRunType == enroot {
+		localTmp = tmp
+	}
+
 	// Use the specified workDir if it is user-specified.
 	// If the workdir is the the default (/run/determined/workdir)
 	// it does not exist on the launcher node so causes and error log.
@@ -151,7 +169,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// a container-private directory and if it is in use we faile with EBUSY.
 	workDir := t.WorkDir
 	if workDir == DefaultWorkDir {
-		workDir = "/var/tmp"
+		workDir = varTmp
 	}
 
 	launchConfig := t.computeLaunchConfig(slotType, workDir, slurmPartition,
@@ -166,7 +184,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	allArchives := *getAllArchives(t)
 	customParams, err := encodeArchiveParameters(
 		dispatcherArchive(t.AgentUserGroup,
-			generateRunDeterminedLinkNames(allArchives)), allArchives)
+			generateRunDeterminedLinkNames(allArchives), localTmp+"/"), allArchives)
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -224,7 +242,8 @@ func (t *TaskSpec) ToDispatcherManifest(
 	launchParameters.SetData(mounts)
 
 	envVars, err := getEnvVarsForLauncherManifest(
-		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp, slotType, containerRunType)
+		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp,
+		slotType, containerRunType, localTmp)
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -337,7 +356,8 @@ func (t *TaskSpec) computeLaunchConfig(
 	launchingUser string,
 ) *map[string]string {
 	launchConfig := map[string]string{
-		"workingDir":          workDir,
+		"workingDir": workDir,
+		// TODO: This can be removed, now that we are using /var/tmp
 		"enableWritableTmpFs": trueValue,
 		// Pass along all variables (PBS) otherwise we only inherit a
 		// minimal PATH from PBS that is missing /usr/sbin etc.
@@ -456,6 +476,7 @@ func encodeArchiveParameters(
 func getEnvVarsForLauncherManifest(
 	taskSpec *TaskSpec, masterHost string, masterPort int, certificateName string,
 	tmpMount bool, slotType device.Type, containerRunType string,
+	localTmp string,
 ) (map[string]string, error) {
 	// Hash map containing the environment variables.
 	m := make(map[string]string)
@@ -523,10 +544,19 @@ func getEnvVarsForLauncherManifest(
 		m["DET_MASTER_CERT_NAME"] = certificateName
 	}
 
+	// Identify a container-private local directory
+	m["DET_LOCALTMP"] = localTmp
+
 	// If the user has not configured a bind mount of /tmp trigger
 	// dispatcher-wrapper.sh to make it local to the container.
+	// This isn't needed with enroot since it is always local.
 	if !tmpMount && containerRunType != enroot {
 		m["DET_CONTAINER_LOCAL_TMP"] = "1"
+	}
+
+	if containerRunType == enroot {
+		// By default mount the user's home dir
+		m["ENROOT_MOUNT_HOME"] = "y"
 	}
 
 	if taskSpec.Environment.RegistryAuth() != nil {
@@ -588,7 +618,7 @@ func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool) {
 		volume.SetTarget(mount.Target)
 		volume.SetReadOnly(mount.ReadOnly)
 		volumes = append(volumes, volume)
-		if mount.Target == "/tmp" {
+		if mount.Target == tmp {
 			userWantsDirMountedOnTmp = true
 		}
 	}
@@ -598,9 +628,10 @@ func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool) {
 
 // Create a softlink archive entry for the specified file name in the
 // '/run/determined' directory to the local container temp version.
-func getRunSubdirLink(aug *model.AgentUserGroup, name string) archive.Item {
+// Provide a localTmp directory to redirect it elsewhere (must end in /).
+func getRunSubdirLink(aug *model.AgentUserGroup, name string, localTmp string) archive.Item {
 	return aug.OwnedArchiveItem(RunDir+"/"+name,
-		[]byte(containerTmpDeterminedDir+name), 0o700, tar.TypeSymlink)
+		[]byte(localTmp+containerTmpDeterminedDir+name), 0o700, tar.TypeSymlink)
 }
 
 // Return any paths that need to be created within /run/determined
@@ -640,7 +671,11 @@ func generateRunDeterminedLinkNames(
 
 // Archive with dispatcher wrapper entrypoint script,  /run/determined directory,
 // and links for each entry under /run/determined for unshared files/directories.
-func dispatcherArchive(aug *model.AgentUserGroup, linksNeeded []string) cproto.RunArchive {
+// The links point at the {localTmp}/run/determined container-private directory
+// so each rank can have a different link.
+func dispatcherArchive(aug *model.AgentUserGroup,
+	linksNeeded []string,
+	localTmp string) cproto.RunArchive {
 	dispatherArchive := archive.Archive{
 		// Add the dispatcher wrapper script
 		aug.OwnedArchiveItem(
@@ -654,7 +689,7 @@ func dispatcherArchive(aug *model.AgentUserGroup, linksNeeded []string) cproto.R
 
 	// Create and add each link
 	for _, linkName := range linksNeeded {
-		dispatherArchive = append(dispatherArchive, getRunSubdirLink(aug, linkName))
+		dispatherArchive = append(dispatherArchive, getRunSubdirLink(aug, linkName, localTmp))
 		logrus.Tracef("Created link for %s", linkName)
 	}
 

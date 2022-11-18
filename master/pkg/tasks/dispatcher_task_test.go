@@ -323,7 +323,7 @@ func Test_dispatcherArchive(t *testing.T) {
 		},
 	}
 
-	got := dispatcherArchive(aug, []string{"link-1", "link-2", "link-3"})
+	got := dispatcherArchive(aug, []string{"link-1", "link-2", "link-3"}, "")
 
 	assert.Equal(t, got.Path, want.Path)
 	assert.Equal(t, len(got.Archive), len(want.Archive))
@@ -743,7 +743,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	}
 
 	envVars, err := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "singularity")
+		"masterHost", 8888, "certName", false, device.CUDA, "singularity", "/")
 
 	assert.NilError(t, err)
 	assert.Assert(t, len(envVars) > 0)
@@ -768,14 +768,20 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["myenv"], "xyz")
 
 	envVarsPodman, _ := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "podman")
+		"masterHost", 8888, "certName", false, device.CUDA, "podman", "/")
 	assert.Equal(t, envVarsPodman["DET_CONTAINER_LOCAL_TMP"], "1")
+	val := envVarsPodman["DET_LOCALTMP"]
+	assert.Equal(t, val, "/")
 
-	// test DET_CONTAINER_LOCAL_TMP is not in ENVs
+	// test DET_CONTAINER_LOCAL_TMP is not in ENVs, and DET_LOCALTMP set properly
 	envVarsEnroot, _ := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "enroot")
+		"masterHost", 8888, "certName", false, device.CUDA, "enroot", "/var/tmp")
 	_, ok := envVarsEnroot["DET_CONTAINER_LOCAL_TMP"]
 	assert.Equal(t, ok, false)
+	val = envVarsEnroot["DET_LOCALTMP"]
+	assert.Equal(t, val, "/var/tmp")
+	val = envVarsEnroot["ENROOT_MOUNT_HOME"]
+	assert.Equal(t, val, "y")
 }
 
 func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
@@ -798,7 +804,7 @@ func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
 	}
 
 	_, err := getEnvVarsForLauncherManifest(ts, "masterHost", 8888, "certName", false,
-		device.CUDA, "podman")
+		device.CUDA, "podman", "/")
 	assert.ErrorContains(t, err, "invalid user-defined environment variable 'cpudefault'")
 }
 
