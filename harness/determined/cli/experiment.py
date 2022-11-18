@@ -531,10 +531,9 @@ def kill_experiment(args: Namespace) -> None:
 def _wait(session: api.Session, experiment_id: int, polling_interval: int = 5) -> None:
     retry = urllib3.util.retry.Retry(
         raise_on_status=False,
-        total=10,
-        status=10,
-        backoff_factor=2,
-        status_forcelist=[413, 429, 502, 503, 504],
+        total=5,
+        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
+        status_forcelist=[502, 503, 504],  # Bad Gateway  # Service Unavailable  # Gateway Timeout
     )
     session._max_retries = retry
 
