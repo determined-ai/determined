@@ -94,7 +94,7 @@ def _dummy_init(
 
     if storage_manager is None:
         base_path = appdirs.user_data_dir("determined")
-        logger.info("no storage_manager provided; storing checkpoints in {base_path}")
+        logger.info(f"no storage_manager provided; storing checkpoints in {base_path}")
         storage_manager = storage.SharedFSStorageManager(base_path)
     checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
 
@@ -225,7 +225,7 @@ def init(
         # TODO: support checkpointing for non-trial tasks.
         if storage_manager is None:
             base_path = appdirs.user_data_dir("determined")
-            logger.info("no storage_manager provided; storing checkpoints in {base_path}")
+            logger.info(f"no storage_manager provided; storing checkpoints in {base_path}")
             storage_manager = storage.SharedFSStorageManager(base_path)
         checkpoint = core.DummyCheckpointContext(distributed, storage_manager)
         preempt = core.DummyPreemptContext(distributed, preempt_mode)
