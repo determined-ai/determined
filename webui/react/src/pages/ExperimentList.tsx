@@ -1,7 +1,9 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import {
+  Column,
   ColumnDef,
   ColumnOrderState,
+  ColumnResizeMode,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
@@ -12,7 +14,8 @@ import {
 import { Input, MenuProps, Typography } from 'antd';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { HTMLProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useDrag, useDrop } from 'react-dnd';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
@@ -451,9 +454,76 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     const forkedFromRenderer = (value: string | number | undefined): React.ReactNode =>
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
+    const filterDropdownState = () => {
+      return (<Menu
+        items={[
+          RunState.Active,
+          RunState.Paused,
+          RunState.Canceled,
+          RunState.Completed,
+          RunState.Error,
+        ].map((value) => (
+          {
+            key: value,
+            label: <Badge key={value} state={value} type={BadgeType.State} />,
+          }
+        ))}
+        onClick={(e) => {
+          handleStateFilterApply([e.key]);
+        }}
+      />);
+    };
     type cellValue = string | number | undefined;
 
+    function IndeterminateCheckbox({
+      indeterminate,
+      className = '',
+      ...rest
+    }: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
+      const ref = React.useRef<HTMLInputElement>(null!);
+
+      React.useEffect(() => {
+        if (typeof indeterminate === 'boolean') {
+          ref.current.indeterminate = !rest.checked && indeterminate;
+        }
+      }, [ref, indeterminate]);
+
+      return (
+        <input
+          className={className + ' cursor-pointer'}
+          ref={ref}
+          type="checkbox"
+          {...rest}
+        />
+      );
+    }
+
     return [
+
+      {
+        accessorKey: 'selection',
+        cell: ({ row }) => (
+          <div className="px-1">
+            <IndeterminateCheckbox
+              {...{
+                checked: row.getIsSelected(),
+                indeterminate: row.getIsSomeSelected(),
+                onChange: row.getToggleSelectedHandler(),
+              }}
+            />
+          </div>
+        ),
+        header: ({ table }) => (
+          <IndeterminateCheckbox
+            {...{
+              checked: table.getIsAllRowsSelected(),
+              indeterminate: table.getIsSomeRowsSelected(),
+              onChange: table.getToggleAllRowsSelectedHandler(),
+            }}
+          />
+        ),
+        size: 1,
+      },
       {
         accessorKey: 'id',
         // align: 'right',
@@ -548,8 +618,16 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         //   text: <Badge state={value} type={BadgeType.State} />,
         //   value,
         // })),
-        header: 'State',
-
+        header: () => {
+          return (
+            <>
+              <span>State</span>
+              <Dropdown overlay={filterDropdownState}>
+                <div>F</div>
+              </Dropdown>
+            </>
+          );
+        },
         size: DEFAULT_COLUMN_WIDTHS['state'],
         // isFiltered: () => !!settings.state,
         // key: V1GetExperimentsRequestSortBy.STATE,
@@ -632,22 +710,33 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const [columnVisibility, setColumnVisibility] = React.useState({});
   const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([]);
-  const [columnSizing, setColumnSizing] = React.useState({});
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
+    columnResizeMode: 'onChange',
     columns,
     data: experiments,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    onRowSelectionChange: setRowSelection,
+
     onSortingChange: setSorting,
     state: {
       columnOrder,
-      columnSizing,
+
       columnVisibility,
+      // columnSizing,
+      rowSelection,
       sorting,
     },
   });
+
+  useEffect(() => {
+    updateSettings({
+      row: Object.keys(rowSelection).map((i) => parseInt(i)),
+    });
+  }, [rowSelection]);
 
   // useLayoutEffect(() => {
   // This is the failsafe for when column settings get into a bad shape.
@@ -808,12 +897,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       if (columns.length === 0) {
         updateSettings({
           columns: ['id', 'name'],
-          columnWidths: [DEFAULT_COLUMN_WIDTHS['id'], DEFAULT_COLUMN_WIDTHS['name']],
+          // columnWidths: [DEFAULT_COLUMN_WIDTHS['id'], DEFAULT_COLUMN_WIDTHS['name']],
         });
       } else {
         updateSettings({
           columns: columns,
-          columnWidths: columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]),
+          // columnWidths: columns.map((col) => DEFAULT_COLUMN_WIDTHS[col]),
         });
       }
     },
@@ -828,22 +917,25 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       table.getAllLeafColumns().forEach((c) => {
         if (settings.columns.includes(c.id as ExperimentColumnName)) {
           visibility[c.id] = true;
-        } else if (c.id !== 'action') {
+        } else if (c.id !== 'action' && c.id !== 'selection') {
           visibility[c.id] = false;
         }
       });
       setColumnVisibility(visibility);
-      setColumnOrder(settings.columns.filter((c) => visibility[c]));
+      setColumnOrder([
+        'selection',
+        ...settings.columns.filter((c) => visibility[c]),
+      ]);
     }
   }, [settings.columns, table]);
 
-  useEffect(() => {
-    const sizing = {};
-    columnOrder.forEach((c, i) => {
-      sizing[c] = settings.columnWidths[i];
-    });
-    setColumnSizing(sizing);
-  }, [settings.columnWidths, columnOrder]);
+  // useEffect(() => {
+  //   const sizing = {};
+  //   columnOrder.forEach((c, i) => {
+  //     sizing[c] = settings.columnWidths[i];
+  //   });
+  //   setColumnSizing(sizing);
+  // }, [settings.columnWidths, columnOrder]);
 
   const { contextHolder: modalColumnsCustomizeContextHolder, modalOpen: openCustomizeColumns } =
     useModalColumnsCustomize({
@@ -1001,6 +1093,92 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   useSetDynamicTabBar(tabBarContent);
 
+  const DraggableColumnHeader: React.FC<{
+    columnOrder,
+    header, setColumnOrder
+  }> = ({ header, columnOrder, setColumnOrder }) => {
+
+    const reorderColumn = (
+      draggedColumnId: string,
+      targetColumnId: string,
+      columnOrder: string[],
+    ): ColumnOrderState => {
+      columnOrder.splice(
+        columnOrder.indexOf(targetColumnId),
+        0,
+        columnOrder.splice(columnOrder.indexOf(draggedColumnId), 1)[0] as string,
+      );
+      return [...columnOrder];
+    };
+    const { column } = header;
+
+    const [, dropRef] = useDrop({
+      accept: 'column',
+      drop: (draggedColumn: Column<ExperimentItem>) => {
+        const newColumnOrder = reorderColumn(
+          draggedColumn.id,
+          column.id,
+          columnOrder,
+        );
+        setColumnOrder(newColumnOrder);
+        updateSettings({
+          columns: newColumnOrder as ExperimentColumnName[],
+        });
+      },
+    });
+
+    const [{ isDragging }, dragRef, previewRef] = useDrag({
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+      item: () => column,
+      type: 'column',
+    });
+
+    return (
+      <th
+        className="ant-table-cell"
+        colSpan={header.colSpan}
+        key={header.id}
+        ref={dropRef}
+        style={{
+          // minWidth: header.getSize(),
+          opacity: isDragging ? 0.5 : 1,
+
+          width: header.getSize(),
+        }}>
+        <div
+          ref={previewRef}
+          {...{
+            className: header.column.getCanSort()
+              ? 'cursor-pointer select-none'
+              : '',
+            onClick: header.column.getToggleSortingHandler(),
+          }}>
+          <div ref={dragRef}>
+            {header.isPlaceholder
+              ? null
+              : flexRender(header.column.columnDef.header, header.getContext())}
+            {{
+              asc: ' 🔼',
+              desc: ' 🔽',
+            }[header.column.getIsSorted() as string] ?? null}
+          </div>
+          <div
+            {...{
+              className: `${css.resizer} ${header.column.getIsResizing() ? css.isResizing : ''
+                }`,
+              onMouseDown: header.getResizeHandler(),
+              onTouchStart: header.getResizeHandler(),
+              style: {
+                transform: '',
+              },
+            }}
+          />
+        </div>
+      </th>
+    );
+  };
   return (
     <Page
       bodyNoPadding
@@ -1009,38 +1187,28 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
       <div className={css.experimentTab}>
+        <TableBatch
+          actions={batchActions.map((action) => ({
+            disabled: !availableBatchActions.includes(action),
+            label: action,
+            value: action,
+          }))}
+          selectedRowCount={(settings.row ?? []).length}
+          onAction={handleBatchAction}
+          onClear={clearSelected}
+        />
         <div className="p-2">
           <table style={{ width: '100%' }}>
             <thead className="ant-table-thead">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <th
-                      className="ant-table-cell"
+                    <DraggableColumnHeader
+                      columnOrder={columnOrder}
+                      header={header}
                       key={header.id}
-                      style={{
-                        maxWidth: header.getSize(),
-                        minWidth: header.getSize(),
-                      }}>
-                      {header.isPlaceholder ? null : (
-                        <div
-                          {...{
-                            className: header.column.getCanSort()
-                              ? 'cursor-pointer select-none'
-                              : '',
-                            onClick: header.column.getToggleSortingHandler(),
-                          }}>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {{
-                            asc: ' 🔼',
-                            desc: ' 🔽',
-                          }[header.column.getIsSorted() as string] ?? null}
-                        </div>
-                      )}
-                    </th>
+                      setColumnOrder={setColumnOrder}
+                    />
                   ))}
                 </tr>
               ))}
@@ -1056,11 +1224,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
                       key={cell.id}
                       style={{
                         height: 60,
-                        maxWidth: cell.column.getSize(),
-                        minWidth: cell.column.getSize(),
                         overflow: 'hidden',
                         paddingBottom: 0,
                         paddingTop: 0,
+                        width: cell.column.getSize(),
                       }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
