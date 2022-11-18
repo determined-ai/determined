@@ -7,6 +7,7 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
@@ -710,7 +711,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const [columnVisibility, setColumnVisibility] = React.useState({});
   const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
@@ -718,17 +718,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     columns,
     data: experiments,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     onRowSelectionChange: setRowSelection,
-
-    onSortingChange: setSorting,
     state: {
       columnOrder,
 
       columnVisibility,
-      // columnSizing,
       rowSelection,
-      sorting,
     },
   });
 
@@ -874,13 +869,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       }
     },
     [submitBatchAction, showConfirmation],
-  );
-
-  const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
-    },
-    [updateSettings],
   );
 
   const clearSelected = useCallback(() => {
@@ -1093,6 +1081,16 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   useSetDynamicTabBar(tabBarContent);
 
+  const handleSort = useCallback((header) => {
+    const sortKey = header.id;
+    let sortDesc = settings.sortDesc;
+    if (settings.sortKey === sortKey) sortDesc = !sortDesc;
+    updateSettings({
+      sortDesc,
+      sortKey,
+    });
+  }, [updateSettings, settings]);
+
   const DraggableColumnHeader: React.FC<{
     columnOrder,
     header, setColumnOrder
@@ -1153,16 +1151,15 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             className: header.column.getCanSort()
               ? 'cursor-pointer select-none'
               : '',
-            onClick: header.column.getToggleSortingHandler(),
+            onClick: () => {
+              handleSort(header);
+            },
           }}>
           <div ref={dragRef}>
             {header.isPlaceholder
               ? null
               : flexRender(header.column.columnDef.header, header.getContext())}
-            {{
-              asc: ' 🔼',
-              desc: ' 🔽',
-            }[header.column.getIsSorted() as string] ?? null}
+            {settings.sortKey === header.id ? (settings.sortDesc ? ' 🔽' : ' 🔼') : ''}
           </div>
           <div
             {...{
