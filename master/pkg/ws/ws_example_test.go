@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/determined-ai/determined/master/pkg/ws"
 	"github.com/gorilla/websocket"
+
+	"github.com/determined-ai/determined/master/pkg/ws"
 )
 
 func Example() {

@@ -28,10 +28,10 @@ const (
 	maxMessageSize = 128 * 1024 * 1024
 )
 
-// Websocket is a facade that wraps a Gorilla websocket and provides a higher-level, type-safe, and
+// WebSocket is a facade that wraps a Gorilla websocket and provides a higher-level, type-safe, and
 // thread-safe API by specializing for JSON encoding/decoding and using channels for read/write. The
 // Close method must be called or resources will be leaked.
-type Websocket[TIn, TOut any] struct {
+type WebSocket[TIn, TOut any] struct {
 	log  *logrus.Entry
 	conn *websocket.Conn
 
@@ -49,14 +49,14 @@ type Websocket[TIn, TOut any] struct {
 }
 
 // Wrap the given, underlying *websocket.Conn and returns a higher level, thread-safe wrapper.
-func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *Websocket[TIn, TOut] {
+func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *WebSocket[TIn, TOut] {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	inbox := make(chan TIn, inboxBufferSize)
 	outbox := make(chan TOut, outboxBufferSize)
 	done := make(chan struct{})
 
-	s := &Websocket[TIn, TOut]{
+	s := &WebSocket[TIn, TOut]{
 		log: logrus.WithFields(logrus.Fields{
 			"component":   "websocket",
 			"remote-addr": conn.RemoteAddr(),
@@ -93,7 +93,7 @@ func Wrap[TIn, TOut any](name string, conn *websocket.Conn) *Websocket[TIn, TOut
 	return s
 }
 
-func (s *Websocket[TIn, TOut]) runReadLoop(ctx context.Context, inbox chan<- TIn) error {
+func (s *WebSocket[TIn, TOut]) runReadLoop(ctx context.Context, inbox chan<- TIn) error {
 	s.log.Trace("running socket read loop")
 	defer s.cancel()
 	defer close(inbox)
@@ -132,7 +132,7 @@ func (s *Websocket[TIn, TOut]) runReadLoop(ctx context.Context, inbox chan<- TIn
 	}
 }
 
-func (s *Websocket[TIn, TOut]) runWriteLoop(ctx context.Context, outbox <-chan TOut) error {
+func (s *WebSocket[TIn, TOut]) runWriteLoop(ctx context.Context, outbox <-chan TOut) error {
 	s.log.Trace("running socket write loop")
 	defer s.cancel()
 
@@ -174,7 +174,7 @@ func (s *Websocket[TIn, TOut]) runWriteLoop(ctx context.Context, outbox <-chan T
 
 // Close closes the websocket by performing the close handshake and closing the underlying
 // connection, rendering it unusable.
-func (s *Websocket[TIn, TOut]) Close() error {
+func (s *WebSocket[TIn, TOut]) Close() error {
 	s.closeOnce.Do(func() {
 		s.log.Trace("attempting graceful close")
 		if hErr := s.closeGraceful(); hErr != nil {
@@ -189,7 +189,7 @@ func (s *Websocket[TIn, TOut]) Close() error {
 	return s.Error()
 }
 
-func (s *Websocket[TIn, TOut]) closeGraceful() error {
+func (s *WebSocket[TIn, TOut]) closeGraceful() error {
 	s.cancel()
 
 	closeDeadline := time.Now().Add(closeWait)
@@ -218,7 +218,7 @@ func (s *Websocket[TIn, TOut]) closeGraceful() error {
 	return nil
 }
 
-func (s *Websocket[TIn, TOut]) closeForced() error {
+func (s *WebSocket[TIn, TOut]) closeForced() error {
 	s.cancel()
 	if err := s.conn.Close(); err != nil {
 		<-s.Done
@@ -229,13 +229,13 @@ func (s *Websocket[TIn, TOut]) closeForced() error {
 }
 
 // Error returns an error if the Websocket has encountered one. Errors from closing are excluded.
-func (s *Websocket[TIn, TOut]) Error() error {
+func (s *WebSocket[TIn, TOut]) Error() error {
 	s.errLock.Lock()
 	defer s.errLock.Unlock()
 	return s.err
 }
 
-func (s *Websocket[TIn, TOut]) setError(err error) {
+func (s *WebSocket[TIn, TOut]) setError(err error) {
 	s.errLock.Lock()
 	defer s.errLock.Unlock()
 	if err == nil {
