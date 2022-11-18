@@ -97,15 +97,8 @@ convert_to_gpu_numbers() {
     fi
 }
 
-# Container-local directory to host determined directory
-# With --writable-tmpfs option / is writable by the user
-# and private to the container instance.
-LOCALTMP=/
-if [ ! -w $LOCALTMP ]; then
-    # If / is not writable (Enroot), then /tmp is
-    # container-private and we can just use that.
-    LOCALTMP=/tmp
-fi
+# Container-local directory to host determined directory and links (default to /)
+LOCALTMP=${DET_LOCALTMP:-/}
 # Source volume of all archives to be cloned
 ROOT="/determined_local_fs"
 # Base of the per-proc copy of tree
