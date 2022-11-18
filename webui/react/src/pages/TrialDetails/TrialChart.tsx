@@ -1,5 +1,6 @@
 import { Empty } from 'antd';
 import { EChartsOption } from 'echarts';
+import { CallbackDataParams } from 'echarts/types/dist/shared';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
@@ -150,6 +151,7 @@ const TrialChart: React.FC<Props> = ({
   const option = useMemo((): EChartsOption => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
+    let currentYAxis = 0;
 
     metrics.forEach((metric, index) => {
       yValues[index] = {};
@@ -229,7 +231,56 @@ const TrialChart: React.FC<Props> = ({
       },
       tooltip: {
         axisPointer: {
+          label: {
+            formatter: (params) => {
+              if (params.axisDimension === 'y') {
+                currentYAxis = Number(params.value);
+              }
+              return String(params.value);
+            },
+          },
           type: 'cross',
+        },
+        formatter: (params) => {
+          type SeriesType = {
+            marker: CallbackDataParams['marker'];
+            seriesName: string;
+            value: number;
+          };
+          const data = params as CallbackDataParams[];
+
+          const seriesList: SeriesType[] = data
+            .filter((d: CallbackDataParams) => d.seriesName)
+            .map((d: CallbackDataParams): SeriesType => {
+              return {
+                marker: d.marker,
+                seriesName: d.seriesName ?? '',
+                value: (d.value as number[])[1],
+              };
+            })
+            .sort((a: SeriesType, b: SeriesType) => b.value - a.value);
+
+          const closestPoint =
+            [...seriesList]
+              .sort((a: SeriesType, b: SeriesType) => {
+                return Math.abs(a.value - currentYAxis) > Math.abs(b.value - currentYAxis) ? 1 : -1;
+              })
+              .shift() ?? undefined;
+
+          let tooltip = '<div>';
+          tooltip += `<div>${(data[0].value as number[])[0]}</div>`;
+          for (const d of seriesList) {
+            const fontWeight = closestPoint?.seriesName === d.seriesName ? 'bold' : 'normal';
+            tooltip += `
+              <div>
+                ${d.marker}
+                <span style="font-weight: ${fontWeight};">${d.seriesName}</span>:
+                ${d.value || '-'}
+              </div>
+            `;
+            tooltip += '</div>';
+          }
+          return tooltip;
         },
         position: ['30%', '100%'],
         trigger: 'axis',
