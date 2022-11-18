@@ -7981,6 +7981,12 @@ export interface V1TaskLogsFieldsResponse {
      */
     containerIds?: Array<string>;
     /**
+     * The distinct rank IDs present in the logs.
+     * @type {Array<number>}
+     * @memberof V1TaskLogsFieldsResponse
+     */
+    rankIds?: Array<number>;
+    /**
      * The distinct stdtypes present in the logs.
      * @type {Array<string>}
      * @memberof V1TaskLogsFieldsResponse
@@ -7992,12 +7998,6 @@ export interface V1TaskLogsFieldsResponse {
      * @memberof V1TaskLogsFieldsResponse
      */
     sources?: Array<string>;
-    /**
-     * The distinct rank IDs present in the logs.
-     * @type {Array<string>}
-     * @memberof V1TaskLogsFieldsResponse
-     */
-    rankIds?: Array<string>;
 }
 
 /**
@@ -8397,6 +8397,12 @@ export interface V1TrialLogsFieldsResponse {
      */
     containerIds?: Array<string>;
     /**
+     * The distinct rank IDs present in the logs.
+     * @type {Array<number>}
+     * @memberof V1TrialLogsFieldsResponse
+     */
+    rankIds?: Array<number>;
+    /**
      * The distinct stdtypes present in the logs.
      * @type {Array<string>}
      * @memberof V1TrialLogsFieldsResponse
@@ -8408,12 +8414,6 @@ export interface V1TrialLogsFieldsResponse {
      * @memberof V1TrialLogsFieldsResponse
      */
     sources?: Array<string>;
-    /**
-     * The distinct rank IDs present in the logs.
-     * @type {Array<string>}
-     * @memberof V1TrialLogsFieldsResponse
-     */
-    rankIds?: Array<string>;
 }
 
 /**
@@ -13007,6 +13007,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {boolean} [follow] Continue following logs until the trial stops.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -13014,11 +13015,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -13054,6 +13054,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarQueryParameter['containerIds'] = containerIds;
             }
 
+            if (rankIds) {
+                localVarQueryParameter['rankIds'] = rankIds;
+            }
+
             if (levels) {
                 localVarQueryParameter['levels'] = levels;
             }
@@ -13080,10 +13084,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
 
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText;
-            }
-
-            if (rankIds) {
-                localVarQueryParameter['rankIds'] = rankIds;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -13735,6 +13735,7 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {boolean} [follow] Continue following logs until the trial stops.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -13742,12 +13743,11 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14123,6 +14123,7 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {boolean} [follow] Continue following logs until the trial stops.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -14130,12 +14131,11 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-            return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(fetch, basePath);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -14537,6 +14537,7 @@ export class ExperimentsApi extends BaseAPI {
      * @param {boolean} [follow] Continue following logs until the trial stops.
      * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
      * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+     * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -14544,13 +14545,12 @@ export class ExperimentsApi extends BaseAPI {
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-        return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(this.fetch, this.basePath);
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18383,6 +18383,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -18390,11 +18391,10 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -18434,6 +18434,10 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
                 localVarQueryParameter['containerIds'] = containerIds;
             }
 
+            if (rankIds) {
+                localVarQueryParameter['rankIds'] = rankIds;
+            }
+
             if (levels) {
                 localVarQueryParameter['levels'] = levels;
             }
@@ -18460,10 +18464,6 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
 
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText;
-            }
-
-            if (rankIds) {
-                localVarQueryParameter['rankIds'] = rankIds;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -18536,6 +18536,7 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -18543,12 +18544,11 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18597,6 +18597,7 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -18604,12 +18605,11 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-            return JobsApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(fetch, basePath);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return JobsApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -18641,6 +18641,7 @@ export class JobsApi extends BaseAPI {
      * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
      * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
      * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+     * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -18648,13 +18649,12 @@ export class JobsApi extends BaseAPI {
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-        return JobsApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(this.fetch, this.basePath);
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return JobsApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22723,6 +22723,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -22730,11 +22731,10 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -22774,6 +22774,10 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
                 localVarQueryParameter['containerIds'] = containerIds;
             }
 
+            if (rankIds) {
+                localVarQueryParameter['rankIds'] = rankIds;
+            }
+
             if (levels) {
                 localVarQueryParameter['levels'] = levels;
             }
@@ -22800,10 +22804,6 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
 
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText;
-            }
-
-            if (rankIds) {
-                localVarQueryParameter['rankIds'] = rankIds;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -22913,6 +22913,7 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -22920,12 +22921,11 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22993,6 +22993,7 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -23000,12 +23001,11 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-            return TasksApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(fetch, basePath);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return TasksApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -23060,6 +23060,7 @@ export class TasksApi extends BaseAPI {
      * @param {Array<string>} [allocationIds] Limit the task logs to particular allocations.
      * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
      * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+     * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -23067,13 +23068,12 @@ export class TasksApi extends BaseAPI {
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-        return TasksApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(this.fetch, this.basePath);
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return TasksApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24765,6 +24765,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {boolean} [follow] Continue following logs until the trial stops.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -24772,11 +24773,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -24812,6 +24812,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 localVarQueryParameter['containerIds'] = containerIds;
             }
 
+            if (rankIds) {
+                localVarQueryParameter['rankIds'] = rankIds;
+            }
+
             if (levels) {
                 localVarQueryParameter['levels'] = levels;
             }
@@ -24838,10 +24842,6 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
 
             if (searchText !== undefined) {
                 localVarQueryParameter['searchText'] = searchText;
-            }
-
-            if (rankIds) {
-                localVarQueryParameter['rankIds'] = rankIds;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -25026,6 +25026,7 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {boolean} [follow] Continue following logs until the trial stops.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -25033,12 +25034,11 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25154,6 +25154,7 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {boolean} [follow] Continue following logs until the trial stops.
          * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
          * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+         * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
          * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
          * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -25161,12 +25162,11 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {string} [searchText] Search the logs by whether the text contains a substring.
-         * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-            return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(fetch, basePath);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -25275,6 +25275,7 @@ export class TrialsApi extends BaseAPI {
      * @param {boolean} [follow] Continue following logs until the trial stops.
      * @param {Array<string>} [agentIds] Limit the trial logs to a subset of agents.
      * @param {Array<string>} [containerIds] Limit the trial logs to a subset of containers.
+     * @param {Array<number>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>} [levels] Limit the trial logs to a subset of agents.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
      * @param {Array<string>} [stdtypes] Limit the trial logs to a subset of output streams.
      * @param {Array<string>} [sources] Limit the trial logs to a subset of sources.
@@ -25282,13 +25283,12 @@ export class TrialsApi extends BaseAPI {
      * @param {Date} [timestampAfter] Limit the trial logs to ones with a timestamp after a given time.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order logs in either ascending or descending order by timestamp.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {string} [searchText] Search the logs by whether the text contains a substring.
-     * @param {Array<string>} [rankIds] Limit the trial logs to a subset of ranks.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, rankIds?: Array<string>, options?: any) {
-        return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, rankIds, options)(this.fetch, this.basePath);
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
