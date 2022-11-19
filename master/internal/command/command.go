@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+
 	"golang.org/x/exp/slices"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -521,7 +523,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 			Handler:  ctx.Self(),
 		}).(type) {
 		case nil:
-		case rm.ErrUnsupported:
+		case rmerrors.ErrUnsupported:
 			ctx.Log().WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return fmt.Errorf("setting group priority for command: %w", err)
@@ -539,7 +541,7 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 		Handler: ctx.Self(),
 	}).(type) {
 	case nil:
-	case rm.ErrUnsupported:
+	case rmerrors.ErrUnsupported:
 		ctx.Log().WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		return fmt.Errorf("setting group weight for command: %w", err)
