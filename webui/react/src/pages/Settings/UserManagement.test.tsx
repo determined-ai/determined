@@ -101,8 +101,10 @@ describe('UserManagement', () => {
     await waitFor(() => jest.setTimeout(300));
     expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
     expect(await screen.findByText(USER_TITLE)).toBeInTheDocument();
-    expect(await screen.findByText(DISPLAY_NAME)).toBeInTheDocument();
-    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
+    waitFor(() => {
+      expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
+      expect(screen.getByText(USERNAME)).toBeInTheDocument();
+    });
   });
 
   it('should render modal for create user when click the button', async () => {
