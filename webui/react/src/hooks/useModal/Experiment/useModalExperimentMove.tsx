@@ -161,7 +161,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [fetchProjects, modalRef]);
 
   const renderRow = useCallback(
-
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       if (!destSettings.projectId) return <Spinner spinning />;
 

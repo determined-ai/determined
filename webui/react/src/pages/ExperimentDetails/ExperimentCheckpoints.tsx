@@ -76,7 +76,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
     useModalModelCreate({ onClose: handleOnCloseCreateModel });
-cccccbcdgihhvfbgilelnejtndklljilhebhevdrdrri
+  cccccbcdgihhvfbgilelnejtndklljilhebhevdrdrri;
 
   const {
     contextHolder: modalCheckpointDeleteContextHolder,
