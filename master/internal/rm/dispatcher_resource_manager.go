@@ -315,6 +315,7 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		sproto.SetGroupMaxSlots,
 		sproto.SetAllocationName,
 		sproto.PendingPreemption,
+		sproto.NotifyContainerRunning,
 		sproto.ResourcesReleased,
 		groupActorStopped:
 		return m.receiveRequestMsg(ctx)
@@ -571,6 +572,22 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 				msg.AllocationID))
 		}
 
+	case sproto.NotifyContainerRunning:
+		dispatches, err := db.ListDispatchesByAllocationID(context.TODO(), msg.AllocationID)
+		if err != nil {
+			ctx.Log().WithError(err).Errorf(
+				"Failed to retrieve the DispatchIDs associated with AllocationID %s",
+				msg.AllocationID)
+			return nil
+		}
+
+		for _, dispatch := range dispatches {
+			dispatchID := dispatch.DispatchID
+			if m.jobWatcher.isJobBeingMonitored(dispatchID) {
+				m.jobWatcher.notifyContainerRunning(ctx, dispatchID, msg.Rank, msg.NumPeers, msg.NodeName)
+			}
+		}
+
 	case KillDispatcherResources:
 
 		ctx.Log().Debug(fmt.Sprintf("Received request to terminate jobs associated with AllocationID %s",
@@ -651,7 +668,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		task.State = schedulingStateFromDispatchState(msg.State)
 		ctx.Tell(task.AllocationRef, sproto.ResourcesStateChanged{
 			ResourcesID:      rID,
-			ResourcesState:   resourcesStateFromDispatchState(msg.State),
+			ResourcesState:   resourcesStateFromDispatchState(msg.IsPullingImage, msg.State),
 			ResourcesStarted: &sproto.ResourcesStarted{HPCJobID: msg.HPCJobID},
 		})
 
@@ -1550,9 +1567,10 @@ type (
 
 	// DispatchStateChange notifies the dispatcher that the give dispatch has changed state.
 	DispatchStateChange struct {
-		DispatchID string
-		State      launcher.DispatchState
-		HPCJobID   string
+		DispatchID     string
+		State          launcher.DispatchState
+		IsPullingImage bool
+		HPCJobID       string
 	}
 
 	// DispatchExited notifies the dispatcher that the give dispatch exited.
@@ -1654,7 +1672,16 @@ func schedulingStateFromDispatchState(state launcher.DispatchState) sproto.Sched
 }
 
 // resourcesStateFromDispatchState returns ResourcesState from DispatchState representation.
-func resourcesStateFromDispatchState(state launcher.DispatchState) sproto.ResourcesState {
+func resourcesStateFromDispatchState(
+	isPullingImage bool,
+	state launcher.DispatchState,
+) sproto.ResourcesState {
+	// The launcher has no state to indicate the image is being pulled, so we
+	// have to test for that separately.
+	if isPullingImage {
+		return sproto.Pulling
+	}
+
 	switch state {
 	case launcher.PENDING:
 		return sproto.Assigned
@@ -1669,4 +1696,13 @@ func resourcesStateFromDispatchState(state launcher.DispatchState) sproto.Resour
 	default:
 		return sproto.Unknown
 	}
+}
+
+// NotifyContainerRunning receives a notification from the container to let
+// the master know that the container is running.
+func (d DispatcherResourceManager) NotifyContainerRunning(
+	ctx actor.Messenger,
+	msg sproto.NotifyContainerRunning,
+) error {
+	return d.ask(ctx, msg, nil)
 }

@@ -2,9 +2,12 @@ package rm
 
 import (
 	"testing"
+	"time"
 
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"gotest.tools/assert"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func String(v string) *string { return &v }
@@ -129,4 +132,79 @@ func Test_getJobID(t *testing.T) {
 		"job-id": "1234",
 	})
 	assert.Equal(t, jobID, "1234")
+}
+
+// Verifies that "allContainersRunning" returns true only when the job watcher
+// has received a "NotifyContainerRunning" message from all the containers that
+// are part of the job.
+func Test_allContainersRunning(t *testing.T) {
+	user := "joeschmoe"
+	dispatchID := "11ae54526b544bcd-8607d5744a7b1439"
+	payloadName := "myPayload"
+
+	job := launcherJob{
+		user:              user,
+		dispatcherID:      dispatchID,
+		payloadName:       payloadName,
+		timestamp:         time.Now(),
+		totalContainers:   0,
+		runningContainers: make(map[int]containerInfo),
+	}
+
+	clientConfiguration := launcher.NewConfiguration()
+	apiClient := launcher.NewAPIClient(clientConfiguration)
+	authToken := "dummyToken"
+	configFile := "dummyConfigFile"
+
+	// Assume Slurm set the SLURM_NPROCS environment variable to 3, meaning
+	// that there will be 3 containers running for the job. In the notification
+	// message the SLURM_NPROCS environment variable is stored in "numPeers",
+	// so use a similar variable name here for consistency.
+	var numPeers int32 = 3
+
+	ctx := getMockActorCtx()
+
+	jobWatcher := newDispatchWatcher(apiClient, authToken, configFile)
+
+	// Add the job to the monitored jobs.
+	jobWatcher.monitoredJobs[dispatchID] = job
+
+	// Since there have not been any "NotifyContainerRunning" messages sent
+	// for this job, then we do not expect all containers to be running.
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), false)
+
+	// The job watcher receives a "NotifyContainerRunning" message from the
+	// first container.
+	jobWatcher.notifyContainerRunning(ctx, dispatchID, 0, numPeers, "node001")
+
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), false)
+
+	// The job watcher receives a "NotifyContainerRunning" message from the
+	// second container.
+	jobWatcher.notifyContainerRunning(ctx, dispatchID, 1, numPeers, "node002")
+
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), false)
+
+	// The job watcher receives a "NotifyContainerRunning" message from the
+	// third container.
+	jobWatcher.notifyContainerRunning(ctx, dispatchID, 3, numPeers, "node003")
+
+	// The job watcher has received "NotifyContainerRunning" messages from all
+	// 3 containers, so "allContainersRunning()" should now return true.
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), true)
+}
+
+func getMockActorCtx() *actor.Context {
+	var ctx *actor.Context
+	sys := actor.NewSystem("")
+	child, _ := sys.ActorOf(actor.Addr("child"), actor.ActorFunc(func(context *actor.Context) error {
+		ctx = context
+		return nil
+	}))
+	parent, _ := sys.ActorOf(actor.Addr("parent"), actor.ActorFunc(func(context *actor.Context) error {
+		context.Ask(child, "").Get()
+		return nil
+	}))
+	sys.Ask(parent, "").Get()
+	return ctx
 }
