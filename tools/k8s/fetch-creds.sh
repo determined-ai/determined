@@ -6,49 +6,49 @@ set -e
 prog="$0"
 
 print_help() {
-    echo "usage: $prog [OPTIONS] OUTDIR SERVICE_ACCOUNT"
-    echo ""
-    echo "where OPTIONS may be any of:"
-    echo "  -h, --help             Show this output."
-    echo "  -c, --context CONTEXT  Specify a kubectl context to use."
-    echo "                         Default: use the kubectl default context."
-    echo "  -s, --static           Fetch static credentials once and exit."
-    echo "                         This is mostly useful for k8s before v1.21"
-    echo "                         when the TokenRequest API feature was not"
-    echo "                         yet GA."
-    echo "                         Default: fetch a fresh token every minute."
-    echo "  -p, --period PERIOD    Configure the wait time between refreshes."
-    echo "                         PERIOD will be passed to the sleep command."
-    echo "                         Default: 60"
-    echo "  -v, --verbose          Log more stuff to stdout."
-    echo ""
-    echo "This script uses kubectl to fetch suitable credentials for a"
-    echo "particular service account, which are stored in OUTDIR."
-    echo ""
-    echo "By default, $prog will run in a loop and continuously refresh the"
-    echo "credentials in OUTDIR."
-    echo ""
-    echo "If CONTEXT is not provided, the default k8s context will be used."
-    echo ""
-    echo "The resulting OUTDIR will look like:"
-    echo ""
-    echo "    OUTDIR"
-    echo "    ├── ca.crt           # a file expected by InClusterConfig()"
-    echo "    ├── token            # a file expected by InClusterConfig()"
-    echo "    ├── docker-env-file  # for docker run --env-file"
-    echo "    └── server           # for k8s apps without InClusterConfig()"
-    echo ""
-    echo "Afterwards, there are two recommended ways to use OUTDIR:"
-    echo ""
-    echo "  - Modify a k8s application to read from OUTDIR directly"
-    echo "    (for example, determined-master does this)"
-    echo ""
-    echo "  - Run an unmodified k8s application via docker run:"
-    echo ""
-    echo '      docker run \'
-    echo '          -v OUTDIR:/var/run/secrets/kubernetes.io/serviceaccount \'
-    echo '          --env-file OUTDIR/docker-env-file \'
-    echo "          my_image_name"
+    echo "usage: $prog [OPTIONS] OUTDIR SERVICE_ACCOUNT
+
+where OPTIONS may be any of:
+  -h, --help             Show this output.
+  -c, --context CONTEXT  Specify a kubectl context to use.
+                         Default: use the kubectl default context.
+  -s, --static           Fetch static credentials once and exit.
+                         This is mostly useful for k8s before v1.21
+                         when the TokenRequest API feature was not
+                         yet GA.
+                         Default: fetch a fresh token every minute.
+  -p, --period PERIOD    Configure the wait time between refreshes.
+                         PERIOD will be passed to the sleep command.
+                         Default: 60
+  -v, --verbose          Log more stuff to stdout.
+
+This script uses kubectl to fetch suitable credentials for a
+particular service account, which are stored in OUTDIR.
+
+By default, $prog will run in a loop and continuously refresh the
+credentials in OUTDIR.
+
+If CONTEXT is not provided, the default k8s context will be used.
+
+The resulting OUTDIR will look like:
+
+    OUTDIR
+    ├── ca.crt           # a file expected by InClusterConfig()
+    ├── token            # a file expected by InClusterConfig()
+    ├── docker-env-file  # for docker run --env-file
+    └── server           # for k8s apps without InClusterConfig()
+
+Afterwards, there are two recommended ways to use OUTDIR:
+
+  - Modify a k8s application to read from OUTDIR directly
+    (for example, determined-master does this)
+
+  - Run an unmodified k8s application via docker run:
+
+      docker run \\
+          -v OUTDIR:/var/run/secrets/kubernetes.io/serviceaccount \\
+          --env-file OUTDIR/docker-env-file \\
+          my_image_name"
 }
 
 context=""
