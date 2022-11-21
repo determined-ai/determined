@@ -44,12 +44,21 @@ var messagePatternsOfInterest = []*regexp.Regexp{
 	regexp.MustCompile("(?:Slurm|Pbs|PBS) job process terminated with exit code \\d+:\n*(?s)(.+)"),
 }
 
+// containerInfo stores the data sent by the container in the
+// "NotifyContainerRunning" message, so that we can keep keep track of which
+// containers are running.
+type containerInfo struct {
+	nodeName string
+}
+
 // launcherJob describes a new launcher job, the progress of which we need to track.
 type launcherJob struct {
-	user         string
-	dispatcherID string
-	payloadName  string
-	timestamp    time.Time
+	user              string
+	dispatcherID      string
+	payloadName       string
+	timestamp         time.Time
+	totalContainers   int
+	runningContainers map[int]containerInfo
 }
 
 // launcherMonitor describes the monitoring of jobs created by the launcher.
@@ -89,10 +98,12 @@ func newDispatchWatcher(
 // payload name may be empty (when reconnecting), monitor will retrieve if necessary.
 func (m *launcherMonitor) monitorJob(user string, dispatchID string, payloadName string) {
 	m.newLauncherJob <- launcherJob{
-		user:         user,
-		dispatcherID: dispatchID,
-		payloadName:  payloadName,
-		timestamp:    time.Now(),
+		user:              user,
+		dispatcherID:      dispatchID,
+		payloadName:       payloadName,
+		timestamp:         time.Now(),
+		totalContainers:   0,
+		runningContainers: make(map[int]containerInfo),
 	}
 }
 
@@ -181,6 +192,100 @@ func filterOutSuperfluousMessages(allMessages []string) []string {
 	}
 
 	return messagesMatchingPattern
+}
+
+func (m *launcherMonitor) notifyContainerRunning(
+	ctx *actor.Context,
+	dispatchID string,
+	rank int32,
+	numPeers int32,
+	nodeName string,
+) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	job, ok := m.monitoredJobs[dispatchID]
+
+	if !ok {
+		ctx.Log().Errorf("Could not find dispatchID %s in the monitored jobs", dispatchID)
+		return
+	}
+
+	job.totalContainers = int(numPeers)
+
+	switch existingEntry, ok := job.runningContainers[int(rank)]; {
+	case !ok:
+		job.runningContainers[int(rank)] = containerInfo{nodeName: nodeName}
+		m.monitoredJobs[dispatchID] = job
+		ctx.Log().Infof("For dispatchID %s, %d out of %d containers running on nodes %s",
+			dispatchID,
+			len(job.runningContainers),
+			job.totalContainers,
+			getNodesThatAreRunningContainer(job))
+
+	// Rank already existed in the map. This is not expected, as each container
+	// should only send the notification that it's running only once.
+	case existingEntry.nodeName != nodeName:
+		// Two different containers running on two different nodes
+		// reported the same rank number. That is unexpected, since
+		// each container is supposed to have a unique rank.
+		ctx.Log().Errorf("For dispatchID %s, received a notification that the container "+
+			"is running for rank %d from two different nodes, %s and %s",
+			dispatchID,
+			rank,
+			existingEntry.nodeName,
+			nodeName)
+
+	default:
+		// A container reported its rank more than once. This is
+		// unexpected, since each container should only send one
+		// notification that it's running.  Unless, for some reason,
+		// the Workload Manager (e.g., Slurm, PBS, etc), restarted
+		// the job.
+		ctx.Log().Warnf("For dispatchID %s, received multiple notifications that the "+
+			"container is running for rank %d from node %s",
+			dispatchID,
+			rank,
+			existingEntry.nodeName)
+	}
+}
+
+// Returns a comma separated string containing the nodes that have notified
+// the Determined master that the are running the container. Used for logging
+// purposes only.
+func getNodesThatAreRunningContainer(job launcherJob) string {
+	var sb strings.Builder
+
+	for _, v := range job.runningContainers {
+		if sb.Len() > 0 {
+			sb.WriteString(",")
+		}
+
+		sb.WriteString(v.nodeName)
+	}
+
+	return sb.String()
+}
+
+// Returns true if all the containers have notified the Determined Master that
+// they are running; false otherwise.
+func (m *launcherMonitor) allContainersRunning(job launcherJob) bool {
+	// Since each container has a unique ID, the number of running containers
+	// is the number of unique IDs in the "runningContainers" map.
+	numContainersRunning := len(job.runningContainers)
+
+	// Initially "numContainersRunning" and "job.totalContainers" will be
+	// zero, until we receive our first notification from one of the
+	// containers.  Therefore, in order to prevent "0 == 0" from falsely
+	// returning true, make sure that at least one container has notified
+	// the master, by adding "numContainersRunning > 0" so that the
+	// value of "job.totalContainers" is set by the first container to
+	// send a notification.
+	if numContainersRunning > 0 && numContainersRunning == job.totalContainers {
+		return true
+	}
+
+	return false
 }
 
 // Returns true if the job with the given dispatch ID is being monitored by
@@ -325,10 +430,24 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 		// keep list of jobs to be removed for later.
 		removeJob = true
 	} else {
+		// From the launcher's perspective, a job is running when the Workload
+		// Manager (e.g., Slurm, PBS, etc) starts the job. However, from the
+		// Determined perspective, a job is not running until the all
+		// containers that are part of the job are being run by
+		// Singularity/Podman.  If the image does not already exist on the
+		// compute node, then Singularity/Podman will first need to pull down
+		// the image from the Internet before they can run the container.
+		// While there is at least one image being pulled (i.e., one container
+		// that's not running), then Determined will report a state of
+		// "Pulling".  When all the containers are running, then Determined
+		// will report a state of "Running".
+		isPullingImage := *resp.State == launcher.RUNNING && !m.allContainersRunning(job)
+
 		ctx.Tell(ctx.Self(), DispatchStateChange{
-			DispatchID: dispatchID,
-			State:      *resp.State,
-			HPCJobID:   getJobID(resp.GetAdditionalPropertiesField()),
+			DispatchID:     dispatchID,
+			State:          *resp.State,
+			IsPullingImage: isPullingImage,
+			HPCJobID:       getJobID(resp.GetAdditionalPropertiesField()),
 		})
 	}
 	return removeJob
