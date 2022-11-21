@@ -101,7 +101,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
         <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
       </Form.Item>
       <Form.Item label="Configure Agent" name="useAgent" valuePropName="checked">
-        <Switch />
+        <Switch disabled={viewOnly} />
       </Form.Item>
       {useAgent && (
         <>
@@ -109,25 +109,25 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
             label="Agent User ID"
             name="agentUid"
             rules={[{ message: 'Agent User ID is required ', required: true }]}>
-            <InputNumber />
+            <InputNumber disabled={viewOnly} />
           </Form.Item>
           <Form.Item
             label="Agent User Name"
             name="agentUser"
             rules={[{ message: 'Agent User Name is required ', required: true }]}>
-            <Input maxLength={100} />
+            <Input disabled={viewOnly} maxLength={100} />
           </Form.Item>
           <Form.Item
             label="Agent User Group ID"
             name="agentGid"
             rules={[{ message: 'Agent User Group ID is required ', required: true }]}>
-            <InputNumber />
+            <InputNumber disabled={viewOnly} />
           </Form.Item>
           <Form.Item
             label="Agent Group Name"
             name="agentGroup"
             rules={[{ message: 'Agent Group Name is required ', required: true }]}>
-            <Input maxLength={100} />
+            <Input disabled={viewOnly} maxLength={100} />
           </Form.Item>
         </>
       )}
@@ -233,14 +233,15 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
       const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
       const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
-      const agentUserGroup = {};
-      if (formData.useAgent) {
+
+      if (formData.useAgent || user) {
+        const agentUserGroup = {};
         agentUserGroup['agentUid'] = formData.agentUid;
         agentUserGroup['agentUser'] = formData.agentUser;
         agentUserGroup['agentGid'] = formData.agentGid;
         agentUserGroup['agentGroup'] = formData.agentGroup;
+        formData['agentUserGroup'] = agentUserGroup;
       }
-      formData['agentUserGroup'] = agentUserGroup;
 
       try {
         if (user) {
