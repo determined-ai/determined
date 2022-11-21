@@ -37,7 +37,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
   id: 85,
   latestValidationMetric: 150,
   startTime: 117,
-  state: 117,
+  state: 64,
   totalBatchesProcessed: 74,
 };
 

@@ -46,7 +46,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   resourcePool: 140,
   searcherType: 140,
   startTime: 118,
-  state: 106,
+  state: 64,
   tags: 106,
   user: 85,
 };
