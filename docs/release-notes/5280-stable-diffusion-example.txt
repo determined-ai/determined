@@ -1,6 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Example: Textual Inversion training and generation using Stable Diffusion with Hugging Face's
-Diffusers and Core API.

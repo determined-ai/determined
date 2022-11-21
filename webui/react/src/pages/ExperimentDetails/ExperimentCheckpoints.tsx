@@ -1,5 +1,5 @@
 import { FilterDropdownProps } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Key, useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
@@ -58,6 +58,15 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
 
+  const {
+    contextHolder: modalCheckpointRegisterContextHolder,
+    modalOpen: openModalCheckpointRegister,
+  } = useModalCheckpointRegister({
+    onClose: (reason?: ModalCloseReason, checkpoints?: string[]) => {
+      if (checkpoints) openModalCreateModel({ checkpoints });
+    },
+  });
+
   const handleOnCloseCreateModel = useCallback(
     (reason?: ModalCloseReason, checkpoints?: string[], modelName?: string) => {
       if (checkpoints) openModalCheckpointRegister({ checkpoints, selectedModelName: modelName });
@@ -67,21 +76,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
   const { contextHolder: modalModelCreateContextHolder, modalOpen: openModalCreateModel } =
     useModalModelCreate({ onClose: handleOnCloseCreateModel });
-
-  const handleOnCloseCheckpointRegister = useCallback(
-    (reason?: ModalCloseReason, checkpoints?: string[]) => {
-      if (checkpoints) openModalCreateModel({ checkpoints });
-      updateSettings({ row: undefined });
-    },
-    [openModalCreateModel, updateSettings],
-  );
-
-  // Has to use var to hoist openModalCheckpointRegister for use above
-  /* eslint-disable-next-line no-var */
-  var {
-    contextHolder: modalCheckpointRegisterContextHolder,
-    modalOpen: openModalCheckpointRegister,
-  } = useModalCheckpointRegister({ onClose: handleOnCloseCheckpointRegister });
+cccccbcdgihhvfbgilelnejtndklljilhebhevdrdrri
 
   const {
     contextHolder: modalCheckpointDeleteContextHolder,
@@ -298,8 +293,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [canceler, stopPolling]);
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys?: Key[]) => {
+      updateSettings({ row: rowKeys?.map(String) });
     },
     [updateSettings],
   );

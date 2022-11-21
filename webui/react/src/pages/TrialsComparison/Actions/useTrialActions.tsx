@@ -93,7 +93,7 @@ const useTrialActions = ({
   const handleChangeSelectionMode = useCallback(() => setSelectAllMatching((prev) => !prev), []);
 
   const selectTrials = useCallback(
-    (rowKeys) => setSelectedTrials(encodeIdList(rowKeys) ?? []),
+    (rowKeys: unknown) => setSelectedTrials(encodeIdList(rowKeys as string[]) ?? []),
     [setSelectedTrials],
   );
 

@@ -66,7 +66,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
     });
   }, [form, user, roles]);
 
-  if (user !== undefined && roles === null && canAssignRoles({})) {
+  if (user !== undefined && roles === null && rbacEnabled && canAssignRoles({})) {
     return <Spinner tip="Loading roles..." />;
   }
 
@@ -153,12 +153,13 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
+  const rbacEnabled = useFeature().isOn('rbac');
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
 
   const fetchUserRoles = useCallback(async () => {
-    if (user !== undefined && canAssignRoles({})) {
+    if (user !== undefined && rbacEnabled && canAssignRoles({})) {
       try {
         const roles = await getUserRoles({ userId: user.id });
         setUserRoles(roles);

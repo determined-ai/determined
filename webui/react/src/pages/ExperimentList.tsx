@@ -739,8 +739,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: unknown) => {
+      updateSettings({ row: rowKeys as number[] });
     },
     [updateSettings],
   );

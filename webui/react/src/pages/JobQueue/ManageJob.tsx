@@ -147,7 +147,7 @@ const ManageJob: React.FC<Props> = ({
     );
   }, [currentPool, currentPoolStats]);
 
-  const handleUpdateResourcePool = useCallback((changedValues) => {
+  const handleUpdateResourcePool = useCallback((changedValues: any) => {
     if (changedValues.resourcePool) setSelectedPoolName(changedValues.resourcePool);
   }, []);
 

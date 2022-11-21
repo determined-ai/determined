@@ -150,6 +150,16 @@ type (
 	PendingPreemption struct {
 		AllocationID model.AllocationID
 	}
+
+	// NotifyContainerRunning notifies the launcher (dispatcher) resource
+	// manager that the container is running.
+	NotifyContainerRunning struct {
+		AllocationID model.AllocationID
+		Rank         int32
+		NumPeers     int32
+		NodeName     string
+	}
+
 	// ReleaseResources notifies the task actor to release resources.
 	ReleaseResources struct {
 		ResourcePool string

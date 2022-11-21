@@ -3482,6 +3482,28 @@ class v1GetMasterResponse:
             out["telemetryEnabled"] = self.telemetryEnabled
         return out
 
+class v1GetMeResponse:
+
+    def __init__(
+        self,
+        *,
+        user: "v1User",
+    ):
+        self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetMeResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "user": v1User.from_json(obj["user"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "user": self.user.to_json(omit_unset),
+        }
+        return out
+
 class v1GetModelDefFileRequest:
     experimentId: "typing.Optional[int]" = None
     path: "typing.Optional[str]" = None
@@ -4476,6 +4498,28 @@ class v1GetTrialsCollectionsResponse:
         }
         if not omit_unset or "collections" in vars(self):
             out["collections"] = None if self.collections is None else [x.to_json(omit_unset) for x in self.collections]
+        return out
+
+class v1GetUserByUsernameResponse:
+
+    def __init__(
+        self,
+        *,
+        user: "v1User",
+    ):
+        self.user = user
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserByUsernameResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "user": v1User.from_json(obj["user"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "user": self.user.to_json(omit_unset),
+        }
         return out
 
 class v1GetUserResponse:
@@ -6213,6 +6257,86 @@ class v1Notebook:
             out["userId"] = self.userId
         return out
 
+class v1NotifyContainerRunningRequest:
+    nodeName: "typing.Optional[str]" = None
+    numPeers: "typing.Optional[int]" = None
+    rank: "typing.Optional[int]" = None
+    requestUuid: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        allocationId: str,
+        data: "typing.Dict[str, typing.Any]",
+        nodeName: "typing.Union[str, None, Unset]" = _unset,
+        numPeers: "typing.Union[int, None, Unset]" = _unset,
+        rank: "typing.Union[int, None, Unset]" = _unset,
+        requestUuid: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.allocationId = allocationId
+        self.data = data
+        if not isinstance(nodeName, Unset):
+            self.nodeName = nodeName
+        if not isinstance(numPeers, Unset):
+            self.numPeers = numPeers
+        if not isinstance(rank, Unset):
+            self.rank = rank
+        if not isinstance(requestUuid, Unset):
+            self.requestUuid = requestUuid
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1NotifyContainerRunningRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "allocationId": obj["allocationId"],
+            "data": obj["data"],
+        }
+        if "nodeName" in obj:
+            kwargs["nodeName"] = obj["nodeName"]
+        if "numPeers" in obj:
+            kwargs["numPeers"] = obj["numPeers"]
+        if "rank" in obj:
+            kwargs["rank"] = obj["rank"]
+        if "requestUuid" in obj:
+            kwargs["requestUuid"] = obj["requestUuid"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "allocationId": self.allocationId,
+            "data": self.data,
+        }
+        if not omit_unset or "nodeName" in vars(self):
+            out["nodeName"] = self.nodeName
+        if not omit_unset or "numPeers" in vars(self):
+            out["numPeers"] = self.numPeers
+        if not omit_unset or "rank" in vars(self):
+            out["rank"] = self.rank
+        if not omit_unset or "requestUuid" in vars(self):
+            out["requestUuid"] = self.requestUuid
+        return out
+
+class v1NotifyContainerRunningResponse:
+
+    def __init__(
+        self,
+        *,
+        data: "typing.Sequence[typing.Dict[str, typing.Any]]",
+    ):
+        self.data = data
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1NotifyContainerRunningResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "data": obj["data"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Any:
+        out: "typing.Dict[str, typing.Any]" = {
+            "data": self.data,
+        }
+        return out
+
 class v1OrderBy(enum.Enum):
     ORDER_BY_UNSPECIFIED = "ORDER_BY_UNSPECIFIED"
     ORDER_BY_ASC = "ORDER_BY_ASC"
@@ -6657,6 +6781,8 @@ class v1PatchUser:
     admin: "typing.Optional[bool]" = None
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     displayName: "typing.Optional[str]" = None
+    isHashed: "typing.Optional[bool]" = None
+    password: "typing.Optional[str]" = None
     username: "typing.Optional[str]" = None
 
     def __init__(
@@ -6666,6 +6792,8 @@ class v1PatchUser:
         admin: "typing.Union[bool, None, Unset]" = _unset,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
+        isHashed: "typing.Union[bool, None, Unset]" = _unset,
+        password: "typing.Union[str, None, Unset]" = _unset,
         username: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(active, Unset):
@@ -6676,6 +6804,10 @@ class v1PatchUser:
             self.agentUserGroup = agentUserGroup
         if not isinstance(displayName, Unset):
             self.displayName = displayName
+        if not isinstance(isHashed, Unset):
+            self.isHashed = isHashed
+        if not isinstance(password, Unset):
+            self.password = password
         if not isinstance(username, Unset):
             self.username = username
 
@@ -6691,6 +6823,10 @@ class v1PatchUser:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "displayName" in obj:
             kwargs["displayName"] = obj["displayName"]
+        if "isHashed" in obj:
+            kwargs["isHashed"] = obj["isHashed"]
+        if "password" in obj:
+            kwargs["password"] = obj["password"]
         if "username" in obj:
             kwargs["username"] = obj["username"]
         return cls(**kwargs)
@@ -6706,6 +6842,10 @@ class v1PatchUser:
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "displayName" in vars(self):
             out["displayName"] = self.displayName
+        if not omit_unset or "isHashed" in vars(self):
+            out["isHashed"] = self.isHashed
+        if not omit_unset or "password" in vars(self):
+            out["password"] = self.password
         if not omit_unset or "username" in vars(self):
             out["username"] = self.username
         return out
@@ -7233,15 +7373,19 @@ class v1PostTrialProfilerMetricsBatchRequest:
         return out
 
 class v1PostUserRequest:
+    isHashed: "typing.Optional[bool]" = None
     password: "typing.Optional[str]" = None
     user: "typing.Optional[v1User]" = None
 
     def __init__(
         self,
         *,
+        isHashed: "typing.Union[bool, None, Unset]" = _unset,
         password: "typing.Union[str, None, Unset]" = _unset,
         user: "typing.Union[v1User, None, Unset]" = _unset,
     ):
+        if not isinstance(isHashed, Unset):
+            self.isHashed = isHashed
         if not isinstance(password, Unset):
             self.password = password
         if not isinstance(user, Unset):
@@ -7251,6 +7395,8 @@ class v1PostUserRequest:
     def from_json(cls, obj: Json) -> "v1PostUserRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "isHashed" in obj:
+            kwargs["isHashed"] = obj["isHashed"]
         if "password" in obj:
             kwargs["password"] = obj["password"]
         if "user" in obj:
@@ -7260,6 +7406,8 @@ class v1PostUserRequest:
     def to_json(self, omit_unset: bool = False) -> typing.Any:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "isHashed" in vars(self):
+            out["isHashed"] = self.isHashed
         if not omit_unset or "password" in vars(self):
             out["password"] = self.password
         if not omit_unset or "user" in vars(self):
@@ -12672,6 +12820,24 @@ def get_GetMasterConfig(
         return v1GetMasterConfigResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMasterConfig", _resp)
 
+def get_GetMe(
+    session: "api.Session",
+) -> "v1GetMeResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/me",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetMeResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetMe", _resp)
+
 def get_GetModel(
     session: "api.Session",
     *,
@@ -13488,6 +13654,26 @@ def get_GetUser(
         return v1GetUserResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUser", _resp)
 
+def get_GetUserByUsername(
+    session: "api.Session",
+    *,
+    username: str,
+) -> "v1GetUserByUsernameResponse":
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/{username}/by-username",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserByUsernameResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserByUsername", _resp)
+
 def get_GetUserSetting(
     session: "api.Session",
 ) -> "v1GetUserSettingResponse":
@@ -14085,6 +14271,27 @@ def post_MoveProject(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_MoveProject", _resp)
+
+def post_NotifyContainerRunning(
+    session: "api.Session",
+    *,
+    allocationId: str,
+    body: "v1NotifyContainerRunningRequest",
+) -> "v1NotifyContainerRunningResponse":
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/allocations/{allocationId}/notify_container_running",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1NotifyContainerRunningResponse.from_json(_resp.json())
+    raise APIHttpError("post_NotifyContainerRunning", _resp)
 
 def patch_PatchExperiment(
     session: "api.Session",

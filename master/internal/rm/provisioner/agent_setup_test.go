@@ -41,14 +41,14 @@ func TestAgentSetupScript(t *testing.T) {
 docker_args=()
 
 mkdir -p /usr/local/determined
-echo c2xlZXAgNQogZWNobyAiaGVsbG8gd29ybGQi | base64 --decode > /usr/local/determined/startup_script
+echo c2xlZXAgNQogZWNobyAiaGVsbG8gd29ybGQi | base64 --decode >/usr/local/determined/startup_script
 echo "#### PRINTING STARTUP SCRIPT START ####"
 cat /usr/local/determined/startup_script
 echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
-echo  | base64 --decode > /usr/local/determined/agent.yaml
+echo  | base64 --decode >/usr/local/determined/agent.yaml
 echo "#### PRINTING CONFIG FILE START ####"
 cat /usr/local/determined/agent.yaml
 echo "#### PRINTING CONFIG FILE END ####"
@@ -68,7 +68,7 @@ fi
 
 cert_b64=PT09PSBjZXJ0ID09PT0=
 if [ -n "$cert_b64" ]; then
-    echo "$cert_b64" | base64 --decode > /usr/local/determined/master.crt
+    echo "$cert_b64" | base64 --decode >/usr/local/determined/master.crt
     echo "#### PRINTING MASTER CERT START ####"
     cat /usr/local/determined/master.crt
     echo "#### PRINTING MASTER CERT END ####"
@@ -77,7 +77,7 @@ if [ -n "$cert_b64" ]; then
     docker_args+=(-e DET_SECURITY_TLS_MASTER_CERT=/usr/local/determined/master.crt)
 fi
 
-echo c2xlZXA= | base64 --decode > /usr/local/determined/container_startup_script
+echo c2xlZXA= | base64 --decode >/usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT START ####"
 cat /usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT END ####"

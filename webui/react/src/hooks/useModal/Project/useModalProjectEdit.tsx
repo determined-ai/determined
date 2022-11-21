@@ -3,7 +3,7 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { patchProject } from 'services/api';
-import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
+import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { Project } from 'types';
 import handleError from 'utils/error';
@@ -26,7 +26,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
   const projectName = Form.useWatch('projectName', form);
 
-  const { modalOpen: openOrUpdate, modalRef, ...modalHooks } = useModal({ onClose });
+  const { modalClose, modalOpen: openOrUpdate, modalRef, ...modalHooks } = useModal({ onClose });
 
   const modalContent = useMemo(() => {
     return (
@@ -70,10 +70,14 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
       icon: null,
       okButtonProps: { disabled: !projectName, form: FORM_ID, htmlType: 'submit' },
       okText: 'Save Changes',
+      onCancel: () => {
+        form.resetFields();
+        modalClose(ModalCloseReason.Cancel);
+      },
       onOk: handleOk,
       title: 'Edit Project',
     };
-  }, [handleOk, modalContent, projectName]);
+  }, [handleOk, modalContent, projectName, form, modalClose]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
@@ -90,7 +94,7 @@ const useModalProjectEdit = ({ onClose, project }: Props): ModalHooks => {
     if (modalRef.current) openOrUpdate(getModalProps);
   }, [getModalProps, modalRef, openOrUpdate]);
 
-  return { modalOpen, modalRef, ...modalHooks };
+  return { modalClose, modalOpen, modalRef, ...modalHooks };
 };
 
 export default useModalProjectEdit;

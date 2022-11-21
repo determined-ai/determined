@@ -1,6 +1,6 @@
 import { Button, Dropdown, Menu, Space } from 'antd';
 import type { MenuProps } from 'antd';
-import { SorterResult } from 'antd/lib/table/interface';
+import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -95,8 +95,15 @@ const WebhooksView: React.FC = () => {
         [MenuKey.DeleteWebhook]: () => {
           showConfirmDelete(record);
         },
-        [MenuKey.TestWebhook]: () => {
-          testWebhook({ id: record.id });
+        [MenuKey.TestWebhook]: async () => {
+          try {
+            await testWebhook({ id: record.id });
+          } catch (e) {
+            handleError(e, {
+              publicSubject: 'Webhook Request Failed',
+              silent: false,
+            });
+          }
         },
       };
 
@@ -172,7 +179,11 @@ const WebhooksView: React.FC = () => {
   }, [WebhookActionMenu]);
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<Webhook> | SorterResult<Webhook>[],
+    ) => {
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<Webhook>;
@@ -182,7 +193,7 @@ const WebhooksView: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: columnKey,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
       };
       updateSettings(newSettings, true);
     },

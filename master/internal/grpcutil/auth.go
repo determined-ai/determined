@@ -50,6 +50,8 @@ var (
 	ErrInvalidCredentials = status.Error(codes.Unauthenticated, "invalid credentials")
 	// ErrTokenMissing notifies that the bearer token could not be found.
 	ErrTokenMissing = status.Error(codes.Unauthenticated, "token missing")
+	// ErrNotActive notifies that the user is not active.
+	ErrNotActive = status.Error(codes.PermissionDenied, "user is not active")
 	// ErrPermissionDenied notifies that the user does not have permission to access the method.
 	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
 )

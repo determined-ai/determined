@@ -161,7 +161,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [fetchProjects, modalRef]);
 
   const renderRow = useCallback(
-    ({ index, style }) => {
+
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
       if (!destSettings.projectId) return <Spinner spinning />;
 
       const disabled = projects[index].archived || projects[index].id === sourceProjectId;
@@ -316,7 +317,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   ]);
 
   const getModalProps = useCallback(
-    (experimentIds, destinationProjectId): ModalFuncProps => {
+    (experimentIds?: number[], destinationProjectId?: number): ModalFuncProps => {
       const pluralizer = experimentIds?.length && experimentIds?.length > 1 ? 's' : '';
       return {
         closable: true,

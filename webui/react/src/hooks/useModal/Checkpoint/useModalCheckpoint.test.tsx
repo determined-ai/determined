@@ -21,7 +21,7 @@ jest.mock('services/api', () => ({
 
 const { experiment, checkpoint } = generateTestExperimentData();
 
-const Container: React.FC = (props: Partial<Props> = {}) => {
+const Container: React.FC<Partial<Props>> = (props: Partial<Props> = {}) => {
   const { contextHolder, modalOpen } = useModalCheckpoint({
     checkpoint: checkpoint,
     config: experiment.config,

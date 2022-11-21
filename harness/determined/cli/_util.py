@@ -1,8 +1,10 @@
 import argparse
+import functools
 from typing import Any, Callable, Dict, List
 
 from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
+from determined.experimental import client
 
 from .errors import FeatureFlagDisabled
 
@@ -79,6 +81,15 @@ def make_pagination_args(
 
 
 default_pagination_args = make_pagination_args()
+
+
+def login_sdk_client(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
+    @functools.wraps(func)
+    def f(namespace: argparse.Namespace) -> Any:
+        client.login(master=namespace.master, user=namespace.user)
+        return func(namespace)
+
+    return f
 
 
 def setup_session(args: argparse.Namespace) -> api.Session:

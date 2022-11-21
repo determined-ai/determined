@@ -10,10 +10,13 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/guregu/null.v3"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -77,6 +80,99 @@ func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
 
 	return api, *userModel, ctx
+}
+
+func TestPatchUser(t *testing.T) {
+	api, _, ctx := setupAPITest(t)
+	userID, err := api.m.db.AddUser(&model.User{
+		Username: uuid.New().String(),
+		Active:   false,
+	}, nil)
+	require.NoError(t, err)
+
+	username := uuid.New().String()
+	displayName := uuid.New().String()
+	password := uuid.New().String()
+	resp, err := api.PatchUser(ctx, &apiv1.PatchUserRequest{
+		UserId: int32(userID),
+		User: &userv1.PatchUser{
+			Admin:  wrapperspb.Bool(true),
+			Active: wrapperspb.Bool(true),
+			AgentUserGroup: &userv1.AgentUserGroup{
+				AgentUid:   ptrs.Ptr(int32(5)),
+				AgentUser:  ptrs.Ptr("agentuser"),
+				AgentGid:   ptrs.Ptr(int32(6)),
+				AgentGroup: ptrs.Ptr("agentgroup"),
+			},
+			Username:    ptrs.Ptr(username),
+			DisplayName: ptrs.Ptr(displayName),
+			Password:    ptrs.Ptr(password),
+			IsHashed:    false,
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, username, resp.User.Username)
+	require.True(t, resp.User.Admin)
+	require.True(t, resp.User.Active)
+	require.Equal(t, ptrs.Ptr(int32(5)), resp.User.AgentUserGroup.AgentUid)
+	require.Equal(t, ptrs.Ptr("agentuser"), resp.User.AgentUserGroup.AgentUser)
+	require.Equal(t, ptrs.Ptr(int32(6)), resp.User.AgentUserGroup.AgentGid)
+	require.Equal(t, ptrs.Ptr("agentgroup"), resp.User.AgentUserGroup.AgentGroup)
+	require.Equal(t, displayName, resp.User.DisplayName)
+
+	// Can we login with new password?
+	_, err = api.Login(ctx, &apiv1.LoginRequest{
+		Username: username,
+		Password: password,
+		IsHashed: false,
+	})
+	require.NoError(t, err)
+
+	// Null out display name and set a client side hashed password.
+	password = uuid.New().String()
+	displayName = ""
+	resp, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+		UserId: int32(userID),
+		User: &userv1.PatchUser{
+			DisplayName: ptrs.Ptr(displayName),
+			Password:    ptrs.Ptr(replicateClientSideSaltAndHash(password)),
+			IsHashed:    true,
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "", resp.User.DisplayName)
+
+	_, err = api.Login(ctx, &apiv1.LoginRequest{
+		Username: username,
+		Password: password,
+		IsHashed: false,
+	})
+	require.NoError(t, err)
+
+	// Verify we can't set a display name similar to another username or display name.
+	similiarName := uuid.New().String()
+	similiarDisplay := uuid.New().String()
+	_, err = api.m.db.AddUser(&model.User{
+		Username:    similiarName + "uPPER",
+		DisplayName: null.StringFrom(similiarDisplay + "lOwEr"),
+	}, nil)
+	require.NoError(t, err)
+
+	_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+		UserId: int32(userID),
+		User: &userv1.PatchUser{
+			DisplayName: ptrs.Ptr(similiarName + "uppEr"),
+		},
+	})
+	require.Error(t, err)
+
+	_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
+		UserId: int32(userID),
+		User: &userv1.PatchUser{
+			DisplayName: ptrs.Ptr(similiarDisplay + "LOWer"),
+		},
+	})
+	require.Error(t, err)
 }
 
 func setupUserAuthzTest(t *testing.T) (*apiServer, *mocks.UserAuthZ, model.User, context.Context) {

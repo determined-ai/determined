@@ -129,7 +129,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   });
 
   const handleTabChange = useCallback(
-    (key) => {
+    (key: string) => {
       navigate(`${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],

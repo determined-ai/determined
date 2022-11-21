@@ -111,6 +111,44 @@ def do_rendezvous_slurm(
     return det.RendezvousInfo(container_addrs=addrs, container_rank=rank)
 
 
+# On HPC, the "launcher" tells the Determined Master that the job is "Running"
+# as soon as the workload manager (e.g., Slurm, PBS, etc) starts running the job.
+# However, if the container is not already cached on the compute node, it will
+# first need to be pulled down from the Internet by Singularity or Podman. From
+# the Determined Master's point of view, the experiment is not running until all
+# the containers are pulled and each container's entry point is executed. The
+# Determined Master will show a state of "Pulling" until it receives notification
+# from all the containers that they are running.  Therefore, notify the
+# Determined Master that the container is running, so that once all the
+# containers that are part of the job report they are running, the Determined
+# Master can change the state from "Pulling" to "Running".
+def send_container_running_notification(sess: api.Session, allocation_id: str) -> None:
+    # Tells the Determined Master this container's unique ID.
+    rank_str = os.environ.get("SLURM_PROCID")
+    assert rank_str, "Unable to send container running notification without SLURM_PROCID"
+    rank = int(rank_str)
+
+    # Tells the Determined Master how many containers are part of the job so
+    # that it knows how many unique IDs it should expect notifications from
+    # in order to change the experiment's state from "Pulling" to "Running".
+    num_peers_str = os.environ.get("SLURM_NPROCS")
+    assert num_peers_str, "Unable to send container running notification without SLURM_NPROCS"
+    num_peers = int(num_peers_str)
+
+    bindings.post_NotifyContainerRunning(
+        sess,
+        allocationId=allocation_id,
+        body=bindings.v1NotifyContainerRunningRequest(
+            allocationId=allocation_id,
+            requestUuid=str(uuid.uuid4()),
+            numPeers=num_peers,
+            rank=rank,
+            nodeName=socket.gethostname(),
+            data={},
+        ),
+    )
+
+
 def rendezvous_ifaces() -> List[str]:
     # First case is a manual override. For maximum flexibility, this can be a comma-delimited list.
     rendezvous_iface = os.environ.get("DET_SLURM_RENDEZVOUS_IFACE")
@@ -231,6 +269,7 @@ if __name__ == "__main__":
     parser.add_argument("--resources", action="store_true")
     parser.add_argument("--rendezvous", action="store_true")
     parser.add_argument("--proxy", action="store_true")
+    parser.add_argument("--notify_container_running", action="store_true")
     args = parser.parse_args()
 
     # Avoid reading det.get_cluster_info(), which might (wrongly) set a singleton to None.
@@ -262,6 +301,11 @@ if __name__ == "__main__":
             backoff_factor=0.5,
         ),
     )
+
+    # Notify the Determined Master that the container is running.
+    # This should only be used on HPC clusters.
+    if args.notify_container_running:
+        send_container_running_notification(sess, info.allocation_id)
 
     if args.trial:
         trial_prep(sess, info)

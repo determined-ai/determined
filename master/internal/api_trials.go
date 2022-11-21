@@ -999,6 +999,29 @@ func (a *apiServer) AllocationPendingPreemptionSignal(
 	return &apiv1.AllocationPendingPreemptionSignalResponse{}, nil
 }
 
+func (a *apiServer) NotifyContainerRunning(
+	ctx context.Context,
+	req *apiv1.NotifyContainerRunningRequest,
+) (*apiv1.NotifyContainerRunningResponse, error) {
+	if err := a.canEditAllocation(ctx, req.AllocationId); err != nil {
+		return nil, err
+	}
+
+	if err := a.m.rm.NotifyContainerRunning(
+		a.m.system,
+		sproto.NotifyContainerRunning{
+			AllocationID: model.AllocationID(req.AllocationId),
+			NumPeers:     req.NumPeers,
+			Rank:         req.Rank,
+			NodeName:     req.NodeName,
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return &apiv1.NotifyContainerRunningResponse{}, nil
+}
+
 func (a *apiServer) MarkAllocationResourcesDaemon(
 	ctx context.Context, req *apiv1.MarkAllocationResourcesDaemonRequest,
 ) (*apiv1.MarkAllocationResourcesDaemonResponse, error) {

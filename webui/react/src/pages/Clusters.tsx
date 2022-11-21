@@ -48,8 +48,8 @@ const Clusters: React.FC = () => {
   }, [overview, resourcePools, agents]);
 
   const handleTabChange = useCallback(
-    (key) => {
-      setTabKey(key);
+    (key: string) => {
+      setTabKey(key as TabType);
       navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],

@@ -27,7 +27,7 @@ const useModalExperimentStop = ({ experimentId, onClose }: Props): ModalHooks =>
   const [type, setType] = useState<ActionType>(ActionType.Cancel);
 
   const handleClose = useCallback(
-    (reason) => {
+    (reason?: ModalCloseReason) => {
       onClose?.(reason === ModalCloseReason.Ok ? type : undefined);
     },
     [onClose, type],

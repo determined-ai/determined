@@ -188,6 +188,7 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 // SlurmConfigV0 configures experiment resource usage.
 type SlurmConfigV0 struct {
 	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
+	RawGpuType      *string  `json:"gpu_type,omitempty"`
 	RawSbatchArgs   []string `json:"sbatch_args,omitempty"`
 }
 

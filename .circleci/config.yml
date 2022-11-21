@@ -24,7 +24,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.19.7-dev0
+    default: 0.19.8-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -669,6 +669,8 @@ commands:
         type: string
       num-machines:
         type: integer
+      labels:
+        type: string
       gpu-type:
         type: string
       gpus-per-machine:
@@ -696,6 +698,8 @@ commands:
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
+      - set-cluster-labels:
+          labels: <<parameters.labels>>
       - gcloud/install:
           version: "319.0.0"
       - kubernetes/install-kubectl
@@ -704,7 +708,7 @@ commands:
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
       - run:
-          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci --no-enable-ip-alias --subnetwork default
+          command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci,${LABELS} --no-enable-ip-alias --subnetwork default
           name: Create GKE cluster
           no_output_timeout: 30m
       - run:
@@ -771,6 +775,8 @@ commands:
         type: string
       num-machines:
         type: integer
+      labels:
+        type: string
       gpu-type:
         type: string
       gpus-per-machine:
@@ -797,6 +803,8 @@ commands:
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
+      - set-cluster-labels:
+          labels: <<parameters.labels>>
       - gcloud/install:
           version: "319.0.0"
       - kubernetes/install-kubectl
@@ -891,6 +899,13 @@ commands:
         type: string
     steps:
       - run: echo "export CLUSTER_ID=\"<<parameters.cluster-id>>\"" >> $BASH_ENV
+
+  set-cluster-labels:
+    parameters:
+      labels:
+        type: string
+    steps:
+      - run: echo "export LABELS=\"$(echo '<<parameters.labels>>' | sed 's/ /-/g')\"" >> $BASH_ENV
 
   wait-for-master:
     parameters:
@@ -1424,7 +1439,7 @@ jobs:
   test-intg-master:
     machine:
       image: <<pipeline.parameters.machine-image>>
-    resource_class: large
+    resource_class: xlarge
     steps:
       - checkout
       - skip-if-docs-only
@@ -1979,6 +1994,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          labels: test-mark=<<parameters.mark>>
           det-version: ${CIRCLE_SHA1}
           gke-version: <<parameters.gke-version>>
           machine-type: <<parameters.machine-type>>
@@ -2066,6 +2082,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - setup-gke-cluster-cuda-11:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          labels: test-mark=<<parameters.mark>>
           det-version: ${CIRCLE_SHA1}
           gke-version: <<parameters.gke-version>>
           machine-type: <<parameters.machine-type>>

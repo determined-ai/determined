@@ -28,6 +28,7 @@ type ResourceManager interface {
 		sproto.ValidateCommandResourcesRequest,
 	) (sproto.ValidateCommandResourcesResponse, error)
 	DeleteJob(actor.Messenger, sproto.DeleteJob) (sproto.DeleteJobResponse, error)
+	NotifyContainerRunning(actor.Messenger, sproto.NotifyContainerRunning) error
 
 	// Scheduling related stuff
 	SetGroupMaxSlots(actor.Messenger, sproto.SetGroupMaxSlots)

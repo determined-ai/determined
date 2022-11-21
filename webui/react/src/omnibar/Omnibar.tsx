@@ -27,7 +27,7 @@ const Omnibar: React.FC = () => {
   }, [storeDispatch]);
 
   const onAction = useCallback(
-    async (item, query) => {
+    async (item: unknown, query: (inputEl: string) => void) => {
       const input: HTMLInputElement | null = omnibarInput();
 
       if (!input) return;

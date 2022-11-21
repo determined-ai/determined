@@ -766,8 +766,8 @@ const ProjectDetails: React.FC = () => {
   );
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: React.Key[]) => {
+      updateSettings({ row: rowKeys as number[] });
     },
     [updateSettings],
   );

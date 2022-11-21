@@ -26,6 +26,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { RawJson, ValueOf } from 'shared/types';
 import { ErrorType } from 'shared/utils/error';
+import { AnyMouseEvent } from 'shared/utils/routes';
 import handleError from 'utils/error';
 
 const JupyterRenderer = lazy(() => import('./IpynbRenderer'));
@@ -279,7 +280,7 @@ const CodeViewer: React.FC<Props> = ({
   }, [experimentId, runtimeConfig, submittedConfig]);
 
   const fetchFile = useCallback(
-    async (path, title) => {
+    async (path: string, title: string) => {
       setPageError(PageError.None);
 
       let file = '';
@@ -315,7 +316,7 @@ const CodeViewer: React.FC<Props> = ({
   );
 
   const handleSelectFile = useCallback(
-    (_, info: { node: DataNode }) => {
+    (_: React.Key[], info: { node: DataNode }) => {
       const selectedKey = String(info.node.key);
 
       if (selectedKey === activeFile?.key) {
@@ -355,7 +356,7 @@ const CodeViewer: React.FC<Props> = ({
   }, [activeFile]);
 
   const handleDownloadClick = useCallback(
-    (e) => {
+    (e: AnyMouseEvent) => {
       if (!activeFile) return;
 
       const filePath = String(activeFile?.key);

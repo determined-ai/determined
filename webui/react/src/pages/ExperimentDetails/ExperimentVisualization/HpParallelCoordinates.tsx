@@ -88,7 +88,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [filteredTrialIdMap, setFilteredTrialIdMap] = useState<Record<number, boolean>>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [showCompareTrials, setShowCompareTrials] = useState(false);
-  const [hermesCreatedFeatures, setHermesCreatedFeatures] = useState<HermesInternalFilters>({});
+  const [hermesCreatedFilters, setHermesCreatedFilters] = useState<HermesInternalFilters>({});
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce((acc, key) => {
@@ -121,7 +121,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
     // Figure out which trials are filtered out based on user filters.
 
-    Object.entries(hermesCreatedFeatures).forEach(([key, list]) => {
+    Object.entries(hermesCreatedFilters).forEach(([key, list]) => {
       if (!chartData.data[key] || list.length === 0) return;
 
       chartData.data[key].forEach((value, index) => {
@@ -143,7 +143,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     });
 
     setFilteredTrialIdMap(newFilteredTrialIdMap);
-  }, [chartData, hermesCreatedFeatures]);
+  }, [chartData, hermesCreatedFilters]);
 
   useEffect(() => {
     resetFilteredTrials();
@@ -155,9 +155,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
 
   const config: Hermes.RecursivePartial<Hermes.Config> = useMemo(
     () => ({
-      filters: hermesCreatedFeatures,
+      filters: hermesCreatedFilters,
       hooks: {
-        onFilterChange: setHermesCreatedFeatures,
+        onFilterChange: setHermesCreatedFilters,
+        onReset: () => setHermesCreatedFilters({}),
       },
       style: {
         axes: { label: { placement: 'after' } },
@@ -171,7 +172,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         padding: [4, 120, 4, 16],
       },
     }),
-    [colorScale, setHermesCreatedFeatures, hermesCreatedFeatures, selectedMetric],
+    [colorScale, setHermesCreatedFilters, hermesCreatedFilters, selectedMetric],
   );
 
   const dimensions = useMemo(() => {
@@ -343,7 +344,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
     [sendBatchActions],
   );
 
-  const handleTableRowSelect = useCallback((rowKeys) => setSelectedRowKeys(rowKeys), []);
+  const handleTableRowSelect = useCallback(
+    (rowKeys: unknown) => setSelectedRowKeys(rowKeys as number[]),
+    [],
+  );
 
   const handleTrialUnselect = useCallback((trialId: number) => {
     setSelectedRowKeys((rowKeys) => rowKeys.filter((id) => id !== trialId));

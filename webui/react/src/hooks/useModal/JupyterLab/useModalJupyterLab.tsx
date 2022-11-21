@@ -222,8 +222,8 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   const [field, setField] = useState([{ name: 'config', value: '' }]);
 
   const handleConfigChange = useCallback(
-    (_, allFields) => {
-      if (!Array.isArray(allFields) || allFields?.length === 0) return;
+    (_: unknown, allFields: unknown) => {
+      if (!Array.isArray(allFields) || allFields.length === 0) return;
       try {
         const configString = allFields[0].value;
         onChange?.(configString);

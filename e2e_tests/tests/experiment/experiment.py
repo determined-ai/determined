@@ -687,11 +687,9 @@ def run_basic_test(
         max_wait_secs=max_wait_secs,
     )
     assert num_active_trials(experiment_id) == 0
-
     verify_completed_experiment_metadata(
         experiment_id, expected_trials, expect_workloads, expect_checkpoints
     )
-
     return experiment_id
 
 

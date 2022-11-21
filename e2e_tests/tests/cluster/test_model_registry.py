@@ -3,6 +3,7 @@ import pytest
 from determined.experimental import Determined, ModelSortBy
 from tests import config as conf
 from tests import experiment as exp
+from tests.cluster.test_users import log_out_user
 
 
 @pytest.mark.e2e_cpu
@@ -12,6 +13,8 @@ def test_model_registry() -> None:
         conf.tutorials_path("mnist_pytorch"),
         None,
     )
+
+    log_out_user()  # Ensure that we use determined credentials.
 
     d = Determined(conf.make_master_url())
     mnist = None

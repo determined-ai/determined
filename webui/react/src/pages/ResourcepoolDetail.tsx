@@ -107,9 +107,9 @@ const ResourcepoolDetailInner: React.FC = () => {
   }, [tab]);
 
   const handleTabChange = useCallback(
-    (key) => {
+    (key: string) => {
       if (!pool) return;
-      setTabKey(key);
+      setTabKey(key as TabType);
       const basePath = paths.resourcePool(pool.name);
       navigate(`${basePath}/${key}`);
     },

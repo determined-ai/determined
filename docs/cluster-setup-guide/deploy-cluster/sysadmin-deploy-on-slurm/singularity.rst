@@ -89,15 +89,17 @@ Determined.
 *************************************************
 
 When using Singularity, you may use :ref:`referencing-local-image-paths` as described above, or you
-may instead configure a directory tree of images to be searched. To utilize this capability, provide
-a shared directory in :ref:`resource_manager.singularity_image_root <cluster-configuration-slurm>`.
-Whenever an image is referenced, it is translated to a local file path as described in
-:ref:`environment.image <exp-environment-image>`. If found, the local path is substituted in the
-``singularity run`` command to avoid the need for Singularity to download and convert the image for
-each user.
+may instead configure a directory tree of images to be searched. To utilize this capability,
+configure a shared directory in :ref:`resource_manager.singularity_image_root
+<cluster-configuration-slurm>`. Whenever an image is referenced, it is translated to a local file
+path as described in :ref:`environment.image <exp-environment-image>`. If found, the local path is
+substituted in the ``singularity run`` command to avoid the need for Singularity to download and
+convert the image for each user.
 
-Add each tagged image required by your environment and the needs of your experiments to the image
-cache:
+You can manually manage the content of this directory tree, or you may use the
+:ref:`manage-singularity-cache <manage-singularity-cache>` script which automates those same steps.
+To manually populate the cache, add each tagged image required by your environment and the needs of
+your experiments to the image cache using the following steps:
 
 #. Create a directory path using the same prefix as the image name referenced in the
    ``singularity_image_root`` directory. For example, the image
@@ -126,3 +128,55 @@ cache:
             temporary-image \
             docker://$image
       scp temporary-image mycluster:$singularity_image_root/$image
+
+.. _manage-singularity-cache:
+
+********************************************************************************
+ Managing the Singularity Image Cache using the manage-singularity-cache script
+********************************************************************************
+
+A convenience script, ``/etc/launcher/scripts/manage-singularity-cache``, is provided by the HPC
+launcher installation to simplify the management of the Singularity image cache. The script
+simplifies the management of the Singularity image cache directory content and helps ensure proper
+name, placement, and permissions of content added to the cache. Adding container images to the
+Singularity image cache avoids the overhead of downloading the images and allows for sharing of
+images between multiple users. It provides the following features:
+
+   -  Download the Determined default cuda, cpu, or rocm environment images
+   -  Download an arbitrary docker image reference
+   -  Copy a local Singularity image file into the cache
+   -  List the currently available images in the cache
+
+If your system has internet access, you can download images directly into the cache. Use the
+``--cuda``, ``--cpu``, or ``--rocm`` options to download the current default CUDA, CPU, or ROCM
+environment container image into the cache. For example, to download the default CUDA container
+image, use the following command:
+
+   .. code:: bash
+
+      /etc/launcher/scripts/manage-singularity-cache --cuda
+
+If your system has internet access, you can download any desired docker container image (e.g.
+``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730``) into the cache using the
+command:
+
+   .. code:: bash
+
+      /etc/launcher/scripts/manage-singularity-cache determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+
+Otherwise, from an internet-connected system, download the desired image using the Singularity
+``pull`` command, then copy it to a system with access to the ``singularity_image_root`` folder. You
+can then add the image to the cache by specifying the local file name using ``-i`` and the docker
+image reference which determines the name to be added to the cache.
+
+   .. code:: bash
+
+      /etc/launcher/scripts/manage-singularity-cache -i localfile.sif determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+
+You can view the current set of docker image names in the cache with the ``-l`` option.
+
+   .. code:: bash
+
+      /etc/launcher/scripts/manage-singularity-cache -l
+      determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+      determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730

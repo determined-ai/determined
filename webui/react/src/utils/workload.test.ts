@@ -1,4 +1,4 @@
-import { CheckpointState, WorkloadGroup } from 'types';
+import { CheckpointState, Step, WorkloadGroup } from 'types';
 
 import * as utils from './workload';
 
@@ -97,9 +97,10 @@ describe('Workload Utilities', () => {
 
   describe('hasCheckpointStep', () => {
     it('should detect checkpoint from step', () => {
-      const step = {
+      const step: Step = {
         batchNum: 100,
         checkpoint: { state: CheckpointState.Active, totalBatches: 100 },
+        key: 'step',
         startTime: '2021-11-29T00:00:00Z',
         training: { totalBatches: 100 },
       };
@@ -107,9 +108,10 @@ describe('Workload Utilities', () => {
     });
 
     it('should reject step with deleted checkpoint', () => {
-      const step = {
+      const step: Step = {
         batchNum: 100,
         checkpoint: { state: CheckpointState.Deleted, totalBatches: 100 },
+        key: 'step',
         startTime: '2021-11-29T00:00:00Z',
         training: { totalBatches: 100 },
       };

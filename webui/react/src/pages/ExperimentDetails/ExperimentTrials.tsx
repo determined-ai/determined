@@ -1,6 +1,6 @@
-import { Dropdown, Menu } from 'antd';
+import { Dropdown, Menu, TablePaginationConfig } from 'antd';
 import type { MenuProps } from 'antd';
-import { FilterDropdownProps, SorterResult } from 'antd/es/table/interface';
+import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -242,7 +242,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   }, [experiment, settings, stateFilterDropdown, dropDownOnTrigger]);
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<TrialItem> | SorterResult<TrialItem>[],
+    ) => {
       if (Array.isArray(tableSorter) || !settings) return;
 
       const { columnKey, order } = tableSorter as SorterResult<TrialItem>;
@@ -254,7 +258,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           ? columnKey
           : V1GetExperimentTrialsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -352,8 +356,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   }, [canceler]);
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: React.Key[]) => {
+      updateSettings({ row: rowKeys.map(Number) });
     },
     [updateSettings],
   );
@@ -371,7 +375,15 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   );
 
   const TrialActionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => {
+    ({
+      record,
+      onVisibleChange,
+      children,
+    }: {
+      children: React.ReactNode;
+      onVisibleChange?: (visible: boolean) => void;
+      record: TrialItem;
+    }) => {
       const MenuKey = {
         HyperparameterSearch: 'hyperparameter-search',
         OpenTensorboard: 'open-tensorboard',
