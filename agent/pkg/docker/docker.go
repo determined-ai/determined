@@ -124,7 +124,7 @@ func (d *Client) ReattachContainer(
 	}
 
 	for _, cont := range containers {
-		// Subscribe to termination notifications first, to not miss immediately exits.
+		// Subscribe to termination notifications first, to not miss immediate exits.
 		waiter, errs := d.cl.ContainerWait(ctx, cont.ID, dcontainer.WaitConditionNextExit)
 
 		// Restore containerInfo.
