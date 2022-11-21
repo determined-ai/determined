@@ -1339,10 +1339,10 @@ The ``pbs`` section specifies configuration options applicable when the cluster 
             - -p1000
             - -PMyProjectName
 
-   Requesting of resources and job placement may be influenced through use of ``-l``, 
-   however chunk count, chunk arrangement, and GPU or CPU counts per chunk 
-   (depending on the value of ``slot_type``) are controlled by Determined;
-   any values specified for these quantities will be ignored.
+   Requesting of resources and job placement may be influenced through use of ``-l``, however chunk
+   count, chunk arrangement, and GPU or CPU counts per chunk (depending on the value of
+   ``slot_type``) are controlled by Determined; any values specified for these quantities will be
+   ignored.
 
 ``slots_per_node``
    The minimum number of slots required for a node to be scheduled during a trial. If
