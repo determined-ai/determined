@@ -238,7 +238,7 @@ func (s *WebSocket[TIn, TOut]) Error() error {
 func (s *WebSocket[TIn, TOut]) setError(err error) {
 	s.errLock.Lock()
 	defer s.errLock.Unlock()
-	if err == nil {
+	if s.err == nil {
 		s.err = err
 	}
 }
