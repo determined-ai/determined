@@ -6,7 +6,7 @@ import Bar from 'components/Bar';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import { resourceStateToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
-import { V1ResourcePoolType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType } from 'services/api-ts-sdk/models';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { floatToPercent } from 'shared/utils/string';
 import { getStateColorCssVar, ShirtSize } from 'themes';

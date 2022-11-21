@@ -1,4 +1,8 @@
-import { Determinedtrialv1State, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
+import {
+  Determinedtrialv1State,
+  V1ResourcePoolType,
+  V1SchedulerType,
+} from 'services/api-ts-sdk/models';
 import { StateOfUnion } from 'themes';
 import {
   CheckpointState,

@@ -5,7 +5,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
-import * as api from 'services/api-ts-sdk';
+import * as api from 'services/api-ts-sdk/models';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
 import { Job, JobType, RPStats } from 'types';

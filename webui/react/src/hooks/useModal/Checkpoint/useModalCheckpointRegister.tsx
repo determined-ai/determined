@@ -6,7 +6,7 @@ import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';
 import { paths } from 'routes/utils';
 import { getModels, postModelVersion } from 'services/api';
-import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk/models';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';

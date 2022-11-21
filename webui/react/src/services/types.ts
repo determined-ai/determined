@@ -444,12 +444,15 @@ export interface DeleteProjectParams {
   id: number;
 }
 
-export interface PatchWorkspaceParams extends Api.V1PatchWorkspace {
+export interface PatchWorkspaceParams {
   id: number;
+  name: string;
 }
 
-export interface PatchProjectParams extends Api.V1PatchProject {
+export interface PatchProjectParams {
+  description?: string;
   id: number;
+  name?: string;
 }
 
 export interface ArchiveProjectParams {

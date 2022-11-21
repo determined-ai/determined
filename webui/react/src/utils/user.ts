@@ -1,4 +1,9 @@
-import { V1Group, V1Role, V1RoleAssignment, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import {
+  V1Group,
+  V1Role,
+  V1RoleAssignment,
+  V1RoleWithAssignments,
+} from 'services/api-ts-sdk/models';
 import { DetailedUser, User, UserOrGroup, UserRole } from 'types';
 
 interface UserNameFields {

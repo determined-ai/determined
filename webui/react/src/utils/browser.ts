@@ -1,5 +1,5 @@
 import { getTrialDetails } from 'services/api';
-import { V1TrialLogsResponse } from 'services/api-ts-sdk';
+import { V1TrialLogsResponse } from 'services/api-ts-sdk/models';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { parseUrl, routeToExternalUrl } from 'shared/utils/routes';

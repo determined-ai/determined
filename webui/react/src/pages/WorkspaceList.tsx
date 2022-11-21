@@ -25,7 +25,7 @@ import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
-import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';

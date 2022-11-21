@@ -1,7 +1,7 @@
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk/models';
 import { CheckpointState } from 'types';
 
 export type CheckpointColumnName =

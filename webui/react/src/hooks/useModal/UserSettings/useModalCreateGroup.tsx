@@ -14,7 +14,7 @@ import {
   removeRolesFromGroup,
   updateGroup,
 } from 'services/api';
-import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
+import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk/models';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser, UserRole } from 'types';

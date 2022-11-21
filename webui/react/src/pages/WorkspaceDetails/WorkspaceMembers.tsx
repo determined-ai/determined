@@ -13,7 +13,7 @@ import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
-import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk/models';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { alphaNumericSorter } from 'shared/utils/sort';

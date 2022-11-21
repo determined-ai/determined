@@ -4,51 +4,72 @@ import { globalStorage } from 'globalStorage';
 import { decodeTrialsCollection } from 'pages/TrialsComparison/api';
 import { TrialsCollection } from 'pages/TrialsComparison/Collections/collections';
 import { serverAddress } from 'routes/utils';
-import * as Api from 'services/api-ts-sdk';
+import { AuthenticationApi } from 'services/api-ts-sdk/apis/AuthenticationApi';
+import { CheckpointsApi } from 'services/api-ts-sdk/apis/CheckpointsApi';
+import { ClusterApi } from 'services/api-ts-sdk/apis/ClusterApi';
+import { CommandsApi } from 'services/api-ts-sdk/apis/CommandsApi';
+import { ExperimentsApi } from 'services/api-ts-sdk/apis/ExperimentsApi';
+import { InternalApi } from 'services/api-ts-sdk/apis/InternalApi';
+import { JobsApi } from 'services/api-ts-sdk/apis/JobsApi';
+import { ModelsApi } from 'services/api-ts-sdk/apis/ModelsApi';
+import { NotebooksApi } from 'services/api-ts-sdk/apis/NotebooksApi';
+import { ProfilerApi } from 'services/api-ts-sdk/apis/ProfilerApi';
+import { ProjectsApi } from 'services/api-ts-sdk/apis/ProjectsApi';
+import { RBACApi } from 'services/api-ts-sdk/apis/RBACApi';
+import { ShellsApi } from 'services/api-ts-sdk/apis/ShellsApi';
+import { TasksApi } from 'services/api-ts-sdk/apis/TasksApi';
+import { TemplatesApi } from 'services/api-ts-sdk/apis/TemplatesApi';
+import { TensorboardsApi } from 'services/api-ts-sdk/apis/TensorboardsApi';
+import { TrialComparisonApi } from 'services/api-ts-sdk/apis/TrialComparisonApi';
+import { UsersApi } from 'services/api-ts-sdk/apis/UsersApi';
+import { WebhooksApi } from 'services/api-ts-sdk/apis/WebhooksApi';
+import { WorkspacesApi } from 'services/api-ts-sdk/apis/WorkspacesApi';
+import * as Api from 'services/api-ts-sdk/models';
+import { Configuration, ConfigurationParameters } from 'services/api-ts-sdk/runtime';
 import * as decoder from 'services/decoder';
 import * as Service from 'services/types';
 import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { identity, noOp } from 'shared/utils/service';
 import * as Type from 'types';
 
-const updatedApiConfigParams = (apiConfig?: Api.ConfigurationParameters): Api.Configuration => {
-  return new Api.Configuration({
+const updatedApiConfigParams = (apiConfig?: ConfigurationParameters): Configuration => {
+  return new Configuration({
     apiKey: `Bearer ${globalStorage.authToken}`,
     basePath: serverAddress(),
     ...apiConfig,
-  } as Api.ConfigurationParameters);
+  } as ConfigurationParameters);
 };
 
-const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
+const generateApiConfig = (apiConfig?: ConfigurationParameters) => {
   const config = updatedApiConfigParams(apiConfig);
   return {
-    Auth: new Api.AuthenticationApi(config),
-    Checkpoints: new Api.CheckpointsApi(config),
-    Cluster: new Api.ClusterApi(config),
-    Commands: new Api.CommandsApi(config),
-    Experiments: new Api.ExperimentsApi(config),
-    Internal: new Api.InternalApi(config),
-    Jobs: new Api.JobsApi.JobsApi(config),
-    Models: new Api.ModelsApi(config),
-    Notebooks: new Api.NotebooksApi(config),
-    Profiler: new Api.ProfilerApi(config),
-    Projects: new Api.ProjectsApi(config),
-    RBAC: new Api.RBACApi(config),
-    Shells: new Api.ShellsApi(config),
-    Tasks: new Api.TasksApi(config),
-    Templates: new Api.TemplatesApi(config),
-    TensorBoards: new Api.TensorboardsApi(config),
-    TrialsComparison: new Api.TrialComparisonApi(config),
-    Users: new Api.UsersApi(config),
-    Webhooks: new Api.WebhooksApi(config),
-    Workspaces: new Api.WorkspacesApi(config),
+    Auth: new AuthenticationApi(config),
+    Checkpoints: new CheckpointsApi(config),
+    Cluster: new ClusterApi(config),
+    Commands: new CommandsApi(config),
+    Experiments: new ExperimentsApi(config),
+    Internal: new InternalApi(config),
+    Jobs: new JobsApi(config),
+    Models: new ModelsApi(config),
+    Notebooks: new NotebooksApi(config),
+    Profiler: new ProfilerApi(config),
+    Projects: new ProjectsApi(config),
+    RBAC: new RBACApi(config),
+    Shells: new ShellsApi(config),
+    Tasks: new TasksApi(config),
+    Templates: new TemplatesApi(config),
+    TensorBoards: new TensorboardsApi(config),
+    TrialsComparison: new TrialComparisonApi(config),
+    Users: new UsersApi(config),
+    Webhooks: new WebhooksApi(config),
+    Workspaces: new WorkspacesApi(config),
   };
 };
 
 export let detApi = generateApiConfig();
 
 // Update references to generated API code with new configuration.
-export const updateDetApi = (apiConfig: Api.ConfigurationParameters): void => {
+export const updateDetApi = (apiConfig: ConfigurationParameters): void => {
   detApi = generateApiConfig(apiConfig);
 };
 
@@ -1212,7 +1233,7 @@ export const deleteWorkspace: DetApi<
 };
 
 export const patchWorkspace: DetApi<
-  Api.PatchWorkspaceRequest,
+  Service.PatchWorkspaceParams,
   Api.V1PatchWorkspaceResponse,
   Type.Workspace
 > = {
@@ -1223,7 +1244,7 @@ export const patchWorkspace: DetApi<
   request: (params, options) => {
     return detApi.Workspaces.patchWorkspace(
       params.id,
-      { name: params.body.name?.trim(), ...params.body },
+      { ...params, name: params.name?.trim() },
       options,
     );
   },

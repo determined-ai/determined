@@ -1,4 +1,4 @@
-import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk';
+import { V1ResourceAllocationAggregatedEntry } from 'services/api-ts-sdk/models';
 import { sumArrays } from 'shared/utils/array';
 import { secondToHour } from 'shared/utils/datetime';
 import { DetailedUser } from 'types';

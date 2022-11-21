@@ -1,5 +1,5 @@
 import { terminalCommandStates } from 'constants/states';
-import * as Api from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk/models';
 import * as Config from 'services/apiConfig';
 import * as Service from 'services/types';
 import { EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
@@ -501,7 +501,7 @@ export const deleteWorkspace = generateDetApi<
 >(Config.deleteWorkspace);
 
 export const patchWorkspace = generateDetApi<
-  Api.PatchWorkspaceRequest,
+  Service.PatchWorkspaceParams,
   Api.V1PatchWorkspaceResponse,
   Type.Workspace
 >(Config.patchWorkspace);

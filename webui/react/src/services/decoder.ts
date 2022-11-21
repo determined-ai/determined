@@ -12,7 +12,7 @@ import {
 import { capitalize } from 'shared/utils/string';
 import * as types from 'types';
 
-import * as Sdk from './api-ts-sdk'; // API Bindings
+import * as Sdk from './api-ts-sdk/models'; // API Bindings
 
 export const mapV1User = (data: Sdk.V1User): types.DetailedUser => {
   return {

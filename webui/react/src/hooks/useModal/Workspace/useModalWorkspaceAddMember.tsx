@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
-import { V1Group, V1Role } from 'services/api-ts-sdk';
+import { V1Group, V1Role } from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';

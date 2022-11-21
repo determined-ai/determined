@@ -25,7 +25,7 @@ import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
-import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk/models';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';

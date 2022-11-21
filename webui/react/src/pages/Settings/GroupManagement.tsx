@@ -14,7 +14,7 @@ import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
-import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
+import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk/models';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { clone, isEqual } from 'shared/utils/data';

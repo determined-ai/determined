@@ -16,7 +16,7 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
-import * as Api from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk/models';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
@@ -104,7 +104,11 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       if (jobs.pagination.total) setTotal(jobs.pagination.total);
 
       // Process job stats response.
-      setRpStats(stats.results.sort((a, b) => a.resourcePool.localeCompare(b.resourcePool)));
+      setRpStats(
+        stats.results.sort((a: Api.V1RPQueueStat, b: Api.V1RPQueueStat) =>
+          a.resourcePool.localeCompare(b.resourcePool),
+        ),
+      );
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,

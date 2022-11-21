@@ -8,7 +8,7 @@ import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
-import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
+import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk/models';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
@@ -16,7 +16,14 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { Primitive } from 'shared/types';
 import { flattenObject, isBoolean, isString } from 'shared/utils/data';
-import { ExperimentBase, HyperparameterType, Metric, metricTypeParamMap, Scale } from 'types';
+import {
+  ExperimentBase,
+  HyperparameterType,
+  Metric,
+  metricTypeParamMap,
+  Scale,
+  TrialHyperparameters,
+} from 'types';
 import { metricToStr } from 'utils/metric';
 
 import css from './HpScatterPlots.module.scss';
@@ -163,7 +170,7 @@ const ScatterPlots: React.FC<Props> = ({
           const trialId = trial.trialId;
           trialIds.push(trialId);
 
-          const flatHParams = flattenObject(trial.hparams as Record<string, any>);
+          const flatHParams = flattenObject(trial.hparams as TrialHyperparameters);
           fullHParams.forEach((hParam) => {
             /**
              * TODO: filtering NaN, +/- Infinity for now, but handle it later with

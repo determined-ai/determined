@@ -10,7 +10,11 @@ import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
-import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
+import {
+  V1GetJobQueueStatsResponse,
+  V1RPQueueStat,
+  V1SchedulerType,
+} from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';

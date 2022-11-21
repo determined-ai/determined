@@ -10,7 +10,7 @@ import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import useSettings from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
-import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { V1AugmentedTrial } from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import { intersection } from 'shared/utils/set';

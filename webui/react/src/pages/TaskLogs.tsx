@@ -119,7 +119,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
   useEffect(() => {
     const canceler = new AbortController();
 
-    readStream(detApi.Jobs.taskLogsFields(taskId, true, 0, { signal: canceler.signal }), (event) =>
+    readStream(detApi.Jobs.taskLogsFields(taskId, true, { signal: canceler.signal }), (event) =>
       setFilterOptions(event as Filters),
     );
 

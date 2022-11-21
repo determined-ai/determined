@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import React from 'react';
 
 import StoreProvider from 'contexts/Store';
-import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { V1GroupSearchResult } from 'services/api-ts-sdk/models';
 import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { DetailedUser } from 'types';
 

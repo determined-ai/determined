@@ -36,7 +36,7 @@ import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
-import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';

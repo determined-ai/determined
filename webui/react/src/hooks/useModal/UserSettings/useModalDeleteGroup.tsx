@@ -2,7 +2,7 @@ import { message } from 'antd';
 import React, { useCallback } from 'react';
 
 import { deleteGroup } from 'services/api';
-import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { V1GroupSearchResult } from 'services/api-ts-sdk/models';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';

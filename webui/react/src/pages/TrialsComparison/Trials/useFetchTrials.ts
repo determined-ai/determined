@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { queryTrials } from 'services/api';
-import { V1QueryTrialsResponse } from 'services/api-ts-sdk';
+import { V1QueryTrialsResponse } from 'services/api-ts-sdk/models';
 import usePolling from 'shared/hooks/usePolling';
 import handleError from 'utils/error';
 

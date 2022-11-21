@@ -3,7 +3,7 @@ import React, { Suspense, useMemo } from 'react';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import { V1ResourcePoolTypeToLabel, V1SchedulerTypeToLabel } from 'constants/states';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
-import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
+import { V1ResourcePoolType, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk/models';
 import awsLogoOnDark from 'shared/assets/images/aws-logo-on-dark.svg';
 import awsLogo from 'shared/assets/images/aws-logo.svg';
 import gcpLogo from 'shared/assets/images/gcp-logo.svg';

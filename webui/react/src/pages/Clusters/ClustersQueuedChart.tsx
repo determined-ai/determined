@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 
 import Page from 'components/Page';
 import Section from 'components/Section';
-import { V1RPQueueStat } from 'services/api-ts-sdk';
+import { V1RPQueueStat } from 'services/api-ts-sdk/models';
 import { DURATION_DAY } from 'shared/utils/datetime';
 
 import ClusterHistoricalUsageChart from '../Cluster/ClusterHistoricalUsageChart';

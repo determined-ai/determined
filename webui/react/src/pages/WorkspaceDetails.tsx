@@ -15,7 +15,12 @@ import {
   getWorkspaceMembers,
   searchRolesAssignableToScope,
 } from 'services/api';
-import { V1Group, V1GroupSearchResult, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import {
+  V1Group,
+  V1GroupSearchResult,
+  V1Role,
+  V1RoleWithAssignments,
+} from 'services/api-ts-sdk/models';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';

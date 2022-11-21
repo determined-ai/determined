@@ -2,7 +2,8 @@ import { pathToRegexp } from 'path-to-regexp';
 import queryString from 'query-string';
 
 import { globalStorage } from 'globalStorage';
-import { ClusterApi, Configuration } from 'services/api-ts-sdk';
+import { ClusterApi } from 'services/api-ts-sdk/apis/ClusterApi';
+import { Configuration } from 'services/api-ts-sdk/runtime';
 import { RouteConfig } from 'shared/types';
 import {
   AnyMouseEvent,

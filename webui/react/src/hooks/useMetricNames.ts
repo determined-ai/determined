@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { V1MetricNamesResponse } from 'services/api-ts-sdk';
+import { V1MetricNamesResponse } from 'services/api-ts-sdk/models';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import { alphaNumericSorter } from 'shared/utils/sort';

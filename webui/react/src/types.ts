@@ -1,5 +1,5 @@
-import * as Api from 'services/api-ts-sdk';
-import { V1AgentUserGroup, V1Group, V1Trigger } from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk/models';
+import { V1AgentUserGroup, V1Group, V1Trigger } from 'services/api-ts-sdk/models';
 import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
 
 interface WithPagination {

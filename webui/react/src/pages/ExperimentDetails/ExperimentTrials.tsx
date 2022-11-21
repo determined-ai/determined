@@ -22,7 +22,7 @@ import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import {
   Determinedexperimentv1State,
   V1GetExperimentTrialsRequestSortBy,
-} from 'services/api-ts-sdk';
+} from 'services/api-ts-sdk/models';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import usePolling from 'shared/hooks/usePolling';

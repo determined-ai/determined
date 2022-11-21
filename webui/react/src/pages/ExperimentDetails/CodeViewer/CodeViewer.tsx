@@ -19,7 +19,7 @@ import useResize from 'hooks/useResize';
 import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
 import { handlePath, paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
-import { V1FileNode } from 'services/api-ts-sdk';
+import { V1FileNode } from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';

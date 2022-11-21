@@ -4,7 +4,7 @@ import { Options } from 'components/UPlot/UPlotChart';
 import {
   V1GetTrialProfilerMetricsResponse,
   V1TrialProfilerMetricsBatch,
-} from 'services/api-ts-sdk';
+} from 'services/api-ts-sdk/models';
 import { ValueOf } from 'shared/types';
 import { TrialDetails } from 'types';
 

@@ -19,7 +19,7 @@ import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getGroups, getUsers, patchUser } from 'services/api';
-import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
+import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk/models';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';

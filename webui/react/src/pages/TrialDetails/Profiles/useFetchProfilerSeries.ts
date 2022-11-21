@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { V1GetTrialProfilerAvailableSeriesResponse } from 'services/api-ts-sdk';
+import { V1GetTrialProfilerAvailableSeriesResponse } from 'services/api-ts-sdk/models';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import useUI from 'shared/contexts/stores/UI';

@@ -1,4 +1,4 @@
-import { V1AugmentedTrial, V1QueryTrialsResponse } from 'services/api-ts-sdk';
+import { V1AugmentedTrial, V1QueryTrialsResponse } from 'services/api-ts-sdk/models';
 import { Primitive, RawJson } from 'shared/types';
 import { flattenObject } from 'shared/utils/data';
 import { union } from 'shared/utils/set';

@@ -23,7 +23,7 @@ import { getExperimentCheckpoints } from 'services/api';
 import {
   Determinedcheckpointv1State,
   V1GetExperimentCheckpointsRequestSortBy,
-} from 'services/api-ts-sdk';
+} from 'services/api-ts-sdk/models';
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';

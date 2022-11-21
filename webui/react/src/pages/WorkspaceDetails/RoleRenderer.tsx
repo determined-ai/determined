@@ -10,7 +10,7 @@ import {
   removeRolesFromGroup,
   removeRolesFromUser,
 } from 'services/api';
-import { V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
+import { V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk/models';
 import { UserOrGroup } from 'types';
 import handleError from 'utils/error';
 import { getAssignedRole, getIdFromUserOrGroup, isUser } from 'utils/user';

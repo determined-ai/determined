@@ -1,7 +1,7 @@
 import { GridListView } from 'components/GridListRadioGroup';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { BaseType, SettingsConfig } from 'hooks/useSettings';
-import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk/models';
 import { ValueOf } from 'shared/types';
 
 export type ProjectColumnName =

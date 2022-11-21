@@ -14,7 +14,7 @@ import {
   removeRolesFromUser,
   updateGroup,
 } from 'services/api';
-import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { V1GroupSearchResult } from 'services/api-ts-sdk/models';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';

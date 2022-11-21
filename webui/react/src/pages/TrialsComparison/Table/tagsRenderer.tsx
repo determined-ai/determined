@@ -2,7 +2,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 
 import TagList, { TagAction } from 'components/Tags';
 import { updateTrialTags } from 'services/api';
-import { V1AugmentedTrial } from 'services/api-ts-sdk';
+import { V1AugmentedTrial } from 'services/api-ts-sdk/models';
 import { ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 

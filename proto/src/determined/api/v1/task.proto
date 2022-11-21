@@ -118,8 +118,6 @@ message TaskLogsFieldsRequest {
   string task_id = 1;
   // Continue following fields until the task stops.
   bool follow = 2;
-  // Param to distinguish from trials.
-  optional int32 x = 3;
 }
 
 // Response to TaskLogsFieldsRequest.

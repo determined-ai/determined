@@ -1,6 +1,6 @@
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { stateRenderer } from 'components/Table/Table';
-import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk/models';
 import { CoreApiGenericCheckpoint } from 'types';
 
 import { DEFAULT_COLUMN_WIDTHS } from './ExperimentCheckpoints.settings';

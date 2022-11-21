@@ -1,5 +1,5 @@
 /* eslint-disable sort-keys-fix/sort-keys-fix */
-import { Determinedtrialv1State } from 'services/api-ts-sdk';
+import { Determinedtrialv1State } from 'services/api-ts-sdk/models';
 import {
   DarkLight,
   getCssVar,

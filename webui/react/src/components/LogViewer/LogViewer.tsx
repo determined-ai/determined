@@ -18,7 +18,7 @@ import useResize from 'hooks/useResize';
 import {
   StreamResultOfV1MasterLogsResponse,
   StreamResultOfV1TaskLogsResponse,
-} from 'services/api-ts-sdk';
+} from 'services/api-ts-sdk/models';
 import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';

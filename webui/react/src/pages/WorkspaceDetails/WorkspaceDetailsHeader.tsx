@@ -10,7 +10,7 @@ import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspa
 import usePermissions from 'hooks/usePermissions';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
-import { V1Role } from 'services/api-ts-sdk';
+import { V1Role } from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { UserOrGroup, Workspace } from 'types';
@@ -60,7 +60,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
   const handleNameChange = useCallback(
     async (name: string) => {
       try {
-        await patchWorkspace({ body: { name }, id: workspace.id });
+        await patchWorkspace({ id: workspace.id, name });
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,

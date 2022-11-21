@@ -56,7 +56,10 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import {
+  Determinedexperimentv1State,
+  V1GetExperimentsRequestSortBy,
+} from 'services/api-ts-sdk/models';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';

@@ -13,7 +13,7 @@ import {
   V1TrialsCollection,
   V1TrialSorter,
   V1TrialTag,
-} from 'services/api-ts-sdk';
+} from 'services/api-ts-sdk/models';
 import { finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { camelCaseToSnake, snakeCaseToCamelCase } from 'shared/utils/string';
 

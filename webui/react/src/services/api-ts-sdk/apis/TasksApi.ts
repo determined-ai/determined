@@ -58,7 +58,6 @@ export interface TaskLogsRequest {
 export interface TaskLogsFieldsRequest {
     taskId: string;
     follow?: boolean;
-    x?: number;
 }
 
 /**
@@ -230,10 +229,6 @@ export class TasksApi extends runtime.BaseAPI {
             queryParameters['follow'] = requestParameters.follow;
         }
 
-        if (requestParameters.x !== undefined) {
-            queryParameters['x'] = requestParameters.x;
-        }
-
         const headerParameters: runtime.HTTPHeaders = {};
 
         if (this.configuration && this.configuration.apiKey) {
@@ -253,8 +248,8 @@ export class TasksApi extends runtime.BaseAPI {
     /**
      * Stream task log fields.
      */
-    async taskLogsFields(taskId: string, follow?: boolean, x?: number, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StreamResultOfV1TaskLogsFieldsResponse> {
-        const response = await this.taskLogsFieldsRaw({ taskId: taskId, follow: follow, x: x }, initOverrides);
+    async taskLogsFields(taskId: string, follow?: boolean, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<StreamResultOfV1TaskLogsFieldsResponse> {
+        const response = await this.taskLogsFieldsRaw({ taskId: taskId, follow: follow }, initOverrides);
         return await response.value();
     }
 

@@ -11,7 +11,7 @@ import {
   GetHPImportanceResponseMetricHPImportance,
   V1GetHPImportanceResponse,
   V1MetricBatchesResponse,
-} from 'services/api-ts-sdk';
+} from 'services/api-ts-sdk/models';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
