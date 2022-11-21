@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 type pullInfo struct {
