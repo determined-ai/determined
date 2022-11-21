@@ -1,6 +1,8 @@
 SWAGGER_SPEC := ../proto/build/swagger/determined/api/v1/api.swagger.json
-CODEGEN_VER = 2.4.27
-CODEGEN_BIN := swagger-codegen-cli-$(CODEGEN_VER).jar
+CODEGEN_VER = 6.2.1
+CODEGEN_BIN := openapi-generator-cli-$(CODEGEN_VER).jar
+SWAGGER_VER = 3.0.36
+SWAGGER_BIN := swagger-codegen-cli-$(SWAGGER_VER).jar
 py_bindings_dest := ../harness/determined/common/api/bindings.py
 ts_bindings_dest := ../webui/react/src/services/api-ts-sdk
 py_generator := generate_bindings.py
@@ -14,7 +16,7 @@ get-deps: deps/$(CODEGEN_BIN)
 
 deps/$(CODEGEN_BIN):
 	mkdir -p deps
-	curl https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(CODEGEN_VER)/$(CODEGEN_BIN) \
+	curl https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/$(CODEGEN_VER)/$(CODEGEN_BIN) \
 		-o deps/$(CODEGEN_BIN)
 
 .PHONY: force-gen
@@ -35,7 +37,8 @@ build/python: $(py_bindings_dest)
 build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	mkdir -p build/$*
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
-		-l typescript-fetch -o build/typescript-fetch
+		-g typescript-fetch --additional-properties=string_enums=true,useSingleRequestParameter=false,enumPropertyNaming=UPPERCASE \
+		-o build/typescript-fetch
 	$(MAKE) bindings-copy-over
 	touch build/typescript-fetch
 
