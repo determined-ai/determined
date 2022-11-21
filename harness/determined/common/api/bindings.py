@@ -5318,11 +5318,13 @@ class v1LaunchNotebookRequest:
     def __init__(
         self,
         *,
+        workspaceId: int,
         config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         preview: "typing.Union[bool, None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
     ):
+        self.workspaceId = workspaceId
         if not isinstance(config, Unset):
             self.config = config
         if not isinstance(files, Unset):
@@ -5335,6 +5337,7 @@ class v1LaunchNotebookRequest:
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchNotebookRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "workspaceId": obj["workspaceId"],
         }
         if "config" in obj:
             kwargs["config"] = obj["config"]
@@ -5348,6 +5351,7 @@ class v1LaunchNotebookRequest:
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
@@ -6188,6 +6192,7 @@ class v1Notebook:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
+        workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         exitStatus: "typing.Union[str, None, Unset]" = _unset,
@@ -6201,6 +6206,7 @@ class v1Notebook:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(container, Unset):
             self.container = container
         if not isinstance(displayName, Unset):
@@ -6222,6 +6228,7 @@ class v1Notebook:
             "startTime": obj["startTime"],
             "state": determinedtaskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "container" in obj:
             kwargs["container"] = v1Container.from_json(obj["container"]) if obj["container"] is not None else None
@@ -6244,6 +6251,7 @@ class v1Notebook:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "container" in vars(self):
             out["container"] = None if self.container is None else self.container.to_json(omit_unset)
