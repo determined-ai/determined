@@ -1351,8 +1351,8 @@ The ``pbs`` section specifies configuration options applicable when the cluster 
             - -l select=2:ngpus=4:mem=4gb
             - -l place=scatter:shared
             - -l walltime=1:00:00
-  
-   then the chunk count (two), the GPU count per chunk (four), and the chunk arrangement (scatter) 
+
+   then the chunk count (two), the GPU count per chunk (four), and the chunk arrangement (scatter)
    would all be ignored in favor of values calculated by Determined.
 
 ``slots_per_node``
