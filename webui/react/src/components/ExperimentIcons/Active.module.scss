@@ -1,3 +1,5 @@
+@use 'sass:math';
+
 .base {
   align-items: center;
   display: flex;
@@ -19,7 +21,7 @@
   &,
   &::before,
   &::after {
-    animation-delay: -$duration / 3;
+    animation-delay: math.div(-$duration, 3);
     animation-duration: $duration;
     animation-iteration-count: infinite;
     animation-name: pulse;
@@ -41,7 +43,7 @@
     width: 100%;
   }
   &::before {
-    animation-delay: -(2 * $duration) / 3;
+    animation-delay: math.div(-(2 * $duration), 3);
     left: -0.5rem;
   }
   &::after {
