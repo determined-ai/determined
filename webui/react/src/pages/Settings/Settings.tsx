@@ -3,10 +3,9 @@ import React, { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
-import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import GroupManagement from 'pages/Settings/GroupManagement';
 import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
@@ -38,8 +37,9 @@ const SettingsContent: React.FC = () => {
   const navigate = useNavigate();
   const { tab } = useParams<Params>();
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const { updateSettings } = useSettings<InteractiveTableSettings>({
-    settings: [],
+  const { updateSettings } = useSettings<object>({
+    applicableRoutespace: '',
+    settings: {},
     storagePath: '',
   });
 

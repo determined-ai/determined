@@ -32,12 +32,13 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
 
 export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => Promise<void>;
 export type ResetSettings = (settings?: string[]) => void;
+type SettingsRecord<T> = { [K in keyof T]: T[K] };
 
 export type UseSettingsReturn<T> = {
   activeSettings: (keys?: string[]) => string[];
   isLoading: boolean;
   resetSettings: ResetSettings;
-  settings: T;
+  settings: SettingsRecord<T>;
   updateSettings: UpdateSettings;
 };
 
@@ -161,19 +162,19 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     update(config.applicableRoutespace, stateSettings, true);
   }, [config, querySettings, state, update, shouldSkipUpdates]);
 
-  const settings: T = useMemo(
+  const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
         ...(state.get(config.applicableRoutespace) ?? {}),
-      } as T),
+      } as SettingsRecord<T>),
     [config, state],
   );
 
   for (const key in config.settings) {
     const setting = config.settings[key];
 
-    if (settings[setting.storageKey] === undefined) {
-      settings[setting.storageKey] = setting.defaultValue;
+    if (settings[setting.storageKey as keyof T] === undefined) {
+      settings[setting.storageKey as keyof T] = setting.defaultValue;
     }
   }
 
@@ -214,7 +215,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
-        const stateSetting = settings[setting];
+        const stateSetting = settings[setting as keyof T];
 
         if (user?.id && !isEqual(newSetting, stateSetting)) {
           acc.push({
@@ -274,7 +275,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
         if (!defaultSetting) return;
 
-        newSettings[setting] = defaultSetting.defaultValue;
+        newSettings[setting as keyof T] = defaultSetting.defaultValue;
       });
 
       update(config.applicableRoutespace, newSettings);
