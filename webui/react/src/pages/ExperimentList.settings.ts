@@ -124,7 +124,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: V1GetExperimentsRequestSortBy.STARTTIME,
+      defaultValue: V1GetExperimentsRequestSortBy.START_TIME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },

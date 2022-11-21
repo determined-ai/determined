@@ -95,7 +95,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         options.timestampAfter = new Date().toISOString();
       }
 
-      return detApi.StreamingJobs.taskLogs(
+      return detApi.Jobs.taskLogs(
         taskId,
         options.limit,
         options.follow,
@@ -119,9 +119,8 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
   useEffect(() => {
     const canceler = new AbortController();
 
-    readStream(
-      detApi.StreamingJobs.taskLogsFields(taskId, true, { signal: canceler.signal }),
-      (event) => setFilterOptions(event as Filters),
+    readStream(detApi.Jobs.taskLogsFields(taskId, true, 0, { signal: canceler.signal }), (event) =>
+      setFilterOptions(event as Filters),
     );
 
     return () => canceler.abort();

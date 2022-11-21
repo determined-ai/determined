@@ -187,7 +187,7 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'displayName',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
-        key: V1GetUsersRequestSortBy.DISPLAYNAME,
+        key: V1GetUsersRequestSortBy.DISPLAY_NAME,
         onCell: onRightClickableCell,
         sorter: true,
         title: 'Display Name',
@@ -195,7 +195,7 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'username',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['username'],
-        key: V1GetUsersRequestSortBy.USERNAME,
+        key: V1GetUsersRequestSortBy.USER_NAME,
         onCell: onRightClickableCell,
         sorter: true,
         title: 'User Name',
@@ -221,7 +221,7 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'modifiedAt',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['modifiedAt'],
-        key: V1GetUsersRequestSortBy.MODIFIEDTIME,
+        key: V1GetUsersRequestSortBy.MODIFIED_TIME,
         onCell: onRightClickableCell,
         render: (value: number): React.ReactNode => relativeTimeRenderer(new Date(value)),
         sorter: true,

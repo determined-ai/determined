@@ -26,7 +26,7 @@ export const login = generateDetApi<Api.V1LoginRequest, Api.V1LoginResponse, Ser
 //   return response;
 // };
 
-export const logout = generateDetApi<EmptyParams, Api.V1LogoutResponse, void>(Config.logout);
+export const logout = generateDetApi<EmptyParams, Record<any, any>, void>(Config.logout);
 
 export const getCurrentUser = generateDetApi<
   EmptyParams,
@@ -72,11 +72,11 @@ export const getUserSetting = generateDetApi<
 
 export const updateUserSetting = generateDetApi<
   Service.UpdateUserSettingParams,
-  Api.V1PostUserSettingResponse,
+  Record<any, any>,
   void
 >(Config.updateUserSetting);
 
-export const resetUserSetting = generateDetApi<EmptyParams, Api.V1ResetUserSettingResponse, void>(
+export const resetUserSetting = generateDetApi<EmptyParams, Record<any, any>, void>(
   Config.resetUserSetting,
 );
 
@@ -120,8 +120,8 @@ export const updateGroup = generateDetApi<
 
 export const deleteGroup = generateDetApi<
   Service.DeleteGroupParams,
-  Api.V1DeleteGroupResponse,
-  Api.V1DeleteGroupResponse
+  Record<any, any>,
+  Record<any, any>
 >(Config.deleteGroup);
 
 /* Roles */
@@ -146,26 +146,26 @@ export const listRoles = generateDetApi<
 
 export const assignRolesToGroup = generateDetApi<
   Service.AssignRolesToGroupParams,
-  Api.V1AssignRolesResponse,
-  Api.V1AssignRolesResponse
+  Record<any, any>,
+  Record<any, any>
 >(Config.assignRolesToGroup);
 
 export const removeRolesFromGroup = generateDetApi<
   Service.RemoveRolesFromGroupParams,
-  Api.V1RemoveAssignmentsResponse,
-  Api.V1RemoveAssignmentsResponse
+  Record<any, any>,
+  Record<any, any>
 >(Config.removeRolesFromGroup);
 
 export const assignRolesToUser = generateDetApi<
   Service.AssignRolesToUserParams,
-  Api.V1AssignRolesResponse,
-  Api.V1AssignRolesResponse
+  Record<any, any>,
+  Record<any, any>
 >(Config.assignRolesToUser);
 
 export const removeRolesFromUser = generateDetApi<
   Service.RemoveRolesFromUserParams,
-  Api.V1RemoveAssignmentsResponse,
-  Api.V1RemoveAssignmentsResponse
+  Record<any, any>,
+  Record<any, any>
 >(Config.removeRolesFromUser);
 
 export const searchRolesAssignableToScope = generateDetApi<
@@ -217,8 +217,8 @@ export const getJobQStats = generateDetApi<
 
 export const updateJobQueue = generateDetApi<
   Api.V1UpdateJobQueueRequest,
-  Api.V1UpdateJobQueueResponse,
-  Api.V1UpdateJobQueueResponse
+  Record<any, any>,
+  Record<any, any>
 >(Config.updateJobQueue);
 
 /* Trials */
@@ -296,51 +296,41 @@ export const createExperiment = generateDetApi<
   Type.ExperimentBase
 >(Config.createExperiment);
 
-export const archiveExperiment = generateDetApi<
-  Service.ExperimentIdParams,
-  Api.V1ArchiveExperimentResponse,
-  void
->(Config.archiveExperiment);
+export const archiveExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+  Config.archiveExperiment,
+);
 
 export const unarchiveExperiment = generateDetApi<
   Service.ExperimentIdParams,
-  Api.V1UnarchiveExperimentResponse,
+  Record<any, any>,
   void
 >(Config.unarchiveExperiment);
 
-export const deleteExperiment = generateDetApi<
-  Service.ExperimentIdParams,
-  Api.V1DeleteExperimentResponse,
-  void
->(Config.deleteExperiment);
+export const deleteExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+  Config.deleteExperiment,
+);
 
 export const activateExperiment = generateDetApi<
   Service.ExperimentIdParams,
-  Api.V1ActivateExperimentResponse,
+  Record<any, any>,
   void
 >(Config.activateExperiment);
 
-export const pauseExperiment = generateDetApi<
-  Service.ExperimentIdParams,
-  Api.V1PauseExperimentResponse,
-  void
->(Config.pauseExperiment);
+export const pauseExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+  Config.pauseExperiment,
+);
 
-export const cancelExperiment = generateDetApi<
-  Service.ExperimentIdParams,
-  Api.V1CancelExperimentResponse,
-  void
->(Config.cancelExperiment);
+export const cancelExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+  Config.cancelExperiment,
+);
 
-export const killExperiment = generateDetApi<
-  Service.ExperimentIdParams,
-  Api.V1KillExperimentResponse,
-  void
->(Config.killExperiment);
+export const killExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+  Config.killExperiment,
+);
 
 export const patchExperiment = generateDetApi<
   Service.PatchExperimentParams,
-  Api.V1KillExperimentResponse,
+  Api.V1PatchExperimentResponse,
   void
 >(Config.patchExperiment);
 
@@ -350,11 +340,9 @@ export const getExperimentLabels = generateDetApi<
   string[]
 >(Config.getExperimentLabels);
 
-export const moveExperiment = generateDetApi<
-  Api.V1MoveExperimentRequest,
-  Api.V1MoveExperimentResponse,
-  void
->(Config.moveExperiment);
+export const moveExperiment = generateDetApi<Api.V1MoveExperimentRequest, Record<any, any>, void>(
+  Config.moveExperiment,
+);
 
 export const getExperimentFileTree = generateDetApi<
   Service.ExperimentIdParams,
@@ -388,11 +376,9 @@ export const createWebhook = generateDetApi<Api.V1Webhook, Api.V1PostWebhookResp
   Config.createWebhook,
 );
 
-export const deleteWebhook = generateDetApi<
-  Service.GetWebhookParams,
-  Api.V1DeleteWebhookResponse,
-  void
->(Config.deleteWebhook);
+export const deleteWebhook = generateDetApi<Service.GetWebhookParams, Record<any, any>, void>(
+  Config.deleteWebhook,
+);
 
 export const getWebhooks = generateDetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]>(
   Config.getWebhooks,
@@ -442,27 +428,21 @@ export const patchModelVersion = generateDetApi<
   Type.ModelVersion | undefined
 >(Config.patchModelVersion);
 
-export const archiveModel = generateDetApi<
-  Service.ArchiveModelParams,
-  Api.V1ArchiveModelResponse,
-  void
->(Config.archiveModel);
+export const archiveModel = generateDetApi<Service.ArchiveModelParams, Record<any, any>, void>(
+  Config.archiveModel,
+);
 
-export const unarchiveModel = generateDetApi<
-  Service.ArchiveModelParams,
-  Api.V1UnarchiveModelResponse,
-  void
->(Config.unarchiveModel);
+export const unarchiveModel = generateDetApi<Service.ArchiveModelParams, Record<any, any>, void>(
+  Config.unarchiveModel,
+);
 
-export const deleteModel = generateDetApi<
-  Service.DeleteModelParams,
-  Api.V1DeleteModelResponse,
-  void
->(Config.deleteModel);
+export const deleteModel = generateDetApi<Service.DeleteModelParams, Record<any, any>, void>(
+  Config.deleteModel,
+);
 
 export const deleteModelVersion = generateDetApi<
   Service.DeleteModelVersionParams,
-  Api.V1DeleteModelVersionResponse,
+  Record<any, any>,
   void
 >(Config.deleteModelVersion);
 
@@ -521,34 +501,30 @@ export const deleteWorkspace = generateDetApi<
 >(Config.deleteWorkspace);
 
 export const patchWorkspace = generateDetApi<
-  Service.PatchWorkspaceParams,
+  Api.PatchWorkspaceRequest,
   Api.V1PatchWorkspaceResponse,
   Type.Workspace
 >(Config.patchWorkspace);
 
 export const archiveWorkspace = generateDetApi<
   Service.ArchiveWorkspaceParams,
-  Api.V1ArchiveWorkspaceResponse,
+  Record<any, any>,
   void
 >(Config.archiveWorkspace);
 
 export const unarchiveWorkspace = generateDetApi<
   Service.UnarchiveWorkspaceParams,
-  Api.V1UnarchiveWorkspaceResponse,
+  Record<any, any>,
   void
 >(Config.unarchiveWorkspace);
 
-export const pinWorkspace = generateDetApi<
-  Service.PinWorkspaceParams,
-  Api.V1PinWorkspaceResponse,
-  void
->(Config.pinWorkspace);
+export const pinWorkspace = generateDetApi<Service.PinWorkspaceParams, Record<any, any>, void>(
+  Config.pinWorkspace,
+);
 
-export const unpinWorkspace = generateDetApi<
-  Service.UnpinWorkspaceParams,
-  Api.V1UnpinWorkspaceResponse,
-  void
->(Config.unpinWorkspace);
+export const unpinWorkspace = generateDetApi<Service.UnpinWorkspaceParams, Record<any, any>, void>(
+  Config.unpinWorkspace,
+);
 
 /* Projects */
 
@@ -588,21 +564,17 @@ export const patchProject = generateDetApi<
   Type.Project
 >(Config.patchProject);
 
-export const moveProject = generateDetApi<
-  Api.V1MoveProjectRequest,
-  Api.V1MoveProjectResponse,
-  void
->(Config.moveProject);
+export const moveProject = generateDetApi<Api.V1MoveProjectRequest, Record<any, any>, void>(
+  Config.moveProject,
+);
 
-export const archiveProject = generateDetApi<
-  Service.ArchiveProjectParams,
-  Api.V1ArchiveProjectResponse,
-  void
->(Config.archiveProject);
+export const archiveProject = generateDetApi<Service.ArchiveProjectParams, Record<any, any>, void>(
+  Config.archiveProject,
+);
 
 export const unarchiveProject = generateDetApi<
   Service.UnarchiveProjectParams,
-  Api.V1UnarchiveProjectResponse,
+  Record<any, any>,
   void
 >(Config.unarchiveProject);
 

@@ -199,7 +199,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
           orderBy: 'ORDER_BY_DESC',
           sortBy: validateDetApiEnum(
             V1GetModelsRequestSortBy,
-            V1GetModelsRequestSortBy.LASTUPDATEDTIME,
+            V1GetModelsRequestSortBy.LAST_UPDATED_TIME,
           ),
         },
         { signal: canceler.signal },

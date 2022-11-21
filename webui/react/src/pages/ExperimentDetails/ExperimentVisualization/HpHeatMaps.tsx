@@ -227,7 +227,7 @@ const HpHeatMaps: React.FC<Props> = ({
     setHasLoaded(false);
 
     readStream<V1TrialsSnapshotResponse>(
-      detApi.StreamingInternal.trialsSnapshot(
+      detApi.Internal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
@@ -248,7 +248,7 @@ const HpHeatMaps: React.FC<Props> = ({
           if (!isObject(trial.hparams)) return;
 
           const trialId = trial.trialId;
-          const flatHParams = flattenObject(trial.hparams);
+          const flatHParams = flattenObject(trial.hparams as Record<string, any>);
           const trialHParams = Object.keys(flatHParams)
             .filter((hParam) => fullHParams.includes(hParam))
             .sort((a, b) => a.localeCompare(b, 'en'));

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
-import { V1PermissionType } from 'services/api-ts-sdk/api';
+import { V1PermissionType } from 'services/api-ts-sdk/models';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -123,7 +123,7 @@ const usePermissions = (): PermissionsHook => {
       canModifyPermissions: canModifyPermissions(rbacOpts),
       canModifyProjects: (args: ProjectPermissionsArgs) =>
         canModifyWorkspaceProjects(rbacOpts, args.workspace, args.project),
-      canModifyUsers: canAdministrateUsers(rbacOpts),
+      canModifyUsers: canADMINISTRATE_USERs(rbacOpts),
       canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspace(rbacOpts, args.workspace),
       canModifyWorkspaceAgentUserGroup: (args: WorkspacePermissionsArgs) =>
@@ -142,7 +142,7 @@ const usePermissions = (): PermissionsHook => {
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
       canViewGroups: canViewGroups(rbacOpts),
-      canViewUsers: canAdministrateUsers(rbacOpts),
+      canViewUsers: canADMINISTRATE_USERs(rbacOpts),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
@@ -182,7 +182,7 @@ const relevantPermissions = (
 };
 
 // User actions
-const canAdministrateUsers = ({
+const canADMINISTRATE_USERs = ({
   rbacAllPermission,
   rbacEnabled,
   user,
@@ -192,7 +192,7 @@ const canAdministrateUsers = ({
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
     rbacAllPermission ||
-    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ADMINISTRATEUSER) : user.isAdmin))
+    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ADMINISTRATE_USER) : user.isAdmin))
   );
 };
 
@@ -210,7 +210,7 @@ const canModifyGroups = ({
   const permitted = relevantPermissions(userAssignments, userRoles);
   return (
     rbacAllPermission ||
-    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.UPDATEGROUP) : user.isAdmin))
+    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.UPDATE_GROUP) : user.isAdmin))
   );
 };
 
@@ -221,7 +221,7 @@ const canModifyPermissions = ({
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return rbacAllPermission || (rbacEnabled && permitted.has(V1PermissionType.ADMINISTRATEUSER));
+  return rbacAllPermission || (rbacEnabled && permitted.has(V1PermissionType.ADMINISTRATE_USER));
 };
 
 // Experiment actions
@@ -232,7 +232,7 @@ const canCreateExperiment = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!workspace &&
-    (!rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATEEXPERIMENT))
+    (!rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATE_EXPERIMENT))
   );
 };
 
@@ -246,7 +246,7 @@ const canDeleteExperiment = (
     (!!experiment &&
       !!user &&
       (rbacEnabled
-        ? permitted.has(V1PermissionType.DELETEEXPERIMENT)
+        ? permitted.has(V1PermissionType.DELETE_EXPERIMENT)
         : user.isAdmin || user.id === experiment.userId))
   );
 };
@@ -258,7 +258,7 @@ const canModifyExperiment = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     rbacAllPermission ||
-    (!!workspace && (!rbacEnabled || permitted.has(V1PermissionType.UPDATEEXPERIMENT)))
+    (!!workspace && (!rbacEnabled || permitted.has(V1PermissionType.UPDATE_EXPERIMENT)))
   );
 };
 
@@ -269,7 +269,9 @@ const canModifyExperimentMetadata = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!workspace &&
-    (!rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.UPDATEEXPERIMENTMETADATA))
+    (!rbacEnabled ||
+      rbacAllPermission ||
+      permitted.has(V1PermissionType.UPDATE_EXPERIMENT_METADATA))
   );
 };
 
@@ -282,7 +284,7 @@ const canMoveExperiment = (
     rbacAllPermission ||
     (!!user &&
       (rbacEnabled
-        ? srcPermit.has(V1PermissionType.DELETEEXPERIMENT)
+        ? srcPermit.has(V1PermissionType.DELETE_EXPERIMENT)
         : user.isAdmin || user.id === experiment.userId))
   );
 };
@@ -294,7 +296,7 @@ const canMoveExperimentsTo = (
   const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
   return (
     rbacAllPermission ||
-    (!!user && (!rbacEnabled || destPermit.has(V1PermissionType.CREATEEXPERIMENT)))
+    (!!user && (!rbacEnabled || destPermit.has(V1PermissionType.CREATE_EXPERIMENT)))
   );
 };
 
@@ -306,7 +308,9 @@ const canViewExperimentArtifacts = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!workspace &&
-    (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWEXPERIMENTARTIFACTS))
+    (!rbacEnabled ||
+      rbacReadPermission ||
+      permitted.has(V1PermissionType.VIEW_EXPERIMENT_ARTIFACTS))
   );
 };
 
@@ -332,7 +336,7 @@ const canCreateProject = (
   workspace?: PermissionWorkspace,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
-  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATEPROJECT);
+  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATE_PROJECT);
 };
 
 const canDeleteWorkspaceProjects = (
@@ -347,7 +351,7 @@ const canDeleteWorkspaceProjects = (
       !!user &&
       !!project &&
       (rbacEnabled
-        ? permitted.has(V1PermissionType.DELETEPROJECT)
+        ? permitted.has(V1PermissionType.DELETE_PROJECT)
         : user.isAdmin || user.id === project.userId))
   );
 };
@@ -364,7 +368,7 @@ const canModifyWorkspaceProjects = (
       !!user &&
       !!project &&
       (rbacEnabled
-        ? permitted.has(V1PermissionType.UPDATEPROJECT)
+        ? permitted.has(V1PermissionType.UPDATE_PROJECT)
         : user.isAdmin || user.id === project.userId))
   );
 };
@@ -379,7 +383,7 @@ const canMoveWorkspaceProjects = (
     (!!user &&
       !!project &&
       (rbacEnabled
-        ? srcPermit.has(V1PermissionType.DELETEPROJECT)
+        ? srcPermit.has(V1PermissionType.DELETE_PROJECT)
         : user.isAdmin || user.id === project.userId))
   );
 };
@@ -391,7 +395,7 @@ const canMoveProjectsTo = (
   const destPermit = relevantPermissions(userAssignments, userRoles, destination?.id);
   return (
     rbacAllPermission ||
-    (!!user && (!rbacEnabled || destPermit.has(V1PermissionType.CREATEPROJECT)))
+    (!!user && (!rbacEnabled || destPermit.has(V1PermissionType.CREATE_PROJECT)))
   );
 };
 
@@ -403,7 +407,7 @@ const canCreateWorkspace = ({
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATEWORKSPACE);
+  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.CREATE_WORKSPACE);
 };
 
 const canDeleteWorkspace = (
@@ -416,7 +420,7 @@ const canDeleteWorkspace = (
     (!!workspace &&
       !!user &&
       (rbacEnabled
-        ? permitted.has(V1PermissionType.DELETEWORKSPACE)
+        ? permitted.has(V1PermissionType.DELETE_WORKSPACE)
         : user.isAdmin || user.id === workspace.userId))
   );
 };
@@ -431,7 +435,7 @@ const canModifyWorkspace = (
     (!!workspace &&
       !!user &&
       (rbacEnabled
-        ? permitted.has(V1PermissionType.UPDATEWORKSPACE)
+        ? permitted.has(V1PermissionType.UPDATE_WORKSPACE)
         : user.isAdmin || user.id === workspace.userId))
   );
 };
@@ -444,7 +448,7 @@ const canModifyWorkspaceAgentUserGroup = (
   return (
     rbacAllPermission ||
     (!!user &&
-      (rbacEnabled ? permitted.has(V1PermissionType.SETWORKSPACEAGENTUSERGROUP) : user.isAdmin))
+      (rbacEnabled ? permitted.has(V1PermissionType.SET_WORKSPACE_AGENT_USER_GROUP) : user.isAdmin))
   );
 };
 
@@ -457,7 +461,7 @@ const canModifyWorkspaceCheckpointStorage = (
     rbacAllPermission ||
     (!!user &&
       (rbacEnabled
-        ? permitted.has(V1PermissionType.SETWORKSPACECHECKPOINTSTORAGECONFIG)
+        ? permitted.has(V1PermissionType.SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG)
         : user.isAdmin))
   );
 };
@@ -469,7 +473,7 @@ const canViewWorkspace = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!workspace &&
-    (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWWORKSPACE))
+    (!rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEW_WORKSPACE))
   );
 };
 
@@ -483,7 +487,9 @@ const canViewWorkspaces = ({
     rbacReadPermission ||
     (!!userRoles && userRoles.length === 1 && userRoles[0].id === -10) ||
     (!!userRoles &&
-      !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEWWORKSPACE)))
+      !!userRoles.find(
+        (r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEW_WORKSPACE),
+      ))
   );
 };
 
@@ -497,7 +503,7 @@ const canUpdateRoles = (
     (!!workspace &&
       !!user &&
       (rbacEnabled
-        ? permitted.has(V1PermissionType.UPDATEROLES)
+        ? permitted.has(V1PermissionType.UPDATE_ROLES)
         : user.isAdmin || user.id === workspace.userId))
   );
 };
@@ -510,7 +516,7 @@ const canAssignRoles = (
   return (
     rbacAllPermission ||
     (!!user && !!workspace && user.id === workspace.userId) ||
-    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ASSIGNROLES) : user.isAdmin))
+    (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ASSIGN_ROLES) : user.isAdmin))
   );
 };
 
@@ -525,7 +531,7 @@ const canEditWebhooks = ({
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
   return rbacEnabled
-    ? rbacAllPermission || permitted.has(V1PermissionType.EDITWEBHOOKS)
+    ? rbacAllPermission || permitted.has(V1PermissionType.EDIT_WEBHOOKS)
     : !!user && user.isAdmin;
 };
 

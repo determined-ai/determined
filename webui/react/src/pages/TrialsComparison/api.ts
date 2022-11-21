@@ -32,9 +32,9 @@ export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
     prefix === 'hparams'
       ? TrialSorterNamespace.HPARAMS
       : prefix === 'validationMetrics'
-      ? TrialSorterNamespace.VALIDATIONMETRICS
+      ? TrialSorterNamespace.VALIDATION_METRICS
       : prefix === 'trainingMetrics'
-      ? TrialSorterNamespace.TRAININGMETRICS
+      ? TrialSorterNamespace.TRAINING_METRICS
       : TrialSorterNamespace.UNSPECIFIED;
 
   const rawField = s.sortKey === 'searcherMetricValue' ? 'searcherMetricLoss' : s.sortKey;
@@ -54,8 +54,8 @@ export const encodeTrialSorter = (s?: TrialSorter): V1TrialSorter => {
 const prefixForNamespace: Record<TrialSorterNamespace, string> = {
   [TrialSorterNamespace.HPARAMS]: 'hparams',
   [TrialSorterNamespace.UNSPECIFIED]: '',
-  [TrialSorterNamespace.TRAININGMETRICS]: 'training_metrics',
-  [TrialSorterNamespace.VALIDATIONMETRICS]: 'validation_metrics',
+  [TrialSorterNamespace.TRAINING_METRICS]: 'training_metrics',
+  [TrialSorterNamespace.VALIDATION_METRICS]: 'validation_metrics',
 };
 
 export const decodeTrialSorter = (s?: V1TrialSorter): TrialSorter => {

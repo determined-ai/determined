@@ -224,7 +224,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
         } = values;
         const body: {
           agentUserGroup?: V1AgentUserGroup;
-          checkpointStorageConfig?: unknown;
+          checkpointStorageConfig?: any;
           name: string;
         } = {
           agentUserGroup: {},
@@ -248,7 +248,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
         }
 
         if (workspaceID) {
-          const response = await patchWorkspace({ id: workspaceID, ...body });
+          const response = await patchWorkspace({ body, id: workspaceID });
           setWorkspace(response);
         } else {
           const response = await createWorkspace(body);

@@ -1,5 +1,4 @@
 import { serverAddress } from 'routes/utils';
-import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'shared/utils/data';
 import { DetError } from 'shared/utils/error';
 import { isApiResponse, processApiError } from 'shared/utils/service';
@@ -24,7 +23,7 @@ export const isLoginFailure = (e: unknown): boolean => {
 /* gRPC Helpers */
 
 export const readStream = async <T = unknown>(
-  fetchArgs: Api.FetchArgs,
+  fetchArgs: any,
   onEvent?: (event: T) => void,
   onError?: (e?: Error) => void,
 ): Promise<unknown> => {

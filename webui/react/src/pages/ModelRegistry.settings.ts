@@ -34,7 +34,9 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ModelColumnName, number> = {
   user: 85,
 };
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelsRequestSortBy => {
-  return Object.values(V1GetModelsRequestSortBy).includes(String(sortKey));
+  return Object.values(V1GetModelsRequestSortBy)
+    .map((v) => v as string)
+    .includes(String(sortKey));
 };
 
 export interface Settings extends InteractiveTableSettings {
@@ -81,7 +83,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: V1GetModelsRequestSortBy.CREATIONTIME,
+      defaultValue: V1GetModelsRequestSortBy.CREATION_TIME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },

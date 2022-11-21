@@ -17,7 +17,7 @@ export function mergeLists<T>(
 type MetricKey = string;
 
 const valMapForHParams = (hparams: RawJson): HpValsMap =>
-  Object.entries(flattenObject(hparams || {}))
+  Object.entries(flattenObject((hparams as Record<string, any>) || {}))
     .map(([key, value]) => ({ [String(key)]: new Set([value]) }))
     .reduce((a, b) => ({ ...a, ...b }), {});
 
@@ -56,7 +56,7 @@ export const aggregrateTrialsMetadata = (
   const vMetrics = decodeMetricKeys(trial.validationMetrics, MetricType.Validation);
 
   return {
-    data: [...agg.data, { ...trial, hparams: flattenObject(trial.hparams) }],
+    data: [...agg.data, { ...trial, hparams: flattenObject(trial.hparams as Record<string, any>) }],
     hparams: aggregateHpVals(agg.hparams, trial.hparams),
     ids: [...agg.ids, trial.trialId],
     maxBatch: Math.max(agg.maxBatch, trial.totalBatches),

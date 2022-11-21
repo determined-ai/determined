@@ -13,7 +13,7 @@ import {
   TrialWorkloadFilter,
 } from 'types';
 
-import * as Api from './api-ts-sdk/api';
+import * as Api from './api-ts-sdk/models';
 export interface LoginResponse {
   token: string;
   user: DetailedUser;

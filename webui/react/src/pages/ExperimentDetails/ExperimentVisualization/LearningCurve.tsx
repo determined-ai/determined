@@ -112,7 +112,7 @@ const LearningCurve: React.FC<Props> = ({
     setHasLoaded(false);
 
     readStream<V1TrialsSampleResponse>(
-      detApi.StreamingInternal.trialsSample(
+      detApi.Internal.trialsSample(
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
@@ -142,7 +142,10 @@ const LearningCurve: React.FC<Props> = ({
 
           // This allows for both typical nested hyperparameters and nested categorgical
           // hyperparameter values to be shown, with HpTrialTable deciding which are displayed.
-          const flatHParams = { ...trial.hparams, ...flattenObject(trial.hparams || {}) };
+          const flatHParams = {
+            ...trial.hparams,
+            ...flattenObject((trial.hparams as Record<string, any>) || {}),
+          };
 
           const hasHParams = Object.keys(flatHParams).length !== 0;
 

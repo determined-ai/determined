@@ -15,14 +15,14 @@ import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete'
 import usePermissions from 'hooks/usePermissions';
 import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
-import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
+import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/models';
 import Icon from 'shared/components/Icon/Icon';
 import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { Webhook } from 'types';
+import { CommandState, Webhook } from 'types';
 import handleError from 'utils/error';
 
 import css from './WebhookList.module.scss';
@@ -131,10 +131,13 @@ const WebhooksView: React.FC = () => {
 
     const webhookTriggerRenderer = (triggers: V1Trigger[]) =>
       triggers.map((t) => {
-        if (t.triggerType === V1TriggerType.EXPERIMENTSTATECHANGE) {
+        if (t.triggerType === V1TriggerType.EXPERIMENT_STATE_CHANGE) {
           return (
             <li className={css.listBadge}>
-              <Badge state={t.condition.state} type={BadgeType.State} />
+              <Badge
+                state={(t.condition as Record<string, CommandState>)?.state}
+                type={BadgeType.State}
+              />
             </li>
           );
         }

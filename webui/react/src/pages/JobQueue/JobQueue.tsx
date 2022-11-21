@@ -67,7 +67,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig(jobState));
 
   const fetchResourcePools = useFetchResourcePools(canceler);
-  const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
+  const isJobOrderAvailable = orderedSchedulers
+    .map((s) => s as string)
+    .includes(selectedRp.schedulerType);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -145,7 +147,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
         !!topJob &&
         job.summary.jobsAhead > 0 &&
         canManageJob(job, selectedRp) &&
-        !unsupportedQPosSchedulers.has(selectedRp.schedulerType)
+        !unsupportedQPosSchedulers
+          .map((sched) => sched as string)
+          .includes(selectedRp.schedulerType)
       ) {
         triggers[JobAction.MoveToTop] = () => moveJobToTop(topJob, job);
       }
@@ -232,7 +236,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                 col.title = 'Priority';
                 col.dataIndex = 'priority';
                 break;
-              case Api.V1SchedulerType.FAIRSHARE:
+              case Api.V1SchedulerType.FAIR_SHARE:
                 col.title = 'Weight';
                 col.dataIndex = 'weight';
                 col.align = 'right';

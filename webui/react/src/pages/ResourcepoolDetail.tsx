@@ -165,7 +165,7 @@ const ResourcepoolDetailInner: React.FC = () => {
         />
       </Section>
       <Section>
-        {pool.schedulerType === V1SchedulerType.ROUNDROBIN ? (
+        {pool.schedulerType === V1SchedulerType.ROUND_ROBIN ? (
           <Page className={css.poolDetailPage}>
             <Section>
               <Message

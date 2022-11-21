@@ -26,28 +26,28 @@ export const columns: ColumnDef<TrialItem>[] = [
   {
     dataIndex: 'totalBatchesProcessed',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['totalBatchesProcessed'],
-    key: V1GetExperimentTrialsRequestSortBy.BATCHESPROCESSED,
+    key: V1GetExperimentTrialsRequestSortBy.BATCHES_PROCESSED,
     sorter: true,
     title: 'Batches',
   },
   {
     dataIndex: 'bestValidationMetric',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['bestValidationMetric'],
-    key: V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC,
+    key: V1GetExperimentTrialsRequestSortBy.BEST_VALIDATION_METRIC,
     sorter: true,
     title: 'Best Validation Metric',
   },
   {
     dataIndex: 'latestValidationMetric',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['latestValidationMetric'],
-    key: V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC,
+    key: V1GetExperimentTrialsRequestSortBy.LATEST_VALIDATION_METRIC,
     sorter: true,
     title: 'Latest Validation Metric',
   },
   {
     dataIndex: 'startTime',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['startTime'],
-    key: V1GetExperimentTrialsRequestSortBy.STARTTIME,
+    key: V1GetExperimentTrialsRequestSortBy.START_TIME,
     render: (_: string, record: TrialItem): ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
     sorter: true,

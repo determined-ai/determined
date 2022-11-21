@@ -70,7 +70,7 @@ export const PoolLogo: React.FC<{ type: V1ResourcePoolType }> = ({ type }) => {
     case V1ResourcePoolType.GCP:
       iconSrc = gcpLogo;
       break;
-    case V1ResourcePoolType.K8S:
+    case V1ResourcePoolType.K8_S:
       iconSrc = k8sLogo;
       break;
     case V1ResourcePoolType.UNSPECIFIED:
@@ -108,7 +108,7 @@ const ResourcePoolCard: React.FC<Props> = ({ resourcePool: pool }: Props) => {
         : processedPool[attribute.key as keyof ResourcePool];
       acc[attribute.label] = value;
       if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];
-      if (pool.type === V1ResourcePoolType.K8S && attribute.key !== 'type') {
+      if (pool.type === V1ResourcePoolType.K8_S && attribute.key !== 'type') {
         delete acc[attribute.label];
       }
       return acc;

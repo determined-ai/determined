@@ -14,7 +14,7 @@ const ExperimentHeaderProgress: React.FC<Props> = ({ experiment }: Props) => {
   const progressPercent = (experiment.progress ?? 0) * 100;
   const status =
     experiment.state === JobState.SCHEDULED ||
-    experiment.state === JobState.SCHEDULEDBACKFILLED ||
+    experiment.state === JobState.SCHEDULED_BACKFILLED ||
     experiment.state === RunState.Active
       ? 'active'
       : undefined;

@@ -196,7 +196,7 @@ const TrialTable: React.FC<Props> = ({
             isFiltered: () => rangeFilterIsActive(filters.hparams, hp),
             key: columnKey,
             render: (_: string, record: V1AugmentedTrial) => {
-              const value = record.hparams[hp];
+              const value = (record.hparams as Record<string, any>)[hp];
               if (isFiniteNumber(value)) {
                 return <HumanReadableNumber num={value} precision={3} />;
               } else if (!value) {
@@ -255,7 +255,7 @@ const TrialTable: React.FC<Props> = ({
             isFiltered: () => rangeFilterIsActive(filters.trainingMetrics, metric.name),
             key: columnKey,
             render: (_: string, record: V1AugmentedTrial) => {
-              const value = record.trainingMetrics?.[metric.name];
+              const value = (record.trainingMetrics as Record<string, any>)?.[metric.name];
               return isFiniteNumber(value) ? (
                 <HumanReadableNumber num={value} precision={NUMBER_PRECISION} />
               ) : (
@@ -285,7 +285,7 @@ const TrialTable: React.FC<Props> = ({
             isFiltered: () => rangeFilterIsActive(filters.validationMetrics, metric.name),
             key: columnKey,
             render: (_: string, record: V1AugmentedTrial) => {
-              const value = record.validationMetrics?.[metric.name];
+              const value = (record.validationMetrics as Record<string, any>)?.[metric.name];
               return isFiniteNumber(value) ? (
                 <HumanReadableNumber num={value} precision={NUMBER_PRECISION} />
               ) : (

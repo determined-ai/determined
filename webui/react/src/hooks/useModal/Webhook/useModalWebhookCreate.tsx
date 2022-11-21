@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
-import { V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';
+import { V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/models';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -75,7 +75,7 @@ const useModalWebhookCreate = ({ onClose }: Props): ModalHooks => {
         await createWebhook({
           triggers: values.triggerEvents.map((state) => ({
             condition: { state },
-            triggerType: V1TriggerType.EXPERIMENTSTATECHANGE,
+            triggerType: V1TriggerType.EXPERIMENT_STATE_CHANGE,
           })),
           url: values.url,
           webhookType: values.webhookType,

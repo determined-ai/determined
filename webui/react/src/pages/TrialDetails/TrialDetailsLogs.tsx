@@ -128,7 +128,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         options.timestampAfter = new Date().toISOString();
       }
 
-      return detApi.StreamingExperiments.trialLogs(
+      return detApi.Experiments.trialLogs(
         trial?.id ?? 0,
         options.limit,
         options.follow,
@@ -155,7 +155,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     const canceler = new AbortController();
 
     readStream(
-      detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: canceler.signal }),
+      detApi.Experiments.trialLogsFields(trial.id, true, { signal: canceler.signal }),
       (event) => setFilterOptions(event as Filters),
     );
 

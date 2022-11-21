@@ -203,7 +203,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             text: <Badge state={value} type={BadgeType.State} />,
             value,
           }));
-      } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC) {
+      } else if (column.key === V1GetExperimentCheckpointsRequestSortBy.SEARCHER_METRIC) {
         column.render = HumanReadableNumberRenderer;
         column.title = `Searcher Metric (${experiment.config.searcher.metric})`;
       } else if (column.key === 'actions') {

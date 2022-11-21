@@ -24,7 +24,7 @@ const ClusterLogs: React.FC = () => {
       options.limit = 0;
     }
 
-    return detApi.StreamingCluster.masterLogs(options.offset, options.limit, options.follow, {
+    return detApi.Cluster.masterLogs(options.offset, options.limit, options.follow, {
       signal: config.canceler.signal,
     });
   }, []);

@@ -60,7 +60,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
   const handleNameChange = useCallback(
     async (name: string) => {
       try {
-        await patchWorkspace({ id: workspace.id, name });
+        await patchWorkspace({ body: { name }, id: workspace.id });
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,

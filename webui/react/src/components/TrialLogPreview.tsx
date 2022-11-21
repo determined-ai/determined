@@ -41,7 +41,7 @@ const TrialLogPreview: React.FC<Props> = ({
 
   const fetchTrialLogs = useCallback((trialId: number, time: string, canceler: AbortController) => {
     readStream(
-      detApi.StreamingExperiments.trialLogs(
+      detApi.Experiments.trialLogs(
         trialId,
         undefined,
         true,
@@ -71,7 +71,7 @@ const TrialLogPreview: React.FC<Props> = ({
   const fetchLatestTrialLog = useCallback(
     (trialId: number, trialState: RunState, canceler: AbortController) => {
       readStream(
-        detApi.StreamingExperiments.trialLogs(
+        detApi.Experiments.trialLogs(
           trialId,
           100,
           false,

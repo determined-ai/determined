@@ -16,14 +16,14 @@ export const columns: ColumnDef<CoreApiGenericCheckpoint>[] = [
   {
     dataIndex: 'totalBatches',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['totalBatches'],
-    key: V1GetExperimentCheckpointsRequestSortBy.BATCHNUMBER,
+    key: V1GetExperimentCheckpointsRequestSortBy.BATCH_NUMBER,
     sorter: true,
     title: 'Total Batches',
   },
   {
     dataIndex: 'searcherMetric',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherMetric'],
-    key: V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC,
+    key: V1GetExperimentCheckpointsRequestSortBy.SEARCHER_METRIC,
     sorter: true,
     title: 'Searcher Metric',
   },

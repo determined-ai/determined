@@ -7,11 +7,11 @@ import handleError from 'utils/error';
 
 // This marks scheduler types that do not support fine-grain control of
 // job positions in the queue.
-export const unsupportedQPosSchedulers = new Set([
-  Api.V1SchedulerType.FAIRSHARE,
+export const unsupportedQPosSchedulers = [
+  Api.V1SchedulerType.FAIR_SHARE,
   Api.V1SchedulerType.PBS,
   Api.V1SchedulerType.SLURM,
-]);
+];
 
 export const jobTypeIconName = (jobType: JobType): string => {
   const type = jobTypeToCommandType(jobType);
@@ -39,10 +39,7 @@ export const jobTypeToCommandType = (jobType: JobType): CommandType | undefined 
   }
 };
 
-export const orderedSchedulers = new Set([
-  Api.V1SchedulerType.PRIORITY,
-  Api.V1SchedulerType.KUBERNETES,
-]);
+export const orderedSchedulers = [Api.V1SchedulerType.PRIORITY, Api.V1SchedulerType.KUBERNETES];
 
 /**
  * Create the update request based on a given position for a job.

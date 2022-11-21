@@ -195,7 +195,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     const canceler = new AbortController();
 
     readStream<V1GetHPImportanceResponse>(
-      detApi.StreamingInternal.getHPImportance(experiment.id, undefined, {
+      detApi.Internal.getHPImportance(experiment.id, undefined, {
         signal: canceler.signal,
       }),
       (event) => {
@@ -221,13 +221,9 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     const batchesMap: Record<number, number> = {};
 
     readStream<V1MetricBatchesResponse>(
-      detApi.StreamingInternal.metricBatches(
-        experiment.id,
-        activeMetric.name,
-        metricTypeParam,
-        undefined,
-        { signal: canceler.signal },
-      ),
+      detApi.Internal.metricBatches(experiment.id, activeMetric.name, metricTypeParam, undefined, {
+        signal: canceler.signal,
+      }),
       (event) => {
         if (!event) return;
         (event.batches || []).forEach((batch) => (batchesMap[batch] = batch));

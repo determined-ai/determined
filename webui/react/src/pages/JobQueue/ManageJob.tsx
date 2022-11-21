@@ -79,7 +79,7 @@ const ManageJob: React.FC<Props> = ({
   jobCount,
 }) => {
   const formRef = useRef<FormInstance<FormValues>>(null);
-  const isOrderedQ = orderedSchedulers.has(schedulerType);
+  const isOrderedQ = orderedSchedulers.map((s) => s as string).includes(schedulerType);
   const { resourcePools } = useStore();
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 
@@ -210,13 +210,13 @@ const ManageJob: React.FC<Props> = ({
           <Input max={99} min={1} type="number" />
         </Form.Item>
         <Form.Item
-          hidden={unsupportedQPosSchedulers.has(schedulerType)}
+          hidden={unsupportedQPosSchedulers.map((sched) => sched as string).includes(schedulerType)}
           label="Position in Queue"
           name="position">
           <Input addonAfter={`out of ${jobCount}`} max={jobCount} min={1} type="number" />
         </Form.Item>
         <Form.Item
-          hidden={schedulerType !== api.V1SchedulerType.FAIRSHARE}
+          hidden={schedulerType !== api.V1SchedulerType.FAIR_SHARE}
           label="Weight"
           name="weight">
           <Input min={0} type="number" />

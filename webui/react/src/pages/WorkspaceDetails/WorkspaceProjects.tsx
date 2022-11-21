@@ -122,7 +122,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       updateSettings({
         sortDesc:
           value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+          value === V1GetWorkspaceProjectsRequestSortBy.LAST_EXPERIMENT_START_TIME
             ? false
             : true,
         sortKey: value as V1GetWorkspaceProjectsRequestSortBy | undefined,
@@ -398,10 +398,10 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             value={settings.sortKey}
             onSelect={handleSortSelect}>
             <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
+            <Option value={V1GetWorkspaceProjectsRequestSortBy.LAST_EXPERIMENT_START_TIME}>
               Last Updated
             </Option>
-            <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME}>
+            <Option value={V1GetWorkspaceProjectsRequestSortBy.CREATION_TIME}>
               Newest to Oldest
             </Option>
           </SelectFilter>

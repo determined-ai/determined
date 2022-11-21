@@ -267,7 +267,7 @@ const SlotAllocationBar: React.FC<Props> = ({
       </ConditionalWrapper>
       {footer && (
         <div className={css.footer}>
-          {poolType === V1ResourcePoolType.K8S ? (
+          {poolType === V1ResourcePoolType.K8_S ? (
             <header>
               {`${
                 isAux

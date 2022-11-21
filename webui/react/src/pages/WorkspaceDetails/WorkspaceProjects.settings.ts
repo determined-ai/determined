@@ -90,7 +90,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME,
+      defaultValue: V1GetWorkspaceProjectsRequestSortBy.LAST_EXPERIMENT_START_TIME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },

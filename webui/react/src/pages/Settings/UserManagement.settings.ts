@@ -65,7 +65,7 @@ const config: SettingsConfig = {
       type: { baseType: BaseType.Boolean },
     },
     {
-      defaultValue: V1GetUsersRequestSortBy.MODIFIEDTIME,
+      defaultValue: V1GetUsersRequestSortBy.MODIFIED_TIME,
       key: 'sortKey',
       storageKey: 'sortKey',
       type: { baseType: BaseType.String },

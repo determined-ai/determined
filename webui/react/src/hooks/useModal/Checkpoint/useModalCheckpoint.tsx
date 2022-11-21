@@ -89,7 +89,7 @@ const useModalCheckpoint = ({
 
   const handleDelete = useCallback(() => {
     if (!checkpoint.uuid) return;
-    readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
+    readStream(detApi.Checkpoints.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
   }, [checkpoint]);
 
   const deleteCPModalProps: ModalFuncProps = useMemo(() => {

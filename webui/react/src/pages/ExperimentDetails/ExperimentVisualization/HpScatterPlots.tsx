@@ -142,7 +142,7 @@ const ScatterPlots: React.FC<Props> = ({
     setHasLoaded(false);
 
     readStream<V1TrialsSnapshotResponse>(
-      detApi.StreamingInternal.trialsSnapshot(
+      detApi.Internal.trialsSnapshot(
         experiment.id,
         selectedMetric.name,
         metricTypeParamMap[selectedMetric.type],
@@ -163,7 +163,7 @@ const ScatterPlots: React.FC<Props> = ({
           const trialId = trial.trialId;
           trialIds.push(trialId);
 
-          const flatHParams = flattenObject(trial.hparams);
+          const flatHParams = flattenObject(trial.hparams as Record<string, any>);
           fullHParams.forEach((hParam) => {
             /**
              * TODO: filtering NaN, +/- Infinity for now, but handle it later with

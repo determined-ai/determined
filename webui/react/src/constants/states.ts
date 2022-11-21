@@ -35,7 +35,7 @@ const activeStates: Array<RunState> = [
 const jobStates: Array<JobState> = [
   JobState.QUEUED,
   JobState.SCHEDULED,
-  JobState.SCHEDULEDBACKFILLED,
+  JobState.SCHEDULED_BACKFILLED,
 ];
 export const killableRunStates: CompoundRunState[] = [
   ...activeStates,
@@ -105,14 +105,14 @@ export const V1ResourcePoolTypeToLabel: { [key in V1ResourcePoolType]: string } 
   [V1ResourcePoolType.AWS]: 'AWS',
   [V1ResourcePoolType.GCP]: 'GCP',
   [V1ResourcePoolType.STATIC]: 'Static',
-  [V1ResourcePoolType.K8S]: 'Kubernetes',
+  [V1ResourcePoolType.K8_S]: 'Kubernetes',
 };
 
 export const V1SchedulerTypeToLabel: { [key in V1SchedulerType]: string } = {
-  [V1SchedulerType.FAIRSHARE]: 'Fairshare',
+  [V1SchedulerType.FAIR_SHARE]: 'Fairshare',
   [V1SchedulerType.KUBERNETES]: 'Kubernetes',
   [V1SchedulerType.PRIORITY]: 'Priority',
-  [V1SchedulerType.ROUNDROBIN]: 'RoundRobin',
+  [V1SchedulerType.ROUND_ROBIN]: 'RoundRobin',
   [V1SchedulerType.SLURM]: 'Slurm',
   [V1SchedulerType.PBS]: 'PBS',
   [V1SchedulerType.UNSPECIFIED]: 'Unspecified',
@@ -156,8 +156,9 @@ export const commandTypeToLabel: { [key in CommandType]: string } = {
 
 export const jobStateToLabel: { [key in JobState]: string } = {
   [JobState.SCHEDULED]: 'Scheduled',
-  [JobState.SCHEDULEDBACKFILLED]: 'ScheduledBackfilled',
+  [JobState.SCHEDULED_BACKFILLED]: 'ScheduledBackfilled',
   [JobState.QUEUED]: 'Queued',
+  STATE_UNSPECIFIED: 'Unspecified',
 };
 
 export const slotStateToLabel: { [key in SlotState]: string } = {
@@ -170,13 +171,14 @@ export const slotStateToLabel: { [key in SlotState]: string } = {
 export const trialStateTolabel: { [key in Determinedtrialv1State]: string } = {
   [Determinedtrialv1State.ACTIVE]: 'Active',
   [Determinedtrialv1State.PAUSED]: 'Paused',
-  [Determinedtrialv1State.STOPPINGCANCELED]: 'Stopping',
-  [Determinedtrialv1State.STOPPINGKILLED]: 'Stopping',
-  [Determinedtrialv1State.STOPPINGCOMPLETED]: 'Stopping',
-  [Determinedtrialv1State.STOPPINGERROR]: 'Error',
+  [Determinedtrialv1State.STOPPING_CANCELED]: 'Stopping',
+  [Determinedtrialv1State.STOPPING_KILLED]: 'Stopping',
+  [Determinedtrialv1State.STOPPING_COMPLETED]: 'Stopping',
+  [Determinedtrialv1State.STOPPING_ERROR]: 'Error',
   [Determinedtrialv1State.CANCELED]: 'Canceled',
   [Determinedtrialv1State.COMPLETED]: 'Completed',
   [Determinedtrialv1State.ERROR]: 'Error',
+  STATE_UNSPECIFIED: 'Unspecified',
 };
 export function stateToLabel(state: StateOfUnion): string {
   return (

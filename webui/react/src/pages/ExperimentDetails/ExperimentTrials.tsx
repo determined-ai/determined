@@ -210,9 +210,9 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.render = checkpointRenderer;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.ID) {
         column.render = idRenderer;
-      } else if (column.key === V1GetExperimentTrialsRequestSortBy.BESTVALIDATIONMETRIC) {
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.BEST_VALIDATION_METRIC) {
         column.render = validationRenderer('bestValidationMetric');
-      } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATESTVALIDATIONMETRIC) {
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.LATEST_VALIDATION_METRIC) {
         column.render = validationRenderer('latestValidationMetric');
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.STATE) {
         column.filterDropdown = stateFilterDropdown;

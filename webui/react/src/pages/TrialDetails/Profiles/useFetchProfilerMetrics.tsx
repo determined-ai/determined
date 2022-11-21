@@ -48,7 +48,7 @@ export const useFetchProfilerMetrics = (
     const follow = !terminalRunStates.has(trialState);
 
     readStream(
-      detApi.StreamingProfiler.getTrialProfilerMetrics(
+      detApi.Profiler.getTrialProfilerMetrics(
         trialId,
         labelsName,
         labelsAgentId,

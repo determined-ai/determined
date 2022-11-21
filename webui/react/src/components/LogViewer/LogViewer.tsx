@@ -15,7 +15,10 @@ import Link from 'components/Link';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
 import useResize from 'hooks/useResize';
-import { FetchArgs } from 'services/api-ts-sdk';
+import {
+  StreamResultOfV1MasterLogsResponse,
+  StreamResultOfV1TaskLogsResponse,
+} from 'services/api-ts-sdk';
 import { readStream } from 'services/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
@@ -35,7 +38,10 @@ export interface Props {
   handleCloseLogs?: () => void;
   initialLogs?: unknown[];
   onDownload?: () => void;
-  onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
+  onFetch?: (
+    config: FetchConfig,
+    type: FetchType,
+  ) => Promise<StreamResultOfV1MasterLogsResponse | StreamResultOfV1TaskLogsResponse>;
   sortKey?: keyof Log;
   title?: React.ReactNode;
 }
