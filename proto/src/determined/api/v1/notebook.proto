@@ -38,6 +38,10 @@ message GetNotebooksRequest {
   // Limit notebooks to those that are owned by users with the specified
   // userIds.
   repeated int32 user_ids = 6;
+  /* TODO(DET-8680): addressed with rbac ntsc api ticket */
+  // Limit to those within a specified workspace, or 0 for all
+  // accessible workspaces.
+  /* int32 workspace_id = 12; */
 }
 // Response to GetNotebooksRequest.
 message GetNotebooksResponse {
@@ -96,6 +100,9 @@ message SetNotebookPriorityResponse {
 
 // Request to launch a notebook.
 message LaunchNotebookRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id" ] }
+  };
   // Notebook config (JSON).
   google.protobuf.Struct config = 1;
   // Template name.
@@ -104,6 +111,13 @@ message LaunchNotebookRequest {
   repeated determined.util.v1.File files = 3;
   // Preview a launching request without actually creating a Notebook.
   bool preview = 4;
+  /* CHAT: we could have this as part of task config and it'll share
+  between ntsc but we'd like to move away from it
+  if we want to go hirearchical it might make sense to set this up
+  for that future. eg take a list of scope_ids, dir_ids, or a path? cc @ilia
+  */
+  // Workspace ID.
+  int32 workspace_id = 5;
 }
 // Response to LaunchNotebookRequest.
 message LaunchNotebookResponse {
