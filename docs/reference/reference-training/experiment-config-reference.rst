@@ -1342,7 +1342,7 @@ The ``pbs`` section specifies configuration options applicable when the cluster 
    Requesting of resources and job placement may be influenced through use of ``-l``, however chunk
    count, chunk arrangement, and GPU or CPU counts per chunk (depending on the value of
    ``slot_type``) are controlled by Determined; any values specified for these quantities will be
-   ignored. For example, if the following were specified for a CUDA experiment:
+   ignored. Consider if the following were specified for a CUDA experiment:
 
    .. code:: yaml
 
@@ -1352,8 +1352,8 @@ The ``pbs`` section specifies configuration options applicable when the cluster 
             - -l place=scatter:shared
             - -l walltime=1:00:00
 
-   then the chunk count (two), the GPU count per chunk (four), and the chunk arrangement (scatter)
-   would all be ignored in favor of values calculated by Determined.
+   The chunk count (two), the GPU count per chunk (four), and the chunk arrangement (scatter) will
+   all be ignored in favor of values calculated by Determined.
 
 ``slots_per_node``
    The minimum number of slots required for a node to be scheduled during a trial. If
