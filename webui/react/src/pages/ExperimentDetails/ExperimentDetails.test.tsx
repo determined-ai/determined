@@ -17,6 +17,7 @@ import history from 'shared/routes/history';
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
 
+jest.useFakeTimers();
 /**
  * Setup mock functions in a way that the responses can
  * be overridden dynamically between test sections.
