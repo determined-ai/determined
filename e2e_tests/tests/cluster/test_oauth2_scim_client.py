@@ -29,7 +29,7 @@ def is_ee() -> bool:
 
 
 @pytest.mark.e2e_cpu
-def test_list_oauth_clients(is_ee: bool):
+def test_list_oauth_clients(is_ee: bool) -> None:
     log_in_user(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.whoami()
@@ -54,7 +54,7 @@ def test_list_oauth_clients(is_ee: bool):
 
 
 @pytest.mark.e2e_cpu
-def test_add_client(is_ee: bool):
+def test_add_client(is_ee: bool) -> None:
     log_in_user(ADMIN_CREDENTIALS)
 
     det_obj = Determined(master=conf.make_master_url())
@@ -71,8 +71,8 @@ def test_add_client(is_ee: bool):
 
     if is_ee:
         client = det_obj.add_oauth_client(domain="XXX", name="sdk_oauth_client_test")
-        assert client["name"] == "sdk_oauth_client_test"
-        assert client["domain"] == "XXX"
+        assert client.name == "sdk_oauth_client_test"
+        assert client.domain == "XXX"
         subprocess.run(command, check=True)
     else:
         with pytest.raises(EnterpriseOnlyError):
@@ -81,18 +81,18 @@ def test_add_client(is_ee: bool):
 
 
 @pytest.mark.e2e_cpu
-def test_remove_client(is_ee: bool):
+def test_remove_client(is_ee: bool) -> None:
     log_in_user(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     if is_ee:
         client = det_obj.add_oauth_client(domain="XXX", name="sdk_oauth_client_test")
-        remove_id = client["id"]
+        remove_id = client.id
         det_obj.remove_oauth_client(client_id=remove_id)
-        list_client_ids = [oclient[id] for oclient in det_obj.list_oauth_clients()]
+        list_client_ids = [oclient.id for oclient in det_obj.list_oauth_clients()]
         assert remove_id not in list_client_ids
 
         client = det_obj.add_oauth_client(domain="XXX", name="cli_oauth_client_test")
-        remove_id = client["id"]
+        remove_id = client.id
 
         command = [
             "det",
@@ -104,7 +104,7 @@ def test_remove_client(is_ee: bool):
             str(remove_id),
         ]
         subprocess.run(command, check=True)
-        list_client_ids = [oclient[id] for oclient in det_obj.list_oauth_clients()]
+        list_client_ids = [oclient.id for oclient in det_obj.list_oauth_clients()]
         assert remove_id not in list_client_ids
 
     else:

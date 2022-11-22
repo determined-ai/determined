@@ -343,11 +343,11 @@ class Determined:
             headers = {"Authorization": "Bearer {}".format(self._token)}
             clients = api.get(self._master, "oauth2/clients", headers=headers).json()
             for client in clients:
-                osc = oauth2_scim_client.Oauth2ScimClient(
-                    name=client["name"], id=client["id"], domain=client["domain"]
+                osc: oauth2_scim_client.Oauth2ScimClient = oauth2_scim_client.Oauth2ScimClient(
+                    name=client["name"], client_id=client["id"], domain=client["domain"]
                 )
                 oauth2_scim_clients.append(osc)
-            return clients
+            return oauth2_scim_clients
         except api.errors.NotFoundException:
             raise EnterpriseOnlyError("API not found: oauth2/clients")
 
@@ -361,8 +361,8 @@ class Determined:
                 json={"domain": domain, "name": name},
             ).json()
 
-            return oauth2_scim_client.Oauth2ScimCient(
-                id=str(client["id"]), secret=str(client["secret"]), domain=domain, name=name
+            return oauth2_scim_client.Oauth2ScimClient(
+                client_id=str(client["id"]), secret=str(client["secret"]), domain=domain, name=name
             )
 
         except api.errors.NotFoundException:
