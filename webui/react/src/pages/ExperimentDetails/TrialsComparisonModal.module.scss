@@ -1,4 +1,4 @@
-$border-color: var(--theme-colors-monochrome-13);
+$border-color: var(--theme-surface-border);
 
 .base {
   border: 1px solid $border-color;
@@ -20,7 +20,7 @@ $border-color: var(--theme-colors-monochrome-13);
     min-width: fit-content;
   }
   .row.header {
-    background-color: var(--theme-colors-monochrome-14);
+    background-color: var(--theme-stage);
   }
   .row.sticky {
     position: sticky;
@@ -34,7 +34,7 @@ $border-color: var(--theme-colors-monochrome-13);
   }
   .cell {
     align-items: center;
-    background-color: var(--theme-colors-monochrome-17);
+    background-color: var(--theme-stage);
     display: flex;
     overflow: hidden;
     padding: 8px;
@@ -49,7 +49,7 @@ $border-color: var(--theme-colors-monochrome-13);
     height: 100%;
   }
   .cell.header {
-    background-color: var(--theme-colors-monochrome-16);
+    background-color: var(--theme-stage);
   }
   .cell.sticky {
     border-right: 1px solid $border-color;
@@ -65,7 +65,7 @@ $border-color: var(--theme-colors-monochrome-13);
     position: sticky;
   }
   .row.header > .cell {
-    background-color: var(--theme-colors-monochrome-14);
+    background-color: var(--theme-stage);
   }
   .trialTag {
     font-size: 14px;
