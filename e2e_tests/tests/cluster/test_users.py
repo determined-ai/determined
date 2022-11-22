@@ -81,10 +81,10 @@ def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0
 
     child.expect(expected, EXPECT_TIMEOUT)
     child.sendline(password)
-    child.read()
+    out = child.read()
     child.wait()
     child.close()
-    assert child.exitstatus == expectedStatus
+    assert child.exitstatus == expectedStatus, out
 
 
 def create_test_user(add_password: bool = False) -> authentication.Credentials:
@@ -94,10 +94,10 @@ def create_test_user(add_password: bool = False) -> authentication.Credentials:
     # Now we activate the user.
     child = det_spawn(["user", "activate", n_username])
     child.expect(pexpect.EOF, timeout=EXPECT_TIMEOUT)
-    child.read()
+    out = child.read()
     child.wait()
     child.close()
-    assert child.exitstatus == 0
+    assert child.exitstatus == 0, out
 
     password = ""
     if add_password:
@@ -119,10 +119,10 @@ def change_user_password(
     child.sendline(target_password)
     child.expect(confirm_pword_prompt, timeout=EXPECT_TIMEOUT)
     child.sendline(target_password)
-    child.read()
+    out = child.read()
     child.wait()
     child.close()
-    return cast(int, child.exitstatus)
+    return cast(int, child.exitstatus), out
 
 
 def log_out_user(username: Optional[str] = None) -> None:
@@ -132,10 +132,10 @@ def log_out_user(username: Optional[str] = None) -> None:
         args = ["user", "logout"]
 
     child = det_spawn(args)
-    child.read()
+    out = child.read()
     child.wait()
     child.close()
-    assert child.exitstatus == 0
+    assert child.exitstatus == 0, out
 
 
 def activate_deactivate_user(active: bool, target_user: str) -> None:
