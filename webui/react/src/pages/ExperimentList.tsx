@@ -12,7 +12,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table';
-import { Input, MenuProps, Typography } from 'antd';
+import { Input, MenuProps, Pagination, Typography } from 'antd';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { HTMLProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -28,6 +28,7 @@ import InteractiveTable, {
   // ColumnDef,
   InteractiveTableSettings,
   onRightClickableCell,
+  Row,
 } from 'components/Table/InteractiveTable';
 import {
   checkmarkRenderer,
@@ -514,6 +515,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             />
           </div>
         ),
+        enableResizing: false,
+        enableSorting: false,
         header: ({ table }) => (
           <IndeterminateCheckbox
             {...{
@@ -562,6 +565,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         // filters: labels.map((label) => ({ text: label, value: label })),
         header: 'Tags',
 
+        minSize: DEFAULT_COLUMN_WIDTHS['tags'],
         size: DEFAULT_COLUMN_WIDTHS['tags'],
         // isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         // key: 'labels',
@@ -680,9 +684,9 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       },
       {
         accessorKey: 'action',
-
         cell: (props) => actionRenderer(props.getValue() as string, props.row.original, props.row.index),
-
+        enableResizing: false,
+        enableSorting: false,
         header: '',
         // align: 'right',
         // className: 'fullCell',
@@ -721,7 +725,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     onRowSelectionChange: setRowSelection,
     state: {
       columnOrder,
-
       columnVisibility,
       rowSelection,
     },
@@ -757,7 +760,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const transferColumns = useMemo(() => {
     return table.getVisibleLeafColumns()
       .filter(
-        (column) => column.columnDef.header !== '' && column.columnDef.header !== 'Action' && column.columnDef.header !== 'Archived',
+        (column) => column.id !== 'selection' && column.id !== 'action' && column.id !== 'archived',
       )
       .map((column) => {
         return column.id?.toString() ?? '';
@@ -1091,6 +1094,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     });
   }, [updateSettings, settings]);
 
+  const updatePagination = useCallback((page, pageSize) => {
+    updateSettings({
+      tableLimit: pageSize,
+      tableOffset: (page - 1) * pageSize,
+    });
+  }, [updateSettings]);
+
   const DraggableColumnHeader: React.FC<{
     columnOrder,
     header, setColumnOrder
@@ -1140,9 +1150,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         key={header.id}
         ref={dropRef}
         style={{
-          // minWidth: header.getSize(),
           opacity: isDragging ? 0.5 : 1,
-
           width: header.getSize(),
         }}>
         <div
@@ -1152,7 +1160,9 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
               ? 'cursor-pointer select-none'
               : '',
             onClick: () => {
-              handleSort(header);
+              if (header.column.getCanSort()) {
+                handleSort(header);
+              }
             },
           }}>
           <div ref={dragRef}>
@@ -1212,27 +1222,38 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             </thead>
             <tbody className="ant-table-tbody">
               {table.getRowModel().rows.map((row) => (
-                <tr
+                <Row
                   className="ant-table-row ant-table-row-level-0"
-                  key={row.id}>
+                  ContextMenu={ContextMenu}
+                  index={parseInt(row.id)}
+                  key={row.id}
+                  record={row.original}>
                   {row.getVisibleCells().map((cell) => (
                     <td
                       className="ant-table-cell"
                       key={cell.id}
                       style={{
                         height: 60,
+                        maxWidth: cell.column.getSize(),
+                        minWidth: cell.column.getSize(),
                         overflow: 'hidden',
                         paddingBottom: 0,
                         paddingTop: 0,
-                        width: cell.column.getSize(),
                       }}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
-                </tr>
+                </Row>
               ))}
             </tbody>
           </table>
+          <Pagination
+            defaultCurrent={settings.tableOffset + 1}
+            showSizeChanger
+            total={total}
+            onChange={updatePagination}
+            onShowSizeChange={updatePagination}
+          />
         </div>
       </div>
       {modalColumnsCustomizeContextHolder}

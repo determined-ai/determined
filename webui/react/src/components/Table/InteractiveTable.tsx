@@ -160,7 +160,7 @@ const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps
   );
 };
 
-const Row: Row = ({
+export const Row: Row = ({
   className,
   children,
   record,
@@ -350,8 +350,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? dropRightStyle
             : dragState === 'draggingLeft'
-            ? dropLeftStyle
-            : {}
+              ? dropLeftStyle
+              : {}
         }
       />
       <span
@@ -360,8 +360,8 @@ const HeaderCell = ({
           dragState === 'draggingRight'
             ? { right: '-3px' }
             : dragState === 'draggingLeft'
-            ? { left: '-3px' }
-            : {}
+              ? { left: '-3px' }
+              : {}
         }
       />
     </th>
@@ -663,13 +663,13 @@ const InteractiveTable: InteractiveTable = ({
             tableLayout="fixed"
             onChange={handleChange}
             onRow={(record, index) =>
-              ({
-                areRowsSelected,
-                ContextMenu,
-                index,
-                numOfPinned,
-                record,
-              } as React.HTMLAttributes<HTMLElement>)
+            ({
+              areRowsSelected,
+              ContextMenu,
+              index,
+              numOfPinned,
+              record,
+            } as React.HTMLAttributes<HTMLElement>)
             }
             {...props}
           />
