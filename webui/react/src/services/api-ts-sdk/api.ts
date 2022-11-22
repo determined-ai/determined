@@ -3166,20 +3166,6 @@ export interface V1GetMasterResponse {
 }
 
 /**
- * Response to GetMeRequest.
- * @export
- * @interface V1GetMeResponse
- */
-export interface V1GetMeResponse {
-    /**
-     * The requested user.
-     * @type {V1User}
-     * @memberof V1GetMeResponse
-     */
-    user: V1User;
-}
-
-/**
  * Request to get a file of model definition.
  * @export
  * @interface V1GetModelDefFileRequest
@@ -3853,20 +3839,6 @@ export interface V1GetTrialsCollectionsResponse {
      * @memberof V1GetTrialsCollectionsResponse
      */
     collections?: Array<V1TrialsCollection>;
-}
-
-/**
- * Response to GetUserByUsernameRequest.
- * @export
- * @interface V1GetUserByUsernameResponse
- */
-export interface V1GetUserByUsernameResponse {
-    /**
-     * The requested user.
-     * @type {V1User}
-     * @memberof V1GetUserByUsernameResponse
-     */
-    user: V1User;
 }
 
 /**
@@ -5235,64 +5207,6 @@ export interface V1Notebook {
 }
 
 /**
- * Arguments to a notify container running.
- * @export
- * @interface V1NotifyContainerRunningRequest
- */
-export interface V1NotifyContainerRunningRequest {
-    /**
-     * The ID of the allocation.
-     * @type {string}
-     * @memberof V1NotifyContainerRunningRequest
-     */
-    allocationId: string;
-    /**
-     * The UUID of the participant in a notify container running message.
-     * @type {string}
-     * @memberof V1NotifyContainerRunningRequest
-     */
-    requestUuid?: string;
-    /**
-     * The number of process to wait for.
-     * @type {number}
-     * @memberof V1NotifyContainerRunningRequest
-     */
-    numPeers?: number;
-    /**
-     * The container's rank.
-     * @type {number}
-     * @memberof V1NotifyContainerRunningRequest
-     */
-    rank?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof V1NotifyContainerRunningRequest
-     */
-    nodeName?: string;
-    /**
-     * The data from this process.
-     * @type {any}
-     * @memberof V1NotifyContainerRunningRequest
-     */
-    data: any;
-}
-
-/**
- * 
- * @export
- * @interface V1NotifyContainerRunningResponse
- */
-export interface V1NotifyContainerRunningResponse {
-    /**
-     * The data for all the processes.
-     * @type {Array<any>}
-     * @memberof V1NotifyContainerRunningResponse
-     */
-    data: Array<any>;
-}
-
-/**
  * Order records in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
  * @export
  * @enum {string}
@@ -5590,18 +5504,6 @@ export interface V1PatchTrialsCollectionResponse {
  */
 export interface V1PatchUser {
     /**
-     * String denoting the username of the user.
-     * @type {string}
-     * @memberof V1PatchUser
-     */
-    username?: string;
-    /**
-     * String denoting the password of the user.
-     * @type {string}
-     * @memberof V1PatchUser
-     */
-    password?: string;
-    /**
      * Bool denoting whether the account is an admin account.
      * @type {boolean}
      * @memberof V1PatchUser
@@ -5614,23 +5516,23 @@ export interface V1PatchUser {
      */
     active?: boolean;
     /**
-     * Name to display in the web UI.
-     * @type {string}
-     * @memberof V1PatchUser
-     */
-    displayName?: string;
-    /**
      * The user and group on the agent host machine.
      * @type {V1AgentUserGroup}
      * @memberof V1PatchUser
      */
     agentUserGroup?: V1AgentUserGroup;
     /**
-     * Indicate whether the provided password is pre-salted & hashed or not.
-     * @type {boolean}
+     * The new username.
+     * @type {string}
      * @memberof V1PatchUser
      */
-    isHashed?: boolean;
+    username?: string;
+    /**
+     * Name to display in the web UI.
+     * @type {string}
+     * @memberof V1PatchUser
+     */
+    displayName?: string;
 }
 
 /**
@@ -5665,12 +5567,6 @@ export interface V1PatchWorkspace {
      * @memberof V1PatchWorkspace
      */
     agentUserGroup?: V1AgentUserGroup;
-    /**
-     * Optional checkpoint storage config. Expects same format as experiment config's checkpoint storage.
-     * @type {any}
-     * @memberof V1PatchWorkspace
-     */
-    checkpointStorageConfig?: any;
 }
 
 /**
@@ -5714,15 +5610,15 @@ export interface V1Permission {
      */
     name?: string;
     /**
-     * Allowed scope types.
-     * @type {V1ScopeTypeMask}
+     * 
+     * @type {boolean}
      * @memberof V1Permission
      */
-    scopeTypeMask?: V1ScopeTypeMask;
+    isGlobal?: boolean;
 }
 
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata like experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata like experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -5741,7 +5637,6 @@ export enum V1PermissionType {
     UPDATEWORKSPACE = <any> 'PERMISSION_TYPE_UPDATE_WORKSPACE',
     DELETEWORKSPACE = <any> 'PERMISSION_TYPE_DELETE_WORKSPACE',
     SETWORKSPACEAGENTUSERGROUP = <any> 'PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP',
-    SETWORKSPACECHECKPOINTSTORAGECONFIG = <any> 'PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG',
     CREATEPROJECT = <any> 'PERMISSION_TYPE_CREATE_PROJECT',
     VIEWPROJECT = <any> 'PERMISSION_TYPE_VIEW_PROJECT',
     UPDATEPROJECT = <any> 'PERMISSION_TYPE_UPDATE_PROJECT',
@@ -6053,12 +5948,6 @@ export interface V1PostUserRequest {
      * @memberof V1PostUserRequest
      */
     password?: string;
-    /**
-     * Indicate whether the provided password is pre-salted & hashed or not.
-     * @type {boolean}
-     * @memberof V1PostUserRequest
-     */
-    isHashed?: boolean;
 }
 
 /**
@@ -6135,12 +6024,6 @@ export interface V1PostWorkspaceRequest {
      * @memberof V1PostWorkspaceRequest
      */
     agentUserGroup?: V1AgentUserGroup;
-    /**
-     * Optional checkpoint storage config.
-     * @type {any}
-     * @memberof V1PostWorkspaceRequest
-     */
-    checkpointStorageConfig?: any;
 }
 
 /**
@@ -7247,12 +7130,6 @@ export interface V1Role {
      * @memberof V1Role
      */
     permissions?: Array<V1Permission>;
-    /**
-     * Allowed scope types.
-     * @type {V1ScopeTypeMask}
-     * @memberof V1Role
-     */
-    scopeTypeMask?: V1ScopeTypeMask;
 }
 
 /**
@@ -7268,17 +7145,11 @@ export interface V1RoleAssignment {
      */
     role: V1Role;
     /**
-     * The id of the workspace the role belongs to. Empty for cluster-wide scope.
+     * The id of the workspace the role belongs to. Omit for a global scope.
      * @type {number}
      * @memberof V1RoleAssignment
      */
     scopeWorkspaceId?: number;
-    /**
-     * Whether the role is assigned cluster-wide.
-     * @type {boolean}
-     * @memberof V1RoleAssignment
-     */
-    scopeCluster?: boolean;
 }
 
 /**
@@ -7300,11 +7171,11 @@ export interface V1RoleAssignmentSummary {
      */
     scopeWorkspaceIds?: Array<number>;
     /**
-     * Whether the role is assigned cluster-wide.
+     * 
      * @type {boolean}
      * @memberof V1RoleAssignmentSummary
      */
-    scopeCluster?: boolean;
+    isGlobal?: boolean;
 }
 
 /**
@@ -7408,26 +7279,6 @@ export enum V1SchedulerType {
     KUBERNETES = <any> 'SCHEDULER_TYPE_KUBERNETES',
     SLURM = <any> 'SCHEDULER_TYPE_SLURM',
     PBS = <any> 'SCHEDULER_TYPE_PBS'
-}
-
-/**
- * 
- * @export
- * @interface V1ScopeTypeMask
- */
-export interface V1ScopeTypeMask {
-    /**
-     * Whether this permission or role can be assigned globally, i.e. cluster-wide. Currently, all permissions can be assigned globally, so this is always true.
-     * @type {boolean}
-     * @memberof V1ScopeTypeMask
-     */
-    cluster?: boolean;
-    /**
-     * Whether this permission or role can be assigned on a particular workspace. For example, `ADMINISTRATE_USER` permission will have this field set to false, since user creation can only be done at a cluster level, and it doesn't make sense for a single workspace.
-     * @type {boolean}
-     * @memberof V1ScopeTypeMask
-     */
-    workspace?: boolean;
 }
 
 /**
@@ -9326,12 +9177,6 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     agentUserGroup?: V1AgentUserGroup;
-    /**
-     * Optional checkpoint storage config. Expects same format as experiment config's checkpoint storage.
-     * @type {any}
-     * @memberof V1Workspace
-     */
-    checkpointStorageConfig?: any;
 }
 
 /**
@@ -15852,52 +15697,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
-         * @param {string} allocationId The ID of the allocation.
-         * @param {V1NotifyContainerRunningRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'allocationId' is not null or undefined
-            if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling notifyContainerRunning.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling notifyContainerRunning.');
-            }
-            const localVarPath = `/api/v1/allocations/{allocationId}/notify_container_running`
-                .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-            const needsSerialization = (<any>"V1NotifyContainerRunningRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -17070,26 +16869,6 @@ export const InternalApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
-         * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
-         * @param {string} allocationId The ID of the allocation.
-         * @param {V1NotifyContainerRunningRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning(allocationId, body, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -17661,17 +17440,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
-         * @param {string} allocationId The ID of the allocation.
-         * @param {V1NotifyContainerRunningRequest} body 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
-            return InternalApiFp(configuration).notifyContainerRunning(allocationId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary PostAllocationProxyAddress sets the proxy address to use when proxying to services provided by an allocation. Upon receipt, the master will also register any proxies specified by the task.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationProxyAddressRequest} body 
@@ -18188,19 +17956,6 @@ export class InternalApi extends BaseAPI {
      */
     public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
         return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary NotifyContainterRunning is used to notify the master that the container is running.  On HPC, the launcher will report a state of \"Running\" as soon as Slurm starts the job, but the container may be in the process of getting pulled down from the Internet, so the experiment is not really considered to be in a \"Running\" state until all the containers that are part of the experiment are running and not being pulled.
-     * @param {string} allocationId The ID of the allocation.
-     * @param {V1NotifyContainerRunningRequest} body 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
-        return InternalApiFp(this.configuration).notifyContainerRunning(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25314,37 +25069,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
-         * @summary Get the current user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getMe(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/me`;
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
@@ -25357,43 +25081,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
-            const localVarUrlObj = url.parse(localVarPath, true);
-            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-					? configuration.apiKey("Authorization")
-					: configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-
-            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
-            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
-            delete localVarUrlObj.search;
-            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
-
-            return {
-                url: url.format(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the requested user with username.
-         * @param {string} username The string of the username.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUserByUsername(username: string, options: any = {}): FetchArgs {
-            // verify required parameter 'username' is not null or undefined
-            if (username === null || username === undefined) {
-                throw new RequiredError('username','Required parameter username was null or undefined when calling getUserByUsername.');
-            }
-            const localVarPath = `/api/v1/users/{username}/by-username`
-                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -25713,24 +25400,6 @@ export const UsersApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get the current user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getMe(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
@@ -25738,25 +25407,6 @@ export const UsersApiFp = function(configuration?: Configuration) {
          */
         getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
-            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the requested user with username.
-         * @param {string} username The string of the username.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25914,15 +25564,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
-         * @summary Get the current user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getMe(options?: any) {
-            return UsersApiFp(configuration).getMe(options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get the requested user.
          * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
@@ -25930,16 +25571,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         getUser(userId: number, options?: any) {
             return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the requested user with username.
-         * @param {string} username The string of the username.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUserByUsername(username: string, options?: any) {
-            return UsersApiFp(configuration).getUserByUsername(username, options)(fetch, basePath);
         },
         /**
          * 
@@ -26026,17 +25657,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
 export class UsersApi extends BaseAPI {
     /**
      * 
-     * @summary Get the current user.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public getMe(options?: any) {
-        return UsersApiFp(this.configuration).getMe(options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
      * @summary Get the requested user.
      * @param {number} userId The id of the user.
      * @param {*} [options] Override http request option.
@@ -26045,18 +25665,6 @@ export class UsersApi extends BaseAPI {
      */
     public getUser(userId: number, options?: any) {
         return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
-    }
-
-    /**
-     * 
-     * @summary Get the requested user with username.
-     * @param {string} username The string of the username.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public getUserByUsername(username: string, options?: any) {
-        return UsersApiFp(this.configuration).getUserByUsername(username, options)(this.fetch, this.basePath);
     }
 
     /**
