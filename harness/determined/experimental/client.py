@@ -88,6 +88,7 @@ def login(
     cert_path: Optional[str] = None,
     cert_name: Optional[str] = None,
     noverify: bool = False,
+    try_reauth: bool = True,
 ) -> None:
     """
     ``login()`` will configure the default Determined() singleton used by all of the other functions
@@ -137,7 +138,7 @@ def login(
             "client.Determined() objects, which each expose the same functions as this module."
         )
 
-    _determined = Determined(master, user, password, cert_path, cert_name, noverify)
+    _determined = Determined(master, user, password, cert_path, cert_name, noverify, try_reauth)
 
 
 @_require_singleton

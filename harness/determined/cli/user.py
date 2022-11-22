@@ -51,22 +51,22 @@ def log_in_user(parsed_args: Namespace) -> None:
     token_store.set_active(username)
 
 
-@authentication.optional
 def log_out_user(parsed_args: Namespace) -> None:
-    auth = authentication.cli_auth
-    if auth is None:
+    try:
+        client.login(master=parsed_args.master, user=parsed_args.user, try_reauth=False)
+    except (api.errors.UnauthenticatedException, api.errors.ForbiddenException):
         return
+
     try:
         client.logout()
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e
-
     except api.errors.UnauthenticatedException:
         pass
 
     token_store = authentication.TokenStore(parsed_args.master)
-    token_store.drop_user(auth.get_session_user())
+    token_store.drop_user(parsed_args.user)
 
 
 @login_sdk_client
