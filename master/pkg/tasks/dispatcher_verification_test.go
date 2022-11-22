@@ -47,6 +47,20 @@ func TestValidateSlurmOptions(t *testing.T) {
 	testEnvironmentSlurm(t, []string{"--nice=7", " -N2", "-Dmydir", "--partion=pname"},
 		"slurm option -N is not configurable",
 		"slurm option -D is not configurable")
+
+	// --gres -- is allowed unless specifying GPU resources
+	testEnvironmentSlurm(t, []string{"--gres=gpu:tesla:100,cpu:100"},
+		"slurm option --gres may not be used to configure GPU resources")
+	testEnvironmentSlurm(t, []string{"--gres=cpu:100,gpu:100"},
+		"slurm option --gres may not be used to configure GPU resources")
+	testEnvironmentSlurm(t, []string{"--gres=cpu:100"})
+	testEnvironmentSlurm(t, []string{"--gres=cpu:100,"})
+	testEnvironmentSlurm(t, []string{"--gres="})
+	testEnvironmentSlurm(t, []string{"--gres=,"})
+	testEnvironmentSlurm(t, []string{"--gres"})
+
+	var slurmArgs []string
+	testEnvironmentSlurm(t, slurmArgs)
 }
 
 func TestValidatePbsOptions(t *testing.T) {

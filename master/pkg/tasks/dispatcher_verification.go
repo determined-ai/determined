@@ -25,11 +25,10 @@ func ValidatePbs(pbsOptions []string) []error {
 
 // ValidateSlurm checks that the specified slurm options are allowed.
 // If any are not messages are returned in an array of errors.
-func ValidateSlurm(slurm []string) []error {
+func ValidateSlurm(slurmOptions []string) []error {
 	forbiddenArgs := []string{
 		"--ntasks-per-node=",
 		"--gpus=", "-G",
-		"--gres=",
 		"--nodes=", "-N",
 		"--ntasks=", "-n",
 		"--chdir=", "-D",
@@ -37,7 +36,31 @@ func ValidateSlurm(slurm []string) []error {
 		"--output=", "-o",
 		"--partition=", "-p",
 	}
-	return validateWlmOptions(wlmSlurm, slurm, forbiddenArgs)
+	errors := validateWlmOptions(wlmSlurm, slurmOptions, forbiddenArgs)
+
+	errors = disallowGresGpuConfiguration(slurmOptions, errors)
+	return errors
+}
+
+// disallowGresGpuConfiguration adds a validation error if --gres references a GPU resource.
+func disallowGresGpuConfiguration(slurmOptions []string, errors []error) []error {
+	for _, option := range slurmOptions {
+		gresSpecs := strings.Split(strings.TrimSpace(option), "=")
+		if gresSpecs[0] == "--gres" && len(gresSpecs) > 1 {
+			// Expect --gres=<list> where entries in the list are of the form
+			// "name[[:type]:count]", separated by commas.
+			for _, gresExpression := range strings.Split(gresSpecs[1], ",") {
+				err := check.TrueSilent(
+					strings.Split(gresExpression, ":")[0] != "gpu",
+					"slurm option --gres may not be used to configure GPU resources")
+				if err != nil {
+					errors = append(errors, err)
+					break
+				}
+			}
+		}
+	}
+	return errors
 }
 
 // validateWlmOptions validates the specified options against the WLM-specific
