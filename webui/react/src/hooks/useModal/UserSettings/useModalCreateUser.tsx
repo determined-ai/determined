@@ -14,7 +14,7 @@ import {
   removeRolesFromUser,
   updateGroup,
 } from 'services/api';
-import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { V1AgentUserGroup, V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
@@ -235,11 +235,8 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
       if (formData.useAgent || user) {
-        const agentUserGroup = {};
-        agentUserGroup['agentUid'] = formData.agentUid;
-        agentUserGroup['agentUser'] = formData.agentUser;
-        agentUserGroup['agentGid'] = formData.agentGid;
-        agentUserGroup['agentGroup'] = formData.agentGroup;
+        const { agentUid, agentUser, agentGid, agentGroup } = formData;
+        const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
         formData['agentUserGroup'] = agentUserGroup;
       }
 
