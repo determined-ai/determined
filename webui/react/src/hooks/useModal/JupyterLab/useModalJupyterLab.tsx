@@ -394,7 +394,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
               max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
               value={fields.slots}
-              onChange={(value) => updateFields?.({ slots: value })}
+              onChange={(value) => updateFields?.({ slots: value ?? undefined })}
             />
           ),
           label: 'Slots',

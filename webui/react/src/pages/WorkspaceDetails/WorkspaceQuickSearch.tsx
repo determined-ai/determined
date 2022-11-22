@@ -138,6 +138,7 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
       <Modal
         closable={false}
         footer={null}
+        open={isModalVisible}
         title={
           <Input
             autoFocus
@@ -148,7 +149,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
             onChange={onChange}
           />
         }
-        visible={isModalVisible}
         width={'clamp(520px, 50vw, 1000px)'}
         onCancel={onHideModal}>
         <div className={css.modalBody}>

@@ -233,8 +233,8 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
       <Modal
         className={css.useNotebookModal}
         footer={null}
+        open={showUseInNotebook}
         title="Use in Notebook"
-        visible={showUseInNotebook}
         onCancel={() => setShowUseInNotebook(false)}>
         <div className={css.topLine}>
           <p>Reference this model in a notebook</p>
