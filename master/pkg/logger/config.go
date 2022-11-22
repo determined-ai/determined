@@ -9,15 +9,17 @@ import (
 // DefaultConfig returns the default configuration of logger.
 func DefaultConfig() *Config {
 	return &Config{
-		Level: "info",
-		Color: true,
+		Level:      "info",
+		Color:      true,
+		Structured: true,
 	}
 }
 
 // Config is the configuration of logger.
 type Config struct {
-	Level string `json:"level"`
-	Color bool   `json:"color"`
+	Level      string `json:"level"`
+	Color      bool   `json:"color"`
+	Structured bool   `json:"structured"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -36,9 +38,14 @@ func SetLogrus(c Config) {
 	}
 
 	logrus.SetLevel(level)
-	logrus.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-		ForceColors:   true,
-		DisableColors: !c.Color,
-	})
+
+	if !c.Structured {
+		logrus.SetFormatter(&logrus.TextFormatter{
+			FullTimestamp: true,
+			ForceColors:   true,
+			DisableColors: !c.Color,
+		})
+	} else {
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	}
 }
