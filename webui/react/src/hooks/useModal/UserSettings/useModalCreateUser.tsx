@@ -68,11 +68,19 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
     });
     if (user?.agentUserGroup) {
       form.setFieldsValue({
-        ['agentGid']: user?.agentUserGroup.agentGid,
-        ['agentGroup']: user?.agentUserGroup.agentGroup,
-        ['agentUid']: user?.agentUserGroup.agentUid,
-        ['agentUser']: user?.agentUserGroup.agentUser,
-        ['useAgent']: true,
+        agentGid: user?.agentUserGroup.agentGid,
+        agentGroup: user?.agentUserGroup.agentGroup,
+        agentUid: user?.agentUserGroup.agentUid,
+        agentUser: user?.agentUserGroup.agentUser,
+        useAgent: true,
+      });
+    } else {
+      form.setFieldsValue({
+        agentGid: undefined,
+        agentGroup: undefined,
+        agentUid: undefined,
+        agentUser: undefined,
+        useAgent: false,
       });
     }
   }, [form, user, roles]);
@@ -237,7 +245,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       if (formData.useAgent || user) {
         const { agentUid, agentUser, agentGid, agentGroup } = formData;
         const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
-        formData['agentUserGroup'] = agentUserGroup;
+        formData.agentUserGroup = agentUserGroup;
       }
 
       try {
