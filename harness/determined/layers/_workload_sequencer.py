@@ -206,6 +206,7 @@ class WorkloadSequencer(workload.Source):
             steps_completed=self.state.steps_completed,
             metrics=metrics,
             batch_metrics=batch_metrics,
+            epoch=max(1, self.state.steps_completed * self.global_batch_size // self.records_per_epoch),
         )
 
         # Report progress to the searcher.  For historical reasons we only deal in batches.
