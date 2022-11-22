@@ -1,0 +1,23 @@
+.tableContainer {
+  :global(.ant-table) {
+    overflow-x: scroll;
+    overflow-y: hidden;
+  }
+}
+.resizer {
+  cursor: col-resize;
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  touch-action: none;
+  user-select: none;
+  width: 4px;
+
+  &:hover {
+    background-color: var(--theme-status-active);
+  }
+}
+.resizer.isResizing {
+  opacity: 1;
+}

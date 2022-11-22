@@ -1,50 +1,38 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import {
-  Column,
   ColumnDef,
   ColumnOrderState,
-  ColumnResizeMode,
-  createColumnHelper,
-  flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
+  RowSelectionState,
   useReactTable,
+  VisibilityState,
 } from '@tanstack/react-table';
-import { Input, MenuProps, Pagination, Typography } from 'antd';
+import { Input, MenuProps, Typography } from 'antd';
 import { Button, Dropdown, Menu, Modal, Space } from 'antd';
-import { FilterDropdownProps } from 'antd/lib/table/interface';
-import React, { HTMLProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
+// import { FilterDropdownProps } from 'antd/lib/table/interface';
+import React, { HTMLProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
+import ExpTable from 'components/ExpTable';
 import FilterCounter from 'components/FilterCounter';
 import Link from 'components/Link';
 import Page from 'components/Page';
-import InteractiveTable, {
-  // ColumnDef,
-  InteractiveTableSettings,
-  onRightClickableCell,
-  Row,
-} from 'components/Table/InteractiveTable';
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import {
   checkmarkRenderer,
-  defaultRowClassName,
   experimentDurationRenderer,
   experimentNameRenderer,
   experimentProgressRenderer,
   ExperimentRenderer,
-  getFullPaginationConfig,
   relativeTimeRenderer,
   stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
-import TableFilterDropdown from 'components/Table/TableFilterDropdown';
-import TableFilterSearch from 'components/Table/TableFilterSearch';
+// import TableFilterDropdown from 'components/Table/TableFilterDropdown';
+// import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
@@ -95,7 +83,6 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
 import settingsConfig, {
@@ -126,12 +113,12 @@ interface Props {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const {
-    users,
+    // users,
     auth: { user },
   } = useStore();
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
-  const [labels, setLabels] = useState<string[]>([]);
+  // const [labels, setLabels] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -243,7 +230,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     try {
       const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
       labels.sort((a, b) => alphaNumericSorter(a, b));
-      setLabels(labels);
+      // setLabels(labels);
     } catch (e) {
       handleError(e);
     }
@@ -261,58 +248,58 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleActionComplete = useCallback(() => fetchExperiments(), [fetchExperiments]);
 
-  const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
+  // const tableSearchIcon = useCallback(() => <Icon name="search" size="tiny" />, []);
 
-  const handleNameSearchApply = useCallback(
-    (newSearch: string) => {
-      updateSettings({ row: undefined, search: newSearch || undefined });
-    },
-    [updateSettings],
-  );
+  // const handleNameSearchApply = useCallback(
+  //   (newSearch: string) => {
+  //     updateSettings({ row: undefined, search: newSearch || undefined });
+  //   },
+  //   [updateSettings],
+  // );
 
-  const handleNameSearchReset = useCallback(() => {
-    updateSettings({ row: undefined, search: undefined });
-  }, [updateSettings]);
+  // const handleNameSearchReset = useCallback(() => {
+  //   updateSettings({ row: undefined, search: undefined });
+  // }, [updateSettings]);
 
-  const nameFilterSearch = useCallback(
-    (filterProps: FilterDropdownProps) => (
-      <TableFilterSearch
-        {...filterProps}
-        value={settings.search || ''}
-        onReset={handleNameSearchReset}
-        onSearch={handleNameSearchApply}
-      />
-    ),
-    [handleNameSearchApply, handleNameSearchReset, settings.search],
-  );
+  // const nameFilterSearch = useCallback(
+  //   (filterProps: FilterDropdownProps) => (
+  //     <TableFilterSearch
+  //       {...filterProps}
+  //       value={settings.search || ''}
+  //       onReset={handleNameSearchReset}
+  //       onSearch={handleNameSearchApply}
+  //     />
+  //   ),
+  //   [handleNameSearchApply, handleNameSearchReset, settings.search],
+  // );
 
-  const handleLabelFilterApply = useCallback(
-    (labels: string[]) => {
-      updateSettings({
-        label: labels.length !== 0 ? labels : undefined,
-        row: undefined,
-      });
-    },
-    [updateSettings],
-  );
+  // const handleLabelFilterApply = useCallback(
+  //   (labels: string[]) => {
+  //     updateSettings({
+  //       label: labels.length !== 0 ? labels : undefined,
+  //       row: undefined,
+  //     });
+  //   },
+  //   [updateSettings],
+  // );
 
-  const handleLabelFilterReset = useCallback(() => {
-    updateSettings({ label: undefined, row: undefined });
-  }, [updateSettings]);
+  // const handleLabelFilterReset = useCallback(() => {
+  //   updateSettings({ label: undefined, row: undefined });
+  // }, [updateSettings]);
 
-  const labelFilterDropdown = useCallback(
-    (filterProps: FilterDropdownProps) => (
-      <TableFilterDropdown
-        {...filterProps}
-        multiple
-        searchable
-        values={settings.label}
-        onFilter={handleLabelFilterApply}
-        onReset={handleLabelFilterReset}
-      />
-    ),
-    [handleLabelFilterApply, handleLabelFilterReset, settings.label],
-  );
+  // const labelFilterDropdown = useCallback(
+  //   (filterProps: FilterDropdownProps) => (
+  //     <TableFilterDropdown
+  //       {...filterProps}
+  //       multiple
+  //       searchable
+  //       values={settings.label}
+  //       onFilter={handleLabelFilterApply}
+  //       onReset={handleLabelFilterReset}
+  //     />
+  //   ),
+  //   [handleLabelFilterApply, handleLabelFilterReset, settings.label],
+  // );
 
   const handleStateFilterApply = useCallback(
     (states: string[]) => {
@@ -324,50 +311,50 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     [updateSettings],
   );
 
-  const handleStateFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, state: undefined });
-  }, [updateSettings]);
+  // const handleStateFilterReset = useCallback(() => {
+  //   updateSettings({ row: undefined, state: undefined });
+  // }, [updateSettings]);
 
-  const stateFilterDropdown = useCallback(
-    (filterProps: FilterDropdownProps) => (
-      <TableFilterDropdown
-        {...filterProps}
-        multiple
-        values={settings.state}
-        onFilter={handleStateFilterApply}
-        onReset={handleStateFilterReset}
-      />
-    ),
-    [handleStateFilterApply, handleStateFilterReset, settings.state],
-  );
+  // const stateFilterDropdown = useCallback(
+  //   (filterProps: FilterDropdownProps) => (
+  //     <TableFilterDropdown
+  //       {...filterProps}
+  //       multiple
+  //       values={settings.state}
+  //       onFilter={handleStateFilterApply}
+  //       onReset={handleStateFilterReset}
+  //     />
+  //   ),
+  //   [handleStateFilterApply, handleStateFilterReset, settings.state],
+  // );
 
-  const handleUserFilterApply = useCallback(
-    (users: string[]) => {
-      updateSettings({
-        row: undefined,
-        user: users.length !== 0 ? users : undefined,
-      });
-    },
-    [updateSettings],
-  );
+  // const handleUserFilterApply = useCallback(
+  //   (users: string[]) => {
+  //     updateSettings({
+  //       row: undefined,
+  //       user: users.length !== 0 ? users : undefined,
+  //     });
+  //   },
+  //   [updateSettings],
+  // );
 
-  const handleUserFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, user: undefined });
-  }, [updateSettings]);
+  // const handleUserFilterReset = useCallback(() => {
+  //   updateSettings({ row: undefined, user: undefined });
+  // }, [updateSettings]);
 
-  const userFilterDropdown = useCallback(
-    (filterProps: FilterDropdownProps) => (
-      <TableFilterDropdown
-        {...filterProps}
-        multiple
-        searchable
-        values={settings.user}
-        onFilter={handleUserFilterApply}
-        onReset={handleUserFilterReset}
-      />
-    ),
-    [handleUserFilterApply, handleUserFilterReset, settings.user],
-  );
+  // const userFilterDropdown = useCallback(
+  //   (filterProps: FilterDropdownProps) => (
+  //     <TableFilterDropdown
+  //       {...filterProps}
+  //       multiple
+  //       searchable
+  //       values={settings.user}
+  //       onFilter={handleUserFilterApply}
+  //       onReset={handleUserFilterReset}
+  //     />
+  //   ),
+  //   [handleUserFilterApply, handleUserFilterReset, settings.user],
+  // );
 
   const saveExperimentDescription = useCallback(async (editedDescription: string, id: number) => {
     try {
@@ -457,23 +444,23 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
     const filterDropdownState = () => {
-      return (<Menu
-        items={[
-          RunState.Active,
-          RunState.Paused,
-          RunState.Canceled,
-          RunState.Completed,
-          RunState.Error,
-        ].map((value) => (
-          {
+      return (
+        <Menu
+          items={[
+            RunState.Active,
+            RunState.Paused,
+            RunState.Canceled,
+            RunState.Completed,
+            RunState.Error,
+          ].map((value) => ({
             key: value,
             label: <Badge key={value} state={value} type={BadgeType.State} />,
-          }
-        ))}
-        onClick={(e) => {
-          handleStateFilterApply([e.key]);
-        }}
-      />);
+          }))}
+          onClick={(e) => {
+            handleStateFilterApply([e.key]);
+          }}
+        />
+      );
     };
     type cellValue = string | number | undefined;
 
@@ -491,17 +478,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       }, [ref, indeterminate]);
 
       return (
-        <input
-          className={className + ' cursor-pointer'}
-          ref={ref}
-          type="checkbox"
-          {...rest}
-        />
+        <input className={className + ' cursor-pointer'} ref={ref} type="checkbox" {...rest} />
       );
     }
 
     return [
-
       {
         accessorKey: 'selection',
         cell: ({ row }) => (
@@ -593,7 +574,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       {
         accessorKey: 'duration',
         // align: 'right',
-        cell: (props) => experimentDurationRenderer(props.getValue() as string, props.row.original, props.row.index),
+        cell: (props) =>
+          experimentDurationRenderer(
+            props.getValue() as string,
+            props.row.original,
+            props.row.index,
+          ),
         header: 'Duration',
         size: DEFAULT_COLUMN_WIDTHS['duration'],
         // key: 'duration',
@@ -611,7 +597,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       },
       {
         accessorKey: 'state',
-        cell: (props) => stateRenderer(props.getValue() as string, props.row.original, props.row.original.id),
+        cell: (props) =>
+          stateRenderer(props.getValue() as string, props.row.original, props.row.original.id),
         // filterDropdown: stateFilterDropdown,
         // filters: [
         //   RunState.Active,
@@ -656,7 +643,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       {
         accessorKey: 'progress',
         // align: 'right',
-        cell: (props) => experimentProgressRenderer(props.getValue() as string, props.row.original, props.row.index),
+        cell: (props) =>
+          experimentProgressRenderer(
+            props.getValue() as string,
+            props.row.original,
+            props.row.index,
+          ),
         header: 'Progress',
         size: DEFAULT_COLUMN_WIDTHS['progress'],
         // key: V1GetExperimentsRequestSortBy.PROGRESS,
@@ -672,7 +664,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       },
       {
         accessorKey: 'user',
-        cell: (props) => userRenderer(props.getValue() as string, props.row.original, props.row.index),
+        cell: (props) =>
+          userRenderer(props.getValue() as string, props.row.original, props.row.index),
         // filterDropdown: userFilterDropdown,
         // filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         header: 'User',
@@ -684,7 +677,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       },
       {
         accessorKey: 'action',
-        cell: (props) => actionRenderer(props.getValue() as string, props.row.original, props.row.index),
+        cell: (props) =>
+          actionRenderer(props.getValue() as string, props.row.original, props.row.index),
         enableResizing: false,
         enableSorting: false,
         header: '',
@@ -700,22 +694,23 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [
     ContextMenu,
     experimentTags,
-    labelFilterDropdown,
-    labels,
-    nameFilterSearch,
+    // labelFilterDropdown,
+    // labels,
+    // nameFilterSearch,
     saveExperimentDescription,
     canEditExperiment,
-    settings,
+    // settings,
     project,
-    stateFilterDropdown,
-    tableSearchIcon,
-    userFilterDropdown,
-    users,
+    // stateFilterDropdown,
+    // tableSearchIcon,
+    // userFilterDropdown,
+    // users,
+    handleStateFilterApply,
   ]);
 
-  const [columnVisibility, setColumnVisibility] = React.useState({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([]);
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
 
   const table = useReactTable({
     columnResizeMode: 'onChange',
@@ -734,7 +729,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     updateSettings({
       row: Object.keys(rowSelection).map((i) => parseInt(i)),
     });
-  }, [rowSelection]);
+  }, [rowSelection, updateSettings]);
 
   // useLayoutEffect(() => {
   // This is the failsafe for when column settings get into a bad shape.
@@ -758,7 +753,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   // }, [settings.columns, settings.columnWidths, columns, resetSettings, updateSettings]);
 
   const transferColumns = useMemo(() => {
-    return table.getVisibleLeafColumns()
+    return table
+      .getVisibleLeafColumns()
       .filter(
         (column) => column.id !== 'selection' && column.id !== 'action' && column.id !== 'archived',
       )
@@ -913,10 +909,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         }
       });
       setColumnVisibility(visibility);
-      setColumnOrder([
-        'selection',
-        ...settings.columns.filter((c) => visibility[c]),
-      ]);
+      setColumnOrder(['selection', ...settings.columns.filter((c) => visibility[c])]);
     }
   }, [settings.columns, table]);
 
@@ -1012,7 +1005,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       stopPolling();
 
       setExperiments([]);
-      setLabels([]);
+      // setLabels([]);
       setIsLoading(true);
       setTotal(0);
     };
@@ -1084,108 +1077,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   useSetDynamicTabBar(tabBarContent);
 
-  const handleSort = useCallback((header) => {
-    const sortKey = header.id;
-    let sortDesc = settings.sortDesc;
-    if (settings.sortKey === sortKey) sortDesc = !sortDesc;
-    updateSettings({
-      sortDesc,
-      sortKey,
-    });
-  }, [updateSettings, settings]);
-
-  const updatePagination = useCallback((page, pageSize) => {
-    updateSettings({
-      tableLimit: pageSize,
-      tableOffset: (page - 1) * pageSize,
-    });
-  }, [updateSettings]);
-
-  const DraggableColumnHeader: React.FC<{
-    columnOrder,
-    header, setColumnOrder
-  }> = ({ header, columnOrder, setColumnOrder }) => {
-
-    const reorderColumn = (
-      draggedColumnId: string,
-      targetColumnId: string,
-      columnOrder: string[],
-    ): ColumnOrderState => {
-      columnOrder.splice(
-        columnOrder.indexOf(targetColumnId),
-        0,
-        columnOrder.splice(columnOrder.indexOf(draggedColumnId), 1)[0] as string,
-      );
-      return [...columnOrder];
-    };
-    const { column } = header;
-
-    const [, dropRef] = useDrop({
-      accept: 'column',
-      drop: (draggedColumn: Column<ExperimentItem>) => {
-        const newColumnOrder = reorderColumn(
-          draggedColumn.id,
-          column.id,
-          columnOrder,
-        );
-        setColumnOrder(newColumnOrder);
-        updateSettings({
-          columns: newColumnOrder as ExperimentColumnName[],
-        });
-      },
-    });
-
-    const [{ isDragging }, dragRef, previewRef] = useDrag({
-      collect: (monitor) => ({
-        isDragging: monitor.isDragging(),
-      }),
-      item: () => column,
-      type: 'column',
-    });
-
-    return (
-      <th
-        className="ant-table-cell"
-        colSpan={header.colSpan}
-        key={header.id}
-        ref={dropRef}
-        style={{
-          opacity: isDragging ? 0.5 : 1,
-          width: header.getSize(),
-        }}>
-        <div
-          ref={previewRef}
-          {...{
-            className: header.column.getCanSort()
-              ? 'cursor-pointer select-none'
-              : '',
-            onClick: () => {
-              if (header.column.getCanSort()) {
-                handleSort(header);
-              }
-            },
-          }}>
-          <div ref={dragRef}>
-            {header.isPlaceholder
-              ? null
-              : flexRender(header.column.columnDef.header, header.getContext())}
-            {settings.sortKey === header.id ? (settings.sortDesc ? ' 🔽' : ' 🔼') : ''}
-          </div>
-          <div
-            {...{
-              className: `${css.resizer} ${header.column.getIsResizing() ? css.isResizing : ''
-                }`,
-              onMouseDown: header.getResizeHandler(),
-              onTouchStart: header.getResizeHandler(),
-              style: {
-                transform: '',
-              },
-            }}
-          />
-        </div>
-      </th>
-    );
-  };
   return (
     <Page
       bodyNoPadding
@@ -1204,57 +1095,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           onAction={handleBatchAction}
           onClear={clearSelected}
         />
-        <div className="p-2">
-          <table style={{ width: '100%' }}>
-            <thead className="ant-table-thead">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <DraggableColumnHeader
-                      columnOrder={columnOrder}
-                      header={header}
-                      key={header.id}
-                      setColumnOrder={setColumnOrder}
-                    />
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="ant-table-tbody">
-              {table.getRowModel().rows.map((row) => (
-                <Row
-                  className="ant-table-row ant-table-row-level-0"
-                  ContextMenu={ContextMenu}
-                  index={parseInt(row.id)}
-                  key={row.id}
-                  record={row.original}>
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      className="ant-table-cell"
-                      key={cell.id}
-                      style={{
-                        height: 60,
-                        maxWidth: cell.column.getSize(),
-                        minWidth: cell.column.getSize(),
-                        overflow: 'hidden',
-                        paddingBottom: 0,
-                        paddingTop: 0,
-                      }}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </Row>
-              ))}
-            </tbody>
-          </table>
-          <Pagination
-            defaultCurrent={settings.tableOffset + 1}
-            showSizeChanger
-            total={total}
-            onChange={updatePagination}
-            onShowSizeChange={updatePagination}
-          />
-        </div>
+        <ExpTable
+          ContextMenu={ContextMenu}
+          loading={isLoading}
+          settings={settings as InteractiveTableSettings}
+          table={table}
+          total={total}
+          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+        />
       </div>
       {modalColumnsCustomizeContextHolder}
       {modalExperimentMoveContextHolder}
