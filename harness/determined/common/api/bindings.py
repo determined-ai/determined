@@ -10378,6 +10378,7 @@ class v1TrialLogsResponse:
         return out
 
 class v1TrialMetrics:
+    epoch: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -10386,11 +10387,14 @@ class v1TrialMetrics:
         stepsCompleted: int,
         trialId: int,
         trialRunId: int,
+        epoch: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.metrics = metrics
         self.stepsCompleted = stepsCompleted
         self.trialId = trialId
         self.trialRunId = trialRunId
+        if not isinstance(epoch, Unset):
+            self.epoch = epoch
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialMetrics":
@@ -10400,6 +10404,8 @@ class v1TrialMetrics:
             "trialId": obj["trialId"],
             "trialRunId": obj["trialRunId"],
         }
+        if "epoch" in obj:
+            kwargs["epoch"] = obj["epoch"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Any:
@@ -10409,6 +10415,8 @@ class v1TrialMetrics:
             "trialId": self.trialId,
             "trialRunId": self.trialRunId,
         }
+        if not omit_unset or "epoch" in vars(self):
+            out["epoch"] = self.epoch
         return out
 
 class v1TrialOperation:

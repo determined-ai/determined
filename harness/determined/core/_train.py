@@ -72,7 +72,7 @@ class TrainContext:
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
-        epochs: Optional[int] = None,
+        epoch: Optional[int] = None,
     ) -> None:
         """
         Report training metrics to the master.
@@ -87,7 +87,7 @@ class TrainContext:
             "metrics": {
                 "avg_metrics": metrics,
             },
-            "epochs": epochs,
+            "epoch": epoch,
         }
         if batch_metrics is not None:
             body["metrics"]["batch_metrics"] = batch_metrics  # type: ignore
@@ -242,6 +242,7 @@ class DummyTrainContext(TrainContext):
         steps_completed: int,
         metrics: Dict[str, Any],
         batch_metrics: Optional[List[Dict[str, Any]]] = None,
+        epoch: Optional[int] = None,
     ) -> None:
         logger.info(
             f"report_training_metrics(steps_completed={steps_completed}, metrics={metrics})"

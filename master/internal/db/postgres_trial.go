@@ -182,10 +182,10 @@ WHERE trial_id = $1
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_steps
 	(trial_id, trial_run_id, state,
-	 end_time, metrics, total_batches)
+	 end_time, metrics, total_batches, total_epochs)
 VALUES
 	(:trial_id, :trial_run_id, :state,
-	 now(), :metrics, :total_batches)
+	 now(), :metrics, :total_batches, :total_epochs)
 `, model.TrialMetrics{
 			TrialID:    int(m.TrialId),
 			TrialRunID: int(m.TrialRunId),
@@ -195,6 +195,7 @@ VALUES
 				"batch_metrics": m.Metrics.BatchMetrics,
 			},
 			TotalBatches: int(m.StepsCompleted),
+			TotalEpochs:  int(m.Epoch),
 		}); err != nil {
 			return errors.Wrap(err, "inserting training metrics")
 		}

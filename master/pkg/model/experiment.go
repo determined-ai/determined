@@ -463,6 +463,7 @@ type TrialMetrics struct {
 	State        State      `db:"state" json:"state"`
 	EndTime      *time.Time `db:"end_time" json:"end_time"`
 	Metrics      JSONObj    `db:"metrics" json:"metrics"`
+	TotalEpochs  int        `db:"total_epochs" json:"total_epochs"`
 }
 
 // Represent order of active states (Queued -> Pulling -> Starting -> Running).

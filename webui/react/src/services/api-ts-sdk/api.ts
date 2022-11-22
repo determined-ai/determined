@@ -8478,6 +8478,12 @@ export interface V1TrialMetrics {
      * @memberof V1TrialMetrics
      */
     metrics: V1Metrics;
+    /**
+     * The current epoch reported on these metrics.
+     * @type {number}
+     * @memberof V1TrialMetrics
+     */
+    epoch?: number;
 }
 
 /**

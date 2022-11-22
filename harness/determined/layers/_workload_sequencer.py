@@ -1,4 +1,5 @@
 import logging
+import math
 import sys
 from typing import Any, Generator, Optional, Tuple
 
@@ -200,13 +201,20 @@ class WorkloadSequencer(workload.Source):
         metrics = response.get("metrics", {}).get("avg_metrics", {})
         batch_metrics = response.get("metrics", {}).get("batch_metrics", [])
 
+        if self.records_per_epoch > 0:
+            epoch = math.ceil(
+                self.state.steps_completed * self.global_batch_size / self.records_per_epoch
+            )
+        else:
+            epoch = 0
+
         self.state.steps_completed += num_batches
         self.state.step_id += 1
         self.core_context.train.report_training_metrics(
             steps_completed=self.state.steps_completed,
             metrics=metrics,
             batch_metrics=batch_metrics,
-            epoch=max(1, self.state.steps_completed * self.global_batch_size // self.records_per_epoch),
+            epoch=epoch,
         )
 
         # Report progress to the searcher.  For historical reasons we only deal in batches.

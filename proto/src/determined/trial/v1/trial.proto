@@ -211,6 +211,8 @@ message TrialMetrics {
   // - avg_metrics: metrics reduced over the reporting period).
   // - batch_metrics: (optional) per-batch metrics.
   determined.common.v1.Metrics metrics = 9;
+  // The current epoch reported on these metrics.
+  int32 epoch = 10;
 }
 
 // The rendezvous info for the trial to rendezvous with sibling containers.
