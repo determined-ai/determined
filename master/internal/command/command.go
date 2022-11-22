@@ -64,7 +64,6 @@ func createGenericCommandActor(
 	taskType model.TaskType,
 	jobID model.JobID,
 	jobType model.JobType,
-	workspaceID model.AccessScopeID,
 	spec tasks.GenericCommandSpec,
 ) error {
 	spec.TaskType = taskType
@@ -79,8 +78,6 @@ func createGenericCommandActor(
 		taskType: taskType,
 		jobType:  jobType,
 		jobID:    jobID,
-
-		workspaceID: workspaceID,
 
 		logCtx: logger.Context{
 			"job-id":    jobID,
@@ -221,7 +218,6 @@ type command struct {
 	jobID          model.JobID
 	allocationID   model.AllocationID
 	allocation     *actor.Ref
-	workspaceID    model.AccessScopeID
 	lastState      task.AllocationState
 	exitStatus     *task.AllocationExited
 	restored       bool
@@ -578,7 +574,6 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
-		WorkspaceId:    int32(c.workspaceID),
 	}
 }
 
