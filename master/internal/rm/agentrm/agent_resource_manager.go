@@ -341,7 +341,7 @@ func (a *agentResourceManager) createResourcePool(
 		ctx.Log().Infof("pool %s using global scheduling config", config.PoolName)
 	}
 
-	rp := NewResourcePool(
+	rp := newResourcePool(
 		&config,
 		db,
 		cert,
@@ -622,7 +622,7 @@ func (a *agentResourceManager) createResourcePoolSummary(
 		}
 	}
 
-	response := ctx.Ask(a.pools[poolName], GetResourceSummary{})
+	response := ctx.Ask(a.pools[poolName], getResourceSummary{})
 	if response.Error() != nil {
 		return &resourcepoolv1.ResourcePool{}, err
 	}
@@ -679,7 +679,7 @@ func (a *agentResourceManager) fetchAvgQueuedTime(pool string) (
 
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
-func (a AgentResourceManager) NotifyContainerRunning(
+func (a ResourceManager) NotifyContainerRunning(
 	ctx actor.Messenger,
 	msg sproto.NotifyContainerRunning,
 ) error {

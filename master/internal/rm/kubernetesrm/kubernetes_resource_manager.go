@@ -830,7 +830,7 @@ func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
 
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
-func (k KubernetesResourceManager) NotifyContainerRunning(
+func (k ResourceManager) NotifyContainerRunning(
 	ctx actor.Messenger,
 	msg sproto.NotifyContainerRunning,
 ) error {

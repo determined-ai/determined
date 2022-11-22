@@ -51,7 +51,7 @@ func (g groupState) String() string {
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
-func (f *fairShare) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (f *fairShare) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return fairshareSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
@@ -70,7 +70,7 @@ func (f *fairShare) createJobQInfo(
 	return jobQ
 }
 
-func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*sproto.RMJobInfo {
+func (f *fairShare) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
 	jobQ := f.createJobQInfo(rp.taskList)
 	return jobQ
 }
@@ -78,7 +78,7 @@ func (f *fairShare) JobQInfo(rp *ResourcePool) map[model.JobID]*sproto.RMJobInfo
 func fairshareSchedule(
 	taskList *tasklist.TaskList,
 	groups map[*actor.Ref]*tasklist.Group,
-	agents map[*actor.Ref]*AgentState,
+	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	allToAllocate := make([]*sproto.AllocateRequest, 0)
@@ -118,11 +118,11 @@ func fairshareSchedule(
 	return allToAllocate, allToRelease
 }
 
-func capacityByAgentLabel(agents map[*actor.Ref]*AgentState) map[string]int {
+func capacityByAgentLabel(agents map[*actor.Ref]*agentState) map[string]int {
 	agentCap := map[string]int{}
 
 	for _, agent := range agents {
-		agentCap[agent.Label] += agent.NumSlots()
+		agentCap[agent.Label] += agent.numSlots()
 	}
 
 	return agentCap
@@ -323,7 +323,7 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.Alloc
 }
 
 func assignTasks(
-	agents map[*actor.Ref]*AgentState, states []*groupState, fittingMethod SoftConstraint,
+	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)

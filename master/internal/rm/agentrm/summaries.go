@@ -7,10 +7,10 @@ import (
 )
 
 // newAgentSummary returns a new immutable view of the agent.
-func newAgentSummary(state *AgentState) sproto.AgentSummary {
+func newAgentSummary(state *agentState) sproto.AgentSummary {
 	return sproto.AgentSummary{
 		Name:   state.Handler.Address().Local(),
-		IsIdle: state.Idle(),
+		IsIdle: state.idle(),
 	}
 }
 
@@ -25,7 +25,7 @@ type resourceSummary struct {
 }
 
 func resourceSummaryFromAgentStates(
-	agentInfo map[*actor.Ref]*AgentState,
+	agentInfo map[*actor.Ref]*agentState,
 ) resourceSummary {
 	summary := resourceSummary{
 		numTotalSlots:          0,
@@ -39,10 +39,10 @@ func resourceSummaryFromAgentStates(
 
 	for _, agentState := range agentInfo {
 		summary.numAgents++
-		summary.numTotalSlots += agentState.NumSlots()
-		summary.numActiveSlots += agentState.NumUsedSlots()
-		summary.maxNumAuxContainers += agentState.NumZeroSlots()
-		summary.numActiveAuxContainers += agentState.NumUsedZeroSlots()
+		summary.numTotalSlots += agentState.numSlots()
+		summary.numActiveSlots += agentState.numUsedSlots()
+		summary.maxNumAuxContainers += agentState.numZeroSlots()
+		summary.numActiveAuxContainers += agentState.numUsedZeroSlots()
 		for agentDevice := range agentState.Devices {
 			deviceTypeCount[agentDevice.Type]++
 		}

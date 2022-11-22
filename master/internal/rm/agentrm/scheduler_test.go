@@ -34,7 +34,7 @@ func setupResourcePool(
 	mockTasks []*MockTask,
 	mockGroups []*MockGroup,
 	mockAgents []*MockAgent,
-) (*ResourcePool, *actor.Ref) {
+) (*resourcePool, *actor.Ref) {
 	if conf == nil {
 		conf = &config.ResourcePoolConfig{PoolName: "pool"}
 	}
@@ -45,10 +45,10 @@ func setupResourcePool(
 		}
 	}
 
-	rp := NewResourcePool(
+	rp := newResourcePool(
 		conf, db, nil, MakeScheduler(conf.Scheduler),
 		MakeFitFunction(conf.Scheduler.FittingPolicy))
-	rp.taskList, rp.groups, rp.agentStatesCache = SetupSchedulerStates(
+	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
 		t, system, mockTasks, mockGroups, mockAgents,
 	)
 	rp.saveNotifications = true
@@ -65,15 +65,15 @@ func setupResourcePool(
 func forceAddAgent(
 	t *testing.T,
 	system *actor.System,
-	agents map[*actor.Ref]*AgentState,
+	agents map[*actor.Ref]*agentState,
 	agentID string,
 	numSlots int,
 	numUsedSlots int,
 	numZeroSlotContainers int,
-) *AgentState {
+) *agentState {
 	ref, created := system.ActorOf(actor.Addr(agentID), &MockAgent{ID: agentID, Slots: numSlots})
 	assert.Assert(t, created)
-	state := NewAgentState(sproto.AddAgent{Agent: ref}, 100)
+	state := newAgentState(sproto.AddAgent{Agent: ref}, 100)
 	for i := 0; i < numSlots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -85,7 +85,7 @@ func forceAddAgent(
 		}
 	}
 	for i := 0; i < numZeroSlotContainers; i++ {
-		_, err := state.AllocateFreeDevices(0, cproto.NewID())
+		_, err := state.allocateFreeDevices(0, cproto.NewID())
 		assert.NilError(t, err)
 	}
 	agents[state.Handler] = state
@@ -101,10 +101,10 @@ func newFakeAgentState(
 	slotsUsed int,
 	maxZeroSlotContainers int,
 	zeroSlotContainers int,
-) *AgentState {
+) *agentState {
 	ref, created := system.ActorOf(actor.Addr(id), &MockAgent{ID: id, Slots: slots, Label: label})
 	assert.Assert(t, created)
-	state := NewAgentState(sproto.AddAgent{Agent: ref, Label: label}, maxZeroSlotContainers)
+	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label}, maxZeroSlotContainers)
 	for i := 0; i < slots; i++ {
 		state.Devices[device.Device{ID: device.ID(i)}] = nil
 	}
@@ -114,14 +114,14 @@ func newFakeAgentState(
 			SlotsNeeded: slotsUsed,
 			Preemptible: true,
 		}
-		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, cproto.NewID()); err != nil {
+		if _, err := state.allocateFreeDevices(req.SlotsNeeded, cproto.NewID()); err != nil {
 			panic(err)
 		}
 	}
 
 	for i := 0; i < zeroSlotContainers; i++ {
 		req := &sproto.AllocateRequest{}
-		if _, err := state.AllocateFreeDevices(req.SlotsNeeded, cproto.NewID()); err != nil {
+		if _, err := state.allocateFreeDevices(req.SlotsNeeded, cproto.NewID()); err != nil {
 			panic(err)
 		}
 	}
@@ -264,7 +264,7 @@ func TestJobStats(t *testing.T) {
 	) {
 		p := &priorityScheduler{}
 		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := SetupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 			make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
@@ -280,7 +280,7 @@ func TestJobStats(t *testing.T) {
 		expectedStats *jobv1.QueueStats,
 	) {
 		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := SetupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit)
@@ -344,11 +344,11 @@ func TestJobOrder(t *testing.T) {
 	) map[model.JobID]*sproto.RMJobInfo {
 		p := &priorityScheduler{preemptionEnabled: false}
 		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := SetupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 		toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 			make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
-		return p.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})
+		return p.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
 	}
 
 	setupFairshare := func(
@@ -357,12 +357,12 @@ func TestJobOrder(t *testing.T) {
 		agents []*MockAgent,
 	) map[model.JobID]*sproto.RMJobInfo {
 		system := actor.NewSystem(t.Name())
-		taskList, groupMap, agentMap := SetupSchedulerStates(t, system, tasks, groups, agents)
+		taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 		toAllocate, _ := fairshareSchedule(taskList, groupMap, agentMap, BestFit)
 		AllocateTasks(toAllocate, agentMap, taskList)
 		fairshareSchedule(taskList, groupMap, agentMap, BestFit)
 		f := fairShare{}
-		return f.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})
+		return f.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
 	}
 
 	groups, agents := prepMockData()
@@ -421,11 +421,11 @@ func TestJobOrderPriority(t *testing.T) {
 
 	p := &priorityScheduler{preemptionEnabled: false}
 	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := SetupSchedulerStates(t, system, tasks, groups, agents)
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 	toAllocate, _ := p.prioritySchedule(taskList, groupMap,
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	AllocateTasks(toAllocate, agentMap, taskList)
-	jobInfo := p.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})
+	jobInfo := p.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
 	assert.Equal(t, len(jobInfo), 1)
 	assert.Equal(t, jobInfo["job1"].State, sproto.SchedulingStateScheduled)
 	assert.Equal(t, jobInfo["job1"].AllocatedSlots, 1)
@@ -440,7 +440,7 @@ func TestJobOrderPriority(t *testing.T) {
 		make(map[model.JobID]decimal.Decimal), agentMap, BestFit)
 	assert.Equal(t, len(toRelease), 0)
 	AllocateTasks(toAllocate, agentMap, taskList)
-	jobInfo = p.JobQInfo(&ResourcePool{taskList: taskList, groups: groupMap})
+	jobInfo = p.JobQInfo(&resourcePool{taskList: taskList, groups: groupMap})
 	assert.Equal(t, len(jobInfo), 2)
 	assert.Equal(t, jobInfo["job1"].State, sproto.SchedulingStateScheduled)
 	assert.Equal(t, jobInfo["job1"].AllocatedSlots, 1)
@@ -450,7 +450,7 @@ func TestJobOrderPriority(t *testing.T) {
 	assert.Equal(t, jobInfo["job2"].State, sproto.SchedulingStateQueued)
 }
 
-func SetupSchedulerStates(
+func setupSchedulerStates(
 	t *testing.T,
 	system *actor.System,
 	mockTasks []*MockTask,
@@ -459,14 +459,14 @@ func SetupSchedulerStates(
 ) (
 	*tasklist.TaskList,
 	map[*actor.Ref]*tasklist.Group,
-	map[*actor.Ref]*AgentState,
+	map[*actor.Ref]*agentState,
 ) {
-	agents := make(map[*actor.Ref]*AgentState, len(mockAgents))
+	agents := make(map[*actor.Ref]*agentState, len(mockAgents))
 	for _, mockAgent := range mockAgents {
 		ref, created := system.ActorOf(actor.Addr(mockAgent.ID), mockAgent)
 		assert.Assert(t, created)
 
-		agent := NewAgentState(sproto.AddAgent{
+		agent := newAgentState(sproto.AddAgent{
 			Agent: ref,
 			Label: mockAgent.Label,
 		}, mockAgent.MaxZeroSlotContainers)
@@ -517,7 +517,7 @@ func SetupSchedulerStates(
 			devices := make([]device.Device, 0)
 			if mockTask.ContainerStarted {
 				if mockTask.SlotsNeeded == 0 {
-					_, err := agentState.AllocateFreeDevices(0, containerID)
+					_, err := agentState.allocateFreeDevices(0, containerID)
 					assert.NilError(t, err)
 				} else {
 					i := 0
@@ -540,10 +540,10 @@ func SetupSchedulerStates(
 				ID: req.AllocationID,
 				Resources: map[sproto.ResourcesID]sproto.Resources{
 					sproto.ResourcesID(containerID): &containerResources{
-						Req:         req,
-						Agent:       agentState,
-						ContainerID: containerID,
-						Devices:     devices,
+						req:         req,
+						agent:       agentState,
+						containerID: containerID,
+						devices:     devices,
 					},
 				},
 			}

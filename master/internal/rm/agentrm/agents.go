@@ -50,18 +50,18 @@ func (a *agents) Receive(ctx *actor.Context) error {
 			// TODO(ilia): only restore the agents which have some non-zero state.
 			// Currently, if an agent tries to reconnect and it was not restored here,
 			// then it'd be told it must restart and do a fresh connection.
-			agentStates, err := RetrieveAgentStates()
+			agentStates, err := retrieveAgentStates()
 			if err != nil {
 				ctx.Log().WithError(err).Warnf("failed to retrieve agent states")
 			}
 
 			ctx.Log().Debugf("agent states to restore: %d", len(agentStates))
-			badAgentIds := []AgentID{}
+			badAgentIds := []agentID{}
 
 			for agentID := range agentStates {
-				agentState := agentStates[agentID]
+				state := agentStates[agentID]
 				agentRef, err := a.createAgentActor(
-					ctx, agentID, agentState.resourcePoolName, a.opts, &agentState)
+					ctx, agentID, state.resourcePoolName, a.opts, &state)
 				if err != nil {
 					ctx.Log().WithError(err).Warnf("failed to create agent %s", agentID)
 					badAgentIds = append(badAgentIds, agentID)
@@ -128,7 +128,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 
 		if ref, err := a.createAgentActor(
 			ctx,
-			AgentID(id),
+			agentID(id),
 			resourcePool,
 			a.opts,
 			nil,
@@ -154,10 +154,10 @@ func (a *agents) Receive(ctx *actor.Context) error {
 
 func (a *agents) createAgentActor(
 	ctx *actor.Context,
-	id AgentID,
+	id agentID,
 	resourcePool string,
 	opts *aproto.MasterSetAgentOptions,
-	restoredAgentState *AgentState,
+	restoredAgentState *agentState,
 ) (*actor.Ref, error) {
 	if id == "" {
 		return nil, errors.Errorf("invalid agent id specified: %s", id)

@@ -25,7 +25,7 @@ func TestRoundRobinSchedulerLabels(t *testing.T) {
 	expectedToRelease := []*MockTask{}
 
 	system := actor.NewSystem(t.Name())
-	taskList, groupMap, agentMap := SetupSchedulerStates(t, system, tasks, groups, agents)
+	taskList, groupMap, agentMap := setupSchedulerStates(t, system, tasks, groups, agents)
 	toAllocate, toRelease := roundRobinSchedule(taskList, groupMap, agentMap, BestFit)
 	assertEqualToAllocate(t, toAllocate, expectedToAllocate)
 	assertEqualToRelease(t, taskList, toRelease, expectedToRelease)

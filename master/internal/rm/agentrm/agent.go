@@ -66,36 +66,36 @@ type (
 		// opts are additional agent options the master sends to the agent.
 		opts *aproto.MasterSetAgentOptions
 
-		agentState *AgentState
+		agentState *agentState
 	}
 
 	reconnectTimeout struct{}
 
-	// GetAgentState response is agent.agentState.
-	GetAgentState struct{}
-	// PatchAllSlotsState updates the state of all slots.
-	PatchAllSlotsState struct {
-		Enabled *bool
-		Drain   *bool
+	// getAgentState response is agent.agentState.
+	getAgentState struct{}
+	// patchAllSlotsState updates the state of all slots.
+	patchAllSlotsState struct {
+		enabled *bool
+		drain   *bool
 	}
-	// PatchSlotState updates the state of the target slot.
-	PatchSlotState struct {
-		ID      device.ID
-		Enabled *bool
-		Drain   *bool
+	// patchSlotState updates the state of the target slot.
+	patchSlotState struct {
+		id      device.ID
+		enabled *bool
+		drain   *bool
 	}
-	// AllocateFreeDevices calls agentState.AllocateFreeDevices.
-	AllocateFreeDevices struct {
-		Slots       int
-		ContainerID cproto.ID
+	// allocateFreeDevices calls agentState.allocateFreeDevices.
+	allocateFreeDevices struct {
+		slots       int
+		containerID cproto.ID
 	}
-	// AllocateFreeDevicesResponse is a response to AllocateFreeDevices.
-	AllocateFreeDevicesResponse struct {
-		Devices []device.Device
+	// allocateFreeDevicesResponse is a response to allocateFreeDevices.
+	allocateFreeDevicesResponse struct {
+		devices []device.Device
 	}
-	// DeallocateContainer calls agentState.DeallocateContainer.
-	DeallocateContainer struct {
-		ContainerID cproto.ID
+	// deallocateContainer calls agentState.deallocateContainer.
+	deallocateContainer struct {
+		containerID cproto.ID
 	}
 )
 
@@ -168,13 +168,13 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 
 			// Re-propagate our old state back on successful recovery.
 			if a.preDisconnectEnabled {
-				a.agentState.Enable(ctx)
+				a.agentState.enable(ctx)
 			} else {
-				a.agentState.Disable(ctx, a.preDisconnectDraining)
+				a.agentState.disable(ctx, a.preDisconnectDraining)
 			}
-			a.agentState.patchAllSlotsState(ctx, PatchAllSlotsState{
-				Enabled: &a.agentState.enabled,
-				Drain:   &a.agentState.draining,
+			a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+				enabled: &a.agentState.enabled,
+				drain:   &a.agentState.draining,
 			})
 
 			if len(a.reconnectBacklog) > 0 {
@@ -263,10 +263,10 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		a.agentState.Enable(ctx)
-		a.agentState.patchAllSlotsState(ctx, PatchAllSlotsState{
-			Enabled: &a.agentState.enabled,
-			Drain:   &a.agentState.draining,
+		a.agentState.enable(ctx)
+		a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+			enabled: &a.agentState.enabled,
+			drain:   &a.agentState.draining,
 		})
 		ctx.Respond(&proto.EnableAgentResponse{Agent: a.summarize(ctx).ToProto()})
 		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
@@ -282,11 +282,11 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		// Mark current agent as disabled with RP.
-		a.agentState.Disable(ctx, msg.Drain)
+		a.agentState.disable(ctx, msg.Drain)
 		// Update individual slot state.
-		a.agentState.patchAllSlotsState(ctx, PatchAllSlotsState{
-			Enabled: &a.agentState.enabled,
-			Drain:   &a.agentState.draining,
+		a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+			enabled: &a.agentState.enabled,
+			drain:   &a.agentState.draining,
 		})
 		// Kill both slotted and zero-slot tasks, unless draining.
 		if !msg.Drain {
@@ -318,14 +318,14 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		if a.awaitingReconnect {
 			return errors.New("agent failed to reconnect by deadline")
 		}
-	case GetAgentState:
+	case getAgentState:
 		if !a.started {
 			ctx.Respond(errors.New("agent state is not available: agent not started"))
 			return nil
 		}
 
-		ctx.Respond(a.agentState.DeepCopy())
-	case PatchSlotState:
+		ctx.Respond(a.agentState.deepCopy())
+	case patchSlotState:
 		if !a.started {
 			ctx.Respond(errors.New("can't patch slot state: agent not started"))
 			return nil
@@ -337,33 +337,33 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 		ctx.Respond(result)
-	case PatchAllSlotsState:
+	case patchAllSlotsState:
 		if !a.started {
 			ctx.Respond(errors.New("can't patch slots state: agent not started"))
 			return nil
 		}
 
 		ctx.Respond(a.agentState.patchAllSlotsState(ctx, msg))
-	case AllocateFreeDevices:
+	case allocateFreeDevices:
 		if !a.started {
-			ctx.Log().Debugf("received AllocateFreeDevices on non-started agent")
+			ctx.Log().Debugf("received allocateFreeDevices on non-started agent")
 			ctx.Respond(errors.New("can't allocate free devices: agent not started"))
 			return nil
 		}
-		devices, err := a.agentState.AllocateFreeDevices(msg.Slots, msg.ContainerID)
+		devices, err := a.agentState.allocateFreeDevices(msg.slots, msg.containerID)
 		if err != nil {
 			ctx.Respond(err)
 		} else {
-			ctx.Respond(AllocateFreeDevicesResponse{
-				Devices: devices,
+			ctx.Respond(allocateFreeDevicesResponse{
+				devices: devices,
 			})
 		}
-	case DeallocateContainer:
+	case deallocateContainer:
 		if !a.started {
 			ctx.Respond(errors.New("can't deallocate container: agent not started"))
 			return nil
 		}
-		a.agentState.DeallocateContainer(msg.ContainerID)
+		a.agentState.deallocateContainer(msg.containerID)
 	case model.SlotsSummary:
 		if !a.started {
 			ctx.Respond(model.SlotsSummary{})
@@ -494,7 +494,7 @@ func (a *agent) taskNeedsRecording(record *aproto.ContainerStatsRecord) bool {
 }
 
 func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStarted) {
-	a.agentState = NewAgentState(
+	a.agentState = newAgentState(
 		sproto.AddAgent{Agent: ctx.Self(), Label: agentStarted.Label},
 		a.maxZeroSlotContainers)
 	a.agentState.resourcePoolName = a.resourcePoolName
@@ -502,7 +502,7 @@ func (a *agent) agentStarted(ctx *actor.Context, agentStarted *aproto.AgentStart
 	ctx.Tell(a.resourcePool, sproto.AddAgent{
 		Agent: ctx.Self(),
 		Label: agentStarted.Label,
-		Slots: a.agentState.NumSlots(),
+		Slots: a.agentState.numSlots(),
 	})
 
 	// TODO(ilia): Deprecate together with the old slots API.
@@ -700,10 +700,10 @@ func (a *agent) socketDisconnected(ctx *actor.Context) {
 	// Mark ourselves as draining to avoid action on ourselves while we recover. While the
 	// system is technically correct without this, it's better because we avoid any waste
 	// effort scheduling things only to have them suffer AgentErrors later.
-	a.agentState.Disable(ctx, true)
-	a.agentState.patchAllSlotsState(ctx, PatchAllSlotsState{
-		Enabled: &a.agentState.enabled,
-		Drain:   &a.agentState.draining,
+	a.agentState.disable(ctx, true)
+	a.agentState.patchAllSlotsState(ctx, patchAllSlotsState{
+		enabled: &a.agentState.enabled,
+		drain:   &a.agentState.draining,
 	})
 	ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 }

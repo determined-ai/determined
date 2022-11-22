@@ -17,27 +17,27 @@ import (
 
 // containerResources contains information for tasks have been allocated but not yet started.
 type containerResources struct {
-	Req         *sproto.AllocateRequest
-	Agent       *AgentState
-	Devices     []device.Device
-	ContainerID cproto.ID
-	Started     *sproto.ResourcesStarted
-	Exited      *sproto.ResourcesStopped
+	req         *sproto.AllocateRequest
+	agent       *agentState
+	devices     []device.Device
+	containerID cproto.ID
+	started     *sproto.ResourcesStarted
+	exited      *sproto.ResourcesStopped
 }
 
 // Summary summarizes a container allocation.
 func (c containerResources) Summary() sproto.ResourcesSummary {
 	return sproto.ResourcesSummary{
-		ResourcesID:   sproto.ResourcesID(c.ContainerID),
+		ResourcesID:   sproto.ResourcesID(c.containerID),
 		ResourcesType: sproto.ResourcesTypeDockerContainer,
-		AllocationID:  c.Req.AllocationID,
+		AllocationID:  c.req.AllocationID,
 		AgentDevices: map[aproto.ID][]device.Device{
-			aproto.ID(c.Agent.Handler.Address().Local()): c.Devices,
+			aproto.ID(c.agent.Handler.Address().Local()): c.devices,
 		},
 
-		ContainerID: &c.ContainerID,
-		Started:     c.Started,
-		Exited:      c.Exited,
+		ContainerID: &c.containerID,
+		Started:     c.started,
+		Exited:      c.exited,
 	}
 }
 
@@ -45,12 +45,12 @@ func (c containerResources) Summary() sproto.ResourcesSummary {
 func (c containerResources) Start(
 	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
 ) error {
-	handler := c.Agent.Handler
-	spec.ContainerID = string(c.ContainerID)
-	spec.ResourcesID = string(c.ContainerID)
-	spec.AllocationID = string(c.Req.AllocationID)
+	handler := c.agent.Handler
+	spec.ContainerID = string(c.containerID)
+	spec.ResourcesID = string(c.containerID)
+	spec.AllocationID = string(c.req.AllocationID)
 	spec.AllocationSessionToken = rri.Token
-	spec.TaskID = string(c.Req.TaskID)
+	spec.TaskID = string(c.req.TaskID)
 	if spec.LoggingFields == nil {
 		spec.LoggingFields = map[string]string{}
 	}
@@ -58,17 +58,17 @@ func (c containerResources) Start(
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeDockerContainer)
 	spec.UseHostMode = rri.IsMultiAgent
-	spec.Devices = c.Devices
+	spec.Devices = c.devices
 	// Write the real DET_UNIQUE_PORT_OFFSET value now that we know which devices to use.
 	spec.ExtraEnvVars["DET_UNIQUE_PORT_OFFSET"] = strconv.Itoa(tasks.UniquePortOffset(spec.Devices))
 	return ctx.Ask(handler, sproto.StartTaskContainer{
-		TaskActor: c.Req.AllocationRef,
+		TaskActor: c.req.AllocationRef,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
-				Parent:  c.Req.AllocationRef.Address(),
-				ID:      c.ContainerID,
+				Parent:  c.req.AllocationRef.Address(),
+				ID:      c.containerID,
 				State:   cproto.Assigned,
-				Devices: c.Devices,
+				Devices: c.devices,
 			},
 			Spec: spec.ToDockerSpec(),
 		},
@@ -78,8 +78,8 @@ func (c containerResources) Start(
 
 // Kill notifies the agent to kill the container.
 func (c containerResources) Kill(ctx *actor.Context, logCtx logger.Context) {
-	ctx.Tell(c.Agent.Handler, sproto.KillTaskContainer{
-		ContainerID: c.ContainerID,
+	ctx.Tell(c.agent.Handler, sproto.KillTaskContainer{
+		ContainerID: c.containerID,
 		LogContext:  logCtx,
 	})
 }
@@ -92,9 +92,9 @@ func (c containerResources) persist() error {
 		return fmt.Errorf("%d agents in containerResources summary", len(summary.AgentDevices))
 	}
 
-	snapshot := ContainerSnapshot{
+	snapshot := containerSnapshot{
 		ResourceID: summary.ResourcesID,
-		ID:         c.ContainerID,
+		ID:         c.containerID,
 		AgentID:    agentID,
 	}
 	_, err := db.Bun().NewInsert().Model(&snapshot).Exec(context.TODO())

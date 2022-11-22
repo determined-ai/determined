@@ -18,11 +18,11 @@ func NewRoundRobinScheduler() Scheduler {
 	return &roundRobinScheduler{}
 }
 
-func (p *roundRobinScheduler) Schedule(rp *ResourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
+func (p *roundRobinScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	return roundRobinSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
-func (p *roundRobinScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*sproto.RMJobInfo {
+func (p *roundRobinScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
 	// not supported
 	return make(map[model.JobID]*sproto.RMJobInfo)
 }
@@ -30,7 +30,7 @@ func (p *roundRobinScheduler) JobQInfo(rp *ResourcePool) map[model.JobID]*sproto
 func roundRobinSchedule(
 	taskList *tasklist.TaskList,
 	groups map[*actor.Ref]*tasklist.Group,
-	agents map[*actor.Ref]*AgentState,
+	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	var states []*groupState

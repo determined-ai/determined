@@ -43,7 +43,7 @@ func (s *slots) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 			ctx.Respond(errors.Wrap(err, "error patching agent"))
 			return
 		}
-		ctx.Tell(ctx.Self().Parent(), PatchSlotState{Enabled: &patch.Enabled, Drain: &patch.Drain})
+		ctx.Tell(ctx.Self().Parent(), patchSlotState{enabled: &patch.Enabled, drain: &patch.Drain})
 		ctx.Respond(apiCtx.NoContent(http.StatusNoContent))
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)

@@ -209,7 +209,7 @@ func (r *ResourceManager) ExternalPreemptionPending(
 
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
-func (r *ActorResourceManager) NotifyContainerRunning(
+func (r *ResourceManager) NotifyContainerRunning(
 	ctx actor.Messenger,
 	msg sproto.NotifyContainerRunning,
 ) error {

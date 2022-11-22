@@ -33,7 +33,7 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 		{ID: "task9", SlotsNeeded: 10, Group: groups[2]},
 	}
 
-	taskList, groupMap, _ := SetupSchedulerStates(t, system, tasks, groups, agents)
+	taskList, groupMap, _ := setupSchedulerStates(t, system, tasks, groups, agents)
 
 	// task 1, task 2, task 3 are in a group with maxSlots = 1 and total slots needed = 5
 	// task 4, task 5 are in a group with maxSlots = 2 and total slots needed = 5

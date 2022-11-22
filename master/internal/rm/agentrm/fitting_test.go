@@ -337,7 +337,7 @@ func TestFindFits(t *testing.T) {
 
 		t.Run(tc.Name, func(t *testing.T) {
 			system := actor.NewSystem(t.Name())
-			agents := []*AgentState{}
+			agents := []*agentState{}
 			for _, agent := range tc.Agents {
 				agents = append(agents, newFakeAgentState(
 					t,
@@ -411,7 +411,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 		tc := testCases[idx]
 
 		t.Run(tc.Name, func(t *testing.T) {
-			var index []*AgentState
+			var index []*agentState
 			for i, capacity := range tc.AgentCapacities {
 				index = append(
 					index,
@@ -428,7 +428,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 				)
 			}
 			agents, index := byHandler(index...)
-			agentIndex := make(map[*AgentState]int)
+			agentIndex := make(map[*agentState]int)
 			for idx, agent := range index {
 				agentIndex[agent] = idx
 			}
@@ -460,10 +460,10 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 }
 
 func byHandler(
-	handlers ...*AgentState,
-) (map[*actor.Ref]*AgentState, []*AgentState) {
-	agents := make(map[*actor.Ref]*AgentState, len(handlers))
-	index := make([]*AgentState, 0, len(handlers))
+	handlers ...*agentState,
+) (map[*actor.Ref]*agentState, []*agentState) {
+	agents := make(map[*actor.Ref]*agentState, len(handlers))
+	index := make([]*agentState, 0, len(handlers))
 	for _, agent := range handlers {
 		agents[agent.Handler] = agent
 		index = append(index, agent)

@@ -12,15 +12,15 @@ import (
 )
 
 // HardConstraint returns true if the task can be assigned to the agent and false otherwise.
-type HardConstraint func(req *sproto.AllocateRequest, agent *AgentState) bool
+type HardConstraint func(req *sproto.AllocateRequest, agent *agentState) bool
 
 // SoftConstraint returns a score from 0 (lowest) to 1 (highest) representing how optimal is the
 // state of the cluster if the task were assigned to the agent.
-type SoftConstraint func(req *sproto.AllocateRequest, agent *AgentState) float64
+type SoftConstraint func(req *sproto.AllocateRequest, agent *agentState) float64
 
 // fittingState is the basis for assigning a task to one or more agents for execution.
 type fittingState struct {
-	Agent *AgentState
+	Agent *agentState
 	Score float64
 	// Use hash distances besides scores of fitting here in order to
 	// load balance across agents for tasks that would have no preference
@@ -63,7 +63,7 @@ func (c candidateList) Swap(i, j int) {
 }
 
 func findFits(
-	req *sproto.AllocateRequest, agents map[*actor.Ref]*AgentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
 	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
 	//    to prevent the provisioner from scaling up for jobs that can never be scheduled in
@@ -81,7 +81,7 @@ func findFits(
 }
 
 func isViable(
-	req *sproto.AllocateRequest, agent *AgentState, constraints ...HardConstraint,
+	req *sproto.AllocateRequest, agent *agentState, constraints ...HardConstraint,
 ) bool {
 	for _, constraint := range constraints {
 		if !constraint(req, agent) {
@@ -92,7 +92,7 @@ func isViable(
 }
 
 func findDedicatedAgentFits(
-	req *sproto.AllocateRequest, agentStates map[*actor.Ref]*AgentState,
+	req *sproto.AllocateRequest, agentStates map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
 ) []*fittingState {
 	if len(agentStates) == 0 {
@@ -104,12 +104,12 @@ func findDedicatedAgentFits(
 	//    a valid assumption, because the only multi-agent tasks are distributed experiments
 	//    which always want equal distribution across agents.
 	// 2) Multi-agent tasks will receive all the slots on every agent they are scheduled on.
-	agentsByNumSlots := make(map[int][]*AgentState)
+	agentsByNumSlots := make(map[int][]*agentState)
 	for _, agent := range agentStates {
 		constraints := []HardConstraint{labelSatisfied, agentSlotUnusedSatisfied}
 		if isViable(req, agent, constraints...) {
-			agentsByNumSlots[agent.NumEmptySlots()] = append(
-				agentsByNumSlots[agent.NumEmptySlots()],
+			agentsByNumSlots[agent.numEmptySlots()] = append(
+				agentsByNumSlots[agent.numEmptySlots()],
 				agent,
 			)
 		}
@@ -172,7 +172,7 @@ func findDedicatedAgentFits(
 }
 
 func findSharedAgentFit(
-	req *sproto.AllocateRequest, agents map[*actor.Ref]*AgentState, fittingMethod SoftConstraint,
+	req *sproto.AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
@@ -203,7 +203,7 @@ func stringHashNumber(s string) uint64 {
 	return binary.LittleEndian.Uint64(hash[:])
 }
 
-func hashDistance(req *sproto.AllocateRequest, agent *AgentState) uint64 {
+func hashDistance(req *sproto.AllocateRequest, agent *agentState) uint64 {
 	return stringHashNumber(string(req.AllocationID)) -
 		stringHashNumber(agent.Handler.Address().String())
 }

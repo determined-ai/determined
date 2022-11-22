@@ -27,19 +27,19 @@ type patchSlot struct {
 func (s *slotProxy) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *proto.GetSlotRequest:
-		result := s.handlePatchSlotState(ctx, PatchSlotState{ID: s.device.ID})
+		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID})
 		if result != nil {
 			ctx.Respond(&proto.GetSlotResponse{Slot: result.ToProto()})
 		}
 	case *proto.EnableSlotRequest:
 		enabled := true
-		result := s.handlePatchSlotState(ctx, PatchSlotState{ID: s.device.ID, Enabled: &enabled})
+		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID, enabled: &enabled})
 		if result != nil {
 			ctx.Respond(&proto.EnableSlotResponse{Slot: result.ToProto()})
 		}
 	case *proto.DisableSlotRequest:
 		enabled := false
-		result := s.handlePatchSlotState(ctx, PatchSlotState{ID: s.device.ID, Enabled: &enabled})
+		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID, enabled: &enabled})
 		if result != nil {
 			ctx.Respond(&proto.EnableSlotResponse{Slot: result.ToProto()})
 		}
@@ -53,10 +53,10 @@ func (s *slotProxy) Receive(ctx *actor.Context) error {
 }
 
 func (s *slotProxy) handlePatchSlotState(
-	ctx *actor.Context, msg PatchSlotState,
+	ctx *actor.Context, msg patchSlotState,
 ) *model.SlotSummary {
 	agentRef := ctx.Self().Parent().Parent()
-	resp := ctx.Ask(agentRef, PatchSlotState{ID: s.device.ID})
+	resp := ctx.Ask(agentRef, patchSlotState{id: s.device.ID})
 	if err := resp.Error(); err != nil {
 		ctx.Respond(err)
 		return nil
@@ -69,7 +69,7 @@ func (s *slotProxy) handlePatchSlotState(
 func (s *slotProxy) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
-		result := s.handlePatchSlotState(ctx, PatchSlotState{ID: s.device.ID})
+		result := s.handlePatchSlotState(ctx, patchSlotState{id: s.device.ID})
 		if result != nil {
 			ctx.Respond(apiCtx.JSON(http.StatusOK, result))
 		}
@@ -80,7 +80,7 @@ func (s *slotProxy) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 			return
 		}
 		agentRef := ctx.Self().Parent().Parent()
-		resp := ctx.Ask(agentRef, PatchSlotState{ID: s.device.ID, Enabled: &patch.Enabled})
+		resp := ctx.Ask(agentRef, patchSlotState{id: s.device.ID, enabled: &patch.Enabled})
 		if err := resp.Error(); err != nil {
 			ctx.Respond(err)
 		} else {

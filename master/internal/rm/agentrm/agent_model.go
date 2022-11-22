@@ -10,34 +10,34 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-// SlotData is a database representation of slot state.
-type SlotData struct {
+// slotData is a database representation of slot state.
+type slotData struct {
 	Device      device.Device
 	UserEnabled bool
 	ContainerID *cproto.ID
 }
 
-// AgentID is the agent id type.
-type AgentID string
+// agentID is the agent id type.
+type agentID string
 
-// AgentSnapshot is a database representation of `agentState`.
-type AgentSnapshot struct {
+// agentSnapshot is a database representation of `agentState`.
+type agentSnapshot struct {
 	bun.BaseModel `bun:"table:resourcemanagers_agent_agentstate,alias:rmas"`
 
 	ID                    int64       `bun:"id,pk,autoincrement"`
-	AgentID               AgentID     `bun:"agent_id,notnull,unique"`
+	AgentID               agentID     `bun:"agent_id,notnull,unique"`
 	UUID                  string      `bun:"uuid,notnull,unique"`
 	ResourcePoolName      string      `bun:"resource_pool_name,notnull"`
 	Label                 string      `bun:"label"`
 	UserEnabled           bool        `bun:"user_enabled"`
 	UserDraining          bool        `bun:"user_draining"`
 	MaxZeroSlotContainers int         `bun:"max_zero_slot_containers"`
-	Slots                 []SlotData  `bun:"slots"`
+	Slots                 []slotData  `bun:"slots"`
 	Containers            []cproto.ID `bun:"containers"`
 }
 
-// ContainerSnapshot is a database representation of `containerResources`.
-type ContainerSnapshot struct {
+// containerSnapshot is a database representation of `containerResources`.
+type containerSnapshot struct {
 	bun.BaseModel `bun:"table:resourcemanagers_agent_containers,alias:rmac"`
 
 	ResourceID sproto.ResourcesID `bun:"resource_id"`
@@ -50,9 +50,9 @@ type ContainerSnapshot struct {
 	ResourcesWithState taskmodel.ResourcesWithState `bun:"rel:belongs-to,join:resource_id=resource_id"`
 }
 
-// NewContainerSnapshot creates an instance from `cproto.Container`.
-func NewContainerSnapshot(c *cproto.Container) ContainerSnapshot {
-	return ContainerSnapshot{
+// newContainerSnapshot creates an instance from `cproto.Container`.
+func newContainerSnapshot(c *cproto.Container) containerSnapshot {
+	return containerSnapshot{
 		ID:      c.ID,
 		State:   c.State,
 		Devices: c.Devices,
@@ -60,7 +60,7 @@ func NewContainerSnapshot(c *cproto.Container) ContainerSnapshot {
 }
 
 // ToContainer converts to `cproto.Container`.
-func (cs *ContainerSnapshot) ToContainer() cproto.Container {
+func (cs *containerSnapshot) ToContainer() cproto.Container {
 	return cproto.Container{
 		ID:      cs.ID,
 		State:   cs.State,

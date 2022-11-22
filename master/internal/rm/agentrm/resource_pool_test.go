@@ -242,7 +242,7 @@ func TestAddRemoveAgent(t *testing.T) {
 	system.Tell(ref, sproto.RemoveAgent{Agent: agentRef})
 }
 
-func setupRPSamePriority(t *testing.T) *ResourcePool {
+func setupRPSamePriority(t *testing.T) *resourcePool {
 	system := actor.NewSystem(t.Name())
 	defaultPriority := 50
 	config := config.ResourcePoolConfig{
