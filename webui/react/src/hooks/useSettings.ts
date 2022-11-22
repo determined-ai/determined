@@ -38,7 +38,7 @@ export type UseSettingsReturn<T> = {
   activeSettings: (keys?: string[]) => string[];
   isLoading: boolean;
   resetSettings: ResetSettings;
-  settings: SettingsRecord<T>;
+  settings: T;
   updateSettings: UpdateSettings;
 };
 

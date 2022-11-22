@@ -134,8 +134,10 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [destSettings.workspaceId]);
 
   useEffect(() => {
-    if (modalRef.current) fetchWorkspaces();
-  }, [fetchWorkspaces, modalRef]);
+    fetchWorkspaces();
+    fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
@@ -155,10 +157,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     },
     [sourceProjectId, updateDestSettings],
   );
-
-  useEffect(() => {
-    if (modalRef.current) fetchProjects();
-  }, [fetchProjects, modalRef]);
 
   const renderRow = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
@@ -181,7 +179,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     },
     [destSettings.projectId, handleProjectSelect, projects, sourceProjectId],
   );
-
   const modalContent = useMemo(() => {
     return (
       <div className={css.base}>
@@ -344,8 +341,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       if (!destSettings.workspaceId)
         updateDestSettings({ projectId: undefined, workspaceId: sourceWorkspaceId });
       setSourceProjectId(sourceProjectId);
-      fetchWorkspaces();
-      fetchProjects();
+      if (!workspaces.length) fetchWorkspaces();
+      if (!projects.length) fetchProjects();
       openOrUpdate({
         ...getModalProps(experimentIds, destSettings.projectId),
         ...initialModalProps,
@@ -356,6 +353,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       getModalProps,
       openOrUpdate,
       fetchProjects,
+      workspaces.length,
+      projects.length,
       destSettings.projectId,
       destSettings.workspaceId,
       updateDestSettings,
