@@ -209,6 +209,8 @@ func (a *apiServer) LaunchNotebook(
 		),
 	}
 
+	spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+
 	// Launch a Notebook actor.
 	var notebookID model.TaskID
 	if err = a.ask(notebooksAddr, *spec, &notebookID); err != nil {
