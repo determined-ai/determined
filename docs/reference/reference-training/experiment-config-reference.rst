@@ -1339,6 +1339,22 @@ The ``pbs`` section specifies configuration options applicable when the cluster 
             - -p1000
             - -PMyProjectName
 
+   Requesting of resources and job placement may be influenced through use of ``-l``, however chunk
+   count, chunk arrangement, and GPU or CPU counts per chunk (depending on the value of
+   ``slot_type``) are controlled by Determined; any values specified for these quantities will be
+   ignored. Consider if the following were specified for a CUDA experiment:
+
+   .. code:: yaml
+
+      pbs:
+         pbsbatch_args:
+            - -l select=2:ngpus=4:mem=4gb
+            - -l place=scatter:shared
+            - -l walltime=1:00:00
+
+   The chunk count (two), the GPU count per chunk (four), and the chunk arrangement (scatter) will
+   all be ignored in favor of values calculated by Determined.
+
 ``slots_per_node``
    The minimum number of slots required for a node to be scheduled during a trial. If
    :ref:`gres_supported <cluster-configuration-slurm>` is false, specify ``slots_per_node`` in order
