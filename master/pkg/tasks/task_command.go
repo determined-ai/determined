@@ -17,6 +17,8 @@ type genericCommandSpecMetadata struct {
 	PublicKey     *string `json:"publicKey"`
 	ExperimentIDs []int32 `json:"experiment_ids"`
 	TrialIDs      []int32 `json:"trial_ids"`
+	// CHAT: we want this to be part of the command snapshot that gets persisted.
+	WorkspaceID model.AccessScopeID `json:"workspace_id"`
 }
 
 // MarshalToMap converts typed struct into a map.
