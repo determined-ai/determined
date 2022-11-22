@@ -8,7 +8,6 @@ from urllib.parse import parse_qs, urlparse
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-
 from determined.errors import EnterpriseOnlyError
 
 CLI_REDIRECT_PORT = 49176

@@ -1,7 +1,7 @@
 from typing import Optional
 
 
-class Oauth2ScimCient:
+class Oauth2ScimClient:
     def __init__(
         self,
         id: str,

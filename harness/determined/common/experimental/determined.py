@@ -56,7 +56,7 @@ class Determined:
         cert_name: Optional[str] = None,
         noverify: bool = False,
     ):
-        master = master or util.get_default_master_address()
+        self._master = master or util.get_default_master_address()
 
         cert = certs.default_load(
             master_url=master,
@@ -65,8 +65,14 @@ class Determined:
             explicit_noverify=noverify,
         )
 
-        auth = authentication.Authentication(master, user, password, cert=cert)
+        # TODO: This should probably be try_reauth=False, but it appears that would break the case
+        # where the default credentials are available from the master and could be discovered by
+        # a REST API call against the master.
+        auth = authentication.Authentication(master, user, password, cert=self._cert)
         self._session = api.Session(master, user, auth, cert)
+        if user is None:
+            user = auth.token_store.get_active_user()
+        self._token = auth.token_store.get_token(user)
 
     def _from_bindings(self, raw: bindings.v1User) -> user.User:
         assert raw.id is not None
@@ -331,12 +337,13 @@ class Determined:
         """
         return list(bindings.get_GetModelLabels(self._session).labels)
 
-    def list_oauth_clients(self) -> Sequence[oauth2_scim_client.Oauth2ScimCient]:
+    def list_oauth_clients(self) -> Sequence[oauth2_scim_client.Oauth2ScimClient]:
         try:
-            oauth2_scim_clients: List[oauth2_scim_client.Oauth2ScimCient] = []
-            clients = api.get(self.master, "oauth2/clients").json()
+            oauth2_scim_clients: List[oauth2_scim_client.Oauth2ScimClient] = []
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            clients = api.get(self._master, "oauth2/clients", headers=headers).json()
             for client in clients:
-                osc = oauth2_scim_client.Oauth2ScimCient(
+                osc = oauth2_scim_client.Oauth2ScimClient(
                     name=client["name"], id=client["id"], domain=client["domain"]
                 )
                 oauth2_scim_clients.append(osc)
@@ -344,11 +351,13 @@ class Determined:
         except api.errors.NotFoundException:
             raise EnterpriseOnlyError("API not found: oauth2/clients")
 
-    def add_oauth_client(self, domain: str, name: str) -> oauth2_scim_client.Oauth2ScimCient:
+    def add_oauth_client(self, domain: str, name: str) -> oauth2_scim_client.Oauth2ScimClient:
         try:
+            headers = {"Authorization": "Bearer {}".format(self._token)}
             client = api.post(
-                self.master,
+                self._master,
                 "oauth2/clients",
+                headers=headers,
                 json={"domain": domain, "name": name},
             ).json()
 
@@ -361,6 +370,7 @@ class Determined:
 
     def remove_oauth_client(self, client_id: str) -> None:
         try:
-            api.delete(self.master, "oauth2/clients/{}".format(client_id))
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            api.delete(self._master, "oauth2/clients/{}".format(client_id), headers=headers)
         except api.errors.NotFoundException:
             raise EnterpriseOnlyError("API not found: oauth2/clients")

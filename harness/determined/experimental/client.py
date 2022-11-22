@@ -61,7 +61,7 @@ from determined.common.experimental.experiment import (  # noqa: F401
     ExperimentState,
 )
 from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
-from determined.common.experimental.oauth2_scim_client import Oauth2ScimCient
+from determined.common.experimental.oauth2_scim_client import Oauth2ScimClient
 from determined.common.experimental.trial import (  # noqa: F401
     TrialOrderBy,
     TrialReference,
@@ -371,15 +371,15 @@ def get_model_labels() -> List[str]:
 
 
 @_require_singleton
-def list_oauth_clients(self) -> Sequence[Oauth2ScimCient]:
+def list_oauth_clients() -> Sequence[Oauth2ScimClient]:
     """
     Get a list of Oauth2 Scim clients.
     """
     assert _determined is not None
-    return _determined.get_model_labels()
+    return _determined.list_oauth_clients()
 
 
-def add_oauth_client(self, domain: str, name: str) -> Oauth2ScimCient:
+def add_oauth_client(domain: str, name: str) -> Oauth2ScimClient:
     """
     Add an oauth client.
     Arguments:
@@ -390,7 +390,7 @@ def add_oauth_client(self, domain: str, name: str) -> Oauth2ScimCient:
     return _determined.add_oauth_client(domain, name)
 
 
-def remove_oauth_client(self, client_id: str) -> None:
+def remove_oauth_client(client_id: str) -> None:
     """
     Arguments:
        client_id: Client id of OAuth client.
