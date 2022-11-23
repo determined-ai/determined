@@ -138,6 +138,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ExperimentListSettings>(settingsConfig);
 
+  const tableOffset = (() => {
+    if (settings.tableOffset > total) {
+      const newTotal = settings.tableOffset > total ? total : total - 1;
+      return settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
+    }
+    return settings.tableOffset;
+  })();
+
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
@@ -192,8 +200,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           ...baseParams,
           experimentIdFilter: { notIn: pinnedIds },
           limit: settings.tableLimit - pinnedIds.length,
-          offset:
-            settings.tableOffset - (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
+          offset: tableOffset - (tableOffset / settings.tableLimit) * pinnedIds.length,
         },
         { signal: canceler.signal },
       );
@@ -821,15 +828,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   useEffect(() => {
-    if (!settings) return;
-    if (settings.tableOffset > total) {
-      const newTotal = settings.tableOffset > total ? total : total - 1;
-      const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
-      updateSettings({ tableOffset: offset });
-    }
-  }, [total, settings, updateSettings]);
-
-  useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -942,7 +940,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit || 0,
-              offset: settings.tableOffset || 0,
+              offset: tableOffset || 0,
             },
             total,
           )}
