@@ -2757,7 +2757,7 @@ workflows:
             - package-and-push-system-dev
           matrix:
             parameters:
-              parallelism: [2]
+              parallelism: [4]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
 
@@ -2838,6 +2838,7 @@ workflows:
               mark: ["model_hub_transformers"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
+              parallelism: [2]
 
       - test-e2e-aws:
           name: test-e2e-transformers-amp
@@ -2854,6 +2855,7 @@ workflows:
               mark: ["model_hub_transformers_amp"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
+              parallelism: [2]
 
   nightly:
     triggers:
@@ -2869,7 +2871,7 @@ workflows:
           context: aws
           matrix:
             parameters:
-              parallelism: [2]
+              parallelism: [4]
               cluster-id-prefix: ["nightly"]
               mark: ["nightly"]
       - test-e2e-aws:
@@ -2892,6 +2894,7 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+              parallelism: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-transformers-amp
           context: aws
@@ -2902,6 +2905,7 @@ workflows:
               compute-agent-instance-type: ["p2.8xlarge"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [2]
+              parallelism: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
           context: aws
