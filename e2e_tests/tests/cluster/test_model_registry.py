@@ -21,6 +21,8 @@ def test_model_registry() -> None:
     objectdetect = None
     tform = None
 
+    existing_models = [m.name for m in d.get_models(sort_by=ModelSortBy.NAME)]
+
     try:
         # Create a model and validate twiddling the metadata.
         mnist = d.create_model("mnist", "simple computer vision model", labels=["a", "b"])
@@ -119,6 +121,12 @@ def test_model_registry() -> None:
         all_versions = mnist.get_versions()
         assert len(all_versions) == 2
 
+        for v in all_versions:
+            mv = mnist.get_version(v.model_version)
+            assert mv is not None
+            assert mv.model_version == v.model_version
+            assert mv.model_version_id != v.model_version
+
         # Test deletion of model version
         latest_version.delete()
         all_versions = mnist.get_versions()
@@ -129,7 +137,8 @@ def test_model_registry() -> None:
         objectdetect = d.create_model("ac - Dc", "a test name model")
 
         models = d.get_models(sort_by=ModelSortBy.NAME)
-        assert [m.name for m in models] == ["ac - Dc", "mnist", "transformer"]
+        model_names = [m.name for m in models if m.name not in existing_models]
+        assert model_names == ["ac - Dc", "mnist", "transformer"]
 
         # Test model labels combined
         mnist.set_labels(["hello", "world"])
@@ -141,7 +150,8 @@ def test_model_registry() -> None:
         tform.delete()
         tform = None
         models = d.get_models(sort_by=ModelSortBy.NAME)
-        assert [m.name for m in models] == ["ac - Dc", "mnist"]
+        model_names = [m.name for m in models if m.name not in existing_models]
+        assert model_names == ["ac - Dc", "mnist"]
     finally:
         # Clean model registry of test models
         for model in [mnist, objectdetect, tform]:
