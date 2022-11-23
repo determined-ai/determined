@@ -6,7 +6,7 @@ import os
 import pathlib
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterator, Optional, Tuple, Union, List, Callable
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from determined import core, tensorboard
 from determined.common import api, storage
@@ -161,9 +161,7 @@ class CheckpointContext:
             storage_id = self._dist.broadcast(storage_id)
             return self._upload_sharded(ckpt_dir, storage_id, metadata)
 
-    def _upload_single(
-        self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None
-    ) -> str:
+    def _upload_single(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> str:
         storage_id = str(uuid.uuid4())
         resources = self._storage_manager._list_directory(ckpt_dir)
 
@@ -206,14 +204,16 @@ class CheckpointContext:
 
         # Merge resources, detect conflicts
         all_resources = self._dist.allgather(resources)
-        logging.info(f'All Resources {all_resources}')
+        logging.info(f"All Resources {all_resources}")
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
             self._print_conflict_error(conflicts, "files")
 
         # Chief gathers metadata across workers, checks for conflicts and saves metadata
         metadata_writer_rank = ckpt_dir_mask.index(True)
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {})
+        all_metadata = self._merge_and_save_metadata(
+            ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {}
+        )
 
         if want_upload:
             assert ckpt_dir
@@ -228,14 +228,13 @@ class CheckpointContext:
 
     def _print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
         # Try to keep the logs easier to read; print the whole failure only on the chief.
-        logging.info(f'{self._dist.rank}')
+        logging.info(f"{self._dist.rank}")
         if self._dist.rank > 0:
             raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts: {conflicts}")
-        msgs = [
-            f"    {f} uploaded by ranks {ranks}"
-            for f, ranks in sorted(conflicts.items())
-        ]
-        raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts:\n" + "\n".join(msgs))
+        msgs = [f"    {f} uploaded by ranks {ranks}" for f, ranks in sorted(conflicts.items())]
+        raise RuntimeError(
+            f"refusing to upload with {conflict_dtype} conflicts:\n" + "\n".join(msgs)
+        )
 
     def download(
         self,
@@ -276,7 +275,9 @@ class CheckpointContext:
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
                 # If selector is None return False == do not download the file
-                return any(self._dist.gather_local(selector(path) if selector is not None else False))
+                return any(
+                    self._dist.gather_local(selector(path) if selector is not None else False)
+                )
 
             self._storage_manager.download(src=storage_id, dst=ckpt_dir, selector=_selector)
             # Tell local workers we finished.
@@ -369,7 +370,9 @@ class CheckpointContext:
 
             # Metadata should not be counted among resources. Why is that?
             # Chief handles merging and saving metadata to ckpt_dir.
-            all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=0, metadata=metadata or {})
+            all_metadata = self._merge_and_save_metadata(
+                ckpt_dir, writer_rank=0, metadata=metadata or {}
+            )
 
             if self._dist.rank == 0:
                 self._report_checkpoint(storage_id, resources, all_metadata)
@@ -399,7 +402,9 @@ class CheckpointContext:
             self._print_conflict_error(conflicts, "file")
 
         # Chief gathers metadata across workers, checks for conflicts, saves metadata.
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=0, metadata=metadata or {})
+        all_metadata = self._merge_and_save_metadata(
+            ckpt_dir, writer_rank=0, metadata=metadata or {}
+        )
         # My assumption is that chief (local_rank=0) typically uploads stuff anyway.
         # If this assumption does not hold, then we can also do this:
         # upload_mask = self._dist.allgather(want_upload)
@@ -418,7 +423,9 @@ class CheckpointContext:
 
         return storage_id
 
-    def _merge_and_save_metadata(self, ckpt_dir: str, writer_rank: int = 0, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _merge_and_save_metadata(
+        self, ckpt_dir: str, writer_rank: int = 0, metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         # Gather metadata across nodes.
         all_metadata = self._dist.allgather(metadata or {})
         # Merge metadata. If a metadata key repeats, raise error.
@@ -473,7 +480,9 @@ class CheckpointContext:
                 # all workers. But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
-                return any(self._dist.gather_local(selector(path) if selector is not None else False))
+                return any(
+                    self._dist.gather_local(selector(path) if selector is not None else False)
+                )
 
             with self._storage_manager.restore_path(storage_id, _selector) as path:
                 # tell local workers that download is finished
