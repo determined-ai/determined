@@ -1057,7 +1057,7 @@ export const getModelVersion: DetApi<
     return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
   },
   request: (params: Service.GetModelVersionParams) =>
-    detApi.Models.getModelVersion(params.modelName, params.versionId),
+    detApi.Models.getModelVersion(params.modelName, params.versionNum),
 };
 
 export const patchModel: DetApi<
@@ -1080,7 +1080,7 @@ export const patchModelVersion: DetApi<
   postProcess: (response) =>
     response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined,
   request: (params: Service.PatchModelVersionParams) =>
-    detApi.Models.patchModelVersion(params.modelName, params.versionId, params.body),
+    detApi.Models.patchModelVersion(params.modelName, params.versionNum, params.body),
 };
 
 export const archiveModel: DetApi<Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void> = {
@@ -1113,7 +1113,7 @@ export const deleteModelVersion: DetApi<
   name: 'deleteModelVersion',
   postProcess: noOp,
   request: (params: Service.GetModelVersionParams) =>
-    detApi.Models.deleteModelVersion(params.modelName, params.versionId),
+    detApi.Models.deleteModelVersion(params.modelName, params.versionNum),
 };
 
 export const getModelLabels: DetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]> = {

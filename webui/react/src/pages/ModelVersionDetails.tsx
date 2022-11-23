@@ -35,7 +35,7 @@ const TabType = {
 type Params = {
   modelId: string;
   tab?: ValueOf<typeof TabType>;
-  versionId: string;
+  versionNum: string;
 };
 
 const TAB_KEYS = Object.values(TabType);
@@ -43,22 +43,22 @@ const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
-  const { modelId: modelID, versionId: versionID, tab } = useParams<Params>();
+  const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
   const [pageError, setPageError] = useState<Error>();
   const navigate = useNavigate();
   const location = useLocation();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const modelId = modelID ?? '';
-  const versionId = versionID ?? '';
+  const versionNum = versionNUM ?? '';
 
-  const basePath = paths.modelVersionDetails(modelId, versionId);
+  const basePath = paths.modelVersionDetails(modelId, versionNum);
 
   const fetchModelVersion = useCallback(async () => {
     try {
       const versionData = await getModelVersion({
         modelName: modelId,
-        versionId: parseInt(versionId),
+        versionNum: parseInt(versionNum),
       });
       /**
        * TODO: can this compare againt prev instead of modelVersion, so that
@@ -69,7 +69,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [modelId, modelVersion, pageError, versionId]);
+  }, [modelId, modelVersion, pageError, versionNum]);
 
   usePolling(fetchModelVersion);
 
@@ -98,7 +98,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { metadata: editedMetadata, modelName: modelId },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
         await fetchModelVersion();
       } catch (e) {
@@ -109,7 +109,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [fetchModelVersion, modelId, versionId],
+    [fetchModelVersion, modelId, versionNum],
   );
 
   const saveNotes = useCallback(
@@ -118,7 +118,7 @@ const ModelVersionDetails: React.FC = () => {
         const versionResponse = await patchModelVersion({
           body: { modelName: modelId, notes: editedNotes },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
         setModelVersion(versionResponse);
       } catch (e) {
@@ -129,7 +129,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId],
+    [modelId, versionNum],
   );
 
   const saveDescription = useCallback(
@@ -138,7 +138,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { comment: editedDescription, modelName: modelId },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
       } catch (e) {
         handleError(e, {
@@ -148,7 +148,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId],
+    [modelId, versionNum],
   );
 
   const saveName = useCallback(
@@ -157,7 +157,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { modelName: modelId, name: editedName },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
       } catch (e) {
         handleError(e, {
@@ -167,7 +167,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId],
+    [modelId, versionNum],
   );
 
   const saveVersionTags = useCallback(
@@ -176,7 +176,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { labels: newTags, modelName: modelId },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
         fetchModelVersion();
       } catch (e) {
@@ -187,7 +187,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [fetchModelVersion, modelId, versionId],
+    [fetchModelVersion, modelId, versionNum],
   );
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
@@ -261,14 +261,14 @@ const ModelVersionDetails: React.FC = () => {
 
   if (!modelId) {
     return <Message title="Model name is empty" />;
-  } else if (isNaN(parseInt(versionId))) {
-    return <Message title={`Invalid Version ID ${versionId}`} />;
+  } else if (isNaN(parseInt(versionNum))) {
+    return <Message title={`Invalid Version ID ${versionNum}`} />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
-    const message = `Unable to fetch model ${modelId} version ${versionId}`;
+    const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion) {
-    return <Spinner tip={`Loading model ${modelId} version ${versionId} details...`} />;
+    return <Spinner tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 
   return (

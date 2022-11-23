@@ -107,7 +107,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
             description: (
               <div className={css.toast}>
                 <p>{`"${versionName || `Version ${selectedModelNumVersions + 1}`}"`} registered</p>
-                <Link path={paths.modelVersionDetails(selectedModelName, response.id)}>
+                <Link path={paths.modelVersionDetails(selectedModelName, response.version)}>
                   View Model Version
                 </Link>
               </div>

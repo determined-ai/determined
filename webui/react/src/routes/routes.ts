@@ -119,13 +119,13 @@ const routes: RouteConfig[] = [
   {
     id: 'modelVersionDetails',
     needAuth: true,
-    path: '/models/:modelId/versions/:versionId/:tab',
+    path: '/models/:modelId/versions/:versionNum/:tab',
     title: 'Version Details',
   },
   {
     id: 'modelVersionDetails',
     needAuth: true,
-    path: '/models/:modelId/versions/:versionId',
+    path: '/models/:modelId/versions/:versionNum',
     title: 'Version Details',
   },
   {
