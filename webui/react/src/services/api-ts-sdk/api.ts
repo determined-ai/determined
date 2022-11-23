@@ -10567,10 +10567,11 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
          * @param {boolean} [follow] Continue following logs until the master stops or the limit is reached.
+         * @param {boolean} [json] Format response messages as json.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        masterLogs(offset?: number, limit?: number, follow?: boolean, options: any = {}): FetchArgs {
+        masterLogs(offset?: number, limit?: number, follow?: boolean, json?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/logs`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10595,6 +10596,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
 
             if (follow !== undefined) {
                 localVarQueryParameter['follow'] = follow;
+            }
+
+            if (json !== undefined) {
+                localVarQueryParameter['json'] = json;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -10946,11 +10951,12 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
          * @param {boolean} [follow] Continue following logs until the master stops or the limit is reached.
+         * @param {boolean} [json] Format response messages as json.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MasterLogsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).masterLogs(offset, limit, follow, options);
+        masterLogs(offset?: number, limit?: number, follow?: boolean, json?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MasterLogsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).masterLogs(offset, limit, follow, json, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11146,11 +11152,12 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
          * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
          * @param {boolean} [follow] Continue following logs until the master stops or the limit is reached.
+         * @param {boolean} [json] Format response messages as json.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
-            return ClusterApiFp(configuration).masterLogs(offset, limit, follow, options)(fetch, basePath);
+        masterLogs(offset?: number, limit?: number, follow?: boolean, json?: boolean, options?: any) {
+            return ClusterApiFp(configuration).masterLogs(offset, limit, follow, json, options)(fetch, basePath);
         },
         /**
          * 
@@ -11344,12 +11351,13 @@ export class ClusterApi extends BaseAPI {
      * @param {number} [offset] Skip the number of master logs before returning results. Negative values denote number of master logs to skip from the end before returning results.
      * @param {number} [limit] Limit the number of master logs. A value of 0 denotes no limit.
      * @param {boolean} [follow] Continue following logs until the master stops or the limit is reached.
+     * @param {boolean} [json] Format response messages as json.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
-        return ClusterApiFp(this.configuration).masterLogs(offset, limit, follow, options)(this.fetch, this.basePath);
+    public masterLogs(offset?: number, limit?: number, follow?: boolean, json?: boolean, options?: any) {
+        return ClusterApiFp(this.configuration).masterLogs(offset, limit, follow, json, options)(this.fetch, this.basePath);
     }
 
     /**

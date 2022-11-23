@@ -96,6 +96,8 @@ message MasterLogsRequest {
   int32 limit = 4;
   // Continue following logs until the master stops or the limit is reached.
   bool follow = 5;
+  // Format response messages as json.
+  bool json = 6;
 }
 // Response to MasterLogsRequest.
 message MasterLogsResponse {

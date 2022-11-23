@@ -112,12 +112,28 @@ func (a *apiServer) MasterLogs(
 	return processBatches(res, func(b api.Batch) error {
 		return b.ForEach(func(r interface{}) error {
 			lr := r.(*logger.Entry)
+
+			var msg string
+			if req.Json {
+				bs, err := logger.JSONFormatter.Format(lr.Entry)
+				if err != nil {
+					return err
+				}
+				msg = string(bs)
+			} else {
+				bs, err := logger.PPrintFormatter.Format(lr.Entry)
+				if err != nil {
+					return err
+				}
+				msg = string(bs)
+			}
+
 			return resp.Send(&apiv1.MasterLogsResponse{
 				LogEntry: &logv1.LogEntry{
 					Id:        int32(lr.ID),
-					Message:   lr.Message,
-					Timestamp: timestamppb.New(lr.Time),
-					Level:     logger.LogrusLevelToProto(lr.Level),
+					Message:   msg,
+					Timestamp: timestamppb.New(lr.Entry.Time),
+					Level:     logger.LogrusLevelToProto(lr.Entry.Level),
 				},
 			})
 		})

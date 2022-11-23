@@ -178,39 +178,6 @@ func (m *Master) getInfo(echo.Context) (interface{}, error) {
 	return m.Info(), nil
 }
 
-func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
-	args := struct {
-		LessThanID    *int `query:"less_than_id"`
-		GreaterThanID *int `query:"greater_than_id"`
-		Limit         *int `query:"tail"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-
-	limit := -1
-	if args.Limit != nil {
-		limit = *args.Limit
-	}
-
-	startID := -1
-	if args.GreaterThanID != nil {
-		startID = *args.GreaterThanID + 1
-	}
-
-	endID := -1
-	if args.LessThanID != nil {
-		endID = *args.LessThanID
-	}
-
-	entries := m.logs.Entries(startID, endID, limit)
-	if len(entries) == 0 {
-		// Return a zero-length array here so the JSON encoding is `[]` rather than `null`.
-		entries = make([]*logger.Entry, 0)
-	}
-	return entries, nil
-}
-
 // @Summary Get a detailed view of resource allocation during the given time period (CSV).
 // @Tags Cluster
 // @ID get-raw-resource-allocation-csv
@@ -1016,7 +983,6 @@ func (m *Master) Run(ctx context.Context) error {
 
 	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
-	m.echo.GET("/logs", api.Route(m.getMasterLogs))
 
 	experimentsGroup := m.echo.Group("/experiments")
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)

@@ -1,16 +1,18 @@
 package logger
 
 import (
-	"fmt"
-	"sort"
-	"strings"
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
+)
+
+// Various formatters for formatting logs going through APIs.
+var (
+	PPrintFormatter = &logrus.TextFormatter{FullTimestamp: true}
+	JSONFormatter   = &logrus.JSONFormatter{}
 )
 
 func computeSlice(startID int, endID int, limit int, totalEntries int, capacity int) (int, int) {
@@ -44,35 +46,10 @@ func computeSlice(startID int, endID int, limit int, totalEntries int, capacity 
 	return startID % capacity, limit
 }
 
-func logrusMessageAndData(entry *logrus.Entry) string {
-	if len(entry.Data) == 0 {
-		return entry.Message
-	}
-
-	// Stringify the fields in a sorted order.
-	keys := make([]string, 0, len(entry.Data))
-	for key := range entry.Data {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	var fields []string
-	for _, key := range keys {
-		strValue := fmt.Sprintf("%v", entry.Data[key])
-		fields = append(
-			fields,
-			fmt.Sprintf("%s=%q", key, strValue),
-		)
-	}
-
-	return entry.Message + "  " + strings.Join(fields, " ")
-}
-
 // Entry captures the interesting attributes of logrus.Entry.
 type Entry struct {
-	ID      int          `json:"id"`
-	Message string       `json:"message"`
-	Time    time.Time    `json:"time"`
-	Level   logrus.Level `json:"level"`
+	ID    int
+	Entry *logrus.Entry
 }
 
 // EntriesBatch is a batch of logger.Entry.
@@ -156,11 +133,7 @@ func (lb *LogBuffer) Len() int {
 
 // Fire implements the logrus.Hook interface.
 func (lb *LogBuffer) Fire(entry *logrus.Entry) error {
-	lb.write(&Entry{
-		Message: logrusMessageAndData(entry),
-		Time:    entry.Time,
-		Level:   entry.Level,
-	})
+	lb.write(&Entry{Entry: entry})
 	return nil
 }
 

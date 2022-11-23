@@ -256,7 +256,7 @@ func TestEntryFieldInclusion(t *testing.T) {
 	assert.NilError(t, buffer.Fire(originalEntry))
 
 	savedEntry := buffer.Entries(-1, -1, -1)[0]
-	assert.Equal(t, savedEntry.Message, originalEntry.Message+`  keyA="valA" keyB="valB"`)
+	assert.Equal(t, savedEntry.Entry, originalEntry.Message+`  keyA="valA" keyB="valB"`)
 
 	fieldsB := map[string]interface{}{"keyA": `my great "quote"`}
 	originalEntry = logger.WithFields(fieldsB)
@@ -265,5 +265,5 @@ func TestEntryFieldInclusion(t *testing.T) {
 	assert.NilError(t, buffer.Fire(originalEntry))
 
 	savedEntry = buffer.Entries(-1, -1, -1)[1]
-	assert.Equal(t, savedEntry.Message, originalEntry.Message+`  keyA="my great \"quote\""`)
+	assert.Equal(t, savedEntry.Entry, originalEntry.Message+`  keyA="my great \"quote\""`)
 }
