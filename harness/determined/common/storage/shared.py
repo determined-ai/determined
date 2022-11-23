@@ -124,7 +124,7 @@ class SharedFSStorageManager(storage.StorageManager):
                         out.append(name)
                 return out
          # TODO revisit this
-        shutil.copytree(src, os.path.join(self._base_path, dst), ignore=ignore, dirs_exist_ok=dirs_exist_ok)
+        shutil.copytree(src, os.path.join(self._base_path, dst), ignore=ignore, dirs_exist_ok=True)
 
     def download(
         self,

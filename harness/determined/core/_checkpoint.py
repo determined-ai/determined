@@ -209,7 +209,7 @@ class CheckpointContext:
         logging.info(f'All Resources {all_resources}')
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            self.print_conflict_error(conflicts, "files")
+            self._print_conflict_error(conflicts, "files")
 
         # Chief gathers metadata across workers, checks for conflicts and saves metadata
         metadata_writer_rank = ckpt_dir_mask.index(True)
@@ -226,7 +226,7 @@ class CheckpointContext:
 
         return storage_id
 
-    def print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
+    def _print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
         # Try to keep the logs easier to read; print the whole failure only on the chief.
         logging.info(f'{self._dist.rank}')
         if self._dist.rank > 0:
@@ -361,13 +361,17 @@ class CheckpointContext:
         ckpt_dir = os.fspath(path)
 
         if self._storage_manager.store_path_is_direct_access():
-            # Ranks save files directly to ckpt_dir which means there is no conflict
+            # Each rank saves files directly to ckpt_dir which means there is no conflict
             # detection on upload. Metadata still needs to be merged and saved,
             # and checkpoint has to be reported.
+            if self._dist.rank == 0:
+                resources = self._storage_manager._list_directory(ckpt_dir)
+
+            # Metadata should not be counted among resources. Why is that?
+            # Chief handles merging and saving metadata to ckpt_dir.
             all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=0, metadata=metadata or {})
 
             if self._dist.rank == 0:
-                resources = self._storage_manager._list_directory(ckpt_dir)
                 self._report_checkpoint(storage_id, resources, all_metadata)
 
             return
@@ -392,14 +396,19 @@ class CheckpointContext:
 
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            self.print_conflict_error(conflicts, "file")
+            self._print_conflict_error(conflicts, "file")
 
-        # Chief gathers metadata across workers, checks for conflicts and saves metadata
+        # Chief gathers metadata across workers, checks for conflicts, saves metadata.
         all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=0, metadata=metadata or {})
+        # My assumption is that chief (local_rank=0) typically uploads stuff anyway.
+        # If this assumption does not hold, then we can also do this:
+        # upload_mask = self._dist.allgather(want_upload)
+        # metadata_writer_rank = upload_mask.index(True)
+        # all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {})
 
         if want_upload:
-            assert ckpt_dir
-            self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+            # use post_store_path to upload and clean up ckpt_dir after uploading
+            self._storage_manager.post_store_path(src=ckpt_dir, dst=storage_id)
 
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)
@@ -415,7 +424,7 @@ class CheckpointContext:
         # Merge metadata. If a metadata key repeats, raise error.
         all_metadata, conflicts = merge_metadata(all_metadata)
         if conflicts:
-            self.print_conflict_error(conflicts, "metadata")
+            self._print_conflict_error(conflicts, "metadata")
         if self._dist.rank == writer_rank:
             assert ckpt_dir is not None
             self._write_metadata_file(ckpt_dir, all_metadata or {})

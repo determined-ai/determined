@@ -270,6 +270,7 @@ def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) ->
 
     def clean_up(storage_id: str, storage_manager) -> None:
         """Search s3 directly to ensure that a checkpoint is actually deleted."""
+        storage_manager.delete(storage_id)
         storage_prefix = storage_manager.get_storage_prefix(storage_id)
         found = [obj.key for obj in storage_manager.bucket.objects.filter(Prefix=storage_prefix)]
         if found:
@@ -295,13 +296,7 @@ def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) ->
 
             with checkpoint_context.store_path(metadata, shard=True) as (path, storage_id):
                 logging.info(f'storage_id={storage_id}')
-                logging.info(f'path={path}')
                 create_checkpoint_dir(path, suffix=str(pex.distributed.rank))
-                logging.info(f'Store. rank {pex.distributed.rank}: all files under {path}: {os.listdir(path)}')
-
-            # dont be Agnieszka, remove what you just saved if you want to test restore_path
-            import shutil
-            shutil.rmtree(path)
 
             pex.distributed.broadcast(None)
             ##################################
@@ -341,6 +336,7 @@ def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) ->
 
             if pex.distributed.rank == 0:
                 clean_up(storage_id, storage_manager)
+            pex.distributed.broadcast(None)
 
 
 def validate_checkpoint(ckpt_dir: str, expected_files: Set[str]) -> None:
@@ -361,6 +357,7 @@ def create_checkpoint_dir(top_dir: str, suffix: str = '') -> None:
     open(os.path.join(top_dir, f'file2_{suffix}'), 'w').close()
 
     open(os.path.join(other_dir, f'file3_{suffix}'), 'w').close()
+    logging.info(f'all files under {top_dir}: {os.listdir(top_dir)}')
 
 
 def create_checkpoint_context(pex, storage_manager):
