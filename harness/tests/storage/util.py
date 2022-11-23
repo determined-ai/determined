@@ -4,7 +4,6 @@ import shutil
 import time
 import uuid
 from typing import Callable, Dict, List, Optional, Tuple
-
 import pytest
 
 from determined import errors
@@ -14,7 +13,8 @@ from determined.tensorboard.fetchers import base
 EXPECTED_FILES = {
     "root.txt": "root file",
     "subdir/": None,
-    "subdir/file.txt": "nested file",
+    "subdir/file1.txt": "nested file 1",
+    "subdir/file2.txt": "nested file 2",
     "empty_dir/": None,
 }
 
@@ -31,19 +31,19 @@ def create_checkpoint(checkpoint_dir: pathlib.Path) -> None:
             f.write(content)
 
 
-def validate_checkpoint(checkpoint_dir: pathlib.Path) -> None:
+def validate_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> None:
     """Make sure an existing checkpoint looks correct."""
     assert checkpoint_dir.exists()
     files_found = set(storage.StorageManager._list_directory(checkpoint_dir))
-    assert files_found == set(EXPECTED_FILES.keys()), (files_found, EXPECTED_FILES)
+    assert files_found == set(expected_files.keys()), (files_found, expected_files)
     for found in files_found:
         path = checkpoint_dir.joinpath(found)
-        if EXPECTED_FILES[found] is None:
+        if expected_files[found] is None:
             assert path.is_dir(), path
         else:
             assert path.is_file(), path
             with path.open() as f:
-                assert f.read() == EXPECTED_FILES[found]
+                assert f.read() == expected_files[found]
 
 
 def run_storage_lifecycle_test(
@@ -60,7 +60,7 @@ def run_storage_lifecycle_test(
     for storage_id in checkpoints:
         # Load checkpoint.
         with manager.restore_path(storage_id) as path:
-            validate_checkpoint(path)
+            validate_checkpoint(path, EXPECTED_FILES)
         # Delete.
         manager.delete(storage_id)
         # Ensure it is gone.
@@ -87,9 +87,44 @@ def run_storage_lifecycle_test(
         path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
         try:
             manager.download(storage_id, path)
-            validate_checkpoint(path)
+            validate_checkpoint(path, EXPECTED_FILES)
         finally:
             shutil.rmtree(path, ignore_errors=True)
+        manager.delete(storage_id)
+        with pytest.raises(errors.CheckpointNotFound):
+            manager.download(storage_id, path)
+        if post_delete_cb is not None:
+            post_delete_cb(storage_id)
+
+    # Upload checkpoint and test restore_path/download with selector.
+    checkpoints = []
+    for _ in range(2):
+        storage_id = str(uuid.uuid4())
+        with manager.store_path(storage_id) as path:
+            create_checkpoint(path)
+            checkpoints.append(storage_id)
+
+    expected_files_subset = {"subdir/": None, "subdir/file1.txt": "nested file 1", "empty_dir/": None}
+
+    def selector(x):
+        return x in ["subdir", "subdir/file1.txt", "empty_dir"]
+
+    # Test restore_path with selector
+    for storage_id in checkpoints:
+        with manager.restore_path(storage_id, selector=selector) as path:
+            validate_checkpoint(path, expected_files_subset)
+
+    # Test download with selector
+    for storage_id in checkpoints:
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        try:
+            manager.download(storage_id, path, selector=selector)
+            validate_checkpoint(path, expected_files_subset)
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+
+    # Clean up
+    for storage_id in checkpoints:
         manager.delete(storage_id)
         with pytest.raises(errors.CheckpointNotFound):
             manager.download(storage_id, path)
