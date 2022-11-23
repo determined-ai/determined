@@ -348,7 +348,7 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 				if aMsg != nil {
 					ctx.Log().WithError(aMsg).Error("")
 				} else {
-					ctx.Log().Error("recieved nil error but no response for RPQueueStats")
+					ctx.Log().Error("received nil error but no response for RPQueueStats")
 				}
 				ctx.Respond(aMsg)
 				return nil

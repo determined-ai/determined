@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
 )
 
@@ -243,27 +242,4 @@ func TestComputeSlice(t *testing.T) {
 	startIndex, length = computeSlice(3, 4, -1, 4, 4)
 	assert.Equal(t, startIndex, 3)
 	assert.Equal(t, length, 1)
-}
-
-func TestEntryFieldInclusion(t *testing.T) {
-	buffer := NewLogBuffer(10)
-	logger := logrus.StandardLogger()
-
-	fields := map[string]interface{}{"keyA": "valA", "keyB": "valB"}
-	originalEntry := logger.WithFields(fields)
-	originalEntry.Message = "important message"
-
-	assert.NilError(t, buffer.Fire(originalEntry))
-
-	savedEntry := buffer.Entries(-1, -1, -1)[0]
-	assert.Equal(t, savedEntry.Entry, originalEntry.Message+`  keyA="valA" keyB="valB"`)
-
-	fieldsB := map[string]interface{}{"keyA": `my great "quote"`}
-	originalEntry = logger.WithFields(fieldsB)
-	originalEntry.Message = "another message"
-
-	assert.NilError(t, buffer.Fire(originalEntry))
-
-	savedEntry = buffer.Entries(-1, -1, -1)[1]
-	assert.Equal(t, savedEntry.Entry, originalEntry.Message+`  keyA="my great \"quote\""`)
 }
