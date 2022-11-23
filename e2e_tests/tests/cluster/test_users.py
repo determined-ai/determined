@@ -222,50 +222,52 @@ def test_create_user_sdk(clean_auth: None, login_admin: None) -> None:
 
 @pytest.mark.e2e_cpu
 def test_logout(clean_auth: None, login_admin: None) -> None:
-    # Tests fallback to default determined user
-    creds = create_test_user(True)
+    try: 
+        # Tests fallback to default determined user
+        creds = create_test_user(True)
 
-    # Set Determined password to something in order to disable auto-login.
-    password = get_random_string()
-    assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
+        # Set Determined password to something in order to disable auto-login.
+        password = get_random_string()
+        assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
 
-    # Log in as new user.
-    log_in_user(creds)
-    # Now we should be able to list experiments.
-    child = det_spawn(["e", "list"])
-    child.read()
-    child.wait()
-    child.close()
-    assert child.status == 0
+        # Log in as new user.
+        log_in_user(creds)
+        # Now we should be able to list experiments.
+        child = det_spawn(["e", "list"])
+        child.read()
+        child.wait()
+        child.close()
+        assert child.status == 0
 
-    # Exiting the logged_in_user context logs out and asserts that the exit code is 0.
-    log_out_user()
-    # Now trying to list experiments should result in an error.
-    child = det_spawn(["e", "list"])
-    expected = "Unauthenticated"
-    assert expected in str(child.read())
-    child.wait()
-    child.close()
-    assert child.status != 0
+        # Exiting the logged_in_user context logs out and asserts that the exit code is 0.
+        log_out_user()
+        # Now trying to list experiments should result in an error.
+        child = det_spawn(["e", "list"])
+        expected = "Unauthenticated"
+        assert expected in str(child.read())
+        child.wait()
+        child.close()
+        assert child.status != 0
 
-    # Log in as determined.
-    log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))
+        # Log in as determined.
+        log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))
 
-    # Log back in as new user.
-    log_in_user(creds)
+        # Log back in as new user.
+        log_in_user(creds)
 
-    # Now log out as determined.
-    log_out_user(constants.DEFAULT_DETERMINED_USER)
+        # Now log out as determined.
+        log_out_user(constants.DEFAULT_DETERMINED_USER)
 
-    # Should still be able to list experiments because new user is logged in.
-    child = det_spawn(["e", "list"])
-    child.read()
-    child.wait()
-    child.close()
-    assert child.status == 0
-
+        # Should still be able to list experiments because new user is logged in.
+        child = det_spawn(["e", "list"])
+        child.read()
+        child.wait()
+        child.close()
+        assert child.status == 0
+    
+    finally: 
     # Change Determined password back to "".
-    change_user_password(constants.DEFAULT_DETERMINED_USER, "")
+        change_user_password(constants.DEFAULT_DETERMINED_USER, "")
     # Clean up.
 
 
