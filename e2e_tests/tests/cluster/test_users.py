@@ -222,7 +222,7 @@ def test_create_user_sdk(clean_auth: None, login_admin: None) -> None:
 
 @pytest.mark.e2e_cpu
 def test_logout(clean_auth: None, login_admin: None) -> None:
-    try: 
+    try:
         # Tests fallback to default determined user
         creds = create_test_user(True)
 
@@ -264,9 +264,9 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
         child.wait()
         child.close()
         assert child.status == 0
-    
-    finally: 
-    # Change Determined password back to "".
+
+    finally:
+        # Change Determined password back to "".
         change_user_password(constants.DEFAULT_DETERMINED_USER, "")
     # Clean up.
 
