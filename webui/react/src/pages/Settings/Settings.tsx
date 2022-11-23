@@ -57,11 +57,6 @@ const SettingsContent: React.FC = () => {
   const tabItems: TabsProps['items'] = useMemo(() => {
     const items: TabsProps['items'] = [
       { children: <SettingsAccount />, key: TAB_KEYS[TabType.Account], label: TabType.Account },
-      {
-        children: <UserManagement />,
-        key: TAB_KEYS[TabType.UserManagement],
-        label: TabType.UserManagement,
-      },
     ];
 
     if (canViewUsers) {
