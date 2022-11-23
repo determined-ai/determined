@@ -1,6 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Space, Tabs, Tooltip } from 'antd';
-import React, { useCallback, useRef, useState } from 'react';
+import { Space, Tooltip } from 'antd';
+import type { TabsProps } from 'antd';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
@@ -26,8 +27,6 @@ import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
 import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
-
-const { TabPane } = Tabs;
 
 type Params = {
   projectId: string;
@@ -73,6 +72,53 @@ const ProjectDetails: React.FC = () => {
       if (!pageError) setPageError(e as Error);
     }
   }, [canceler.signal, id, pageError]);
+
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    if (!project) {
+      return [];
+    }
+
+    const items: TabsProps['items'] = [
+      {
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <ExperimentList project={project} />
+            </div>
+          </div>
+        ),
+        key: 'experiments',
+        label: id === 1 ? '' : 'Experiments',
+      },
+    ];
+
+    if (!project.immutable && projectId) {
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <ProjectNotes fetchProject={fetchProject} project={project} />
+            </div>
+          </div>
+        ),
+        key: 'notes',
+        label: 'Notes',
+      });
+      items.push({
+        children: (
+          <div className={css.tabPane}>
+            <div className={css.base}>
+              <TrialsComparison projectId={projectId} />
+            </div>
+          </div>
+        ),
+        key: 'trials',
+        label: 'Trials',
+      });
+    }
+
+    return items;
+  }, [fetchProject, id, project, projectId]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
   usePolling(fetchWorkspace, { rerunOnNewFn: true });
@@ -125,27 +171,9 @@ const ProjectDetails: React.FC = () => {
       <DynamicTabs
         basePath={paths.projectDetailsBasePath(id)}
         destroyInactiveTabPane
-        tabBarStyle={{ height: 50, paddingLeft: 16 }}>
-        <TabPane className={css.tabPane} key="experiments" tab={id === 1 ? '' : 'Experiments'}>
-          <div className={css.base}>
-            <ExperimentList project={project} />
-          </div>
-        </TabPane>
-        {!project.immutable && projectId && (
-          <>
-            <TabPane className={css.tabPane} key="notes" tab="Notes">
-              <div className={css.base}>
-                <ProjectNotes fetchProject={fetchProject} project={project} />
-              </div>
-            </TabPane>
-            <TabPane className={css.tabPane} key="trials" tab="Trials">
-              <div className={css.base}>
-                <TrialsComparison projectId={projectId} />
-              </div>
-            </TabPane>
-          </>
-        )}
-      </DynamicTabs>
+        items={tabItems}
+        tabBarStyle={{ height: 50, paddingLeft: 16 }}
+      />
     </Page>
   );
 };

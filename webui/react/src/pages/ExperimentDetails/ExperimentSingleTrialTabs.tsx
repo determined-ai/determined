@@ -1,5 +1,6 @@
 import { Button, Tabs } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import type { TabsProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
@@ -26,8 +27,6 @@ import TrialDetailsProfiles from '../TrialDetails/TrialDetailsProfiles';
 import ExperimentCheckpoints from './ExperimentCheckpoints';
 
 const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
-
-const { TabPane } = Tabs;
 
 const TabType = {
   Checkpoints: 'checkpoints',
@@ -219,6 +218,96 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const showExperimentArtifacts = canViewExperimentArtifacts({ workspace });
   const showCreateExperiment = canCreateExperiment({ workspace }) && showExperimentArtifacts;
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    const items: TabsProps['items'] = [
+      {
+        children: waitingForTrials ? (
+          <Spinner spinning={true} tip="Waiting for trials..." />
+        ) : wontHaveTrials ? (
+          <NeverTrials />
+        ) : (
+          <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
+        ),
+        key: TabType.Overview,
+        label: 'Overview',
+      },
+      {
+        children: wontHaveTrials ? (
+          <NeverTrials />
+        ) : (
+          <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
+        ),
+        key: TabType.Hyperparameters,
+        label: 'Hyperparameters',
+      },
+    ];
+
+    if (showExperimentArtifacts) {
+      items.push({
+        children: <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />,
+        key: TabType.Checkpoints,
+        label: 'Checkpoints',
+      });
+      items.push({
+        children: (
+          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+            <CodeViewer
+              experimentId={experiment.id}
+              runtimeConfig={experiment.configRaw}
+              submittedConfig={experiment.originalConfig}
+            />
+          </React.Suspense>
+        ),
+        key: TabType.Code,
+        label: 'Code',
+      });
+    }
+
+    items.push({
+      children: (
+        <NotesCard
+          disabled={!editableNotes}
+          notes={experiment.notes ?? ''}
+          style={{ border: 0, height: '100%' }}
+          onSave={handleNotesUpdate}
+        />
+      ),
+      key: TabType.Notes,
+      label: 'Notes',
+    });
+
+    items.push({
+      children: (
+        <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
+      ),
+      key: TabType.Profiler,
+      label: 'Profiler',
+    });
+
+    if (showExperimentArtifacts) {
+      items.push({
+        children: wontHaveTrials ? (
+          <NeverTrials />
+        ) : (
+          <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
+        ),
+        key: TabType.Logs,
+        label: 'Logs',
+      });
+    }
+
+    return items;
+  }, [
+    editableNotes,
+    experiment,
+    handleNotesUpdate,
+    pageRef,
+    showExperimentArtifacts,
+    trialDetails,
+    waitingForTrials,
+    wontHaveTrials,
+  ]);
+
   return (
     <TrialLogPreview
       hidePreview={tabKey === TabType.Logs}
@@ -226,6 +315,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       onViewLogs={handleViewLogs}>
       <Tabs
         activeKey={tabKey}
+        items={tabItems}
         tabBarExtraContent={
           tabKey === TabType.Hyperparameters && showCreateExperiment ? (
             <div style={{ padding: 8 }}>
@@ -234,60 +324,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
           ) : undefined
         }
         tabBarStyle={{ height: 48, paddingLeft: 16 }}
-        onChange={handleTabChange}>
-        <TabPane key={TabType.Overview} tab="Overview">
-          {waitingForTrials ? (
-            <Spinner spinning={true} tip="Waiting for trials..." />
-          ) : wontHaveTrials ? (
-            <NeverTrials />
-          ) : (
-            <TrialDetailsOverview experiment={experiment} trial={trialDetails} />
-          )}
-        </TabPane>
-        <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-          {wontHaveTrials ? (
-            <NeverTrials />
-          ) : (
-            <TrialDetailsHyperparameters pageRef={pageRef} trial={trialDetails as TrialDetails} />
-          )}
-        </TabPane>
-        {showExperimentArtifacts ? (
-          <>
-            <TabPane key={TabType.Checkpoints} tab="Checkpoints">
-              <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />
-            </TabPane>
-            <TabPane key={TabType.Code} tab="Code">
-              <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-                <CodeViewer
-                  experimentId={experiment.id}
-                  runtimeConfig={experiment.configRaw}
-                  submittedConfig={experiment.originalConfig}
-                />
-              </React.Suspense>
-            </TabPane>
-          </>
-        ) : null}
-        <TabPane key={TabType.Notes} tab="Notes">
-          <NotesCard
-            disabled={!editableNotes}
-            notes={experiment.notes ?? ''}
-            style={{ border: 0, height: '100%' }}
-            onSave={handleNotesUpdate}
-          />
-        </TabPane>
-        <TabPane key={TabType.Profiler} tab="Profiler">
-          <TrialDetailsProfiles experiment={experiment} trial={trialDetails as TrialDetails} />
-        </TabPane>
-        {showExperimentArtifacts ? (
-          <TabPane key={TabType.Logs} tab="Logs">
-            {wontHaveTrials ? (
-              <NeverTrials />
-            ) : (
-              <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
-            )}
-          </TabPane>
-        ) : null}
-      </Tabs>
+        onChange={handleTabChange}
+      />
       {modalHyperparameterSearchContextHolder}
     </TrialLogPreview>
   );
