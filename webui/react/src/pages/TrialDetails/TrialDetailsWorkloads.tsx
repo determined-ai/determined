@@ -211,7 +211,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
         sortDesc: order === 'descend',
         sortKey: columnKey as string,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       });
     },
     [columns, updateSettings],

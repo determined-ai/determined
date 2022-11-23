@@ -152,6 +152,14 @@ const ProjectDetails: React.FC = () => {
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ProjectDetailsSettings>(settingsConfig);
 
+  const tableOffset = (() => {
+    if (total && settings.tableOffset >= total) {
+      const newTotal = settings.tableOffset > total ? total : total - 1;
+      return settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
+    }
+    return settings.tableOffset;
+  })();
+
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
@@ -219,8 +227,7 @@ const ProjectDetails: React.FC = () => {
           ...baseParams,
           experimentIdFilter: { notIn: pinnedIds },
           limit: settings.tableLimit - pinnedIds.length,
-          offset:
-            settings.tableOffset - (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
+          offset: tableOffset - (tableOffset / settings.tableLimit) * pinnedIds.length,
         },
         { signal: canceler.signal },
       );
@@ -886,16 +893,6 @@ const ProjectDetails: React.FC = () => {
     },
     [openNoteDelete, project?.id],
   );
-
-  useEffect(() => {
-    if (!settings.tableOffset || !settings.tableLimit) return;
-
-    if (settings.tableOffset >= total && total) {
-      const newTotal = settings.tableOffset > total ? total : total - 1;
-      const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
-      updateSettings({ tableOffset: offset });
-    }
-  }, [total, settings.tableOffset, settings.tableLimit, updateSettings]);
 
   /*
    * Get new experiments based on changes to the

@@ -460,7 +460,7 @@ const InteractiveTable: InteractiveTable = ({
 
       const newSettings: Partial<InteractiveTableSettings> = {
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;

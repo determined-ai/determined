@@ -489,7 +489,7 @@ const ModelRegistry: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
