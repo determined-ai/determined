@@ -104,10 +104,6 @@ class StorageManager(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
-        """
-        `paths` is assumed to be a list of paths relative to the root of the storage directory, if
-        it is defined.
-        """
         pass
 
     @abc.abstractmethod
