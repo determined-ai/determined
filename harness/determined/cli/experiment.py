@@ -528,32 +528,29 @@ def kill_experiment(args: Namespace) -> None:
     print("Killed experiment {}".format(args.experiment_id))
 
 
-def _wait(session: api.Session, experiment_id: int, polling_interval: int = 5) -> None:
+@authentication.required
+def wait(args: Namespace) -> None:
     retry = urllib3.util.retry.Retry(
         raise_on_status=False,
         total=5,
         backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
         status_forcelist=[502, 503, 504],  # Bad Gateway  # Service Unavailable  # Gateway Timeout
     )
-    session._max_retries = retry
 
     while True:
-        r = bindings.get_GetExperiment(session=session, experimentId=experiment_id).experiment
+        r = bindings.get_GetExperiment(
+            session=cli.setup_session(args, max_retries=retry), experimentId=args.experiment_id
+        ).experiment
 
         state_val = r.state.value.replace("STATE_", "")
         if state_val in constants.TERMINAL_STATES:
-            print("Experiment {} terminated with state {}".format(experiment_id, state_val))
+            print("Experiment {} terminated with state {}".format(args.experiment_id, state_val))
             if state_val == constants.COMPLETED:
                 sys.exit(0)
             else:
                 sys.exit(1)
 
-        time.sleep(polling_interval)
-
-
-@authentication.required
-def wait(args: Namespace) -> None:
-    _wait(cli.setup_session(args), args.experiment_id, args.polling_interval)
+        time.sleep(args.polling_interval)
 
 
 @authentication.required
