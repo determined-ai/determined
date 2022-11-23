@@ -146,7 +146,8 @@ class CheckpointContext:
         if not shard:
             if self._dist.rank != 0:
                 raise RuntimeError(
-                    f"cannot call .upload(shard=False) from non-chief worker (rank={self._dist.rank})"
+                    f"cannot call .upload(shard=False) from non-chief worker "
+                    f"(rank={self._dist.rank})"
                 )
             if ckpt_dir is None:
                 raise RuntimeError(
@@ -188,8 +189,6 @@ class CheckpointContext:
             file_uid = None
         else:
             st = os.stat(ckpt_dir)
-            # st_dev = represents the identifier of the device on which this file resides.
-            # st_ino = represents the inode number (identification number) on Unix
             file_uid = (st.st_dev, st.st_ino)
         all_file_uids = self._dist.allgather(file_uid)
         # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
