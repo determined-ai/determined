@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { useStore } from 'contexts/Store';
-import useAuthCheck from 'hooks/useAuthCheck';
 import { paths } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
@@ -16,12 +15,7 @@ const Router: React.FC<Props> = (props: Props) => {
   const { auth } = useStore();
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
-  const checkAuth = useAuthCheck(canceler);
   const location = useLocation();
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
 
   useEffect(() => {
     if (auth.isAuthenticated) {

@@ -1,4 +1,5 @@
 import { Button, Menu, Tooltip, Typography } from 'antd';
+import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
@@ -11,7 +12,7 @@ import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
@@ -39,16 +40,16 @@ interface Settings {
   navbarCollapsed: boolean;
 }
 
-const settingsConfig: SettingsConfig = {
-  settings: [
-    {
+const settingsConfig: SettingsConfig<Settings> = {
+  applicableRoutespace: 'navigation',
+  settings: {
+    navbarCollapsed: {
       defaultValue: false,
-      key: 'navbarCollapsed',
       skipUrlEncoding: true,
       storageKey: 'navbarCollapsed',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-  ],
+  },
   storagePath: 'navigation',
 };
 

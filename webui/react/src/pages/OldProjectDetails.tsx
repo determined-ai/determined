@@ -44,7 +44,7 @@ import useModalExperimentMove, {
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import NoPermissions from 'pages/NoPermissions';
 import { paths } from 'routes/utils';
 import {
@@ -144,7 +144,8 @@ const ProjectDetails: React.FC = () => {
 
   useEffect(() => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-  }, [updateDestinationSettings, project?.workspaceId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.workspaceId]);
 
   const id = parseInt(projectId ?? '1');
 
@@ -184,6 +185,7 @@ const ProjectDetails: React.FC = () => {
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (!settings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -236,20 +238,7 @@ const ProjectDetails: React.FC = () => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canceler.signal,
-    id,
-    settings.archived,
-    labelsString,
-    pinnedString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -413,6 +402,8 @@ const ProjectDetails: React.FC = () => {
       onVisibleChange?: ((visible: boolean) => void) | undefined;
       record: ExperimentItem;
     }) => {
+      if (!settings) return <Spinner spinning />;
+
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
@@ -678,6 +669,7 @@ const ProjectDetails: React.FC = () => {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
       if (action === Action.Move) {
+        if (!settings || !settings.row.length) return;
         return openMoveModal({
           experimentIds: settings.row.filter(
             (id) =>
@@ -821,6 +813,8 @@ const ProjectDetails: React.FC = () => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
+
       let newColumns: ExperimentColumnName[];
       let newColumnWidths: number[];
 
@@ -894,6 +888,8 @@ const ProjectDetails: React.FC = () => {
   );
 
   useEffect(() => {
+    if (!settings.tableOffset || !settings.tableLimit) return;
+
     if (settings.tableOffset >= total && total) {
       const newTotal = settings.tableOffset > total ? total : total - 1;
       const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
@@ -908,19 +904,8 @@ const ProjectDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  }, [
-    fetchExperiments,
-    settings.archived,
-    labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // cleanup
   useEffect(() => {
@@ -1044,7 +1029,7 @@ const ProjectDetails: React.FC = () => {
               settings={settings as InteractiveTableSettings}
               showSorterTooltip={false}
               size="small"
-              updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+              updateSettings={updateSettings as UpdateSettings}
             />
           </div>
         ),

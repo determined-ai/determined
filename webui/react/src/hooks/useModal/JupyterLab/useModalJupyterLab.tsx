@@ -1,10 +1,11 @@
 import { Alert, Button, Form, Input, InputNumber, Select } from 'antd';
 import type { ModalFuncProps } from 'antd';
+import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
+import { SettingsConfig, UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getResourcePools, getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -22,38 +23,40 @@ const { Item } = Form;
 const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
 
-const settingsConfig: SettingsConfig = {
-  settings: [
-    {
+const settingsConfig: SettingsConfig<JupyterLabOptions> = {
+  applicableRoutespace: STORAGE_PATH,
+  settings: {
+    name: {
       defaultValue: '',
-      key: 'name',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'name',
+      type: union([string, undefinedType]),
     },
-    {
+    pool: {
       defaultValue: '',
-      key: 'pool',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'pool',
+      type: union([string, undefinedType]),
     },
-    {
+    slots: {
       defaultValue: DEFAULT_SLOT_COUNT,
-      key: 'slots',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.Integer },
+      storageKey: 'slots',
+      type: union([number, undefinedType]),
     },
-    {
-      key: 'template',
+    template: {
+      defaultValue: '',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'template',
+      type: union([string, undefinedType]),
     },
-  ],
+  },
   storagePath: STORAGE_PATH,
 };
 
 interface FormProps {
   fields: JupyterLabOptions;
-  updateFields?: UpdateSettings<JupyterLabOptions>;
+  updateFields?: UpdateSettings;
 }
 
 interface FullConfigProps {
@@ -89,10 +92,10 @@ const useModalJupyterLab = (): ModalHooks => {
   const fetchConfig = useCallback(async () => {
     try {
       const newConfig = await previewJupyterLab({
-        name: fields.name,
-        pool: fields.pool,
-        slots: fields.slots,
-        template: fields.template,
+        name: fields?.name,
+        pool: fields?.pool,
+        slots: fields?.slots,
+        template: fields?.template,
       });
       setConfig(yaml.dump(newConfig));
     } catch (e) {
@@ -111,10 +114,10 @@ const useModalJupyterLab = (): ModalHooks => {
       launchJupyterLab({ config: yaml.load(config || '') as RawJson });
     } else {
       launchJupyterLab({
-        name: fields.name,
-        pool: fields.pool,
-        slots: fields.slots,
-        template: fields.template,
+        name: fields?.name,
+        pool: fields?.pool,
+        slots: fields?.slots,
+        template: fields?.template,
       });
     }
     modalClose();
@@ -126,20 +129,20 @@ const useModalJupyterLab = (): ModalHooks => {
     setConfigError(undefined);
   }, []);
 
-  const formContent = useMemo(
-    () =>
-      showFullConfig ? (
-        <JupyterLabFullConfig
-          config={config}
-          configError={configError}
-          setButtonDisabled={setButtonDisabled}
-          onChange={handleConfigChange}
-        />
-      ) : (
-        <JupyterLabForm fields={fields} updateFields={updateFields} />
-      ),
-    [config, configError, fields, handleConfigChange, showFullConfig, updateFields],
-  );
+  const formContent = useMemo(() => {
+    if (!fields) return <Spinner spinning />;
+
+    return showFullConfig ? (
+      <JupyterLabFullConfig
+        config={config}
+        configError={configError}
+        setButtonDisabled={setButtonDisabled}
+        onChange={handleConfigChange}
+      />
+    ) : (
+      <JupyterLabForm fields={fields} updateFields={updateFields} />
+    );
+  }, [config, configError, fields, handleConfigChange, showFullConfig, updateFields]);
 
   const content = useMemo(
     () => (
@@ -288,7 +291,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   const [resourcePools, setResourcePools] = useState<ResourcePool[]>([]);
 
   const resourceInfo = useMemo(() => {
-    const selectedPool = resourcePools.find((pool) => pool.name === fields.pool);
+    const selectedPool = resourcePools.find((pool) => pool.name === fields?.pool);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
     /**
@@ -301,14 +304,14 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
     const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
     if (hasAuxCapacity && !hasComputeCapacity) updateFields?.({ slots: 0 });
-    if (hasComputeCapacity && fields.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
+    if (hasComputeCapacity && fields?.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
 
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [fields.pool, updateFields, resourcePools, fields.slots]);
+  }, [fields?.pool, updateFields, resourcePools, fields?.slots]);
 
   const fetchResourcePools = useCallback(async () => {
     try {
@@ -335,11 +338,11 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   }, [fetchTemplates]);
 
   useEffect(() => {
-    if (!fields.pool && resourcePools[0]?.name) {
+    if (!fields?.pool && resourcePools[0]?.name) {
       const pool = resourcePools[0]?.name;
       updateFields?.({ pool });
     }
-  }, [resourcePools, fields.pool, updateFields]);
+  }, [resourcePools, fields?.pool, updateFields]);
 
   return (
     <div className={css.form}>
@@ -349,7 +352,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
             <Select
               allowClear
               placeholder="No template (optional)"
-              value={fields.template}
+              value={fields?.template}
               onChange={(value) => updateFields?.({ template: value?.toString() })}>
               {templates.map((temp) => (
                 <Option key={temp.name} value={temp.name}>
@@ -364,7 +367,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
           content: (
             <Input
               placeholder="Name (optional)"
-              value={fields.name}
+              value={fields?.name}
               onChange={(e) => updateFields?.({ name: e.target.value })}
             />
           ),
@@ -375,7 +378,7 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
             <Select
               allowClear
               placeholder="Pick the best option"
-              value={fields.pool}
+              value={fields?.pool}
               onChange={(value) => updateFields?.({ pool: value })}>
               {resourcePools.map((pool) => (
                 <Option key={pool.name} value={pool.name}>
@@ -390,11 +393,11 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
           condition: resourceInfo.hasCompute,
           content: (
             <InputNumber
-              defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
+              defaultValue={fields?.slots !== undefined ? fields?.slots : DEFAULT_SLOT_COUNT}
               max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
               min={resourceInfo.hasAux ? 0 : 1}
-              value={fields.slots}
-              onChange={(value) => updateFields?.({ slots: value ?? undefined })}
+              value={fields?.slots}
+              onChange={(value) => updateFields?.({ slots: value })}
             />
           ),
           label: 'Slots',

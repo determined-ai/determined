@@ -7,6 +7,7 @@ import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
@@ -17,7 +18,7 @@ import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, getUsers, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -117,6 +118,8 @@ const UserManagement: React.FC = () => {
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
   const fetchUsers = useCallback(async (): Promise<void> => {
+    if (!settings) return;
+
     try {
       const response = await getUsers(
         {
@@ -137,13 +140,7 @@ const UserManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    canceler.signal,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.tableLimit,
-    settings.tableOffset,
-  ]);
+  }, [canceler.signal, settings]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -160,7 +157,8 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset, fetchUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetchGroups();
@@ -242,7 +240,7 @@ const UserManagement: React.FC = () => {
   }, [fetchUsers, groups, rbacEnabled]);
 
   const table = useMemo(() => {
-    return (
+    return settings ? (
       <InteractiveTable
         columns={columns}
         containerRef={pageRef}
@@ -260,8 +258,10 @@ const UserManagement: React.FC = () => {
         settings={settings as InteractiveTableSettings}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+        updateSettings={updateSettings as UpdateSettings}
       />
+    ) : (
+      <SkeletonTable columns={columns.length} />
     );
   }, [users, isLoading, settings, columns, total, updateSettings]);
   return (

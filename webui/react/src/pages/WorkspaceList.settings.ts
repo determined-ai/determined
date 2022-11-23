@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { GridListView } from 'components/GridListRadioGroup';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import { ValueOf } from 'shared/types';
 
@@ -41,83 +43,86 @@ export interface WorkspaceListSettings extends InteractiveTableSettings {
   whose: WhoseWorkspaces;
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
+const config: SettingsConfig<WorkspaceListSettings> = {
+  applicableRoutespace: 'workspace-list',
+  settings: {
+    archived: {
       defaultValue: false,
-      key: 'archived',
       storageKey: 'archived',
-      type: { baseType: BaseType.Boolean },
+      type: union([undefinedType, boolean]),
     },
-    {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
+      skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([
+          literal('action'),
+          literal('archived'),
+          literal('name'),
+          literal('numProjects'),
+          literal('state'),
+          literal('userId'),
+        ]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: WorkspaceColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'name',
-      type: { baseType: BaseType.String },
+    name: {
+      defaultValue: undefined,
+      storageKey: 'name',
+      type: union([undefinedType, string]),
     },
-    {
+    sortDesc: {
       defaultValue: false,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: V1GetWorkspacesRequestSortBy.NAME,
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(V1GetWorkspacesRequestSortBy.ID),
+        literal(V1GetWorkspacesRequestSortBy.NAME),
+        literal(V1GetWorkspacesRequestSortBy.UNSPECIFIED),
+      ]),
     },
-    {
+    tableLimit: {
       defaultValue: 10,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-    {
-      key: 'user',
+    user: {
+      defaultValue: undefined,
       storageKey: 'user',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([undefinedType, array(string)]),
     },
-    {
+    view: {
       defaultValue: GridListView.Grid,
-      key: 'view',
       skipUrlEncoding: true,
       storageKey: 'view',
-      type: { baseType: BaseType.String },
+      type: union([literal(GridListView.Grid), literal(GridListView.List)]),
     },
-    {
+    whose: {
       defaultValue: WhoseWorkspaces.All,
-      key: 'whose',
       skipUrlEncoding: true,
       storageKey: 'whose',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(WhoseWorkspaces.All),
+        literal(WhoseWorkspaces.Mine),
+        literal(WhoseWorkspaces.Others),
+      ]),
     },
-  ],
+  },
   storagePath: 'workspace-list',
 };
 

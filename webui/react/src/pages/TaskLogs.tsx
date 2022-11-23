@@ -7,7 +7,7 @@ import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters
 import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';

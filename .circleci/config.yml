@@ -296,7 +296,7 @@ commands:
         type: string
       python-version:
         type: string
-        default: "3.7.11"
+        default: "3.7.15"
     steps:
       - when:
           condition: <<parameters.install-python>>

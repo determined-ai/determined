@@ -3,17 +3,15 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
@@ -311,23 +309,27 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   return (
     <div className={css.membersContainer}>
-      <InteractiveTable
-        columns={columns}
-        containerRef={pageRef}
-        dataSource={usersAndGroups}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          usersAndGroups.length,
-        )}
-        rowKey={generateTableKey}
-        settings={settings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      />
+      {settings ? (
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          dataSource={usersAndGroups}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            usersAndGroups.length,
+          )}
+          rowKey={generateTableKey}
+          settings={settings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+        />
+      ) : (
+        <SkeletonTable columns={columns.length} />
+      )}
     </div>
   );
 };

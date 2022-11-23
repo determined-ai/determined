@@ -94,6 +94,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
         label = option.children;
       }
     }
+
     return !!label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   }, []);
 

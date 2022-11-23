@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { handleTableChange } from 'components/Table/ResponsiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   checkmarkRenderer,
   defaultRowClassName,
@@ -12,15 +12,14 @@ import {
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchResourcePools } from 'hooks/useFetch';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, getJobQStats, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
 import ActionDropdown, { Triggers } from 'shared/components/ActionDropdown/ActionDropdown';
 import Icon from 'shared/components/Icon/Icon';
-import usePolling from 'shared/hooks/usePolling';
-import { clone, isEqual } from 'shared/utils/data';
+import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
@@ -65,11 +64,14 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const pageRef = useRef<HTMLElement>(null);
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig(jobState));
+  const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
   const fetchResourcePools = useFetchResourcePools(canceler);
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
 
   const fetchAll = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const orderBy = settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC';
       const [jobs, stats] = await Promise.all([
@@ -115,7 +117,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     }
   }, [canceler.signal, selectedRp.name, settings, jobState, topJob]);
 
-  usePolling(fetchAll, { rerunOnNewFn: true });
+  useEffect(() => {
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const rpTotalJobCount = useCallback(
     (rpName: string) => {
@@ -183,6 +188,33 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     fetchAll();
   }, [fetchAll]);
 
+  useEffect(() => {
+    fetchResourcePools();
+    return () => canceler.abort();
+  }, [canceler, fetchResourcePools]);
+
+  useEffect(() => {
+    if (!managingJob) return;
+    const job = jobs.find((j) => j.jobId === managingJob.jobId);
+    if (!job) {
+      setManagingJob(undefined);
+    } else if (!isEqual(job, managingJob)) {
+      setManagingJob(job);
+    }
+  }, [jobs, managingJob]);
+
+  useEffect(() => {
+    const col = defaultColumns.find(({ key }) => key === SCHEDULING_VAL_KEY);
+    if (col) {
+      const replaceIndex = settingsColumns.findIndex((column) =>
+        ['priority', 'weight', 'resourcePool'].includes(column),
+      );
+      const newColumns = [...settingsColumns];
+      if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
+      if (!isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
+    }
+  }, [settings.columns, settingsColumns, updateSettings]);
+
   const columns = useMemo(() => {
     return defaultColumns
       .map((col) => {
@@ -214,10 +246,8 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
             };
             break;
           case SCHEDULING_VAL_KEY: {
-            const replaceIndex = settings.columns.findIndex((column) =>
-              ['priority', 'weight', 'resourcePool'].includes(column),
-            );
-            const newColumns = clone(settings.columns);
+            if (!settingsColumns) break;
+
             switch (selectedRp.schedulerType) {
               case Api.V1SchedulerType.SLURM:
                 col.title = 'Partition';
@@ -238,8 +268,6 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                 col.align = 'right';
                 break;
             }
-            if (replaceIndex !== -1) newColumns[replaceIndex] = col.dataIndex;
-            if (!isEqual(newColumns, settings.columns)) updateSettings({ columns: newColumns });
             break;
           }
           case 'jobsAhead':
@@ -282,31 +310,11 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   }, [
     isJobOrderAvailable,
     dropDownOnTrigger,
-    settings.columns,
+    settingsColumns,
     settings.sortKey,
     settings.sortDesc,
     selectedRp.schedulerType,
-    updateSettings,
   ]);
-
-  useEffect(() => {
-    fetchResourcePools();
-    return () => canceler.abort();
-  }, [canceler, fetchResourcePools]);
-
-  useEffect(() => {
-    setPageState((cur) => ({ ...cur, isLoading: true }));
-  }, [settings.sortDesc, settings.sortKey, settings.tableLimit, settings.tableOffset]);
-
-  useEffect(() => {
-    if (!managingJob) return;
-    const job = jobs.find((j) => j.jobId === managingJob.jobId);
-    if (!job) {
-      setManagingJob(undefined);
-    } else if (!isEqual(job, managingJob)) {
-      setManagingJob(job);
-    }
-  }, [jobs, managingJob]);
 
   // table title using selectedRp and schedulerType from list of resource pools
   const tableTitle = useMemo(() => {
@@ -329,27 +337,30 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
       id="jobs"
       title="Job Queue by Resource Pool">
       <Section hideTitle={!!selectedRp} title={tableTitle}>
-        <InteractiveTable
-          columns={columns}
-          containerRef={pageRef}
-          dataSource={jobs}
-          loading={pageState.isLoading}
-          pagination={getFullPaginationConfig(
-            {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
-            },
-            total,
-          )}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="jobId"
-          scroll={{ x: 1000 }}
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-          onChange={handleTableChange(columns, settings, updateSettings)}
-        />
+        {settings ? (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            dataSource={jobs}
+            loading={pageState.isLoading}
+            pagination={getFullPaginationConfig(
+              {
+                limit: settings.tableLimit,
+                offset: settings.tableOffset,
+              },
+              total,
+            )}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="jobId"
+            scroll={{ x: 1000 }}
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings}
+          />
+        ) : (
+          <SkeletonTable columns={columns.length} />
+        )}
       </Section>
       {!!managingJob && (
         <ManageJob

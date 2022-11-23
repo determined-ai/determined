@@ -9,12 +9,14 @@ import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import useAuthCheck from 'hooks/useAuthCheck';
 import { useFetchInfo } from 'hooks/useFetch';
 import { useFetchUsers } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
 import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
@@ -33,11 +35,16 @@ const AppView: React.FC = () => {
   const { auth, info, ui } = useStore();
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
+  const checkAuth = useAuthCheck(canceler);
 
   const isServerReachable = useMemo(() => !!info.clusterId, [info.clusterId]);
 
   const fetchInfo = useFetchInfo(canceler);
   const fetchUsers = useFetchUsers(canceler);
+
+  useEffect(() => {
+    if (isServerReachable) checkAuth();
+  }, [checkAuth, isServerReachable]);
 
   useTheme();
   useKeyTracker();
@@ -126,11 +133,13 @@ const AppView: React.FC = () => {
   return (
     <div className={css.base}>
       {isServerReachable ? (
-        <Navigation>
-          <main>
-            <Router routes={appRoutes} />
-          </main>
-        </Navigation>
+        <SettingsProvider>
+          <Navigation>
+            <main>
+              <Router routes={appRoutes} />
+            </main>
+          </Navigation>
+        </SettingsProvider>
       ) : (
         <PageMessage title="Server is Unreachable">
           <p>

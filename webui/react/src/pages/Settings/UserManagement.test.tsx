@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
 import { DetailedUser } from 'types';
 
@@ -18,6 +19,7 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 jest.mock('services/api', () => ({
+  ...jest.requireActual('services/api'),
   getGroups: () => Promise.resolve({ groups: [] }),
   getUserRoles: () => Promise.resolve([]),
   getUsers: () => {
@@ -30,6 +32,25 @@ jest.mock('services/api', () => ({
     };
     const users: Array<DetailedUser> = [currentUser];
     return Promise.resolve({ pagination: { total: 1 }, users });
+  },
+  getUserSetting: () => Promise.resolve({ settings: [] }),
+}));
+
+jest.mock('contexts/Store', () => ({
+  __esModule: true,
+  ...jest.requireActual('contexts/Store'),
+  useStore: () => ({
+    auth: { checked: true, user: { id: 1 } as DetailedUser },
+    info: { featureSwitches: [], rbacEnabled: false },
+  }),
+}));
+
+jest.mock('hooks/useTelemetry', () => ({
+  ...jest.requireActual('hooks/useTelemetry'),
+  telemetryInstance: {
+    track: jest.fn(),
+    trackPage: jest.fn(),
+    updateTelemetry: jest.fn(),
   },
 }));
 
@@ -61,29 +82,34 @@ const setup = () =>
   render(
     <StoreProvider>
       <DndProvider backend={HTML5Backend}>
-        <HelmetProvider>
-          <HistoryRouter history={history}>
-            <Container />
-          </HistoryRouter>
-        </HelmetProvider>
+        <SettingsProvider>
+          <HelmetProvider>
+            <HistoryRouter history={history}>
+              <Container />
+            </HistoryRouter>
+          </HelmetProvider>
+        </SettingsProvider>
       </DndProvider>
     </StoreProvider>,
   );
 
 describe('UserManagement', () => {
+  afterEach(() => jest.clearAllTimers());
   it('should render table/button correct values', async () => {
-    await waitFor(() => setup());
+    setup();
 
+    await waitFor(() => jest.setTimeout(300));
     expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
     expect(await screen.findByText(USER_TITLE)).toBeInTheDocument();
-    expect(await screen.findByText(DISPLAY_NAME)).toBeInTheDocument();
-    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
+    waitFor(() => {
+      expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
+      expect(screen.getByText(USERNAME)).toBeInTheDocument();
+    });
   });
 
   it('should render modal for create user when click the button', async () => {
-    await waitFor(() => setup());
-    await user.click(screen.getByLabelText(CREAT_USER_LABEL));
-
-    expect(screen.getAllByText('Create User')).toHaveLength(2);
+    setup();
+    await user.click(await screen.findByLabelText(CREAT_USER_LABEL));
+    expect(screen.getAllByText('New User')).toHaveLength(1);
   });
 });
