@@ -33,7 +33,7 @@ import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -76,14 +76,21 @@ const ModelRegistry: React.FC = () => {
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
 
-  const { activeSettings, settings, updateSettings, resetSettings } =
-    useSettings<Settings>(settingsConfig);
+  const {
+    activeSettings,
+    isLoading: isLoadingSettings,
+    settings,
+    updateSettings,
+    resetSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
   const fetchUsers = useFetchUsers(canceler);
 
   const fetchModels = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const response = await getModels(
         {
@@ -137,7 +144,8 @@ const ModelRegistry: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModels();
-  }, [fetchModels, settings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const switchArchived = useCallback(
     async (model: ModelItem) => {
@@ -499,6 +507,8 @@ const ModelRegistry: React.FC = () => {
     (showArchived: boolean) => {
       let newColumns: ModelColumnName[];
       let newColumnWidths: number[];
+      const settingsColumns = settings.columns ?? [];
+      const settingsColumnsWidths = settings.columnWidths ?? [];
 
       if (showArchived) {
         if (settings.columns?.includes('archived')) {
@@ -506,19 +516,19 @@ const ModelRegistry: React.FC = () => {
           newColumns = settings.columns;
           newColumnWidths = settings.columnWidths;
         } else {
-          newColumns = [...settings.columns, 'archived'];
-          newColumnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']];
+          newColumns = [...settingsColumns, 'archived'];
+          newColumnWidths = [...settingsColumnsWidths, DEFAULT_COLUMN_WIDTHS['archived']];
         }
       } else {
-        const archivedIndex = settings.columns.indexOf('archived');
+        const archivedIndex = settings.columns.indexOf('archived') ?? 0;
         if (archivedIndex !== -1) {
-          newColumns = [...settings.columns];
-          newColumnWidths = [...settings.columnWidths];
+          newColumns = [...settingsColumns];
+          newColumnWidths = [...settingsColumnsWidths];
           newColumns.splice(archivedIndex, 1);
           newColumnWidths.splice(archivedIndex, 1);
         } else {
-          newColumns = settings.columns;
-          newColumnWidths = settings.columnWidths;
+          newColumns = settingsColumns;
+          newColumnWidths = settingsColumnsWidths;
         }
       }
       updateSettings({
@@ -588,7 +598,7 @@ const ModelRegistry: React.FC = () => {
           containerRef={pageRef}
           ContextMenu={ModelActionDropdown}
           dataSource={models}
-          loading={isLoading}
+          loading={isLoading || isLoadingSettings}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,
@@ -601,7 +611,7 @@ const ModelRegistry: React.FC = () => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
       )}

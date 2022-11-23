@@ -8,7 +8,6 @@ import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
-  InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
 import {
@@ -22,7 +21,7 @@ import {
 import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
@@ -68,6 +67,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
 
   const fetchProjects = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const response = await getWorkspaceProjects(
         {
@@ -92,23 +93,12 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    canceler.signal,
-    id,
-    workspace,
-    settings.archived,
-    settings.name,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.tableLimit,
-    settings.tableOffset,
-    settings.user,
-    settings.view,
-  ]);
+  }, [canceler.signal, id, workspace, settings]);
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
@@ -139,6 +129,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   );
 
   useEffect(() => {
+    if (!settings.whose) return;
+
     switch (settings.whose) {
       case WhoseProjects.All:
         updateSettings({ user: undefined });
@@ -255,6 +247,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
+
       let newColumns: ProjectColumnName[];
       let newColumnWidths: number[];
 
@@ -313,6 +307,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   );
 
   const projectsList = useMemo(() => {
+    if (!settings) return <Spinner spinning />;
+
     switch (settings.view) {
       case GridListView.Grid:
         return (
@@ -346,7 +342,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             rowKey="id"
             settings={settings}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
           />
         );
     }
@@ -405,7 +401,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
               Newest to Oldest
             </Option>
           </SelectFilter>
-          <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
+          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>
       <Spinner spinning={isLoading}>

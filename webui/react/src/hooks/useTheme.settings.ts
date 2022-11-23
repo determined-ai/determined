@@ -1,19 +1,21 @@
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { literal, union } from 'io-ts';
+
+import { SettingsConfig } from 'hooks/useSettings';
 import { Mode } from 'shared/themes';
 
 export interface Settings {
   mode: Mode;
 }
 
-export const config: SettingsConfig = {
-  settings: [
-    {
+export const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'settings/theme',
+  settings: {
+    mode: {
       defaultValue: Mode.System,
-      key: 'mode',
       skipUrlEncoding: true,
       storageKey: 'mode',
-      type: { baseType: BaseType.String },
+      type: union([literal(Mode.Dark), literal(Mode.Light), literal(Mode.System)]),
     },
-  ],
+  },
   storagePath: 'settings/theme',
 };

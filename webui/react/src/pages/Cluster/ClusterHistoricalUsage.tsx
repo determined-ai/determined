@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import { useStore } from 'contexts/Store';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
 
 import css from './ClusterHistoricalUsage.module.scss';

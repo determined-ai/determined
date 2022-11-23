@@ -9,11 +9,12 @@ import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
 import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -225,7 +226,7 @@ const WebhooksView: React.FC = () => {
             Call external services when experiments complete or throw errors.
           </p>
         </div>
-      ) : (
+      ) : settings ? (
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
@@ -243,9 +244,11 @@ const WebhooksView: React.FC = () => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
+      ) : (
+        <SkeletonTable columns={columns.length} />
       )}
       {modalWebhookCreateContextHolder}
       {modalWebhookDeleteContextHolder}

@@ -35,7 +35,7 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import { useFetchUsers } from 'hooks/useFetch';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -560,7 +560,7 @@ const TaskList: React.FC = () => {
           containerRef={pageRef}
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
-          loading={tasks === undefined}
+          loading={tasks === undefined || !settings}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,
@@ -578,7 +578,7 @@ const TaskList: React.FC = () => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
       </div>

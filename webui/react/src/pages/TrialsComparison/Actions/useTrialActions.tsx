@@ -1,4 +1,5 @@
 import { Dropdown, Menu } from 'antd';
+import { array, number } from 'io-ts';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, {
   Dispatch,
@@ -10,7 +11,7 @@ import React, {
 } from 'react';
 
 import TableBatch from 'components/Table/TableBulkActions';
-import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
@@ -48,17 +49,16 @@ interface Props {
   sorter: TrialSorter;
 }
 
-export const settingsConfig: SettingsConfig = {
+export const settingsConfig: SettingsConfig<{ ids: number[] }> = {
   applicableRoutespace: '/trials',
-  settings: [
-    {
+  settings: {
+    ids: {
       defaultValue: [],
-      key: 'ids',
       // skipUrlEncoding: true,
       storageKey: 'selectedTrialIds',
-      type: { baseType: BaseType.Integer, isArray: true },
+      type: array(number),
     },
-  ],
+  },
   storagePath: 'trials-selection',
 };
 
@@ -71,7 +71,7 @@ const useTrialActions = ({
 }: Props): TrialActionsInterface => {
   const { settings, updateSettings } = useSettings<{ ids: number[] }>(settingsConfig);
 
-  const [selectedTrials, setSelectedTrials] = useState<number[]>(settings.ids);
+  const [selectedTrials, setSelectedTrials] = useState<number[]>(settings.ids ?? []);
 
   const previouslySelectedTrials = usePrevious(selectedTrials, undefined);
 

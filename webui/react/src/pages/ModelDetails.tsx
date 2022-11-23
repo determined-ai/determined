@@ -23,7 +23,7 @@ import {
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
   getModelDetails,
@@ -62,9 +62,15 @@ const ModelDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const fetchModel = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const modelData = await getModelDetails({
         limit: settings.tableLimit,
@@ -93,7 +99,8 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-  }, [fetchModel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const downloadModel = useCallback(
     (version: ModelVersion) => {
@@ -238,7 +245,7 @@ const ModelDetails: React.FC = () => {
       tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<ModelVersion> | SorterResult<ModelVersion>[],
     ) => {
-      if (Array.isArray(tableSorter)) return;
+      if (Array.isArray(tableSorter) || !settings.tableOffset) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
@@ -433,7 +440,7 @@ const ModelDetails: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
-            loading={isLoading}
+            loading={isLoading || isLoadingSettings}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -446,7 +453,7 @@ const ModelDetails: React.FC = () => {
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
             onChange={handleTableChange}
           />
         )}

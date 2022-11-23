@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
 import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';

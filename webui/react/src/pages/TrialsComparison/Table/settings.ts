@@ -1,56 +1,47 @@
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { array, boolean, number, string, undefined, union } from 'io-ts';
 
-export const trialsTableSettingsConfig: SettingsConfig = {
+import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import { SettingsConfig } from 'hooks/useSettings';
+
+export const trialsTableSettingsConfig: SettingsConfig<InteractiveTableSettings> = {
   applicableRoutespace: '/trials',
-  settings: [
-    {
+  settings: {
+    columns: {
       defaultValue: [],
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(string),
     },
-    {
+    columnWidths: {
       defaultValue: [],
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       skipUrlEncoding: true,
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: 'trialId',
-      key: 'sortKey',
       skipUrlEncoding: true,
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([undefined, string, number, boolean]),
     },
-    {
+    tableLimit: {
       defaultValue: 20,
-      key: 'tableLimit',
       skipUrlEncoding: true,
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
       skipUrlEncoding: true,
       storageKey: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-  ],
+  },
   storagePath: 'trial-table',
 };
