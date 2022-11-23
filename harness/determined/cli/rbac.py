@@ -242,7 +242,7 @@ def describe_role(args: Namespace) -> None:
     req = bindings.v1GetRolesByIDRequest(roleIds=[role_id])
     resp = bindings.post_GetRolesByID(session, body=req)
     if args.json:
-        print(json.dumps(resp.to_json().get("roles")[0], indent=2))
+        print(json.dumps(resp.roles[0] if resp.roles else None, indent=2))
         return
 
     if resp.roles is None or len(resp.roles) != 1:
