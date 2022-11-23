@@ -494,7 +494,7 @@ const TaskList: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : ALL_SORTKEY[0],
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);

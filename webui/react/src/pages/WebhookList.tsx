@@ -193,7 +193,7 @@ const WebhooksView: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: columnKey,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       updateSettings(newSettings, true);
     },
