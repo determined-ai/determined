@@ -531,7 +531,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 		}
 	case cproto.Terminated:
 		ctx.Log().
-			WithError(sc.ContainerStopped.Failure).
+			WithField("why", sc.ContainerStopped).
 			Infof("container %s terminated", sc.Container.ID)
 		delete(a.agentState.containerAllocation, sc.Container.ID)
 	}

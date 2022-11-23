@@ -14,10 +14,7 @@ import time
 
 def main(increment_by):
     x = 0
-    for batch in range(100):
-        x += increment_by
-        time.sleep(.1)
-        print(f"x is now {x}")
+    print(f"x is now {x}")
 
 
 if __name__ == "__main__":

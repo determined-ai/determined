@@ -345,7 +345,11 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 			aResp := actorResps[rpRef]
 			switch aMsg := aResp.(type) {
 			case error:
-				ctx.Log().WithError(aMsg).Error("")
+				if aMsg != nil {
+					ctx.Log().WithError(aMsg).Error("")
+				} else {
+					ctx.Log().Error("recieved nil error but no response for RPQueueStats")
+				}
 				ctx.Respond(aMsg)
 				return nil
 			case *jobv1.QueueStats:

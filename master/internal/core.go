@@ -760,8 +760,11 @@ func (m *Master) Run(ctx context.Context) error {
 
 	ctx, cancel := context.WithCancel(ctx)
 	go func() {
-		sErr := m.system.Ref.AwaitTermination()
-		log.WithError(sErr).Error("actor system exited")
+		if sErr := m.system.Ref.AwaitTermination(); sErr != nil {
+			log.WithError(sErr).Error("actor system failed")
+		} else {
+			log.Error("actor system exited")
+		}
 		cancel()
 	}()
 

@@ -13,7 +13,7 @@ type ContainerFailure struct {
 	ExitCode    *ExitCode
 }
 
-func (c ContainerFailure) Error() string {
+func (c *ContainerFailure) Error() string {
 	if c.ExitCode == nil {
 		return fmt.Sprintf("%s: %s", c.FailureType, c.ErrMsg)
 	}

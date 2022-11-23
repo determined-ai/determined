@@ -276,7 +276,11 @@ func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.Alloca
 			})
 		case error:
 			// Rollback previous allocations.
-			ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
+			if resp != nil {
+				ctx.Log().WithError(resp).Warnf("failed to allocate request %s", req.AllocationID)
+			} else {
+				ctx.Log().Warnf("failed to allocate request %s but got no error", req.AllocationID)
+			}
 			rollback = true
 			return false
 		default:
@@ -789,7 +793,11 @@ func (rp *resourcePool) fetchAgentStates(ctx *actor.Context) map[*actor.Ref]*age
 		case *agentState:
 			result[ref] = msg
 		case error:
-			ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
+			if msg != nil {
+				ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
+			} else {
+				ctx.Log().Warnf("failed to get agent state for %s but got no error", ref.Address().Local())
+			}
 		default:
 			ctx.Log().Warnf("bad agent state response for agent %s", ref.Address().Local())
 		}
@@ -806,7 +814,11 @@ func (rp *resourcePool) refreshAgentStateCacheFor(ctx *actor.Context, agents []*
 		case *agentState:
 			rp.agentStatesCache[ref] = msg
 		case error:
-			ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
+			if msg != nil {
+				ctx.Log().WithError(msg).Warnf("failed to get agent state for agent %s", ref.Address().Local())
+			} else {
+				ctx.Log().Warnf("failed to get agent state for %s but got no error", ref.Address().Local())
+			}
 			delete(rp.agentStatesCache, ref)
 		default:
 			ctx.Log().Warnf("bad agent state response for agent %s", ref.Address().Local())

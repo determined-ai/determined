@@ -89,9 +89,9 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 			context.TODO(), msg.configMapName,
 			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 		if errDeletingConfigMap != nil {
+			err = errDeletingConfigMap
 			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 				"failed to delete configMap %s", msg.configMapName)
-			err = errDeletingConfigMap
 		} else {
 			ctx.Log().WithField("handler", msg.handler.Address()).Infof(
 				"deleted configMap %s", msg.configMapName)
