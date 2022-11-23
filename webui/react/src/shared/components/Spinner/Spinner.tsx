@@ -1,5 +1,5 @@
 import { Spin } from 'antd';
-import { SpinProps } from 'antd/es/spin';
+import type { SpinProps } from 'antd/es/spin';
 import React from 'react';
 
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
@@ -9,7 +9,6 @@ import css from './Spinner.module.scss';
 interface Props extends Omit<SpinProps, 'size'> {
   center?: boolean;
   children?: React.ReactNode;
-
   conditionalRender?: boolean;
   inline?: boolean;
   size?: IconSize;
