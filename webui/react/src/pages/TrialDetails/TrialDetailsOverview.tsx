@@ -23,7 +23,7 @@ export interface Props {
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
   const { settings, updateSettings } = useSettings<Settings>(
-    Object.assign(settingsConfig, { applicableRoutespace: storagePath }),
+    Object.assign(settingsConfig, { storagePath }),
   );
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
