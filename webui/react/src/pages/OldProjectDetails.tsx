@@ -153,7 +153,7 @@ const ProjectDetails: React.FC = () => {
     useSettings<ProjectDetailsSettings>(settingsConfig);
 
   const tableOffset = (() => {
-    if (settings.tableOffset >= total && total) {
+    if (total && settings.tableOffset >= total) {
       const newTotal = settings.tableOffset > total ? total : total - 1;
       return settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
     }
