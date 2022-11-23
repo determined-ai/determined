@@ -1,5 +1,7 @@
 <p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
 
+hoohaa
+
 # Determined: Deep Learning Training Platform
 
 Determined is an open-source deep learning training platform that makes building
