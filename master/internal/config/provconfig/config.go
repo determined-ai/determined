@@ -33,10 +33,16 @@ type Config struct {
 	AgentConfigFileContents json.RawMessage   `json:"agent_config_file_contents"`
 	AWS                     *AWSClusterConfig `union:"type,aws" json:"-"`
 	GCP                     *GCPClusterConfig `union:"type,gcp" json:"-"`
+	HPC                     *HpcClusterConfig `union:"type,launcher" json:"-"`
 	MaxIdleAgentPeriod      model.Duration    `json:"max_idle_agent_period"`
 	MaxAgentStartingPeriod  model.Duration    `json:"max_agent_starting_period"`
 	MinInstances            int               `json:"min_instances"`
 	MaxInstances            int               `json:"max_instances"`
+}
+
+// HpcClusterConfig describes the configuration for a HPC cluster managed by Determined.
+type HpcClusterConfig struct {
+	BaseResourcePool string `json:"base_resource_pool"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.
@@ -88,7 +94,8 @@ func (c Config) Validate() []error {
 		masterURLErr,
 		check.NotEmpty(c.AgentDockerImage, "must configure an agent docker image"),
 		check.False(c.AWS != nil && c.GCP != nil, "must configure only one cluster"),
-		check.False(c.AWS == nil && c.GCP == nil, "must configure aws or gcp cluster"),
+		check.False(c.AWS == nil && c.GCP == nil && c.HPC == nil,
+			"must configure aws or gcp or hpc cluster"),
 		check.GreaterThan(
 			int64(c.MaxIdleAgentPeriod), int64(0), "max idle agent period must be greater than 0"),
 		check.GreaterThan(

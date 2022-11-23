@@ -21,7 +21,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 	err := json.Unmarshal([]byte(`{}`), &config)
 	assert.NilError(t, err)
 	err = check.Validate(&config)
-	assert.ErrorContains(t, err, "must configure aws or gcp cluster")
+	assert.ErrorContains(t, err, "must configure aws or gcp or hpc cluster")
 	expected := Config{
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),
@@ -224,4 +224,21 @@ boot_disk_source_image: test-source_image3
 		AgentReconnectBackoff:  aproto.AgentReconnectBackoffValue,
 	}
 	assert.DeepEqual(t, expected, unmarshaled)
+}
+
+func TestUnmarshalProvisionerConfigWithHpc(t *testing.T) {
+	configRaw := `
+master_url: http://test.master
+agent_docker_image: test_image
+
+type: launcher
+base_resource_pool: tesla_queue
+`
+	unmarshaled := Config{}
+	err := yaml.Unmarshal([]byte(configRaw), &unmarshaled, yaml.DisallowUnknownFields)
+	assert.NilError(t, err)
+	err = check.Validate(&unmarshaled)
+	assert.NilError(t, err)
+
+	assert.Equal(t, unmarshaled.HPC.BaseResourcePool, "tesla_queue")
 }
