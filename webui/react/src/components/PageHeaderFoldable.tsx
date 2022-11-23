@@ -1,5 +1,5 @@
-import { Button, Dropdown, Menu, Tooltip } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Tooltip } from 'antd';
+import type { DropdownProps, MenuProps } from 'antd';
 import React, { useState } from 'react';
 
 import Icon from 'shared/components/Icon/Icon';
@@ -38,7 +38,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
   const [isExpanded, setIsExpanded] = useState(false);
 
   const dropdownClasses = [css.optionsDropdown];
-  let dropdownOptions: React.ReactNode = <></>;
+  let dropdownOptions: DropdownProps['menu'] = {};
   if (options && options.length > 0) {
     if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
     if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
@@ -58,7 +58,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
       label: renderOptionLabel(opt),
     }));
 
-    dropdownOptions = <Menu items={menuItems} onClick={onItemClick} />;
+    dropdownOptions = { items: menuItems, onClick: onItemClick };
   }
 
   return (
@@ -90,7 +90,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
             ))}
           </div>
           {dropdownOptions && (
-            <Dropdown overlay={dropdownOptions} placement="bottomRight" trigger={['click']}>
+            <Dropdown menu={dropdownOptions} placement="bottomRight" trigger={['click']}>
               <Button
                 className={dropdownClasses.join(' ')}
                 ghost

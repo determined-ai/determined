@@ -1,4 +1,4 @@
-import { Dropdown, Menu, Modal, ModalFuncProps } from 'antd';
+import { Dropdown, Modal, ModalFuncProps } from 'antd';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
@@ -147,7 +147,7 @@ const ActionDropdown = <T extends string>({
   return children ? (
     <>
       <Dropdown
-        overlay={<Menu items={menuItems} onClick={handleMenuClick} />}
+        menu={{ items: menuItems, onClick: handleMenuClick }}
         placement="bottomRight"
         trigger={trigger ?? ['contextMenu']}
         onVisibleChange={onVisibleChange}>
@@ -157,7 +157,7 @@ const ActionDropdown = <T extends string>({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown
-        overlay={<Menu items={menuItems} onClick={handleMenuClick} />}
+        menu={{ items: menuItems, onClick: handleMenuClick }}
         placement="bottomRight"
         trigger={trigger ?? ['click']}
         onVisibleChange={onVisibleChange}>

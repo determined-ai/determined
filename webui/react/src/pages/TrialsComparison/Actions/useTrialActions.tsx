@@ -1,4 +1,4 @@
-import { Dropdown, Menu } from 'antd';
+import { Dropdown } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, {
   Dispatch,
@@ -143,34 +143,32 @@ const useTrialActions = ({
       { key: TrialAction.AddTags, label: 'Add Tags' },
     ];
 
-    const menu = (
-      <Menu
-        items={menuItems}
-        onClick={(params: MenuInfo) => {
-          params.domEvent.stopPropagation();
-          const { key: action } = params;
-          dispatchTrialAction(
-            action as TrialAction,
-            { trialIds: [id] },
-            action === TrialAction.OpenTensorBoard
-              ? openTensorBoard
-              : action === TrialAction.AddTags
-              ? modalOpen
-              : noOp,
-          );
-        }}
-      />
-    );
+    const menu = {
+      items: menuItems,
+      onClick: (params: MenuInfo) => {
+        params.domEvent.stopPropagation();
+        const { key: action } = params;
+        dispatchTrialAction(
+          action as TrialAction,
+          { trialIds: [id] },
+          action === TrialAction.OpenTensorBoard
+            ? openTensorBoard
+            : action === TrialAction.AddTags
+            ? modalOpen
+            : noOp,
+        );
+      },
+    };
 
     return children ? (
       <>
-        <Dropdown overlay={menu} placement="bottomLeft" trigger={['contextMenu']}>
+        <Dropdown menu={menu} placement="bottomLeft" trigger={['contextMenu']}>
           {children}
         </Dropdown>
       </>
     ) : (
       <div className={css.base} title="Open actions menu" onClick={(e) => e.stopPropagation()}>
-        <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
           <button onClick={(e) => e.stopPropagation()}>
             <Icon name="overflow-vertical" />
           </button>

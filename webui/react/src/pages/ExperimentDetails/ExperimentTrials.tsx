@@ -1,4 +1,4 @@
-import { Dropdown, Menu, TablePaginationConfig } from 'antd';
+import { Dropdown, TablePaginationConfig } from 'antd';
 import type { MenuProps } from 'antd';
 import { FilterDropdownProps, FilterValue, SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -412,7 +412,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
 
       return (
         <Dropdown
-          overlay={<Menu items={menuItems} onClick={onItemClick} />}
+          menu={{ items: menuItems, onClick: onItemClick }}
           trigger={['contextMenu']}
           onVisibleChange={onVisibleChange}>
           {children}

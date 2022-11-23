@@ -1,4 +1,5 @@
-import { Button, Dropdown, Menu, message, Space, Table } from 'antd';
+import { Button, Dropdown, message, Space, Table } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Page from 'components/Page';
@@ -17,6 +18,7 @@ import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser } from 'types';
@@ -52,20 +54,35 @@ const GroupActionDropdown = ({
   const { modalOpen: openDeleteGroupModal, contextHolder: modalDeleteGroupContextHolder } =
     useModalDeleteGroup({ group, onClose: fetchGroups });
 
-  const menuItems = (
-    <Menu>
-      <Menu.Item key="edit" onClick={() => openEditGroupModal()}>
-        Edit
-      </Menu.Item>
-      <Menu.Item danger key="delete" onClick={() => openDeleteGroupModal()}>
-        Delete
-      </Menu.Item>
-    </Menu>
-  );
+  const menuItems: DropDownProps['menu'] = useMemo(() => {
+    const MenuKey = {
+      Delete: 'delete',
+      Edit: 'edit',
+    } as const;
+
+    const funcs = {
+      [MenuKey.Delete]: () => {
+        openEditGroupModal();
+      },
+      [MenuKey.Edit]: () => {
+        openDeleteGroupModal();
+      },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as ValueOf<typeof MenuKey>]();
+    };
+
+    const items: MenuProps['items'] = [
+      { key: MenuKey.Edit, label: 'Edit' },
+      { key: MenuKey.Delete, label: 'Delete' },
+    ];
+    return { items: items, onClick: onItemClick };
+  }, [openDeleteGroupModal, openEditGroupModal]);
 
   return (
     <div className={dropdownCss.base}>
-      <Dropdown overlay={menuItems} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>

@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, message, Space } from 'antd';
+import { Button, Dropdown, message, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -89,7 +89,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   return (
     <div className={dropdownCss.base}>
       <Dropdown
-        overlay={<Menu items={menuItems} onClick={onItemClick} />}
+        menu={{ items: menuItems, onClick: onItemClick }}
         placement="bottomRight"
         trigger={['click']}>
         <Button className={css.overflow} type="text">

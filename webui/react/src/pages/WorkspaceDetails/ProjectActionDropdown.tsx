@@ -1,5 +1,5 @@
-import { Dropdown, Menu } from 'antd';
-import type { MenuProps } from 'antd';
+import { Dropdown } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
@@ -74,7 +74,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
     openProjectDelete();
   }, [openProjectDelete]);
 
-  const menuProps: { items: MenuProps['items']; onClick: MenuProps['onClick'] } = useMemo(() => {
+  const menuProps: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       Delete: 'delete',
       Edit: 'edit',
@@ -157,7 +157,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
     <>
       <Dropdown
         disabled={menuProps.items?.length === 0}
-        overlay={<Menu {...menuProps} />}
+        menu={menuProps}
         placement="bottomLeft"
         trigger={trigger ?? ['contextMenu', 'click']}
         onVisibleChange={onVisibleChange}>
@@ -172,7 +172,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
       onClick={stopPropagation}>
       <Dropdown
         disabled={menuProps.items?.length === 0}
-        overlay={<Menu {...menuProps} />}
+        menu={menuProps}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>

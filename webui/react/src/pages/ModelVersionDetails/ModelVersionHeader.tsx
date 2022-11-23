@@ -1,6 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Breadcrumb, Button, Dropdown, Modal, Space } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -155,7 +155,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
     await copyToClipboard(referenceText);
   }, [referenceText]);
 
-  const menu = useMemo(() => {
+  const menu: DropDownProps['menu'] = useMemo(() => {
     const onItemClick: MenuProps['onClick'] = (e) => {
       const action = actions.find((ac) => ac.key === e.key) as Action;
       action.onClick();
@@ -169,7 +169,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
       label: action.text,
     }));
 
-    return <Menu className={css.overflow} items={menuItems} onClick={onItemClick} />;
+    return { className: css.overflow, items: menuItems, onClick: onItemClick };
   }, [actions]);
 
   return (
@@ -219,7 +219,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
                 {action.text}
               </Button>
             ))}
-            <Dropdown overlay={menu} trigger={['click']}>
+            <Dropdown menu={menu} trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>

@@ -1,5 +1,5 @@
-import { Dropdown, Menu } from 'antd';
-import type { MenuProps } from 'antd';
+import { Dropdown } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
@@ -89,7 +89,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     openWorkspaceDelete();
   }, [openWorkspaceDelete]);
 
-  const WorkspaceActionMenu = useMemo(() => {
+  const WorkspaceActionMenu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       Delete: 'delete',
       Edit: 'edit',
@@ -136,7 +136,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       menuItems.push({ type: 'divider' });
       menuItems.push({ key: MenuKey.Delete, label: 'Delete...' });
     }
-    return <Menu items={menuItems} onClick={onItemClick} />;
+    return { items: menuItems, onClick: onItemClick };
   }, [
     canDeleteWorkspace,
     canModifyWorkspace,
@@ -150,7 +150,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   return children ? (
     <>
       <Dropdown
-        overlay={WorkspaceActionMenu}
+        menu={WorkspaceActionMenu}
         placement="bottomLeft"
         trigger={trigger ?? ['contextMenu', 'click']}
         onVisibleChange={onVisibleChange}>
@@ -164,10 +164,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       className={[css.base, className].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
-      <Dropdown
-        overlay={WorkspaceActionMenu}
-        placement="bottomRight"
-        trigger={trigger ?? ['click']}>
+      <Dropdown menu={WorkspaceActionMenu} placement="bottomRight" trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

@@ -1,4 +1,5 @@
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Dropdown } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
@@ -16,6 +17,7 @@ import useSettings, { UpdateSettings } from 'hooks/useSettings';
 import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, Workspace } from 'types';
 import { getAssignedRole, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
@@ -65,21 +67,34 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
     userOrGroupId: getIdFromUserOrGroup(userOrGroup),
   });
 
-  const menuItems = (
-    <Menu>
-      <Menu.Item danger key="remove" onClick={() => openWorkspaceRemoveMemberModal()}>
-        Remove
-      </Menu.Item>
-      {openWorkspaceRemoveMemberContextHolder}
-    </Menu>
-  );
+  const menuItems: DropDownProps['menu'] = useMemo(() => {
+    const MenuKey = {
+      Remove: 'remove',
+    } as const;
+
+    const funcs = {
+      [MenuKey.Remove]: () => {
+        openWorkspaceRemoveMemberModal();
+      },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as ValueOf<typeof MenuKey>]();
+    };
+
+    return {
+      items: [{ danger: true, key: 'remove', label: MenuKey.Remove }],
+      onClick: onItemClick,
+    };
+  }, [openWorkspaceRemoveMemberModal]);
 
   return (
     <div>
-      <Dropdown overlay={menuItems} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
         <Button type="text">
           <Icon name="overflow-vertical" />
         </Button>
+        {openWorkspaceRemoveMemberContextHolder}
       </Dropdown>
     </div>
   );

@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input, Menu, Modal, Space, Typography } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Input, Modal, Space, Typography } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -937,7 +937,7 @@ const ProjectDetails: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const ExperimentTabOptions = useMemo(() => {
-    const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {
+    const getMenuProps = (): DropDownProps['menu'] => {
       const MenuKey = {
         Columns: 'columns',
         ResultFilter: 'resetFilters',
@@ -985,10 +985,7 @@ const ProjectDetails: React.FC = () => {
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
-          <Dropdown
-            overlay={<Menu {...getMenuProps()} />}
-            placement="bottomRight"
-            trigger={['click']}>
+          <Dropdown menu={getMenuProps()} placement="bottomRight" trigger={['click']}>
             <div>
               <Icon name="overflow-vertical" />
             </div>

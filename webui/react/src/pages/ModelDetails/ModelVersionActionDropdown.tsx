@@ -1,5 +1,5 @@
-import { Dropdown, Menu } from 'antd';
-import type { MenuProps } from 'antd';
+import { Dropdown } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -31,7 +31,7 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
 
   const handleDeleteClick = useCallback(() => onDelete?.(), [onDelete]);
 
-  const ModelVersionActionMenu = useMemo(() => {
+  const ModelVersionActionMenu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteVersion: 'delete-version',
       Download: 'download',
@@ -55,12 +55,12 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
       { danger: true, key: MenuKey.DeleteVersion, label: 'Deregister Version' },
     ];
 
-    return <Menu items={menuItems} onClick={onItemClick} />;
+    return { items: menuItems, onClick: onItemClick };
   }, [handleDeleteClick, handleDownloadClick]);
 
   return children ? (
     <Dropdown
-      overlay={ModelVersionActionMenu}
+      menu={ModelVersionActionMenu}
       placement="bottomLeft"
       trigger={trigger ?? ['contextMenu', 'click']}
       onVisibleChange={onVisibleChange}>
@@ -72,7 +72,7 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown
-        overlay={ModelVersionActionMenu}
+        menu={ModelVersionActionMenu}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>
