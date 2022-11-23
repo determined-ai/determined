@@ -49,11 +49,11 @@ def test_full_storage_path() -> None:
         shared._full_storage_path("/host_path", storage_path="../test")
 
 
-def test_checkpoint_lifecycle(manager: storage.SharedFSStorageManager) -> None:
+def test_checkpoint_lifecycle(caplog: Any, manager: storage.SharedFSStorageManager) -> None:
     def post_delete_cb(storage_id: str) -> None:
         assert storage_id not in os.listdir(manager._base_path)
 
-    util.run_storage_lifecycle_test(manager, post_delete_cb)
+    util.run_storage_lifecycle_test(manager, post_delete_cb, caplog)
 
 
 def test_validate(manager: storage.SharedFSStorageManager) -> None:

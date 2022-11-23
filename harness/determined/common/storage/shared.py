@@ -117,8 +117,18 @@ class SharedFSStorageManager(storage.StorageManager):
 
             def ignore(ign_dir: str, names: List[str]) -> List[str]:
                 out: List[str] = []
+
+                start_path = os.path.join(self._base_path, src)
+
                 # rel_dir would be "subdir" instead of "/determined_shared_fs/UUID/subdir"
-                rel_dir = os.path.relpath(ign_dir, src)
+                rel_dir = os.path.relpath(ign_dir, start_path)
+
+                # rel_dir == "." happens only for the top dir.
+                # Since users provide selector with respect to the current dir (w/o using "."),
+                # let's convert "." to empty path.
+                if rel_dir == ".":
+                    rel_dir = ""
+
                 for name in names:
                     # ckpt_path would be "subdir/file"
                     ckpt_path = os.path.join(rel_dir, name)

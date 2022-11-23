@@ -3,7 +3,8 @@ import pathlib
 import shutil
 import time
 import uuid
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import pytest
 
 from determined import errors
@@ -49,6 +50,7 @@ def validate_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> N
 def run_storage_lifecycle_test(
     manager: storage.StorageManager,
     post_delete_cb: Optional[Callable] = None,
+    caplog: Any = None,
 ) -> None:
     checkpoints = []
     for _ in range(2):
@@ -104,15 +106,30 @@ def run_storage_lifecycle_test(
             create_checkpoint(path)
             checkpoints.append(storage_id)
 
-    expected_files_subset = {"subdir/": None, "subdir/file1.txt": "nested file 1", "empty_dir/": None}
+    expected_files_subset = {
+        "subdir/": None,
+        "subdir/file1.txt": "nested file 1",
+        "empty_dir/": None,
+    }
 
     def selector(x):
         return x in ["subdir", "subdir/file1.txt", "empty_dir"]
 
     # Test restore_path with selector
+    # clear logs collected up to this point
+    if caplog is not None:
+        caplog.clear()
     for storage_id in checkpoints:
         with manager.restore_path(storage_id, selector=selector) as path:
-            validate_checkpoint(path, expected_files_subset)
+            if isinstance(manager, storage.shared.SharedFSStorageManager):
+                assert caplog
+                assert (
+                    caplog.messages[0] == "Ignoring partial checkpoint download from shared_fs;"
+                    " all files will be directly accessible from shared_fs."
+                )
+                validate_checkpoint(path, EXPECTED_FILES)
+            else:
+                validate_checkpoint(path, expected_files_subset)
 
     # Test download with selector
     for storage_id in checkpoints:
