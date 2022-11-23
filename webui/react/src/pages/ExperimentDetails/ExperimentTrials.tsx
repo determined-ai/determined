@@ -414,7 +414,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         <Dropdown
           menu={{ items: menuItems, onClick: onItemClick }}
           trigger={['contextMenu']}
-          onVisibleChange={onVisibleChange}>
+          onOpenChange={onVisibleChange}>
           {children}
         </Dropdown>
       );

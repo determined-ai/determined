@@ -63,7 +63,7 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
       menu={ModelVersionActionMenu}
       placement="bottomLeft"
       trigger={trigger ?? ['contextMenu', 'click']}
-      onVisibleChange={onVisibleChange}>
+      onOpenChange={onVisibleChange}>
       {children}
     </Dropdown>
   ) : (

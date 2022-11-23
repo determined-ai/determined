@@ -89,7 +89,7 @@ const TaskActionDropdown: React.FC<Props> = ({
       menu={menu}
       placement="bottomLeft"
       trigger={['contextMenu']}
-      onVisibleChange={onVisibleChange}>
+      onOpenChange={onVisibleChange}>
       {children}
     </Dropdown>
   ) : (

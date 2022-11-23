@@ -153,7 +153,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         menu={WorkspaceActionMenu}
         placement="bottomLeft"
         trigger={trigger ?? ['contextMenu', 'click']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
       {modalWorkspaceDeleteContextHolder}

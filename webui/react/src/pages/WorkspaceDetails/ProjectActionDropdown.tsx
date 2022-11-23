@@ -160,7 +160,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
         menu={menuProps}
         placement="bottomLeft"
         trigger={trigger ?? ['contextMenu', 'click']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
       {contextHolders}

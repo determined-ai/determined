@@ -544,7 +544,7 @@ const ModelRegistry: React.FC = () => {
       <Dropdown
         menu={ModelActionMenu(record)}
         trigger={['contextMenu']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
     ),

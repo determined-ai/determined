@@ -150,7 +150,7 @@ const ActionDropdown = <T extends string>({
         menu={{ items: menuItems, onClick: handleMenuClick }}
         placement="bottomRight"
         trigger={trigger ?? ['contextMenu']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
     </>
@@ -160,7 +160,7 @@ const ActionDropdown = <T extends string>({
         menu={{ items: menuItems, onClick: handleMenuClick }}
         placement="bottomRight"
         trigger={trigger ?? ['click']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>
