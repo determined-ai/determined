@@ -38,6 +38,8 @@ repos:
       - id: yamllint
         files: '^.github/'
   - repo: https://github.com/psf/black
-    rev: '22.10.0'
+    rev: '20.8b1'
     hooks:
       - id: black
+        additional_dependencies: ['click==8.0.4']
+        exclude: ^(examples|harness/determined/common/api/bindings.py)
