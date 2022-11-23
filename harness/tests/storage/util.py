@@ -1,15 +1,19 @@
+import logging
 import os
 import pathlib
 import shutil
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from unittest import mock
 
 import pytest
+import requests
 
-from determined import errors
+from determined import core, errors
 from determined.common import storage
 from determined.tensorboard.fetchers import base
+from tests import parallel
 
 EXPECTED_FILES = {
     "root.txt": "root file",
@@ -19,10 +23,25 @@ EXPECTED_FILES = {
     "empty_dir/": None,
 }
 
+# File structure for sharded checkpoint testing
+EXPECTED_FILES_N0 = {
+    "file0_0": "file 0 node 0",
+    "file1_0": "file 1 node 0",
+    "subdir/": None,
+    "subdir/file3_0.txt": "nested file node 0",
+    "metadata.json": '{\n  "steps_completed": 1\n}',
+}
+EXPECTED_FILES_N1 = {
+    "file0_1": "file 0 node 1",
+    "file1_1": "file 1 node 1",
+    "subdir/": None,
+    "subdir/file3_1.txt": "nested file node 1",
+}
 
-def create_checkpoint(checkpoint_dir: pathlib.Path) -> None:
+
+def create_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> None:
     """Create a new checkpoint."""
-    for file, content in EXPECTED_FILES.items():
+    for file, content in expected_files.items():
         path = checkpoint_dir.joinpath(file)
         path.parent.mkdir(parents=True, exist_ok=True)
         if content is None:
@@ -37,6 +56,8 @@ def validate_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> N
     assert checkpoint_dir.exists()
     files_found = set(storage.StorageManager._list_directory(checkpoint_dir))
     assert files_found == set(expected_files.keys()), (files_found, expected_files)
+    logging.info(f"files_found={files_found}")
+    logging.info(f"expected_files={expected_files}")
     for found in files_found:
         path = checkpoint_dir.joinpath(found)
         if expected_files[found] is None:
@@ -44,7 +65,8 @@ def validate_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> N
         else:
             assert path.is_file(), path
             with path.open() as f:
-                assert f.read() == expected_files[found]
+                text = f.read()
+                assert text == expected_files[found], (text, expected_files[found])
 
 
 def run_storage_lifecycle_test(
@@ -56,7 +78,7 @@ def run_storage_lifecycle_test(
     for _ in range(2):
         storage_id = str(uuid.uuid4())
         with manager.store_path(storage_id) as path:
-            create_checkpoint(path)
+            create_checkpoint(path, EXPECTED_FILES)
             checkpoints.append(storage_id)
 
     for storage_id in checkpoints:
@@ -79,7 +101,7 @@ def run_storage_lifecycle_test(
         storage_id = str(uuid.uuid4())
         path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
         try:
-            create_checkpoint(path)
+            create_checkpoint(path, EXPECTED_FILES)
             manager.upload(path, storage_id)
             checkpoints.append(storage_id)
         finally:
@@ -103,7 +125,7 @@ def run_storage_lifecycle_test(
     for _ in range(2):
         storage_id = str(uuid.uuid4())
         with manager.store_path(storage_id) as path:
-            create_checkpoint(path)
+            create_checkpoint(path, EXPECTED_FILES)
             checkpoints.append(storage_id)
 
     expected_files_subset = {
@@ -238,3 +260,200 @@ def run_tensorboard_fetcher_test(
         timed_backoff_sync_check({**second_files, **third_files})
     finally:
         rm_files(files_to_remove)
+
+
+def run_storage_upload_download_sharded_test(
+    pex: parallel.Execution,
+    storage_manager: storage.StorageManager,
+    tmp_path: pathlib.Path,
+    clean_up: Optional[Callable] = None,
+) -> None:
+    # create core checkpoint context
+    checkpoint_context = create_checkpoint_context(pex, storage_manager)
+
+    # create "local" file structure
+    ckpt_dir = tmp_path.joinpath(f"ckpt_dir_{pex.distributed.rank}")
+    if pex.distributed.rank == 0:
+        create_checkpoint(ckpt_dir, EXPECTED_FILES_N0)
+    else:
+        create_checkpoint(ckpt_dir, EXPECTED_FILES_N1)
+
+    logging.info(f"done creating data {pex.distributed.rank}")
+
+    # wait for all ranks to save files
+    pex.distributed.allgather(None)
+
+    logging.info(
+        f"Rank {pex.distributed.rank}. "
+        f"Files in ckpt_dir: "
+        f"{[os.path.join(dp, f) for dp, dn, fn in os.walk(ckpt_dir) for f in fn]}"
+    )
+
+    if pex.distributed.rank == 0:
+        metadata = {"steps_completed": 1}
+    else:
+        metadata = None
+
+    # upload sharded data
+    storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True)
+
+    # 1. test downloading w/o selector: every rank gets all the files + metadata
+    download_dir1 = tmp_path.joinpath(f"test1_download_{pex.distributed.rank}")
+    try:
+        checkpoint_context.download(storage_id, download_dir1)
+        validate_checkpoint(
+            download_dir1, expected_files={**EXPECTED_FILES_N0, **EXPECTED_FILES_N1}
+        )
+    finally:
+        shutil.rmtree(download_dir1, ignore_errors=True)
+
+    # 2. test downloading with selector: every rank gets selected files
+    download_dir2 = tmp_path.joinpath(f"test2_download_{pex.distributed.rank}")
+    if pex.distributed.rank == 0:
+
+        def selector(x):
+            return x == "subdir/file3_0.txt"
+
+    else:
+
+        def selector(x):
+            return x == "file1_1"
+
+    checkpoint_context.download(storage_id, download_dir2, selector=selector)
+
+    if pex.distributed.rank == 0:
+        validate_checkpoint(
+            download_dir2,
+            expected_files={"subdir/file3_0.txt": "nested file node 0", "subdir/": None},
+        )
+    else:
+        validate_checkpoint(download_dir2, expected_files={"file1_1": "file 1 node 1"})
+
+    # 3.test downloading with and w/o selector
+    download_dir3 = tmp_path.joinpath(f"test3_download_{pex.distributed.rank}")
+    if pex.distributed.rank == 0:
+
+        def selector(x):
+            return x in EXPECTED_FILES_N0
+
+    else:
+        selector = None
+
+    checkpoint_context.download(storage_id, download_dir3, selector=selector)
+    if pex.distributed.rank == 0:
+        validate_checkpoint(download_dir3, expected_files=EXPECTED_FILES_N0)
+    else:
+        assert not download_dir3.exists()
+
+    # cleanup
+    if pex.distributed.rank == 0 and clean_up is not None:
+        clean_up(storage_id, storage_manager)
+    pex.distributed.allgather(None)
+
+    # 1. upload sharded data from rank 0 only
+    storage_id = checkpoint_context.upload(
+        ckpt_dir if pex.distributed.rank == 0 else None, metadata, shard=True
+    )
+    download_dir4 = tmp_path.joinpath(f"test4_download_{pex.distributed.rank}")
+    checkpoint_context.download(storage_id, download_dir4)
+    validate_checkpoint(download_dir4, expected_files=EXPECTED_FILES_N0)
+
+    if pex.distributed.rank == 0 and clean_up is not None:
+        clean_up(storage_id, storage_manager)
+    pex.distributed.broadcast(None)
+
+    # 2. upload sharded data from rank 1 only
+    # metadata should be saved and uploaded as well
+    storage_id = checkpoint_context.upload(
+        ckpt_dir if pex.distributed.rank == 1 else None, metadata, shard=True
+    )
+    download_dir5 = tmp_path.joinpath(f"test5_download_{pex.distributed.rank}")
+    checkpoint_context.download(storage_id, download_dir5)
+    validate_checkpoint(download_dir5, expected_files={**EXPECTED_FILES_N1, **{"metadata.json": '{\n  "steps_completed": 1\n}'}})
+
+    if pex.distributed.rank == 0 and clean_up is not None:
+        clean_up(storage_id, storage_manager)
+    pex.distributed.broadcast(None)
+
+
+def run_storage_store_restore_sharded_test(
+    pex: parallel.Execution,
+    storage_manager: storage.StorageManager,
+    clean_up: Optional[Callable] = None,
+) -> None:
+    # create checkpoint context
+    checkpoint_context = create_checkpoint_context(pex, storage_manager)
+
+    # upload sharded data
+    if pex.distributed.rank == 0:
+        metadata = {"steps_completed": 1}
+    else:
+        metadata = None
+
+    with checkpoint_context.store_path(metadata, shard=True) as (path, storage_id):
+        logging.info(f"storage_id={storage_id}")
+        # create "local" file structure
+        ckpt_dir = path.joinpath(f"ckpt_dir_{pex.distributed.rank}")
+        if pex.distributed.rank == 0:
+            create_checkpoint(ckpt_dir, EXPECTED_FILES_N0)
+        else:
+            create_checkpoint(ckpt_dir, EXPECTED_FILES_N1)
+
+    pex.distributed.broadcast(None)
+
+    # 1. test downloading with selector: every rank gets selected files
+    if pex.distributed.rank == 0:
+
+        def selector(x):
+            return x == "subdir/file3_0"
+
+    else:
+
+        def selector(x):
+            return x == "file1_1"
+
+    with checkpoint_context.restore_path(storage_id, selector=selector) as path:
+        if pex.distributed.rank == 0:
+            validate_checkpoint(path, expected_files={"subdir/file3_0.txt": "nested file node 0", "subdir/": None})
+        else:
+            validate_checkpoint(path, expected_files={"file1_1": "file 1 node 1"})
+
+    pex.distributed.broadcast(None)
+
+    # 2.test downloading with and w/o selector
+    if pex.distributed.rank == 0:
+
+        def selector(x):
+            return x in list(EXPECTED_FILES_N0.keys())
+
+    else:
+        selector = None
+
+    with checkpoint_context.restore_path(storage_id, selector=selector) as path:
+        if pex.distributed.rank == 0:
+            validate_checkpoint(path, expected_files=EXPECTED_FILES_N0)
+        else:
+            validate_checkpoint(path, expected_files={})
+
+    # cleanup
+    if pex.distributed.rank == 0:
+        clean_up(storage_id, storage_manager)
+    pex.distributed.broadcast(None)
+
+
+def create_checkpoint_context(pex, storage_manager):
+    session = mock.MagicMock()
+    response = requests.Response()
+    response.status_code = 200
+    session._do_request.return_value = response
+    tensorboard_manager = mock.MagicMock()
+    checkpoint_context = core.CheckpointContext(
+        pex.distributed,
+        storage_manager,
+        session=session,
+        task_id="task-id",
+        allocation_id="allocation-id",
+        tbd_sync_mode=core.TensorboardMode.AUTO,
+        tensorboard_manager=tensorboard_manager,
+    )
+    return checkpoint_context
