@@ -327,7 +327,6 @@ const ModelVersionDetails: React.FC = () => {
       <Tabs
         activeKey={tabKey}
         items={tabItems}
-        style={{ height: 'auto' }}
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
         onChange={handleTabChange}
       />

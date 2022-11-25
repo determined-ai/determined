@@ -268,7 +268,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         <NotesCard
           disabled={!editableNotes}
           notes={experiment.notes ?? ''}
-          style={{ border: 0, height: '100%' }}
+          style={{ border: 0 }}
           onSave={handleNotesUpdate}
         />
       ),
