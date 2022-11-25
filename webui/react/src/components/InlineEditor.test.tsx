@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -17,7 +17,7 @@ const setup = (
     ? jest.fn(() => Promise.resolve(new Error()))
     : jest.fn(() => Promise.resolve());
   const onCancel = jest.fn();
-  render(
+  const { container } = render(
     <InlineEditor
       disabled={disabled}
       pattern={pattern}
@@ -27,7 +27,12 @@ const setup = (
     />,
   );
 
-  return { onCancel, onSave, user };
+  const waitForSpinnerToDisappear = async () => {
+    if (container.querySelector('.ant-spin-spinning') == null) return;
+    await waitForElementToBeRemoved(container.querySelector('.ant-spin-spinning'));
+  };
+
+  return { onCancel, onSave, user, waitForSpinnerToDisappear };
 };
 
 describe('InlineEditor', () => {
@@ -37,27 +42,29 @@ describe('InlineEditor', () => {
   });
 
   it('should preserves input when focus leaves', async () => {
-    const { user } = setup();
+    const { waitForSpinnerToDisappear, user } = setup();
     await user.click(screen.getByRole('textbox'));
     await user.clear(screen.getByRole('textbox'));
     await user.type(screen.getByRole('textbox'), 'after');
     await user.click(document.body);
     expect(screen.getByRole('textbox')).not.toHaveFocus();
+    await waitForSpinnerToDisappear();
     expect(screen.getByDisplayValue('after')).toBeInTheDocument();
   });
 
   it('should calls save with input on blur', async () => {
-    const { onSave, user } = setup();
+    const { onSave, waitForSpinnerToDisappear, user } = setup();
     await user.click(screen.getByRole('textbox'));
     await user.clear(screen.getByRole('textbox'));
     await user.type(screen.getByRole('textbox'), 'after');
     await user.click(document.body);
     expect(screen.getByRole('textbox')).not.toHaveFocus();
+    await waitForSpinnerToDisappear();
     expect(onSave).toHaveBeenCalledWith('after');
   });
 
   it('should restores value when save fails', async () => {
-    const { onSave, user } = setup({
+    const { onSave, waitForSpinnerToDisappear, user } = setup({
       disabled: false,
       onSaveReturnsError: true,
       pattern: new RegExp(''),
@@ -67,6 +74,7 @@ describe('InlineEditor', () => {
     await user.clear(screen.getByRole('textbox'));
     await user.type(screen.getByRole('textbox'), 'after');
     await user.keyboard('{enter}');
+    await waitForSpinnerToDisappear();
     expect(onSave).toHaveBeenCalledWith('after');
     expect(screen.getByDisplayValue('before')).toBeInTheDocument();
   });
@@ -93,7 +101,7 @@ describe('InlineEditor', () => {
   });
 
   it('should ignore keydown event until the IME is confirmed', async () => {
-    const { user } = setup();
+    const { waitForSpinnerToDisappear, user } = setup();
     const textbox = screen.getByRole('textbox');
     await user.click(textbox);
     await user.clear(textbox);
@@ -101,6 +109,7 @@ describe('InlineEditor', () => {
     fireEvent.keyDown(textbox, { code: 'Enter', key: 'Enter', keyCode: 229 });
     expect(textbox).toHaveFocus();
     await user.keyboard('{enter}');
+    await waitForSpinnerToDisappear();
     expect(textbox).not.toHaveFocus();
     expect(screen.getByDisplayValue('こんにちは')).toBeInTheDocument();
   });

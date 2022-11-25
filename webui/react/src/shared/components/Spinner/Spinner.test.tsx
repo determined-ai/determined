@@ -1,6 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { readFileSync } from 'fs';
+
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import Spinner from './Spinner';
 
@@ -8,53 +10,47 @@ const spinnerTextContent = 'Spinner Text Content';
 
 const user = userEvent.setup();
 
-interface Props {
-  handleButtonClick: jest.Mock<unknown, unknown[]>;
-  spinning: boolean;
-}
-
-const SpinnerComponent = ({ spinning, handleButtonClick }: Props) => {
-  const [isSpin, setIsSpin] = useState<boolean>(false);
-
-  useEffect(() => {
-    setIsSpin(spinning);
-  }, [spinning]);
-
-  const onToggle = () => setIsSpin((v) => !v);
-
-  return (
-    <>
-      <button data-testid="toogle-button" onClick={onToggle}>
-        Toggle Spin
-      </button>
-      <Spinner spinning={isSpin} tip={spinnerTextContent}>
-        <button data-testid="inside-button" onClick={handleButtonClick}>
-          click
-        </button>
-      </Spinner>
-    </>
-  );
-};
-
 const setup = (spinning: boolean) => {
   const handleButtonClick = jest.fn();
-  const { container } = render(
-    <SpinnerComponent handleButtonClick={handleButtonClick} spinning={spinning} />,
+  const { container, rerender } = render(
+    <Spinner spinning={spinning} tip={spinnerTextContent}>
+      <button onClick={handleButtonClick}>click</button>
+    </Spinner>,
   );
-  return { container, handleButtonClick };
+  return { container, handleButtonClick, rerender };
 };
 
 describe('Spinner', () => {
+  // load Antd StyleSheet
+  // Same code is defined in setupTests.ts
+  const antdStyleSheet = readFileSync('node_modules/antd/dist/antd.css').toString();
+  const style = document.createElement('style');
+  style.innerHTML = antdStyleSheet;
+  document.body.appendChild(style);
+
+  it('blocks inner content while spinning', async () => {
+    const { handleButtonClick } = setup(true);
+    const button = screen.getByRole('button');
+    let error = null;
+    try {
+      await user.click(button);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).not.toBeNull();
+    expect(handleButtonClick).toHaveBeenCalledTimes(0);
+  });
+
   it('doesnt block inner content when not spinning', async () => {
     const { handleButtonClick } = setup(false);
-    const button = screen.getByTestId('inside-button');
+    const button = screen.getByRole('button');
     await user.click(button);
     expect(handleButtonClick).toHaveBeenCalledTimes(1);
   });
 
-  it('displays tip text when spinning', async () => {
+  it('displays tip text when spinning', () => {
     setup(true);
-    expect(await screen.findByText(spinnerTextContent)).toBeInTheDocument();
+    expect(screen.getByText(spinnerTextContent)).toBeInTheDocument();
   });
 
   it('doesnt display tip text when not spinning', () => {
@@ -62,24 +58,26 @@ describe('Spinner', () => {
     expect(screen.queryByText(spinnerTextContent)).not.toBeInTheDocument();
   });
 
-  it('goes away when spinning is updated to false', async () => {
-    const { container } = setup(true);
+  it('goes away when spinning is updated to false', () => {
+    const { container, rerender } = setup(true);
 
-    waitFor(() => {
-      expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
-    });
-    await user.click(screen.getByTestId('toogle-button'));
-    waitFor(() => {
-      expect(container.getElementsByClassName('ant-spin-spinning')?.[0] ?? false).toBeFalsy();
-    });
+    expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
+    rerender(
+      <Spinner spinning={false} tip="Spinner text content">
+        <button>click</button>
+      </Spinner>,
+    );
+    expect(container.getElementsByClassName('ant-spin-spinning')?.[0]).toBeFalsy();
   });
 
-  it('appears when spinning is updated to false', async () => {
-    const { container } = setup(false);
+  it('appears when spinning is updated to false', () => {
+    const { container, rerender } = setup(false);
     expect(container.getElementsByClassName('ant-spin-spinning')?.[0]).toBeFalsy();
-    await user.click(screen.getByTestId('toogle-button'));
-    waitFor(() => {
-      expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
-    });
+    rerender(
+      <Spinner spinning={true} tip="Spinner text content">
+        <button>click</button>
+      </Spinner>,
+    );
+    expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
   });
 });
