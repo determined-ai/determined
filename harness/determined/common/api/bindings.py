@@ -359,7 +359,7 @@ class protobufFieldMask:
             kwargs["paths"] = obj["paths"]
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
         if not omit_unset or "paths" in vars(self):
@@ -2588,7 +2588,7 @@ class v1ExperimentGroup:
         }
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
             "name": self.name,
@@ -3095,7 +3095,7 @@ class v1GetExperimentGroupsResponse:
         }
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "groups": [x.to_json(omit_unset) for x in self.groups],
         }
@@ -6588,7 +6588,7 @@ class v1PatchExperimentGroup:
             kwargs["name"] = obj["name"]
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
         if not omit_unset or "name" in vars(self):
@@ -6611,7 +6611,7 @@ class v1PatchExperimentGroupResponse:
         }
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "group": self.group.to_json(omit_unset),
         }
@@ -7269,7 +7269,7 @@ class v1PostExperimentGroupRequest:
             kwargs["projectId"] = obj["projectId"]
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "name": self.name,
         }
@@ -7293,7 +7293,7 @@ class v1PostExperimentGroupResponse:
         }
         return cls(**kwargs)
 
-    def to_json(self, omit_unset: bool = False) -> typing.Any:
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "group": self.group.to_json(omit_unset),
         }
