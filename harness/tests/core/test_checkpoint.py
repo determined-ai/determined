@@ -147,19 +147,66 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
 
 @pytest.mark.parametrize(
     "resources,expected_merged,expected_conflicts",
-    [([{"file0": 0}, {"file1": 0}], {"file0": 0, "file1": 0}, {}),
-     ([{"file0": 0}, {"file0": 0}], {"file0": 0}, {'file0':[0, 1]}),
-     ([{"dir1/": 0}, {"dir1/": 0}], {"dir1/": 0}, {}),
-     ([{"file1/": 0}, {"file1": 0}], {"file1/": 0, "file1": 0}, {'file1':[0,1]}),
-     ([{"dir1/file1": 0}, {"file1": 0}], {"dir1/file1": 0, "file1": 0}, {}),
-     ([{"dir1/file1": 0}, {"dir1/file1/": 0}], {"dir1/file1": 0, "dir1/file1/": 0}, {})]
+    [
+        ([{"file0": 0}, {"file1": 0}], {"file0": 0, "file1": 0}, {}),
+        ([{"file0": 0}, {"file0": 0}], {"file0": 0}, {"file0": [0, 1]}),
+        ([{"dir1/": 0}, {"dir1/": 0}], {"dir1/": 0}, {}),
+        ([{"file1/": 0}, {"file1": 0}], {"file1/": 0, "file1": 0}, {"file1": [0, 1]}),
+        ([{"dir1/file1": 0}, {"file1": 0}], {"dir1/file1": 0, "file1": 0}, {}),
+        (
+            [{"dir1/file1": 0}, {"dir1/file1/": 0}],
+            {"dir1/file1": 0, "dir1/file1/": 0},
+            {"dir1/file1": [0, 1]},
+        ),
+    ],
 )
 def test_merge_files(
     resources: List[Dict[str, int]],
     expected_merged: Dict[str, int],
     expected_conflicts: Dict[str, List[int]],
-):
+) -> None:
     merged, conflicts = core._checkpoint.merge_resources(resources)
-    assert conflicts == conflicts
+    assert conflicts == expected_conflicts
     assert merged == expected_merged
 
+
+@pytest.mark.parametrize(
+    "metadata,expected_merged,expected_conflicts",
+    [
+        ([{"key1": 0}, {"key2": 0}], {"key1": 0, "key2": 0}, {}),
+        ([{"key1": 0}, {"key1": 0}], {"key1": 0}, {"key1": [0, 1]}),
+        ([{"key1": 1, "key2": 0}, {"key1": 0}], {"key1": 1, "key2": 0}, {"key1": [0, 1]}),
+        ([{"key1": [1]}, {"key1": [0]}], {"key1": [1, 0]}, {}),
+        ([{"key1": [1]}, {"key1": 1}], {"key1": [1]}, {"key1": [0, 1]}),
+        (
+            [{"key1": {"subkey1": 1}}, {"key1": {"subkey2": 2}}],
+            {"key1": {"subkey1": 1, "subkey2": 2}},
+            {},
+        ),
+        ([{"key1": {"subkey1": 1}}, {"key1": 2}], {"key1": {"subkey1": 1}}, {"key1": [0, 1]}),
+        ([{"key1": {"subkey1": 1}}, {"key1": [2]}], {"key1": {"subkey1": 1}}, {"key1": [0, 1]}),
+        (
+            [{"key1": {"subkey1": 1}}, {"key1": {"subkey1": 2}}],
+            {"key1": {"subkey1": 1}},
+            {"key1/subkey1": [0, 1]},
+        ),
+        (
+            [{"key1": {"subkey1": {"subkey2": 1}}}, {"key1": {"subkey2": 2}}],
+            {"key1": {"subkey1": {"subkey2": 1}, "subkey2": 2}},
+            {},
+        ),
+        (
+            [{"key1": {"subkey1": [1]}}, {"key1": {"subkey1": [2]}}],
+            {"key1": {"subkey1": [1, 2]}},
+            {},
+        ),
+    ],
+)
+def test_merge_metadata(
+    metadata: List[Dict[str, Any]],
+    expected_merged: Dict[str, Any],
+    expected_conflicts: Dict[str, List],
+) -> None:
+    merged, conflicts = core._checkpoint.merge_metadata(metadata)
+    assert conflicts == expected_conflicts
+    assert merged == expected_merged

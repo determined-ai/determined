@@ -35,12 +35,54 @@ class DownloadMode(enum.Enum):
 
 
 def merge_metadata(all_metadata: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], Dict[str, List]]:
+    """
+      Given a list of metadata, return:
+        - merged metadata
+        - a dict mapping conflicting keys to ranks that would upload them
+
+    Merging scenarios:
+    #  Metadata 1        | Metadata 2          | Conflict |  Result
+    # -------------------|---------------------|----------|-------------------------------
+    #  key1: val         | key2: val           | no       | {key1: val, key2: val}
+    #  key1: val         | key1: val           | yes      | n/a
+    #  key1: [val]       | key1: [val]         | no       | {key1: [val, val]}
+    #  key1: [val]       | key1: val           | yes      | n/a
+    #  key1: [val]       | key1: {key3: val}   | yes      | n/a
+    #  key1: {key3: val} | key1: {key4: val}   | no       | key1: {key3: val, key4: val}
+    #  key1: {key3: val} | key1: val           | yes      | n/a
+    #  key1: {key3: val} | key1: [val]         | yes      | n/a
+    """
     merged: Dict[str, Any] = {}
     conflicts: Dict[str, List] = {}
-    for rank, metadata in enumerate(all_metadata):
-        for _key in metadata:
-            conflicts.setdefault(_key, []).append(rank)
-            merged[_key] = metadata[_key]
+    for rank, rank_metadata in enumerate(all_metadata):
+
+        for _key in rank_metadata:
+            metadata = rank_metadata[_key]
+            if _key not in merged:
+                merged[_key] = metadata
+                conflicts[_key] = [rank]
+            else:
+                if not isinstance(metadata, type(merged[_key])):
+                    # if values under the same keys have different types
+                    # report conflict and skip merging
+                    conflicts[_key].append(rank)
+                else:
+                    if isinstance(metadata, list):
+                        # merge two lists
+                        merged[_key].extend(metadata)
+                    elif isinstance(metadata, dict):
+                        # recursively merge dictionaries and collect conflicts
+                        merged[_key], nested_conflicts = merge_metadata([merged[_key], metadata])
+
+                        # pre-append current key to conflicted nested keys reported
+                        # to distinguish between nested and not-nested keys
+                        for k in nested_conflicts:
+                            local_rank = nested_conflicts[k]
+                            abs_k = _key + "/" + k
+                            conflicts.setdefault(abs_k, []).extend(local_rank)
+                    else:
+                        # unknown merging scenario; report conflict and skip merging
+                        conflicts[_key].append(rank)
 
     conflicts = {k: v for (k, v) in conflicts.items() if len(v) > 1}
     return merged, conflicts
