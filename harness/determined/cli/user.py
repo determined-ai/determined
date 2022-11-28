@@ -54,7 +54,7 @@ def log_in_user(parsed_args: Namespace) -> None:
 def log_out_user(parsed_args: Namespace) -> None:
     det_obj = None
     try:
-        det_obj = det_obj = Determined(master=parsed_args.master, user=parsed_args.user)
+        det_obj = det_obj = Determined(master=parsed_args.master, user=parsed_args.user, try_reauth=False)
     except (api.errors.UnauthenticatedException, api.errors.ForbiddenException):
         return
     assert det_obj is None
