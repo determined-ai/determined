@@ -95,6 +95,7 @@ const config: SettingsConfig<ExperimentListSettings> = {
           literal('description'),
           literal('duration'),
           literal('forkedFrom'),
+          literal('groupName'),
           literal('id'),
           literal('name'),
           literal('progress'),
@@ -125,8 +126,8 @@ const config: SettingsConfig<ExperimentListSettings> = {
       storageKey: 'pinned',
       type: record(number, array(number)),
     },
-    {
-      key: 'row',
+    row: {
+      defaultValue: undefined,
       storageKey: 'row',
       type: union([undefinedType, array(number)]),
     },

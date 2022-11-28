@@ -97,6 +97,7 @@ const config: SettingsConfig<ProjectDetailsSettings> = {
           literal('description'),
           literal('duration'),
           literal('forkedFrom'),
+          literal('groupName'),
           literal('id'),
           literal('name'),
           literal('progress'),
@@ -127,8 +128,8 @@ const config: SettingsConfig<ProjectDetailsSettings> = {
       storageKey: 'pinned',
       type: record(number, array(number)),
     },
-    {
-      key: 'row',
+    row: {
+      defaultValue: undefined,
       storageKey: 'row',
       type: union([undefinedType, array(number)]),
     },
