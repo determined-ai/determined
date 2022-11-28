@@ -1128,8 +1128,6 @@ workloads for this experiment. For more information on customizing the trial env
    -  ``--cap-drop``
    -  ``--device``
 
-.. _exp-environment-slurm:
-
 ***************
  Optimizations
 ***************
