@@ -5,7 +5,7 @@ import getpass
 import hashlib
 import json
 import pathlib
-from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, cast
+from typing import Any, Callable, Dict, Iterator, NamedTuple, Optional, Tuple, cast
 
 import filelock
 
@@ -38,6 +38,30 @@ class UsernameTokenPair:
         self.token = token
 
 
+def default_load_user_password(
+    requested_user: Optional[str],
+    password: Optional[str],
+    token_store: "TokenStore",
+) -> Tuple[Optional[str], Optional[str]]:
+    # Always prefer an explicitly provided user/password.
+    if requested_user:
+        return requested_user, password
+
+    # Next highest priority is user/password from environment.
+    # Watch out! We have to check for DET_USER and DET_PASS, because containers will have DET_USER
+    # set, but that doesn't overrule the active user in the TokenStore, because if the TokenStore in
+    # the container has an active user, that means the user has explicitly ran `det user login`
+    # inside the container.
+    if (
+        util.get_det_username_from_env() is not None
+        and util.get_det_password_from_env() is not None
+    ):
+        return util.get_det_username_from_env(), util.get_det_password_from_env()
+
+    # Last priority is the active user in the token store.
+    return token_store.get_active_user(), password
+
+
 class Authentication:
     def __init__(
         self,
@@ -59,19 +83,14 @@ class Authentication:
         try_reauth: bool,
         cert: Optional[certs.Cert],
     ) -> UsernameTokenPair:
-        session_user = (
-            requested_user
-            or self.token_store.get_active_user()
-            or constants.DEFAULT_DETERMINED_USER
+        session_user, password = default_load_user_password(
+            requested_user, password, self.token_store
         )
 
-        if (
-            requested_user is None
-            and util.get_det_username_from_env() is not None
-            and util.get_det_password_from_env() is not None
-        ):
-            session_user = util.get_det_username_from_env()  # type: ignore
-            password = util.get_det_password_from_env()
+        # For login, we allow falling back to the default username.
+        if not session_user:
+            session_user = constants.DEFAULT_DETERMINED_USER
+        assert session_user is not None
 
         token = self.token_store.get_token(session_user)
         if token is not None and not _is_token_valid(self.master_address, token, cert):
@@ -83,7 +102,8 @@ class Authentication:
             and util.get_det_username_from_env() is not None
             and util.get_det_user_token_from_env() is not None
         ):
-            session_user = util.get_det_username_from_env()  # type: ignore
+            session_user = util.get_det_username_from_env()
+            assert session_user
             token = util.get_det_user_token_from_env()
 
         if token is not None:
@@ -126,7 +146,6 @@ class Authentication:
         """
         Returns the authentication token for the session user. If there is no
         active session, then an UnauthenticatedException will be raised.
-
         """
         if self.session is None:
             if must:
@@ -149,6 +168,59 @@ def do_login(
     token = r.token
 
     return token
+
+
+class LogoutAuthentication(Authentication):
+    """
+    An api-compatible Authentication object that is basically exactly a UserTokenPair.
+
+    TODO(MLG-215): delete Authentication class and write a function that returns a UsernameTokenPair
+    in its place, and let do_request() take UsernameTokenPair as input.
+    """
+
+    def __init__(self, session_user: str, session_token: str) -> None:
+        self.session_user = session_user
+        self.session_token = session_token
+
+    def get_session_user(self) -> str:
+        return self.session_user
+
+    def get_session_token(self, must: bool = True) -> str:
+        return self.session_token
+
+
+def logout(
+    master_address: Optional[str],
+    requested_user: Optional[str],
+    cert: Optional[certs.Cert],
+) -> None:
+    """
+    Logout if there is an active session for this master/username pair, otherwise do nothing.
+    """
+
+    master_address = master_address or util.get_default_master_address()
+    token_store = TokenStore(master_address)
+
+    session_user, _ = default_load_user_password(requested_user, None, token_store)
+    # Don't log out of DEFAULT_DETERMINED_USER when it's not specified and not the active user.
+
+    if session_user is None:
+        return
+
+    session_token = token_store.get_token(session_user)
+
+    if session_token is None:
+        return
+
+    token_store.drop_user(session_user)
+
+    auth = LogoutAuthentication(session_user, session_token)
+    sess = api.Session(user=session_user, master=master_address, auth=auth, cert=cert)
+    try:
+        bindings.post_Logout(sess)
+    except (api.errors.UnauthenticatedException, api.errors.APIException):
+        # This session may have expired, but we don't care.
+        pass
 
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:
@@ -392,24 +464,6 @@ def required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     def f(namespace: argparse.Namespace) -> Any:
         global cli_auth
         cli_auth = Authentication(namespace.master, namespace.user, try_reauth=True)
-        return func(namespace)
-
-    return f
-
-
-def optional(func: Callable[[argparse.Namespace], Any]) -> Callable[[argparse.Namespace], Any]:
-    """
-    A decorator for cli functions.
-    """
-
-    @functools.wraps(func)
-    def f(namespace: argparse.Namespace) -> Any:
-        global cli_auth
-        try:
-            cli_auth = Authentication(namespace.master, namespace.user, try_reauth=False)
-        except (api.errors.UnauthenticatedException, api.errors.ForbiddenException):
-            pass
-
         return func(namespace)
 
     return f
