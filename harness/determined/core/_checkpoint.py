@@ -6,7 +6,7 @@ import os
 import pathlib
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 from determined import core, tensorboard
 from determined.common import api, storage
@@ -35,8 +35,8 @@ class DownloadMode(enum.Enum):
 
 
 def merge_metadata(all_metadata: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], Dict[str, List]]:
-    merged = {}
-    conflicts = {}
+    merged: Dict[str, Any] = {}
+    conflicts: Dict[str, List] = {}
     for rank, metadata in enumerate(all_metadata):
         for _key in metadata:
             conflicts.setdefault(_key, []).append(rank)
@@ -57,9 +57,9 @@ def merge_resources(
     Note that we allow multiple ranks to upload directories, but only one rank may upload any
     given file.
     """
-    files = set()
-    uploaders = {}
-    merged = {}
+    files: Set[str] = set()
+    uploaders: Dict[str, List] = {}
+    merged: Dict[str, int] = {}
     for rank, rscs in enumerate(all_resources):
 
         for name in rscs:
@@ -137,7 +137,6 @@ class CheckpointContext:
 
         Returns:  The ``storage_id`` for this checkpoint.
         """
-
         if ckpt_dir is not None:
             ckpt_dir = os.fspath(ckpt_dir)
 
@@ -156,7 +155,7 @@ class CheckpointContext:
                 )
             return self._upload_single(ckpt_dir, metadata)
         else:
-            storage_id = None
+            storage_id: Optional[str] = None
             if self._dist.rank == 0:
                 storage_id = str(uuid.uuid4())
             storage_id = self._dist.broadcast(storage_id)
@@ -199,16 +198,16 @@ class CheckpointContext:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
         else:
-            resources = []
+            resources = {}
 
         # Merge resources, detect conflicts
         all_resources = self._dist.allgather(resources)
-        logging.info(f"All Resources {all_resources}")
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
             self._print_conflict_error(conflicts, "files")
 
-        # Chief gathers metadata across workers, checks for conflicts and saves metadata
+        # The lowest rank that is uploading ckpt_dir collects
+        # and saves metadata
         metadata_writer_rank = ckpt_dir_mask.index(True)
         all_metadata = self._merge_and_save_metadata(
             ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {}
@@ -273,10 +272,13 @@ class CheckpointContext:
                 # all workers.  But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
-                # If selector is None return False == do not download the file
-                return any(
-                    self._dist.gather_local(selector(path) if selector is not None else False)
+                # If selector is None return False => do not download the file
+                upload_path = self._dist.gather_local(
+                    selector(path) if selector is not None else False
                 )
+                # upload_path is not None when we are on the local chief
+                assert upload_path
+                return any(upload_path)
 
             self._storage_manager.download(src=storage_id, dst=ckpt_dir, selector=_selector)
             # Tell local workers we finished.
@@ -354,6 +356,7 @@ class CheckpointContext:
         if self._dist.rank == 0:
             storage_id = str(uuid.uuid4())
         storage_id = self._dist.broadcast(storage_id)
+        assert storage_id
 
         path = self._storage_manager.pre_store_path(storage_id)
         yield path, storage_id
@@ -391,7 +394,7 @@ class CheckpointContext:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
         else:
-            resources = []
+            resources = {}
 
         # Merge resources, detect conflicts
         all_resources = self._dist.allgather(resources)
@@ -408,7 +411,8 @@ class CheckpointContext:
         # If this assumption does not hold, then we can also do this:
         # upload_mask = self._dist.allgather(want_upload)
         # metadata_writer_rank = upload_mask.index(True)
-        # all_metadata = self._merge_and_save_metadata(ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {})
+        # all_metadata = self._merge_and_save_metadata(
+        # ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {})
 
         if want_upload:
             # use post_store_path to upload and clean up ckpt_dir after uploading
@@ -423,18 +427,21 @@ class CheckpointContext:
         return storage_id
 
     def _merge_and_save_metadata(
-        self, ckpt_dir: str, writer_rank: int = 0, metadata: Optional[Dict[str, Any]] = None
+        self,
+        ckpt_dir: Optional[str],
+        writer_rank: int,
+        metadata: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         # Gather metadata across nodes.
         all_metadata = self._dist.allgather(metadata or {})
         # Merge metadata. If a metadata key repeats, raise error.
-        all_metadata, conflicts = merge_metadata(all_metadata)
+        merged_metadata, conflicts = merge_metadata(all_metadata)
         if conflicts:
             self._print_conflict_error(conflicts, "metadata")
         if self._dist.rank == writer_rank:
-            assert ckpt_dir is not None
-            self._write_metadata_file(ckpt_dir, all_metadata or {})
-        return all_metadata
+            assert ckpt_dir
+            self._write_metadata_file(ckpt_dir, merged_metadata)
+        return merged_metadata
 
     @contextlib.contextmanager
     def restore_path(
@@ -479,9 +486,12 @@ class CheckpointContext:
                 # all workers. But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
-                return any(
-                    self._dist.gather_local(selector(path) if selector is not None else False)
+                upload_path = self._dist.gather_local(
+                    selector(path) if selector is not None else False
                 )
+                # upload_path is not None when we are on the local chief
+                assert upload_path
+                return any(upload_path)
 
             with self._storage_manager.restore_path(storage_id, _selector) as path:
                 # tell local workers that download is finished

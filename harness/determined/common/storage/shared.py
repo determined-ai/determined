@@ -116,6 +116,7 @@ class SharedFSStorageManager(storage.StorageManager):
         else:
 
             def ignore(ign_dir: str, names: List[str]) -> List[str]:
+                assert selector
                 out: List[str] = []
 
                 start_path = os.path.join(self._base_path, src)

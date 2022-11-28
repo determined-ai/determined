@@ -3,7 +3,7 @@ import os
 import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Union
-
+import logging
 import botocore.exceptions
 import pytest
 
@@ -105,22 +105,6 @@ def test_live_s3_lifecycle(require_secrets: bool, tmp_path: Path, prefix: Option
     util.run_storage_lifecycle_test(live_manager, post_delete_cb)
 
 
-@pytest.mark.cloud
-@pytest.mark.parametrize("prefix", [None, "my/test/prefix"])
-def test_live_s3_lifecycle(require_secrets: bool, tmp_path: Path, prefix: Optional[str]) -> None:
-    live_manager = get_live_manager(require_secrets, tmp_path, prefix)
-
-    def post_delete_cb(storage_id: str) -> None:
-        """Search s3 directly to ensure that a checkpoint is actually deleted."""
-        storage_prefix = live_manager.get_storage_prefix(storage_id)
-        found = [obj.key for obj in live_manager.bucket.objects.filter(Prefix=storage_prefix)]
-        if found:
-            file_list = "    " + "\n    ".join(found)
-            raise ValueError(f"found {len(found)} files in bucket after delete:\n{file_list}")
-
-    util.run_storage_lifecycle_test(live_manager, post_delete_cb)
-
-
 def get_tensorboard_fetcher_s3(
     require_secrets: bool, local_sync_dir: str, paths_to_sync: List[str]
 ) -> S3Fetcher:
@@ -163,16 +147,19 @@ def test_tensorboard_fetcher_s3(require_secrets: bool, tmp_path: Path) -> None:
     util.run_tensorboard_fetcher_test(local_sync_dir, fetcher, storage_relpath, put_files, rm_files)
 
 
+def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None:
+    """Search s3 directly to ensure that a checkpoint is actually deleted."""
+    storage_manager.delete(storage_id)
+    storage_prefix = storage_manager.get_storage_prefix(storage_id)
+    found = [obj.key for obj in storage_manager.bucket.objects.filter(Prefix=storage_prefix)]
+    if found:
+        file_list = "    " + "\n    ".join(found)
+        logging.info(f"found {len(found)} files in bucket after delete:\n{file_list}")
+        raise ValueError(f"found {len(found)} files in bucket after delete:\n{file_list}")
+
+
 @pytest.mark.cloud
 def test_live_s3_sharded_upload_download(require_secrets: bool, tmp_path: Path) -> None:
-    def clean_up(storage_id: str, storage_manager) -> None:
-        """Search s3 directly to ensure that a checkpoint is actually deleted."""
-        storage_manager.delete(storage_id)
-        storage_prefix = storage_manager.get_storage_prefix(storage_id)
-        found = [obj.key for obj in storage_manager.bucket.objects.filter(Prefix=storage_prefix)]
-        if found:
-            file_list = "    " + "\n    ".join(found)
-            raise ValueError(f"found {len(found)} files in bucket after delete:\n{file_list}")
 
     with parallel.Execution(2) as pex:
 
@@ -186,14 +173,6 @@ def test_live_s3_sharded_upload_download(require_secrets: bool, tmp_path: Path) 
 
 @pytest.mark.cloud
 def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) -> None:
-    def clean_up(storage_id: str, storage_manager) -> None:
-        """Search s3 directly to ensure that a checkpoint is actually deleted."""
-        storage_manager.delete(storage_id)
-        storage_prefix = storage_manager.get_storage_prefix(storage_id)
-        found = [obj.key for obj in storage_manager.bucket.objects.filter(Prefix=storage_prefix)]
-        if found:
-            file_list = "    " + "\n    ".join(found)
-            raise ValueError(f"found {len(found)} files in bucket after delete:\n{file_list}")
 
     with parallel.Execution(2) as pex:
 

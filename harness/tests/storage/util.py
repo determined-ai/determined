@@ -4,7 +4,7 @@ import pathlib
 import shutil
 import time
 import uuid
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from unittest import mock
 
 import pytest
@@ -39,7 +39,9 @@ EXPECTED_FILES_N1 = {
 }
 
 
-def create_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> None:
+def create_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Optional[Dict] = None) -> None:
+    if expected_files is None:
+        expected_files = EXPECTED_FILES
     """Create a new checkpoint."""
     for file, content in expected_files.items():
         path = checkpoint_dir.joinpath(file)
@@ -78,7 +80,7 @@ def run_storage_lifecycle_test(
     for _ in range(2):
         storage_id = str(uuid.uuid4())
         with manager.store_path(storage_id) as path:
-            create_checkpoint(path, EXPECTED_FILES)
+            create_checkpoint(path)
             checkpoints.append(storage_id)
 
     for storage_id in checkpoints:
@@ -101,7 +103,7 @@ def run_storage_lifecycle_test(
         storage_id = str(uuid.uuid4())
         path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
         try:
-            create_checkpoint(path, EXPECTED_FILES)
+            create_checkpoint(path)
             manager.upload(path, storage_id)
             checkpoints.append(storage_id)
         finally:
@@ -125,7 +127,7 @@ def run_storage_lifecycle_test(
     for _ in range(2):
         storage_id = str(uuid.uuid4())
         with manager.store_path(storage_id) as path:
-            create_checkpoint(path, EXPECTED_FILES)
+            create_checkpoint(path)
             checkpoints.append(storage_id)
 
     expected_files_subset = {
@@ -134,7 +136,7 @@ def run_storage_lifecycle_test(
         "empty_dir/": None,
     }
 
-    def selector(x):
+    def selector(x: str) -> bool:
         return x in ["subdir", "subdir/file1.txt", "empty_dir"]
 
     # Test restore_path with selector
@@ -289,10 +291,9 @@ def run_storage_upload_download_sharded_test(
         f"{[os.path.join(dp, f) for dp, dn, fn in os.walk(ckpt_dir) for f in fn]}"
     )
 
+    metadata: Optional[Dict[str, Any]] = None
     if pex.distributed.rank == 0:
         metadata = {"steps_completed": 1}
-    else:
-        metadata = None
 
     # upload sharded data
     storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True)
@@ -311,44 +312,51 @@ def run_storage_upload_download_sharded_test(
     download_dir2 = tmp_path.joinpath(f"test2_download_{pex.distributed.rank}")
     if pex.distributed.rank == 0:
 
-        def selector(x):
-            return x == "subdir/file3_0.txt"
+        def selector(x: str) -> bool:
+            return x == "subdir/file3_0"
 
     else:
 
-        def selector(x):
+        def selector(x: str) -> bool:
             return x == "file1_1"
+    try:
+        checkpoint_context.download(storage_id, download_dir2, selector=selector)
 
-    checkpoint_context.download(storage_id, download_dir2, selector=selector)
-
-    if pex.distributed.rank == 0:
-        validate_checkpoint(
-            download_dir2,
-            expected_files={"subdir/file3_0.txt": "nested file node 0", "subdir/": None},
-        )
-    else:
-        validate_checkpoint(download_dir2, expected_files={"file1_1": "file 1 node 1"})
+        if pex.distributed.rank == 0:
+            validate_checkpoint(
+                download_dir2,
+                expected_files={"subdir/file3_0": "nested file node 0", "subdir/": None},
+            )
+        else:
+            validate_checkpoint(download_dir2, expected_files={"file1_1": "file 1 node 1"})
+    finally:
+        shutil.rmtree(download_dir2, ignore_errors=True)
 
     # 3.test downloading with and w/o selector
     download_dir3 = tmp_path.joinpath(f"test3_download_{pex.distributed.rank}")
     if pex.distributed.rank == 0:
 
-        def selector(x):
+        def selector(x: str) -> bool:
             return x in EXPECTED_FILES_N0
 
     else:
         selector = None
 
-    checkpoint_context.download(storage_id, download_dir3, selector=selector)
-    if pex.distributed.rank == 0:
-        validate_checkpoint(download_dir3, expected_files=EXPECTED_FILES_N0)
-    else:
-        assert not download_dir3.exists()
+    try:
+        checkpoint_context.download(storage_id, download_dir3, selector=selector)
+        if pex.distributed.rank == 0:
+            validate_checkpoint(download_dir3, expected_files=EXPECTED_FILES_N0)
+        else:
+            assert not download_dir3.exists()
+    finally:
+        shutil.rmtree(download_dir3, ignore_errors=True)
 
     # cleanup
     if pex.distributed.rank == 0 and clean_up is not None:
         clean_up(storage_id, storage_manager)
+    logging.info(f"before broadcast {pex.distributed.rank}")
     pex.distributed.allgather(None)
+    logging.info(f" after broadcast {pex.distributed.rank}")
 
     # 1. upload sharded data from rank 0 only
     storage_id = checkpoint_context.upload(
@@ -369,7 +377,10 @@ def run_storage_upload_download_sharded_test(
     )
     download_dir5 = tmp_path.joinpath(f"test5_download_{pex.distributed.rank}")
     checkpoint_context.download(storage_id, download_dir5)
-    validate_checkpoint(download_dir5, expected_files={**EXPECTED_FILES_N1, **{"metadata.json": '{\n  "steps_completed": 1\n}'}})
+    validate_checkpoint(
+        download_dir5,
+        expected_files={**EXPECTED_FILES_N1, **{"metadata.json": '{\n  "steps_completed": 1\n}'}},
+    )
 
     if pex.distributed.rank == 0 and clean_up is not None:
         clean_up(storage_id, storage_manager)
@@ -385,10 +396,9 @@ def run_storage_store_restore_sharded_test(
     checkpoint_context = create_checkpoint_context(pex, storage_manager)
 
     # upload sharded data
+    metadata: Optional[Dict[str, int]] = None
     if pex.distributed.rank == 0:
         metadata = {"steps_completed": 1}
-    else:
-        metadata = None
 
     with checkpoint_context.store_path(metadata, shard=True) as (path, storage_id):
         logging.info(f"storage_id={storage_id}")
@@ -399,21 +409,24 @@ def run_storage_store_restore_sharded_test(
             create_checkpoint(path, EXPECTED_FILES_N1)
 
     pex.distributed.broadcast(None)
+    selector: Optional[Callable[[str], bool]]
 
     # 1. test downloading with selector: every rank gets selected files
     if pex.distributed.rank == 0:
 
-        def selector(x):
+        def selector(x: str) -> bool:
             return x == "subdir/file3_0"
 
     else:
 
-        def selector(x):
+        def selector(x: str) -> bool:
             return x == "file1_1"
 
     with checkpoint_context.restore_path(storage_id, selector=selector) as path:
         if pex.distributed.rank == 0:
-            validate_checkpoint(path, expected_files={"subdir/file3_0": "nested file node 0", "subdir/": None})
+            validate_checkpoint(
+                path, expected_files={"subdir/file3_0": "nested file node 0", "subdir/": None}
+            )
         else:
             validate_checkpoint(path, expected_files={"file1_1": "file 1 node 1"})
 
@@ -422,7 +435,7 @@ def run_storage_store_restore_sharded_test(
     # 2.test downloading with and w/o selector
     if pex.distributed.rank == 0:
 
-        def selector(x):
+        def selector(x: str) -> bool:
             return x in list(EXPECTED_FILES_N0.keys())
 
     else:
@@ -435,12 +448,14 @@ def run_storage_store_restore_sharded_test(
             validate_checkpoint(path, expected_files={})
 
     # cleanup
-    if pex.distributed.rank == 0:
+    if pex.distributed.rank == 0 and clean_up is not None:
         clean_up(storage_id, storage_manager)
     pex.distributed.broadcast(None)
 
 
-def create_checkpoint_context(pex, storage_manager):
+def create_checkpoint_context(
+    pex: parallel.Execution, storage_manager: storage.StorageManager
+) -> core.CheckpointContext:
     session = mock.MagicMock()
     response = requests.Response()
     response.status_code = 200
