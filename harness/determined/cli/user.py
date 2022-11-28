@@ -69,7 +69,7 @@ def log_out_user(parsed_args: Namespace) -> None:
         pass
 
     token_store = authentication.TokenStore(parsed_args.master)
-    token_store.drop_user(det_obj.auth.get_session_user()) # get current user instead
+    token_store.drop_user(det_obj.auth.get_session_user())
 
 
 @login_sdk_client
