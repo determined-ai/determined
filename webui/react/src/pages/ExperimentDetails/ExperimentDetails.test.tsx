@@ -13,6 +13,7 @@ import {
   getWorkspace,
 } from 'services/api';
 import history from 'shared/routes/history';
+import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
@@ -39,6 +40,7 @@ jest.mock('services/api', () => ({
   getProject: jest.fn(),
   getTrialDetails: jest.fn(),
   getWorkspace: jest.fn(),
+  getWorkspaces: jest.fn().mockReturnValue({ workspaces: [] }),
 }));
 
 jest.mock('hooks/useTelemetry', () => ({
@@ -64,16 +66,18 @@ const setup = () => {
   const view = render(
     <StoreProvider>
       <HelmetProvider>
-        <HistoryRouter history={history}>
-          <ExperimentDetails />
-        </HistoryRouter>
+        <WorkspacesProvider>
+          <HistoryRouter history={history}>
+            <ExperimentDetails />
+          </HistoryRouter>
+        </WorkspacesProvider>
       </HelmetProvider>
     </StoreProvider>,
   );
   return { view };
 };
 
-describe('Experment Details Page', () => {
+describe('Experiment Details Page', () => {
   describe('Invalid Experiment ID', () => {
     const INVALID_ID = 'beadbead';
 
