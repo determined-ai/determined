@@ -58,7 +58,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
   const { canAssignRoles, canModifyPermissions } = usePermissions();
   const { knownRoles } = useStore();
 
-  const useAgent = Form.useWatch('useAgent', form);
+  const useAgent = Form.useWatch<FormValues>('useAgent', form);
 
   useEffect(() => {
     form.setFieldsValue({
@@ -247,6 +247,8 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
         formData.agentUserGroup = agentUserGroup;
       }
+
+      delete formData.useAgent;
 
       try {
         if (user) {
