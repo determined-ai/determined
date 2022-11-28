@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
 
@@ -773,7 +774,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	if priority == nil {
 		return nil
 	}
-	oldPriority := rm.DefaultSchedulingPriority
+	oldPriority := config.DefaultSchedulingPriority
 	var oldPriorityPtr *int
 	resources := e.Config.Resources()
 	if resources.Priority() != nil {
@@ -804,7 +805,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 			Handler:  ctx.Self(),
 		}).(type) {
 		case nil:
-		case rm.ErrUnsupported:
+		case rmerrors.ErrUnsupported:
 			ctx.Log().WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
@@ -830,7 +831,7 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		Handler: ctx.Self(),
 	}).(type) {
 	case nil:
-	case rm.ErrUnsupported:
+	case rmerrors.ErrUnsupported:
 		ctx.Log().WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		resources.SetWeight(oldWeight)
