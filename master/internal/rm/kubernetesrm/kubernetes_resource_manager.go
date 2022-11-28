@@ -1,10 +1,7 @@
 package kubernetesrm
 
 import (
-	"bytes"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"time"
 
@@ -61,7 +58,7 @@ func New(
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) ResourceManager {
-	tlsConfig, err := makeTLSConfig(cert)
+	tlsConfig, err := model.MakeTLSConfig(cert)
 	if err != nil {
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
@@ -132,6 +129,19 @@ func (k ResourceManager) GetAgents(
 	msg *apiv1.GetAgentsRequest,
 ) (resp *apiv1.GetAgentsResponse, err error) {
 	return resp, actorrm.AskAt(k.Ref().System(), sproto.PodsAddr, msg, &resp)
+}
+
+// NotifyContainerRunning receives a notification from the container to let
+// the master know that the container is running.
+func (k ResourceManager) NotifyContainerRunning(
+	ctx actor.Messenger,
+	msg sproto.NotifyContainerRunning,
+) error {
+	// Kubernetes Resource Manager does not implement a handler for the
+	// NotifyContainerRunning message, as it is only used on HPC
+	// (High Performance Computing).
+	return errors.New(
+		"the NotifyContainerRunning message is unsupported for KubernetesResourceManager")
 }
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
@@ -794,49 +804,4 @@ func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 
 func (p k8sPodResources) Persist() error {
 	return nil
-}
-
-func makeTLSConfig(cert *tls.Certificate) (model.TLSClientConfig, error) {
-	if cert == nil {
-		return model.TLSClientConfig{}, nil
-	}
-	var content bytes.Buffer
-	for _, c := range cert.Certificate {
-		if err := pem.Encode(&content, &pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: c,
-		}); err != nil {
-			return model.TLSClientConfig{}, errors.Wrap(err, "failed to encode PEM")
-		}
-	}
-
-	leaf, err := x509.ParseCertificate(cert.Certificate[0])
-	if err != nil {
-		return model.TLSClientConfig{}, errors.Wrap(err, "failed to parse certificate")
-	}
-	certName := ""
-	if len(leaf.DNSNames) > 0 {
-		certName = leaf.DNSNames[0]
-	} else if len(leaf.IPAddresses) > 0 {
-		certName = leaf.IPAddresses[0].String()
-	}
-
-	return model.TLSClientConfig{
-		Enabled:         true,
-		CertBytes:       content.Bytes(),
-		CertificateName: certName,
-	}, nil
-}
-
-// NotifyContainerRunning receives a notification from the container to let
-// the master know that the container is running.
-func (k ResourceManager) NotifyContainerRunning(
-	ctx actor.Messenger,
-	msg sproto.NotifyContainerRunning,
-) error {
-	// Kubernetes Resource Manager does not implement a handler for the
-	// NotifyContainerRunning message, as it is only used on HPC
-	// (High Performance Computing).
-	return errors.New(
-		"the NotifyContainerRunning message is unsupported for KubernetesResourceManager")
 }
