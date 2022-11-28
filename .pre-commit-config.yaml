@@ -41,5 +41,6 @@ repos:
     rev: '20.8b1'
     hooks:
       - id: black
+        # known issue fixed in a newer version: https://github.com/psf/black/issues/2964#issuecomment-1080974737
         additional_dependencies: ['click==8.0.4']
         exclude: ^(examples|harness/determined/common/api/bindings.py)
