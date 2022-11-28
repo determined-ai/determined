@@ -360,7 +360,7 @@ func pbTimestampSlice(n int) []*timestamppb.Timestamp {
 	for i := 0; i < n; i++ {
 		ts[i] = ptypes.TimestampNow()
 		// Round off to millis.
-		ts[i].Nanos = int32(math.Round(float64(ts[i].Nanos)/float64(time.Millisecond)) *
+		ts[i].Nanos = int32(math.Floor(float64(ts[i].Nanos)/float64(time.Millisecond)) *
 			float64(time.Millisecond))
 	}
 	return ts
