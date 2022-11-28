@@ -1,4 +1,3 @@
-import random
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -51,7 +50,11 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
         val = batch[0]
         np_rand = np.random.randint(1, 1000)
-        rand_rand = random.randint(0, 1000)
+        # Disable random.rand test because tensorboard async uploading can mess with random state
+        # in unexpected way.
+        # We should reenable this test when the upcoming feature flag to enable/disable async
+        # tensorboard uploading is released.
+        # rand_rand = random.randint(0, 1000)
         torch_rand = torch.randint(1000, (1,))
         gpu_rand = torch.randint(1000, (1,), device=self.context.device)
 
@@ -60,7 +63,7 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         return {
             "validation_error": val,
             "np_rand": np_rand,
-            "rand_rand": rand_rand,
+            # "rand_rand": rand_rand,
             "torch_rand": torch_rand,
             "gpu_rand": gpu_rand,
         }
