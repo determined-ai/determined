@@ -33,6 +33,8 @@
       - CAP_STRING
     drop_capabilities:
       - OTHER_CAP_STRING
+    docker_flags:
+      - DOCKERFLAG
   defaulted:
     environment_variables:
       cpu:
@@ -57,6 +59,8 @@
       - CAP_STRING
     drop_capabilities:
       - OTHER_CAP_STRING
+    docker_flags:
+      - DOCKERFLAG      
 
 - name: single searcher defaults
   sane_as:

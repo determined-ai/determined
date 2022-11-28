@@ -104,6 +104,18 @@ var minExpConfig = expconf.ExperimentConfig{
 	},
 }
 
+func TestInvalidDockerFlags(t *testing.T) {
+	api, _, ctx := setupAPITest(t)
+
+	_, err := api.CreateExperiment(ctx, &apiv1.CreateExperimentRequest{
+		Config: minExpConfToYaml(t) + `
+environment: 
+  docker_flags: ['--a']
+`,
+	})
+	require.ErrorContains(t, err, "invalid docker flags: unknown flag: --a")
+}
+
 func TestGetExperimentLabels(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t)
 	_, p0 := createProjectAndWorkspace(ctx, t, api)

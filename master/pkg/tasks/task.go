@@ -9,10 +9,12 @@ import (
 
 	docker "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/dockerflags"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -195,7 +197,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 }
 
 // ToDockerSpec converts a task spec to a docker container spec.
-func (t *TaskSpec) ToDockerSpec() cproto.Spec {
+func (t *TaskSpec) ToDockerSpec() (cproto.Spec, error) {
 	var envVars []string
 	for k, v := range t.EnvVars() {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", k, v))
@@ -228,6 +230,28 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 		})
 	}
 
+	conf, hostConf, networkConf, err := dockerflags.Parse(env.DockerFlags())
+	if err != nil {
+		return cproto.Spec{}, errors.Wrap(err, "error adding docker flags to Docker config")
+	}
+
+	conf.User = getUser(t.AgentUserGroup)
+	conf.ExposedPorts = toPortSet(env.Ports())
+	conf.Env = envVars
+	conf.Cmd = t.Entrypoint
+	conf.Image = env.Image().For(deviceType)
+	conf.WorkingDir = t.WorkDir
+
+	hostConf.Privileged = false // Users setting privileged could be bad from a security standpoint.
+
+	hostConf.NetworkMode = network
+	hostConf.Mounts = t.Mounts
+	hostConf.PublishAllPorts = true
+	hostConf.ShmSize = shmSize
+	hostConf.CapAdd = env.AddCapabilities()
+	hostConf.CapDrop = env.DropCapabilities()
+	hostConf.Resources.Devices = devices
+
 	runArchives, rootArchives := t.Archives()
 	spec := cproto.Spec{
 		TaskType: string(t.TaskType),
@@ -236,32 +260,15 @@ func (t *TaskSpec) ToDockerSpec() cproto.Spec {
 			ForcePull: env.ForcePullImage(),
 		},
 		RunSpec: cproto.RunSpec{
-			ContainerConfig: docker.Config{
-				User:         getUser(t.AgentUserGroup),
-				ExposedPorts: toPortSet(env.Ports()),
-				Env:          envVars,
-				Cmd:          t.Entrypoint,
-				Image:        env.Image().For(deviceType),
-				WorkingDir:   t.WorkDir,
-			},
-			HostConfig: docker.HostConfig{
-				NetworkMode:     network,
-				Mounts:          t.Mounts,
-				PublishAllPorts: true,
-				ShmSize:         shmSize,
-				CapAdd:          env.AddCapabilities(),
-				CapDrop:         env.DropCapabilities(),
-
-				Resources: docker.Resources{
-					Devices: devices,
-				},
-			},
+			ContainerConfig:  *conf,
+			HostConfig:       *hostConf,
+			NetworkingConfig: *networkConf,
 			Archives:         append(runArchives, rootArchives...),
 			UseFluentLogging: true,
 		},
 	}
 
-	return spec
+	return spec, nil
 }
 
 // workDirArchive ensures that the workdir is created and owned by the user.

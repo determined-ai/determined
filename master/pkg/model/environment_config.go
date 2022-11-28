@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/dockerflags"
 
 	"github.com/ghodss/yaml"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -38,6 +39,7 @@ type Environment struct {
 
 	AddCapabilities  []string `json:"add_capabilities"`
 	DropCapabilities []string `json:"drop_capabilities"`
+	DockerFlags      []string `json:"docker_flags"`
 }
 
 // RuntimeItem configures the runtime image.
@@ -150,7 +152,13 @@ func (r *RuntimeItems) For(deviceType device.Type) []string {
 
 // Validate implements the check.Validatable interface.
 func (e Environment) Validate() []error {
-	return validatePodSpec(e.PodSpec)
+	var errs []error
+	_, _, _, err := dockerflags.Parse(e.DockerFlags) // nolint: dogsled
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return append(errs, validatePodSpec(e.PodSpec)...)
 }
 
 func validatePodSpec(podSpec *k8sV1.Pod) []error {

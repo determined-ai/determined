@@ -949,6 +949,16 @@ schemas = {
                 "type": "string"
             }
         },
+        "docker_flags": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "string"
+            }
+        },
         "pod_spec": {
             "type": [
                 "object",

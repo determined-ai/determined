@@ -278,6 +278,8 @@ def test_shm_size_command(
             "config.yaml": f"""
 resources:
   shm_size: {actual}
+environment:
+  docker_flags: ["--shm-size", "90000"] # Ignores docker flags since we specify shm_size.
 """
         },
     ) as tree:
@@ -294,6 +296,46 @@ tail -1 | \
 [ "$(awk '{{print $2}}')" = '{expected}' ]"""
         ]
         _run_and_verify_exit_code_zero(cmd)
+
+
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
+def test_docker_flags_command(tmp_path: Path) -> None:
+    _run_cmd_with_config_expecting_failure(
+        "exit 0",
+        "invalid docker flags: unknown flag: --a",
+        {"environment": {"docker_flags": ["--a"]}},
+    )
+
+    # Verify CPU shares config is applied.
+    cpu_shares = 17
+    with cmd.interactive_command(
+        "command",
+        "run",
+        "--config",
+        f"environment.docker_flags=['--cpu-shares={cpu_shares}']",
+        "echo hello world; echo hello world; sleep infinity",
+    ) as command:
+        assert command.task_id is not None
+        for line in command.stdout:
+            if "hello world" in line:
+                break
+
+        parent = cmd.get_command(command.task_id)["container"]["parent"]
+        client = docker.from_env()
+        running_containers = client.containers.list()
+        for i in running_containers:
+            if i.labels.get("ai.determined.container.parent") == parent:
+                inspect_output = client.api.inspect_container(i.id)
+                assert inspect_output["HostConfig"]["CpuShares"] == cpu_shares
+                break
+        else:
+            pytest.fail(
+                "did not find command container with label "
+                + f"ai.determined.container.parent=={parent} "
+                + "instead found containers with labels "
+                + f"{[c.labels for c in running_containers]}"
+            )
 
 
 @pytest.mark.slow

@@ -106,5 +106,6 @@ func (e Environment) ToExpconf() expconf.EnvironmentConfig {
 		RawPodSpec:              (*expconf.PodSpec)(e.PodSpec),
 		RawAddCapabilities:      e.AddCapabilities,
 		RawDropCapabilities:     e.DropCapabilities,
+		RawDockerFlags:          expconf.DockerFlags(e.DockerFlags),
 	}).(expconf.EnvironmentConfig)
 }

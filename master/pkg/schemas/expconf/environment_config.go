@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/dockerflags"
 )
 
 // PodSpec is just a k8sV1.Pod with custom methods, since k8sV1.Pod is not reflect-friendly.
@@ -51,8 +52,28 @@ type EnvironmentConfigV0 struct {
 	RawForcePullImage *bool             `json:"force_pull_image"`
 	RawPodSpec        *PodSpec          `json:"pod_spec"`
 
-	RawAddCapabilities  []string `json:"add_capabilities"`
-	RawDropCapabilities []string `json:"drop_capabilities"`
+	RawAddCapabilities  []string    `json:"add_capabilities"`
+	RawDropCapabilities []string    `json:"drop_capabilities"`
+	RawDockerFlags      DockerFlags `json:"docker_flags"`
+}
+
+// DockerFlags is a wrapper over []string so we can validate flags on experiment submit.
+type DockerFlags []string
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (d *DockerFlags) UnmarshalJSON(b []byte) error {
+	var flags []string
+	if err := json.Unmarshal(b, &flags); err != nil {
+		return errors.Wrap(err, "unable to parse docker flags")
+	}
+
+	_, _, _, err := dockerflags.Parse(flags) // nolint: dogsled
+	if err != nil {
+		return errors.Wrap(err, "invalid docker flags")
+	}
+
+	*d = DockerFlags(flags)
+	return nil
 }
 
 //go:generate ../gen.sh
