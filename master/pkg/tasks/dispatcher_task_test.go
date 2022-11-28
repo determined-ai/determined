@@ -119,6 +119,8 @@ func Test_getPortMappings(t *testing.T) {
 }
 
 func TestTaskSpec_computeLaunchConfig(t *testing.T) {
+	gpuTypeValue := "tesla"
+
 	type args struct {
 		slotType          device.Type
 		workDir           string
@@ -131,6 +133,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 		containerPaths    []string
 		modes             []string
 		launchingUser     string
+		gpuType           *string
 	}
 	tests := []struct {
 		name string
@@ -143,6 +146,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				slotType:       device.CUDA,
 				workDir:        workDir,
 				slurmPartition: "partitionName",
+				gpuType:        &gpuTypeValue,
 			},
 			want: &map[string]string{
 				"workingDir":          workDir,
@@ -150,6 +154,7 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				"enableWritableTmpFs": trueValue,
 				"exportAll":           trueValue,
 				"queue":               "partitionName",
+				"gpuType":             gpuTypeValue,
 			},
 		},
 		{
@@ -237,8 +242,15 @@ func TestTaskSpec_computeLaunchConfig(t *testing.T) {
 				RawDropCapabilities:     tt.args.dropCaps,
 			}
 
+			slurmOpts := expconf.SlurmConfig{
+				RawSlotsPerNode: nil,
+				RawGpuType:      tt.args.gpuType,
+				RawSbatchArgs:   nil,
+			}
+
 			tr := &TaskSpec{
 				Environment: environment,
+				SlurmConfig: slurmOpts,
 			}
 
 			if len(tt.args.hostPaths) > 0 {
@@ -474,11 +486,13 @@ func Test_ToDispatcherManifest(t *testing.T) {
 		containerRunType       string
 		isPbsScheduler         bool
 		slotType               device.Type
+		gpuType                string
 		tresSupported          bool
 		gresSupported          bool
 		Slurm                  []string
 		Pbs                    []string
 		wantCarrier            string
+		wantGpuType            string
 		wantResourcesInstances *map[string]int32
 		wantResourcesGpus      *map[string]int32
 		wantSlurmArgs          []string
@@ -612,7 +626,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			}
 			slurmOpts := expconf.SlurmConfig{
 				RawSlotsPerNode: nil,
-				RawGpuType:      nil,
+				RawGpuType:      &tt.gpuType,
 				RawSbatchArgs:   tt.Slurm,
 			}
 			pbsOpts := expconf.PbsConfig{
