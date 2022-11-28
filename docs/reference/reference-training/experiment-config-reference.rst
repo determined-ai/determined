@@ -1108,8 +1108,6 @@ workloads for this experiment. For more information on customizing the trial env
    Just like ``add_capabilities`` but corresponding to the ``--cap-drop`` argument of ``docker run``
    rather than ``--cap-add``.
 
-.. _exp-environment-slurm:
-
 ***************
  Optimizations
 ***************
