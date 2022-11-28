@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/uptrace/bun"
 
@@ -24,17 +23,6 @@ func (a *CommandAuthZBasic) CanGetCommand(
 func (a *CommandAuthZBasic) CanGetCommandArtifacts(
 	ctx context.Context, curUser model.User, c *command,
 ) error {
-	return nil
-}
-
-// CanDeleteCommand returns an error if the command
-// is not owned by the current user and the current user is not an admin.
-func (a *CommandAuthZBasic) CanDeleteCommand(
-	ctx context.Context, curUser model.User, c *command,
-) error {
-	if !curUser.Admin {
-		return fmt.Errorf("non admin users may not delete other user's commands")
-	}
 	return nil
 }
 
