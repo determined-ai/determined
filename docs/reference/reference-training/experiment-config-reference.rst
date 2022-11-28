@@ -1294,6 +1294,18 @@ The ``slurm`` section specifies configuration options applicable when the cluste
 
 **Optional Fields**
 
+``gpu_type``
+   An optional GPU type name to be included in the generated Slurm ``--gpus`` or ``--gres`` option
+   if you have configured GPU types within your Slurm gres configuration. Specify this option to
+   select that specific GPU type when there are multiple GPU types within the Slurm partition. The
+   default is to select GPUs without regard to their type. For example, you can request the
+   ``tesla`` GPU type with:
+
+   .. code:: yaml
+
+      slurm:
+         gpu_type: tesla
+
 ``sbatch_args``
    Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
    control of Slurm options not otherwise managed by Determined. For example, to specify required
