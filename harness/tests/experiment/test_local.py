@@ -14,7 +14,7 @@ from tests.experiment.fixtures import (
 
 def test_test_one_batch() -> None:
     with det._local_execution_manager(pathlib.Path(pytorch_onevar_model.__file__).parent):
-        experimental.test_one_batch(
+        experimental.test_one_batch_pytorch(
             trial_class=pytorch_onevar_model.OneVarTrial,
             config={
                 "hyperparameters": {

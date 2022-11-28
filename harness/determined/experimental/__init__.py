@@ -9,4 +9,4 @@ from determined.common.experimental import (
     TrialOrderBy,
     TrialSortBy,
 )
-from determined.experimental._native import test_one_batch
+from determined.experimental._native import test_one_batch, test_one_batch_pytorch

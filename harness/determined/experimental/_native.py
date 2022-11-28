@@ -1,4 +1,5 @@
 import logging
+import sys
 import tempfile
 from typing import Any, Dict, Optional, Type
 
@@ -70,4 +71,33 @@ def test_one_batch(
         logging.info("The test experiment passed.")
         logging.info(
             "Note: to submit an experiment to the cluster, change local parameter to False"
+        )
+
+
+def test_one_batch_pytorch(trial_class: Any, config: Dict) -> Any:
+    try:
+        from determined import pytorch
+    except ImportError:
+        logging.error("unable to import determined.pytorch module")
+        return
+
+    with pytorch.init(
+        hparams=config["hyperparameters"]
+    ) as trial_context:  # type: pytorch.PyTorchTrialContext
+        trial_context._exp_conf = config
+        trial_inst = trial_class(trial_context)
+        trainer = pytorch.Trainer(trial_inst, trial_context)
+        trainer.fit(
+            max_length=pytorch.Batch(1),
+            checkpoint_period=pytorch.TrainUnit._from_values(
+                **config.get("min_checkpoint_period", {"batches": sys.maxsize})
+            ),
+            validation_period=pytorch.TrainUnit._from_values(
+                **config.get("min_validation_period", {"batches": sys.maxsize})
+            ),
+            checkpoint_policy=config.get("checkpoint_policy", "all"),
+            average_aggregated_gradients=config.get("optimizations", {}).get(
+                "average_aggregated_gradients"
+            ),
+            aggregation_frequency=config.get("optimizations", {}).get("aggregation_frequency", 1),
         )
