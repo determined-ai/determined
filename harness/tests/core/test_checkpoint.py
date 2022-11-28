@@ -1,6 +1,6 @@
 import contextlib
 import pathlib
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator, Optional
 from unittest import mock
 
 import pytest
@@ -18,7 +18,9 @@ def make_mock_storage_manager(basedir: pathlib.Path) -> Any:
         yield pathlib.Path(path)
 
     @contextlib.contextmanager
-    def restore_path(storage_id: str) -> Iterator[pathlib.Path]:
+    def restore_path(
+        storage_id: str, selector: Optional[Callable[[str], bool]] = None
+    ) -> Iterator[pathlib.Path]:
         path = basedir.joinpath("restore-path")
         path.mkdir(exist_ok=True)
         yield pathlib.Path(path)

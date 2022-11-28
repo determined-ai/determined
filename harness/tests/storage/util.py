@@ -300,7 +300,6 @@ def run_storage_upload_download_sharded_test(
 
     selector: Optional[Callable[[str], bool]]
 
-
     # 1. test downloading w/o selector: every rank gets all the files + metadata
     download_dir = tmp_path.joinpath(f"test1_download{pex.distributed.rank}")
     try:
