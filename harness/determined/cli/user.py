@@ -7,7 +7,7 @@ from termcolor import colored
 
 from determined.cli import login_sdk_client
 from determined.common import api
-from determined.common.api import authentication
+from determined.common.api import authentication, certs
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
 
@@ -46,27 +46,14 @@ def log_in_user(parsed_args: Namespace) -> None:
     password = getpass.getpass(message)
 
     token_store = authentication.TokenStore(parsed_args.master)
-    token = authentication.do_login(parsed_args.master, username, password)
+    token = authentication.do_login(parsed_args.master, username, password, certs.cli_cert)
     token_store.set_token(username, token)
     token_store.set_active(username)
 
 
-@authentication.optional
 def log_out_user(parsed_args: Namespace) -> None:
-    auth = authentication.cli_auth
-    if auth is None:
-        return
-    try:
-        client.logout()
-    except api.errors.APIException as e:
-        if e.status_code != 401:
-            raise e
-
-    except api.errors.UnauthenticatedException:
-        pass
-
-    token_store = authentication.TokenStore(parsed_args.master)
-    token_store.drop_user(auth.get_session_user())
+    # Log out of the user specified by the command line, or the active user.
+    authentication.logout(parsed_args.master, parsed_args.user, certs.cli_cert)
 
 
 @login_sdk_client
@@ -103,7 +90,7 @@ def change_password(parsed_args: Namespace) -> None:
     # password change so that the user doesn't have to do so manually.
     if parsed_args.target_user is None:
         token_store = authentication.TokenStore(parsed_args.master)
-        token = authentication.do_login(parsed_args.master, username, password)
+        token = authentication.do_login(parsed_args.master, username, password, certs.cli_cert)
         token_store.set_token(username, token)
         token_store.set_active(username)
 
