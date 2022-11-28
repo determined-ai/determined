@@ -28,14 +28,14 @@ EXPECTED_FILES_N0 = {
     "file0_0": "file 0 node 0",
     "file1_0": "file 1 node 0",
     "subdir/": None,
-    "subdir/file3_0.txt": "nested file node 0",
+    "subdir/file3_0": "nested file node 0",
     "metadata.json": '{\n  "steps_completed": 1\n}',
 }
 EXPECTED_FILES_N1 = {
     "file0_1": "file 0 node 1",
     "file1_1": "file 1 node 1",
     "subdir/": None,
-    "subdir/file3_1.txt": "nested file node 1",
+    "subdir/file3_1": "nested file node 1",
 }
 
 
@@ -393,11 +393,10 @@ def run_storage_store_restore_sharded_test(
     with checkpoint_context.store_path(metadata, shard=True) as (path, storage_id):
         logging.info(f"storage_id={storage_id}")
         # create "local" file structure
-        ckpt_dir = path.joinpath(f"ckpt_dir_{pex.distributed.rank}")
         if pex.distributed.rank == 0:
-            create_checkpoint(ckpt_dir, EXPECTED_FILES_N0)
+            create_checkpoint(path, EXPECTED_FILES_N0)
         else:
-            create_checkpoint(ckpt_dir, EXPECTED_FILES_N1)
+            create_checkpoint(path, EXPECTED_FILES_N1)
 
     pex.distributed.broadcast(None)
 
@@ -414,7 +413,7 @@ def run_storage_store_restore_sharded_test(
 
     with checkpoint_context.restore_path(storage_id, selector=selector) as path:
         if pex.distributed.rank == 0:
-            validate_checkpoint(path, expected_files={"subdir/file3_0.txt": "nested file node 0", "subdir/": None})
+            validate_checkpoint(path, expected_files={"subdir/file3_0": "nested file node 0", "subdir/": None})
         else:
             validate_checkpoint(path, expected_files={"file1_1": "file 1 node 1"})
 
