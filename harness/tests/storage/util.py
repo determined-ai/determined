@@ -298,18 +298,19 @@ def run_storage_upload_download_sharded_test(
     # upload sharded data
     storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True)
 
+    selector: Optional[Callable[[str], bool]]
+
+
     # 1. test downloading w/o selector: every rank gets all the files + metadata
-    download_dir1 = tmp_path.joinpath(f"test1_download_{pex.distributed.rank}")
+    download_dir = tmp_path.joinpath(f"test1_download{pex.distributed.rank}")
     try:
-        checkpoint_context.download(storage_id, download_dir1)
-        validate_checkpoint(
-            download_dir1, expected_files={**EXPECTED_FILES_N0, **EXPECTED_FILES_N1}
-        )
+        checkpoint_context.download(storage_id, download_dir)
+        validate_checkpoint(download_dir, expected_files={**EXPECTED_FILES_N0, **EXPECTED_FILES_N1})
     finally:
-        shutil.rmtree(download_dir1, ignore_errors=True)
+        shutil.rmtree(download_dir, ignore_errors=True)
 
     # 2. test downloading with selector: every rank gets selected files
-    download_dir2 = tmp_path.joinpath(f"test2_download_{pex.distributed.rank}")
+    download_dir = tmp_path.joinpath(f"test2_download_{pex.distributed.rank}")
     if pex.distributed.rank == 0:
 
         def selector(x: str) -> bool:
@@ -319,21 +320,22 @@ def run_storage_upload_download_sharded_test(
 
         def selector(x: str) -> bool:
             return x == "file1_1"
+
     try:
-        checkpoint_context.download(storage_id, download_dir2, selector=selector)
+        checkpoint_context.download(storage_id, download_dir, selector=selector)
 
         if pex.distributed.rank == 0:
             validate_checkpoint(
-                download_dir2,
+                download_dir,
                 expected_files={"subdir/file3_0": "nested file node 0", "subdir/": None},
             )
         else:
-            validate_checkpoint(download_dir2, expected_files={"file1_1": "file 1 node 1"})
+            validate_checkpoint(download_dir, expected_files={"file1_1": "file 1 node 1"})
     finally:
-        shutil.rmtree(download_dir2, ignore_errors=True)
+        shutil.rmtree(download_dir, ignore_errors=True)
 
     # 3.test downloading with and w/o selector
-    download_dir3 = tmp_path.joinpath(f"test3_download_{pex.distributed.rank}")
+    download_dir = tmp_path.joinpath(f"test3_download_{pex.distributed.rank}")
     if pex.distributed.rank == 0:
 
         def selector(x: str) -> bool:
@@ -343,13 +345,13 @@ def run_storage_upload_download_sharded_test(
         selector = None
 
     try:
-        checkpoint_context.download(storage_id, download_dir3, selector=selector)
+        checkpoint_context.download(storage_id, download_dir, selector=selector)
         if pex.distributed.rank == 0:
-            validate_checkpoint(download_dir3, expected_files=EXPECTED_FILES_N0)
+            validate_checkpoint(download_dir, expected_files=EXPECTED_FILES_N0)
         else:
-            assert not download_dir3.exists()
+            assert not download_dir.exists()
     finally:
-        shutil.rmtree(download_dir3, ignore_errors=True)
+        shutil.rmtree(download_dir, ignore_errors=True)
 
     # cleanup
     if pex.distributed.rank == 0 and clean_up is not None:
@@ -362,9 +364,9 @@ def run_storage_upload_download_sharded_test(
     storage_id = checkpoint_context.upload(
         ckpt_dir if pex.distributed.rank == 0 else None, metadata, shard=True
     )
-    download_dir4 = tmp_path.joinpath(f"test4_download_{pex.distributed.rank}")
-    checkpoint_context.download(storage_id, download_dir4)
-    validate_checkpoint(download_dir4, expected_files=EXPECTED_FILES_N0)
+    download_dir = tmp_path.joinpath(f"test4_download_{pex.distributed.rank}")
+    checkpoint_context.download(storage_id, download_dir)
+    validate_checkpoint(download_dir, expected_files=EXPECTED_FILES_N0)
 
     if pex.distributed.rank == 0 and clean_up is not None:
         clean_up(storage_id, storage_manager)
@@ -375,10 +377,10 @@ def run_storage_upload_download_sharded_test(
     storage_id = checkpoint_context.upload(
         ckpt_dir if pex.distributed.rank == 1 else None, metadata, shard=True
     )
-    download_dir5 = tmp_path.joinpath(f"test5_download_{pex.distributed.rank}")
-    checkpoint_context.download(storage_id, download_dir5)
+    download_dir = tmp_path.joinpath(f"test5_download_{pex.distributed.rank}")
+    checkpoint_context.download(storage_id, download_dir)
     validate_checkpoint(
-        download_dir5,
+        download_dir,
         expected_files={**EXPECTED_FILES_N1, **{"metadata.json": '{\n  "steps_completed": 1\n}'}},
     )
 

@@ -155,10 +155,12 @@ class CheckpointContext:
                 )
             return self._upload_single(ckpt_dir, metadata)
         else:
-            storage_id: Optional[str] = None
+            storage_id = None
             if self._dist.rank == 0:
                 storage_id = str(uuid.uuid4())
             storage_id = self._dist.broadcast(storage_id)
+
+            assert storage_id
             return self._upload_sharded(ckpt_dir, storage_id, metadata)
 
     def _upload_single(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> str:
