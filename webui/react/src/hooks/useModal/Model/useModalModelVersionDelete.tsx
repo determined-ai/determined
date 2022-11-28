@@ -41,14 +41,14 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
     try {
       await deleteModelVersion({
         modelName: modelVersion.model.name ?? '',
-        versionId: modelVersion.id ?? 0,
+        versionNum: modelVersion.version ?? 0,
       });
       routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: `Unable to delete model version ${modelVersion.id}.`,
+        publicSubject: `Unable to delete model version ${modelVersion.version}.`,
         silent: false,
         type: ErrorType.Server,
       });

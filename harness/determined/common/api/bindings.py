@@ -12000,12 +12000,12 @@ def delete_DeleteModelVersion(
     session: "api.Session",
     *,
     modelName: str,
-    modelVersionId: int,
+    modelVersionNum: int,
 ) -> None:
     _params = None
     _resp = session._do_request(
         method="DELETE",
-        path=f"/api/v1/models/{modelName}/versions/{modelVersionId}",
+        path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}",
         params=_params,
         json=None,
         data=None,
@@ -12941,12 +12941,12 @@ def get_GetModelVersion(
     session: "api.Session",
     *,
     modelName: str,
-    modelVersion: int,
+    modelVersionNum: int,
 ) -> "v1GetModelVersionResponse":
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/models/{modelName}/versions/{modelVersion}",
+        path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}",
         params=_params,
         json=None,
         data=None,
@@ -14340,12 +14340,12 @@ def patch_PatchModelVersion(
     *,
     body: "v1PatchModelVersion",
     modelName: str,
-    modelVersionId: int,
+    modelVersionNum: int,
 ) -> "v1PatchModelVersionResponse":
     _params = None
     _resp = session._do_request(
         method="PATCH",
-        path=f"/api/v1/models/{modelName}/versions/{modelVersionId}",
+        path=f"/api/v1/models/{modelName}/versions/{modelVersionNum}",
         params=_params,
         json=body.to_json(True),
         data=None,
