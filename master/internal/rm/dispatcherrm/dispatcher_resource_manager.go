@@ -1,4 +1,4 @@
-package rm
+package dispatcherrm
 
 import (
 	"context"
@@ -22,6 +22,9 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -46,6 +49,12 @@ const (
 	pbsResourcesCarrier    = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
 	launcherMinimumVersion = "3.1.3"
 )
+
+// schedulerTick periodically triggers the scheduler to act.
+type schedulerTick struct{}
+
+// actionCoolDown is the rate limit for queue submission.
+const actionCoolDown = 500 * time.Millisecond
 
 // hpcResources is a data type describing the HPC resources available
 // to Slurm on on the Launcher node.
@@ -115,7 +124,7 @@ type (
 
 // DispatcherResourceManager is a resource manager for managing slurm resources.
 type DispatcherResourceManager struct {
-	*ActorResourceManager
+	*actorrm.ResourceManager
 }
 
 // GetResourcePoolRef just returns a ref to the dispatcher RM since it doesn't have separate
@@ -159,7 +168,7 @@ func (d *DispatcherResourceManager) ResolveResourcePool(
 // ValidateResourcePool validates that the given resource pool exists.
 func (d *DispatcherResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
 	var resp hasSlurmPartitionResponse
-	switch err := d.ask(ctx, hasSlurmPartitionRequest{PoolName: name}, &resp); {
+	switch err := d.Ask(ctx, hasSlurmPartitionRequest{PoolName: name}, &resp); {
 	case err != nil:
 		return fmt.Errorf("requesting resource pool: %w", err)
 	case !resp.HasResourcePool:
@@ -187,8 +196,8 @@ func (d *DispatcherResourceManager) IsReattachEnabledForRP(
 	return true
 }
 
-// NewDispatcherResourceManager returns a new dispatcher resource manager.
-func NewDispatcherResourceManager(
+// New returns a new dispatcher resource manager.
+func New(
 	system *actor.System,
 	db *db.PgDB,
 	echo *echo.Echo,
@@ -196,7 +205,7 @@ func NewDispatcherResourceManager(
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) *DispatcherResourceManager {
-	tlsConfig, err := makeTLSConfig(cert)
+	tlsConfig, err := model.MakeTLSConfig(cert)
 	if err != nil {
 		panic(errors.Wrap(err, "failed to set up TLS config"))
 	}
@@ -218,7 +227,7 @@ func NewDispatcherResourceManager(
 		rm,
 	)
 	system.Ask(ref, actor.Ping{}).Get()
-	return &DispatcherResourceManager{ActorResourceManager: WrapRMActor(ref)}
+	return &DispatcherResourceManager{ResourceManager: actorrm.Wrap(ref)}
 }
 
 // dispatcherResourceProvider manages the lifecycle of dispatcher resources.
@@ -227,10 +236,10 @@ type dispatcherResourceManager struct {
 
 	apiClient                *launcher.APIClient
 	hpcResourcesManifest     *launcher.Manifest
-	reqList                  *taskList
-	groups                   map[*actor.Ref]*group
+	reqList                  *tasklist.TaskList
+	groups                   map[*actor.Ref]*tasklist.Group
 	dispatchIDToAllocationID map[string]model.AllocationID
-	slotsUsedPerGroup        map[*group]int
+	slotsUsedPerGroup        map[*tasklist.Group]int
 	masterTLSConfig          model.TLSClientConfig
 	loggingConfig            model.LoggingConfig
 	jobWatcher               *launcherMonitor
@@ -276,10 +285,10 @@ func newDispatcherResourceManager(
 
 		apiClient:                apiClient,
 		hpcResourcesManifest:     hpcResourcesManifest,
-		reqList:                  newTaskList(),
-		groups:                   make(map[*actor.Ref]*group),
+		reqList:                  tasklist.New(),
+		groups:                   make(map[*actor.Ref]*tasklist.Group),
 		dispatchIDToAllocationID: make(map[string]model.AllocationID),
-		slotsUsedPerGroup:        make(map[*group]int),
+		slotsUsedPerGroup:        make(map[*tasklist.Group]int),
 
 		masterTLSConfig:     masterTLSConfig,
 		loggingConfig:       loggingConfig,
@@ -317,7 +326,7 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		sproto.PendingPreemption,
 		sproto.NotifyContainerRunning,
 		sproto.ResourcesReleased,
-		groupActorStopped:
+		tasklist.GroupActorStopped:
 		return m.receiveRequestMsg(ctx)
 
 	case
@@ -332,15 +341,15 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		return m.receiveJobQueueMsg(ctx)
 
 	case sproto.GetAllocationHandler:
-		ctx.Respond(getTaskHandler(m.reqList, msg.ID))
+		ctx.Respond(m.reqList.TaskHandler(msg.ID))
 
 	case sproto.GetAllocationSummary:
-		if resp := getTaskSummary(m.reqList, msg.ID, m.groups, slurmSchedulerType); resp != nil {
+		if resp := m.reqList.TaskSummary(msg.ID, m.groups, slurmSchedulerType); resp != nil {
 			ctx.Respond(*resp)
 		}
 
 	case sproto.GetAllocationSummaries:
-		ctx.Respond(getTaskSummaries(m.reqList, m.groups, slurmSchedulerType))
+		ctx.Respond(m.reqList.TaskSummaries(m.groups, slurmSchedulerType))
 
 	case *apiv1.GetResourcePoolsRequest:
 		resourcePoolSummary, err := m.summarizeResourcePool(ctx)
@@ -494,7 +503,11 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		m.addTask(ctx, msg)
 
 	case StartDispatcherResources:
-		req := m.reqList.taskByHandler[msg.TaskActor]
+		req, ok := m.reqList.TaskByHandler(msg.TaskActor)
+		if !ok {
+			sendResourceStateChangedErrorResponse(ctx, errors.New("no such task"), msg,
+				"task not found in the task list")
+		}
 
 		slotType, err := m.resolveSlotType(ctx, req.ResourcePool)
 		if err != nil {
@@ -564,7 +577,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 	case sproto.PendingPreemption:
 		ctx.Log().Info(fmt.Sprintf("PendingPreemption of %s.  Terminating.", msg.AllocationID))
-		allocReq, ok := m.reqList.GetTaskByID(msg.AllocationID)
+		allocReq, ok := m.reqList.TaskByID(msg.AllocationID)
 		if ok {
 			ctx.Tell(allocReq.AllocationRef, sproto.ReleaseResources{ForcePreemption: true})
 		} else {
@@ -651,13 +664,13 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
-		task, ok := m.reqList.GetTaskByID(allocationID)
+		task, ok := m.reqList.TaskByID(allocationID)
 		if !ok {
 			log.Warnf("received DispatchStateChange for dispatch unknown to task list: %s", allocationID)
 			return nil
 		}
 
-		alloc := m.reqList.GetAllocations(task.AllocationRef)
+		alloc := m.reqList.Allocation(task.AllocationRef)
 		if len(alloc.Resources) != 1 {
 			log.Warnf("allocation has malformed resources: %v", alloc)
 			return nil
@@ -680,13 +693,13 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			return nil
 		}
 
-		task, ok := m.reqList.GetTaskByID(allocationID)
+		task, ok := m.reqList.TaskByID(allocationID)
 		if !ok {
 			log.Warnf("received DispatchExited for dispatch unknown to task list: %s", allocationID)
 			return nil
 		}
 
-		alloc := m.reqList.GetAllocations(task.AllocationRef)
+		alloc := m.reqList.Allocation(task.AllocationRef)
 		if len(alloc.Resources) != 1 {
 			log.Warnf("allocation has malformed resources: %v", alloc)
 			return nil
@@ -740,9 +753,9 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		delete(m.dispatchIDToAllocationID, msg.DispatchID)
 
 	case sproto.SetGroupMaxSlots:
-		m.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
+		m.getOrCreateGroup(ctx, msg.Handler).MaxSlots = msg.MaxSlots
 
-	case groupActorStopped:
+	case tasklist.GroupActorStopped:
 		delete(m.slotsUsedPerGroup, m.groups[msg.Ref])
 		delete(m.groups, msg.Ref)
 
@@ -822,7 +835,7 @@ func (m *dispatcherResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		// Compute RPQueueStat results for each resource pool
 		for _, resourcePool := range msg.ResourcePools {
 			resp.Results = append(resp.Results, &apiv1.RPQueueStat{
-				Stats:        jobStatsByPool(m.reqList, resourcePool),
+				Stats:        tasklist.JobStatsByPool(m.reqList, resourcePool),
 				ResourcePool: resourcePool,
 			})
 		}
@@ -832,14 +845,15 @@ func (m *dispatcherResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 		ctx.Log().Debugf("GetJobQStats for resource pool %s", msg.ResourcePool)
 		// TODO(HAL-2863): Fill this in for the given pool as discerned from the slurm resources
 		// info job.
-		ctx.Respond(jobStats(m.reqList))
+		ctx.Respond(tasklist.JobStats(m.reqList))
 
 	case sproto.SetGroupWeight, sproto.SetGroupPriority, sproto.MoveJob:
 		// TODO(HAL-2863): We may not be able to support these specific actions, but how we
 		// let people interact with the job queue in dispatcher/slurm world.
 		// ctx.Respond(fmt.Errorf("modifying job positions is not yet supported in slurm"))
 		if ctx.ExpectingResponse() {
-			ctx.Respond(ErrUnsupported(fmt.Sprintf("%T unsupported in the dispatcher RM", msg)))
+			ctx.Respond(rmerrors.ErrUnsupported(
+				fmt.Sprintf("%T unsupported in the dispatcher RM", msg)))
 		}
 		return nil
 
@@ -1365,18 +1379,18 @@ func (m *dispatcherResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 
 func (m *dispatcherResourceManager) jobQInfo(rp string) map[model.JobID]*sproto.RMJobInfo {
 	var reqs []*sproto.AllocateRequest
-	for it := m.reqList.iterator(); it.next(); {
-		if it.value().ResourcePool == rp {
-			reqs = append(reqs, it.value())
+	for it := m.reqList.Iterator(); it.Next(); {
+		if it.Value().ResourcePool == rp {
+			reqs = append(reqs, it.Value())
 		}
 	}
-	return reduceToJobQInfo(reqs)
+	return tasklist.ReduceToJobQInfo(reqs)
 }
 
 func (m *dispatcherResourceManager) receiveSetTaskName(
 	ctx *actor.Context, msg sproto.SetAllocationName,
 ) {
-	if task, found := m.reqList.GetAllocationByHandler(msg.AllocationRef); found {
+	if task, found := m.reqList.TaskByHandler(msg.AllocationRef); found {
 		task.Name = msg.Name
 	}
 }
@@ -1427,7 +1441,7 @@ func (m *dispatcherResourceManager) assignResources(
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
-	m.reqList.SetAllocationsRaw(req.AllocationRef, &assigned)
+	m.reqList.AddAllocationRaw(req.AllocationRef, &assigned)
 	req.AllocationRef.System().Tell(req.AllocationRef, assigned)
 
 	if req.Restore {
@@ -1462,7 +1476,7 @@ func (m *dispatcherResourceManager) resourcesReleased(ctx *actor.Context, handle
 	ctx.Log().Infof("resources are released for %s", handler.Address())
 	m.reqList.RemoveTaskByHandler(handler)
 
-	if req, ok := m.reqList.GetAllocationByHandler(handler); ok {
+	if req, ok := m.reqList.TaskByHandler(handler); ok {
 		if group := m.groups[handler]; group != nil {
 			m.slotsUsedPerGroup[group] -= req.SlotsNeeded
 		}
@@ -1507,28 +1521,28 @@ func (m *dispatcherResourceManager) debugKillAllInactiveDispatches(
 func (m *dispatcherResourceManager) getOrCreateGroup(
 	ctx *actor.Context,
 	handler *actor.Ref,
-) *group {
+) *tasklist.Group {
 	if g, ok := m.groups[handler]; ok {
 		return g
 	}
 	priority := config.KubernetesDefaultPriority
-	g := &group{handler: handler, weight: 1, priority: &priority}
+	g := &tasklist.Group{Handler: handler, Weight: 1, Priority: &priority}
 	m.groups[handler] = g
 	m.slotsUsedPerGroup[g] = 0
 
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
+		actors.NotifyOnStop(ctx, handler, tasklist.GroupActorStopped{})
 	}
 	return g
 }
 
 func (m *dispatcherResourceManager) schedulePendingTasks(ctx *actor.Context) {
-	for it := m.reqList.iterator(); it.next(); {
-		req := it.value()
+	for it := m.reqList.Iterator(); it.Next(); {
+		req := it.Value()
 		group := m.groups[req.Group]
-		assigned := m.reqList.GetAllocations(req.AllocationRef)
-		if !assignmentIsScheduled(assigned) {
-			if maxSlots := group.maxSlots; maxSlots != nil {
+		assigned := m.reqList.Allocation(req.AllocationRef)
+		if !tasklist.AssignmentIsScheduled(assigned) {
+			if maxSlots := group.MaxSlots; maxSlots != nil {
 				if m.slotsUsedPerGroup[group]+req.SlotsNeeded > *maxSlots {
 					continue
 				}
@@ -1544,7 +1558,7 @@ type (
 		id    sproto.ResourcesID
 		req   *sproto.AllocateRequest
 		rm    *actor.Ref
-		group *group
+		group *tasklist.Group
 
 		defaultRendezvousIface string
 		defaultProxyIface      string
@@ -1601,7 +1615,7 @@ func (r DispatcherResources) Start(
 	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(r.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
-	spec.ResourcesConfig.SetPriority(r.group.priority)
+	spec.ResourcesConfig.SetPriority(r.group.Priority)
 	if spec.LoggingFields == nil {
 		spec.LoggingFields = map[string]string{}
 	}
@@ -1704,5 +1718,5 @@ func (d DispatcherResourceManager) NotifyContainerRunning(
 	ctx actor.Messenger,
 	msg sproto.NotifyContainerRunning,
 ) error {
-	return d.ask(ctx, msg, nil)
+	return d.Ask(ctx, msg, nil)
 }

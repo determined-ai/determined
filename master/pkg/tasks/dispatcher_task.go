@@ -677,7 +677,8 @@ func generateRunDeterminedLinkNames(
 // so each rank can have a different link.
 func dispatcherArchive(aug *model.AgentUserGroup,
 	linksNeeded []string,
-	localTmp string) cproto.RunArchive {
+	localTmp string,
+) cproto.RunArchive {
 	dispatherArchive := archive.Archive{
 		// Add the dispatcher wrapper script
 		aug.OwnedArchiveItem(
