@@ -95,6 +95,8 @@ options="$(
 unmodified="/run/determined/ssh/authorized_keys_unmodified"
 modified="/run/determined/ssh/authorized_keys"
 sed -e "s/^/$options /" "$unmodified" >"$modified"
+# Ensure permissions are restrictive enough for ssh
+chmod 600 "$modified"
 
 READINESS_REGEX="Server listening on"
 
