@@ -1,6 +1,6 @@
 import contextlib
 import pathlib
-from typing import Any, Callable, Iterator, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional
 from unittest import mock
 
 import pytest
@@ -143,3 +143,23 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                     pass
             storage_manager.restore_path.assert_called_once()
             storage_manager.restore_path.reset_mock()
+
+
+@pytest.mark.parametrize(
+    "resources,expected_merged,expected_conflicts",
+    [([{"file0": 0}, {"file1": 0}], {"file0": 0, "file1": 0}, {}),
+     ([{"file0": 0}, {"file0": 0}], {"file0": 0}, {'file0':[0, 1]}),
+     ([{"dir1/": 0}, {"dir1/": 0}], {"dir1/": 0}, {}),
+     ([{"file1/": 0}, {"file1": 0}], {"file1/": 0, "file1": 0}, {'file1':[0,1]}),
+     ([{"dir1/file1": 0}, {"file1": 0}], {"dir1/file1": 0, "file1": 0}, {}),
+     ([{"dir1/file1": 0}, {"dir1/file1/": 0}], {"dir1/file1": 0, "dir1/file1/": 0}, {})]
+)
+def test_merge_files(
+    resources: List[Dict[str, int]],
+    expected_merged: Dict[str, int],
+    expected_conflicts: Dict[str, List[int]],
+):
+    merged, conflicts = core._checkpoint.merge_resources(resources)
+    assert conflicts == conflicts
+    assert merged == expected_merged
+

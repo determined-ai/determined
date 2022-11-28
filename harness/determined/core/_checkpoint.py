@@ -66,7 +66,7 @@ def merge_resources(
             size = rscs[name]
             if name.endswith(os.sep):
                 # Dir name.
-                stripped = name.rstrip("/")
+                stripped = name.rstrip(os.sep)
                 uploaders.setdefault(stripped, []).append(rank)
             else:
                 # File name.
