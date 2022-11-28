@@ -2697,9 +2697,6 @@ workflows:
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -2719,9 +2716,6 @@ workflows:
               num-machines: [2]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
       # Nightly distributed tests
       - request-gpu-distributed-nightly:
@@ -2982,9 +2976,6 @@ workflows:
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
       - test-e2e-gke-cuda-11:
           name: test-e2e-gke-parallel-tfonly
@@ -3000,9 +2991,6 @@ workflows:
               num-machines: [2]
               environment-image:
                 - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.5-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.6-gpu-0.19.4
-                - determinedai/environments:cuda-11.2-tf-2.7-gpu-0.19.4
 
   release:
     jobs:
