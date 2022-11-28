@@ -151,11 +151,11 @@ func (t *TaskSpec) ToDispatcherManifest(
 	 * We need a per-container-private link directory to host /run/determined.
 	 * This is the target of a number of softlinks that are remapped to per-container
 	 * disk location for each rank.
-	 * Singularity/PodMan now use /var/tmp
+	 * Singularity/PodMan use /
 	 * On Enroot, use /tmp (/var/tmp is not writable by default -- we could enable this,
 	 * but will require a custom tmpfs mount)
 	 */
-	localTmp := varTmp
+	localTmp := "/"
 	if containerRunType == enroot {
 		localTmp = tmp
 	}
@@ -356,8 +356,7 @@ func (t *TaskSpec) computeLaunchConfig(
 	launchingUser string,
 ) *map[string]string {
 	launchConfig := map[string]string{
-		"workingDir": workDir,
-		// TODO: This can be removed, now that we are using /var/tmp
+		"workingDir":          workDir,
 		"enableWritableTmpFs": trueValue,
 		// Pass along all variables (PBS) otherwise we only inherit a
 		// minimal PATH from PBS that is missing /usr/sbin etc.
