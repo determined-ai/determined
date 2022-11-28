@@ -42,7 +42,7 @@ type Config struct {
 
 // HpcClusterConfig describes the configuration for a HPC cluster managed by Determined.
 type HpcClusterConfig struct {
-	BaseResourcePool string `json:"base_resource_pool"`
+	Partition string `json:"partition"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.

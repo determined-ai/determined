@@ -232,7 +232,7 @@ master_url: http://test.master
 agent_docker_image: test_image
 
 type: hpc
-base_resource_pool: tesla_queue
+partition: tesla_queue
 `
 	unmarshaled := Config{}
 	err := yaml.Unmarshal([]byte(configRaw), &unmarshaled, yaml.DisallowUnknownFields)
@@ -240,5 +240,5 @@ base_resource_pool: tesla_queue
 	err = check.Validate(&unmarshaled)
 	assert.NilError(t, err)
 
-	assert.Equal(t, unmarshaled.HPC.BaseResourcePool, "tesla_queue")
+	assert.Equal(t, unmarshaled.HPC.Partition, "tesla_queue")
 }
