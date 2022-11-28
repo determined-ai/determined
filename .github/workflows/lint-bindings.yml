@@ -78,7 +78,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: adopt
-          java-version: 14.0.1
+          java-version: 14.0.2
       - name: Run checks
         run: |
           make -C bindings get-deps
