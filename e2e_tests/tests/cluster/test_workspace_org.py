@@ -8,7 +8,7 @@ import pytest
 from determined.common import api
 from determined.common.api import authentication, bindings, errors
 from tests import config as conf
-from tests.cluster.test_users import ADMIN_CREDENTIALS, logged_in_user, change_user_password
+from tests.cluster.test_users import ADMIN_CREDENTIALS, change_user_password, logged_in_user
 from tests.experiment import determined_test_session, run_basic_test, wait_for_experiment_state
 
 from .test_agent_user_group import _delete_workspace_and_check
