@@ -19,6 +19,8 @@
     registry_auth:
       username: samiam
       password: eggsnham
+    docker_flags:
+      - DOCKER_FLAG
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
@@ -42,6 +44,8 @@
     registry_auth:
       username: samiam
       password: eggsnham
+    docker_flags:
+      - DOCKER_FLAG
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
@@ -68,6 +72,8 @@
     registry_auth:
       username: samiam
       password: eggsnham
+    docker_flags:
+      - DOCKER_FLAG
     add_capabilities:
       - CAP_STRING
     drop_capabilities:
@@ -91,6 +97,8 @@
     registry_auth:
       username: samiam
       password: eggsnham
+    docker_flags:
+      - DOCKER_FLAG
     add_capabilities:
       - CAP_STRING
     drop_capabilities:

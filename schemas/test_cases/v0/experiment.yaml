@@ -178,6 +178,7 @@
       pod_spec:
       ports: {}
       registry_auth: null
+      docker_flags: []
       add_capabilities: []
       drop_capabilities: []
     hyperparameters: {}
