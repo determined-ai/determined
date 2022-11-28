@@ -17,7 +17,7 @@ const setup = (
     ? jest.fn(() => Promise.resolve(new Error()))
     : jest.fn(() => Promise.resolve());
   const onCancel = jest.fn();
-  const { container } = render(
+  render(
     <InlineEditor
       disabled={disabled}
       pattern={pattern}
@@ -28,8 +28,11 @@ const setup = (
   );
 
   const waitForSpinnerToDisappear = async () => {
-    if (container.querySelector('.ant-spin-spinning') == null) return;
-    await waitForElementToBeRemoved(container.querySelector('.ant-spin-spinning'));
+    if (screen.queryByTestId('custom-spinner') == null) return;
+    await waitForElementToBeRemoved(screen.queryByTestId('custom-spinner')).catch((err) =>
+      // eslint-disable-next-line no-console
+      console.error(err),
+    );
   };
 
   return { onCancel, onSave, user, waitForSpinnerToDisappear };

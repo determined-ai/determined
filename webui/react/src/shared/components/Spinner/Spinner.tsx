@@ -31,6 +31,7 @@ const Spinner: React.FC<Props> = ({
   return (
     <div className={classes.join(' ')}>
       <Spin
+        data-testid="custom-spinner"
         indicator={
           <div className={css.spin}>
             <Icon name="spinner" size={size} />
