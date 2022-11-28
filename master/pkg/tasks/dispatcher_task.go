@@ -376,6 +376,9 @@ func (t *TaskSpec) computeLaunchConfig(
 	if containerRunType == podman {
 		launchConfig["networkMode"] = "host"
 	}
+	if t.SlurmConfig.GpuType() != nil {
+		launchConfig["gpuType"] = *t.SlurmConfig.GpuType()
+	}
 	// From launcher 3.0.16, disableImageCache & add/dropCapabilities are supported, but
 	// implemented for podman only. Added to singularity as well for 3.1.4.
 	if t.Environment.ForcePullImage() {
