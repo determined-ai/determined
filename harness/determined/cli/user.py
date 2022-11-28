@@ -10,6 +10,7 @@ from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
 from determined.experimental import client
+from determined.experimental import Determined
 
 from . import render
 
@@ -51,13 +52,15 @@ def log_in_user(parsed_args: Namespace) -> None:
     token_store.set_active(username)
 
 
-@authentication.optional
 def log_out_user(parsed_args: Namespace) -> None:
-    auth = authentication.cli_auth
-    if auth is None:
-        return
+    det_obj = None
     try:
-        client.logout()
+        det_obj =  det_obj = Determined(master=parsed_args.master, user=parsed_args.user)
+    except (api.errors.UnauthenticatedException, api.errors.ForbiddenException):
+        return
+    assert det_obj is None
+    try:
+        det_obj.logout()
     except api.errors.APIException as e:
         if e.status_code != 401:
             raise e
@@ -66,7 +69,7 @@ def log_out_user(parsed_args: Namespace) -> None:
         pass
 
     token_store = authentication.TokenStore(parsed_args.master)
-    token_store.drop_user(auth.get_session_user())
+    token_store.drop_user(det_obj.auth.get_session_user()) # get current user instead
 
 
 @login_sdk_client
