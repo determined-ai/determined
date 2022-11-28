@@ -231,7 +231,7 @@ func TestUnmarshalProvisionerConfigWithHpc(t *testing.T) {
 master_url: http://test.master
 agent_docker_image: test_image
 
-type: launcher
+type: hpc
 base_resource_pool: tesla_queue
 `
 	unmarshaled := Config{}

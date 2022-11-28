@@ -33,7 +33,7 @@ type Config struct {
 	AgentConfigFileContents json.RawMessage   `json:"agent_config_file_contents"`
 	AWS                     *AWSClusterConfig `union:"type,aws" json:"-"`
 	GCP                     *GCPClusterConfig `union:"type,gcp" json:"-"`
-	HPC                     *HpcClusterConfig `union:"type,launcher" json:"-"`
+	HPC                     *HpcClusterConfig `union:"type,hpc" json:"-"`
 	MaxIdleAgentPeriod      model.Duration    `json:"max_idle_agent_period"`
 	MaxAgentStartingPeriod  model.Duration    `json:"max_agent_starting_period"`
 	MinInstances            int               `json:"min_instances"`
