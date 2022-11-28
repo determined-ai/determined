@@ -7,7 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 // CommandAuthZ describes authz methods for commands.
@@ -15,16 +15,16 @@ type CommandAuthZ interface {
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
-		ctx context.Context, curUser model.User, e *model.Command,
+		ctx context.Context, curUser model.User, c *command,
 	) (canGetCmd bool, serverError error)
 
 	// DELETE /api/v1/commands/:cmd_id
-	CanDeleteCommand(ctx context.Context, curUser model.User, e *model.Command) error
+	CanDeleteCommand(ctx context.Context, curUser model.User, c *command) error
 
 	// GET /api/v1/commands
-	// "proj" being nil indicates getting commands from all projects.
+	// "workspace" being nil indicates getting commands from all workspaces.
 	FilterCommandsQuery(
-		ctx context.Context, curUser model.User, proj *projectv1.Project, query *bun.SelectQuery,
+		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace, query *bun.SelectQuery,
 	) (*bun.SelectQuery, error)
 
 	// POST /api/v1/commands/:cmd_id/activate
@@ -33,27 +33,27 @@ type CommandAuthZ interface {
 	// POST /api/v1/commands/:cmd_id/kill
 	// POST /api/v1/commands/:cmd_id/hyperparameter-importance
 	// POST /api/v1/commands/:cmd_id/cancel
-	CanEditCommand(ctx context.Context, curUser model.User, e *model.Command) error
+	CanEditCommand(ctx context.Context, curUser model.User, c *command) error
 
 	// POST /api/v1/commands/:cmd_id/archive
 	// POST /api/v1/commands/:cmd_id/unarchive
 	// PATCH /api/v1/commands/:cmd_id/
-	CanEditCommandsMetadata(ctx context.Context, curUser model.User, e *model.Command) error
+	CanEditCommandsMetadata(ctx context.Context, curUser model.User, c *command) error
 
 	// POST /api/v1/commands
 	CanCreateCommand(
-		ctx context.Context, curUser model.User, proj *projectv1.Project, e *model.Command,
+		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace, c *command,
 	) error
 
 	// PATCH /commands/:cmd_id
 	CanSetCommandsMaxSlots(
-		ctx context.Context, curUser model.User, e *model.Command, slots int,
+		ctx context.Context, curUser model.User, c *command, slots int,
 	) error
 	CanSetCommandsWeight(
-		ctx context.Context, curUser model.User, e *model.Command, weight float64,
+		ctx context.Context, curUser model.User, c *command, weight float64,
 	) error
 	CanSetCommandsPriority(
-		ctx context.Context, curUser model.User, e *model.Command, priority int,
+		ctx context.Context, curUser model.User, c *command, priority int,
 	) error
 }
 
