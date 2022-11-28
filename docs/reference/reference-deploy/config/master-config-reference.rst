@@ -99,7 +99,10 @@ The master supports the following configuration settings:
       details.
 
    -  ``slurm``: Additional Slurm options when launching trials with ``sbatch``. See
-      :ref:`environment.slurm <exp-environment-slurm>` for more details.
+      :ref:`environment.slurm <slurm-config>` for more details.
+
+   -  ``pbs``: Additional PBS options when launching trials with ``qsub``. See
+      :ref:`environment.pbs <pbs-config>` for more details.
 
 -  ``root``: Specifies the root directory of the state files. Defaults to
    ``/usr/share/determined/master``.
