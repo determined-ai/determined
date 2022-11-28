@@ -9,8 +9,7 @@ from determined.cli import login_sdk_client
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.experimental import client
-from determined.experimental import Determined
+from determined.experimental import Determined, client
 
 from . import render
 
@@ -55,7 +54,7 @@ def log_in_user(parsed_args: Namespace) -> None:
 def log_out_user(parsed_args: Namespace) -> None:
     det_obj = None
     try:
-        det_obj =  det_obj = Determined(master=parsed_args.master, user=parsed_args.user)
+        det_obj = det_obj = Determined(master=parsed_args.master, user=parsed_args.user)
     except (api.errors.UnauthenticatedException, api.errors.ForbiddenException):
         return
     assert det_obj is None
