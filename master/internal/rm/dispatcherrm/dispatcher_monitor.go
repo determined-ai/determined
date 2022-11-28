@@ -1,4 +1,4 @@
-package rm
+package dispatcherrm
 
 // Follow launcher jobs to completion and report status back to Determined.
 

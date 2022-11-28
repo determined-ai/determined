@@ -1,4 +1,4 @@
-package rm
+package dispatcherrm
 
 import (
 	"testing"
@@ -8,6 +8,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -391,9 +392,9 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 		config                   *config.DispatcherResourceManagerConfig
 		apiClient                *launcher.APIClient
 		hpcResourcesManifest     *launcher.Manifest
-		reqList                  *taskList
-		groups                   map[*actor.Ref]*group
-		slotsUsedPerGroup        map[*group]int
+		reqList                  *tasklist.TaskList
+		groups                   map[*actor.Ref]*tasklist.Group
+		slotsUsedPerGroup        map[*tasklist.Group]int
 		dispatchIDToAllocationID map[string]model.AllocationID
 		masterTLSConfig          model.TLSClientConfig
 		loggingConfig            model.LoggingConfig
