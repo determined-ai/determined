@@ -923,6 +923,15 @@ func (m *dispatcherResourceManager) selectDefaultPools(
 			defaultComputePar = defaultAuxPar
 		}
 	}
+
+	// If explicitly configured, just override.
+	if m.config.DefaultComputeResourcePool != nil {
+		defaultComputePar = *m.config.DefaultComputeResourcePool
+	}
+	if m.config.DefaultAuxResourcePool != nil {
+		defaultAuxPar = *m.config.DefaultAuxResourcePool
+	}
+
 	return defaultComputePar, defaultAuxPar
 }
 

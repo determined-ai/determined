@@ -29,14 +29,16 @@ type DispatcherResourceManagerConfig struct {
 	ProxyNetworkInterface      string       `json:"proxy_network_interface"`
 	// Configuration parameters that are proxies for launcher.conf
 	// and will be applied there by the init script.
-	UserName             string `json:"user_name"`
-	GroupName            string `json:"group_name"`
-	SingularityImageRoot string `json:"singularity_image_root"`
-	JobStorageRoot       string `json:"job_storage_root"`
-	Path                 string `json:"path"`
-	LdLibraryPath        string `json:"ld_library_path"`
-	TresSupported        bool   `json:"tres_supported"`
-	GresSupported        bool   `json:"gres_supported"`
+	UserName                   string  `json:"user_name"`
+	GroupName                  string  `json:"group_name"`
+	SingularityImageRoot       string  `json:"singularity_image_root"`
+	JobStorageRoot             string  `json:"job_storage_root"`
+	Path                       string  `json:"path"`
+	LdLibraryPath              string  `json:"ld_library_path"`
+	TresSupported              bool    `json:"tres_supported"`
+	GresSupported              bool    `json:"gres_supported"`
+	DefaultAuxResourcePool     *string `json:"default_aux_resource_pool"`
+	DefaultComputeResourcePool *string `json:"default_compute_resource_pool"`
 
 	Security           *DispatcherSecurityConfig                     `json:"security"`
 	PartitionOverrides map[string]DispatcherPartitionOverrideConfigs `json:"partition_overrides"`

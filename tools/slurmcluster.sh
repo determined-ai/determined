@@ -155,7 +155,7 @@ function pull_auth_token() {
 
 # Update your username/port pair
 USERPORT_madagund=8083
-USERPORT_stokc=8084
+USERPORT_laney=8084
 USERPORT_rcorujo=8085
 USERPORT_phillipgaisford=8086
 USERPORT_pankaj=8087
@@ -180,7 +180,7 @@ fi
 
 # Update your JETTY HTTP username/port pair from loadDevLauncher.sh
 DEV_LAUNCHER_PORT_madagund=18083
-DEV_LAUNCHER_PORT_stokc=18084
+DEV_LAUNCHER_PORT_laney=18084
 DEV_LAUNCHER_PORT_rcorujo=18085
 DEV_LAUNCHER_PORT_phillipgaisford=18086
 DEV_LAUNCHER_PORT_pankaj=18087
