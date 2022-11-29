@@ -447,6 +447,9 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 		p3,
 	}
 
+	worf := "worf"
+	data := "data"
+
 	tests := []struct {
 		name        string
 		fields      fields
@@ -456,31 +459,41 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 	}{
 		{
 			name:        "One partition test",
-			fields:      fields{},
+			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
 			args:        args{hpcResourceDetails: hpc},
 			wantCompute: "worf",
 			wantAux:     "worf",
 		},
 		{
 			name:        "Two partition test",
-			fields:      fields{},
+			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
 			args:        args{hpcResourceDetails: hpc2},
 			wantCompute: "data",
 			wantAux:     "worf",
 		},
 		{
 			name:        "Three partition test",
-			fields:      fields{},
+			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
 			args:        args{hpcResourceDetails: hpc3},
 			wantCompute: "data",
 			wantAux:     "worf",
 		},
 		{
 			name:        "No GPU partition test",
-			fields:      fields{},
+			fields:      fields{config: &config.DispatcherResourceManagerConfig{}},
 			args:        args{hpcResourceDetails: hpc4},
 			wantCompute: "picard",
 			wantAux:     "picard",
+		},
+		{
+			name: "Override default test",
+			fields: fields{config: &config.DispatcherResourceManagerConfig{
+				DefaultComputeResourcePool: &worf,
+				DefaultAuxResourcePool:     &data,
+			}},
+			args:        args{hpcResourceDetails: hpc3},
+			wantCompute: "worf",
+			wantAux:     "data",
 		},
 	}
 	for _, tt := range tests {
