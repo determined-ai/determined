@@ -51,7 +51,7 @@ def test_wait_unstable_network(
     auth_mock.return_value = mock_det_auth()
     user = "user1"
     with api_server.run_api_server(
-        credentials=(user, "password1", "token1"),
+        credentials=(user, "password1", "token1"), ssl_keys=None
     ) as master_url:
         args = CliArgs(master=master_url, experiment_id=1)
         with pytest.raises(SystemExit) as e:

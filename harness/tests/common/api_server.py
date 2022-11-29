@@ -31,7 +31,7 @@ def sample_get_experiment() -> bindings.v1GetExperimentResponse:
 def run_api_server(
     address: Tuple[str, int] = ("localhost", 12345),
     credentials: Tuple[str, str, str] = ("user1", "password1", "token1"),
-    ssl_keys: Dict[str, Path] = CERTS1,
+    ssl_keys: Optional[Dict[str, Path]] = CERTS1,
 ) -> Iterator[str]:
     user, password, token = credentials
     lock = threading.RLock()
@@ -113,19 +113,21 @@ def run_api_server(
 
     server = HTTPServer(address, RequestHandler)
 
-    server.socket = ssl.wrap_socket(
-        server.socket,
-        keyfile=str(ssl_keys["keyfile"]),
-        certfile=str(ssl_keys["certfile"]),
-        server_side=True,
-    )
+    if ssl_keys is not None:
+        server.socket = ssl.wrap_socket(
+            server.socket,
+            keyfile=str(ssl_keys["keyfile"]),
+            certfile=str(ssl_keys["certfile"]),
+            server_side=True,
+        )
 
     thread = threading.Thread(target=server.serve_forever, args=[0.1])
     thread.start()
     try:
         host = address[0]
         port = address[1]
-        yield f"https://{host}:{port}"
+        protocol = "https" if ssl_keys is not None else "http"
+        yield f"{protocol}://{host}:{port}"
     finally:
         server.shutdown()
         thread.join()
