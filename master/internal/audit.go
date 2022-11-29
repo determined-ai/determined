@@ -95,10 +95,7 @@ func authzAuditLogMiddleware() echo.MiddlewareFunc {
 				c.SetRequest(c.Request().WithContext(newCtx))
 			}
 
-			if err = next(c); err != nil {
-				c.Error(err)
-			}
-			return
+			return next(c)
 		}
 	})
 }
