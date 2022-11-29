@@ -13,15 +13,16 @@ import projectDetailConfigSettings, {
   ProjectDetailsSettings,
 } from 'pages/OldProjectDetails.settings';
 import { paths } from 'routes/utils';
-import { getWorkspaceProjects, moveExperiment } from 'services/api';
+import { moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
+// import { isEqual } from 'shared/utils/data';
+// import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { useFetchWorkspaceProjects, useWorkspaceProjects } from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, Project } from 'types';
-import handleError from 'utils/error';
+// import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
@@ -89,7 +90,15 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     useSettings<ProjectDetailsSettings>(projectDetailConfigSettings);
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const workspaceProjects = useWorkspaceProjects();
+  const projects = useMemo(() => {
+    if (workspaceProjects && destSettings.workspaceId) return workspaceProjects.get(destSettings.workspaceId) ?? [];
+
+    return [];
+  }, [workspaceProjects, destSettings.workspaceId]);
+  // const [projects, setProjects] = useState<Project[]>([]);
+  // const fetchWorkspaceProjects = useEnsureWorkspaceProjectsFetched(canceler.current);
+  const fetchWorkspaceProjects = useFetchWorkspaceProjects(canceler.current);
   const { canMoveExperimentsTo } = usePermissions();
   const workspaces = Loadable.map(useWorkspaces(), (ws) =>
     ws.filter((w) => !w.immutable && canMoveExperimentsTo({ destination: { id: w.id } })),
@@ -100,31 +109,39 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
-  const fetchProjects = useCallback(async () => {
-    if (!destSettings.workspaceId) return;
-    try {
-      const response = await getWorkspaceProjects({
-        id: destSettings.workspaceId,
-        limit: 0,
-        // users: (!user || user.isAdmin) ? [] : [ user.username ],
-      });
-      setProjects((prev) => (isEqual(prev, response.projects) ? prev : response.projects));
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to fetch projects.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [destSettings.workspaceId]);
+  // const fetchProjects = useCallback(async () => {
+  //   if (!destSettings.workspaceId) return;
+  //   try {
+  //     const response = await getWorkspaceProjects({
+  //       id: destSettings.workspaceId,
+  //       limit: 0,
+  //       // users: (!user || user.isAdmin) ? [] : [ user.username ],
+  //     });
+  //     setProjects((prev) => (isEqual(prev, response.projects) ? prev : response.projects));
+  //   } catch (e) {
+  //     handleError(e, {
+  //       level: ErrorLevel.Error,
+  //       publicMessage: 'Please try again later.',
+  //       publicSubject: 'Unable to fetch projects.',
+  //       silent: false,
+  //       type: ErrorType.Server,
+  //     });
+  //   }
+  // }, [destSettings.workspaceId]);
 
   useEffect(() => {
     ensureWorkspacesFetched();
-    fetchProjects();
+    // fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!destSettings.workspaceId) return;
+
+    if (!workspaceProjects || !workspaceProjects.get(destSettings.workspaceId)) {
+      fetchWorkspaceProjects(destSettings.workspaceId);
+    }
+  }, [destSettings.workspaceId, workspaceProjects, fetchWorkspaceProjects]);
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
@@ -132,7 +149,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         projectId: workspaceId === 1 && sourceProjectId !== 1 ? 1 : undefined,
         workspaceId: workspaceId as number,
       });
-      setProjects([]);
+      // setProjects([]);
     },
     [sourceProjectId, updateDestSettings],
   );
@@ -147,7 +164,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const renderRow = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      if (!destSettings.projectId) return <Spinner spinning />;
+      if (!destSettings.projectId || !workspaceProjects) return <Spinner spinning />;
 
       const disabled = projects[index].archived || projects[index].id === sourceProjectId;
       const selected = projects[index].id === destSettings.projectId;
@@ -164,7 +181,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         </li>
       );
     },
-    [destSettings.projectId, handleProjectSelect, projects, sourceProjectId],
+    [destSettings, handleProjectSelect, projects, workspaceProjects, sourceProjectId],
   );
   const modalContent = useMemo(() => {
     return (
@@ -224,7 +241,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         )}
       </div>
     );
-  }, [handleWorkspaceSelect, projects.length, renderRow, destSettings.workspaceId, workspaces]);
+  }, [handleWorkspaceSelect, projects, renderRow, destSettings.workspaceId, workspaces]);
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 
@@ -329,7 +346,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       if (!destSettings.workspaceId)
         updateDestSettings({ projectId: undefined, workspaceId: sourceWorkspaceId });
       setSourceProjectId(sourceProjectId);
-      if (!projects.length) fetchProjects();
+      if (!projects.length) fetchWorkspaceProjects(destSettings.workspaceId);
       openOrUpdate({
         ...getModalProps(experimentIds, destSettings.projectId),
         ...initialModalProps,
@@ -338,7 +355,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     [
       getModalProps,
       openOrUpdate,
-      fetchProjects,
+      fetchWorkspaceProjects,
       projects.length,
       destSettings.projectId,
       destSettings.workspaceId,
