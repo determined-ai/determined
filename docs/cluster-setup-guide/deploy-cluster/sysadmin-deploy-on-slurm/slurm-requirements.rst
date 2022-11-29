@@ -83,7 +83,9 @@ recommended to optimize how Determined interacts with Slurm:
 
    -  A Slurm partition with no GPUs is identified as an AUX resource pool.
 
-   -  The Determined default resource pool is set to the Slurm default partition.
+   -  The Determined default resource pool is set to the Slurm default partition. Override this
+      default using the :ref:`slurm section <cluster-configuration-slurm>`
+      ``default_compute_resource_pool`` or ``default_aux_resource_pool`` option.
 
 -  Tune the Slurm configuration for Determined job preemption.
 
@@ -125,7 +127,9 @@ to optimize how Determined interacts with PBS:
 
    -  A PBS queue with no GPUs is identified as an AUX resource pool.
 
-   -  The Determined default resource pool is set to the PBS default queue.
+   -  The Determined default resource pool is set to the PBS default queue. Override this default
+      using the :ref:`pbs section <cluster-configuration-slurm>` ``default_compute_resource_pool``
+      or ``default_aux_resource_pool`` option.
 
 -  Tune the PBS configuration for Determined job preemption.
 
