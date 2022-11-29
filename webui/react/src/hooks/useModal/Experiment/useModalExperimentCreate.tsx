@@ -4,16 +4,17 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
+import { V1LaunchWarning } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson, ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
-import { DetError, isDetError, isError } from 'shared/utils/error';
+import { DetError, ErrorLevel, ErrorType, isDetError, isError } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ExperimentBase, TrialHyperparameters, TrialItem } from 'types';
-import handleError from 'utils/error';
+import handleError, { handleWarning } from 'utils/error';
 import { trialHParamsToExperimentHParams } from 'utils/experiment';
 import { upgradeConfig } from 'utils/experiment';
 
@@ -217,15 +218,27 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
       if (!modalState.experiment || (!isFork && !modalState.trial)) return;
 
       try {
-        const { id: newExperimentId } = await createExperiment({
+        const { experiment: newExperiment, warnings } = await createExperiment({
           activate: true,
           experimentConfig: newConfig,
           parentId: modalState.experiment.id,
           projectId: modalState.experiment.projectId,
         });
-
+        const currentSlotsExceeded = warnings
+          ? warnings.includes(V1LaunchWarning.CURRENTSLOTSEXCEEDED)
+          : false;
+        if (currentSlotsExceeded) {
+          handleWarning({
+            level: ErrorLevel.Warn,
+            publicMessage:
+              'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
+            publicSubject: 'Current Slots Exceeded',
+            silent: false,
+            type: ErrorType.Server,
+          });
+        }
         // Route to reload path to forcibly remount experiment page.
-        const newPath = paths.experimentDetails(newExperimentId);
+        const newPath = paths.experimentDetails(newExperiment.id);
         routeToReactUrl(paths.reload(newPath));
       } catch (e) {
         let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;

@@ -1,5 +1,5 @@
 import * as Api from 'services/api-ts-sdk';
-import { V1AgentUserGroup, V1Group, V1Trigger } from 'services/api-ts-sdk';
+import { V1AgentUserGroup, V1Group, V1LaunchWarning, V1Trigger } from 'services/api-ts-sdk';
 import { Primitive, RawJson, RecordKey, ValueOf } from 'shared/types';
 
 interface WithPagination {
@@ -565,6 +565,11 @@ export interface ProjectExperiment extends ExperimentItem {
   workspaceName: string;
 }
 
+export interface CreateExperimentResponse {
+  experiment: ExperimentBase;
+  warnings?: V1LaunchWarning[];
+}
+
 export interface ExperimentBase extends ProjectExperiment {
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
@@ -658,6 +663,11 @@ export interface ExperimentTask extends Task {
   userId?: number;
   username: string;
   workspaceId: number;
+}
+
+export interface CommandResponse {
+  command: CommandTask;
+  warnings?: V1LaunchWarning[];
 }
 
 export interface CommandTask extends Task {

@@ -33,7 +33,7 @@ import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,
-  CommandTask,
+  CommandResponse,
   ExperimentBase,
   MetricsWorkload,
   RunState,
@@ -41,7 +41,7 @@ import {
 } from 'types';
 import handleError from 'utils/error';
 import { getMetricValue } from 'utils/metric';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
 import settingsConfig, { isOfSortKey, Settings } from './ExperimentTrials.settings';
@@ -114,7 +114,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   );
 
   const handleOpenTensorBoard = useCallback(async (trial: TrialItem) => {
-    openCommand(await openOrCreateTensorBoard({ trialIds: [trial.id] }));
+    openCommandResponse(await openOrCreateTensorBoard({ trialIds: [trial.id] }));
   }, []);
 
   const handleViewLogs = useCallback(
@@ -316,7 +316,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       try {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
-          openCommand(result as CommandTask);
+          openCommandResponse(result as CommandResponse);
         }
 
         // Refetch experiment list to get updates based on batch action.

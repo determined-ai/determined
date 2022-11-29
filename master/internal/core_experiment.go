@@ -472,11 +472,13 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	defaulted := schemas.WithDefaults(config).(expconf.ExperimentConfig)
 	resources := defaulted.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial(), false)
+		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
 	if err != nil {
 		return nil, nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
-
+	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
+		return nil, nil, false, nil, errors.Wrapf(err, "error validating resources")
+	}
 	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
@@ -597,7 +599,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		}
 	}
 
-	e, err := newExperiment(m, dbExp, taskSpec)
+	e, launchWarnings, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
@@ -625,6 +627,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		Archived: false,
 		Config:   config,
 		Labels:   make([]string, 0),
+		Warnings: launchWarnings,
 	}
 	return response, nil
 }

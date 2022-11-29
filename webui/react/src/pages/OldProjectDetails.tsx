@@ -78,6 +78,7 @@ import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
+  CommandResponse,
   CommandTask,
   ExperimentItem,
   ExperimentPagination,
@@ -670,7 +671,7 @@ const ProjectDetails: React.FC = () => {
     useModalExperimentMove({ onClose: handleActionComplete, user });
 
   const sendBatchActions = useCallback(
-    (action: Action): Promise<void[] | CommandTask> | void => {
+    (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({ experimentIds: settings.row });

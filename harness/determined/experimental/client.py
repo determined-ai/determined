@@ -48,7 +48,7 @@ import pathlib
 import warnings
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
-from determined.common.api import Session  # noqa: F401
+from determined.common.api import Session, bindings  # noqa: F401
 from determined.common.experimental.checkpoint import (  # noqa: F401
     Checkpoint,
     CheckpointState,

@@ -41,7 +41,7 @@ class Telemetry {
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   track(event: string, ...args: any[]) {
-    if (analytics?.track) analytics.track(event, ...args);
+    if (window.analytics?.track) analytics.track(event, ...args);
   }
 
   async load(info: DeterminedInfo): Promise<void> {
@@ -55,8 +55,8 @@ class Telemetry {
       const telemetry = await getTelemetry({});
       const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
       if (isProperKey) {
-        analytics.load(telemetry.segmentKey || '');
-        analytics.page();
+        if (analytics?.load) analytics.load(telemetry.segmentKey || '');
+        if (analytics?.page) analytics.page();
         this.isLoaded = true;
       }
     } catch (e) {
