@@ -36,7 +36,7 @@ import { getStateColorCssVar } from 'themes';
 import { ExperimentAction as Action, ExperimentBase, RunState, TrialItem } from 'types';
 import handleError from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
 
@@ -299,8 +299,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: async () => {
           setIsRunningTensorBoard(true);
           try {
-            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [experiment.id] });
-            openCommand(tensorboard);
+            const commandResponse = await openOrCreateTensorBoard({
+              experimentIds: [experiment.id],
+            });
+            openCommandResponse(commandResponse);
             setIsRunningTensorBoard(false);
           } catch (e) {
             setIsRunningTensorBoard(false);

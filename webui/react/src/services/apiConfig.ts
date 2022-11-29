@@ -616,11 +616,14 @@ export const getExperiment: DetApi<
 export const createExperiment: DetApi<
   Service.CreateExperimentParams,
   Api.V1CreateExperimentResponse,
-  Type.ExperimentBase
+  Type.CreateExperimentResponse
 > = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
-    return decoder.mapV1GetExperimentDetailsResponse(resp);
+    return {
+      experiment: decoder.mapV1GetExperimentDetailsResponse(resp),
+      warnings: resp.warnings || [],
+    };
   },
   request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
@@ -1556,10 +1559,15 @@ export const getTemplates: DetApi<
 export const launchJupyterLab: DetApi<
   Service.LaunchJupyterLabParams,
   Api.V1LaunchNotebookResponse,
-  Type.CommandTask
+  Type.CommandResponse
 > = {
   name: 'launchJupyterLab',
-  postProcess: (response) => decoder.mapV1Notebook(response.notebook),
+  postProcess: (response) => {
+    return {
+      command: decoder.mapV1Notebook(response.notebook),
+      warnings: response.warnings || [],
+    };
+  },
   request: (params: Service.LaunchJupyterLabParams) => detApi.Notebooks.launchNotebook(params),
 };
 
@@ -1576,10 +1584,15 @@ export const previewJupyterLab: DetApi<
 export const launchTensorBoard: DetApi<
   Service.LaunchTensorBoardParams,
   Api.V1LaunchTensorboardResponse,
-  Type.CommandTask
+  Type.CommandResponse
 > = {
   name: 'launchTensorBoard',
-  postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
+  postProcess: (response) => {
+    return {
+      command: decoder.mapV1TensorBoard(response.tensorboard),
+      wanrings: response.warnings || [],
+    };
+  },
   request: (params: Service.LaunchTensorBoardParams) =>
     detApi.TensorBoards.launchTensorboard(params),
 };

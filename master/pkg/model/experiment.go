@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -349,6 +350,7 @@ type ExperimentDescriptor struct {
 	Archived bool                     `json:"archived"`
 	Config   expconf.ExperimentConfig `json:"config"`
 	Labels   []string                 `json:"labels"`
+	Warnings []command.LaunchWarning  `json:"warnings"`
 }
 
 // NewExperiment creates a new experiment struct in the paused state.  Note

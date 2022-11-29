@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
+	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -52,27 +53,29 @@ type protoCommandParams struct {
 }
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
-	*tasks.GenericCommandSpec, error,
+	*tasks.GenericCommandSpec, []command.LaunchWarning, error,
 ) {
 	var err error
 
 	// Validate the userModel and get the agent userModel group.
 	userModel, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
+		return nil,
+			nil,
+			status.Errorf(codes.Unauthenticated, "failed to get the user: %s", err)
 	}
 
 	// TODO(ilia): When commands are workspaced, also use workspace AgentUserGroup here.
 	agentUserGroup, err := user.GetAgentUserGroup(userModel.ID, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var configBytes []byte
 	if req.Config != nil {
 		configBytes, err = protojson.Marshal(req.Config)
 		if err != nil {
-			return nil, status.Errorf(
+			return nil, nil, status.Errorf(
 				codes.InvalidArgument, "failed to parse config %s: %s", configBytes, err)
 		}
 	}
@@ -82,13 +85,23 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.MustZeroSlot {
 		resources.Slots = 0
 	}
-
 	poolName, err := a.m.rm.ResolveResourcePool(
-		a.m.system, resources.ResourcePool, resources.Slots, true)
+		a.m.system, resources.ResourcePool, resources.Slots)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err = a.m.rm.ValidateResources(a.m.system, poolName, resources.Slots, true); err != nil {
+		return nil, nil, fmt.Errorf("validating resources: %v", err)
 	}
 
+	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
+		a.m.system,
+		poolName,
+		resources.Slots,
+	)
+	if err != nil {
+		return nil, launchWarnings, fmt.Errorf("checking respurce availability: %v", err.Error())
+	}
 	// Get the base TaskSpec.
 	taskContainerDefaults := a.m.getTaskContainerDefaults(poolName)
 	taskSpec := *a.m.taskSpec
@@ -106,11 +119,11 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	if req.TemplateName != "" {
 		template, err := a.m.db.TemplateByName(req.TemplateName)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
 				errors.Wrapf(err, "failed to find template: %s", req.TemplateName).Error())
 		}
 		if err := yaml.Unmarshal(template.Config, &config); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
 				errors.Wrapf(err, "failed to unmarshal template: %s", req.TemplateName).Error())
 		}
 	}
@@ -119,7 +132,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		dec.DisallowUnknownFields()
 
 		if err := dec.Decode(&config); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
 				errors.Wrapf(err,
 					"unable to decode the merged config: %s", string(configBytes)).Error())
 		}
@@ -142,7 +155,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		workdirSetInReq := config.WorkDir != nil &&
 			(workDirInDefaults == nil || *workDirInDefaults != *config.WorkDir)
 		if workdirSetInReq {
-			return nil, status.Errorf(codes.InvalidArgument,
+			return nil, launchWarnings, status.Errorf(codes.InvalidArgument,
 				"cannot set work_dir and context directory at the same time")
 		}
 		config.WorkDir = nil
@@ -150,7 +163,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	token, createSessionErr := a.m.db.StartUserSession(userModel)
 	if createSessionErr != nil {
-		return nil, status.Errorf(codes.Internal,
+		return nil, launchWarnings, status.Errorf(codes.Internal,
 			errors.Wrapf(createSessionErr,
 				"unable to create user session inside task").Error())
 	}
@@ -160,7 +173,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		Base:      taskSpec,
 		Config:    config,
 		UserFiles: userFiles,
-	}, nil
+	}, launchWarnings, nil
 }
 
 func (a *apiServer) GetCommands(
@@ -239,7 +252,7 @@ func (a *apiServer) SetCommandPriority(
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
-	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
@@ -287,7 +300,8 @@ func (a *apiServer) LaunchCommand(
 	}
 
 	return &apiv1.LaunchCommandResponse{
-		Command: cmd,
-		Config:  protoutils.ToStruct(spec.Config),
+		Command:  cmd,
+		Config:   protoutils.ToStruct(spec.Config),
+		Warnings: command.LaunchWarningToProto(launchWarnings),
 	}, nil
 }

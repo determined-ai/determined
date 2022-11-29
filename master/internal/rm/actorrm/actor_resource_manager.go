@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -36,9 +37,29 @@ func (r *ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger,
 	name string,
 	slots int,
-	command bool,
 ) (string, error) {
 	return name, nil
+}
+
+// ValidateResources is a default implementation to satisfy the interface, mostly for tests.
+func (r *ActorResourceManager) ValidateResources(
+	ctx actor.Messenger,
+	name string,
+	slots int,
+	command bool,
+) error {
+	return nil
+}
+
+// ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
+func (r *ActorResourceManager) ValidateResourcePoolAvailability(
+	ctx actor.Messenger,
+	name string,
+	slots int) (
+	[]command.LaunchWarning,
+	error,
+) {
+	return nil, nil
 }
 
 // ValidateResourcePool is a default implementation to satisfy the interface, mostly for tests.

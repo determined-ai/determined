@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -97,6 +98,23 @@ func (a ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName stri
 	return false
 }
 
+// CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
+func (a AgentResourceManager) CheckMaxSlotsExceeded(
+	ctx actor.Messenger, name string, slots int,
+) (bool, error) {
+	ref, err := a.GetResourcePoolRef(ctx, name)
+	if err != nil {
+		return false, err
+	}
+	resp := ref.System().Ask(ref, sproto.CapacityCheck{
+		Slots: slots,
+	})
+	if resp.Error() != nil {
+		return false, resp.Error()
+	}
+	return resp.Get().(sproto.CapacityCheckResponse).CapacityExceeded, nil
+}
+
 // ResolveResourcePool fully resolves the resource pool name.
 func (a ResourceManager) ResolveResourcePool(
 	ctx actor.Messenger, name string, slots int, command bool,
@@ -123,19 +141,47 @@ func (a ResourceManager) ResolveResourcePool(
 	if err := a.ValidateResourcePool(ctx, name); err != nil {
 		return "", fmt.Errorf("validating pool: %w", err)
 	}
+	return name, nil
+}
 
+// ValidateResources ensures enough resources are available for a command.
+func (a AgentResourceManager) ValidateResources(
+	ctx actor.Messenger, name string, slots int, command bool,
+) error {
+	// TODO: Replace this function usage with ValidateCommandResources
 	if slots > 0 && command {
-		switch resp, err := a.ValidateCommandResources(ctx, sproto.ValidateCommandResourcesRequest{
-			ResourcePool: name,
-			Slots:        slots,
-		}); {
+		switch resp, err := a.ValidateCommandResources(ctx,
+			sproto.ValidateCommandResourcesRequest{
+				ResourcePool: name,
+				Slots:        slots,
+			}); {
 		case err != nil:
-			return "", fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
+			return fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
 		case !resp.Fulfillable:
-			return "", errors.New("request unfulfillable, please try requesting less slots")
+			return errors.New("request unfulfillable, please try requesting less slots")
 		}
 	}
-	return name, nil
+	return nil
+}
+
+// ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
+func (a AgentResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
+	name string, slots int) (
+	[]command.LaunchWarning,
+	error,
+) {
+	if slots == 0 {
+		return nil, nil
+	}
+
+	switch exceeded, err := a.CheckMaxSlotsExceeded(ctx, name, slots); {
+	case err != nil:
+		return nil, fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
+	case exceeded:
+		return []command.LaunchWarning{command.CurrentSlotsExceeded}, nil
+	default:
+		return nil, nil
+	}
 }
 
 // GetAgents gets the state of connected agents. Go around the RM and directly to the agents actor

@@ -2,9 +2,8 @@ import { Action } from 'components/Table/TableBulkActions';
 import { openOrCreateTensorBoard } from 'services/api';
 import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { CommandTask } from 'types';
 import handleError from 'utils/error';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import { TrialsSelectionOrCollection } from '../Collections/collections';
 
@@ -23,7 +22,7 @@ export type TrialsActionHandler = (t: trials) => Promise<void> | void;
 export const openTensorBoard = async ({ trials }: trials): Promise<void> => {
   if ('trialIds' in trials) {
     const result = await openOrCreateTensorBoard({ trialIds: trials.trialIds });
-    if (result) openCommand(result as CommandTask);
+    if (result) openCommandResponse(result);
   }
 };
 

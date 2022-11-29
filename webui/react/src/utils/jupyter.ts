@@ -3,7 +3,7 @@ import { previewJupyterLab as apiPreviewJupyterLab } from 'services/api';
 import { RawJson } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 export interface JupyterLabOptions {
   name?: string;
@@ -18,7 +18,7 @@ interface JupyterLabLaunchOptions extends JupyterLabOptions {
 
 export const launchJupyterLab = async (options: JupyterLabLaunchOptions = {}): Promise<void> => {
   try {
-    const jupyterLab = await apiLaunchJupyterLab({
+    const commandResponse = await apiLaunchJupyterLab({
       config: options.config || {
         description: options.name === '' ? undefined : options.name,
         resources: {
@@ -28,7 +28,7 @@ export const launchJupyterLab = async (options: JupyterLabLaunchOptions = {}): P
       },
       templateName: options.template === '' ? undefined : options.template,
     });
-    openCommand(jupyterLab);
+    openCommandResponse(commandResponse);
   } catch (e) {
     handleError(e, {
       level: ErrorLevel.Error,

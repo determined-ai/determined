@@ -1834,6 +1834,12 @@ export interface V1CreateExperimentResponse {
      * @memberof V1CreateExperimentResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1CreateExperimentResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -4456,6 +4462,12 @@ export interface V1LaunchCommandResponse {
      * @memberof V1LaunchCommandResponse
      */
     config: any;
+    /**
+     * If the requested slots exceeded the current max available.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchCommandResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -4508,6 +4520,12 @@ export interface V1LaunchNotebookResponse {
      * @memberof V1LaunchNotebookResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchNotebookResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -4560,6 +4578,12 @@ export interface V1LaunchShellResponse {
      * @memberof V1LaunchShellResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchShellResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -4618,6 +4642,22 @@ export interface V1LaunchTensorboardResponse {
      * @memberof V1LaunchTensorboardResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchTensorboardResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+
+/**
+ * Enum values for warnings when launching commands.   - LAUNCH_WARNING_UNSPECIFIED: Default value  - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: For a default webhook
+ * @export
+ * @enum {string}
+ */
+export enum V1LaunchWarning {
+    UNSPECIFIED = <any> 'LAUNCH_WARNING_UNSPECIFIED',
+    CURRENTSLOTSEXCEEDED = <any> 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED'
 }
 
 /**

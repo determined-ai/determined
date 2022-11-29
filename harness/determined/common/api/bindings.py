@@ -1744,15 +1744,19 @@ class v1CreateExperimentRequest:
         return out
 
 class v1CreateExperimentResponse:
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
         self,
         *,
         config: "typing.Dict[str, typing.Any]",
         experiment: "v1Experiment",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
         self.config = config
         self.experiment = experiment
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1CreateExperimentResponse":
@@ -1760,6 +1764,8 @@ class v1CreateExperimentResponse:
             "config": obj["config"],
             "experiment": v1Experiment.from_json(obj["experiment"]),
         }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -1767,6 +1773,8 @@ class v1CreateExperimentResponse:
             "config": self.config,
             "experiment": self.experiment.to_json(omit_unset),
         }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
 class v1CreateGroupRequest:
@@ -5284,15 +5292,19 @@ class v1LaunchCommandRequest:
         return out
 
 class v1LaunchCommandResponse:
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
         self,
         *,
         command: "v1Command",
         config: "typing.Dict[str, typing.Any]",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
         self.command = command
         self.config = config
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchCommandResponse":
@@ -5300,6 +5312,8 @@ class v1LaunchCommandResponse:
             "command": v1Command.from_json(obj["command"]),
             "config": obj["config"],
         }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5307,6 +5321,8 @@ class v1LaunchCommandResponse:
             "command": self.command.to_json(omit_unset),
             "config": self.config,
         }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
 class v1LaunchNotebookRequest:
@@ -5360,15 +5376,19 @@ class v1LaunchNotebookRequest:
         return out
 
 class v1LaunchNotebookResponse:
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
         self,
         *,
         config: "typing.Dict[str, typing.Any]",
         notebook: "v1Notebook",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
         self.config = config
         self.notebook = notebook
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchNotebookResponse":
@@ -5376,6 +5396,8 @@ class v1LaunchNotebookResponse:
             "config": obj["config"],
             "notebook": v1Notebook.from_json(obj["notebook"]),
         }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5383,6 +5405,8 @@ class v1LaunchNotebookResponse:
             "config": self.config,
             "notebook": self.notebook.to_json(omit_unset),
         }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
 class v1LaunchShellRequest:
@@ -5436,15 +5460,19 @@ class v1LaunchShellRequest:
         return out
 
 class v1LaunchShellResponse:
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
         self,
         *,
         config: "typing.Dict[str, typing.Any]",
         shell: "v1Shell",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
         self.config = config
         self.shell = shell
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchShellResponse":
@@ -5452,6 +5480,8 @@ class v1LaunchShellResponse:
             "config": obj["config"],
             "shell": v1Shell.from_json(obj["shell"]),
         }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5459,6 +5489,8 @@ class v1LaunchShellResponse:
             "config": self.config,
             "shell": self.shell.to_json(omit_unset),
         }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
 
 class v1LaunchTensorboardRequest:
@@ -5520,15 +5552,19 @@ class v1LaunchTensorboardRequest:
         return out
 
 class v1LaunchTensorboardResponse:
+    warnings: "typing.Optional[typing.Sequence[v1LaunchWarning]]" = None
 
     def __init__(
         self,
         *,
         config: "typing.Dict[str, typing.Any]",
         tensorboard: "v1Tensorboard",
+        warnings: "typing.Union[typing.Sequence[v1LaunchWarning], None, Unset]" = _unset,
     ):
         self.config = config
         self.tensorboard = tensorboard
+        if not isinstance(warnings, Unset):
+            self.warnings = warnings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchTensorboardResponse":
@@ -5536,6 +5572,8 @@ class v1LaunchTensorboardResponse:
             "config": obj["config"],
             "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
         }
+        if "warnings" in obj:
+            kwargs["warnings"] = [v1LaunchWarning(x) for x in obj["warnings"]] if obj["warnings"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5543,7 +5581,13 @@ class v1LaunchTensorboardResponse:
             "config": self.config,
             "tensorboard": self.tensorboard.to_json(omit_unset),
         }
+        if not omit_unset or "warnings" in vars(self):
+            out["warnings"] = None if self.warnings is None else [x.value for x in self.warnings]
         return out
+
+class v1LaunchWarning(enum.Enum):
+    LAUNCH_WARNING_UNSPECIFIED = "LAUNCH_WARNING_UNSPECIFIED"
+    LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED = "LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED"
 
 class v1ListRolesRequest:
     offset: "typing.Optional[int]" = None
