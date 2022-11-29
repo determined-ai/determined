@@ -14,6 +14,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -128,9 +130,32 @@ func (a *apiServer) SetNotebookPriority(
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
+// TODO create experiment could use this?
+func (a *apiServer) getValidatedWorkspaceForNewJob(ctx context.Context, workspaceId int32) (*model.Workspace, error) {
+	wId := model.DefaultWorkspaceId
+	if workspaceId != 0 {
+		wId = int(workspaceId)
+	}
+	var w model.Workspace
+	if err := db.Bun().NewSelect().Model(&w).
+		Where("id = ?", wId).
+		Scan(ctx); err != nil {
+		// TODO figure out the proper error code
+		return nil, err
+	}
+	if w.Archived {
+		return nil, status.Error(codes.InvalidArgument, "cannot launch new jobs in archived workspace")
+	}
+	return &w, nil
+}
+
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
 	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -138,6 +163,20 @@ func (a *apiServer) LaunchNotebook(
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+	}
+	/*
+		TODO:
+		- get the requesting user
+		- ? add workspace to command config
+		- check for workspace existence and archived status
+		- default to Uncategorized workspace
+	*/
+	workspace, err := a.getValidatedWorkspaceForNewJob(ctx, req.WorkspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if err = command.AuthZProvider.Get().CanCreateCommand(ctx, *user, workspace, nil); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -209,7 +248,7 @@ func (a *apiServer) LaunchNotebook(
 		),
 	}
 
-	spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspace.ID)
 
 	// Launch a Notebook actor.
 	var notebookID model.TaskID

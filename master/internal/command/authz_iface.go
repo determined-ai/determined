@@ -7,7 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // CommandAuthZ describes authz methods for commands.
@@ -15,37 +15,37 @@ type CommandAuthZ interface {
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
-		ctx context.Context, curUser model.User, c *command,
+		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
 	) (canGetCmd bool, serverError error)
 
 	// GET /api/v1/commands
 	// "workspace" being nil indicates getting commands from all workspaces.
 	FilterCommandsQuery(
-		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace, query *bun.SelectQuery,
+		ctx context.Context, curUser model.User, workspace *model.Workspace, query *bun.SelectQuery,
 	) (*bun.SelectQuery, error)
 
 	// POST /api/v1/commands
 	// POST /api/v1/commands/:cmd_id/kill
 	// POST /api/v1/commands/:cmd_id/cancel
-	CanEditCommand(ctx context.Context, curUser model.User, c *command) error
+	CanEditCommand(ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec) error
 
 	// PATCH /api/v1/commands/:cmd_id/
-	CanEditCommandsMetadata(ctx context.Context, curUser model.User, c *command) error
+	CanEditCommandsMetadata(ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec) error
 
 	// POST /api/v1/commands
 	CanCreateCommand(
-		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace, c *command,
+		ctx context.Context, curUser model.User, workspace *model.Workspace, c *tasks.GenericCommandSpec,
 	) error
 
 	// PATCH /commands/:cmd_id
 	CanSetCommandsMaxSlots(
-		ctx context.Context, curUser model.User, c *command, slots int,
+		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, slots int,
 	) error
 	CanSetCommandsWeight(
-		ctx context.Context, curUser model.User, c *command, weight float64,
+		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, weight float64,
 	) error
 	CanSetCommandsPriority(
-		ctx context.Context, curUser model.User, c *command, priority int,
+		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
 	) error
 }
 
