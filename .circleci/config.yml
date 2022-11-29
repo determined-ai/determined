@@ -7,6 +7,7 @@ orbs:
   kubernetes: circleci/kubernetes@0.11.0
   helm: circleci/helm@1.2.0
   gcloud: circleci/gcp-cli@2.1.0
+  aws: circleci/aws-cli@3.1.3
   queue: eddiewebb/queue@volatile
   codecov: codecov/codecov@3.0.0
 
@@ -1821,6 +1822,7 @@ jobs:
           condition: <<parameters.enable-tls>>
           steps:
             - generate-tls-cert
+      - aws/install
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
