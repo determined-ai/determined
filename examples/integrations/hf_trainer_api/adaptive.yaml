@@ -16,16 +16,17 @@ searcher:
   divisor: 4
   metric: eval_loss
 hyperparameters:
-  learning_rate:
-    type: log
-    base: 10
-    minval: -5
-    maxval: -2
-  adam_epsilon:
-    type: log
-    base: 10
-    minval: -10
-    maxval: -2
+  training_arguments:
+    learning_rate:
+      type: log
+      base: 10
+      minval: -5
+      maxval: -2
+    adam_epsilon:
+      type: log
+      base: 10
+      minval: -10
+      maxval: -7
 entrypoint: >-
   python -m determined.launch.torch_distributed
   python image_classification.py 

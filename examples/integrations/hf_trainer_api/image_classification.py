@@ -50,7 +50,8 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
-
+import json
+from pathlib import Path
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
 logger = logging.getLogger(__name__)
@@ -193,29 +194,38 @@ def collate_fn(examples):
     return {"pixel_values": pixel_values, "labels": labels}
 
 
-def parse_arguments():
+def dict2args(hparams):
+    out = []
+    for key in hparams:
+        out.append('--' + str(key))
+        out.append(str(hparams[key]))
+    return out
+
+
+def parse_input_arguments(train_hps):
+    train_hps = train_hps['training_arguments'] if 'training_arguments' in train_hps else {}
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
+    dataclass_types = (ModelArguments, DataTrainingArguments, TrainingArguments)
+    parser = HfArgumentParser(dataclass_types)
 
-    parser = HfArgumentParser(
-        (ModelArguments, DataTrainingArguments, TrainingArguments)
-    )
+    # 1. If your arguments are defined in a file:
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
-        # If we pass only one argument to the script and it's the path to a json file,
-        # let's parse it to get our arguments.
-        model_args, data_args, training_args = parser.parse_json_file(
-            json_file=os.path.abspath(sys.argv[1])
-        )
+        args_fname = os.path.abspath(sys.argv[1])
+        args = json.loads(Path(args_fname).read_text())
+        args = args.update(train_hps)
+        model_args, data_args, training_args = parser.parse_dict(args)
+    # 2. If your arguments are in a sys.argv:
     else:
-        model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+        args = sys.argv[1:]
+        args.extend(dict2args(train_hps))
+        model_args, data_args, training_args = parser.parse_args_into_dataclasses(args)
+
     return model_args, data_args, training_args
 
-def main(core_context, model_args, data_args, training_args):
-    # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
-    # information sent is the one passed as arguments along with your Python/PyTorch versions.
-    # send_example_telemetry("run_image_classification", model_args, data_args)
 
+def main(core_context, model_args, data_args, training_args):
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -411,7 +421,7 @@ def main(core_context, model_args, data_args, training_args):
     )
 
     det_callback = DetCallback(
-        training_args, filter_metrics=["loss", "accuracy"], tokenizer=feature_extractor
+        core_context, training_args, filter_metrics=["loss", "accuracy"], tokenizer=feature_extractor
     )
     trainer.add_callback(det_callback)
 
@@ -449,8 +459,11 @@ def main(core_context, model_args, data_args, training_args):
 
 
 if __name__ == "__main__":
-    model_args, data_args, training_args = parse_arguments()
-    set_hyperparameters(training_args)
+
+    info = det.get_cluster_info()
+    assert info is not None
+    hparams = info.trial.hparams
+    model_args, data_args, training_args = parse_input_arguments(hparams)
 
     if training_args.deepspeed:
         distributed = det.core.DistributedContext.from_deepspeed()
