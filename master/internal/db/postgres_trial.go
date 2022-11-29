@@ -11,7 +11,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -222,12 +221,6 @@ WHERE trial_id = $1
 			return errors.Wrap(err, "archiving validations")
 		}
 
-		if err := db.ensureStep(
-			ctx, tx, int(m.TrialId), int(m.TrialRunId), int(m.StepsCompleted),
-		); err != nil {
-			return err
-		}
-
 		if _, err := tx.NamedExecContext(ctx, `
 INSERT INTO raw_validations
 	(trial_id, trial_run_id, state, end_time,
@@ -253,47 +246,6 @@ VALUES
 
 		return nil
 	})
-}
-
-// ensureStep inserts a noop step if no step exists at the batch index of the validation.
-// This is used to make sure there is at least a dummy step for each validation or checkpoint,
-// in the event one comes without (e.g. perform_initial_validation).
-func (db *PgDB) ensureStep(
-	ctx context.Context, tx *sqlx.Tx, trialID, trialRunID, stepsCompleted int,
-) error {
-	var exists bool
-	switch err := tx.QueryRowxContext(ctx, `
-SELECT EXISTS(SELECT 1 FROM steps WHERE trial_id = $1 AND total_batches = $2);`,
-		trialID, stepsCompleted).Scan(&exists); {
-	case err != nil:
-		return err
-	case exists:
-		return nil
-	}
-
-	if _, err := tx.NamedExecContext(ctx, `
-INSERT INTO raw_steps
-	(trial_id, trial_run_id, state,
-	 end_time, metrics, total_batches)
-VALUES
-	(:trial_id, :trial_run_id, :state,
-	 :end_time, :metrics, :total_batches)
-ON CONFLICT (trial_id, trial_run_id, total_batches)
-DO NOTHING
-`, model.TrialMetrics{
-		TrialID:    trialID,
-		TrialRunID: trialRunID,
-		State:      model.CompletedState,
-		EndTime:    ptrs.Ptr(time.Now().UTC()),
-		Metrics: map[string]interface{}{
-			"avg_metrics":   struct{}{},
-			"batch_metrics": []struct{}{},
-		},
-		TotalBatches: stepsCompleted,
-	}); err != nil {
-		return errors.Wrap(err, "inserting training metrics")
-	}
-	return nil
 }
 
 // AddCheckpointMetadata persists metadata for a completed checkpoint to the database.

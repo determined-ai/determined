@@ -86,10 +86,8 @@ def _workloads_tabulate(
         w_unpacked = _workload_container_unpack(w)
 
         row_metrics = []
-        if metrics:
-            metrics_workload = w.training or w.validation
-            if metrics_workload:
-                row_metrics = [json.dumps(metrics_workload.metrics.to_json(), indent=4)]
+        if metrics and w.training:
+            row_metrics = [json.dumps(w.training.metrics.to_json(), indent=4)]
 
         values.append(
             [

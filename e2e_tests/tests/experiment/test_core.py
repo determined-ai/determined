@@ -476,3 +476,14 @@ def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
 
     finally:
         exp.cancel_single(experiment_id)
+
+
+@pytest.mark.e2e_cpu
+def test_core_api_non_conforming_steps_vals_checkpoints():
+    exp.run_basic_test(
+        conf.fixtures_path("core_api/non_conforming.yaml"),
+        conf.fixtures_path("core_api"),
+        1,
+        expect_workloads=3,
+        expect_checkpoints=1,
+    )
