@@ -14,9 +14,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 )
 
-// ExperimentConfigV0 is a versioned experiment config.
-//
 //go:generate ../gen.sh
+// ExperimentConfigV0 is a versioned experiment config.
 type ExperimentConfigV0 struct {
 	RawBindMounts               BindMountsConfigV0          `json:"bind_mounts"`
 	RawCheckpointPolicy         *string                     `json:"checkpoint_policy"`
@@ -186,27 +185,23 @@ func (l *LabelsV0) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-// SlurmConfigV0 configures experiment resource usage.
-//
 //go:generate ../gen.sh
+// SlurmConfigV0 configures experiment resource usage.
 type SlurmConfigV0 struct {
 	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
 	RawGpuType      *string  `json:"gpu_type,omitempty"`
 	RawSbatchArgs   []string `json:"sbatch_args,omitempty"`
 }
 
-// PbsConfigV0 configures experiment resource usage.
-//
 //go:generate ../gen.sh
+// PbsConfigV0 configures experiment resource usage.
 type PbsConfigV0 struct {
 	RawSlotsPerNode *int     `json:"slots_per_node,omitempty"`
 	RawSbatchArgs   []string `json:"pbsbatch_args,omitempty"`
 }
 
+//go:generate ../gen.sh
 // ResourcesConfigV0 configures experiment resource usage.
-//
-//go:generate ../gen.sh
-//go:generate ../gen.sh
 type ResourcesConfigV0 struct {
 	// Slots is used by commands while trials use SlotsPerTrial.
 	RawSlots *int `json:"slots,omitempty"`
@@ -223,9 +218,8 @@ type ResourcesConfigV0 struct {
 	RawDevices DevicesConfigV0 `json:"devices"`
 }
 
-// OptimizationsConfigV0 is a legacy config value.
-//
 //go:generate ../gen.sh
+// OptimizationsConfigV0 is a legacy config value.
 type OptimizationsConfigV0 struct {
 	RawAggregationFrequency       *int    `json:"aggregation_frequency"`
 	RawAverageAggregatedGradients *bool   `json:"average_aggregated_gradients"`
@@ -238,9 +232,8 @@ type OptimizationsConfigV0 struct {
 	RawAutoTuneTensorFusion       *bool   `json:"auto_tune_tensor_fusion"`
 }
 
-// BindMountsConfigV0 is the configuration for bind mounts.
-//
 //go:generate ../gen.sh
+// BindMountsConfigV0 is the configuration for bind mounts.
 type BindMountsConfigV0 []BindMountV0
 
 // Merge is just merge-by-appending, with a specific form of deduplication.
@@ -284,9 +277,8 @@ func (e *EntrypointV0) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &e.RawEntrypoint)
 }
 
-// BindMountV0 configures trial runner filesystem bind mounts.
-//
 //go:generate ../gen.sh
+// BindMountV0 configures trial runner filesystem bind mounts.
 type BindMountV0 struct {
 	RawHostPath      string  `json:"host_path"`
 	RawContainerPath string  `json:"container_path"`
@@ -294,9 +286,8 @@ type BindMountV0 struct {
 	RawPropagation   *string `json:"propagation"`
 }
 
-// DevicesConfigV0 is the configuration for devices.
-//
 //go:generate ../gen.sh
+// DevicesConfigV0 is the configuration for devices.
 type DevicesConfigV0 []DeviceV0
 
 // Merge is just merge-by-appending, with a specific form of deduplication.
@@ -319,9 +310,8 @@ func (d DevicesConfigV0) Merge(other interface{}) interface{} {
 	return out
 }
 
-// DeviceV0 configures trial runner filesystem bind mounts.
-//
 //go:generate ../gen.sh
+// DeviceV0 configures trial runner filesystem bind mounts.
 type DeviceV0 struct {
 	RawHostPath      string  `json:"host_path"`
 	RawContainerPath string  `json:"container_path"`
@@ -350,8 +340,6 @@ func (d *DeviceV0) UnmarshalJSON(data []byte) error {
 
 //go:generate ../gen.sh
 // ReproducibilityConfigV0 configures parameters related to reproducibility.
-//
-//go:generate ../gen.sh
 type ReproducibilityConfigV0 struct {
 	RawExperimentSeed *uint32 `json:"experiment_seed"`
 }
@@ -367,16 +355,14 @@ func (r ReproducibilityConfigV0) WithDefaults() interface{} {
 	return ReproducibilityConfigV0{&seed}
 }
 
-// SecurityConfigV0 is a legacy config.
-//
 //go:generate ../gen.sh
+// SecurityConfigV0 is a legacy config.
 type SecurityConfigV0 struct {
 	RawKerberos KerberosConfigV0 `json:"kerberos"`
 }
 
-// KerberosConfigV0 is a legacy config.
-//
 //go:generate ../gen.sh
+// KerberosConfigV0 is a legacy config.
 type KerberosConfigV0 struct {
 	RawConfigFile string `json:"config_file"`
 }
