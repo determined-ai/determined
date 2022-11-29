@@ -44,6 +44,7 @@ See :ref:`use-trained-models` for more ideas on what to do next.
 """
 
 import functools
+import logging
 import pathlib
 import warnings
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
@@ -225,14 +226,21 @@ def whoami() -> User:
     return _determined.whoami()
 
 
-@_require_singleton
+# DOES NOT REQUIRE SINGLETON (don't force a login in order to log out).
 def logout() -> None:
     """
     Get the :class:`~determined.experimental.client.User` representing the
     current user.
     """
-    assert _determined is not None
-    return _determined.logout()
+    if _determined is not None:
+        return _determined.logout()
+
+    logging.warning(
+        "client has not been logged in, either explicitly by client.login() or implicitly by any "
+        "other client.* function, so client.logout() has no session to log out of and is a no-op. "
+        "If you would like to log out of the default active session, try "
+        "client.Determined().logout() instead."
+    )
 
 
 @_require_singleton
