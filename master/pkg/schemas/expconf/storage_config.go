@@ -18,9 +18,8 @@ const (
 	DefaultSharedFSPropagation = "rprivate"
 )
 
-// CheckpointStorageConfigV0 has the common checkpoint config params.
-//
 //go:generate ../gen.sh
+// CheckpointStorageConfigV0 has the common checkpoint config params.
 type CheckpointStorageConfigV0 struct {
 	RawSharedFSConfig *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
 	RawHDFSConfig     *HDFSConfigV0     `union:"type,hdfs" json:"-"`
@@ -67,9 +66,8 @@ func (c CheckpointStorageConfigV0) Printable() CheckpointStorageConfigV0 {
 	return out
 }
 
-// TensorboardStorageConfigV0 is a legacy config.
-//
 //go:generate ../gen.sh
+// TensorboardStorageConfigV0 is a legacy config.
 type TensorboardStorageConfigV0 struct {
 	RawSharedFSConfigV0 *SharedFSConfigV0 `union:"type,shared_fs" json:"-"`
 	RawHDFSConfig       *HDFSConfigV0     `union:"type,hdfs" json:"-"`
@@ -93,9 +91,8 @@ func (t *TensorboardStorageConfigV0) UnmarshalJSON(data []byte) error {
 	return union.Unmarshal(data, t)
 }
 
-// SharedFSConfigV0 is a config for shared filesystem storage.
-//
 //go:generate ../gen.sh
+// SharedFSConfigV0 is a config for shared filesystem storage.
 type SharedFSConfigV0 struct {
 	RawHostPath        *string `json:"host_path"`
 	RawContainerPath   *string `json:"container_path,omitempty"`
@@ -120,18 +117,16 @@ func (s SharedFSConfigV0) PathInContainer() string {
 	return filepath.Join(DefaultSharedFSContainerPath, *s.RawStoragePath)
 }
 
-// HDFSConfigV0 configures storing checkpoints in HDFS.
-//
 //go:generate ../gen.sh
+// HDFSConfigV0 configures storing checkpoints in HDFS.
 type HDFSConfigV0 struct {
 	RawURL  *string `json:"hdfs_url"`
 	RawPath *string `json:"hdfs_path"`
 	RawUser *string `json:"user"`
 }
 
-// S3ConfigV0 configures storing checkpoints on S3.
-//
 //go:generate ../gen.sh
+// S3ConfigV0 configures storing checkpoints on S3.
 type S3ConfigV0 struct {
 	RawBucket      *string `json:"bucket"`
 	RawAccessKey   *string `json:"access_key"`
@@ -160,9 +155,8 @@ func validateStoragePrefix(prefix *string) error {
 	return nil
 }
 
-// GCSConfigV0 configures storing checkpoints on GCS.
-//
 //go:generate ../gen.sh
+// GCSConfigV0 configures storing checkpoints on GCS.
 type GCSConfigV0 struct {
 	RawBucket *string `json:"bucket"`
 	RawPrefix *string `json:"prefix"`
@@ -180,9 +174,8 @@ func (c GCSConfigV0) Validate() []error {
 	return errs
 }
 
-// AzureConfigV0 configures storing checkpoints on Azure.
-//
 //go:generate ../gen.sh
+// AzureConfigV0 configures storing checkpoints on Azure.
 type AzureConfigV0 struct {
 	RawContainer        *string `json:"container"`
 	RawConnectionString *string `json:"connection_string,omitempty"`

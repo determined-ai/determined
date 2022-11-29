@@ -22,14 +22,15 @@ type Mergable interface {
 //
 // Example usage:
 //
-//	config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
+//    config, err := expconf.ParseAnyExperimentConfigYAML(bytes)
 //
-//	var cluster_default_storage expconf.CheckpointStorage = ...
+//    var cluster_default_storage expconf.CheckpointStorage = ...
 //
-//	// Use the cluster checkpoint storage if the user did not specify one.
-//	config.RawCheckpointStorage = schemas.Merge(
-//	    config.RawCheckpointStorage, &cluster_default_storage
-//	).(*CheckpointStorageConfig)
+//    // Use the cluster checkpoint storage if the user did not specify one.
+//    config.RawCheckpointStorage = schemas.Merge(
+//        config.RawCheckpointStorage, &cluster_default_storage
+//    ).(*CheckpointStorageConfig)
+//
 func Merge(obj interface{}, src interface{}) interface{} {
 	name := fmt.Sprintf("%T", obj)
 

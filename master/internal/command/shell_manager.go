@@ -1,6 +1,5 @@
 // Package command provides utilities for commands. This package comment is to satisfy linters
 // without disabling golint for the file.
-//
 //nolint:dupl // So easy with generics, so hard without; just wait.
 package command
 

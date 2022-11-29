@@ -38,10 +38,10 @@ var nonRetryableErrors = []*regexp.Regexp{
 }
 
 // A trial is a task actor which is responsible for handling:
-//   - messages from the resource manager,
-//   - messages from the experiment,
-//   - messages from the trial container(s), and
-//   - keeping the trial table of the database up-to-date.
+//  - messages from the resource manager,
+//  - messages from the experiment,
+//  - messages from the trial container(s), and
+//  - keeping the trial table of the database up-to-date.
 //
 // The trial's desired state is dictated to it by the experiment, searcher and user; they push
 // it to states like 'ACTIVE', 'PAUSED' and kill or wake it when more work is available. It takes

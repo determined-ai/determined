@@ -64,35 +64,35 @@ type queuedResourceRequest struct {
 // There are two reasons a queue system is required as opposed to allowing the pod actors
 // to create and delete Kubernetes resources asynchronously themselves:
 //
-//  1. Each pod creation first requires the creation of a configMap, however creating the two
-//     is not an atomic operation. If there is a large number of concurrent creation requests
-//     (e.g., a large HP search experiment) the kubernetes API server ends up processing the
-//     creation of all the configMaps before starting to create pods, which adds significant
-//     latency to the creation of pods.
+//    1) Each pod creation first requires the creation of a configMap, however creating the two
+//       is not an atomic operation. If there is a large number of concurrent creation requests
+//       (e.g., a large HP search experiment) the kubernetes API server ends up processing the
+//       creation of all the configMaps before starting to create pods, which adds significant
+//       latency to the creation of pods.
 //
-//  2. If all creation and deletion requests are submitted asynchronously, it is possible the
-//     Kubernetes API server will temporarily become saturated, and be slower to respond to other
-//     requests.
+//    2) If all creation and deletion requests are submitted asynchronously, it is possible the
+//       Kubernetes API server will temporarily become saturated, and be slower to respond to other
+//       requests.
 //
-//     When requests come in they are buffered by the requestQueue until a worker becomes available
-//     at which point the longest queue request is forwarded to the available. Requests are buffered
-//     rather than forward right away because buffering makes it possible to cancel creation
-//     requests after they are created, but before they are executed. Since the actor system
-//     processes messages in a FIFO order, if all request were forwarded right away any
-//     cancellation request would only be processed after the creation request case already been
-//     processed, requiring an unnecessary resource creation and deletion. An example of this is
-//     when a large HP search is created and then killed moments later. By having requests be
-//     buffered, if a deletion request arrives prior to the creation request being executed, the
-//     requestQueue detects this and skips the unnecessary creation / deletion.
+//  When requests come in they are buffered by the requestQueue until a worker becomes available
+//  at which point the longest queue request is forwarded to the available. Requests are buffered
+//  rather than forward right away because buffering makes it possible to cancel creation requests
+//  after they are created, but before they are executed. Since the actor system processes messages
+//  in a FIFO order, if all request were forwarded right away any cancellation request would only
+//  be processed after the creation request case already been processed, requiring an unnecessary
+//  resource creation and deletion. An example of this is when a large HP search is created and
+//  then killed moments later. By having requests be buffered, if a deletion request arrives
+//  prior to the creation request being executed, the requestQueue detects this and skips the
+//  unnecessary creation / deletion.
 //
-//     The message protocol consists of `createKubernetesResources` and `deleteKubernetesResources`
-//     messages being sent to the requestQueue. If it forwards the request to a worker, the worker
-//     will send the original task handler a `resourceCreationFailed` or a `resourceDeletionFailed`
-//     if an error was encountered while creating / deleting the resources. If a deletion request
-//     arrives before the creation request had been sent to the worker, the `requestQueue` will
-//     notify the task handler of this by sending a `resourceCreationCancelled` message.
-//     requestProcessingWorkers notify the requestQueue that they are available to receive work
-//     by sending a `workerAvailable` message.
+//  The message protocol consists of `createKubernetesResources` and `deleteKubernetesResources`
+//  messages being sent to the requestQueue. If it forwards the request to a worker, the worker
+//  will send the original task handler a `resourceCreationFailed` or a `resourceDeletionFailed`
+//  if an error was encountered while creating / deleting the resources. If a deletion request
+//  arrives before the creation request had been sent to the worker, the `requestQueue` will
+//  notify the task handler of this by sending a `resourceCreationCancelled` message.
+//  requestProcessingWorkers notify the requestQueue that they are available to receive work
+//  by sending a `workerAvailable` message.
 type requestQueue struct {
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface

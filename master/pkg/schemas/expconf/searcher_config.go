@@ -9,9 +9,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-// SearcherConfigV0 holds the searcher configurations.
-//
 //go:generate ../gen.sh
+// SearcherConfigV0 holds the searcher configurations.
 type SearcherConfigV0 struct {
 	RawSingleConfig       *SingleConfigV0       `union:"name,single" json:"-"`
 	RawRandomConfig       *RandomConfigV0       `union:"name,random" json:"-"`
@@ -84,8 +83,6 @@ type CustomConfigV0 struct {
 
 //go:generate ../gen.sh
 // SingleConfigV0 configures a single trial.
-//
-//go:generate ../gen.sh
 type SingleConfigV0 struct {
 	RawMaxLength *LengthV0 `json:"max_length"`
 }
@@ -95,9 +92,8 @@ func (s SingleConfigV0) Unit() Unit {
 	return s.RawMaxLength.Unit
 }
 
-// RandomConfigV0 configures a random search.
-//
 //go:generate ../gen.sh
+// RandomConfigV0 configures a random search.
 type RandomConfigV0 struct {
 	RawMaxLength           *LengthV0 `json:"max_length"`
 	RawMaxTrials           *int      `json:"max_trials"`
@@ -109,9 +105,8 @@ func (r RandomConfigV0) Unit() Unit {
 	return r.RawMaxLength.Unit
 }
 
-// GridConfigV0 configures a grid search.
-//
 //go:generate ../gen.sh
+// GridConfigV0 configures a grid search.
 type GridConfigV0 struct {
 	RawMaxLength           *LengthV0 `json:"max_length"`
 	RawMaxConcurrentTrials *int      `json:"max_concurrent_trials"`
@@ -122,9 +117,8 @@ func (g GridConfigV0) Unit() Unit {
 	return g.RawMaxLength.Unit
 }
 
-// AsyncHalvingConfigV0 configures asynchronous successive halving.
-//
 //go:generate ../gen.sh
+// AsyncHalvingConfigV0 configures asynchronous successive halving.
 type AsyncHalvingConfigV0 struct {
 	RawNumRungs            *int      `json:"num_rungs"`
 	RawMaxLength           *LengthV0 `json:"max_length"`
@@ -159,9 +153,8 @@ func AdaptiveModePtr(mode string) *AdaptiveMode {
 	return &tmp
 }
 
-// AdaptiveASHAConfigV0 configures an adaptive searcher for use with ASHA.
-//
 //go:generate ../gen.sh
+// AdaptiveASHAConfigV0 configures an adaptive searcher for use with ASHA.
 type AdaptiveASHAConfigV0 struct {
 	RawMaxLength           *LengthV0     `json:"max_length"`
 	RawMaxTrials           *int          `json:"max_trials"`
@@ -178,9 +171,8 @@ func (a AdaptiveASHAConfigV0) Unit() Unit {
 	return a.RawMaxLength.Unit
 }
 
-// SyncHalvingConfigV0 is a legacy config.
-//
 //go:generate ../gen.sh
+// SyncHalvingConfigV0 is a legacy config.
 type SyncHalvingConfigV0 struct {
 	RawNumRungs        *int      `json:"num_rungs"`
 	RawMaxLength       *LengthV0 `json:"max_length"`
@@ -189,9 +181,8 @@ type SyncHalvingConfigV0 struct {
 	RawTrainStragglers *bool     `json:"train_stragglers"`
 }
 
-// AdaptiveConfigV0 is a legacy config.
-//
 //go:generate ../gen.sh
+// AdaptiveConfigV0 is a legacy config.
 type AdaptiveConfigV0 struct {
 	RawMaxLength       *LengthV0     `json:"max_length"`
 	RawBudget          *LengthV0     `json:"budget"`
@@ -202,9 +193,8 @@ type AdaptiveConfigV0 struct {
 	RawMaxRungs        *int          `json:"max_rungs"`
 }
 
-// AdaptiveSimpleConfigV0 is a legacy config.
-//
 //go:generate ../gen.sh
+// AdaptiveSimpleConfigV0 is a legacy config.
 type AdaptiveSimpleConfigV0 struct {
 	RawMaxLength *LengthV0     `json:"max_length"`
 	RawMaxTrials *int          `json:"max_trials"`

@@ -40,9 +40,8 @@ func (p PodSpec) WithDefaults() interface{} {
 	return PodSpec(*pod.DeepCopy())
 }
 
-// EnvironmentConfigV0 configures the environment of a Determined command or experiment.
-//
 //go:generate ../gen.sh --import github.com/docker/docker/api/types
+// EnvironmentConfigV0 configures the environment of a Determined command or experiment.
 type EnvironmentConfigV0 struct {
 	RawImage                *EnvironmentImageMapV0     `json:"image"`
 	RawEnvironmentVariables *EnvironmentVariablesMapV0 `json:"environment_variables"`
@@ -56,9 +55,8 @@ type EnvironmentConfigV0 struct {
 	RawDropCapabilities []string `json:"drop_capabilities"`
 }
 
-// EnvironmentImageMapV0 configures the runtime image.
-//
 //go:generate ../gen.sh
+// EnvironmentImageMapV0 configures the runtime image.
 type EnvironmentImageMapV0 struct {
 	RawCPU  *string `json:"cpu"`
 	RawCUDA *string `json:"cuda"`
@@ -131,9 +129,8 @@ func (e EnvironmentImageMapV0) For(deviceType device.Type) string {
 	}
 }
 
-// EnvironmentVariablesMapV0 configures the runtime environment variables.
-//
 //go:generate ../gen.sh
+// EnvironmentVariablesMapV0 configures the runtime environment variables.
 type EnvironmentVariablesMapV0 struct {
 	RawCPU  []string `json:"cpu"`
 	RawCUDA []string `json:"cuda"`
