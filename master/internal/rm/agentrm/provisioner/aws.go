@@ -31,7 +31,7 @@ type awsCluster struct {
 	spot *spotState
 }
 
-//nolint:lll
+//nolint:lll  // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
 const ec2InstanceID = `$(curl -q -H "X-aws-ec2-metadata-token: $(curl -q -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")"  http://169.254.169.254/latest/meta-data/instance-id)`
 
 func newAWSCluster(
