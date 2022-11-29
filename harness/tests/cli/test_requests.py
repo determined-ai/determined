@@ -23,7 +23,13 @@ class CliArgs:
 
 def mock_det_auth(user: str = "test", master_url: str = "http://localhost:8888") -> Authentication:
     with mock.Mocker() as mocker:
-        mocker.post(master_url + "/login", status_code=200, json={"token": "fake-token"})
+        mocker.get(master_url + "/api/v1/me", status_code=200, json={"username": user})
+        fake_user = {"username": user, "admin": True, "active": True}
+        mocker.post(
+            master_url + "/api/v1/auth/login",
+            status_code=200,
+            json={"token": "fake-token", "user": fake_user},
+        )
         mocker.get("/info", status_code=200, json={"version": "1.0"})
         mocker.get(
             "/users/me", status_code=200, json={"username": constants.DEFAULT_DETERMINED_USER}
