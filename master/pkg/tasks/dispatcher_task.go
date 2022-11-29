@@ -193,7 +193,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		slotType, gresSupported, isPbsLauncher)
 
 	var slurmArgs []string
-	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm...)
+	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm.SbatchArgs()...)
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
 	slurmArgs = append(slurmArgs, resourceOpts...)
 	logrus.Debugf("Custom slurm arguments: %s", slurmArgs)
@@ -205,7 +205,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	customParams["slurmArgs"] = slurmArgs
 
 	var pbsArgs []string
-	pbsArgs = append(pbsArgs, t.TaskContainerDefaults.Pbs...)
+	pbsArgs = append(pbsArgs, t.TaskContainerDefaults.Pbs.SbatchArgs()...)
 	pbsArgs = append(pbsArgs, t.PbsConfig.SbatchArgs()...)
 	logrus.Debugf("Custom pbs arguments: %s", pbsArgs)
 	errList = ValidatePbs(pbsArgs)
