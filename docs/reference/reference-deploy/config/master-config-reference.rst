@@ -327,6 +327,14 @@ The master supports the following configuration settings:
          -  ``task_container_defaults`` (See :ref:`top-level setting
             <master-task-container-defaults>`)
 
+      -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
+         dedicated compute resources, auxiliary, or systems tasks. Defaults to the Slurm/PBS default
+         partition if no resource pool is specified.
+
+      -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
+         compute resources, e.g. GPUs or dedicated CPUs. Defaults to the Slurm/PBS default partition
+         if it has GPU resources and if no resource pool is specified.
+
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
    the job is submitted. Refer to the documentation on :ref:`resource-pools` for more information.
