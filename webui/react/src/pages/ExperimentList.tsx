@@ -834,16 +834,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // cleanup
   useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
-
-      setExperiments([]);
-      setLabels([]);
-      setIsLoading(true);
-      setTotal(0);
     };
   }, [canceler, stopPolling]);
 
