@@ -25,7 +25,8 @@ class _InteractiveCommandProcess:
             iterator = iter(self.process.stdout)  # type: ignore
             line = next(iterator)
             m = None
-            max_iterations = iterations = 0
+            max_iterations = 2
+            iterations = 0
             while line and not m and iterations < max_iterations:
                 iterations += 1
                 m = re.search(rb"Scheduling .* \(id: (.*)\)", line)
