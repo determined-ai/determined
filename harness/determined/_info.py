@@ -346,6 +346,10 @@ class ClusterInfo:
     @property
     def container_addrs(self) -> List[str]:
         """A list of addresses for all containers in the allocation, ordered by rank."""
+        if self.task_type != "TRIAL":
+            # Presently, only trials are allowed to use the rendezvous API.
+            # But also, only trials are scheduled across multiple nodes, so we can cheat here.
+            return ["127.0.0.1"]
         assert self._rendezvous_info is not None
         return self._rendezvous_info.container_addrs
 
@@ -357,6 +361,10 @@ class ClusterInfo:
         When using a distributed training framework, the framework may choose a different rank for
         this container.
         """
+        if self.task_type != "TRIAL":
+            # Presently, only trials are allowed to use the rendezvous API.
+            # But also, only trials are scheduled across multiple nodes, so we can cheat here.
+            return 0
         assert self._rendezvous_info is not None
         return self._rendezvous_info.container_rank
 

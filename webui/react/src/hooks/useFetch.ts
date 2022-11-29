@@ -1,22 +1,18 @@
 import { useCallback } from 'react';
 
 import { activeRunStates } from 'constants/states';
-import { agentsToOverview, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import {
   getActiveTasks,
-  getAgents,
   getExperiments,
   getInfo,
   getPermissionsSummary,
   getResourcePools,
   getUsers,
-  getUserSetting,
   getWorkspaces,
   listRoles,
 } from 'services/api';
 import { ErrorType } from 'shared/utils/error';
-import { BrandingType, ResourceType } from 'types';
-import { updateFaviconType } from 'utils/browser';
 import handleError from 'utils/error';
 
 export const useFetchActiveExperiments = (canceler: AbortController): (() => Promise<void>) => {
@@ -42,25 +38,6 @@ export const useFetchActiveExperiments = (canceler: AbortController): (() => Pro
   }, [canceler, storeDispatch]);
 };
 
-export const useFetchAgents = (canceler: AbortController): (() => Promise<void>) => {
-  const { info } = useStore();
-  const storeDispatch = useStoreDispatch();
-
-  return useCallback(async (): Promise<void> => {
-    try {
-      const response = await getAgents({ signal: canceler.signal });
-      const cluster = agentsToOverview(response);
-      storeDispatch({ type: StoreAction.SetAgents, value: response });
-      updateFaviconType(
-        cluster[ResourceType.ALL].allocation !== 0,
-        info.branding || BrandingType.Determined,
-      );
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, info.branding, storeDispatch]);
-};
-
 export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
 
@@ -82,19 +59,6 @@ export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) 
     try {
       const usersResponse = await getUsers({}, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetUsers, value: usersResponse.users });
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, storeDispatch]);
-};
-
-export const useFetchUserSettings = (canceler: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-
-  return useCallback(async (): Promise<void> => {
-    try {
-      const userSettingResponse = await getUserSetting({}, { signal: canceler.signal });
-      storeDispatch({ type: StoreAction.SetUserSettings, value: userSettingResponse.settings });
     } catch (e) {
       handleError(e);
     }

@@ -51,22 +51,13 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
   /**
    * prevents stable tab content, e.g. archived state
    */
-  useEffect(
-    () => setActiveTab((curTab) => tabs.find((tab) => tab.title === curTab.title) ?? tabs[0]),
-    [tabs],
-  );
+  useEffect(() => {
+    setActiveTab((curTab) => tabs.find((tab) => tab.title === curTab.title) ?? tabs[0]);
+  }, [tabs]);
 
   useEffect(() => {
     fetchWorkspace();
   }, [fetchWorkspace]);
-
-  // cleanup
-  useEffect(() => {
-    return () => {
-      setWorkspace(undefined);
-      setActiveTab(tabs[0]);
-    };
-  }, [tabs]);
 
   if (project.immutable) {
     const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
@@ -110,6 +101,7 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
         type="project"
       />
       <Tabs
+        activeKey={sentenceToCamelCase(activeTab.title)}
         defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
         tabBarExtraContent={activeTab.options}
         tabBarStyle={{ height: 50, paddingLeft: 16 }}

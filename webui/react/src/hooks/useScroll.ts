@@ -45,8 +45,8 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
     viewWidth: element?.clientWidth || 0,
   });
 
-  const handleResize = useCallback(
-    (entries) => {
+  const handleResize: ResizeObserverCallback = useCallback(
+    (entries: ResizeObserverEntry[]) => {
       // Check to make sure the scroll element is being observed for resize.
       const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
       if (!element || elements.indexOf(element) === -1) return;

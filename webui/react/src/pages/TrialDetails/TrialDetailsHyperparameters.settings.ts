@@ -1,5 +1,7 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 
 export type HyperparameterColumnName = 'hyperparameter' | 'value';
 
@@ -10,49 +12,39 @@ export const DEFAULT_COLUMN_WIDTHS: Record<HyperparameterColumnName, number> = {
   value: 150,
 };
 
-export interface Settings extends InteractiveTableSettings {
+export interface Settings extends Omit<InteractiveTableSettings, 'tableLimit' | 'tableOffset'> {
   columns: HyperparameterColumnName[];
 }
 
-const config: SettingsConfig = {
+const config: SettingsConfig<Settings> = {
   applicableRoutespace: '/hyperparameters',
-  settings: [
-    {
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(union([literal('hyperparameter'), literal('value')])),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map(
         (col: HyperparameterColumnName) => DEFAULT_COLUMN_WIDTHS[col],
       ),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: 'hyperparameter',
-      key: 'sortKey',
       skipUrlEncoding: true,
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([undefinedType, union([boolean, number, string])]),
     },
-  ],
+  },
   storagePath: 'trial-hyperparameters',
 };
 

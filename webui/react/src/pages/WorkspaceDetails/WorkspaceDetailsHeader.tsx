@@ -40,6 +40,7 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({
   const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
     useModalWorkspaceAddMember({
       addableUsersAndGroups,
+      onClose: fetchWorkspace,
       rolesAssignableToScope,
       workspaceId: workspace.id,
     });

@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 
 export type UserColumnName =
@@ -33,55 +35,54 @@ export interface UserManagementSettings extends InteractiveTableSettings {
   sortKey: V1GetUsersRequestSortBy;
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
+const config: SettingsConfig<UserManagementSettings> = {
+  applicableRoutespace: 'user-management',
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
+      skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(string),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'row',
-      type: { baseType: BaseType.Integer, isArray: true },
+    row: {
+      defaultValue: undefined,
+      storageKey: 'row',
+      type: union([array(number), array(string), undefinedType]),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: V1GetUsersRequestSortBy.MODIFIEDTIME,
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(V1GetUsersRequestSortBy.ACTIVE),
+        literal(V1GetUsersRequestSortBy.ADMIN),
+        literal(V1GetUsersRequestSortBy.DISPLAYNAME),
+        literal(V1GetUsersRequestSortBy.MODIFIEDTIME),
+        literal(V1GetUsersRequestSortBy.UNSPECIFIED),
+        literal(V1GetUsersRequestSortBy.USERNAME),
+      ]),
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
+  },
   storagePath: 'user-management',
 };
 

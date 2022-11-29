@@ -155,6 +155,28 @@ service Determined {
       tags: "Users"
     };
   }
+
+  // Get the requested user with username.
+  rpc GetUserByUsername(GetUserByUsernameRequest)
+      returns (GetUserByUsernameResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{username}/by-username"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Get the current user.
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/me"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
   // Create a new user.
   rpc PostUser(PostUserRequest) returns (PostUserResponse) {
     option (google.api.http) = {
@@ -821,6 +843,23 @@ service Determined {
     };
   }
 
+  // NotifyContainterRunning is used to notify the master that the container
+  // is running.  On HPC, the launcher will report a state of "Running" as
+  // soon as Slurm starts the job, but the container may be in the process
+  // of getting pulled down from the Internet, so the experiment is not
+  // really considered to be in a "Running" state until all the containers
+  // that are part of the experiment are running and not being pulled.
+  rpc NotifyContainerRunning(NotifyContainerRunningRequest)
+      returns (NotifyContainerRunningResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/allocations/{allocation_id}/notify_container_running"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get the current searcher operation.
   rpc GetCurrentTrialSearcherOperation(GetCurrentTrialSearcherOperationRequest)
       returns (GetCurrentTrialSearcherOperationResponse) {
@@ -1293,7 +1332,7 @@ service Determined {
   rpc GetModelVersion(GetModelVersionRequest)
       returns (GetModelVersionResponse) {
     option (google.api.http) = {
-      get: "/api/v1/models/{model_name}/versions/{model_version}"
+      get: "/api/v1/models/{model_name}/versions/{model_version_num}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"
@@ -1325,7 +1364,7 @@ service Determined {
   rpc PatchModelVersion(PatchModelVersionRequest)
       returns (PatchModelVersionResponse) {
     option (google.api.http) = {
-      patch: "/api/v1/models/{model_name}/versions/{model_version_id}"
+      patch: "/api/v1/models/{model_name}/versions/{model_version_num}"
       body: "model_version"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -1337,7 +1376,7 @@ service Determined {
   rpc DeleteModelVersion(DeleteModelVersionRequest)
       returns (DeleteModelVersionResponse) {
     option (google.api.http) = {
-      delete: "/api/v1/models/{model_name}/versions/{model_version_id}"
+      delete: "/api/v1/models/{model_name}/versions/{model_version_num}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Models"

@@ -1,10 +1,11 @@
 import { Button, Dropdown, Menu, Select, Tooltip } from 'antd';
+import { string } from 'io-ts';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { useStore } from 'contexts/Store';
-import useSettings, { BaseType, SettingsConfig, SettingsHook } from 'hooks/useSettings';
+import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
 import Icon from 'shared/components/Icon';
@@ -31,16 +32,15 @@ export interface TrialsCollectionInterface {
 
 const collectionStoragePath = (projectId: string) => `collection/${projectId}`;
 
-const configForProject = (projectId: string): SettingsConfig => ({
+const configForProject = (projectId: string): SettingsConfig<{ collection: string }> => ({
   applicableRoutespace: '/trials',
-  settings: [
-    {
+  settings: {
+    collection: {
       defaultValue: '',
-      key: 'collection',
       storageKey: 'collection',
-      type: { baseType: BaseType.String },
+      type: string,
     },
-  ],
+  },
   storagePath: collectionStoragePath(projectId),
 });
 
@@ -74,7 +74,7 @@ const defaultSorter: TrialSorter = {
 
 export const useTrialCollections = (
   projectId: string,
-  tableSettingsHook: SettingsHook<InteractiveTableSettings>,
+  tableSettingsHook: UseSettingsReturn<InteractiveTableSettings>,
 ): TrialsCollectionInterface => {
   const { settings: tableSettings, updateSettings: updateTableSettings } = tableSettingsHook;
   const filterStorage = useStorage(`trial-filters}/${projectId ?? 1}`);
@@ -110,7 +110,7 @@ export const useTrialCollections = (
   const sorter: TrialSorter = useMemo(
     () => ({
       ...defaultSorter,
-      sortDesc: tableSettings.sortDesc,
+      sortDesc: !!tableSettings.sortDesc,
       sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
     }),
     [tableSettings.sortDesc, tableSettings.sortKey],
@@ -146,13 +146,13 @@ export const useTrialCollections = (
   );
 
   const setPreviousCollection = useCallback(
-    (c) => previousCollectionStorage.set('collection', c),
+    (c: TrialsCollection) => previousCollectionStorage.set('collection', c),
     [previousCollectionStorage],
   );
 
   const activeCollection = useMemo(
-    () => collections.find((c) => c.name === settings?.collection),
-    [collections, settings?.collection],
+    () => collections.find((c) => c.name === settings.collection),
+    [collections, settings.collection],
   );
 
   const fetchCollections = useCallback(async () => {
@@ -289,8 +289,8 @@ export const useTrialCollections = (
     useModalRenameCollection({ onComplete: handleRenameComplete });
 
   const renameCollection = useCallback(() => {
-    const id = collections.find((c) => c.name === settings?.collection)?.id;
-    if (id) openRenameModal({ id, name: settings.collection });
+    const id = collections.find((c) => c.name === settings.collection)?.id;
+    if (id) openRenameModal({ id, name: settings.collection ?? '' });
   }, [collections, settings.collection, openRenameModal]);
 
   const collectionIsActive = !!(collections.length && settings.collection);

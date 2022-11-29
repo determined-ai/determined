@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { CommandState, CommandType } from 'types';
 
 export type TaskColumnName =
@@ -62,84 +64,109 @@ export interface Settings extends InteractiveTableSettings {
   user?: string[];
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'task-list',
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([
+          literal('action'),
+          literal('id'),
+          literal('startTime'),
+          literal('state'),
+          literal('name'),
+          literal('type'),
+          literal('resourcePool'),
+          literal('user'),
+        ]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: TaskColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'row',
-      type: { baseType: BaseType.String, isArray: true },
+    row: {
+      defaultValue: undefined,
+      storageKey: 'row',
+      type: union([undefinedType, array(string)]),
     },
-    {
-      key: 'search',
-      type: { baseType: BaseType.String },
+    search: {
+      defaultValue: undefined,
+      storageKey: 'search',
+      type: union([undefinedType, string]),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: 'startTime',
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal('id'),
+        literal('name'),
+        literal('resourcePool'),
+        literal('startTime'),
+        literal('state'),
+        literal('type'),
+        literal('user'),
+      ]),
     },
-    {
-      key: 'state',
+    state: {
+      defaultValue: undefined,
       storageKey: 'state',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(CommandState.Pulling),
+            literal(CommandState.Queued),
+            literal(CommandState.Running),
+            literal(CommandState.Starting),
+            literal(CommandState.Terminated),
+            literal(CommandState.Terminating),
+            literal(CommandState.Waiting),
+          ]),
+        ),
+      ]),
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-    {
-      key: 'type',
+    type: {
+      defaultValue: undefined,
       storageKey: 'type',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(CommandType.Command),
+            literal(CommandType.JupyterLab),
+            literal(CommandType.Shell),
+            literal(CommandType.TensorBoard),
+          ]),
+        ),
+      ]),
     },
-    {
-      key: 'user',
+    user: {
+      defaultValue: undefined,
       storageKey: 'user',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([undefinedType, array(string)]),
     },
-  ],
+  },
   storagePath: 'task-list',
 };
 

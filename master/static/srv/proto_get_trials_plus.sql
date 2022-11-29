@@ -176,13 +176,19 @@ SELECT
     WHERE a.task_id = t.task_id
   ) AS wall_clock_time,
   (
-    SELECT sum((jsonb_each).value::text::bigint)
+    SELECT coalesce(sum((size_tuple).value::text::bigint), 0)
     FROM (
-        SELECT jsonb_each(resources) FROM checkpoints_old_view c WHERE c.trial_id = t.id
+        SELECT jsonb_each(c.resources) AS size_tuple
+        FROM checkpoints_old_view c
+        WHERE c.trial_id = t.id
           AND state != 'DELETED'
+          AND c.resources != 'null'::jsonb
         UNION ALL
-        SELECT jsonb_each(resources) FROM checkpoints_new_view c WHERE c.trial_id = t.id
+        SELECT jsonb_each(c.resources) as size_tuple
+        FROM checkpoints_new_view c
+        WHERE c.trial_id = t.id
           AND state != 'DELETED'
+          AND c.resources != 'null'::jsonb
     ) r
   ) AS total_checkpoint_size,
   -- `restart` count is incremented before `restart <= max_restarts` stop restart check,

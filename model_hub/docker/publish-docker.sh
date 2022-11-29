@@ -5,7 +5,7 @@ set -x
 
 docker info
 
-if [ "$#" -ne 3 ] ; then
+if [ "$#" -ne 3 ]; then
     echo "usage: $0 LOG_NAME TAG ARTIFACTS_DIR" >&2
     exit 1
 fi
@@ -21,4 +21,4 @@ docker push "$tag"
 mkdir -p "$artifacts"
 
 log_file="$artifacts/publish-$log_name"
-echo "${underscore_name}" > "$log_file"
+echo "${underscore_name}" >"$log_file"

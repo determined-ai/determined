@@ -50,7 +50,7 @@ describe('TimeAgo', () => {
     const customClassName = 'customClassName';
     const view = render(<TimeAgo className={customClassName} datetime={datetime} />);
     const element = view.getByText(daysMatch);
-    expect(element.className).toBe(customClassName);
+    expect(element.className).toBe(`base ${customClassName}`);
   });
 
   it('should render "Just Now" when < 1 minute', () => {
@@ -120,7 +120,7 @@ describe('TimeAgo', () => {
   it('should render updates', async () => {
     render(<TimeAgo datetime={shared.now - 59 * DURATION_SECOND} />);
     expect(screen.getByText(/just now/i)).toBeInTheDocument();
-
+    await new Promise((r) => setTimeout(r, 2000));
     await waitFor(() => expect(screen.queryByText(/1m ago/i)).not.toBeNull());
     expect(screen.getByText(/1m ago/i)).toBeInTheDocument();
   });

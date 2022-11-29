@@ -223,17 +223,15 @@ def delete_experiment(args: Namespace) -> None:
 @authentication.required
 def describe(args: Namespace) -> None:
     session = cli.setup_session(args)
-    exps = []
+    responses: List[bindings.v1GetExperimentResponse] = []
     for experiment_id in args.experiment_ids.split(","):
         r = bindings.get_GetExperiment(session, experimentId=experiment_id)
-        if args.json:
-            exps.append(r.to_json())
-        else:
-            exps.append(r.experiment)
+        responses.append(r)
 
     if args.json:
-        print(json.dumps(exps, indent=4))
+        print(json.dumps([resp.to_json() for resp in responses], indent=4))
         return
+    exps = [resp.experiment for resp in responses]
 
     # Display overall experiment information.
     headers = [
@@ -248,7 +246,7 @@ def describe(args: Namespace) -> None:
         "Resource Pool",
         "Labels",
     ]
-    values = [
+    values: List[List] = [
         [
             exp.id,
             exp.state.value.replace("STATE_", ""),
@@ -448,7 +446,7 @@ def describe(args: Namespace) -> None:
                         )
                         wl_output[wl_detail.totalBatches] = row
 
-            # Done procesing one trial's workloads, add to output values.
+            # Done processing one trial's workloads, add to output values.
             values += sorted(wl_output.values(), key=lambda a: int(a[1]))
 
     if not args.outdir:

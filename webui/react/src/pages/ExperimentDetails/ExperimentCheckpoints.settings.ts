@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { CheckpointState } from 'types';
 
@@ -39,66 +41,81 @@ export interface Settings extends InteractiveTableSettings {
   tableOffset: number;
 }
 
-const config: SettingsConfig = {
+const config: SettingsConfig<Settings> = {
   applicableRoutespace: '/checkpoints',
-  settings: [
-    {
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([
+          literal('action'),
+          literal('uuid'),
+          literal('state'),
+          literal('searcherMetric'),
+          literal('totalBatches'),
+          literal('checkpoint'),
+        ]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: CheckpointColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'row',
-      type: { baseType: BaseType.String, isArray: true },
+    row: {
+      defaultValue: undefined,
+      storageKey: 'row',
+      type: union([undefinedType, array(string)]),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: V1GetExperimentCheckpointsRequestSortBy.UUID,
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(V1GetExperimentCheckpointsRequestSortBy.BATCHNUMBER),
+        literal(V1GetExperimentCheckpointsRequestSortBy.ENDTIME),
+        literal(V1GetExperimentCheckpointsRequestSortBy.SEARCHERMETRIC),
+        literal(V1GetExperimentCheckpointsRequestSortBy.STATE),
+        literal(V1GetExperimentCheckpointsRequestSortBy.TRIALID),
+        literal(V1GetExperimentCheckpointsRequestSortBy.UNSPECIFIED),
+        literal(V1GetExperimentCheckpointsRequestSortBy.UUID),
+      ]),
     },
-    {
-      key: 'state',
+    state: {
+      defaultValue: undefined,
       storageKey: 'state',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(CheckpointState.Active),
+            literal(CheckpointState.Completed),
+            literal(CheckpointState.Deleted),
+            literal(CheckpointState.Error),
+            literal(CheckpointState.Unspecified),
+          ]),
+        ),
+      ]),
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
-  storagePath: 'experiment-checkpoints-list',
+  },
+  storagePath: '/checkpoints',
 };
 
 export default config;

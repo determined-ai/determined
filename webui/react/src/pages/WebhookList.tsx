@@ -1,6 +1,6 @@
 import { Button, Dropdown, Menu, Space } from 'antd';
 import type { MenuProps } from 'antd';
-import { SorterResult } from 'antd/lib/table/interface';
+import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -9,11 +9,12 @@ import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
 import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -94,8 +95,15 @@ const WebhooksView: React.FC = () => {
         [MenuKey.DeleteWebhook]: () => {
           showConfirmDelete(record);
         },
-        [MenuKey.TestWebhook]: () => {
-          testWebhook({ id: record.id });
+        [MenuKey.TestWebhook]: async () => {
+          try {
+            await testWebhook({ id: record.id });
+          } catch (e) {
+            handleError(e, {
+              publicSubject: 'Webhook Request Failed',
+              silent: false,
+            });
+          }
         },
       };
 
@@ -171,7 +179,11 @@ const WebhooksView: React.FC = () => {
   }, [WebhookActionMenu]);
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<Webhook> | SorterResult<Webhook>[],
+    ) => {
       if (Array.isArray(tableSorter)) return;
 
       const { columnKey, order } = tableSorter as SorterResult<Webhook>;
@@ -181,7 +193,7 @@ const WebhooksView: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: columnKey,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       updateSettings(newSettings, true);
     },
@@ -214,7 +226,7 @@ const WebhooksView: React.FC = () => {
             Call external services when experiments complete or throw errors.
           </p>
         </div>
-      ) : (
+      ) : settings ? (
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
@@ -232,9 +244,11 @@ const WebhooksView: React.FC = () => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
+      ) : (
+        <SkeletonTable columns={columns.length} />
       )}
       {modalWebhookCreateContextHolder}
       {modalWebhookDeleteContextHolder}

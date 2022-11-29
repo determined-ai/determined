@@ -1,5 +1,7 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { ValueOf } from 'shared/types';
 
 export type MembersColumnName = 'name' | 'role' | 'action';
@@ -21,59 +23,50 @@ export const DEFAULT_COLUMN_WIDTHS: Record<MembersColumnName, number> = {
 export interface WorkspaceMembersSettings extends InteractiveTableSettings {
   columns: MembersColumnName[];
   name?: string;
-  sortKey: WorkspaceMembersSortBy;
+  sortKey: string;
 }
 
-const config: SettingsConfig = {
+const config: SettingsConfig<WorkspaceMembersSettings> = {
   applicableRoutespace: 'members',
-  settings: [
-    {
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
+      skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(union([literal('name'), literal('role'), literal('action')])),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: MembersColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'name',
-      type: { baseType: BaseType.String },
+    name: {
+      defaultValue: undefined,
+      storageKey: 'name',
+      type: union([undefinedType, string]),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: WorkspaceMembersSortBy.USERNAME,
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: string,
     },
-    {
+    tableLimit: {
       defaultValue: 10,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
+  },
   storagePath: 'workspace-members',
 };
 

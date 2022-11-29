@@ -24,9 +24,9 @@ import {
   experimentNameRenderer,
   experimentProgressRenderer,
   ExperimentRenderer,
+  expStateRenderer,
   getFullPaginationConfig,
   relativeTimeRenderer,
-  stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -44,7 +44,7 @@ import useModalExperimentMove, {
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import NoPermissions from 'pages/NoPermissions';
 import { paths } from 'routes/utils';
 import {
@@ -144,12 +144,21 @@ const ProjectDetails: React.FC = () => {
 
   useEffect(() => {
     updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-  }, [updateDestinationSettings, project?.workspaceId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.workspaceId]);
 
   const id = parseInt(projectId ?? '1');
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ProjectDetailsSettings>(settingsConfig);
+
+  const tableOffset = (() => {
+    if (total && settings.tableOffset >= total) {
+      const newTotal = settings.tableOffset > total ? total : total - 1;
+      return settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
+    }
+    return settings.tableOffset;
+  })();
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -184,6 +193,7 @@ const ProjectDetails: React.FC = () => {
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (!settings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -217,8 +227,7 @@ const ProjectDetails: React.FC = () => {
           ...baseParams,
           experimentIdFilter: { notIn: pinnedIds },
           limit: settings.tableLimit - pinnedIds.length,
-          offset:
-            settings.tableOffset - (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
+          offset: tableOffset - (tableOffset / settings.tableLimit) * pinnedIds.length,
         },
         { signal: canceler.signal },
       );
@@ -236,20 +245,7 @@ const ProjectDetails: React.FC = () => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canceler.signal,
-    id,
-    settings.archived,
-    labelsString,
-    pinnedString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -413,6 +409,8 @@ const ProjectDetails: React.FC = () => {
       onVisibleChange?: ((visible: boolean) => void) | undefined;
       record: ExperimentItem;
     }) => {
+      if (!settings) return <Spinner spinning />;
+
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
@@ -563,7 +561,7 @@ const ProjectDetails: React.FC = () => {
         })),
         isFiltered: () => !!settings.state,
         key: V1GetExperimentsRequestSortBy.STATE,
-        render: stateRenderer,
+        render: expStateRenderer,
         sorter: true,
         title: 'State',
       },
@@ -678,6 +676,7 @@ const ProjectDetails: React.FC = () => {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
       if (action === Action.Move) {
+        if (!settings || !settings.row.length) return;
         return openMoveModal({
           experimentIds: settings.row.filter(
             (id) =>
@@ -775,8 +774,8 @@ const ProjectDetails: React.FC = () => {
   );
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: React.Key[]) => {
+      updateSettings({ row: rowKeys as number[] });
     },
     [updateSettings],
   );
@@ -821,6 +820,8 @@ const ProjectDetails: React.FC = () => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
+
       let newColumns: ExperimentColumnName[];
       let newColumnWidths: number[];
 
@@ -893,14 +894,6 @@ const ProjectDetails: React.FC = () => {
     [openNoteDelete, project?.id],
   );
 
-  useEffect(() => {
-    if (settings.tableOffset >= total && total) {
-      const newTotal = settings.tableOffset > total ? total : total - 1;
-      const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
-      updateSettings({ tableOffset: offset });
-    }
-  }, [total, settings.tableOffset, settings.tableLimit, updateSettings]);
-
   /*
    * Get new experiments based on changes to the
    * filters, pagination, search and sorter.
@@ -908,19 +901,8 @@ const ProjectDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  }, [
-    fetchExperiments,
-    settings.archived,
-    labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // cleanup
   useEffect(() => {
@@ -1047,7 +1029,7 @@ const ProjectDetails: React.FC = () => {
               settings={settings as InteractiveTableSettings}
               showSorterTooltip={false}
               size="small"
-              updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+              updateSettings={updateSettings as UpdateSettings}
             />
           </div>
         ),
@@ -1104,9 +1086,7 @@ const ProjectDetails: React.FC = () => {
     const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!project) {
-    return (
-      <Spinner tip={projectId === '1' ? 'Loading...' : `Loading project ${projectId} details...`} />
-    );
+    return <Spinner tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
   }
 
   if (project && !expPermissions.canViewWorkspace({ workspace: { id: project.workspaceId } })) {

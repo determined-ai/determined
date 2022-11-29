@@ -6,6 +6,8 @@ import Page from 'components/Page';
 import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
+import { useAgents, useClusterOverview } from 'stores/agents';
+import { Loadable } from 'utils/loadable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
@@ -34,15 +36,20 @@ const Clusters: React.FC = () => {
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const { agents, cluster: overview, resourcePools } = useStore();
+  const { resourcePools } = useStore();
+  const overview = useClusterOverview();
+  const agents = useAgents();
 
   const cluster = useMemo(() => {
-    return clusterStatusText(overview, resourcePools, agents);
+    return Loadable.match(Loadable.all([agents, overview]), {
+      Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
+      NotLoaded: () => undefined, // TODO show spinner when this is loading
+    });
   }, [overview, resourcePools, agents]);
 
   const handleTabChange = useCallback(
-    (key) => {
-      setTabKey(key);
+    (key: string) => {
+      setTabKey(key as TabType);
       navigate(key === DEFAULT_TAB_KEY ? basePath : `${basePath}/${key}`, { replace: true });
     },
     [basePath, navigate],

@@ -2,8 +2,7 @@
   "extends": "./src/shared/configs/tsconfig.json",
   "compilerOptions": {
     "baseUrl": "./src",
-    "module": "esnext",
-    "noImplicitAny": false
+    "module": "esnext"
   },
   "include": ["src/**/*", "typings/**/*.ts"]
 }

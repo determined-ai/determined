@@ -9,13 +9,13 @@ import { useStore } from 'contexts/Store';
 import {
   useFetchActiveExperiments,
   useFetchActiveTasks,
-  useFetchAgents,
   useFetchResourcePools,
 } from 'hooks/useFetch';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
+import { useEnsureAgentsFetched } from 'stores/agents';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 
@@ -90,13 +90,14 @@ export const clusterStatusText = (
 
 const ClusterOverview: React.FC = () => {
   const { resourcePools } = useStore();
+
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
   const [canceler] = useState(new AbortController());
 
   const fetchActiveExperiments = useFetchActiveExperiments(canceler);
   const fetchActiveTasks = useFetchActiveTasks(canceler);
-  const fetchAgents = useFetchAgents(canceler);
+  const fetchAgents = useEnsureAgentsFetched(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
 
   const fetchActiveRunning = useCallback(async () => {

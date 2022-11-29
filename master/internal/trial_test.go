@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 
 	"github.com/pkg/errors"
@@ -189,7 +191,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 
 	// mock resource manager.
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	rmImpl := rm.WrapRMActor(system.MustActorOf(actor.Addr("rm"), &rmActor))
+	rmImpl := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
 
 	// mock logger.
 	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}

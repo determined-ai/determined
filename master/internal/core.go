@@ -854,8 +854,6 @@ func (m *Master) Run(ctx context.Context) error {
 	}
 
 	// Add resistance to common HTTP attacks.
-	//
-	// TODO(DET-1696): Enable Content Security Policy (CSP).
 	secureConfig := middleware.SecureConfig{
 		Skipper:            middleware.DefaultSkipper,
 		XSSProtection:      "1; mode=block",
@@ -967,6 +965,7 @@ func (m *Master) Run(ctx context.Context) error {
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
 
 	webuiGroup := m.echo.Group(webuiBaseRoute)
+	webuiGroup.File("", reactIndex)
 	webuiGroup.File("/", reactIndex)
 	webuiGroup.GET("/*", func(c echo.Context) error {
 		groupPath := strings.TrimPrefix(c.Request().URL.Path, webuiBaseRoute+"/")

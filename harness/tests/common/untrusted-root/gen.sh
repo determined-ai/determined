@@ -26,7 +26,7 @@ echo "$rootca" | openssl x509 -req -days "$days" -sha512 -CAcreateserial \
     -in "$csr" -CA "$ca" -CAkey /dev/stdin -out "$cert"
 
 # Turn the certificate into a proper chain.
-cat "$ca" >> "$cert"
+cat "$ca" >>"$cert"
 
 rm *.srl *.csr
 

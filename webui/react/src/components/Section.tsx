@@ -11,7 +11,7 @@ interface Props {
   bodyDynamic?: boolean;
   bodyNoPadding?: boolean;
   bodyScroll?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   divider?: boolean;
   filters?: React.ReactNode;

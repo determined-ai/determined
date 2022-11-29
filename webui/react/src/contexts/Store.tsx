@@ -1,22 +1,15 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { V1UserWebSetting } from 'services/api-ts-sdk';
 import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
-import { percent } from 'shared/utils/number';
 import { checkDeepEquality } from 'shared/utils/store';
 import {
-  Agent,
   Auth,
-  ClusterOverview,
-  ClusterOverviewResource,
   DetailedUser,
   DeterminedInfo,
-  PoolOverview,
   ResourcePool,
-  ResourceType,
   UserAssignment,
   UserRole,
   Workspace,
@@ -41,20 +34,19 @@ interface State {
     shells: number;
     tensorboards: number;
   };
-  agents: Agent[];
+
   auth: Auth & { checked: boolean };
-  cluster: ClusterOverview;
+
   info: DeterminedInfo;
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
-  pool: PoolOverview;
+
   resourcePools: ResourcePool[];
   ui: {
     omnibar: OmnibarState;
   };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
-  userSettings: V1UserWebSetting[];
   users: DetailedUser[];
 }
 
@@ -63,7 +55,6 @@ export const StoreAction = {
   HideOmnibar: 'HideOmnibar',
 
   Reset: 'Reset',
-
   // Auth
   ResetAuth: 'ResetAuth',
 
@@ -111,7 +102,6 @@ export const StoreAction = {
 
 type Action =
   | { type: typeof StoreAction.Reset }
-  | { type: typeof StoreAction.SetAgents; value: Agent[] }
   | { type: typeof StoreAction.ResetAuth }
   | { type: typeof StoreAction.ResetAuthCheck }
   | { type: typeof StoreAction.SetAuth; value: Auth }
@@ -120,7 +110,6 @@ type Action =
   | { type: typeof StoreAction.SetInfoCheck }
   | { type: typeof StoreAction.SetUsers; value: DetailedUser[] }
   | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
-  | { type: typeof StoreAction.SetUserSettings; value: V1UserWebSetting[] }
   | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
@@ -145,14 +134,6 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
-const initClusterOverview: ClusterOverview = {
-  [ResourceType.CPU]: clone(initResourceTally),
-  [ResourceType.CUDA]: clone(initResourceTally),
-  [ResourceType.ROCM]: clone(initResourceTally),
-  [ResourceType.ALL]: clone(initResourceTally),
-  [ResourceType.UNSPECIFIED]: clone(initResourceTally),
-};
 export const initInfo: DeterminedInfo = {
   branding: undefined,
   checked: false,
@@ -173,13 +154,10 @@ const initState: State = {
     shells: 0,
     tensorboards: 0,
   },
-  agents: [],
   auth: initAuth,
-  cluster: initClusterOverview,
   info: initInfo,
   knownRoles: [],
   pinnedWorkspaces: [],
-  pool: {},
   resourcePools: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
@@ -191,7 +169,6 @@ const initState: State = {
     },
   ],
   users: [],
-  userSettings: [],
 };
 
 const StateContext = React.createContext<State | undefined>(undefined);
@@ -209,71 +186,11 @@ const ensureAuthCookieSet = (token: string): void => {
   if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
 };
 
-export const agentsToOverview = (agents: Agent[]): ClusterOverview => {
-  // Deep clone for render detection.
-  const overview: ClusterOverview = clone(initClusterOverview);
-
-  agents.forEach((agent) => {
-    agent.resources
-      .filter((resource) => resource.enabled)
-      .forEach((resource) => {
-        const isResourceFree = resource.container == null;
-        const availableResource = isResourceFree ? 1 : 0;
-        overview[resource.type].available += availableResource;
-        overview[resource.type].total++;
-        overview[ResourceType.ALL].available += availableResource;
-        overview[ResourceType.ALL].total++;
-      });
-  });
-
-  for (const key in overview) {
-    const rt = key as ResourceType;
-    overview[rt].allocation =
-      overview[rt].total !== 0
-        ? percent((overview[rt].total - overview[rt].available) / overview[rt].total)
-        : 0;
-  }
-
-  return overview;
-};
-
-export const agentsToPoolOverview = (agents: Agent[]): PoolOverview => {
-  const overview: PoolOverview = {};
-  agents.forEach((agent) => {
-    agent.resourcePools.forEach((pname) => {
-      overview[pname] = clone(initResourceTally);
-      agent.resources
-        .filter((resource) => resource.enabled)
-        .forEach((resource) => {
-          const isResourceFree = resource.container == null;
-          const availableResource = isResourceFree ? 1 : 0;
-          overview[pname].available += availableResource;
-          overview[pname].total += 1;
-        });
-    });
-  });
-
-  for (const key in overview) {
-    overview[key].allocation =
-      overview[key].total !== 0
-        ? percent((overview[key].total - overview[key].available) / overview[key].total)
-        : 0;
-  }
-
-  return overview;
-};
-
 // TODO turn this into a partial reducer simliar to reducerUI.
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
-    case StoreAction.SetAgents: {
-      if (isEqual(state.agents, action.value)) return state;
-      const cluster = agentsToOverview(action.value);
-      const pool = agentsToPoolOverview(action.value);
-      return { ...state, agents: action.value, cluster, pool };
-    }
     case StoreAction.ResetAuth:
       clearAuthCookie();
       globalStorage.removeAuthToken();
@@ -310,9 +227,6 @@ const reducer = (state: State, action: Action): State => {
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }
-    case StoreAction.SetUserSettings:
-      if (isEqual(state.userSettings, action.value)) return state;
-      return { ...state, userSettings: action.value };
     case StoreAction.SetResourcePools:
       if (isEqual(state.resourcePools, action.value)) return state;
       return { ...state, resourcePools: action.value };

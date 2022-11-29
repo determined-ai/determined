@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetModelVersionsRequestSortBy } from 'services/api-ts-sdk';
 
 export type ModelVersionColumnName =
@@ -40,54 +42,58 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: V1GetModelVersionsRequestSortBy;
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'model-details',
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([
+          literal('action'),
+          literal('description'),
+          literal('lastUpdatedTime'),
+          literal('name'),
+          literal('tags'),
+          literal('version'),
+          literal('user'),
+        ]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map(
         (col: ModelVersionColumnName) => DEFAULT_COLUMN_WIDTHS[col],
       ),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: V1GetModelVersionsRequestSortBy.VERSION,
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(V1GetModelVersionsRequestSortBy.CREATIONTIME),
+        literal(V1GetModelVersionsRequestSortBy.UNSPECIFIED),
+        literal(V1GetModelVersionsRequestSortBy.VERSION),
+      ]),
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
+  },
   storagePath: 'model-details',
 };
 

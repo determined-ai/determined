@@ -22,9 +22,9 @@ import {
   experimentNameRenderer,
   experimentProgressRenderer,
   ExperimentRenderer,
+  expStateRenderer,
   getFullPaginationConfig,
   relativeTimeRenderer,
-  stateRenderer,
   userRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -41,7 +41,7 @@ import useModalExperimentMove, {
   settingsConfig as moveExperimentSettingsConfig,
 } from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -60,6 +60,7 @@ import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'serv
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey, ValueOf } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
@@ -137,6 +138,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ExperimentListSettings>(settingsConfig);
 
+  const tableOffset = (() => {
+    if (settings.tableOffset > total) {
+      const newTotal = settings.tableOffset > total ? total : total - 1;
+      return settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
+    }
+    return settings.tableOffset;
+  })();
+
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
@@ -157,6 +166,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (!settings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -190,8 +200,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           ...baseParams,
           experimentIdFilter: { notIn: pinnedIds },
           limit: settings.tableLimit - pinnedIds.length,
-          offset:
-            settings.tableOffset - (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
+          offset: tableOffset - (tableOffset / settings.tableLimit) * pinnedIds.length,
         },
         { signal: canceler.signal },
       );
@@ -209,20 +218,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canceler.signal,
-    id,
-    settings.archived,
-    labelsString,
-    pinnedString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -386,6 +382,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       onVisibleChange?: ((visible: boolean) => void) | undefined;
       record: ExperimentItem;
     }) => {
+      if (!settings) return <Spinner spinning />;
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
@@ -536,7 +533,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         })),
         isFiltered: () => !!settings.state,
         key: V1GetExperimentsRequestSortBy.STATE,
-        render: stateRenderer,
+        render: expStateRenderer,
         sorter: true,
         title: 'State',
       },
@@ -718,7 +715,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         });
       }
     },
-    [fetchExperiments, sendBatchActions, updateSettings, settings.row],
+    [fetchExperiments, sendBatchActions, updateSettings],
   );
 
   const showConfirmation = useCallback(
@@ -749,8 +746,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: unknown) => {
+      updateSettings({ row: rowKeys as number[] });
     },
     [updateSettings],
   );
@@ -795,6 +792,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
       let newColumns: ExperimentColumnName[];
       let newColumnWidths: number[];
 
@@ -830,33 +828,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   useEffect(() => {
-    if (settings.tableOffset > total) {
-      const newTotal = settings.tableOffset > total ? total : total - 1;
-      const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
-      updateSettings({ tableOffset: offset });
-    }
-  }, [total, settings.tableOffset, settings.tableLimit, updateSettings]);
-
-  /*
-   * Get new experiments based on changes to the
-   * filters, pagination, search and sorter.
-   */
-  useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  }, [
-    fetchExperiments,
-    settings.archived,
-    labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // cleanup
   useEffect(() => {
@@ -964,8 +939,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           numOfPinned={(settings.pinned?.[id] ?? []).length}
           pagination={getFullPaginationConfig(
             {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
+              limit: settings.tableLimit || 0,
+              offset: tableOffset || 0,
             },
             total,
           )}
@@ -980,7 +955,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
         />
       </div>
       {modalColumnsCustomizeContextHolder}

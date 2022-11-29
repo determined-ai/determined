@@ -1,8 +1,12 @@
+import { readFileSync } from 'fs';
+
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import Spinner from './Spinner';
+
+jest.useRealTimers(); // This should solve the flakyness around timming out
 
 const spinnerTextContent = 'Spinner Text Content';
 
@@ -19,7 +23,14 @@ const setup = (spinning: boolean) => {
 };
 
 describe('Spinner', () => {
-  loadAntdStyleSheet(); // defined in setupTests.ts
+  beforeAll(() => {
+    // load Antd StyleSheet
+    // Same code is defined in setupTests.ts
+    const antdStyleSheet = readFileSync('node_modules/antd/dist/antd.css').toString();
+    const style = document.createElement('style');
+    style.innerHTML = antdStyleSheet;
+    document.body.appendChild(style);
+  });
 
   it('blocks inner content while spinning', async () => {
     const { handleButtonClick } = setup(true);

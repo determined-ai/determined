@@ -29,7 +29,7 @@ func replicateClientSideSaltAndHash(password string) string {
 }
 
 func (a *apiServer) Login(
-	_ context.Context, req *apiv1.LoginRequest,
+	ctx context.Context, req *apiv1.LoginRequest,
 ) (*apiv1.LoginResponse, error) {
 	if a.m.config.InternalConfig.ExternalSessions.JwtKey != "" {
 		return nil, status.Error(codes.FailedPrecondition, "authentication is configured to be external")
@@ -54,14 +54,14 @@ func (a *apiServer) Login(
 	} else {
 		hashedPassword = replicateClientSideSaltAndHash(req.Password)
 	}
+
 	if !userModel.ValidatePassword(hashedPassword) {
 		return nil, grpcutil.ErrInvalidCredentials
 	}
 
 	if !userModel.Active {
-		return nil, grpcutil.ErrPermissionDenied
+		return nil, grpcutil.ErrNotActive
 	}
-
 	token, err := a.m.db.StartUserSession(userModel)
 	if err != nil {
 		return nil, err

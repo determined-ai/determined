@@ -1108,8 +1108,6 @@ workloads for this experiment. For more information on customizing the trial env
    Just like ``add_capabilities`` but corresponding to the ``--cap-drop`` argument of ``docker run``
    rather than ``--cap-add``.
 
-.. _exp-environment-slurm:
-
 ***************
  Optimizations
 ***************
@@ -1296,6 +1294,18 @@ The ``slurm`` section specifies configuration options applicable when the cluste
 
 **Optional Fields**
 
+``gpu_type``
+   An optional GPU type name to be included in the generated Slurm ``--gpus`` or ``--gres`` option
+   if you have configured GPU types within your Slurm gres configuration. Specify this option to
+   select that specific GPU type when there are multiple GPU types within the Slurm partition. The
+   default is to select GPUs without regard to their type. For example, you can request the
+   ``tesla`` GPU type with:
+
+   .. code:: yaml
+
+      slurm:
+         gpu_type: tesla
+
 ``sbatch_args``
    Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable
    control of Slurm options not otherwise managed by Determined. For example, to specify required
@@ -1338,6 +1348,22 @@ The ``pbs`` section specifies configuration options applicable when the cluster 
          pbsbatch_args:
             - -p1000
             - -PMyProjectName
+
+   Requesting of resources and job placement may be influenced through use of ``-l``, however chunk
+   count, chunk arrangement, and GPU or CPU counts per chunk (depending on the value of
+   ``slot_type``) are controlled by Determined; any values specified for these quantities will be
+   ignored. Consider if the following were specified for a CUDA experiment:
+
+   .. code:: yaml
+
+      pbs:
+         pbsbatch_args:
+            - -l select=2:ngpus=4:mem=4gb
+            - -l place=scatter:shared
+            - -l walltime=1:00:00
+
+   The chunk count (two), the GPU count per chunk (four), and the chunk arrangement (scatter) will
+   all be ignored in favor of values calculated by Determined.
 
 ``slots_per_node``
    The minimum number of slots required for a node to be scheduled during a trial. If

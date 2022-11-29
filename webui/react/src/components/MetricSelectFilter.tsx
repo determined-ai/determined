@@ -116,7 +116,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     [multiple, onChange, value],
   );
 
-  const handleFiltering = useCallback((search: string, option) => {
+  const handleFiltering = useCallback((search: string, option: any) => {
     if (option.key === allOptionId || option.key === resetOptionId) return true;
     if (!option.value) return false;
 

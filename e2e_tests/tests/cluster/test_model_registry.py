@@ -3,6 +3,7 @@ import pytest
 from determined.experimental import Determined, ModelSortBy
 from tests import config as conf
 from tests import experiment as exp
+from tests.cluster.test_users import log_out_user
 
 
 @pytest.mark.e2e_cpu
@@ -13,10 +14,14 @@ def test_model_registry() -> None:
         None,
     )
 
+    log_out_user()  # Ensure that we use determined credentials.
+
     d = Determined(conf.make_master_url())
     mnist = None
     objectdetect = None
     tform = None
+
+    existing_models = [m.name for m in d.get_models(sort_by=ModelSortBy.NAME)]
 
     try:
         # Create a model and validate twiddling the metadata.
@@ -116,6 +121,12 @@ def test_model_registry() -> None:
         all_versions = mnist.get_versions()
         assert len(all_versions) == 2
 
+        for v in all_versions:
+            mv = mnist.get_version(v.model_version)
+            assert mv is not None
+            assert mv.model_version == v.model_version
+            assert mv.model_version_id != v.model_version
+
         # Test deletion of model version
         latest_version.delete()
         all_versions = mnist.get_versions()
@@ -126,7 +137,8 @@ def test_model_registry() -> None:
         objectdetect = d.create_model("ac - Dc", "a test name model")
 
         models = d.get_models(sort_by=ModelSortBy.NAME)
-        assert [m.name for m in models] == ["ac - Dc", "mnist", "transformer"]
+        model_names = [m.name for m in models if m.name not in existing_models]
+        assert model_names == ["ac - Dc", "mnist", "transformer"]
 
         # Test model labels combined
         mnist.set_labels(["hello", "world"])
@@ -138,7 +150,8 @@ def test_model_registry() -> None:
         tform.delete()
         tform = None
         models = d.get_models(sort_by=ModelSortBy.NAME)
-        assert [m.name for m in models] == ["ac - Dc", "mnist"]
+        model_names = [m.name for m in models if m.name not in existing_models]
+        assert model_names == ["ac - Dc", "mnist"]
     finally:
         # Clean model registry of test models
         for model in [mnist, objectdetect, tform]:

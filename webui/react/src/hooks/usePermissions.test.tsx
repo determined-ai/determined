@@ -48,14 +48,14 @@ const PermissionRenderer: React.FC<Props> = () => {
 const setup = async () => {
   return await render(
     <StoreProvider>
-      <PermissionRenderer />
+      <PermissionRenderer workspaceId={1} />
     </StoreProvider>,
   );
 };
 
 describe('usePermissions', () => {
   it('should have OSS permissions', async () => {
-    useFeature.mockReturnValue({
+    (useFeature as jest.Mock).mockReturnValue({
       isOn: () => false,
     });
     await setup();
@@ -70,8 +70,8 @@ describe('usePermissions', () => {
   });
 
   it('should have read permissions', async () => {
-    useFeature.mockReturnValue({
-      isOn: (f) => ['rbac', 'mock_permissions_read'].includes(f),
+    (useFeature as jest.Mock).mockReturnValue({
+      isOn: (f: string) => ['rbac', 'mock_permissions_read'].includes(f),
     });
     await setup();
 
@@ -86,8 +86,8 @@ describe('usePermissions', () => {
   });
 
   it('should have create/read/update/delete permissions', async () => {
-    useFeature.mockReturnValue({
-      isOn: (f) => ['rbac', 'mock_permissions_all'].includes(f),
+    (useFeature as jest.Mock).mockReturnValue({
+      isOn: (f: string) => ['rbac', 'mock_permissions_all'].includes(f),
     });
     await setup();
 

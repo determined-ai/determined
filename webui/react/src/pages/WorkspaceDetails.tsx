@@ -132,7 +132,7 @@ const WorkspaceDetails: React.FC = () => {
     } catch (e) {
       handleError(e);
     }
-  }, [canceler.signal, id]);
+  }, [canceler.signal, id, rbacEnabled]);
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
@@ -155,7 +155,7 @@ const WorkspaceDetails: React.FC = () => {
   usePolling(fetchAll, { rerunOnNewFn: true });
 
   const handleTabChange = useCallback(
-    (activeTab) => {
+    (activeTab: string) => {
       const tab = activeTab as WorkspaceDetailsTab;
       navigate(paths.workspaceDetails(workspaceId, tab), { replace: true });
       setTabKey(tab);
@@ -218,6 +218,7 @@ const WorkspaceDetails: React.FC = () => {
           <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
             <WorkspaceMembers
               assignments={workspaceAssignments}
+              fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
               groupsAssignedDirectly={groupsAssignedDirectly}
               pageRef={pageRef}
               rolesAssignableToScope={rolesAssignableToScope}

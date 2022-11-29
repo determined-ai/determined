@@ -81,6 +81,6 @@ func MapAndFilterErrors(err error, passthrough map[error]bool, mapping map[error
 		}
 	}
 
-	logrus.WithError(err).Debug("suppressing error at API boundary")
+	logrus.WithError(err).Warn("suppressing error at API boundary")
 	return ErrInternal
 }

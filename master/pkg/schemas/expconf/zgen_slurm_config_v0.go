@@ -16,6 +16,14 @@ func (s *SlurmConfigV0) SetSlotsPerNode(val *int) {
 	s.RawSlotsPerNode = val
 }
 
+func (s SlurmConfigV0) GpuType() *string {
+	return s.RawGpuType
+}
+
+func (s *SlurmConfigV0) SetGpuType(val *string) {
+	s.RawGpuType = val
+}
+
 func (s SlurmConfigV0) SbatchArgs() []string {
 	return s.RawSbatchArgs
 }

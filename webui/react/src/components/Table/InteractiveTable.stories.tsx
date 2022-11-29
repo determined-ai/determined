@@ -1,7 +1,8 @@
 import { Meta, Story } from '@storybook/react';
+import { array, number, string, undefined, union } from 'io-ts';
 import React, { useCallback, useMemo, useRef } from 'react';
 
-import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { generateAlphaNumeric, generateLetters } from 'shared/utils/string';
 
 import InteractiveTable, { InteractiveTableSettings } from './InteractiveTable';
@@ -28,32 +29,28 @@ const columns = new Array(20).fill(null).map(() => {
   };
 });
 
-const config: SettingsConfig = {
-  settings: [
-    {
+const config: SettingsConfig<
+  Omit<InteractiveTableSettings, 'sortDesc' | 'sortKey' | 'tableLimit' | 'tableOffset'>
+> = {
+  applicableRoutespace: 'storybook',
+  settings: {
+    columns: {
       defaultValue: columns.map((column) => column.dataIndex),
-      key: 'columns',
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(string),
     },
-    {
+    columnWidths: {
       defaultValue: columns.map((column) => column.defaultWidth),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'row',
-      type: { baseType: BaseType.String, isArray: true },
+    row: {
+      defaultValue: [],
+      storageKey: 'row',
+      type: union([undefined, array(string), array(number)]),
     },
-  ],
+  },
   storagePath: 'storybook',
 };
 
@@ -64,11 +61,14 @@ export const Default: Story<InteractiveTableProps & { numRows: number }> = ({
   ...args
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { settings, updateSettings } = useSettings<InteractiveTableSettings>(config);
+  const { settings, updateSettings } =
+    useSettings<
+      Omit<InteractiveTableSettings, 'sortDesc' | 'sortKey' | 'tableLimit' | 'tableOffset'>
+    >(config);
 
   const handleTableRowSelect = useCallback(
-    (rowKeys) => {
-      updateSettings({ row: rowKeys });
+    (rowKeys: React.Key[]) => {
+      updateSettings({ row: rowKeys.map(String) });
     },
     [updateSettings],
   );
@@ -97,7 +97,7 @@ export const Default: Story<InteractiveTableProps & { numRows: number }> = ({
           preserveSelectedRowKeys: true,
           selectedRowKeys: settings.row ?? [],
         }}
-        settings={settings}
+        settings={settings as InteractiveTableSettings}
         updateSettings={updateSettings}
       />
     </div>

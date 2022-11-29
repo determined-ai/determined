@@ -3,6 +3,7 @@ import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
@@ -22,6 +23,7 @@ import {
   ModelItem,
   ModelVersion,
   Project,
+  RunState,
   StartEndTimes,
   TrialItem,
   Workspace,
@@ -81,16 +83,18 @@ export const HumanReadableNumberRenderer = (num: number): React.ReactNode => {
 };
 
 export const relativeTimeRenderer = (date: Date): React.ReactNode => {
-  return (
-    <Tooltip title={date?.toLocaleString()}>
-      <TimeAgo datetime={date} />
-    </Tooltip>
-  );
+  return <TimeAgo className={css.timeAgo} datetime={date} />;
 };
 
 export const stateRenderer: Renderer<{ state: StateOfUnion }> = (_, record) => (
   <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
     <Badge state={record.state} type={BadgeType.State} />
+  </div>
+);
+
+export const expStateRenderer: Renderer<{ state: RunState }> = (_, record) => (
+  <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+    <ExperimentIcons state={record.state} />
   </div>
 );
 
@@ -178,7 +182,7 @@ export const modelNameRenderer = (value: string, record: ModelItem): React.React
 );
 
 export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
-  <Link path={paths.modelVersionDetails(String(record.model.id), record.id)}>
+  <Link path={paths.modelVersionDetails(String(record.model.id), record.version)}>
     {value ? value : 'Version ' + record.version}
   </Link>
 );
@@ -189,7 +193,7 @@ export const modelVersionNumberRenderer = (
 ): React.ReactNode => (
   <Link
     className={css.versionBox}
-    path={paths.modelVersionDetails(String(record.model.id), record.id)}>
+    path={paths.modelVersionDetails(String(record.model.id), record.version)}>
     V{record.version}
   </Link>
 );

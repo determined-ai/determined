@@ -32,7 +32,7 @@ const Transfer: React.FC<Props> = ({
   );
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearch = useCallback((e) => {
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   }, []);
 
@@ -96,7 +96,7 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderRow = useCallback(
-    (row, style, handleClick) => {
+    (row: string, style: React.CSSProperties, handleClick: () => void) => {
       return (
         <li style={style} onClick={handleClick}>
           {renderEntry(row)}
@@ -124,7 +124,13 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderDraggableRow = useCallback(
-    (row, index, style, handleClick, handleDrop) => {
+    (
+      row: string,
+      index: number,
+      style: React.CSSProperties,
+      handleClick: (event: React.MouseEvent<Element, MouseEvent>) => void,
+      handleDrop: (column: string, newNeighborColumnName: string) => void,
+    ) => {
       return (
         <DraggableListItem
           columnName={row}
@@ -140,7 +146,7 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderHiddenRow = useCallback(
-    ({ index, style }) => {
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const row = filteredHiddenEntries[index];
       return renderRow(row, style, () => moveToRight(row));
     },
@@ -148,7 +154,7 @@ const Transfer: React.FC<Props> = ({
   );
 
   const renderVisibleRow = useCallback(
-    ({ index, style }) => {
+    ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const row = filteredVisibleEntries[index];
       return reorder
         ? renderDraggableRow(row, index, style, () => moveToLeft(row), switchRowOrder)

@@ -81,7 +81,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.19.7-dev0
+    Default: 0.19.8-dev0
 
   DBPassword:
     Type: String
@@ -731,6 +731,14 @@ Resources:
       Roles:
         - !Ref MasterRole
 
+  IMDSV2LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        MetadataOptions:
+          HttpTokens: required
+          HttpPutResponseHopLimit: 2
+        
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -742,6 +750,9 @@ Resources:
         - Master
       KeyName: !Ref Keypair
       IamInstanceProfile: !Ref MasterInstanceProfile
+      LaunchTemplate:
+        LaunchTemplateId: !Ref IMDSV2LaunchTemplate
+        Version: !GetAtt IMDSV2LaunchTemplate.LatestVersionNumber
       SecurityGroupIds:
         - !Ref MasterSecurityGroup
       BlockDeviceMappings:

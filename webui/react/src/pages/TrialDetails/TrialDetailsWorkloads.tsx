@@ -1,6 +1,6 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import { SorterResult } from 'antd/es/table/interface';
+import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import CheckpointModalTrigger from 'components/CheckpointModalTrigger';
@@ -17,7 +17,6 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { numericSorter } from 'shared/utils/sort';
 import {
-  CommandTask,
   ExperimentBase,
   Metric,
   Step,
@@ -198,17 +197,21 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
   );
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<Step> | SorterResult<Step>[],
+    ) => {
       if (Array.isArray(tableSorter)) return;
 
-      const { columnKey, order } = tableSorter as SorterResult<CommandTask>;
+      const { columnKey, order } = tableSorter as SorterResult<Step>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
       updateSettings({
         sortDesc: order === 'descend',
         sortKey: columnKey as string,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       });
     },
     [columns, updateSettings],

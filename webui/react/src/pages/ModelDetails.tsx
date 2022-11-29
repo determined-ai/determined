@@ -1,5 +1,5 @@
 import { Typography } from 'antd';
-import { SorterResult } from 'antd/lib/table/interface';
+import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -23,7 +23,7 @@ import {
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
   getModelDetails,
@@ -38,7 +38,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
-import { ModelVersion, ModelVersions } from 'types';
+import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
 
 import css from './ModelDetails.module.scss';
@@ -62,9 +62,15 @@ const ModelDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const fetchModel = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const modelData = await getModelDetails({
         limit: settings.tableLimit,
@@ -93,7 +99,8 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-  }, [fetchModel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const downloadModel = useCallback(
     (version: ModelVersion) => {
@@ -110,13 +117,17 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveModelVersionTags = useCallback(
-    async (modelName, versionId, tags) => {
+    async (modelName: string, versionNum: number, tags: string[]) => {
       try {
-        await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
+        await patchModelVersion({
+          body: { labels: tags, modelName },
+          modelName,
+          versionNum: versionNum,
+        });
         await fetchModel();
       } catch (e) {
         handleError(e, {
-          publicSubject: `Unable to update model version ${versionId} tags.`,
+          publicSubject: `Unable to update model version ${versionNum} tags.`,
           silent: true,
           type: ErrorType.Api,
         });
@@ -126,14 +137,14 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveVersionDescription = useCallback(
-    async (editedDescription: string, versionId: number) => {
+    async (editedDescription: string, versionNum: number) => {
       try {
         const modelName = model?.model.name;
         if (modelName) {
           await patchModelVersion({
             body: { comment: editedDescription, modelName },
             modelName,
-            versionId,
+            versionNum: versionNum,
           });
         }
       } catch (e) {
@@ -159,7 +170,7 @@ const ModelDetails: React.FC = () => {
               compact
               disabled={record.model.archived}
               tags={record.labels ?? []}
-              onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
+              onChange={(tags) => saveModelVersionTags(record.model.name, record.version, tags)}
             />
           </div>
         </Typography.Text>
@@ -178,7 +189,7 @@ const ModelDetails: React.FC = () => {
         disabled={record.model.archived}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         value={record.comment ?? ''}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
+        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.version)}
       />
     );
 
@@ -233,8 +244,12 @@ const ModelDetails: React.FC = () => {
   }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription]);
 
   const handleTableChange = useCallback(
-    (tablePagination, tableFilters, tableSorter) => {
-      if (Array.isArray(tableSorter)) return;
+    (
+      tablePagination: TablePaginationConfig,
+      tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<ModelVersion> | SorterResult<ModelVersion>[],
+    ) => {
+      if (Array.isArray(tableSorter) || !settings.tableOffset) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
@@ -243,7 +258,7 @@ const ModelDetails: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelVersionsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current - 1) * tablePagination.pageSize,
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -252,7 +267,7 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveMetadata = useCallback(
-    async (editedMetadata) => {
+    async (editedMetadata: Metadata) => {
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -338,7 +353,7 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveModelTags = useCallback(
-    async (editedTags) => {
+    async (editedTags: string[]) => {
       try {
         const modelName = model?.model.name;
         if (modelName) {
@@ -371,7 +386,15 @@ const ModelDetails: React.FC = () => {
   }, [model?.model.archived, model?.model.name]);
 
   const actionDropdown = useCallback(
-    ({ record, onVisibleChange, children }) => (
+    ({
+      record,
+      onVisibleChange,
+      children,
+    }: {
+      children: React.ReactNode;
+      onVisibleChange?: (visible: boolean) => void;
+      record: ModelVersion;
+    }) => (
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
         onDelete={() => deleteModelVersion(record)}
@@ -421,7 +444,7 @@ const ModelDetails: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
-            loading={isLoading}
+            loading={isLoading || isLoadingSettings}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -434,7 +457,7 @@ const ModelDetails: React.FC = () => {
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
             onChange={handleTableChange}
           />
         )}

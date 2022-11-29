@@ -86,9 +86,7 @@ const ProjectDetails: React.FC = () => {
     const message = `Unable to fetch Project ${projectId}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!project) {
-    return (
-      <Spinner tip={projectId === '1' ? 'Loading...' : `Loading project ${projectId} details...`} />
-    );
+    return <Spinner tip={id === 1 ? 'Loading...' : `Loading project ${id} details...`} />;
   }
   return (
     <Page

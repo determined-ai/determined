@@ -6,8 +6,8 @@ import React, { useCallback, useMemo } from 'react';
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
-import { relativeTimeRenderer } from 'components/Table/Table';
 import TagList from 'components/TagList';
+import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
@@ -52,7 +52,7 @@ const ModelHeader: React.FC<Props> = ({
         ),
         label: 'Created by',
       },
-      { content: relativeTimeRenderer(new Date(model.lastUpdatedTime)), label: 'Updated' },
+      { content: <TimeAgo datetime={new Date(model.lastUpdatedTime)} />, label: 'Updated' },
       {
         content: (
           <InlineEditor

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
@@ -109,6 +109,8 @@ export const useTheme = (): void => {
 
   // Update setting mode when mode changes.
   useLayoutEffect(() => {
+    if (!settings.mode) return;
+
     if (isSettingsReady) {
       // We have read from the settings, going forward any mode difference requires an update.
       if (settings.mode !== ui.mode) updateSettings({ mode: ui.mode });

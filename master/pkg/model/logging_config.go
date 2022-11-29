@@ -1,7 +1,11 @@
 package model
 
 import (
+	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"io/ioutil"
 
 	"github.com/pkg/errors"
@@ -88,6 +92,39 @@ type TLSClientConfig struct {
 	CertificatePath string `json:"certificate"`
 	CertificateName string `json:"certificate_name"`
 	CertBytes       []byte
+}
+
+// MakeTLSConfig constructs a TLSClientConfig to use the provided tls.Certificate.
+func MakeTLSConfig(cert *tls.Certificate) (TLSClientConfig, error) {
+	if cert == nil {
+		return TLSClientConfig{}, nil
+	}
+	var content bytes.Buffer
+	for _, c := range cert.Certificate {
+		if err := pem.Encode(&content, &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: c,
+		}); err != nil {
+			return TLSClientConfig{}, errors.Wrap(err, "failed to encode PEM")
+		}
+	}
+
+	leaf, err := x509.ParseCertificate(cert.Certificate[0])
+	if err != nil {
+		return TLSClientConfig{}, errors.Wrap(err, "failed to parse certificate")
+	}
+	certName := ""
+	if len(leaf.DNSNames) > 0 {
+		certName = leaf.DNSNames[0]
+	} else if len(leaf.IPAddresses) > 0 {
+		certName = leaf.IPAddresses[0].String()
+	}
+
+	return TLSClientConfig{
+		Enabled:         true,
+		CertBytes:       content.Bytes(),
+		CertificateName: certName,
+	}, nil
 }
 
 // Validate implements the check.Validatable interface.

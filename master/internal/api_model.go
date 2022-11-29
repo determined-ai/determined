@@ -357,7 +357,7 @@ func (a *apiServer) DeleteModel(
 func (a *apiServer) GetModelVersion(
 	ctx context.Context, req *apiv1.GetModelVersionRequest,
 ) (*apiv1.GetModelVersionResponse, error) {
-	mv, err := a.ModelVersionFromID(req.ModelName, req.ModelVersion)
+	mv, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionNum)
 	if err != nil {
 		return nil, err
 	}
@@ -452,31 +452,32 @@ func (a *apiServer) PatchModelVersion(
 	ctx context.Context, req *apiv1.PatchModelVersionRequest) (*apiv1.PatchModelVersionResponse,
 	error,
 ) {
-	currModelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionId)
+	currModelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionNum)
 	if err != nil {
 		return nil, err
 	}
 
 	parentModel := currModelVersion.Model
 	madeChanges := false
+	modelVersionName := fmt.Sprintf("%v:%v", req.ModelName, req.ModelVersionNum)
 
 	if req.ModelVersion.Name != nil && req.ModelVersion.Name.Value != currModelVersion.Name {
 		log.Infof("model version (%v) name changing from %q to %q",
-			req.ModelVersionId, currModelVersion.Name, req.ModelVersion.Name.Value)
+			modelVersionName, currModelVersion.Name, req.ModelVersion.Name.Value)
 		madeChanges = true
 		currModelVersion.Name = req.ModelVersion.Name.Value
 	}
 
 	if req.ModelVersion.Comment != nil && req.ModelVersion.Comment.Value != currModelVersion.Comment {
 		log.Infof("model version (%v) comment changing from %q to %q",
-			req.ModelVersionId, currModelVersion.Comment, req.ModelVersion.Comment.Value)
+			modelVersionName, currModelVersion.Comment, req.ModelVersion.Comment.Value)
 		madeChanges = true
 		currModelVersion.Comment = req.ModelVersion.Comment.Value
 	}
 
 	if req.ModelVersion.Notes != nil && req.ModelVersion.Notes.Value != currModelVersion.Notes {
 		log.Infof("model version (%v) notes changing from %q to %q",
-			req.ModelVersionId, currModelVersion.Notes, req.ModelVersion.Notes.Value)
+			modelVersionName, currModelVersion.Notes, req.ModelVersion.Notes.Value)
 		madeChanges = true
 		currModelVersion.Notes = req.ModelVersion.Notes.Value
 	}
@@ -493,7 +494,7 @@ func (a *apiServer) PatchModelVersion(
 
 		if !bytes.Equal(currMeta, newMeta) {
 			log.Infof("model version (%v) metadata changing from %q to %q",
-				req.ModelVersionId, currMeta, newMeta)
+				modelVersionName, currMeta, newMeta)
 			madeChanges = true
 			currMeta = newMeta
 		}
@@ -510,7 +511,7 @@ func (a *apiServer) PatchModelVersion(
 		reqLabels := strings.Join(reqLabelList, ",")
 		if currLabels != reqLabels {
 			log.Infof("model version (%v) labels changing from %q to %q",
-				req.ModelVersionId, currModelVersion.Labels, reqLabels)
+				modelVersionName, currModelVersion.Labels, reqLabels)
 			madeChanges = true
 		}
 		currLabels = reqLabels
@@ -521,12 +522,12 @@ func (a *apiServer) PatchModelVersion(
 	}
 
 	finalModelVersion := &modelv1.ModelVersion{}
-	err = a.m.db.QueryProto("update_model_version", finalModelVersion, req.ModelVersionId,
+	err = a.m.db.QueryProto("update_model_version", finalModelVersion, currModelVersion.Id,
 		parentModel.Id, currModelVersion.Name, currModelVersion.Comment, currModelVersion.Notes,
 		currMeta, currLabels)
 
 	return &apiv1.PatchModelVersionResponse{ModelVersion: finalModelVersion},
-		errors.Wrapf(err, "error updating model version %v in database", req.ModelVersionId)
+		errors.Wrapf(err, "error updating model version (%v) in database", modelVersionName)
 }
 
 func (a *apiServer) DeleteModelVersion(
@@ -538,15 +539,21 @@ func (a *apiServer) DeleteModelVersion(
 		return nil, err
 	}
 
+	modelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionNum)
+	if err != nil {
+		return nil, err
+	}
+
 	holder := &modelv1.ModelVersion{}
-	err = a.m.db.QueryProto("delete_model_version", holder, req.ModelVersionId,
+	err = a.m.db.QueryProto("delete_model_version", holder, modelVersion.Id,
 		user.User.Id, user.User.Admin)
 
+	modelVersionName := fmt.Sprintf("%v:%v", req.ModelName, req.ModelVersionNum)
 	if holder.Id == 0 {
 		return nil, errors.Wrapf(err, "model version %v does not exist or not deletable by this user",
-			req.ModelVersionId)
+			modelVersionName)
 	}
 
 	return &apiv1.DeleteModelVersionResponse{},
-		errors.Wrapf(err, "error deleting model version %v", req.ModelVersionId)
+		errors.Wrapf(err, "error deleting model version %v", modelVersionName)
 }
