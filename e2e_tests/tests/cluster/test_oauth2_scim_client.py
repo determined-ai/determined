@@ -25,7 +25,7 @@ def is_ee() -> bool:
     output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
 
     rp = json.loads(output)["branding"]
-    return bool(rp == "hpe")
+    return rp == "hpe"
 
 
 @pytest.mark.e2e_cpu
@@ -50,7 +50,8 @@ def test_list_oauth_clients(is_ee: bool) -> None:
     else:
         with pytest.raises(EnterpriseOnlyError):
             det_obj.list_oauth_clients()
-        subprocess.run(command, check=False)
+        with pytest.raises(subprocess.CalledProcessError):
+             subprocess.run(command, check=True)
 
 
 @pytest.mark.e2e_cpu
@@ -77,7 +78,8 @@ def test_add_client(is_ee: bool) -> None:
     else:
         with pytest.raises(EnterpriseOnlyError):
             det_obj.add_oauth_client(domain="XXX", name="sdk_oauth_client_test")
-        subprocess.run(command, check=False)
+        with pytest.raises(subprocess.CalledProcessError):
+             subprocess.run(command, check=True)
 
 
 @pytest.mark.e2e_cpu
@@ -119,4 +121,5 @@ def test_remove_client(is_ee: bool) -> None:
             "remove",
             "4",
         ]
-        subprocess.run(command, check=False)
+        with pytest.raises(subprocess.CalledProcessError):
+             subprocess.run(command, check=True)

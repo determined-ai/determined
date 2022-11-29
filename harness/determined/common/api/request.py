@@ -111,10 +111,6 @@ def do_request(
     timeout: Optional[Union[Tuple, float]] = None,
     max_retries: Optional[urllib3.util.retry.Retry] = None,
 ) -> requests.Response:
-
-    # print("in request.py")
-    # print(path)
-    # print(host)
     # If no explicit Authentication object was provided, use the cli's singleton Authentication.
     if auth is None:
         auth = authentication.cli_auth
