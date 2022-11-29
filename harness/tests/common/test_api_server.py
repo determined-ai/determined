@@ -1,10 +1,12 @@
+from typing import Any
+
 import requests
 
 from tests.common.api_server import run_api_server
 
 
 def test_flaky_endpoint() -> None:
-    def test(*args, **kwargs):
+    def test(*args: Any, **kwargs: Any) -> None:
         with run_api_server(*args, **kwargs) as master_url:
             with requests.Session() as session:
                 for _ in range(2):  # end point FAILS_FOR 2 times
