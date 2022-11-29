@@ -1,0 +1,56 @@
+name: cifar10_moe_deepspeed
+environment:
+    #environment_variables:                                                                          
+    #    - NCCL_DEBUG=INFO                                                                           
+    # You may need to modify this to match your network configuration.                          
+    #    - NCCL_SOCKET_IFNAME=ens,eth,ib
+    #environment_variables:
+    #    - CUDA_LAUNCH_BLOCKING=1
+    #    - NCCL_BLOCKING_WAIT=1
+    #    - NCCL_DEBUG=INFO
+    #    - NCCL_IB_DISABLE=1
+    image:
+      gpu: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.5-gpu-0.19.4
+      #  gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-0.19.4
+      #  gpu: determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-deepspeed-0.5.10-gpu-ed66d8a
+hyperparameters:
+    deepspeed_config: ds_config.json
+    learning_rate:
+        type: log
+        minval: -5
+        maxval: -3
+        base: 10
+    with_cuda: true
+    use_ema: false
+    batch_size: 32
+    log_interval: 100
+    moe: true
+    ep_world_size: 1
+    num_experts:
+        - 2
+    mlp_type: standard
+    top_k: 1
+    min_capacity: 0
+    noisy_gate_policy: RSample
+    moe_param_group: true
+bind_mounts:
+    - host_path: /tmp
+      container_path: /data
+    - host_path: /tmp
+      container_path: /root/.cache
+resources:
+  slots_per_trial: 2
+records_per_epoch: 50000
+searcher:
+  name:  single
+  metric: accuracy
+  smaller_is_better: false
+  max_length:
+    epochs: 1
+max_restarts: 0
+entrypoint:
+  - python3
+  - -m
+  - determined.launch.deepspeed
+  - python
+  - cifar10_deepspeed.py

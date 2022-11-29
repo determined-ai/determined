@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union, cast
 import deepspeed
 import torch
 from deepspeed.runtime import config_utils
+from deepspeed.runtime.utils import get_ma_status, see_memory_usage
 
 import determined as det
 from determined import profiler, pytorch
@@ -112,7 +113,14 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._data_repro_checks_disabled = False
         self._manual_grad_accumulation = False
 
+        self._activation_mem = None
+
         self._check_experiment_config_optimizations()
+
+    def _is_model_info_trial(self) -> bool:
+        # TODO we can think of a less hacky way
+        logging.warning(self.get_hparams()["deepspeed_config"])
+        return self.get_hparams()["deepspeed_config"] == "model_info_ds_config.json"
 
     def _check_experiment_config_optimizations(self) -> None:
         """
@@ -208,6 +216,59 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                     "not match that for the first wrapped engine.  Num sample reporting will only "
                     "apply to wrapped model engine 1."
                 )
+
+        def alt_autotuning_profile_model_info(inner_self) -> bool:
+            """
+            Replace the standard autotuning_profile_model_info
+            in order to capture and save the model info
+            and avoid calling exit()
+            Returns:
+                always False to avoid the default logic
+            """
+            if (
+                inner_self.autotuning_enabled()
+                and inner_self._config.autotuning_config.model_info
+                and inner_self._config.autotuning_config.model_info.get("profile", False)
+            ):
+                try:
+                    _ = inner_self.autotuning_model_info
+                except AttributeError:
+                    inner_self.autotuning_model_info = {}
+
+                if len(inner_self.autotuning_model_info) == 0:
+                    num_params = 0
+                    trainable_num_params = 0
+
+                    for p in inner_self.module.parameters():
+                        n = 0
+                        if hasattr(p, "ds_tensor"):  # if the parameter is partitioned in zero 3
+                            n += p.ds_numel
+                        else:  # if the parameter is not partitioned in zero 3 yet
+                            n += p.numel()
+                        num_params += n
+                        if p.requires_grad:
+                            trainable_num_params += n
+                    if inner_self.global_rank == 0:
+                        inner_self.autotuning_model_info["num_params"] = (
+                            num_params * inner_self.mp_world_size
+                        )
+                        inner_self.autotuning_model_info["trainable_num_params"] = (
+                            trainable_num_params * inner_self.mp_world_size
+                        )
+
+                    logging.info(f"num_params={num_params}")
+                elif "memory_allocated" not in inner_self.autotuning_model_info:
+                    inner_self.autotuning_model_info["memory_allocated"] = get_ma_status()
+                elif "activation_mem_per_gpu" not in inner_self.autotuning_model_info:
+                    if inner_self.global_rank == 0:
+                        ma = inner_self.autotuning_model_info["memory_allocated"]
+                        activation_mem = get_ma_status() - ma
+                        inner_self.autotuning_model_info["activation_mem_per_gpu"] = activation_mem
+            return False
+
+        model.autotuning_profile_model_info = alt_autotuning_profile_model_info.__get__(
+            model, deepspeed.DeepSpeedEngine
+        )
 
         self.models.append(model)
         return model

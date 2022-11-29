@@ -1,5 +1,6 @@
 import abc
 import contextlib
+import json
 import logging
 import os
 import pathlib
@@ -535,6 +536,16 @@ class DeepSpeedTrialController(det.TrialController):
 
     @torch.no_grad()  # type: ignore
     def _compute_validation_metrics(self) -> workload.Response:
+        if self.context._is_model_info_trial():
+            logging.info("Computing validation metrics for model info trial")
+            if self.is_chief:
+                searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
+                return {
+                    "num_inputs": 0,
+                    "validation_metrics": {searcher_metric_name: self.context._activation_mem},
+                }
+            return {}
+
         self.context.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.
@@ -960,6 +971,20 @@ class DeepSpeedTrial(det.Trial):
         """
         for i, m in enumerate(context.models):
             m.save_checkpoint(path, tag=f"model{i}")
+            self._append_autotuning_model_info(path, m)
+
+    def _append_autotuning_model_info(
+        self, path: pathlib.Path, model: deepspeed.DeepSpeedEngine
+    ) -> None:
+        if model.global_rank != 0:
+            return
+        try:
+            model_info = model.autotuning_model_info
+            with path.joinpath("model_info.json").open("w") as f:
+                json.dump(model_info, f, indent=2)
+        except AttributeError:
+            # no autotuning_model_info means we are not obtaining model info
+            pass
 
     def load(
         self,
