@@ -94,7 +94,7 @@ func (k ResourceManager) ResolveResourcePool(
 }
 
 // ValidateResources ensures enough resources are available in the resource pool.
-func (k KubernetesResourceManager) ValidateResources(
+func (k ResourceManager) ValidateResources(
 	ctx actor.Messenger,
 	name string,
 	slots int,
@@ -112,7 +112,7 @@ func (k ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) 
 }
 
 // ValidateResourcePoolAvailability checks the available resources for a given pool.
-func (k KubernetesResourceManager) ValidateResourcePoolAvailability(
+func (k ResourceManager) ValidateResourcePoolAvailability(
 	ctx actor.Messenger,
 	name string,
 	slots int,

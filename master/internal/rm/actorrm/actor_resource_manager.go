@@ -42,7 +42,7 @@ func (r *ResourceManager) ResolveResourcePool(
 }
 
 // ValidateResources is a default implementation to satisfy the interface, mostly for tests.
-func (r *ActorResourceManager) ValidateResources(
+func (r *ResourceManager) ValidateResources(
 	ctx actor.Messenger,
 	name string,
 	slots int,
@@ -52,7 +52,7 @@ func (r *ActorResourceManager) ValidateResources(
 }
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
-func (r *ActorResourceManager) ValidateResourcePoolAvailability(
+func (r *ResourceManager) ValidateResourcePoolAvailability(
 	ctx actor.Messenger,
 	name string,
 	slots int) (

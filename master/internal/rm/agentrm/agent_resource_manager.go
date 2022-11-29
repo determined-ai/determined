@@ -99,7 +99,7 @@ func (a ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName stri
 }
 
 // CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
-func (a AgentResourceManager) CheckMaxSlotsExceeded(
+func (a ResourceManager) CheckMaxSlotsExceeded(
 	ctx actor.Messenger, name string, slots int,
 ) (bool, error) {
 	ref, err := a.GetResourcePoolRef(ctx, name)
@@ -117,7 +117,7 @@ func (a AgentResourceManager) CheckMaxSlotsExceeded(
 
 // ResolveResourcePool fully resolves the resource pool name.
 func (a ResourceManager) ResolveResourcePool(
-	ctx actor.Messenger, name string, slots int, command bool,
+	ctx actor.Messenger, name string, slots int,
 ) (string, error) {
 	// If the resource pool isn't set, fill in the default at creation time.
 	if name == "" && slots == 0 {
@@ -145,7 +145,7 @@ func (a ResourceManager) ResolveResourcePool(
 }
 
 // ValidateResources ensures enough resources are available for a command.
-func (a AgentResourceManager) ValidateResources(
+func (a ResourceManager) ValidateResources(
 	ctx actor.Messenger, name string, slots int, command bool,
 ) error {
 	// TODO: Replace this function usage with ValidateCommandResources
@@ -165,7 +165,7 @@ func (a AgentResourceManager) ValidateResources(
 }
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
-func (a AgentResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
+func (a ResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
 	name string, slots int) (
 	[]command.LaunchWarning,
 	error,
