@@ -392,7 +392,7 @@ func TesAuthzPostUserActivity(t *testing.T) {
 			ActivityTime:    time.Now(),
 			EntityType:  EntityType_ENTITY_TYPE_PROJECT,
 			EntityId: 1
-			UserId: int32(userID)
+			UserId: int32(curUser.Id)
 	})
 	require.NoError(t, err)
 }
