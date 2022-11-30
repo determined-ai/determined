@@ -228,7 +228,7 @@ def parse_input_arguments(train_hps):
     return model_args, data_args, training_args
 
 
-def main(core_context, model_args, data_args, training_args):
+def main(det_callback, model_args, data_args, training_args):
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -423,9 +423,6 @@ def main(core_context, model_args, data_args, training_args):
         data_collator=collate_fn,
     )
 
-    det_callback = DetCallback(
-        core_context, training_args, filter_metrics=["loss", "accuracy"]
-    )
     trainer.add_callback(det_callback)
 
     # Training
@@ -474,4 +471,7 @@ if __name__ == "__main__":
         distributed = det.core.DistributedContext.from_torch_distributed()
 
     with det.core.init(distributed=distributed) as core_context:
-        main(core_context, model_args, data_args, training_args)
+        det_callback = DetCallback(
+            core_context, training_args, filter_metrics=["loss", "accuracy"]
+        )
+        main(det_callback, model_args, data_args, training_args)

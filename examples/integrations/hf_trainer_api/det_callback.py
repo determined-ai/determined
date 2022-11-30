@@ -75,6 +75,9 @@ class DetCallback(TrainerCallback):
 
             self.last_metrics.update(metrics)
 
+        if self.core_context.preempt.should_preempt():
+            control.should_save = True
+
     def _get_metrics(self, logs: typing.Dict) -> typing.Tuple[typing.Dict, str]:
         metrics = logs
         metric_type = get_metric_type(logs)
@@ -143,7 +146,7 @@ class DetCallback(TrainerCallback):
                 resume_step = metadata["steps_completed"]
             checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
 
-            # to resume deepspeed, each node is required to have ALL sharded model/optimizer states,
+            # to resume deepspeed, each node requires ALL sharded model/optimizer states,
             # so we can skip using selector and just download all files
             self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
             args.resume_from_checkpoint = checkpoint_path
@@ -162,9 +165,6 @@ class DetCallback(TrainerCallback):
 
             if state.global_step >= self.current_op.length:
                 self._update_searcher(state, control)
-
-        if self.core_context.preempt.should_preempt():
-            control.should_save = True
 
     def on_epoch_end(
         self,
