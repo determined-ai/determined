@@ -2,6 +2,7 @@ import { Button, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import ExperimentIcons from 'components/ExperimentIcons';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -406,35 +407,38 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         leftContent={
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>
-              <div className={classes.join(' ')} style={stateStyle}>
-                {isPausable && (
-                  <Button
-                    className={css.buttonPause}
-                    disabled={!canPausePlay}
-                    icon={<Icon name="pause" size="large" />}
-                    shape="circle"
-                    onClick={handlePauseClick}
-                  />
-                )}
-                {isPaused && (
-                  <Button
-                    className={css.buttonPlay}
-                    disabled={!canPausePlay}
-                    icon={<Icon name="play" size="large" />}
-                    shape="circle"
-                    onClick={handlePlayClick}
-                  />
-                )}
-                {!isTerminated && (
-                  <Button
-                    className={css.buttonStop}
-                    disabled={!canPausePlay}
-                    icon={<Icon name="stop" size="large" />}
-                    shape="circle"
-                    onClick={handleStopClick}
-                  />
-                )}
-                <label>{stateToLabel(experiment.state)}</label>
+              <div className={css.stateIcon}>
+                {<ExperimentIcons state={experiment.state} />}
+                <div className={classes.join(' ')} style={stateStyle}>
+                  {isPausable && (
+                    <Button
+                      className={css.buttonPause}
+                      disabled={!canPausePlay}
+                      icon={<Icon name="pause" size="large" />}
+                      shape="circle"
+                      onClick={handlePauseClick}
+                    />
+                  )}
+                  {isPaused && (
+                    <Button
+                      className={css.buttonPlay}
+                      disabled={!canPausePlay}
+                      icon={<Icon name="play" size="large" />}
+                      shape="circle"
+                      onClick={handlePlayClick}
+                    />
+                  )}
+                  {!isTerminated && (
+                    <Button
+                      className={css.buttonStop}
+                      disabled={!canPausePlay}
+                      icon={<Icon name="stop" size="large" />}
+                      shape="circle"
+                      onClick={handleStopClick}
+                    />
+                  )}
+                  <label>{stateToLabel(experiment.state)}</label>
+                </div>
               </div>
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>

@@ -1,22 +1,25 @@
 import { Tooltip } from 'antd';
 import React, { CSSProperties, useMemo } from 'react';
 
-import { runStateToLabel } from 'constants/states';
+import { stateToLabel } from 'constants/states';
 import Icon from 'shared/components/Icon/Icon';
-import { RunState } from 'types';
+import { CompoundRunState, JobState, RunState } from 'types';
 
 import Active from './Active';
 import Queue from './Queue';
 import Spinner from './Spinner';
 
 interface Props {
-  state: RunState;
+  state: CompoundRunState;
 }
 
 const ExperimentIcons: React.FC<Props> = ({ state }) => {
   const icon = useMemo(() => {
     const IconStyle: CSSProperties = { fontWeight: 900 };
     switch (state) {
+      case JobState.SCHEDULED:
+      case JobState.SCHEDULEDBACKFILLED:
+      case JobState.QUEUED:
       case RunState.Queued:
         return <Queue />;
       case RunState.Starting:
@@ -37,14 +40,15 @@ const ExperimentIcons: React.FC<Props> = ({ state }) => {
         return <Icon name="error" style={{ ...IconStyle, color: 'var(--theme-status-error)' }} />;
       case RunState.Active:
       case RunState.Unspecified:
+      case JobState.UNSPECIFIED:
         return <Active />;
       default:
         return <Icon name="cancelled" style={{ ...IconStyle, color: 'var(--theme-ix-cancel)' }} />;
     }
   }, [state]);
   return (
-    <Tooltip title={runStateToLabel[state]}>
-      <span>{icon}</span>
+    <Tooltip title={stateToLabel(state)}>
+      <span style={{ display: 'inherit' }}>{icon}</span>
     </Tooltip>
   );
 };
