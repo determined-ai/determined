@@ -4,7 +4,7 @@ import random
 import sys
 import time
 import uuid
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from termcolor import colored
 
@@ -154,9 +154,9 @@ def create_experiment(
     try:
         j = r.json()
     except json.decoder.JSONDecodeError:
-        warnings: Optional[list[bindings.v1LaunchWarning]] = None
+        warnings: Optional[List[bindings.v1LaunchWarning]] = None
     else:
-        response_warnings: Optional[list[int]] = j.get("warnings")
+        response_warnings: Optional[List[int]] = j.get("warnings")
         if response_warnings:
             launch_warnings = list(bindings.v1LaunchWarning)
             warnings = [launch_warnings[warning] for warning in response_warnings]
