@@ -45,6 +45,10 @@ class Govcloud(base.DeterminedDeployment):
         constants.cloudformation.AGENT_RECONNECT_ATTEMPTS,
         constants.cloudformation.AGENT_RECONNECT_BACKOFF,
         constants.cloudformation.AGENT_CONFIG_FILE_CONTENTS,
+        constants.cloudformation.MASTER_IMAGE_NAME,
+        constants.cloudformation.AGENT_IMAGE_NAME,
+        constants.cloudformation.DOCKER_USER,
+        constants.cloudformation.DOCKER_PASS,
     ]
 
     def deploy(self, no_prompt: bool, update_terminate_agents: bool) -> None:

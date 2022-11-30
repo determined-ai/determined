@@ -78,6 +78,26 @@ Parameters:
     Description: Docker image repository to use for determined-master and determined-agent images
     Default: determinedai
 
+  MasterImageName:
+    Type: String
+    Description: Name of the Docker image to use for the Determined master
+    Default: determined-master
+
+  AgentImageName:
+    Type: String
+    Description: Name of the Docker image to use for the Determined agent
+    Default: determined-agent
+
+  DockerUser:
+    Type: String
+    Description: Docker user to pull images that need authentication
+    Default: ""
+
+  DockerPass:
+    Type: String
+    Description: Docker password to pull images that need authentication
+    Default: ""
+
   Version:
     Type: String
     Description: Determined version or commit for master image
@@ -826,7 +846,7 @@ Resources:
                 master_cert_name: ${MasterCertName}
                 iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
                 image_id: ${AgentAmi}
-                agent_docker_image: ${ImageRepoPrefix}/determined-agent:${Version}
+                agent_docker_image: ${ImageRepoPrefix}/${AgentImageName}:${Version}
                 instance_name: determined-agent-${AWS::StackName}
                 log_group: /${LogGroupPrefix}/${AWS::StackName}
                 log_stream: determined-agent
@@ -855,6 +875,9 @@ Resources:
                   apt install -y lustre-client-modules-4.4.0-1109-aws
                   mkdir /mnt/fsx
                   mount -t lustre -o noatime,flock ${FSxVal} /mnt/fsx
+                  if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
+                    echo "${DockerPass}" | docker login --username "${DockerUser}" --password-stdin
+                  fi
 
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}
@@ -884,6 +907,10 @@ Resources:
             curl -fsSL https://www.amazontrust.com/repository/AmazonRootCA1.pem > \
               /usr/local/determined/etc/db_ssl_root_cert.pem
 
+            if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
+              echo "${DockerPass}" | docker login --username "${DockerUser}" --password-stdin
+            fi
+
             docker network create determined
 
             docker stop $(docker ps -a -q)
@@ -895,7 +922,7 @@ Resources:
                 --rm \
                 -v /usr/local/determined/etc/:/etc/determined/ \
                 --entrypoint /bin/bash \
-                ${ImageRepoPrefix}/determined-master:${Version} \
+                ${ImageRepoPrefix}/${MasterImageName}:${Version} \
                 -c "/usr/bin/determined-gotmpl -i /etc/determined/master.yaml.context /etc/determined/master.yaml.tmpl > /etc/determined/master.yaml"
             test $? -eq 0 || ( echo "Failed to generate master.yaml" && exit 1 )
 
@@ -908,7 +935,7 @@ Resources:
                 --log-opt awslogs-stream=determined-master \
                 -p "$port":"$port" \
                 -v /usr/local/determined/etc/:/etc/determined/ \
-                ${ImageRepoPrefix}/determined-master:${Version}
+                ${ImageRepoPrefix}/${MasterImageName}:${Version}
             --//
           - AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]
             FSxVal: !If [CreateFSx, !Sub "${FSx}.fsx.${AWS::Region}.amazonaws.com@tcp:/${FSx.LustreMountName}", !Ref MountFSxId]
