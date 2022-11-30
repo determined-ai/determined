@@ -9,6 +9,7 @@ from tests import config
 from tests import config as conf
 from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user
 
+
 @pytest.mark.e2e_cpu
 def test_list_oauth_clients() -> None:
     log_in_user(ADMIN_CREDENTIALS)
