@@ -1,11 +1,11 @@
 export type Loadable<T> =
   | {
-      _tag: 'Loaded';
-      data: T;
-    }
+    _tag: 'Loaded';
+    data: T;
+  }
   | {
-      _tag: 'NotLoaded';
-    };
+    _tag: 'NotLoaded';
+  };
 
 const exhaustive = (v: never): never => v;
 
@@ -77,17 +77,17 @@ const getOrElse = <T>(def: T, l: Loadable<T>): T => {
 
 type MatchArgs<T, U> =
   | {
-      Loaded: (data: T) => U;
-      NotLoaded: () => U;
-    }
+    Loaded: (data: T) => U;
+    NotLoaded: () => U;
+  }
   | {
-      Loaded: (data: T) => U;
-      _: () => U;
-    }
+    Loaded: (data: T) => U;
+    _: () => U;
+  }
   | {
-      NotLoaded: () => U;
-      _: () => U;
-    };
+    NotLoaded: () => U;
+    _: () => U;
+  };
 /**
  * Allows you to match out the cases in the Loadable with named
  * arguments.
@@ -118,6 +118,14 @@ const quickMatch = <T, U>(l: Loadable<T>, def: U, f: (data: T) => U): U => {
 /** Returns true if the passed object is a Loadable */
 const isLoadable = <T, Z>(l: Loadable<T> | Z): l is Loadable<T> => {
   return ['Loaded', 'NotLoaded', 'NotFound'].includes((l as Loadable<T>)?._tag);
+};
+
+const isLoading = <T>(l: Loadable<T>): l is { _tag: 'NotLoaded' } => {
+  return l === NotLoaded;
+};
+
+const isLoaded = <T>(l: Loadable<T>): l is { _tag: 'Loaded'; data: T } => {
+  return l !== NotLoaded;
 };
 
 /**
@@ -163,6 +171,8 @@ export const Loadable = {
   forEach,
   getOrElse,
   isLoadable,
+  isLoaded,
+  isLoading,
   map,
   match,
   quickMatch,
