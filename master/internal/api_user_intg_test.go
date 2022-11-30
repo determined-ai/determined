@@ -394,4 +394,12 @@ func TesAuthzPostUserActivity(t *testing.T) {
 	})
 
 	require.NoError(t, err)
+
+	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     1,
+	})
+
+	require.NoError(t, err)
 }
