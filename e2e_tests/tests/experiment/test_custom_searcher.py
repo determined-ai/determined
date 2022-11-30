@@ -294,6 +294,8 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 
 @pytest.mark.nightly
 def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
+    # init client with non default master url
+    client.login(master=conf.make_master_url())
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -337,6 +339,9 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
 
     for trial in response_trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
+
+    # clean up
+    client._determined = None
 
 
 @pytest.mark.e2e_cpu_2a
@@ -449,6 +454,8 @@ def test_run_asha_searcher_exp_core_api(
     ],
 )
 def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
+    # init client with non default master url
+    client.login(master=conf.make_master_url())
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -525,6 +532,9 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
 
     assert search_method.progress(search_runner.state) == pytest.approx(1.0)
+
+    # clean up
+    client._determined = None
 
 
 class FallibleSearchRunner(searcher.LocalSearchRunner):
