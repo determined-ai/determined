@@ -3,7 +3,7 @@ import pathlib
 import subprocess
 import tempfile
 import time
-from typing import Generator, List, Optional
+from typing import Iterator, List, Optional
 
 import pytest
 import yaml
@@ -20,7 +20,7 @@ TIMESTAMP = int(time.time())
 
 
 @pytest.fixture
-def client_login() -> Generator[None, None, None]:
+def client_login() -> Iterator[None]:
     client.login(master=conf.make_master_url())
     yield
     client._determined = None
