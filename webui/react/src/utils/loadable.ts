@@ -1,11 +1,11 @@
 export type Loadable<T> =
   | {
-    _tag: 'Loaded';
-    data: T;
-  }
+      _tag: 'Loaded';
+      data: T;
+    }
   | {
-    _tag: 'NotLoaded';
-  };
+      _tag: 'NotLoaded';
+    };
 
 const exhaustive = (v: never): never => v;
 
@@ -77,17 +77,17 @@ const getOrElse = <T>(def: T, l: Loadable<T>): T => {
 
 type MatchArgs<T, U> =
   | {
-    Loaded: (data: T) => U;
-    NotLoaded: () => U;
-  }
+      Loaded: (data: T) => U;
+      NotLoaded: () => U;
+    }
   | {
-    Loaded: (data: T) => U;
-    _: () => U;
-  }
+      Loaded: (data: T) => U;
+      _: () => U;
+    }
   | {
-    NotLoaded: () => U;
-    _: () => U;
-  };
+      NotLoaded: () => U;
+      _: () => U;
+    };
 /**
  * Allows you to match out the cases in the Loadable with named
  * arguments.
