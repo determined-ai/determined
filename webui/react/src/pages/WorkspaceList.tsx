@@ -29,6 +29,7 @@ import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
+import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
@@ -121,8 +122,9 @@ const WorkspaceList: React.FC = () => {
     [updateSettings],
   );
 
+  const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (!settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose) return;
 
     switch (settings.whose) {
       case WhoseWorkspaces.All:
@@ -135,7 +137,7 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [updateSettings, user, users, settings.whose]);
+  }, [updateSettings, user, users, settings.whose, prevWhose]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
