@@ -11,6 +11,7 @@ import (
 )
 
 // CommandAuthZ describes authz methods for commands.
+// DISCUSS should we start moving to using NTSC in code, anything other than "command" is more clear IMO.
 type CommandAuthZ interface {
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
@@ -47,6 +48,12 @@ type CommandAuthZ interface {
 	CanSetCommandsPriority(
 		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
 	) error
+
+	// GET /api/v1/tasks/count
+	// TODO(nick) move this when we add an AuthZ for notebooks.
+	CanGetActiveTasksCount(ctx context.Context, curUser model.User) error
+	CanAccessNTSCTask(ctx context.Context, curUser model.User, ownerID model.UserID) (
+		canView bool, serverError error)
 }
 
 // AuthZProvider is the authz registry for commands.
