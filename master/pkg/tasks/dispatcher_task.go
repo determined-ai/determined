@@ -243,7 +243,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	envVars, err := getEnvVarsForLauncherManifest(
 		t, masterHost, masterPort, certificateName, userWantsDirMountedOnTmp,
-		slotType, containerRunType, localTmp)
+		slotType, containerRunType, localTmp, t.slotsPerNode(isPbsLauncher))
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -478,7 +478,7 @@ func encodeArchiveParameters(
 func getEnvVarsForLauncherManifest(
 	taskSpec *TaskSpec, masterHost string, masterPort int, certificateName string,
 	tmpMount bool, slotType device.Type, containerRunType string,
-	localTmp string,
+	localTmp string, slotsPerNode int,
 ) (map[string]string, error) {
 	// Hash map containing the environment variables.
 	m := make(map[string]string)
@@ -532,7 +532,10 @@ func getEnvVarsForLauncherManifest(
 
 	// Some in-container setup in slurm needs to know the slot type to set other envvars correctly.
 	m["DET_SLOT_TYPE"] = string(slotType)
-
+	// If slots_per_node is specified, generate a DET_SLOT_IDS value to enable use of the slots
+	if slotsPerNode != unspecifiedSlotsPerNode {
+		m["DET_SLOT_IDS"] = generatesSlotIdsString(slotsPerNode)
+	}
 	// The "entrypoint.sh" script that's mounted by the Singularity task container
 	// will set the DET_SLOT_IDS environment variable when it sees that DET_AGENT_ID is
 	// set to "launcher". So, if you change the value here, you also need to make the
@@ -579,6 +582,17 @@ func getEnvVarsForLauncherManifest(
 	}
 
 	return m, nil
+}
+
+// Return a DET_SLOT_IDS value of the form [0,1,2...] referencing
+// the number of slots specified.
+func generatesSlotIdsString(slots int) string {
+	var slotIds []string
+	for i := 0; i < slots; i++ {
+		slotIds = append(slotIds, strconv.Itoa(i))
+	}
+
+	return fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
 }
 
 // Assigns the name for the payload we're going to send to the launcher. It's up for
