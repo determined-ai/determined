@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
@@ -557,4 +558,20 @@ func (a *apiServer) ResetUserSetting(
 
 	err = db.ResetUserSetting(curUser.ID)
 	return &apiv1.ResetUserSettingResponse{}, err
+}
+
+func (a *apiServer) PostUserActivity(
+	ctx context.Context, req *apiv1.PostUserActivityRequest,
+) (*apiv1.PostUserActivityResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	timestamp := time.Now()
+	if _, err := db.Bun().NewInsert().Model(model.UserActivityFromProto(
+		req.ActivityType, req.EntityType, req.EntityId, int32(curUser.ID), timestamp,
+	)).On("CONFLICT (user_id, activity_type, entity_type, entity_id) DO UPDATE").
+		Set("activity_time = ?", timestamp).
+		Exec(ctx); err != nil {
+		fmt.Printf("Err was %v", err)
+		return nil, err
+	}
+	return &apiv1.PostUserActivityResponse{}, err
 }

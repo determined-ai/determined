@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -14,6 +15,22 @@ import (
 
 // BCryptCost is a stopgap until we implement sane master-configuration.
 const BCryptCost = 15
+
+// ActivityType describes a user activity
+type ActivityType string
+
+// EntityType represents an entity
+type EntityType string
+
+const (
+	// ActivityTypeGet represents a get request.
+	ActivityTypeGet ActivityType = "GET"
+)
+
+const (
+	// EntityTypeProject represents a project.
+	EntityTypeProject EntityType = "DEFAULT"
+)
 
 // UserID is the type for user IDs.
 type UserID int
@@ -147,4 +164,51 @@ type UserWebSetting struct {
 	Key         string
 	Value       string
 	StoragePath string
+}
+
+// UserActivity is a record of user activity.
+type UserActivity struct {
+	bun.BaseModel `bun:"table:activity"`
+	UserID        UserID       `db:"user_id" json:"user_id"`
+	ActivityType  ActivityType `db:"activity_type" json:"activity_type"`
+	EntityType    EntityType   `db:"entity_type" json:entity_type"`
+	EntityId      int32        `db:"entity_id" json:"entity_id"`
+	ActivityTime  time.Time    `db:"activity_time" json:"activity_time"`
+}
+
+// EntityTypeFromProto returns an EntityType from a proto.
+func entityTypeFromProto(e userv1.EntityType) EntityType {
+	switch e {
+	case userv1.EntityType_ENTITY_TYPE_PROJECT:
+		return EntityTypeProject
+	default:
+		panic(fmt.Errorf("missing mapping for entity type %s to model", e))
+	}
+}
+
+// ActivityTypeFromProto returns an ActivityType from a proto.
+func activityTypeFromProto(a userv1.ActivityType) ActivityType {
+	switch a {
+	case userv1.ActivityType_ACTIVITY_TYPE_GET:
+		return ActivityTypeGet
+	default:
+		panic(fmt.Errorf("missing mapping for activity type %s to model", a))
+	}
+}
+
+// UserActivityFromProto returns a model UserActivity from a proto definition.
+func UserActivityFromProto(
+	a userv1.ActivityType,
+	e userv1.EntityType,
+	entityId int32,
+	userId int32,
+	timestamp time.Time,
+) *UserActivity {
+	return &UserActivity{
+		UserID:       UserID(userId),
+		ActivityType: activityTypeFromProto(a),
+		EntityType:   entityTypeFromProto(e),
+		EntityId:     entityId,
+		ActivityTime: timestamp,
+	}
 }

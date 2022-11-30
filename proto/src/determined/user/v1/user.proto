@@ -70,3 +70,21 @@ message UserWebSetting {
   // The value of setting.
   string value = 3;
 }
+
+// ActivityType represents a user activity
+enum ActivityType {
+  // Default activity type.
+  ACTIVITY_TYPE_UNSPECIFIED = 0;
+
+  // Represents a get request.
+  ACTIVITY_TYPE_GET = 1;
+}
+
+// EntityType represents an entity
+enum EntityType {
+  // Default entity type.
+  ENTITY_TYPE_UNSPECIFIED = 0;
+
+  // Represents a project.
+  ENTITY_TYPE_PROJECT = 1;
+}
