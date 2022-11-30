@@ -116,6 +116,14 @@ to optimize how Determined interacts with PBS:
    other configurations such as targeting a specific resource pool with only GPU nodes, or
    specifying a PBS constraint in the experiment configuration.
 
+   PBS should be configured to provide the environment variable ``CUDA_VISIBLE_DEVICES``
+   (``ROCR_VISIBLE_DEVICES`` for ROCm) to the job based upon the GPUs allocated. If PBS is not
+   configured to provide ``CUDA_VISIBLE_DEVICES``, Determined will utilize a single GPU on each
+   node. To fully utilize mutliple GPUs, you must either manually define ``CUDA_VISIBLE_DEVICES`` or
+   provide the ``pbs.slots_per_node`` setting in your experiment configuration to indicate how many
+   GPU slots are available for use. The format of ``CUDA_VISIBLE_DEVICES`` is an array of GPU IDs
+   (e.g. ``[0,1,2,3]`` which indicates the four GPUS 0 through 3).
+
 -  Ensure homogeneous PBS queues.
 
    Determined maps PBS queues to Determined resource pools. It is recommended that the nodes within
