@@ -135,10 +135,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             placeholder="Select a destination workspace."
             showSearch={false}
             style={{ width: '100%' }}
-            value={workspaceId ?? undefined}
+            value={workspaceId === 1 ? undefined : workspaceId ?? undefined}
             onSelect={handleWorkspaceSelect}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
-              // TODO loading state
               return (
                 <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
                   <div className={workspace.archived ? css.workspaceOptionDisabled : ''}>
