@@ -92,11 +92,11 @@ def login_sdk_client(func: Callable[[argparse.Namespace], Any]) -> Callable[...,
     return f
 
 
-def setup_session(args: argparse.Namespace) -> api.Session:
-    master_url = args.master or util.get_default_master_address()
-    cert = certs.default_load(master_url)
+def setup_session(args: argparse.Namespace, **kwargs: Any) -> api.Session:
+    master_url = kwargs.pop("master", None) or args.master or util.get_default_master_address()
+    cert = kwargs.pop("cert", None) or certs.default_load(master_url)
 
-    return api.Session(master_url, args.user, authentication.cli_auth, cert)
+    return api.Session(master_url, args.user, authentication.cli_auth, cert, **kwargs)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:
