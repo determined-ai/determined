@@ -1,7 +1,0 @@
-name: core-api-stage-2
-entrypoint: python3 non_conforming.py
-searcher:
-   name: single
-   metric: x
-   max_length: 1
-max_restarts: 0
