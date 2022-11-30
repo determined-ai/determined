@@ -757,7 +757,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	}
 
 	envVars, err := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "singularity", "/")
+		"masterHost", 8888, "certName", false, device.CUDA, "singularity", "/", 4)
 
 	assert.NilError(t, err)
 	assert.Assert(t, len(envVars) > 0)
@@ -768,6 +768,7 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["DET_MASTER_PORT"], "8888")
 	assert.Equal(t, envVars["DET_CONTAINER_ID"], "Container_ID")
 	assert.Equal(t, envVars["DET_CLUSTER_ID"], "Cluster_ID")
+	assert.Equal(t, envVars["DET_SLOT_IDS"], "[0,1,2,3]")
 	assert.Equal(t, envVars["SLURM_KILL_BAD_EXIT"], "1")
 	assert.Equal(t, envVars["DET_SLOT_TYPE"], "cuda")
 	assert.Equal(t, envVars["DET_AGENT_ID"], "launcher")
@@ -782,14 +783,17 @@ func Test_getEnvVarsForLauncherManifest(t *testing.T) {
 	assert.Equal(t, envVars["myenv"], "xyz")
 
 	envVarsPodman, _ := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "podman", "/")
+		"masterHost", 8888, "certName", false, device.CUDA, "podman", "/", 0)
 	assert.Equal(t, envVarsPodman["DET_CONTAINER_LOCAL_TMP"], "1")
 	val := envVarsPodman["DET_LOCALTMP"]
 	assert.Equal(t, val, "/")
+	// slots_per_node unspecified
+	_, present := envVarsPodman["DET_SLOT_IDS"]
+	assert.Equal(t, present, false)
 
 	// test DET_CONTAINER_LOCAL_TMP is not in ENVs, and DET_LOCALTMP set properly
 	envVarsEnroot, _ := getEnvVarsForLauncherManifest(ts,
-		"masterHost", 8888, "certName", false, device.CUDA, "enroot", "/var/tmp")
+		"masterHost", 8888, "certName", false, device.CUDA, "enroot", "/var/tmp", 0)
 	_, ok := envVarsEnroot["DET_CONTAINER_LOCAL_TMP"]
 	assert.Equal(t, ok, false)
 	val = envVarsEnroot["DET_LOCALTMP"]
@@ -818,7 +822,7 @@ func Test_getEnvVarsForLauncherManifestErr(t *testing.T) {
 	}
 
 	_, err := getEnvVarsForLauncherManifest(ts, "masterHost", 8888, "certName", false,
-		device.CUDA, "podman", "/")
+		device.CUDA, "podman", "/", 0)
 	assert.ErrorContains(t, err, "invalid user-defined environment variable 'cpudefault'")
 }
 

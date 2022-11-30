@@ -161,11 +161,12 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                 export CUDA_VISIBLE_DEVICES="$(convert_to_gpu_numbers)"
             fi
 
-            export DET_SLOT_IDS="[${CUDA_VISIBLE_DEVICES}]"
-            export DET_UNIQUE_PORT_OFFSET=$(echo $CUDA_VISIBLE_DEVICES | cut -d',' -f1)
             export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
 
             if [ ! -z "$CUDA_VISIBLE_DEVICES" ]; then
+                export DET_SLOT_IDS="[${CUDA_VISIBLE_DEVICES}]"
+                export DET_UNIQUE_PORT_OFFSET=$(echo $CUDA_VISIBLE_DEVICES | cut -d',' -f1)
+
                 # Test if "nvidia-smi" exists in the PATH before trying to invoking it.
                 if type nvidia-smi >/dev/null 2>&1; then
                     # For Nvidia GPUS, the slot IDs are the device index. Replace the
@@ -180,17 +181,15 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
                 else
                     log "WARNING: nvidia-smi not found.  May be unable to perform CUDA operations." 1>&2
                 fi
-            else
-                # If CUDA_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
-                # Determined agents deployment would, which should indicate to Determined to just use the
-                # CPU.
+            elif [ -z "$DET_SLOT_IDS" ]; then
+                # If CUDA_VISIBLE_DEVICES and DET_SLOT_IDS are not set, then we default DET_SLOT_IDS the same as
+                # Determined agents deployment would, which should indicate to Determined to just use one
+                # CPU.  If slots_per_node is specified, DET_SLOT_IDS will be provided indicating the slots to use.
                 export DET_SLOT_IDS="[0]"
             fi
             ;;
 
         "rocm")
-            export DET_SLOT_IDS="[${ROCR_VISIBLE_DEVICES}]"
-            export DET_UNIQUE_PORT_OFFSET=$(echo $ROCR_VISIBLE_DEVICES | cut -d',' -f1)
             export DET_UNIQUE_PORT_OFFSET=${DET_UNIQUE_PORT_OFFSET:=0}
 
             # ROCm command rocm-smi is implemented as a python script.  With singularity --rocm
@@ -210,12 +209,15 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
             fi
 
             if [ ! -z "$ROCR_VISIBLE_DEVICES" ]; then
+                export DET_SLOT_IDS="[${ROCR_VISIBLE_DEVICES}]"
+                export DET_UNIQUE_PORT_OFFSET=$(echo $ROCR_VISIBLE_DEVICES | cut -d',' -f1)
+
                 # Test if "rocm-smi" exists in the PATH before trying to invoking it.
                 if [ ! type rocm-smi ] >/dev/null 2>&1; then
                     log "WARNING: rocm-smi not found.  May be unable to perform ROCM operations." 1>&2
                 fi
-            else
-                # If ROCR_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same that a
+            elif [ -z "$DET_SLOT_IDS" ]; then
+                # If ROCR_VISIBLE_DEVICES is not set, then we default DET_SLOT_IDS the same as
                 # Determined agents deployment would, which should indicate to Determined to just use the
                 # CPU.
                 export DET_SLOT_IDS="[0]"
@@ -223,8 +225,10 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
             ;;
 
         "cpu")
-            # For CPU only training, the "slot" we get is just the CPU, but it needs to be set.
-            export DET_SLOT_IDS="[0]"
+            if [ -z "$DET_SLOT_IDS" ]; then
+                # For CPU only training, the "slot" we get is just the CPU, but it needs to be set.
+                export DET_SLOT_IDS="[0]"
+            fi
             export DET_UNIQUE_PORT_OFFSET=0
             ;;
 
@@ -252,6 +256,8 @@ if [ $(whoami) == "root" ] && [ -r /run/determined/etc/passwd ]; then
     log_debug "DEBUG: Running as root inside container, changing agent user passwd entry to uid/gid 0/0."
     sed -i "s/\([a-zA-Z0-9]\+\):x:[0-9]\+:[0-9]\+:/\1:x:0:0:/" /run/determined/etc/passwd
 fi
+
+log_debug "DEBUG: Will utilize slots DET_SLOT_IDS $DET_SLOT_IDS"
 
 log "INFO: Setting workdir to $DET_WORKDIR"
 cd $DET_WORKDIR
