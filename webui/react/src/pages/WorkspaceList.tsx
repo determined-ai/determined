@@ -137,7 +137,7 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [updateSettings, user, users, settings.whose, prevWhose]);
+  }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
