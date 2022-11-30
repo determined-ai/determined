@@ -42,7 +42,7 @@ class HDFSStorageManager(storage.CloudStorageManager):
         selector: Optional[storage.Selector] = None,
     ) -> None:
         if selector is not None:
-            raise NotImplementedError("HDFSStorageManager does not support partial uploads")
+            raise NotImplementedError("HDFSStorageManager does not support partial downloads")
         dst = os.fspath(dst)
         logging.info(f"Downloading {src} from HDFS")
         self.client.download(src, dst, overwrite=True)

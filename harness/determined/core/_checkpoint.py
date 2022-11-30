@@ -56,35 +56,34 @@ def merge_metadata(all_metadata: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], 
     conflicts: Dict[str, List] = {}
     for rank, rank_metadata in enumerate(all_metadata):
 
-        for _key in rank_metadata:
-            metadata = rank_metadata[_key]
-            if _key not in merged:
-                merged[_key] = metadata
-                conflicts[_key] = [rank]
+        for key in rank_metadata:
+            metadata = rank_metadata[key]
+            if key not in merged:
+                merged[key] = metadata
+                conflicts[key] = [rank]
             else:
-                if not isinstance(metadata, type(merged[_key])):
+                if not isinstance(metadata, type(merged[key])):
                     # if values under the same keys have different types
                     # report conflict and skip merging
-                    conflicts[_key].append(rank)
+                    conflicts[key].append(rank)
+                elif isinstance(metadata, list):
+                    # merge two lists
+                    merged[key].extend(metadata)
+                elif isinstance(metadata, dict):
+                    # recursively merge dictionaries and collect conflicts
+                    merged[key], nested_conflicts = merge_metadata([merged[key], metadata])
+
+                    # pre-append current key to conflicted nested keys reported
+                    # to distinguish between nested and not-nested keys
+                    for k in nested_conflicts:
+                        local_rank = nested_conflicts[k]
+                        abs_k = key + "/" + k
+                        conflicts.setdefault(abs_k, []).extend(local_rank)
                 else:
-                    if isinstance(metadata, list):
-                        # merge two lists
-                        merged[_key].extend(metadata)
-                    elif isinstance(metadata, dict):
-                        # recursively merge dictionaries and collect conflicts
-                        merged[_key], nested_conflicts = merge_metadata([merged[_key], metadata])
+                    # unknown merging scenario; report conflict and skip merging
+                    conflicts[key].append(rank)
 
-                        # pre-append current key to conflicted nested keys reported
-                        # to distinguish between nested and not-nested keys
-                        for k in nested_conflicts:
-                            local_rank = nested_conflicts[k]
-                            abs_k = _key + "/" + k
-                            conflicts.setdefault(abs_k, []).extend(local_rank)
-                    else:
-                        # unknown merging scenario; report conflict and skip merging
-                        conflicts[_key].append(rank)
-
-    conflicts = {k: v for (k, v) in conflicts.items() if len(v) > 1}
+    conflicts = {k: v for k, v in conflicts.items() if len(v) > 1}
     return merged, conflicts
 
 
