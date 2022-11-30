@@ -11,9 +11,6 @@ from transformers import (
 import os
 import determined as det
 import logging
-import torch
-import uuid
-import shutil
 
 
 class DetCallback(TrainerCallback):
@@ -22,8 +19,6 @@ class DetCallback(TrainerCallback):
         core_context: det.core.Context,
         args: TrainingArguments,
         filter_metrics: typing.List[str] = None,
-        tokenizer: typing.Any = None,
-        tokenizer_options: typing.Dict = None,
         checkpoint_metadata: typing.Dict = None,
     ) -> None:
         super().__init__()
@@ -32,8 +27,6 @@ class DetCallback(TrainerCallback):
 
         self.filter_metrics = filter_metrics
         self.user_checkpoint_metadata = checkpoint_metadata
-        self.tokenizer = tokenizer
-        self.tokenizer_options = tokenizer_options
         self.load_last_checkpoint(args)
 
         self.last_metrics: typing.Dict[str, float] = {}
@@ -101,78 +94,29 @@ class DetCallback(TrainerCallback):
         **kwargs,
     ):
         info = det.get_cluster_info()
-        if info is None:
-            # TODO: modify to support local mode
-            logging.warning("ClusterInfo is None: not running in a task. Skip saving.")
-            return
+        assert info
 
+        # local_path is where HF Trainer saves model and tokenizer
         local_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
 
-        storage_manager = self.core_context.checkpoint._storage_manager
-
         if state.is_world_process_zero:
-
             det_checkpoint_metadata = {
                 "steps_completed": state.global_step,
                 "trial_id": info.trial.trial_id,
             }
-            if self.tokenizer_options is not None:
-                det_checkpoint_metadata["tokenizer_options"] = self.tokenizer_options
 
-            storage_id = str(uuid.uuid4())
-            with storage_manager.store_path(storage_id) as path:
-                self.core_context.distributed.broadcast((storage_id, path))
-                self._save(path, local_path)
-
-                storage = det.common.storage
-                resources = storage.StorageManager._list_directory(path)
-                if isinstance(storage_manager, storage.SharedFSStorageManager):
-                    all_resources = [resources]
-                else:
-                    # Gather resources across nodes.
-                    all_resources = self.core_context.distributed.gather(resources)
-
-            resources = {k: v for d in all_resources for k, v in d.items()}
-
-            self.core_context.checkpoint._report_checkpoint(
-                storage_id, resources, det_checkpoint_metadata
-            )
+            if self.user_checkpoint_metadata is not None:
+                self._on_save_user_data(local_path)
 
         else:
-            storage_id, path = self.core_context.distributed.broadcast(None)
-            self._save(path, local_path)
+            det_checkpoint_metadata = None
 
-            storage = det.common.storage
-            if not isinstance(storage_manager, storage.SharedFSStorageManager):
-                # Gather resources across nodes.
-                if self.core_context.distributed.local_rank == 0:
-                    resources = storage.StorageManager._list_directory(path)
-                else:
-                    resources = {}
-
-                _ = self.core_context.distributed.gather(resources)
-            if self.core_context.distributed.local_rank == 0:
-                storage_manager.post_store_path(str(path), storage_id)
+        self.core_context.checkpoint.upload(
+            local_path, metadata=det_checkpoint_metadata, shard=True
+        )
 
         if self.core_context.preempt.should_preempt():
             raise Exception("Process preempted / killed")
-
-    def _save(self, path: pathlib.Path, local_path: str) -> None:
-        if self.core_context.distributed.local_rank == 0:
-            path.mkdir(parents=True, exist_ok=True)
-
-        _ = self.core_context.distributed.gather_local(None)  # sync
-
-        if self.core_context.distributed.local_rank == 0:
-            # only local_rank=0 should copy the content of the local path
-            shutil.copytree(local_path, path, dirs_exist_ok=True)
-
-        if self.core_context.distributed.rank == 0:
-            if self.tokenizer is not None:
-                self.tokenizer.save_pretrained(os.path.join(path, "tokenizer"))
-
-            if self.user_checkpoint_metadata is not None:
-                self._on_save_user_data(path)
 
     def _on_save_user_data(self, save_path) -> None:
         """
@@ -186,11 +130,7 @@ class DetCallback(TrainerCallback):
 
     def load_last_checkpoint(self, args: TrainingArguments) -> None:
         info = det.get_cluster_info()
-
-        if info is None:
-            # TODO: modify to support local mode
-            logging.warning("ClusterInfo is None: not running in a task. Skip loading.")
-            return
+        assert info
 
         latest_checkpoint = info.latest_checkpoint
         if latest_checkpoint is not None:
@@ -203,15 +143,9 @@ class DetCallback(TrainerCallback):
                 resume_step = metadata["steps_completed"]
             checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
 
-            if self.core_context.distributed.local_rank == 0:
-                self.core_context.checkpoint.download(
-                    latest_checkpoint, checkpoint_path
-                )
-                torch.distributed.barrier()
-            else:
-                # wait until local rank 0 finishes downloading data
-                torch.distributed.barrier()
-
+            # to resume deepspeed, each node is required to have ALL sharded model/optimizer states,
+            # so we can skip using selector and just download all files
+            self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
             args.resume_from_checkpoint = checkpoint_path
 
     def on_step_end(
@@ -300,13 +234,6 @@ class DetCallback(TrainerCallback):
             f"use (--num_train_epochs and searcher.max_length.epochs) OR "
             f"(--max_steps and searcher.max_length.batches)."
         )
-
-
-def set_hyperparameters(training_args: TrainingArguments):
-    hparams = det.get_cluster_info().trial.hparams
-    for k, v in hparams.items():
-        if hasattr(training_args, k):
-            setattr(training_args, k, v)
 
 
 EVAL = "eval_"

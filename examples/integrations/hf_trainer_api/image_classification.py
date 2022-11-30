@@ -33,7 +33,7 @@ from torchvision.transforms import (
     Resize,
     ToTensor,
 )
-from det_callback import DetCallback, set_hyperparameters
+from det_callback import DetCallback
 import transformers
 from transformers import (
     MODEL_FOR_IMAGE_CLASSIFICATION_MAPPING,
@@ -52,6 +52,7 @@ from transformers.utils.versions import require_version
 import determined as det
 import json
 from pathlib import Path
+
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
 logger = logging.getLogger(__name__)
@@ -197,13 +198,15 @@ def collate_fn(examples):
 def dict2args(hparams):
     out = []
     for key in hparams:
-        out.append('--' + str(key))
+        out.append("--" + str(key))
         out.append(str(hparams[key]))
     return out
 
 
 def parse_input_arguments(train_hps):
-    train_hps = train_hps['training_arguments'] if 'training_arguments' in train_hps else {}
+    train_hps = (
+        train_hps["training_arguments"] if "training_arguments" in train_hps else {}
+    )
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
@@ -421,7 +424,7 @@ def main(core_context, model_args, data_args, training_args):
     )
 
     det_callback = DetCallback(
-        core_context, training_args, filter_metrics=["loss", "accuracy"], tokenizer=feature_extractor
+        core_context, training_args, filter_metrics=["loss", "accuracy"]
     )
     trainer.add_callback(det_callback)
 
@@ -461,7 +464,7 @@ def main(core_context, model_args, data_args, training_args):
 if __name__ == "__main__":
 
     info = det.get_cluster_info()
-    assert info is not None
+    assert info
     hparams = info.trial.hparams
     model_args, data_args, training_args = parse_input_arguments(hparams)
 
@@ -471,4 +474,4 @@ if __name__ == "__main__":
         distributed = det.core.DistributedContext.from_torch_distributed()
 
     with det.core.init(distributed=distributed) as core_context:
-        main(core_context, model_args, data_args, training_args )
+        main(core_context, model_args, data_args, training_args)
