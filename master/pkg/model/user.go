@@ -16,10 +16,10 @@ import (
 // BCryptCost is a stopgap until we implement sane master-configuration.
 const BCryptCost = 15
 
-// ActivityType describes a user activity
+// ActivityType describes a user activity.
 type ActivityType string
 
-// EntityType represents an entity
+// EntityType represents an entity.
 type EntityType string
 
 const (
@@ -29,7 +29,7 @@ const (
 
 const (
 	// EntityTypeProject represents a project.
-	EntityTypeProject EntityType = "DEFAULT"
+	EntityTypeProject EntityType = "Project"
 )
 
 // UserID is the type for user IDs.
@@ -171,8 +171,8 @@ type UserActivity struct {
 	bun.BaseModel `bun:"table:activity"`
 	UserID        UserID       `db:"user_id" json:"user_id"`
 	ActivityType  ActivityType `db:"activity_type" json:"activity_type"`
-	EntityType    EntityType   `db:"entity_type" json:entity_type"`
-	EntityId      int32        `db:"entity_id" json:"entity_id"`
+	EntityType    EntityType   `db:"entity_type" json:"entity_type"`
+	EntityID      int32        `db:"entity_id" json:"entity_id"`
 	ActivityTime  time.Time    `db:"activity_time" json:"activity_time"`
 }
 
@@ -200,15 +200,15 @@ func activityTypeFromProto(a userv1.ActivityType) ActivityType {
 func UserActivityFromProto(
 	a userv1.ActivityType,
 	e userv1.EntityType,
-	entityId int32,
-	userId int32,
+	entityID int32,
+	userID int32,
 	timestamp time.Time,
 ) *UserActivity {
 	return &UserActivity{
-		UserID:       UserID(userId),
+		UserID:       UserID(userID),
 		ActivityType: activityTypeFromProto(a),
 		EntityType:   entityTypeFromProto(e),
-		EntityId:     entityId,
+		EntityID:     entityID,
 		ActivityTime: timestamp,
 	}
 }
