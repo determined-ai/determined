@@ -213,7 +213,7 @@ def test_model_versions(client: _client.Determined) -> None:
         assert ver.notes == "vernotes", ver.notes
 
         # Break the cache.
-        ver2 = model.get_version(ver.model_version_id)
+        ver2 = model.get_version(ver.model_version)
         assert ver2 is not None
         assert ver2.name == "vername", ver2.name
         assert ver2.notes == "vernotes", ver2.notes
@@ -221,12 +221,12 @@ def test_model_versions(client: _client.Determined) -> None:
         # Test get_version without an arg, while a version exists.
         ver3 = model.get_version()
         assert ver3
-        assert ver3.model_version_id == ver.model_version_id
+        assert ver3.model_version == ver.model_version
 
         ver2.delete()
 
         with pytest.raises(errors.APIException):
-            model.get_version(ver.model_version_id)
+            model.get_version(ver.model_version)
 
         # Test get_version without an arg, when no version exists.
         assert model.get_version() is None
