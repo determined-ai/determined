@@ -384,7 +384,7 @@ func TesAuthzPostUserActivity(t *testing.T) {
 	authzUsers.On("canSetUsersOwnActivity", mock.Anything, curUser).
 		Return(fmt.Errorf("canSetUsersOwnActivity")).Once()
 
-	_, err := api.PostUserActivity(ctx, &apiv1.ResetUserSettingRequest{})
+	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	resp, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
