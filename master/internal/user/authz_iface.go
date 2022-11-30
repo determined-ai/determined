@@ -63,8 +63,7 @@ type UserAuthZ interface {
 	) error
 	// POST /api/v1/users/setting
 	CanResetUsersOwnSettings(ctx context.Context, curUser model.User) error
-	// POST /api/v1/users/activity
-	CanSetUsersOwnActivity(ctx context.Context, curUser model.User) error
+
 	// GET /api/v1/tasks/count
 	// TODO(nick) move this when we add an AuthZ for notebooks.
 	CanGetActiveTasksCount(ctx context.Context, curUser model.User) error

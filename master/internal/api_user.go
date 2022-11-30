@@ -567,9 +567,6 @@ func (a *apiServer) PostUserActivity(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanSetUsersOwnActivity(ctx, *curUser); err != nil {
-		return nil, status.Error(codes.PermissionDenied, err.Error())
-	}
 
 	timestamp := time.Now()
 	if _, err := db.Bun().NewInsert().Model(model.UserActivityFromProto(

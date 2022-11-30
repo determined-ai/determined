@@ -138,11 +138,6 @@ func (a *UserAuthZBasic) CanAccessNTSCTask(
 	return curUser.Admin || curUser.ID == ownerID, nil
 }
 
-// CanSetUsersOwnActivity always returns nil.
-func (a *UserAuthZBasic) CanSetUsersOwnActivity(ctx context.Context, curUser model.User) error {
-	return nil
-}
-
 func init() {
 	AuthZProvider.Register("basic", &UserAuthZBasic{})
 }
