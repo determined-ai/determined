@@ -376,3 +376,23 @@ func TestAuthzResetUserSetting(t *testing.T) {
 	_, err := api.ResetUserSetting(ctx, &apiv1.ResetUserSettingRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
+
+func TesAuthzPostUserActivity(t *testing.T) {
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t)
+
+	expectedErr := status.Error(codes.PermissionDenied, "canSetUsersOwnActivity")
+	authzUsers.On("canSetUsersOwnActivity", mock.Anything, curUser).
+		Return(fmt.Errorf("canSetUsersOwnActivity")).Once()
+
+	_, err := api.PostUserActivity(ctx, &apiv1.ResetUserSettingRequest{})
+	require.Equal(t, expectedErr.Error(), err.Error())
+
+	resp, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+			ActivityType:  ActivityType_ACTIVITY_TYPE_GET,
+			ActivityTime:    time.Now(),
+			EntityType:  EntityType_ENTITY_TYPE_PROJECT,
+			EntityId: 1
+			UserId: int32(userID)
+	})
+	require.NoError(t, err)
+}
