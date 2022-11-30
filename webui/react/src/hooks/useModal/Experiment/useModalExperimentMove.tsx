@@ -333,7 +333,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
    */
   useEffect(() => {
     if (modalRef.current) openOrUpdate(getModalProps(experimentIds, destSettings.projectId));
-  }, [destSettings.projectId, getModalProps, modalRef, openOrUpdate, experimentIds]);
+  }, [destSettings.projectId, destSettings.workspaceId, experimentIds]);
 
   return { modalOpen, modalRef, ...modalHook };
 };
