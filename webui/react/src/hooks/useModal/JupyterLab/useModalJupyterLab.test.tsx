@@ -80,6 +80,18 @@ describe('useModalJupyterLab', () => {
     expect(await screen.findByText(MODAL_TITLE)).toBeInTheDocument();
   });
 
+  it('should close modal', async () => {
+    const user = await setup();
+
+    await screen.findByText(MODAL_TITLE);
+    const button = await screen.findByRole('button', { name: /Launch/i });
+    user.click(button);
+
+    await waitFor(() => {
+      expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
+    });
+  });
+
   it('should show modal in simple form mode', async () => {
     await setup();
 
@@ -95,18 +107,6 @@ describe('useModalJupyterLab', () => {
 
     await waitFor(() => {
       expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).toBeInTheDocument();
-    });
-  });
-
-  it('should close modal', async () => {
-    const user = await setup();
-
-    await screen.findByText(MODAL_TITLE);
-    const button = await screen.findByRole('button', { name: /Launch/i });
-    user.click(button);
-
-    await waitFor(() => {
-      expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
     });
   });
 });

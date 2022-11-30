@@ -83,7 +83,9 @@ recommended to optimize how Determined interacts with Slurm:
 
    -  A Slurm partition with no GPUs is identified as an AUX resource pool.
 
-   -  The Determined default resource pool is set to the Slurm default partition.
+   -  The Determined default resource pool is set to the Slurm default partition. Override this
+      default using the :ref:`slurm section <cluster-configuration-slurm>`
+      ``default_compute_resource_pool`` or ``default_aux_resource_pool`` option.
 
 -  Tune the Slurm configuration for Determined job preemption.
 
@@ -114,6 +116,14 @@ to optimize how Determined interacts with PBS:
    other configurations such as targeting a specific resource pool with only GPU nodes, or
    specifying a PBS constraint in the experiment configuration.
 
+   PBS should be configured to provide the environment variable ``CUDA_VISIBLE_DEVICES``
+   (``ROCR_VISIBLE_DEVICES`` for ROCm) to the job based upon the GPUs allocated. If PBS is not
+   configured to provide ``CUDA_VISIBLE_DEVICES``, Determined will utilize a single GPU on each
+   node. To fully utilize mutliple GPUs, you must either manually define ``CUDA_VISIBLE_DEVICES`` or
+   provide the ``pbs.slots_per_node`` setting in your experiment configuration to indicate how many
+   GPU slots are available for use. The format of ``CUDA_VISIBLE_DEVICES`` is an array of GPU IDs
+   (e.g. ``[0,1,2,3]`` which indicates the four GPUS 0 through 3).
+
 -  Ensure homogeneous PBS queues.
 
    Determined maps PBS queues to Determined resource pools. It is recommended that the nodes within
@@ -125,7 +135,9 @@ to optimize how Determined interacts with PBS:
 
    -  A PBS queue with no GPUs is identified as an AUX resource pool.
 
-   -  The Determined default resource pool is set to the PBS default queue.
+   -  The Determined default resource pool is set to the PBS default queue. Override this default
+      using the :ref:`pbs section <cluster-configuration-slurm>` ``default_compute_resource_pool``
+      or ``default_aux_resource_pool`` option.
 
 -  Tune the PBS configuration for Determined job preemption.
 

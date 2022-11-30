@@ -25,7 +25,7 @@ import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, ProjectExperiment } from 'types';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 interface Props {
   children?: React.ReactNode;
@@ -102,8 +102,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             if (onComplete) onComplete(action);
             break;
           case Action.OpenTensorBoard: {
-            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [id] });
-            openCommand(tensorboard);
+            const commandResponse = await openOrCreateTensorBoard({ experimentIds: [id] });
+            openCommandResponse(commandResponse);
             break;
           }
           case Action.SwitchPin: {

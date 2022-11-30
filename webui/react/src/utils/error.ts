@@ -38,6 +38,14 @@ const log = (e: DetError) => {
   e.logger[key](e);
 };
 
+// Handle a warning to the user in the UI
+export const handleWarning = (warningOptions: DetErrorOptions): void => {
+  // Error object is null because this is just a warning
+  const detWarning = new DetError(null, warningOptions);
+
+  openNotification(detWarning);
+};
+
 // Handle an error at the point that you'd want to stop bubbling it up. Avoid handling
 // and re-throwing.
 const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetError | void => {

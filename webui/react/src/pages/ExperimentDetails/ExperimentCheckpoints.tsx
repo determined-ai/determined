@@ -280,14 +280,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // cleanup
   useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
-
-      setCheckpoints([]);
-      setTotal(0);
     };
   }, [canceler, stopPolling]);
 

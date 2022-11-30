@@ -233,13 +233,9 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     </ResponsiveFilters>
   );
 
-  // cleanup
   useEffect(() => {
     return () => {
       stopPolling();
-
-      setWorkloads([]);
-      setWorkloadCount(0);
     };
   }, [stopPolling]);
 
