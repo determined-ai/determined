@@ -64,6 +64,20 @@ func (_m *UserAuthZ) CanCreateUsersOwnSetting(ctx context.Context, curUser model
 	return r0
 }
 
+// CanSetUsersOwnActivity provides a mock function with given fields: ctx, curUser
+func (_m *UserAuthZ) CanSetUsersOwnActivity(ctx context.Context, curUser model.User) error {
+	ret := _m.Called(ctx, curUser)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User) error); ok {
+		r0 = rf(ctx, curUser)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CanGetActiveTasksCount provides a mock function with given fields: ctx, curUser
 func (_m *UserAuthZ) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
 	ret := _m.Called(ctx, curUser)
