@@ -83,7 +83,8 @@ class Batch(TrainUnit):
 
 
 class Record(TrainUnit):
-    pass
+    def _to_batches(self, global_batch_size: int) -> Batch:
+        return Batch(max(self.value // global_batch_size, 1))
 
 
 class _TrainStepType(enum.Enum):
@@ -529,7 +530,7 @@ class _PyTorchTrialController:
 
             self.training_iterator = iter(self.training_loader)
             self.training_enumerator = enumerate(
-                self.training_iterator, start=self.start_from_batch
+                self.dataloader_next(self.prof, self.training_iterator), start=self.start_from_batch
             )
 
             def cleanup_iterator() -> None:
@@ -561,6 +562,18 @@ class _PyTorchTrialController:
                     callback.on_training_start()
 
             self._run()
+
+    @staticmethod
+    def dataloader_next(
+        profiler: det.profiler.ProfilerAgent, dataloader_iter: Iterator
+    ) -> Iterator:
+        while True:
+            try:
+                with profiler.record_timing("dataloader_next", requires_sync=False):
+                    batch = next(dataloader_iter)
+            except StopIteration:
+                return
+            yield batch
 
     def _run(self) -> None:
         if self.local_training:
@@ -656,6 +669,12 @@ class _PyTorchTrialController:
             for step in train_steps:
                 if isinstance(step.unit, Batch) and step.unit._divides(batch_idx + 1):
                     step.limit_reached = True
+
+                # Convert records to batches
+                if isinstance(step.unit, Record):
+                    batch_unit = step.unit._to_batches(self.global_batch_size)
+                    if batch_unit._divides(batch_idx + 1):
+                        step.limit_reached = True
 
                 # True epoch based training not supported, detect last batch of epoch to calculate
                 # fully-trained epochs
@@ -993,12 +1012,12 @@ class _PyTorchTrialController:
                 ),
             )
 
-            # # Gather a list of per-worker (num_inputs, num_batches) tuples.
-            # input_counts = self.context.distributed.gather((num_inputs, idx + 1))
-            # if self.context.distributed.rank == 0:
-            #     assert input_counts is not None
-            #     # Reshape and sum.
-            #     num_inputs, num_batches = [sum(n) for n in zip(*input_counts)]
+            # Gather a list of per-worker (num_inputs, num_batches) tuples.
+            input_counts = self.context.distributed.gather((num_inputs, idx + 1))
+            if self.is_chief:
+                assert input_counts is not None
+                # Reshape and sum.
+                num_inputs, num_batches = [sum(n) for n in zip(*input_counts)]
 
         else:
             assert self._evaluate_full_dataset_defined(), "evaluate_full_dataset not defined."
@@ -1047,7 +1066,9 @@ class _PyTorchTrialController:
             # validation data.
             if self._evaluate_batch_defined():
                 step_duration = time.time() - step_start_time
-                logging.info(det.util.make_timing_log("validated", step_duration, num_inputs, idx))
+                logging.info(
+                    det.util.make_timing_log("validated", step_duration, num_inputs, num_batches)
+                )
             self.metric_writer.on_validation_step_end(self.state.batches_trained, metrics)
 
         should_checkpoint = False
@@ -1055,7 +1076,7 @@ class _PyTorchTrialController:
         if searcher_op and self.is_chief:
             searcher_length = TrainUnit._from_searcher_unit(searcher_op.length, self.searcher_unit)
             searcher_metric = self._validate_searcher_metric(metrics)
-            if self._steps_until_complete(searcher_length) < 1:
+            if self._steps_until_complete(searcher_length) < 1 and not searcher_op._completed:
                 searcher_op.report_completed(searcher_metric)
 
             if self.ckpt_policy == "best" and not self._checkpoint_is_current():
