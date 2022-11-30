@@ -39,7 +39,8 @@ def logs(args: Namespace) -> None:
     resp = bindings.get_MasterLogs(cli.setup_session(args), **params)
     try:
         for log in resp:
-            print(log.logEntry.message, end="")
+            if log.logEntry:
+                print(log.logEntry.message, end="")
     except KeyboardInterrupt:
         pass
 
