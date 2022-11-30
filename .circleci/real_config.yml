@@ -3165,6 +3165,7 @@ workflows:
           requires:
             - build-react
             - build-docs
+          context: determined-ee
           filters: *any-upstream
 
       # Distributed tests
