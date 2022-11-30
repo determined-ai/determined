@@ -79,6 +79,7 @@ const WorkspaceList: React.FC = () => {
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
           users: settings.user,
+          //
         },
         { signal: canceler.signal },
       );
@@ -129,10 +130,10 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: undefined });
         break;
       case WhoseWorkspaces.Mine:
-        updateSettings({ user: user ? [user.username] : undefined });
+        updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseWorkspaces.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
         break;
     }
   }, [updateSettings, user, users, settings.whose]);

@@ -133,6 +133,11 @@ func (a *apiServer) GetWorkspaceProjects(
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIds := make([]string, 0, len(req.UserIds))
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	// Construct the ordering expression.
 	startTime := apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME
 	sortColMap := map[apiv1.GetWorkspaceProjectsRequest_SortBy]string{
@@ -168,6 +173,7 @@ func (a *apiServer) GetWorkspaceProjects(
 		&resp.Projects,
 		req.Id,
 		userFilterExpr,
+		userIDFilterExpr,
 		nameFilter,
 		archFilterExpr,
 	)

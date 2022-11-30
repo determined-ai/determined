@@ -80,6 +80,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
           users: settings.user,
+          //
         },
         { signal: canceler.signal },
       );
@@ -112,7 +113,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       updateSettings({
         sortDesc:
           value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+            value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
             ? false
             : true,
         sortKey: value as V1GetWorkspaceProjectsRequestSortBy | undefined,

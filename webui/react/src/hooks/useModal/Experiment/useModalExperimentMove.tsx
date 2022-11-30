@@ -106,7 +106,6 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       const response = await getWorkspaceProjects({
         id: destSettings.workspaceId,
         limit: 0,
-        // users: (!user || user.isAdmin) ? [] : [ user.username ],
       });
       setProjects((prev) => (isEqual(prev, response.projects) ? prev : response.projects));
     } catch (e) {

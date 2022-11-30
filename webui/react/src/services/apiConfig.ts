@@ -1178,7 +1178,8 @@ export const getWorkspaces: DetApi<
       params.limit,
       params.name,
       params.archived,
-      params.users,
+      undefined,
+      getUserIds(params.users),
       params.pinned,
       options,
     );
@@ -1247,7 +1248,8 @@ export const getWorkspaceProjects: DetApi<
       params.limit,
       params.name,
       params.archived,
-      params.users,
+      undefined,
+      getUserIds(params.users),
       options,
     );
   },
