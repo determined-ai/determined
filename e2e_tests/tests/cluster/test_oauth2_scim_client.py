@@ -1,11 +1,9 @@
-import json
 import subprocess
 
 import pytest
 
 from determined.errors import EnterpriseOnlyError
 from determined.experimental import Determined
-from tests import config
 from tests import config as conf
 from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user
 
