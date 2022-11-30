@@ -1,14 +1,13 @@
 import { Empty, notification, Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
-import { number, undefined as undefinedType, union } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
-import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import projectDetailConfigSettings, {
   ProjectDetailsSettings,
 } from 'pages/OldProjectDetails.settings';
@@ -41,30 +40,6 @@ export interface ShowModalProps {
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
-
-export interface Settings {
-  projectId?: number;
-  workspaceId?: number;
-}
-
-export const settingsConfig: SettingsConfig<Settings> = {
-  applicableRoutespace: 'experiment-destination',
-  settings: {
-    projectId: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'projectId',
-      type: union([undefinedType, number]),
-    },
-    workspaceId: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'workspaceId',
-      type: union([undefinedType, number]),
-    },
-  },
-  storagePath: 'experiment-destination',
-};
 
 const moveExperimentWithHandler = async (
   experimentId: number,
