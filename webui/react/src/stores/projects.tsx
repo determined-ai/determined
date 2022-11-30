@@ -1,3 +1,4 @@
+import { Map } from 'immutable';
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
 import { getWorkspaceProjects } from 'services/api';
@@ -5,49 +6,32 @@ import { Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-type UpdateProjects = (fn: (project: Map<number, Project>) => Map<number, Project>) => void;
-type UpdateWorkspaceProjects = (
-  fn: (ws: Loadable<Map<number, Project[]>>) => Loadable<Map<number, Project[]>>,
-) => void;
-
-type UseWorkspaceProjectsReturn = {
-  updateWorkspaceProjects: UpdateWorkspaceProjects;
-  workspaceProjects: Map<number, Project[]> | null;
-};
+type UpdateProjectsByIndex = (fn: (ws: Map<string, Project[]>) => Map<string, Project[]>) => void;
 
 type ProjectsContext = {
   projects: Map<number, Project>;
+  projectsByIndex: Map<string, Project[]>;
   updateProjects: (fn: (project: Map<number, Project>) => Map<number, Project>) => void;
-  updateWorkspaceProjects: UpdateWorkspaceProjects;
-  workspaceProjects: Loadable<Map<number, Project[]>>;
+  updateProjectsByIndex: UpdateProjectsByIndex;
 };
 
 const ProjectsContext = createContext<ProjectsContext | null>(null);
 
 export const ProjectsProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [workspaceProjects, setWorkspaceProjects] =
-    useState<Loadable<Map<number, Project[]>>>(NotLoaded);
-  const [projects, setProjects] = useState<Map<number, Project>>(() => new Map());
+  const [workspaceProjects, setWorkspaceProjects] = useState<Map<string, Project[]>>(Map());
+  const [projects, setProjects] = useState<Map<number, Project>>(() => Map());
 
   return (
     <ProjectsContext.Provider
       value={{
         projects,
+        projectsByIndex: workspaceProjects,
         updateProjects: setProjects,
-        updateWorkspaceProjects: setWorkspaceProjects,
-        workspaceProjects: workspaceProjects,
+        updateProjectsByIndex: setWorkspaceProjects,
       }}>
       {children}
     </ProjectsContext.Provider>
   );
-};
-
-const mapWorkspaceProjects = (wsProjects: Project[], updateProjects: UpdateProjects) => {
-  const projectsMap = new Map<number, Project>();
-
-  wsProjects.forEach((project) => projectsMap.set(project.id, project));
-
-  updateProjects(() => projectsMap);
 };
 
 export const useFetchWorkspaceProjects = (
@@ -56,10 +40,10 @@ export const useFetchWorkspaceProjects = (
   const context = useContext(ProjectsContext);
 
   if (context === null) {
-    throw new Error('Attempted to use useFetchProjects outside of Projects Context');
+    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
   }
 
-  const { updateWorkspaceProjects, updateProjects } = context;
+  const { updateProjectsByIndex, updateProjects } = context;
 
   return useCallback(
     async (workspaceId: number): Promise<void> => {
@@ -72,20 +56,20 @@ export const useFetchWorkspaceProjects = (
           { signal: canceler.signal },
         );
 
-        updateWorkspaceProjects(() => {
-          const projectsMap = new Map<number, Project[]>();
-
-          projectsMap.set(workspaceId, response.projects);
-
-          return Loaded(projectsMap);
+        updateProjectsByIndex((prevState) => {
+          return prevState.set(`byworkspace-${workspaceId}`, response.projects);
         });
 
-        mapWorkspaceProjects(response.projects, updateProjects);
+        updateProjects((prevState) => {
+          return prevState.withMutations((state) => {
+            response.projects.forEach((proj) => state.set(proj.id, proj));
+          });
+        });
       } catch (e) {
         handleError(e);
       }
     },
-    [canceler, updateWorkspaceProjects, updateProjects],
+    [canceler, updateProjectsByIndex, updateProjects],
   );
 };
 
@@ -95,16 +79,14 @@ export const useEnsureWorkspaceProjectsFetched = (
   const context = useContext(ProjectsContext);
 
   if (context === null) {
-    throw new Error('Attempted to use useEnsureFetchWorkspaces outside of Workspace Context');
+    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
   }
 
-  const { workspaceProjects, updateWorkspaceProjects, updateProjects } = context;
+  const { updateProjectsByIndex, updateProjects } = context;
 
   return useCallback(
     async (workspaceId: number): Promise<void> => {
-      const projectsMap = Loadable.getOrElse(new Map<number, Project[]>(), workspaceProjects);
-
-      if (workspaceProjects !== NotLoaded && !!projectsMap.get(workspaceId)) return;
+      if (context.projectsByIndex.get(`byworkspace-${workspaceId}`)) return;
 
       try {
         const response = await getWorkspaceProjects(
@@ -115,38 +97,54 @@ export const useEnsureWorkspaceProjectsFetched = (
           { signal: canceler.signal },
         );
 
-        projectsMap.set(workspaceId, response.projects);
-        const projectsCollection = Array.from(projectsMap.values()).flat();
+        updateProjectsByIndex((prevState) => {
+          return prevState.set(`byworkspace-${workspaceId}`, response.projects);
+        });
 
-        updateWorkspaceProjects(() => Loaded(projectsMap));
-        mapWorkspaceProjects(projectsCollection, updateProjects);
+        updateProjects((prevState) => {
+          return prevState.withMutations((state) => {
+            response.projects.forEach((proj) => state.set(proj.id, proj));
+          });
+        });
       } catch (e) {
         handleError(e);
       }
     },
-    [canceler, workspaceProjects, updateWorkspaceProjects, updateProjects],
+    [canceler, context.projectsByIndex, updateProjectsByIndex, updateProjects],
   );
 };
 
-export const useWorkspaceProjects = (): UseWorkspaceProjectsReturn => {
+export const useWorkspaceProjects = (
+  workspaceId: number | Loadable<number>,
+): Loadable<Project[]> => {
   const context = useContext(ProjectsContext);
 
   if (context === null) {
     throw new Error('Attempted to use useWorkspaceProjects outside of Projects Context');
   }
 
-  const { workspaceProjects, updateWorkspaceProjects } = context;
+  let loadedWorkspaceId: number;
 
-  const wsProjectsState = Loadable.map(workspaceProjects, (wsPj) => wsPj);
+  if (Loadable.isLoadable(workspaceId)) {
+    if (Loadable.isLoading(workspaceId)) {
+      return NotLoaded;
+    } else {
+      loadedWorkspaceId = workspaceId.data;
+    }
+  } else {
+    loadedWorkspaceId = workspaceId;
+  }
 
-  if (wsProjectsState === NotLoaded) return { updateWorkspaceProjects, workspaceProjects: null };
+  const { projectsByIndex } = context;
 
-  const projectsMap = Loadable.getOrElse(new Map<number, Project[]>(), workspaceProjects);
+  const projects = projectsByIndex.get(`byworkspace-${loadedWorkspaceId}`);
 
-  return { updateWorkspaceProjects, workspaceProjects: projectsMap };
+  if (projects === undefined) return NotLoaded;
+
+  return Loaded(projects);
 };
 
-export const useProjects = (projectId: number): Project | undefined => {
+export const useProject = (projectId: number): Loadable<Project> => {
   const context = useContext(ProjectsContext);
 
   if (context === null) {
@@ -157,5 +155,7 @@ export const useProjects = (projectId: number): Project | undefined => {
 
   const project = projects.get(projectId);
 
-  return project;
+  if (project === undefined) return NotLoaded;
+
+  return Loaded(project);
 };
