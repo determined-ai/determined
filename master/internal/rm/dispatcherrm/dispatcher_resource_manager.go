@@ -138,7 +138,7 @@ func (d *DispatcherResourceManager) GetResourcePoolRef(
 // ResolveResourcePool returns the resolved slurm partition or an error if it doesn't exist or
 // can't be resolved due to internal errors.
 func (d *DispatcherResourceManager) ResolveResourcePool(
-	ctx actor.Messenger, name string, slots int, command bool,
+	ctx actor.Messenger, name string, slots int,
 ) (string, error) {
 	// If the resource pool isn't set, fill in the default at creation time.
 	if name == "" && slots == 0 {
