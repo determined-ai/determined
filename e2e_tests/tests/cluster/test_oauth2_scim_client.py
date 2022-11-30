@@ -12,9 +12,6 @@ from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user
 def test_list_oauth_clients() -> None:
     log_in_user(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
-    user = det_obj.whoami()
-    print(user.username)
-
     command = [
         "det",
         "-m",
