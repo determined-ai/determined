@@ -85,8 +85,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
+      console.log('first', workspaceId);
       setProjectId(workspaceId === 1 && sourceProjectId !== 1 ? 1 : null);
-      if (workspaceId !== undefined && typeof workspaceId === 'number') setWorkspaceId(workspaceId);
+      if (workspaceId !== undefined && typeof workspaceId === 'number') {
+        console.log('second')
+        setWorkspaceId(workspaceId);
+      }
     },
     [sourceProjectId],
   );
@@ -135,7 +139,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             placeholder="Select a destination workspace."
             showSearch={false}
             style={{ width: '100%' }}
-            value={workspaceId === 1 ? undefined : workspaceId ?? undefined}
+            value={workspaceId ?? undefined}
             onSelect={handleWorkspaceSelect}>
             {Loadable.getOrElse([], workspaces).map((workspace) => {
               return (
