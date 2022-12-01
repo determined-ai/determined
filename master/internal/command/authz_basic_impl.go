@@ -20,10 +20,20 @@ func (a *CommandAuthZBasic) CanGetCommand(
 	return true, nil
 }
 
-// CanGetCommandArtifacts always returns a nil error.
-func (a *CommandAuthZBasic) CanGetCommandArtifacts(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
-) error {
+// CanAccessNTSCTask returns true and nil error unless the developer master config option
+// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
+// an admin or if the user owns the task and a nil error.
+func (a *CommandAuthZBasic) CanAccessNTSCTask(
+	ctx context.Context, curUser model.User, ownerID model.UserID,
+) (bool, error) {
+	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
+		return true, nil
+	}
+	return curUser.Admin || curUser.ID == ownerID, nil
+}
+
+// CanGetActiveTasksCount always returns a nil error.
+func (a *CommandAuthZBasic) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
 	return nil
 }
 
@@ -34,15 +44,8 @@ func (a *CommandAuthZBasic) FilterCommandsQuery(
 	return query, nil
 }
 
-// CanEditCommand always returns a nil error.
-func (a *CommandAuthZBasic) CanEditCommand(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
-) error {
-	return nil
-}
-
-// CanEditCommandsMetadata always returns a nil error.
-func (a *CommandAuthZBasic) CanEditCommandsMetadata(
+// CanTerminateCommand always returns a nil error.
+func (a *CommandAuthZBasic) CanTerminateCommand(
 	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
 ) error {
 	return nil
@@ -74,23 +77,6 @@ func (a *CommandAuthZBasic) CanSetCommandsPriority(
 	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
 ) error {
 	return nil
-}
-
-// CanGetActiveTasksCount always returns a nil error.
-func (a *CommandAuthZBasic) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
-	return nil
-}
-
-// CanAccessNTSCTask returns true and nil error unless the developer master config option
-// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
-// an admin or if the user owns the task and a nil error.
-func (a *CommandAuthZBasic) CanAccessNTSCTask(
-	ctx context.Context, curUser model.User, ownerID model.UserID,
-) (bool, error) {
-	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
-		return true, nil
-	}
-	return curUser.Admin || curUser.ID == ownerID, nil
 }
 
 func init() {
