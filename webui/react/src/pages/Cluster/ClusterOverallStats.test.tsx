@@ -7,6 +7,11 @@ import { TasksProvider } from 'stores/tasks';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
+jest.mock('services/api', () => ({
+  getActiveTasks: () => Promise.resolve({ commands: 0, notebooks: 0, shells: 0, tensorboards: 0 }),
+  getExperiments: () => Promise.resolve({ experiments: [], pagination: { total: 0 } }),
+}));
+
 const setup = () => {
   const view = render(
     <StoreProvider>
