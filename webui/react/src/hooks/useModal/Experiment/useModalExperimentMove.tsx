@@ -64,7 +64,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const { canMoveExperimentsTo } = usePermissions();
   const workspaces = Loadable.map(useWorkspaces(), (ws) =>
-    ws.filter((w) => !w.immutable && canMoveExperimentsTo({ destination: { id: w.id } })),
+    ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
   const projects = useWorkspaceProjects(workspaceId);
   const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
@@ -81,12 +81,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   useEffect(() => {
     ensureProjectsFetched(workspaceId);
-  }, [workspaceId, ensureProjectsFetched]);
+  }, [workspaceId]);
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
       setProjectId(workspaceId === 1 && sourceProjectId !== 1 ? 1 : null);
-      setWorkspaceId(workspaceId as number);
+      if (workspaceId !== undefined && typeof workspaceId === 'number') setWorkspaceId(workspaceId);
     },
     [sourceProjectId],
   );
@@ -154,7 +154,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             <label className={css.label} htmlFor="project">
               Project
             </label>
-            {workspaceId === 1 ? (
+            {workspaceId === undefined ? (
               <div className={css.emptyContainer}>
                 <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </div>
@@ -252,6 +252,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, [
     closeNotification,
     experimentIds,
+    projectId,
     projectSettings.pinned,
     projects,
     sourceProjectId,
