@@ -152,6 +152,35 @@ func (m *Master) getCheckpointImpl(
 	return nil
 }
 
+func parseCheckpointUUID(ckptInput string) (uuid.UUID, error) {
+	id, err := uuid.Parse(ckptInput)
+	if err != nil {
+		return id, echo.NewHTTPError(http.StatusBadRequest,
+			fmt.Sprintf("unable to parse checkpoint UUID %s: %s",
+				ckptInput, err))
+	}
+	return id, nil
+}
+
+func (m *Master) confirmCheckpointAccess(c echo.Context, ckptUUID string) error {
+	curUser := c.(*detContext.DetContext).MustGetUser()
+	if err := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, ckptUUID,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		s, ok := status.FromError(err)
+		if !ok {
+			return err
+		}
+		switch s.Code() {
+		case codes.NotFound:
+		case codes.PermissionDenied:
+			return echo.NewHTTPError(http.StatusNotFound, s.Message())
+		default:
+			return fmt.Errorf(s.Message())
+		}
+	}
+	return nil
+}
+
 // @Summary Check for access to a checkpoint's files for download.
 // @Tags Checkpoints
 // @ID check-checkpoint
@@ -168,30 +197,14 @@ func (m *Master) checkCheckpoint(c echo.Context) error {
 	if err := api.BindArgs(&args, c); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid checkpoint_uuid: "+err.Error())
 	}
-	id, err := uuid.Parse(args.CheckpointUUID)
+	id, err := parseCheckpointUUID(args.CheckpointUUID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("unable to parse checkpoint UUID %s: %s",
-				args.CheckpointUUID, err))
+		return err
 	}
 
-	curUser := c.(*detContext.DetContext).MustGetUser()
-	if err := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		s, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-		switch s.Code() {
-		case codes.NotFound:
-			return echo.NewHTTPError(http.StatusNotFound, s.Message())
-		case codes.PermissionDenied:
-			return echo.NewHTTPError(http.StatusForbidden, s.Message())
-		default:
-			return fmt.Errorf(s.Message())
-		}
+	if err := m.confirmCheckpointAccess(c, args.CheckpointUUID); err != nil {
+		return err
 	}
-
 	c.Response().Header().Set(echo.HeaderContentType, "application/json")
 	return m.checkCheckpointAccess(c.Request().Context(), id, c.Response())
 }
@@ -203,39 +216,32 @@ func (m *Master) checkCheckpoint(c echo.Context) error {
 // @Produce  application/gzip,application/zip
 // @Param   checkpoint_uuid path string  true  "Checkpoint UUID"
 // @Success 200 {} string ""
-//nolint:godot
 // @Router /checkpoints/{checkpoint_uuid} [get]
+//
+//nolint:godot
 func (m *Master) getCheckpoint(c echo.Context) error {
+	// Get the MIME type. ZIP is default.
+	mimeType := c.Request().Header.Get("Accept")
+	if mimeType != MIMEApplicationGZip {
+		mimeType = MIMEApplicationZip
+	}
+
 	args := struct {
 		CheckpointUUID string `path:"checkpoint_uuid"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid checkpoint_uuid: "+err.Error())
 	}
-	id, err := uuid.Parse(args.CheckpointUUID)
+
+	id, err := parseCheckpointUUID(args.CheckpointUUID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("unable to parse checkpoint UUID %s: %s",
-				args.CheckpointUUID, err))
+		return err
 	}
 
-	curUser := c.(*detContext.DetContext).MustGetUser()
-	if err := m.canDoActionOnCheckpoint(c.Request().Context(), curUser, args.CheckpointUUID,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		s, ok := status.FromError(err)
-		if !ok {
-			return err
-		}
-		switch s.Code() {
-		case codes.NotFound:
-			return echo.NewHTTPError(http.StatusNotFound, s.Message())
-		case codes.PermissionDenied:
-			return echo.NewHTTPError(http.StatusForbidden, s.Message())
-		default:
-			return fmt.Errorf(s.Message())
-		}
+	if err := m.confirmCheckpointAccess(c, args.CheckpointUUID); err != nil {
+		return err
 	}
 
-	c.Response().Header().Set(echo.HeaderContentType, MIMEApplicationZip)
-	return m.getCheckpointImpl(c.Request().Context(), id, MIMEApplicationZip, c.Response())
+	c.Response().Header().Set(echo.HeaderContentType, mimeType)
+	return m.getCheckpointImpl(c.Request().Context(), id, mimeType, c.Response())
 }
