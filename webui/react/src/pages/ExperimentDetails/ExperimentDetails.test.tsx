@@ -13,6 +13,7 @@ import {
   getWorkspace,
 } from 'services/api';
 import history from 'shared/routes/history';
+import { ProjectsProvider } from 'stores/projects';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -40,6 +41,7 @@ jest.mock('services/api', () => ({
   getProject: jest.fn(),
   getTrialDetails: jest.fn(),
   getWorkspace: jest.fn(),
+  getWorkspaceProjects: jest.fn().mockReturnValue({ projects: [] }),
   getWorkspaces: jest.fn().mockReturnValue({ workspaces: [] }),
 }));
 
@@ -67,9 +69,11 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <WorkspacesProvider>
-          <HistoryRouter history={history}>
-            <ExperimentDetails />
-          </HistoryRouter>
+          <ProjectsProvider>
+            <HistoryRouter history={history}>
+              <ExperimentDetails />
+            </HistoryRouter>
+          </ProjectsProvider>
         </WorkspacesProvider>
       </HelmetProvider>
     </StoreProvider>,
