@@ -197,54 +197,6 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 	}
 }
 
-// ProcessProxyAuthentication is a middleware processing function that attempts
-// to authenticate incoming HTTP requests coming through proxies.
-func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err error) {
-	token, err := s.extractToken(c.Request())
-	if err != nil {
-		return true, redirectToLogin(c)
-	}
-
-	user, _, err := UserByToken(token, s.extConfig)
-	if errors.Is(err, db.ErrNotFound) {
-		return true, redirectToLogin(c)
-	} else if err != nil {
-		return true, err
-	}
-	if !user.Active {
-		return true, redirectToLogin(c)
-	}
-
-	taskID := c.Param("service")
-	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
-	if err != nil {
-		return true, err
-	}
-
-	var ctx context.Context
-
-	if c.Request() == nil || c.Request().Context() == nil {
-		ctx = context.TODO()
-	} else {
-		ctx = c.Request().Context()
-	}
-	if ok, err := AuthZProvider.Get().CanAccessNTSCTask(
-		ctx, *user, ownerID); err != nil {
-		return true, err
-	} else if !ok {
-		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
-	}
-
-	return false, nil
-}
-
-func redirectToLogin(c echo.Context) error {
-	return c.Redirect(
-		http.StatusSeeOther,
-		fmt.Sprintf("/det/login?redirect=%s", c.Request().URL),
-	)
-}
-
 func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 	// Delete the cookie if one is set.
 	if cookie, err := c.Cookie("auth"); err == nil {
