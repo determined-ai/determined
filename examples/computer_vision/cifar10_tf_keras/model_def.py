@@ -31,6 +31,7 @@ from data import (
 
 from determined import keras
 
+
 class CIFARTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext) -> None:
         self.context = context
@@ -75,11 +76,7 @@ class CIFARTrial(keras.TFKerasTrial):
         return model
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        return [
-            keras.callbacks.TensorBoard(
-                update_freq="batch", profile_batch=0, histogram_freq=1
-            )
-        ]
+        return [keras.callbacks.TensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
     def build_training_data_loader(self) -> keras.InputData:
         hparams = self.context.get_hparams()

@@ -74,9 +74,7 @@ class CIFARTrial(DeepSpeedTrial):
             for_training=False,
         )
 
-    def train_batch(
-        self, iter_dataloader, epoch_idx, batch_idx
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, iter_dataloader, epoch_idx, batch_idx) -> Dict[str, torch.Tensor]:
         batch = self.context.to_device(next(iter_dataloader))
         inputs, labels = batch[0], batch[1]
         if self.fp16:

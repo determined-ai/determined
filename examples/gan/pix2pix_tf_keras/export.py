@@ -53,11 +53,12 @@ def export_model(trial_id: int, latest=False) -> tf.keras.Model:
 
 def main():
     parser = argparse.ArgumentParser(description="Pix2Pix model export")
+    parser.add_argument("--trial-id", type=int, required=True, help="Trial ID to export.")
     parser.add_argument(
-        "--trial-id", type=int, required=True, help="Trial ID to export."
-    )
-    parser.add_argument(
-        "--master-url", type=str, default=os.environ["DET_MASTER"], help="URL of the Determined master (uses DET_MASTER environment variable by default)."
+        "--master-url",
+        type=str,
+        default=os.environ["DET_MASTER"],
+        help="URL of the Determined master (uses DET_MASTER environment variable by default).",
     )
     parser.add_argument(
         "--latest",

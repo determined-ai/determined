@@ -29,9 +29,7 @@ class Pix2Pix(tf.keras.Model):
 
     def compile(self, discriminator_optimizer=None, generator_optimizer=None):
         super(Pix2Pix, self).compile()
-        self.discriminator_optimizer = (
-            discriminator_optimizer or make_discriminator_optimizer()
-        )
+        self.discriminator_optimizer = discriminator_optimizer or make_discriminator_optimizer()
         self.generator_optimizer = generator_optimizer or make_generator_optimizer()
 
     def call(self, input_images, training=False):
@@ -54,12 +52,8 @@ class Pix2Pix(tf.keras.Model):
             )
             d_loss = self.discriminator_loss(disc_reals, disc_fakes)
 
-        generator_gradients = gen_tape.gradient(
-            g_loss, self.generator.trainable_variables
-        )
-        discriminator_gradients = disc_tape.gradient(
-            d_loss, self.discriminator.trainable_variables
-        )
+        generator_gradients = gen_tape.gradient(g_loss, self.generator.trainable_variables)
+        discriminator_gradients = disc_tape.gradient(d_loss, self.discriminator.trainable_variables)
 
         self.generator_optimizer.apply_gradients(
             zip(generator_gradients, self.generator.trainable_variables)
@@ -83,9 +77,7 @@ class Pix2Pix(tf.keras.Model):
         gen_outputs = self.generator(input_images, training=False)
         disc_reals = self.discriminator([input_images, real_images], training=False)
         disc_fakes = self.discriminator([gen_outputs, real_images], training=False)
-        g_loss, g_gan_loss, g_l1_loss = self.generator_loss(
-            disc_fakes, gen_outputs, real_images
-        )
+        g_loss, g_gan_loss, g_l1_loss = self.generator_loss(disc_fakes, gen_outputs, real_images)
         d_loss = self.discriminator_loss(disc_reals, disc_fakes)
         return {
             "g_gan_loss": g_gan_loss,

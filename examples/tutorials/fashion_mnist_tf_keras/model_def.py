@@ -35,7 +35,7 @@ class FashionMNISTTrial(TFKerasTrial):
         # Create and wrap the optimizer.
         optimizer = tf.keras.optimizers.Adam()
         optimizer = self.context.wrap_optimizer(optimizer)
-        
+
         model.compile(
             optimizer=optimizer,
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),

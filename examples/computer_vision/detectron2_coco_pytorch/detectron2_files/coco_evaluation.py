@@ -142,18 +142,18 @@ class COCOEvaluator(DatasetEvaluator):
                 prediction["instances"] = instances_to_coco_json(instances, input["image_id"])
             if "proposals" in output:
                 prediction["proposals"] = output["proposals"].to(self._cpu_device)
-            
+
             if len(prediction) > 1:
                 values.append(prediction)
-        
+
         if len(values) > 0:
             return {self.evaluator_name: values}
 
-        return None        
+        return None
 
     def evaluate(self):
         if self.fake:
-            return {'bbox': {'AP': 1}}
+            return {"bbox": {"AP": 1}}
         predictions = self._predictions
         if len(predictions) == 0:
             self._logger.warning("[COCOEvaluator] Did not receive valid predictions.")

@@ -105,14 +105,10 @@ class DARTSCNNTrial(PyTorchTrial):
             self.context.get_hparam("train_epochs"),
         )
         step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
-        self.wrapped_scheduler = self.context.wrap_lr_scheduler(
-            self.scheduler, step_mode=step_mode
-        )
+        self.wrapped_scheduler = self.context.wrap_lr_scheduler(self.scheduler, step_mode=step_mode)
 
     def build_training_data_loader(self) -> DataLoader:
-        train_transform, valid_transform = utils._data_transforms_cifar10(
-            AttrDict(self.hparams)
-        )
+        train_transform, valid_transform = utils._data_transforms_cifar10(AttrDict(self.hparams))
         train_data = dset.CIFAR10(
             root="{}/data-rank{}".format(
                 self.data_config["data_download_dir"],
@@ -134,9 +130,7 @@ class DARTSCNNTrial(PyTorchTrial):
         return train_queue
 
     def build_validation_data_loader(self) -> DataLoader:
-        train_transform, valid_transform = utils._data_transforms_cifar10(
-            AttrDict(self.hparams)
-        )
+        train_transform, valid_transform = utils._data_transforms_cifar10(AttrDict(self.hparams))
         valid_data = dset.CIFAR10(
             root="{}/data-rank{}".format(
                 self.data_config["data_download_dir"],
@@ -165,12 +159,8 @@ class DARTSCNNTrial(PyTorchTrial):
         for cell in ["normal", "reduce"]:
             for node in range(4):
                 for edge in [1, 2]:
-                    edge_ind = self.hparams[
-                        "{}_node{}_edge{}".format(cell, node + 1, edge)
-                    ]
-                    edge_op = self.hparams[
-                        "{}_node{}_edge{}_op".format(cell, node + 1, edge)
-                    ]
+                    edge_ind = self.hparams["{}_node{}_edge{}".format(cell, node + 1, edge)]
+                    edge_op = self.hparams["{}_node{}_edge{}_op".format(cell, node + 1, edge)]
                     cell_config[cell].append((edge_op, edge_ind))
         print(cell_config)
         return Genotype(
@@ -180,9 +170,7 @@ class DARTSCNNTrial(PyTorchTrial):
             reduce_concat=range(2, 6),
         )
 
-    def train_batch(
-        self, batch: Any, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
         input, target = batch
         self.model.drop_path_prob = (
             self.hparams["drop_path_prob"]
@@ -214,9 +202,7 @@ class DARTSCNNTrial(PyTorchTrial):
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
 
-    def evaluate_full_dataset(
-        self, data_loader: torch.utils.data.DataLoader
-    ) -> Dict[str, Any]:
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         acc_top1 = 0
         acc_top5 = 0
         loss_avg = 0

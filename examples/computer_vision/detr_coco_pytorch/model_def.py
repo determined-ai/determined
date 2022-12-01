@@ -182,9 +182,7 @@ class DETRTrial(PyTorchTrial):
             self.catIdtoCls = dataset_val.catIdtoCls
         # Set up evaluator
         self.base_ds = get_coco_api_from_dataset(dataset_val)
-        iou_types = tuple(
-            k for k in ("segm", "bbox") if k in self.postprocessors.keys()
-        )
+        iou_types = tuple(k for k in ("segm", "bbox") if k in self.postprocessors.keys())
         self.reducer = self.context.wrap_reducer(
             COCOReducer(self.base_ds, iou_types, self.cat_ids),
             for_training=False,
@@ -207,17 +205,13 @@ class DETRTrial(PyTorchTrial):
         outputs = self.model(samples)
         loss_dict = self.criterion(outputs, targets)
         weight_dict = self.criterion.weight_dict
-        losses = sum(
-            loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict
-        )
+        losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
         self.context.backward(losses)
         self.context.step_optimizer(self.optimizer, clip_grads=self.clip_grads_fn)
 
         # Compute losses for logging
         loss_dict_scaled = {
-            f"{k}_scaled": v * weight_dict[k]
-            for k, v in loss_dict.items()
-            if k in weight_dict
+            f"{k}_scaled": v * weight_dict[k] for k, v in loss_dict.items() if k in weight_dict
         }
         loss_dict["sum_unscaled"] = sum(loss_dict.values())
         loss_dict["sum_scaled"] = sum(loss_dict_scaled.values())
@@ -237,9 +231,7 @@ class DETRTrial(PyTorchTrial):
 
         # Compute losses for logging
         loss_dict_scaled = {
-            f"{k}_scaled": v * weight_dict[k]
-            for k, v in loss_dict.items()
-            if k in weight_dict
+            f"{k}_scaled": v * weight_dict[k] for k, v in loss_dict.items() if k in weight_dict
         }
         loss_dict["sum_unscaled"] = sum(loss_dict.values())
         loss_dict["sum_scaled"] = sum(loss_dict_scaled.values())
@@ -253,8 +245,6 @@ class DETRTrial(PyTorchTrial):
                 row["labels"] = torch.tensor(
                     [self.cat_ids[l.item()] for l in row["labels"]], dtype=torch.int64
                 )
-        result = [
-            (target["image_id"].item(), output) for target, output in zip(targets, res)
-        ]
+        result = [(target["image_id"].item(), output) for target, output in zip(targets, res)]
         self.reducer.update(result)
         return loss_dict

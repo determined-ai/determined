@@ -12,7 +12,7 @@ from determined.pytorch import (
     PyTorchTrialContext,
     DataLoader,
     LRScheduler,
-    PyTorchCallback
+    PyTorchCallback,
 )
 
 from data import BilevelDataset

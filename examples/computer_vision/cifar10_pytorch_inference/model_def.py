@@ -56,9 +56,7 @@ class PredictionsReducer(MetricReducer):
     def cross_slot_reduce(self, per_slot_metrics):
 
         # TODO: Log or save outputs to persistent store
-        predictions = [
-            p for slot_predictions in per_slot_metrics for p in slot_predictions
-        ]
+        predictions = [p for slot_predictions in per_slot_metrics for p in slot_predictions]
         np.save(self.output_file, predictions)
 
         return {}
@@ -66,14 +64,11 @@ class PredictionsReducer(MetricReducer):
 
 def accuracy_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
     """Return the accuracy rate based on dense predictions and sparse labels."""
-    assert len(predictions) == len(
-        labels
-    ), "Predictions and labels must have the same length."
+    assert len(predictions) == len(labels), "Predictions and labels must have the same length."
     assert len(labels.shape) == 1, "Labels must be a column vector."
 
     return (  # type: ignore
-        float((predictions.argmax(1) == labels.to(torch.long)).sum())
-        / predictions.shape[0]
+        float((predictions.argmax(1) == labels.to(torch.long)).sum()) / predictions.shape[0]
     )
 
 
@@ -102,9 +97,7 @@ class CIFARTrial(PyTorchTrial):
         self.model = self.context.wrap_model(resnet.resnet18(pretrained=True))
 
         # IGNORE: Dummy optimizer that needs to be specified but is unused
-        self.optimizer = self.context.wrap_optimizer(
-            torch.optim.RMSprop(self.model.parameters())
-        )
+        self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(self.model.parameters()))
 
         # TODO: Create custom reducer to save inference output
         output_file = os.path.join(self.download_directory, "predictions.npy")
@@ -155,9 +148,7 @@ class CIFARTrial(PyTorchTrial):
         transform = transforms.Compose(
             [
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    (0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616)
-                ),
+                transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616)),
             ]
         )
         valset = torchvision.datasets.CIFAR10(

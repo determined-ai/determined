@@ -106,8 +106,6 @@ def download_data(data_loc):
         os.path.join(temp_data_dir, "ptb.valid.txt"),
         os.path.join(data_loc, "valid.txt"),
     )
-    shutil.move(
-        os.path.join(temp_data_dir, "ptb.test.txt"), os.path.join(data_loc, "test.txt")
-    )
+    shutil.move(os.path.join(temp_data_dir, "ptb.test.txt"), os.path.join(data_loc, "test.txt"))
 
     logging.info("\tcompleted")

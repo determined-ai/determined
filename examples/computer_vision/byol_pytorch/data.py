@@ -75,9 +75,7 @@ class DoubleTransformDataset(Dataset):
     Returns result of applying two separate transforms to the given dataset.
     """
 
-    def __init__(
-        self, dataset: Dataset, transform1: Callable, transform2: Callable
-    ) -> None:
+    def __init__(self, dataset: Dataset, transform1: Callable, transform2: Callable) -> None:
         self.dataset = dataset
         self.transform1 = transform1
         self.transform2 = transform2
@@ -129,9 +127,9 @@ class GCSImageFolder(Dataset):
         class_count = 0
         blob_list_blob = self._bucket.blob(blob_list_path)
         blob_list_io = StringIO(
-            download_gcs_blob_with_backoff(
-                blob_list_blob, n_retries=4, max_backoff=2
-            ).decode("utf-8")
+            download_gcs_blob_with_backoff(blob_list_blob, n_retries=4, max_backoff=2).decode(
+                "utf-8"
+            )
         )
         blob_list = [s.strip() for s in blob_list_io.readlines()]
         for path in blob_list:
@@ -152,9 +150,7 @@ class GCSImageFolder(Dataset):
         if self._streaming:
             img_str = download_gcs_blob_with_backoff(blob)
         else:
-            assert (
-                self._target_dir is not None
-            ), "Must pass download directory if not streaming."
+            assert self._target_dir is not None, "Must pass download directory if not streaming."
             target_path = os.path.join(self._target_dir, img_path)
             if not os.path.exists(target_path):
                 os.makedirs(target_path, exist_ok=True)
@@ -305,9 +301,7 @@ def split_supervised_dataset(
         raise Exception()
 
 
-def build_imagenet(
-    data_config: AttrDict, download_dir: str, split: DatasetSplit
-) -> Dataset:
+def build_imagenet(data_config: AttrDict, download_dir: str, split: DatasetSplit) -> Dataset:
     # We assume ImageNet is already on disk, as e.g. a mounted NFS drive.
     def build_train() -> Dataset:
         # return ImageFolder(os.path.join(download_dir, "train"))

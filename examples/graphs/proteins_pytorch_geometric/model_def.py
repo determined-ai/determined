@@ -10,7 +10,7 @@ from torch_geometric.nn import (
     GraphConv,
     TopKPooling,
     global_mean_pool as gap,
-    global_max_pool as gmp
+    global_max_pool as gmp,
 )
 
 
@@ -59,13 +59,10 @@ class Net(torch.nn.Module):
 def download_data_with_retry(n_retries, download_directory, dataset_name):
     while n_retries > 0:
         try:
-            return TUDataset(
-                root=download_directory,
-                name=dataset_name
-            )
+            return TUDataset(root=download_directory, name=dataset_name)
         except Exception as e:
             n_retries -= 1
-            if n_retries==0:
+            if n_retries == 0:
                 raise
 
 
@@ -85,9 +82,7 @@ class GraphConvTrial(PyTorchTrial):
 
         num_training = self.context.get_hparam("training_records")
         num_val = len(self.dataset) - num_training
-        self.train_subset, self.valid_subset = random_split(
-            self.dataset, [num_training, num_val]
-        )
+        self.train_subset, self.valid_subset = random_split(self.dataset, [num_training, num_val])
 
         self.num_feature = self.dataset.num_features
         self.num_class = self.dataset.num_classes

@@ -32,12 +32,8 @@ def export_model(experiment_id: int) -> tf.keras.Model:
 
 def main():
     parser = argparse.ArgumentParser(description="DCGan Model Export")
-    parser.add_argument(
-        "--experiment-id", type=int, required=True, help="Experiment ID to export."
-    )
-    parser.add_argument(
-        "--master-url", type=str, default="", help="URL of the Determined master."
-    )
+    parser.add_argument("--experiment-id", type=int, required=True, help="Experiment ID to export.")
+    parser.add_argument("--master-url", type=str, default="", help="URL of the Determined master.")
     parser.add_argument(
         "--noise-dim",
         type=int,

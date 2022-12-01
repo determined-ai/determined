@@ -71,9 +71,7 @@ class CIFARTrial(DeepSpeedTrial):
                 transforms.Resize(256),
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
 
@@ -87,7 +85,7 @@ class CIFARTrial(DeepSpeedTrial):
             batch_size=self.context.train_micro_batch_size_per_gpu,
             shuffle=True,
             drop_last=True,
-            num_workers=2
+            num_workers=2,
         )
 
     def build_validation_data_loader(self) -> Any:
@@ -95,9 +93,7 @@ class CIFARTrial(DeepSpeedTrial):
             [
                 transforms.Resize(256),
                 transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
 
@@ -111,5 +107,5 @@ class CIFARTrial(DeepSpeedTrial):
             batch_size=self.context.train_micro_batch_size_per_gpu,
             shuffle=False,
             drop_last=True,
-            num_workers=2
+            num_workers=2,
         )

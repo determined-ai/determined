@@ -94,12 +94,12 @@ class SemSegEvaluator(DatasetEvaluator):
             ).reshape(self._N, self._N)
 
             values.extend(self.encode_json_sem_seg(pred, input["file_name"]))
-        
-        return {self.evaluator_name: {'predictions': values, 'conf_matrix': self._conf_matrix}}
+
+        return {self.evaluator_name: {"predictions": values, "conf_matrix": self._conf_matrix}}
 
     def setup_data(self, values):
-        self._predictions = values[self.evaluator_name]['predictions']
-        conf_matrix_list = values[self.evaluator_name]['conf_matrix']
+        self._predictions = values[self.evaluator_name]["predictions"]
+        conf_matrix_list = values[self.evaluator_name]["conf_matrix"]
 
         self._conf_matrix = np.zeros_like(self._conf_matrix)
         for conf_matrix in conf_matrix_list:

@@ -248,10 +248,13 @@ def get_detection_dataset_dicts(
             print_instances_class_histogram(dataset_dicts, class_names)
         except AttributeError:  # class names are not available for this dataset
             pass
-    
+
     return dataset_dicts
 
-def build_detection_train_loader(cfg, mapper=None, per_gpu_bs=16, seed=1, rank=1,world_size=1, context=None):
+
+def build_detection_train_loader(
+    cfg, mapper=None, per_gpu_bs=16, seed=1, rank=1, world_size=1, context=None
+):
     """
     A data loader is created by the following steps:
     1. Use the dataset names in config to query :class:`DatasetCatalog`, and obtain a list of dicts.
@@ -269,7 +272,7 @@ def build_detection_train_loader(cfg, mapper=None, per_gpu_bs=16, seed=1, rank=1
     """
     images_per_worker = per_gpu_bs
 
-    if context.get_hparam('fake_data') is False:
+    if context.get_hparam("fake_data") is False:
 
         dataset_dicts = get_detection_dataset_dicts(
             cfg.DATASETS.TRAIN,
@@ -284,7 +287,7 @@ def build_detection_train_loader(cfg, mapper=None, per_gpu_bs=16, seed=1, rank=1
     if mapper is None:
         mapper = DatasetMapper(cfg, True)
 
-    if context.get_hparam('fake_data') is True:
+    if context.get_hparam("fake_data") is True:
         dataset = FakeMapperDataset(mapper)
     else:
         dataset = MapDataset(dataset, mapper)
@@ -293,9 +296,7 @@ def build_detection_train_loader(cfg, mapper=None, per_gpu_bs=16, seed=1, rank=1
     if sampler_name == "TrainingSampler":
         sampler = TrainingSampler(len(dataset), seed=seed, rank=rank, world_size=world_size)
     elif sampler_name == "RepeatFactorTrainingSampler":
-        sampler = RepeatFactorTrainingSampler(
-            dataset_dicts, cfg.DATALOADER.REPEAT_THRESHOLD
-        )
+        sampler = RepeatFactorTrainingSampler(dataset_dicts, cfg.DATALOADER.REPEAT_THRESHOLD)
     else:
         raise ValueError("Unknown training sampler: {}".format(sampler_name))
 
@@ -304,7 +305,6 @@ def build_detection_train_loader(cfg, mapper=None, per_gpu_bs=16, seed=1, rank=1
     initial_batch = context.get_initial_batch()
     skip_records = batch_size * initial_batch
     sampler = det.pytorch.samplers.SkipSampler(sampler, skip=skip_records)
-
 
     if cfg.DATALOADER.ASPECT_RATIO_GROUPING:
         data_loader = torch.utils.data.DataLoader(
@@ -347,7 +347,7 @@ def build_detection_test_loader(cfg, dataset_name, mapper=None, context=None):
         DataLoader: a torch DataLoader, that loads the given detection
         dataset, with test-time transformation and batching.
     """
-    if context.get_hparam('fake_data') is False:
+    if context.get_hparam("fake_data") is False:
 
         dataset_dicts = get_detection_dataset_dicts(
             [dataset_name],
@@ -360,16 +360,18 @@ def build_detection_test_loader(cfg, dataset_name, mapper=None, context=None):
         )
 
         dataset = DatasetFromList(dataset_dicts)
-    
+
     if mapper is None:
         mapper = DatasetMapper(cfg, False)
-    
-    if context.get_hparam('fake_data') is True:
+
+    if context.get_hparam("fake_data") is True:
         dataset = FakeMapperDataset(mapper)
     else:
         dataset = MapDataset(dataset, mapper)
 
-    sampler = InferenceSampler(len(dataset), context.distributed.get_rank(), context.distributed.get_size())
+    sampler = InferenceSampler(
+        len(dataset), context.distributed.get_rank(), context.distributed.get_size()
+    )
     # Always use 1 image per worker during inference since this is the
     # standard when reporting inference time in papers.
     batch_sampler = torch.utils.data.sampler.BatchSampler(sampler, 1, drop_last=False)

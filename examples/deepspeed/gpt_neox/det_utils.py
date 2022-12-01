@@ -39,9 +39,7 @@ def get_neox_args(context):
         logging.info(f"Setting neox_args.{k} to {v}")
 
     # Build neox args.
-    neox_args = NeoXArgs.process_parsed_deepy_args(
-        args, overwrite_values=overwrite_values
-    )
+    neox_args = NeoXArgs.process_parsed_deepy_args(args, overwrite_values=overwrite_values)
     return neox_args
 
 
@@ -95,9 +93,7 @@ class LMReducers(MetricReducer):
         metrics["lm_loss_ppl"] = np.exp(metrics["lm_loss"])
         if self.char_level_ppl:
             tokens_per_char = sum(token_count) / sum(char_count)
-            metrics["lm_loss_char_lvl_ppl"] = np.exp(
-                metrics["lm_loss"] * tokens_per_char
-            )
+            metrics["lm_loss_char_lvl_ppl"] = np.exp(metrics["lm_loss"] * tokens_per_char)
         return metrics
 
 

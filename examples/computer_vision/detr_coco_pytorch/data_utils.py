@@ -30,9 +30,7 @@ async def download_and_extract_url(zipurl, outdir):
 
 def async_download_url_list(url_list, outdir):
     loop = asyncio.get_event_loop()
-    tasks = [
-        asyncio.ensure_future(download_and_extract_url(url, outdir)) for url in url_list
-    ]
+    tasks = [asyncio.ensure_future(download_and_extract_url(url, outdir)) for url in url_list]
     loop.run_until_complete(asyncio.gather(*tasks))
 
 

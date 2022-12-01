@@ -4,10 +4,14 @@ from transformers import (
     BertForQuestionAnswering,
     AlbertConfig,
     AlbertTokenizer,
-    AlbertForQuestionAnswering
+    AlbertForQuestionAnswering,
 )
 
 MODEL_CLASSES = {
     "bert": (BertConfig, BertTokenizer, BertForQuestionAnswering),
-    "albert": (AlbertConfig, AlbertTokenizer, AlbertForQuestionAnswering,)
+    "albert": (
+        AlbertConfig,
+        AlbertTokenizer,
+        AlbertForQuestionAnswering,
+    ),
 }

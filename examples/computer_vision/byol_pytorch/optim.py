@@ -67,9 +67,7 @@ def build_cls_optimizer(hparams: AttrDict, lr: float, model: nn.Module) -> Optim
     In BYOL paper, multiple LRs are evaluated and the best is taken.  Thus,
     this build function is parameterized by LR.
     """
-    return SGD(
-        model.parameters(), lr, momentum=hparams.classifier.momentum, nesterov=True
-    )
+    return SGD(model.parameters(), lr, momentum=hparams.classifier.momentum, nesterov=True)
 
 
 def reset_model_parameters(model: nn.Module) -> None:

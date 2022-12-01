@@ -152,9 +152,7 @@ class GPT2Trial(DeepSpeedTrial):
             total_loss_dict=self.total_train_loss_dict,
             learning_rate=lr,
             iteration=self.neox_args.iteration,
-            loss_scale=self.optimizer.cur_scale
-            if self.neox_args.precision == "fp16"
-            else None,
+            loss_scale=self.optimizer.cur_scale if self.neox_args.precision == "fp16" else None,
             report_memory_flag=self.report_memory_flag,
             skipped_iter=skipped_iter,
             model=self.model,
@@ -195,9 +193,7 @@ class GPT2Trial(DeepSpeedTrial):
 
         if data_iterator is not None:
             if self.neox_args.char_level_ppl:
-                data_iterator = megatron_utils.CharCounter(
-                    data_iterator, self.neox_args.tokenizer
-                )
+                data_iterator = megatron_utils.CharCounter(data_iterator, self.neox_args.tokenizer)
 
         loss = megatron_train.forward_step(
             model=self.model,
@@ -235,7 +231,7 @@ class GPT2Trial(DeepSpeedTrial):
             shuffle=True,
             num_workers=self.neox_args.num_workers,
             drop_last=True,
-            pin_memory=False
+            pin_memory=False,
         )
 
     def build_validation_data_loader(self):

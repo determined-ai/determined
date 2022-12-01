@@ -65,9 +65,7 @@ class EMAWrapper(nn.Module):
         self.ema(self.ema_vars())
 
     def restore_ema(self):
-        for curr, shad, p in zip(
-            self.curr_vars(), self.ema.shadow_vars(), self.ema_vars()
-        ):
+        for curr, shad, p in zip(self.curr_vars(), self.ema.shadow_vars(), self.ema_vars()):
             curr.data = p.data
             p.data = shad.data
 

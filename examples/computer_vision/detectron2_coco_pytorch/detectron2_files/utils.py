@@ -55,6 +55,7 @@ def eval_make_dataset_dicts(mask):
     record["annotations"] = [obj]
     return [record]
 
+
 def make_mask():
     """
     Makes a donut shaped binary mask.

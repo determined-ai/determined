@@ -47,18 +47,22 @@ class BertPyTorch(PyTorchTrial):
             finetuning_task=self.context.get_data_config().get("task").lower(),
             cache_dir=cache_dir_per_rank,
         )
-        self.model = self.context.wrap_model(model_class.from_pretrained(
-            self.context.get_data_config().get("model_name_or_path"),
-            from_tf=(".ckpt" in self.context.get_data_config().get("model_name_or_path")),
-            config=config,
-            cache_dir=cache_dir_per_rank,
-        ))
+        self.model = self.context.wrap_model(
+            model_class.from_pretrained(
+                self.context.get_data_config().get("model_name_or_path"),
+                from_tf=(".ckpt" in self.context.get_data_config().get("model_name_or_path")),
+                config=config,
+                cache_dir=cache_dir_per_rank,
+            )
+        )
 
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
             {
                 "params": [
-                    p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)
+                    p
+                    for n, p in self.model.named_parameters()
+                    if not any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": self.context.get_hparam("weight_decay"),
             },
@@ -69,11 +73,13 @@ class BertPyTorch(PyTorchTrial):
                 "weight_decay": 0.0,
             },
         ]
-        self.optimizer = self.context.wrap_optimizer(AdamW(
-            optimizer_grouped_parameters,
-            lr=self.context.get_hparam("learning_rate"),
-            eps=self.context.get_hparam("adam_epsilon"),
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            AdamW(
+                optimizer_grouped_parameters,
+                lr=self.context.get_hparam("learning_rate"),
+                eps=self.context.get_hparam("adam_epsilon"),
+            )
+        )
         self.lr_scheduler = self.context.wrap_lr_scheduler(
             get_linear_schedule_with_warmup(
                 self.optimizer,

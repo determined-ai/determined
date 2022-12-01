@@ -26,6 +26,7 @@ from detectron2_files.sem_seg_evaluation import SemSegEvaluator
 
 from detectron2.data import MetadataCatalog
 
+
 class DatasetEvaluator:
     """
     Base class for a dataset evaluator.
@@ -208,12 +209,14 @@ def inference_context(model):
     yield
     model.train(training_mode)
 
+
 class EvaluatorReducer(MetricReducer):
     """
     Reducer class used for Determined.
 
     There can be 1 or N number of evaluators
     """
+
     def __init__(self, evaluators):
         self.reset()
         self.evaluators = evaluators
@@ -226,18 +229,18 @@ class EvaluatorReducer(MetricReducer):
             # add key if haven't seen evaluator
             if key not in self.values:
                 self.values[key] = []
-            
+
             # If the values are just a list, combine into 1 array
             # This is most evaluators
             if isinstance(values[key], list):
                 self.values[key].extend(values[key])
-            
+
             # For evaluators that have a list and bin count
-            elif isinstance(values[key], dict): 
+            elif isinstance(values[key], dict):
                 for key2 in values[key].keys():
                     if isinstance(values[key], list):
                         self.values[key][key2].extend(values[key][key2])
-                    else: 
+                    else:
                         # np.array bin count
                         # the bins will be updated in the evaluators as a class variable
                         # so it will have the most up to date per slot
@@ -253,18 +256,18 @@ class EvaluatorReducer(MetricReducer):
         # Should loop based on N gpu
         for gpu_slot in per_slot_metrics:
             # Typically will loop once unless using multiple evaluators
-            for key, values in gpu_slot.items(): # eval name, values
+            for key, values in gpu_slot.items():  # eval name, values
                 if key not in val:
                     val[key] = []
-                
+
                 # If the values are just a list, combine into 1 array
                 # This is most evaluators
                 if isinstance(values, list):
                     val[key].extend(values)
-                
+
                 # For evaluators that have a list and bin count
-                elif isinstance(values, dict): 
-                    for key2 in values.keys(): # Should have 2 keys
+                elif isinstance(values, dict):
+                    for key2 in values.keys():  # Should have 2 keys
                         if isinstance(values[key2], list):
                             val[key][key2].extend(values[key2])
                         else:
@@ -285,6 +288,7 @@ class EvaluatorReducer(MetricReducer):
                 fmt_results[new_key] = value
         return fmt_results
 
+
 def get_evaluator(cfg, dataset_name, output_folder=None, fake=False):
     """
     This is a slightly altered detectron2 function. Below are original comments:
@@ -296,7 +300,7 @@ def get_evaluator(cfg, dataset_name, output_folder=None, fake=False):
     """
     if output_folder is not None:
         output_folder = os.path.join(output_folder, "inference")
-    
+
     evaluator_list = []
     evaluator_type = MetadataCatalog.get(dataset_name).evaluator_type
     if evaluator_type in ["sem_seg", "coco_panoptic_seg"]:

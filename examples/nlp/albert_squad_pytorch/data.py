@@ -17,14 +17,23 @@ def cache_dir(using_bind_mount: bool, rank: int, bind_mount_path: Path = None):
     return base_dir / f"cache/{rank}"
 
 
-def load_and_cache_examples(data_dir: Path, tokenizer, task, max_seq_length, doc_stride, max_query_length, evaluate=False, model_name=None):
-    if (task == "SQuAD1.1"):
+def load_and_cache_examples(
+    data_dir: Path,
+    tokenizer,
+    task,
+    max_seq_length,
+    doc_stride,
+    max_query_length,
+    evaluate=False,
+    model_name=None,
+):
+    if task == "SQuAD1.1":
         train_url = "https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json"
         validation_url = "https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json"
         train_file = "train-v1.1.json"
         validation_file = "dev-v1.1.json"
         processor = SquadV1Processor()
-    elif (task == "SQuAD2.0"):
+    elif task == "SQuAD2.0":
         train_url = "https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json"
         validation_url = "https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v2.0.json"
         train_file = "train-v2.0.json"
@@ -39,13 +48,13 @@ def load_and_cache_examples(data_dir: Path, tokenizer, task, max_seq_length, doc
         # TODO: Cache instead of always downloading
         with urllib.request.urlopen(validation_url) as url:
             val_path = data_dir / validation_file
-            with val_path.open('w') as f:
+            with val_path.open("w") as f:
                 f.write(url.read().decode())
 
     else:
         with urllib.request.urlopen(train_url) as url:
             train_path = data_dir / train_file
-            with train_path.open('w') as f:
+            with train_path.open("w") as f:
                 f.write(url.read().decode())
 
     # Load data features from cache or dataset file
@@ -73,14 +82,16 @@ def load_and_cache_examples(data_dir: Path, tokenizer, task, max_seq_length, doc
         else:
             examples = processor.get_train_examples(data_dir, filename=train_file)
         features, dataset = squad_convert_examples_to_features(
-                examples=examples,
-                tokenizer=tokenizer,
-                max_seq_length=max_seq_length,
-                doc_stride=doc_stride,
-                max_query_length=max_query_length,
-                is_training=not evaluate,
-                return_dataset="pt",
+            examples=examples,
+            tokenizer=tokenizer,
+            max_seq_length=max_seq_length,
+            doc_stride=doc_stride,
+            max_query_length=max_query_length,
+            is_training=not evaluate,
+            return_dataset="pt",
         )
         print("Saving features into cached file %s", cached_features_file)
-        torch.save({"features": features, "dataset": dataset, "examples": examples}, cached_features_file)
+        torch.save(
+            {"features": features, "dataset": dataset, "examples": examples}, cached_features_file
+        )
     return dataset, examples, features

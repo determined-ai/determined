@@ -120,9 +120,7 @@ def apply_policy(policy, img):
     for xform in policy:
         assert len(xform) == 3
         name, probability, level = xform
-        xform_fn = NAME_TO_TRANSFORM[name].pil_transformer(
-            probability, level, img_shape
-        )
+        xform_fn = NAME_TO_TRANSFORM[name].pil_transformer(probability, level, img_shape)
         pil_img = xform_fn(pil_img)
     return pil_img
 
@@ -160,23 +158,15 @@ class TransformT(object):
 
 ################## Transform Functions ##################
 identity = TransformT("identity", lambda pil_img, level, _: pil_img)
-flip_lr = TransformT(
-    "FlipLR", lambda pil_img, level, _: pil_img.transpose(Image.FLIP_LEFT_RIGHT)
-)
-flip_ud = TransformT(
-    "FlipUD", lambda pil_img, level, _: pil_img.transpose(Image.FLIP_TOP_BOTTOM)
-)
+flip_lr = TransformT("FlipLR", lambda pil_img, level, _: pil_img.transpose(Image.FLIP_LEFT_RIGHT))
+flip_ud = TransformT("FlipUD", lambda pil_img, level, _: pil_img.transpose(Image.FLIP_TOP_BOTTOM))
 # pylint:disable=g-long-lambda
-auto_contrast = TransformT(
-    "AutoContrast", lambda pil_img, level, _: ImageOps.autocontrast(pil_img)
-)
+auto_contrast = TransformT("AutoContrast", lambda pil_img, level, _: ImageOps.autocontrast(pil_img))
 equalize = TransformT("Equalize", lambda pil_img, level, _: ImageOps.equalize(pil_img))
 invert = TransformT("Invert", lambda pil_img, level, _: ImageOps.invert(pil_img))
 # pylint:enable=g-long-lambda
 blur = TransformT("Blur", lambda pil_img, level, _: pil_img.filter(ImageFilter.BLUR))
-smooth = TransformT(
-    "Smooth", lambda pil_img, level, _: pil_img.filter(ImageFilter.SMOOTH)
-)
+smooth = TransformT("Smooth", lambda pil_img, level, _: pil_img.filter(ImageFilter.SMOOTH))
 
 
 def _rotate_impl(pil_img, level, _):
@@ -337,9 +327,7 @@ def _cutout_pil_impl(pil_img, level, img_shape):
     if size <= 0:
         return pil_img
     img_height, img_width, num_channels = (img_shape[0], img_shape[1], 3)
-    _, upper_coord, lower_coord = create_cutout_mask(
-        img_height, img_width, num_channels, size
-    )
+    _, upper_coord, lower_coord = create_cutout_mask(img_height, img_width, num_channels, size)
     pixels = pil_img.load()  # create the pixel map
 
     for i in range(upper_coord[1], lower_coord[1]):  # for every col:

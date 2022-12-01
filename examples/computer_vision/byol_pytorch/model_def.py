@@ -61,7 +61,7 @@ def classifier_loss(
         clipped_logits = input_logits
     return (
         F.cross_entropy(clipped_logits, target)
-        + hparams.classifier.logit_regularization_beta * (clipped_logits**2).mean()
+        + hparams.classifier.logit_regularization_beta * (clipped_logits ** 2).mean()
     )
 
 
@@ -70,9 +70,9 @@ class BYOLTrial(PyTorchTrial):
         self.context = context
         self.hparams = AttrDict(self.context.get_hparams())
         self.data_config = AttrDict(self.context.get_data_config())
-        self.hparams.total_epochs = self.context.get_experiment_config()["searcher"][
-            "max_length"
-        ]["epochs"]
+        self.hparams.total_epochs = self.context.get_experiment_config()["searcher"]["max_length"][
+            "epochs"
+        ]
         self.rank = self.context.distributed.get_rank()
         try:
             self.training_mode = TrainingMode[self.hparams.training_mode]
@@ -93,12 +93,10 @@ class BYOLTrial(PyTorchTrial):
             # Create a separate dataloader for training the classifier during validation.
             # With distributed training, calling get_data_loader on the Determined dataloader will automatically
             # shard the dataset.
-            self.train_cls_dataloader = (
-                self._build_cls_training_data_loader().get_data_loader(
-                    repeat=False,
-                    num_replicas=self.context.distributed.get_size(),
-                    rank=self.rank,
-                )
+            self.train_cls_dataloader = self._build_cls_training_data_loader().get_data_loader(
+                repeat=False,
+                num_replicas=self.context.distributed.get_size(),
+                rank=self.rank,
             )
 
     def _should_train_classifier_before_validation(self) -> bool:
@@ -180,9 +178,7 @@ class BYOLTrial(PyTorchTrial):
         )
         self.cls_models = [
             self.context.wrap_model(
-                torch.nn.Linear(
-                    backbone_metadata.feature_size, dataset_metadata.num_classes
-                )
+                torch.nn.Linear(backbone_metadata.feature_size, dataset_metadata.num_classes)
             )
             for lr in self.hparams.classifier.learning_rates
         ]
@@ -246,9 +242,7 @@ class BYOLTrial(PyTorchTrial):
         rounded_length = (
             len(cls_train_dataset) // self.context.get_global_batch_size()
         ) * self.context.get_global_batch_size()
-        cls_train_dataset = torch.utils.data.Subset(
-            cls_train_dataset, range(rounded_length)
-        )
+        cls_train_dataset = torch.utils.data.Subset(cls_train_dataset, range(rounded_length))
         return DataLoader(
             cls_train_dataset,
             batch_size=self.context.get_per_slot_batch_size(),
@@ -269,9 +263,7 @@ class BYOLTrial(PyTorchTrial):
                 DatasetSplit.CLS_VALIDATION,
             )
             test_dataset = build_dataset(self.data_config, DatasetSplit.TEST)
-            dataset: Dataset = JointDataset(
-                [cls_val_dataset, test_dataset], ["lr_val", "test"]
-            )
+            dataset: Dataset = JointDataset([cls_val_dataset, test_dataset], ["lr_val", "test"])
         else:
             # When only reporting self-supervised loss, we just use CLS_VALIDATION.
             dataset = build_dataset(
@@ -345,15 +337,11 @@ class BYOLTrial(PyTorchTrial):
         else:
             return self._evaluate_self_supervised_batch(batch, batch_idx)
 
-    def _evaluate_classifier_batch(
-        self, batch: TorchData, batch_idx: int
-    ) -> Dict[str, Any]:
+    def _evaluate_classifier_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
         # Evaluation batches run simultaneously over LR validation subset and test dataset (using JointDataset)
         # We use a custom reducer to report test performance on the best validated LR.
         imgs, labels, d_idx = batch
-        embeddings = self.byol_model.forward(
-            imgs, return_embedding=True, return_projection=False
-        )
+        embeddings = self.byol_model.forward(imgs, return_embedding=True, return_projection=False)
         correct_cts_val = {}
         correct_cts_test = {}
         test_ct = cast(int, torch.sum(cast(torch.Tensor, d_idx) == 1).item())
@@ -361,18 +349,12 @@ class BYOLTrial(PyTorchTrial):
             model = self.cls_models[lr_idx]
             logits = cast(torch.Tensor, model(embeddings))
             preds = torch.argmax(logits, 1)
-            correct_cts_val[lr_idx] = cast(
-                int, torch.sum((preds == labels) * (d_idx == 0)).item()
-            )
-            correct_cts_test[lr_idx] = cast(
-                int, torch.sum((preds == labels) * (d_idx == 1)).item()
-            )
+            correct_cts_val[lr_idx] = cast(int, torch.sum((preds == labels) * (d_idx == 0)).item())
+            correct_cts_test[lr_idx] = cast(int, torch.sum((preds == labels) * (d_idx == 1)).item())
         self.final_acc_reducer.update(correct_cts_val, correct_cts_test, test_ct)
         return {}
 
-    def _evaluate_self_supervised_batch(
-        self, batch: TorchData, batch_idx: int
-    ) -> Dict[str, Any]:
+    def _evaluate_self_supervised_batch(self, batch: TorchData, batch_idx: int) -> Dict[str, Any]:
         imgs, labels = batch
         # During evaluation, we use the same transformed image for both inputs.
         x = AttrDict({"first": imgs, "second": imgs, "shape": [len(imgs)]})
@@ -403,9 +385,7 @@ class ClassifierTrainCallback(PyTorchCallback):
             trial.cls_models[lr_idx].train()
             reset_model_parameters(trial.cls_models[lr_idx])
             reset_sgd_optimizer(trial.cls_opts[lr_idx])
-        print(
-            f"Training classifier heads for {trial.hparams.classifier.train_epochs} epochs..."
-        )
+        print(f"Training classifier heads for {trial.hparams.classifier.train_epochs} epochs...")
         with torch.enable_grad():
             for epoch_idx in range(trial.hparams.classifier.train_epochs):
                 print(f"Training epoch {epoch_idx}")
@@ -413,9 +393,7 @@ class ClassifierTrainCallback(PyTorchCallback):
                     imgs, labels = batch
                     imgs = imgs.cuda()
                     labels = labels.cuda()
-                    losses = trial._train_classifier_batch(
-                        (imgs, labels), epoch_idx, batch_idx
-                    )
+                    losses = trial._train_classifier_batch((imgs, labels), epoch_idx, batch_idx)
                     # Record avg loss over last epoch.
                     if epoch_idx == trial.hparams.classifier.train_epochs - 1:
                         for cls_loss_key, cls_loss in losses.items():

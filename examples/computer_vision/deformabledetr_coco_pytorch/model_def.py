@@ -132,9 +132,7 @@ class DeformableDETRTrial(PyTorchTrial):
 
         self.model = self.context.wrap_model(model)
 
-        n_parameters = sum(
-            p.numel() for p in self.model.parameters() if p.requires_grad
-        )
+        n_parameters = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         print("number of params:", n_parameters)
         param_dicts = [
             {
@@ -151,8 +149,7 @@ class DeformableDETRTrial(PyTorchTrial):
                 "params": [
                     p
                     for n, p in self.model.named_parameters()
-                    if match_name_keywords(n, self.hparams.lr_backbone_names)
-                    and p.requires_grad
+                    if match_name_keywords(n, self.hparams.lr_backbone_names) and p.requires_grad
                 ],
                 "lr": self.hparams.lr_backbone,
             },
@@ -160,8 +157,7 @@ class DeformableDETRTrial(PyTorchTrial):
                 "params": [
                     p
                     for n, p in self.model.named_parameters()
-                    if match_name_keywords(n, self.hparams.lr_linear_proj_names)
-                    and p.requires_grad
+                    if match_name_keywords(n, self.hparams.lr_linear_proj_names) and p.requires_grad
                 ],
                 "lr": self.hparams.lr * self.hparams.lr_linear_proj_mult,
             },
@@ -214,9 +210,7 @@ class DeformableDETRTrial(PyTorchTrial):
             self.catIdtoCls = dataset_val.catIdtoCls
         # Set up evaluator
         self.base_ds = dataset_val.coco
-        iou_types = tuple(
-            k for k in ("segm", "bbox") if k in self.postprocessors.keys()
-        )
+        iou_types = tuple(k for k in ("segm", "bbox") if k in self.postprocessors.keys())
         self.reducer = self.context.wrap_reducer(
             COCOReducer(self.base_ds, iou_types, self.cat_ids),
             for_training=False,
@@ -238,9 +232,7 @@ class DeformableDETRTrial(PyTorchTrial):
         outputs = self.model(samples)
         loss_dict = self.criterion(outputs, targets)
         weight_dict = self.criterion.weight_dict
-        losses = sum(
-            loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict
-        )
+        losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
         self.context.backward(losses)
         self.context.step_optimizer(self.optimizer, clip_grads=self.clip_grads_fn)
 
@@ -267,8 +259,6 @@ class DeformableDETRTrial(PyTorchTrial):
                 row["labels"] = torch.tensor(
                     [self.cat_ids[l.item()] for l in row["labels"]], dtype=torch.int64
                 )
-        result = [
-            (target["image_id"].item(), output) for target, output in zip(targets, res)
-        ]
+        result = [(target["image_id"].item(), output) for target, output in zip(targets, res)]
         self.reducer.update(result)
         return loss_dict

@@ -119,9 +119,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         self.catIds = catIds
         if len(catIds):
             self.ids = self.coco.getImgIds(catIds=catIds)
-            self.catIdtoCls = {
-                catId: i for i, catId in zip(range(len(self.catIds)), self.catIds)
-            }
+            self.catIdtoCls = {catId: i for i, catId in zip(range(len(self.catIds)), self.catIds)}
 
     def __getitem__(self, idx):
         coco = self.coco

@@ -9,6 +9,7 @@ from detectron2.utils.serialize import PicklableWrapper
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from .utils import *
 
+
 class MapDataset(data.Dataset):
     """
     Map a function over the elements in a dataset.
@@ -53,10 +54,12 @@ class MapDataset(data.Dataset):
                     )
                 )
 
+
 class FakeMapperDataset(data.Dataset):
     """
     Used to test implementation with fake data
     """
+
     def __init__(self, map_func):
         _map_func = PicklableWrapper(map_func)  # wrap so that a lambda will work
         mask = make_mask()
@@ -70,6 +73,7 @@ class FakeMapperDataset(data.Dataset):
     def __getitem__(self, idx):
 
         return self.data
+
 
 class DatasetFromList(data.Dataset):
     """
@@ -163,5 +167,3 @@ class AspectRatioGroupedDataset(data.IterableDataset):
             if len(bucket) == self.batch_size:
                 yield bucket[:]
                 del bucket[:]
-
-
