@@ -2,19 +2,6 @@
   flex-wrap: wrap;
   font-size: 14px;
 
-  .stateIcon {
-    align-items: center;
-    display: inline-flex;
-    gap: 8px;
-    justify-content: center;
-  }
-  .icon {
-    position: absolute;
-    top: 4px;
-  }
-  .buttonWithAnimation {
-    border: none;
-  }
   .state {
     align-items: center;
     border-radius: 24px;
@@ -63,6 +50,17 @@
       font-weight: bold;
       line-height: 16px;
       text-transform: uppercase;
+    }
+    .icon {
+      position: absolute;
+      top: 4px;
+
+      & > i {
+        font-size: var(--icon-small);
+      }
+    }
+    .buttonWithAnimation {
+      border: none;
     }
   }
   .state.terminated {

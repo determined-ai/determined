@@ -49,7 +49,7 @@ import { openCommandResponse } from 'utils/wait';
 import css from './ExperimentDetailsHeader.module.scss';
 
 // Actionable means that user can take an action, such as pause, stop
-const isActonableIcon = (state: CompoundRunState): boolean => {
+const isActionableIcon = (state: CompoundRunState): boolean => {
   switch (state) {
     case JobState.SCHEDULED:
     case JobState.SCHEDULEDBACKFILLED:
@@ -74,7 +74,8 @@ const isActonableIcon = (state: CompoundRunState): boolean => {
   }
 };
 
-// Show status(state) animation in button if true
+// If status(state) icon has actionable butotn(s) and animation fits the design,
+// show  animation around the icon
 const isShownAnimation = (state: CompoundRunState): boolean => {
   switch (state) {
     case JobState.SCHEDULED:
@@ -483,7 +484,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>
               <div className={css.stateIcon}>
-                {isActonableIcon(experiment.state) ? (
+                {isActionableIcon(experiment.state) ? (
                   <div className={classes.join(' ')} style={stateStyle}>
                     {isPausable && (
                       <Button
