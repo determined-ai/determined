@@ -295,9 +295,10 @@ These fields default to the following respective value:
 
 .. code:: yaml
 
-   save_experiment_best: 0
-   save_trial_best: 1
-   save_trial_latest: 1
+   checkpoint_storage:
+      save_experiment_best: 0
+      save_trial_best: 1
+      save_trial_latest: 1
 
 This policy will save the most recent *and* the best checkpoint per trial. In other words, if the
 most recent checkpoint is also the *best* checkpoint for a given trial, only one checkpoint will be
