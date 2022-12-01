@@ -429,10 +429,26 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 		}
 	}
 
+	addNullInclusiveFilter := func(field string, values []int32) {
+		if values != nil {
+			if slices.Contains(values, -100) {
+				filters = append(filters, api.Filter{
+					Field:     field,
+					Operation: api.FilterOperationInOrNull,
+					Values:    values,
+				})
+			} else {
+				addInFilter(field, values, len(values))
+			}
+		}
+	}
+
+	addNullInclusiveFilter("rank_id", req.RankIds)
+	// agent_id / allocation_id?
+
 	addInFilter("allocation_id", req.AllocationIds, len(req.AllocationIds))
 	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
 	addInFilter("container_id", req.ContainerIds, len(req.ContainerIds))
-	addInFilter("rank_id", req.RankIds, len(req.RankIds))
 	addInFilter("stdtype", req.Stdtypes, len(req.Stdtypes))
 	addInFilter("source", req.Sources, len(req.Sources))
 	addInFilter("level", func() interface{} {
