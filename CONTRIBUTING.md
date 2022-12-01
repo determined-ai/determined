@@ -64,6 +64,7 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 - cURL (>= 7)
 - jq (>= 1.6)
 - socat (>= 1.7)
+- mockery (>= 1.1.0)
 
 If you are installing prerequisites from your Linux distribution's package 
 repository, ensure that they meet the version requirements above, particularly 
