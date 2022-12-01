@@ -7,6 +7,8 @@ import { generateDetApi } from 'shared/utils/service';
 import * as Type from 'types';
 import { tensorBoardMatchesSource } from 'utils/task';
 
+type OpenAPINullResponse = Record<any, any>;
+
 /* Authentication */
 
 export const login = generateDetApi<Api.V1LoginRequest, Api.V1LoginResponse, Service.LoginResponse>(
@@ -26,7 +28,7 @@ export const login = generateDetApi<Api.V1LoginRequest, Api.V1LoginResponse, Ser
 //   return response;
 // };
 
-export const logout = generateDetApi<EmptyParams, Record<any, any>, void>(Config.logout);
+export const logout = generateDetApi<EmptyParams, OpenAPINullResponse, void>(Config.logout);
 
 export const getCurrentUser = generateDetApi<
   EmptyParams,
@@ -72,11 +74,11 @@ export const getUserSetting = generateDetApi<
 
 export const updateUserSetting = generateDetApi<
   Service.UpdateUserSettingParams,
-  Record<any, any>,
+  OpenAPINullResponse,
   void
 >(Config.updateUserSetting);
 
-export const resetUserSetting = generateDetApi<EmptyParams, Record<any, any>, void>(
+export const resetUserSetting = generateDetApi<EmptyParams, OpenAPINullResponse, void>(
   Config.resetUserSetting,
 );
 
@@ -120,8 +122,8 @@ export const updateGroup = generateDetApi<
 
 export const deleteGroup = generateDetApi<
   Service.DeleteGroupParams,
-  Record<any, any>,
-  Record<any, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 >(Config.deleteGroup);
 
 /* Roles */
@@ -146,26 +148,26 @@ export const listRoles = generateDetApi<
 
 export const assignRolesToGroup = generateDetApi<
   Service.AssignRolesToGroupParams,
-  Record<any, any>,
-  Record<any, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 >(Config.assignRolesToGroup);
 
 export const removeRolesFromGroup = generateDetApi<
   Service.RemoveRolesFromGroupParams,
-  Record<any, any>,
-  Record<any, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 >(Config.removeRolesFromGroup);
 
 export const assignRolesToUser = generateDetApi<
   Service.AssignRolesToUserParams,
-  Record<any, any>,
-  Record<any, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 >(Config.assignRolesToUser);
 
 export const removeRolesFromUser = generateDetApi<
   Service.RemoveRolesFromUserParams,
-  Record<any, any>,
-  Record<any, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 >(Config.removeRolesFromUser);
 
 export const searchRolesAssignableToScope = generateDetApi<
@@ -217,8 +219,8 @@ export const getJobQStats = generateDetApi<
 
 export const updateJobQueue = generateDetApi<
   Api.V1UpdateJobQueueRequest,
-  Record<any, any>,
-  Record<any, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 >(Config.updateJobQueue);
 
 /* Trials */
@@ -296,35 +298,35 @@ export const createExperiment = generateDetApi<
   Type.ExperimentBase
 >(Config.createExperiment);
 
-export const archiveExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+export const archiveExperiment = generateDetApi<Service.ExperimentIdParams, OpenAPINullResponse, void>(
   Config.archiveExperiment,
 );
 
 export const unarchiveExperiment = generateDetApi<
   Service.ExperimentIdParams,
-  Record<any, any>,
+  OpenAPINullResponse,
   void
 >(Config.unarchiveExperiment);
 
-export const deleteExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+export const deleteExperiment = generateDetApi<Service.ExperimentIdParams, OpenAPINullResponse, void>(
   Config.deleteExperiment,
 );
 
 export const activateExperiment = generateDetApi<
   Service.ExperimentIdParams,
-  Record<any, any>,
+  OpenAPINullResponse,
   void
 >(Config.activateExperiment);
 
-export const pauseExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+export const pauseExperiment = generateDetApi<Service.ExperimentIdParams, OpenAPINullResponse, void>(
   Config.pauseExperiment,
 );
 
-export const cancelExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+export const cancelExperiment = generateDetApi<Service.ExperimentIdParams, OpenAPINullResponse, void>(
   Config.cancelExperiment,
 );
 
-export const killExperiment = generateDetApi<Service.ExperimentIdParams, Record<any, any>, void>(
+export const killExperiment = generateDetApi<Service.ExperimentIdParams, OpenAPINullResponse, void>(
   Config.killExperiment,
 );
 
@@ -340,7 +342,7 @@ export const getExperimentLabels = generateDetApi<
   string[]
 >(Config.getExperimentLabels);
 
-export const moveExperiment = generateDetApi<Api.V1MoveExperimentRequest, Record<any, any>, void>(
+export const moveExperiment = generateDetApi<Api.V1MoveExperimentRequest, OpenAPINullResponse, void>(
   Config.moveExperiment,
 );
 
@@ -376,7 +378,7 @@ export const createWebhook = generateDetApi<Api.V1Webhook, Api.V1PostWebhookResp
   Config.createWebhook,
 );
 
-export const deleteWebhook = generateDetApi<Service.GetWebhookParams, Record<any, any>, void>(
+export const deleteWebhook = generateDetApi<Service.GetWebhookParams, OpenAPINullResponse, void>(
   Config.deleteWebhook,
 );
 
@@ -428,21 +430,21 @@ export const patchModelVersion = generateDetApi<
   Type.ModelVersion | undefined
 >(Config.patchModelVersion);
 
-export const archiveModel = generateDetApi<Service.ArchiveModelParams, Record<any, any>, void>(
+export const archiveModel = generateDetApi<Service.ArchiveModelParams, OpenAPINullResponse, void>(
   Config.archiveModel,
 );
 
-export const unarchiveModel = generateDetApi<Service.ArchiveModelParams, Record<any, any>, void>(
+export const unarchiveModel = generateDetApi<Service.ArchiveModelParams, OpenAPINullResponse, void>(
   Config.unarchiveModel,
 );
 
-export const deleteModel = generateDetApi<Service.DeleteModelParams, Record<any, any>, void>(
+export const deleteModel = generateDetApi<Service.DeleteModelParams, OpenAPINullResponse, void>(
   Config.deleteModel,
 );
 
 export const deleteModelVersion = generateDetApi<
   Service.DeleteModelVersionParams,
-  Record<any, any>,
+  OpenAPINullResponse,
   void
 >(Config.deleteModelVersion);
 
@@ -508,21 +510,21 @@ export const patchWorkspace = generateDetApi<
 
 export const archiveWorkspace = generateDetApi<
   Service.ArchiveWorkspaceParams,
-  Record<any, any>,
+  OpenAPINullResponse,
   void
 >(Config.archiveWorkspace);
 
 export const unarchiveWorkspace = generateDetApi<
   Service.UnarchiveWorkspaceParams,
-  Record<any, any>,
+  OpenAPINullResponse,
   void
 >(Config.unarchiveWorkspace);
 
-export const pinWorkspace = generateDetApi<Service.PinWorkspaceParams, Record<any, any>, void>(
+export const pinWorkspace = generateDetApi<Service.PinWorkspaceParams, OpenAPINullResponse, void>(
   Config.pinWorkspace,
 );
 
-export const unpinWorkspace = generateDetApi<Service.UnpinWorkspaceParams, Record<any, any>, void>(
+export const unpinWorkspace = generateDetApi<Service.UnpinWorkspaceParams, OpenAPINullResponse, void>(
   Config.unpinWorkspace,
 );
 
@@ -564,17 +566,17 @@ export const patchProject = generateDetApi<
   Type.Project
 >(Config.patchProject);
 
-export const moveProject = generateDetApi<Api.V1MoveProjectRequest, Record<any, any>, void>(
+export const moveProject = generateDetApi<Api.V1MoveProjectRequest, OpenAPINullResponse, void>(
   Config.moveProject,
 );
 
-export const archiveProject = generateDetApi<Service.ArchiveProjectParams, Record<any, any>, void>(
+export const archiveProject = generateDetApi<Service.ArchiveProjectParams, OpenAPINullResponse, void>(
   Config.archiveProject,
 );
 
 export const unarchiveProject = generateDetApi<
   Service.UnarchiveProjectParams,
-  Record<any, any>,
+  OpenAPINullResponse,
   void
 >(Config.unarchiveProject);
 

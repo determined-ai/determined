@@ -39,6 +39,8 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 	java -jar deps/$(CODEGEN_BIN) generate -i $(SWAGGER_SPEC) \
 		-g typescript-fetch --additional-properties=string_enums=true,useSingleRequestParameter=false,enumPropertyNaming=UPPERCASE \
 		-o build/typescript-fetch
+	rm build/typescript-fetch/index.ts
+	rm build/typescript-fetch/apis/index.ts
 	$(MAKE) bindings-copy-over
 	touch build/typescript-fetch
 

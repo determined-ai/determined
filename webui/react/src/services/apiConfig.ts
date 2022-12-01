@@ -32,6 +32,8 @@ import { DetApi, EmptyParams, RawJson, SingleEntityParams } from 'shared/types';
 import { identity, noOp } from 'shared/utils/service';
 import * as Type from 'types';
 
+type OpenAPINullResponse = Record<any, any>;
+
 const updatedApiConfigParams = (apiConfig?: ConfigurationParameters): Configuration => {
   return new Configuration({
     apiKey: `Bearer ${globalStorage.authToken}`,
@@ -105,7 +107,7 @@ export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, Service.Logi
     ),
 };
 
-export const logout: DetApi<EmptyParams, Record<string, any>, void> = {
+export const logout: DetApi<EmptyParams, OpenAPINullResponse, void> = {
   name: 'logout',
   postProcess: noOp,
   request: () => detApi.Auth.logout(),
@@ -188,7 +190,7 @@ export const getUserSetting: DetApi<
 
 export const updateUserSetting: DetApi<
   Service.UpdateUserSettingParams,
-  Record<string, any>,
+  OpenAPINullResponse,
   void
 > = {
   name: 'updateUserSetting',
@@ -200,7 +202,7 @@ export const updateUserSetting: DetApi<
     }),
 };
 
-export const resetUserSetting: DetApi<EmptyParams, Record<string, any>, Record<string, any>> = {
+export const resetUserSetting: DetApi<EmptyParams, OpenAPINullResponse, OpenAPINullResponse> = {
   name: 'resetUserSetting',
   postProcess: (response) => response,
   request: () => detApi.Users.resetUserSetting(),
@@ -299,8 +301,8 @@ export const updateGroup: DetApi<
 
 export const deleteGroup: DetApi<
   Service.DeleteGroupParams,
-  Record<string, any>,
-  Record<string, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 > = {
   name: 'deleteGroup',
   postProcess: (response) => response,
@@ -344,8 +346,8 @@ export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse,
 
 export const assignRolesToGroup: DetApi<
   Service.AssignRolesToGroupParams,
-  Record<string, any>,
-  Record<string, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 > = {
   name: 'assignRolesToGroup',
   postProcess: (response) => response,
@@ -363,8 +365,8 @@ export const assignRolesToGroup: DetApi<
 
 export const removeRolesFromGroup: DetApi<
   Service.RemoveRolesFromGroupParams,
-  Record<string, any>,
-  Record<string, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 > = {
   name: 'removeRolesFromGroup',
   postProcess: (response) => response,
@@ -382,8 +384,8 @@ export const removeRolesFromGroup: DetApi<
 
 export const assignRolesToUser: DetApi<
   Service.AssignRolesToUserParams,
-  Record<string, any>,
-  Record<string, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 > = {
   name: 'assignRolesToUser',
   postProcess: (response) => response,
@@ -401,8 +403,8 @@ export const assignRolesToUser: DetApi<
 
 export const removeRolesFromUser: DetApi<
   Service.RemoveRolesFromUserParams,
-  Record<string, any>,
-  Record<string, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 > = {
   name: 'removeRolesFromUser',
   postProcess: (response) => response,
@@ -558,7 +560,7 @@ export const patchTrialsCollection: DetApi<
   },
 };
 
-export const deleteTrialsCollection: DetApi<number, Record<string, any>, Record<string, any>> = {
+export const deleteTrialsCollection: DetApi<number, OpenAPINullResponse, OpenAPINullResponse> = {
   name: 'deleteTrialsCollection',
   postProcess: (response) => response,
   request: (id: number) => {
@@ -643,7 +645,7 @@ export const createExperiment: DetApi<
   },
 };
 
-export const archiveExperiment: DetApi<Service.ExperimentIdParams, Record<string, any>, void> = {
+export const archiveExperiment: DetApi<Service.ExperimentIdParams, OpenAPINullResponse, void> = {
   name: 'archiveExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
@@ -651,7 +653,7 @@ export const archiveExperiment: DetApi<Service.ExperimentIdParams, Record<string
   },
 };
 
-export const deleteExperiment: DetApi<Service.ExperimentIdParams, Record<string, any>, void> = {
+export const deleteExperiment: DetApi<Service.ExperimentIdParams, OpenAPINullResponse, void> = {
   name: 'deleteExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
@@ -659,7 +661,7 @@ export const deleteExperiment: DetApi<Service.ExperimentIdParams, Record<string,
   },
 };
 
-export const unarchiveExperiment: DetApi<Service.ExperimentIdParams, Record<string, any>, void> = {
+export const unarchiveExperiment: DetApi<Service.ExperimentIdParams, OpenAPINullResponse, void> = {
   name: 'unarchiveExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
@@ -667,7 +669,7 @@ export const unarchiveExperiment: DetApi<Service.ExperimentIdParams, Record<stri
   },
 };
 
-export const activateExperiment: DetApi<Service.ExperimentIdParams, Record<string, any>, void> = {
+export const activateExperiment: DetApi<Service.ExperimentIdParams, OpenAPINullResponse, void> = {
   name: 'activateExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
@@ -675,7 +677,7 @@ export const activateExperiment: DetApi<Service.ExperimentIdParams, Record<strin
   },
 };
 
-export const pauseExperiment: DetApi<Service.ExperimentIdParams, Record<string, any>, void> = {
+export const pauseExperiment: DetApi<Service.ExperimentIdParams, OpenAPINullResponse, void> = {
   name: 'pauseExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
@@ -683,7 +685,7 @@ export const pauseExperiment: DetApi<Service.ExperimentIdParams, Record<string, 
   },
 };
 
-export const cancelExperiment: DetApi<Service.ExperimentIdParams, Record<string, any>, void> = {
+export const cancelExperiment: DetApi<Service.ExperimentIdParams, OpenAPINullResponse, void> = {
   name: 'cancelExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
@@ -691,7 +693,7 @@ export const cancelExperiment: DetApi<Service.ExperimentIdParams, Record<string,
   },
 };
 
-export const killExperiment: DetApi<Service.ExperimentIdParams, Record<string, any>, void> = {
+export const killExperiment: DetApi<Service.ExperimentIdParams, OpenAPINullResponse, void> = {
   name: 'killExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
@@ -810,7 +812,7 @@ export const getTrialDetails: DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
-export const moveExperiment: DetApi<Api.V1MoveExperimentRequest, Record<string, any>, void> = {
+export const moveExperiment: DetApi<Api.V1MoveExperimentRequest, OpenAPINullResponse, void> = {
   name: 'moveExperiment',
   postProcess: noOp,
   request: (params) =>
@@ -941,7 +943,7 @@ export const createWebhook: DetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Typ
   request: (params, options) => detApi.Webhooks.postWebhook(params, options),
 };
 
-export const deleteWebhook: DetApi<Service.GetWebhookParams, Record<string, any>, void> = {
+export const deleteWebhook: DetApi<Service.GetWebhookParams, OpenAPINullResponse, void> = {
   name: 'deleteWebhook',
   postProcess: noOp,
   request: (params: Service.GetWebhookParams) => detApi.Webhooks.deleteWebhook(params.id),
@@ -1059,19 +1061,19 @@ export const patchModelVersion: DetApi<
     detApi.Models.patchModelVersion(params.modelName, params.versionId, params.body),
 };
 
-export const archiveModel: DetApi<Service.ArchiveModelParams, Record<string, any>, void> = {
+export const archiveModel: DetApi<Service.ArchiveModelParams, OpenAPINullResponse, void> = {
   name: 'archiveModel',
   postProcess: noOp,
   request: (params: Service.GetModelParams) => detApi.Models.archiveModel(params.modelName),
 };
 
-export const unarchiveModel: DetApi<Service.ArchiveModelParams, Record<string, any>, void> = {
+export const unarchiveModel: DetApi<Service.ArchiveModelParams, OpenAPINullResponse, void> = {
   name: 'unarchiveModel',
   postProcess: noOp,
   request: (params: Service.GetModelParams) => detApi.Models.unarchiveModel(params.modelName),
 };
 
-export const deleteModel: DetApi<Service.DeleteModelParams, Record<string, any>, void> = {
+export const deleteModel: DetApi<Service.DeleteModelParams, OpenAPINullResponse, void> = {
   name: 'deleteModel',
   postProcess: noOp,
   request: (params: Service.GetModelParams) => detApi.Models.deleteModel(params.modelName),
@@ -1079,7 +1081,7 @@ export const deleteModel: DetApi<Service.DeleteModelParams, Record<string, any>,
 
 export const deleteModelVersion: DetApi<
   Service.DeleteModelVersionParams,
-  Record<string, any>,
+  OpenAPINullResponse,
   void
 > = {
   name: 'deleteModelVersion',
@@ -1250,7 +1252,7 @@ export const patchWorkspace: DetApi<
   },
 };
 
-export const archiveWorkspace: DetApi<Service.ArchiveWorkspaceParams, Record<string, any>, void> = {
+export const archiveWorkspace: DetApi<Service.ArchiveWorkspaceParams, OpenAPINullResponse, void> = {
   name: 'archiveWorkspace',
   postProcess: noOp,
   request: (params) => detApi.Workspaces.archiveWorkspace(params.id),
@@ -1258,7 +1260,7 @@ export const archiveWorkspace: DetApi<Service.ArchiveWorkspaceParams, Record<str
 
 export const unarchiveWorkspace: DetApi<
   Service.UnarchiveWorkspaceParams,
-  Record<string, any>,
+  OpenAPINullResponse,
   void
 > = {
   name: 'unarchiveWorkspace',
@@ -1266,13 +1268,13 @@ export const unarchiveWorkspace: DetApi<
   request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
 };
 
-export const pinWorkspace: DetApi<Service.PinWorkspaceParams, Record<string, any>, void> = {
+export const pinWorkspace: DetApi<Service.PinWorkspaceParams, OpenAPINullResponse, void> = {
   name: 'pinWorkspace',
   postProcess: noOp,
   request: (params) => detApi.Workspaces.pinWorkspace(params.id),
 };
 
-export const unpinWorkspace: DetApi<Service.UnpinWorkspaceParams, Record<string, any>, void> = {
+export const unpinWorkspace: DetApi<Service.UnpinWorkspaceParams, OpenAPINullResponse, void> = {
   name: 'unpinWorkspace',
   postProcess: noOp,
   request: (params) => detApi.Workspaces.unpinWorkspace(params.id),
@@ -1364,7 +1366,7 @@ export const deleteProject: DetApi<
   request: (params) => detApi.Projects.deleteProject(params.id),
 };
 
-export const moveProject: DetApi<Api.V1MoveProjectRequest, Record<string, any>, void> = {
+export const moveProject: DetApi<Api.V1MoveProjectRequest, OpenAPINullResponse, void> = {
   name: 'moveProject',
   postProcess: noOp,
   request: (params) =>
@@ -1374,13 +1376,13 @@ export const moveProject: DetApi<Api.V1MoveProjectRequest, Record<string, any>, 
     }),
 };
 
-export const archiveProject: DetApi<Service.ArchiveProjectParams, Record<string, any>, void> = {
+export const archiveProject: DetApi<Service.ArchiveProjectParams, OpenAPINullResponse, void> = {
   name: 'archiveProject',
   postProcess: noOp,
   request: (params) => detApi.Projects.archiveProject(params.id),
 };
 
-export const unarchiveProject: DetApi<Service.UnarchiveProjectParams, Record<string, any>, void> = {
+export const unarchiveProject: DetApi<Service.UnarchiveProjectParams, OpenAPINullResponse, void> = {
   name: 'unarchiveProject',
   postProcess: noOp,
   request: (params) => detApi.Projects.unarchiveProject(params.id),
@@ -1575,8 +1577,8 @@ export const getJobQueueStats: DetApi<
 
 export const updateJobQueue: DetApi<
   Api.V1UpdateJobQueueRequest,
-  Record<string, any>,
-  Record<string, any>
+  OpenAPINullResponse,
+  OpenAPINullResponse
 > = {
   name: 'updateJobQueue',
   postProcess: identity,
