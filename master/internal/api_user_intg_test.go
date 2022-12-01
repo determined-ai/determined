@@ -391,6 +391,8 @@ func TestPostUserActivity(t *testing.T) {
 
 	require.NoError(t, err)
 
+	time.Sleep(4 * time.Second)
+
 	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
 		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
 		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
