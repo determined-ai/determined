@@ -81,30 +81,10 @@ export const ClusterOverallStats: React.FC = () => {
         <OverviewStats title="Active Experiments">
           {activeExperiments.pagination?.total ?? 0}
         </OverviewStats>
-        <OverviewStats title="Active JupyterLabs">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.notebooks,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
-        <OverviewStats title="Active TensorBoards">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.tensorboards,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
-        <OverviewStats title="Active Shells">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.shells,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
-        <OverviewStats title="Active Commands">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.commands,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
+        <OverviewStats title="Active JupyterLabs">{activeTasks?.notebooks ?? 0}</OverviewStats>
+        <OverviewStats title="Active TensorBoards">{activeTasks?.tensorboards ?? 0}</OverviewStats>
+        <OverviewStats title="Active Shells">{activeTasks?.shells ?? 0}</OverviewStats>
+        <OverviewStats title="Active Commands">{activeTasks?.commands ?? 0}</OverviewStats>
       </Grid>
     </Section>
   );
