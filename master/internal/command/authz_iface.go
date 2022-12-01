@@ -10,6 +10,21 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
+// ResourceContext is a context that contains information about an individual NTSC resource.
+type ResourceContext struct {
+	Spec    *tasks.GenericCommandSpec
+	OwnerID model.UserID
+}
+
+// AccessContext is the request context for checking access to a resource.
+type AccessContext struct {
+	Ctx context.Context
+	// User is the user making the request.
+	User model.User
+	// Workspace is the workspace the user is making the request in.
+	Workspace *model.Workspace
+}
+
 // CommandAuthZ describes authz methods for commands.
 // DISCUSS should we start moving to using NTSC in code, anything other than "command" is more clear IMO.
 type CommandAuthZ interface {
@@ -17,7 +32,7 @@ type CommandAuthZ interface {
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
+		aCtx AccessContext, rCtx ResourceContext,
 	) (canGetCmd bool, serverError error)
 
 	CanAccessNTSCTask(ctx context.Context, curUser model.User, ownerID model.UserID) (
@@ -30,26 +45,28 @@ type CommandAuthZ interface {
 	// GET /api/v1/commands
 	// "workspace" being nil indicates getting commands from all workspaces.
 	FilterCommandsQuery(
-		ctx context.Context, curUser model.User, workspace *model.Workspace, query *bun.SelectQuery,
+		aCtx AccessContext, query *bun.SelectQuery,
 	) (*bun.SelectQuery, error)
 
 	// POST /api/v1/commands/:cmd_id/kill
-	CanTerminateCommand(ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec) error
+	CanTerminateCommand(
+		aCtx AccessContext, rCtx ResourceContext,
+	) error
 
 	// POST /api/v1/commands
 	CanCreateCommand(
-		ctx context.Context, curUser model.User, workspace *model.Workspace, c *tasks.GenericCommandSpec,
+		aCtx AccessContext, rCtx ResourceContext,
 	) error
 
 	// PATCH /commands/:cmd_id
 	CanSetCommandsMaxSlots(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, slots int,
+		aCtx AccessContext, rCtx ResourceContext, slots int,
 	) error
 	CanSetCommandsWeight(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, weight float64,
+		aCtx AccessContext, rCtx ResourceContext, weight float64,
 	) error
 	CanSetCommandsPriority(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
+		aCtx AccessContext, rCtx ResourceContext, priority int,
 	) error
 }
 
