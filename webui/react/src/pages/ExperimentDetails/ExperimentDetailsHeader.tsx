@@ -34,12 +34,66 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { getDuration } from 'shared/utils/datetime';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentAction as Action, ExperimentBase, RunState, TrialItem } from 'types';
+import {
+  ExperimentAction as Action,
+  CompoundRunState,
+  ExperimentBase,
+  JobState,
+  RunState,
+  TrialItem,
+} from 'types';
 import handleError from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
+
+// Actionable means that user can take an action, such as pause, stop
+const isActonableIcon = (state: CompoundRunState): boolean => {
+  switch (state) {
+    case JobState.SCHEDULED:
+    case JobState.SCHEDULEDBACKFILLED:
+    case JobState.QUEUED:
+    case RunState.Queued:
+    case RunState.Starting:
+    case RunState.Pulling:
+    case RunState.Running:
+    case RunState.Paused:
+    case RunState.Active:
+    case RunState.Unspecified:
+    case JobState.UNSPECIFIED:
+      return true;
+    case RunState.Completed:
+    case RunState.Error:
+    case RunState.Deleted:
+    case RunState.Deleting:
+    case RunState.DeleteFailed:
+      return false;
+    default:
+      return false;
+  }
+};
+
+// Show status(state) animation in button if true
+const isShownAnimation = (state: CompoundRunState): boolean => {
+  switch (state) {
+    case JobState.SCHEDULED:
+    case JobState.SCHEDULEDBACKFILLED:
+    case JobState.QUEUED:
+    case RunState.Queued:
+    case RunState.Starting:
+    case RunState.Pulling:
+    case RunState.Running:
+      return true;
+    case RunState.Active:
+    case RunState.Paused:
+    case RunState.Unspecified:
+    case JobState.UNSPECIFIED:
+      return false;
+    default:
+      return false;
+  }
+};
 
 interface Props {
   experiment: ExperimentBase;
@@ -353,6 +407,27 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     return `${experiment.jobSummary.jobsAhead} jobs ahead of this one`;
   }, [experiment.jobSummary]);
 
+  const returnStatusIcon = useCallback(
+    (iconNode: React.ReactNode): React.ReactNode => {
+      {
+        return isShownAnimation(experiment.state) ? (
+          <>
+            <ExperimentIcons
+              height={'32px'}
+              isTooltipVisible={false}
+              state={experiment.state}
+              width={'32px'}
+            />
+            <div className={css.icon}>{iconNode}</div>
+          </>
+        ) : (
+          <>{iconNode}</>
+        );
+      }
+    },
+    [experiment.state],
+  );
+
   return (
     <>
       <BreadcrumbBar experiment={experiment} id={experiment.id} type="experiment" />
@@ -408,37 +483,48 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>
               <div className={css.stateIcon}>
-                {<ExperimentIcons state={experiment.state} />}
-                <div className={classes.join(' ')} style={stateStyle}>
-                  {isPausable && (
-                    <Button
-                      className={css.buttonPause}
-                      disabled={!canPausePlay}
-                      icon={<Icon name="pause" size="large" />}
-                      shape="circle"
-                      onClick={handlePauseClick}
-                    />
-                  )}
-                  {isPaused && (
-                    <Button
-                      className={css.buttonPlay}
-                      disabled={!canPausePlay}
-                      icon={<Icon name="play" size="large" />}
-                      shape="circle"
-                      onClick={handlePlayClick}
-                    />
-                  )}
-                  {!isTerminated && (
-                    <Button
-                      className={css.buttonStop}
-                      disabled={!canPausePlay}
-                      icon={<Icon name="stop" size="large" />}
-                      shape="circle"
-                      onClick={handleStopClick}
-                    />
-                  )}
-                  <label>{stateToLabel(experiment.state)}</label>
-                </div>
+                {isActonableIcon(experiment.state) ? (
+                  <div className={classes.join(' ')} style={stateStyle}>
+                    {isPausable && (
+                      <Button
+                        className={
+                          isShownAnimation(experiment.state)
+                            ? css.buttonWithAnimation
+                            : css.buttonPause
+                        }
+                        disabled={!canPausePlay}
+                        icon={returnStatusIcon(<Icon name="pause" size="large" />)}
+                        shape="circle"
+                        onClick={handlePauseClick}
+                      />
+                    )}
+                    {isPaused && (
+                      <Button
+                        className={
+                          isShownAnimation(experiment.state)
+                            ? css.buttonWithAnimation
+                            : css.buttonPlay
+                        }
+                        disabled={!canPausePlay}
+                        icon={returnStatusIcon(<Icon name="play" size="large" />)}
+                        shape="circle"
+                        onClick={handlePlayClick}
+                      />
+                    )}
+                    {!isTerminated && (
+                      <Button
+                        className={css.buttonStop}
+                        disabled={!canPausePlay}
+                        icon={<Icon name="stop" size="large" />}
+                        shape="circle"
+                        onClick={handleStopClick}
+                      />
+                    )}
+                    <label>{stateToLabel(experiment.state)}</label>
+                  </div>
+                ) : (
+                  <ExperimentIcons state={experiment.state} />
+                )}
               </div>
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>

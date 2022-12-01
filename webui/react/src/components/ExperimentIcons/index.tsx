@@ -10,10 +10,13 @@ import Queue from './Queue';
 import Spinner from './Spinner';
 
 interface Props {
+  height?: CSSProperties['height'];
+  isTooltipVisible?: boolean;
   state: CompoundRunState;
+  width?: CSSProperties['width'];
 }
 
-const ExperimentIcons: React.FC<Props> = ({ state }) => {
+const ExperimentIcons: React.FC<Props> = ({ state, height, width, isTooltipVisible = true }) => {
   const icon = useMemo(() => {
     const IconStyle: CSSProperties = { fontWeight: 900 };
     switch (state) {
@@ -21,35 +24,55 @@ const ExperimentIcons: React.FC<Props> = ({ state }) => {
       case JobState.SCHEDULEDBACKFILLED:
       case JobState.QUEUED:
       case RunState.Queued:
-        return <Queue />;
+        return <Queue height={height} width={width} />;
       case RunState.Starting:
       case RunState.Pulling:
-        return <Spinner type="bowtie" />;
+        return <Spinner height={height} type="bowtie" width={width} />;
       case RunState.Running:
-        return <Spinner type="shadow" />;
+        return <Spinner height={height} type="shadow" width={width} />;
       case RunState.Paused:
-        return <Icon name="pause" style={{ color: 'var(--theme-ix-cancel)' }} />;
+        return <Icon name="pause" style={{ color: 'var(--theme-ix-cancel)', height, width }} />;
       case RunState.Completed:
         return (
-          <Icon name="checkmark" style={{ ...IconStyle, color: 'var(--theme-status-success)' }} />
+          <Icon
+            name="checkmark"
+            style={{ height, width, ...IconStyle, color: 'var(--theme-status-success)' }}
+          />
         );
       case RunState.Error:
       case RunState.Deleted:
       case RunState.Deleting:
       case RunState.DeleteFailed:
-        return <Icon name="error" style={{ ...IconStyle, color: 'var(--theme-status-error)' }} />;
+        return (
+          <Icon
+            name="error"
+            style={{ height, width, ...IconStyle, color: 'var(--theme-status-error)' }}
+          />
+        );
       case RunState.Active:
       case RunState.Unspecified:
       case JobState.UNSPECIFIED:
         return <Active />;
       default:
-        return <Icon name="cancelled" style={{ ...IconStyle, color: 'var(--theme-ix-cancel)' }} />;
+        return (
+          <Icon
+            name="cancelled"
+            style={{ height, width, ...IconStyle, color: 'var(--theme-ix-cancel)' }}
+          />
+        );
     }
-  }, [state]);
+  }, [height, state, width]);
+
   return (
-    <Tooltip title={stateToLabel(state)}>
-      <span style={{ display: 'inherit' }}>{icon}</span>
-    </Tooltip>
+    <>
+      {isTooltipVisible ? (
+        <Tooltip placement="bottom" title={stateToLabel(state)}>
+          <span style={{ display: 'inherit' }}>{icon}</span>
+        </Tooltip>
+      ) : (
+        <span style={{ display: 'inherit' }}>{icon}</span>
+      )}
+    </>
   );
 };
 

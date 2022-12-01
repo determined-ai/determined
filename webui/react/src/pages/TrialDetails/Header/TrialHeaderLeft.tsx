@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import ExperimentIcons from 'components/ExperimentIcons';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
-import { getStateColorCssVar } from 'themes';
 import { ExperimentBase, TrialDetails } from 'types';
 
 import css from './TrialHeaderLeft.module.scss';
@@ -22,16 +21,8 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
       </Link>
       <Icon name="arrow-right" size="tiny" />
       <div className={css.trial}>
-        {<ExperimentIcons state={trial.state} />}
-        <div
-          className={css.state}
-          style={{
-            backgroundColor: getStateColorCssVar(trial.state),
-            color: getStateColorCssVar(trial.state, { isOn: true, strongWeak: 'strong' }),
-          }}>
-          {trial.state}
-        </div>
-        Trial {trial.id}
+        <ExperimentIcons state={trial.state} />
+        <div>Trial {trial.id}</div>
       </div>
     </div>
   );
