@@ -141,7 +141,7 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	}
 
 	reqCtx := c.Request().Context()
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(reqCtx, curUser, ownerID); err != nil {
+	if ok, err := command.AuthZProvider.Get().CanAccessNTSCTask(reqCtx, curUser, ownerID); err != nil {
 		return err
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")

@@ -60,7 +60,7 @@ func (a *apiServer) GetNotebooks(
 		if err != nil {
 			return false
 		}
-		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
+		ok, serverError := command.AuthZProvider.Get().CanAccessNTSCTask(
 			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId))
 		if serverError != nil {
 			err = serverError
@@ -88,7 +88,7 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
+	if ok, err := command.AuthZProvider.Get().CanAccessNTSCTask(
 		ctx, *curUser, model.UserID(resp.Notebook.UserId)); err != nil {
 		return nil, err
 	} else if !ok {

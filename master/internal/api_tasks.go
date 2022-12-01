@@ -76,7 +76,7 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return user.AuthZProvider.Get().CanAccessNTSCTask(ctx, curUser, taskOwnerID)
+	return command.AuthZProvider.Get().CanAccessNTSCTask(ctx, curUser, taskOwnerID)
 }
 
 func (a *apiServer) canDoActionsOnTask(
@@ -306,7 +306,7 @@ func (a *apiServer) GetActiveTasksCount(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
+	if err = command.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
