@@ -1,18 +1,24 @@
 .base {
-  align-items: center;
-  display: flex;
   height: 24px;
-  justify-content: center;
+  margin: auto;
+  position: relative;
   width: 24px;
 }
-.spinner {
-  -webkit-animation: pulse 1.75s infinite ease-in-out;
+.spinner,
+.innerSpinner {
   animation: pulse 1.75s infinite ease-in-out;
-  background: var(--theme-breath-button-overlay);
+  background-color: var(--theme-breath-button-overlay);
   border-radius: 50%;
-  height: 20px;
-  position: relative;
-  width: 20px;
+  height: 100%;
+  left: 0;
+  opacity: 0.85;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+.innerSpinner {
+  animation: pulseSpinner 1.75s infinite ease-in-out;
+  background: var(--theme-breath-button);
 }
 
 @keyframes pulse {
@@ -25,28 +31,12 @@
   }
 }
 
-.inner_spinner::before,
-.inner_spinner::after {
-  -webkit-animation: pulse-spinner 1.75s infinite ease-in-out;
-  animation: pulse-spinner 1.75s infinite ease-in-out;
-  background: var(--theme-breath-button);
-  border-radius: 50%;
-  content: '';
-  display: block;
-  height: 12px;
-  margin: 4px;
-  position: absolute;
-  width: 12px;
-}
-
-/* Animation */
-
-@keyframes pulse-spinner {
+@keyframes pulseSpinner {
   0%,
   100% {
     transform: scale(0);
   }
   50% {
-    transform: scale(1);
+    transform: scale(0.6);
   }
 }

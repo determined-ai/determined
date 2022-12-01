@@ -153,8 +153,8 @@ const themeBase = {
   statusWarningOnStrong: undefined,
   statusWarningOnWeak: undefined,
 
-  breathButton: 'rgba(143, 143, 143, 0.4)',
-  breathButtonOverlay: 'rgba(143, 143, 143, 0.2)',
+  breathButton: 'rgba(143, 143, 143, 0.7)',
+  breathButtonOverlay: 'rgba(143, 143, 143, 0.4)',
 };
 
 const themeLight = {

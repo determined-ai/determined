@@ -10,9 +10,8 @@ interface Props {
 const Queue: React.FC<Props> = ({ height, width }) => {
   return (
     <div className={css.base} style={{ height, width }}>
-      <div className={css.spinner}>
-        <div className={css.inner_spinner} />
-      </div>
+      <div className={css.spinner} />
+      <div className={css.innerSpinner} />
     </div>
   );
 };
