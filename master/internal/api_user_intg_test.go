@@ -386,9 +386,9 @@ func TestPostUserActivity(t *testing.T) {
 		EntityId:     1,
 	})
 
-	activityCount := getActivityEntry(ctx, curUser.ID, 1)
-
 	require.NoError(t, err)
+
+	activityCount := getActivityEntry(ctx, curUser.ID, 1)
 	require.Equal(t, activityCount, 1, ctx)
 
 	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
@@ -397,9 +397,9 @@ func TestPostUserActivity(t *testing.T) {
 		EntityId:     1,
 	})
 
-	activityCount = getActivityEntry(ctx, curUser.ID, 1)
-
 	require.NoError(t, err)
+
+	activityCount = getActivityEntry(ctx, curUser.ID, 1)
 	require.Equal(t, activityCount, 1, ctx)
 }
 
