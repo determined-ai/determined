@@ -10,13 +10,12 @@ import Queue from './Queue';
 import Spinner from './Spinner';
 
 interface Props {
-  height?: CSSProperties['height'];
   isTooltipVisible?: boolean;
   state: CompoundRunState;
-  width?: CSSProperties['width'];
+  style?: CSSProperties;
 }
 
-const ExperimentIcons: React.FC<Props> = ({ state, height, width, isTooltipVisible = true }) => {
+const ExperimentIcons: React.FC<Props> = ({ state, style, isTooltipVisible = true }) => {
   const icon = useMemo(() => {
     const IconStyle: CSSProperties = { fontWeight: 900 };
     switch (state) {
@@ -24,19 +23,19 @@ const ExperimentIcons: React.FC<Props> = ({ state, height, width, isTooltipVisib
       case JobState.SCHEDULEDBACKFILLED:
       case JobState.QUEUED:
       case RunState.Queued:
-        return <Queue height={height} width={width} />;
+        return <Queue style={style} />;
       case RunState.Starting:
       case RunState.Pulling:
-        return <Spinner height={height} type="bowtie" width={width} />;
+        return <Spinner style={style} type="bowtie" />;
       case RunState.Running:
-        return <Spinner height={height} type="shadow" width={width} />;
+        return <Spinner style={style} type="shadow" />;
       case RunState.Paused:
-        return <Icon name="pause" style={{ color: 'var(--theme-ix-cancel)', height, width }} />;
+        return <Icon name="pause" style={{ ...style, color: 'var(--theme-ix-cancel)' }} />;
       case RunState.Completed:
         return (
           <Icon
             name="checkmark"
-            style={{ height, width, ...IconStyle, color: 'var(--theme-status-success)' }}
+            style={{ ...style, ...IconStyle, color: 'var(--theme-status-success)' }}
           />
         );
       case RunState.Error:
@@ -46,7 +45,7 @@ const ExperimentIcons: React.FC<Props> = ({ state, height, width, isTooltipVisib
         return (
           <Icon
             name="error"
-            style={{ height, width, ...IconStyle, color: 'var(--theme-status-error)' }}
+            style={{ ...style, ...IconStyle, color: 'var(--theme-status-error)' }}
           />
         );
       case RunState.Active:
@@ -57,20 +56,20 @@ const ExperimentIcons: React.FC<Props> = ({ state, height, width, isTooltipVisib
         return (
           <Icon
             name="cancelled"
-            style={{ height, width, ...IconStyle, color: 'var(--theme-ix-cancel)' }}
+            style={{ ...style, ...IconStyle, color: 'var(--theme-ix-cancel)' }}
           />
         );
     }
-  }, [height, state, width]);
+  }, [state, style]);
 
   return (
     <>
       {isTooltipVisible ? (
         <Tooltip placement="bottom" title={stateToLabel(state)}>
-          <span style={{ display: 'inherit' }}>{icon}</span>
+          <div style={{ display: 'flex' }}>{icon}</div>
         </Tooltip>
       ) : (
-        <span style={{ display: 'inherit' }}>{icon}</span>
+        <div style={{ display: 'flex' }}>{icon}</div>
       )}
     </>
   );

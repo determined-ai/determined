@@ -411,14 +411,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const returnStatusIcon = useCallback(
     (iconNode: React.ReactNode): React.ReactNode => {
       {
+        const cssProps: React.CSSProperties = { height: '32px', width: '32px' };
+        if (experiment.state === RunState.Running) {
+          cssProps['borderColor'] = 'white';
+        }
+
         return isShownAnimation(experiment.state) ? (
           <>
-            <ExperimentIcons
-              height={'32px'}
-              isTooltipVisible={false}
-              state={experiment.state}
-              width={'32px'}
-            />
+            <ExperimentIcons isTooltipVisible={false} state={experiment.state} style={cssProps} />
             <div className={css.icon}>{iconNode}</div>
           </>
         ) : (

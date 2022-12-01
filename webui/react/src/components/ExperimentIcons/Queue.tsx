@@ -3,13 +3,12 @@ import React, { CSSProperties } from 'react';
 import css from './Queue.module.scss';
 
 interface Props {
-  height?: CSSProperties['height'];
-  width?: CSSProperties['width'];
+  style?: CSSProperties;
 }
 
-const Queue: React.FC<Props> = ({ height, width }) => {
+const Queue: React.FC<Props> = ({ style }) => {
   return (
-    <div className={css.base} style={{ height, width }}>
+    <div className={css.base} style={style}>
       <div className={css.spinner} />
       <div className={css.innerSpinner} />
     </div>
