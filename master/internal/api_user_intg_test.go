@@ -378,13 +378,16 @@ func TestAuthzResetUserSetting(t *testing.T) {
 }
 
 func TestPostUserActivity(t *testing.T) {
-	api, _, _, ctx := setupUserAuthzTest(t)
+	api, _, curUser, ctx := setupUserAuthzTest(t)
 
 	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
 		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
 		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
 		EntityId:     1,
 	})
+
+	activityEntry := getActivityEntry(ctx, curUser.ID, 1)
+	timestamp := activityEntry.ActivityTime
 
 	require.NoError(t, err)
 
@@ -394,5 +397,16 @@ func TestPostUserActivity(t *testing.T) {
 		EntityId:     1,
 	})
 
+	updatedActivityEntry := getActivityEntry(ctx, curUser.ID, 1)
+	updatedTimestamp := updatedActivityEntry.ActivityTime
+
 	require.NoError(t, err)
+	require.NotEqual(t, timestamp, updatedTimestamp, ctx)
+}
+
+func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) model.UserActivity {
+	u := model.UserActivity{}
+	_, _ = db.Bun().NewSelect().Model(&u).Where("user_id = ?",
+		int32(userID)).Where("entity_id = ?", entityID).Exec(ctx)
+	return u
 }
