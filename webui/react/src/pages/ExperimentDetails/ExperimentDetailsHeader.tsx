@@ -412,8 +412,19 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     (iconNode: React.ReactNode): React.ReactNode => {
       {
         const cssProps: React.CSSProperties = { height: '32px', width: '32px' };
-        if (experiment.state === RunState.Running) {
-          cssProps['borderColor'] = 'white';
+        switch (experiment.state) {
+          case JobState.SCHEDULED:
+          case JobState.SCHEDULEDBACKFILLED:
+          case JobState.QUEUED:
+          case RunState.Queued:
+            cssProps['backgroundColor'] = 'white';
+            cssProps['opacity'] = '0.25';
+            break;
+          case RunState.Running:
+            cssProps['borderColor'] = 'white';
+            break;
+          default:
+            break;
         }
 
         return isShownAnimation(experiment.state) ? (
