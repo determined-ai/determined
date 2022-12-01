@@ -6,6 +6,7 @@ import { V1Pagination } from 'services/api-ts-sdk';
 import { GetExperimentsParams } from 'services/types';
 import { ExperimentItem } from 'types';
 import handleError from 'utils/error';
+import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 type ExperimentPagination = {
   experiments: ExperimentItem[];
@@ -48,24 +49,19 @@ export const useFetchExperiments = (
   return useCallback(async (): Promise<void> => {
     try {
       const response = await getExperiments(filters, { signal: canceler.signal });
-      updateExperimentsIndex(
-        Map<string, ExperimentPagination>({
-          ...experimentsIndex,
-          [encodeArgs(filters)]: response,
-        }),
-      );
+      updateExperimentsIndex(experimentsIndex.set(encodeArgs(filters), response));
     } catch (e) {
       handleError(e);
     }
   }, [canceler, experimentsIndex, filters, getExperiments, updateExperimentsIndex]);
 };
 
-export const useExperiments = (filters: GetExperimentsParams): ExperimentPagination => {
+export const useExperiments = (filters: GetExperimentsParams): Loadable<ExperimentPagination> => {
   const context = useContext(ExperimentsContext);
   if (context === null) {
     throw new Error('Attempted to use useExperiments outside of Experiment Context');
   }
-  const { experimentsIndex } = context;
+  const loadedVal = context.experimentsIndex.get(encodeArgs(filters));
 
-  return experimentsIndex.get(encodeArgs(filters)) || { experiments: [] };
+  return loadedVal ? Loaded(loadedVal) : NotLoaded;
 };
