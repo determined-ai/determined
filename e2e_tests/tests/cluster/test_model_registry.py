@@ -125,7 +125,6 @@ def test_model_registry() -> None:
             mv = mnist.get_version(v.model_version)
             assert mv is not None
             assert mv.model_version == v.model_version
-            assert mv.model_version_id != v.model_version
 
         # Test deletion of model version
         latest_version.delete()

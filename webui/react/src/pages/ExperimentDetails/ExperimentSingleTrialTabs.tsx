@@ -178,18 +178,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialDetails();
   }, [fetchTrialDetails, prevTrialId, trialId]);
 
-  // cleanup
-  useEffect(() => {
-    return () => {
-      stopPolling();
-
-      setFirstTrialId(undefined);
-      setWontHaveTrials(false);
-      setTrialDetails(undefined);
-      setTabKey(DEFAULT_TAB_KEY);
-    };
-  }, [stopPolling]);
-
   const handleNotesUpdate = useCallback(
     async (editedNotes: string) => {
       try {

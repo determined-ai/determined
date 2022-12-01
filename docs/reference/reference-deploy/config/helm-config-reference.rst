@@ -193,6 +193,10 @@
 
    -  ``enable_prometheus``: Whether Prometheus is enabled. Defaults to ``false``.
 
+-  ``tensorboardTimeout``: Specifies the duration in seconds before idle TensorBoard instances are
+   automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
+   any HTTP traffic. The default timeout is 300 (5 minutes).
+
 -  ``defaultPassword``: Specifies a string containing the default password for the admin and
    determined user accounts.
 

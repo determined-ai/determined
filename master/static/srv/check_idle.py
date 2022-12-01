@@ -34,7 +34,7 @@ def wait_for_jupyter(addr):
                 # Connection worked, we're done here.
                 return
             except ConnectionError as e:
-                if (i+1) % 10 == 0:
+                if (i + 1) % 10 == 0:
                     # Every 10 seconds without reaching jupyter, start telling the user.
                     # This is beyond the range of expected startup times.
                     logging.warning(f"jupyter is still not reachable at {addr}")

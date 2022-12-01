@@ -157,6 +157,10 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if args.shut_down_on_connection_loss:
         config_file_contents["hooks"] = {"on_connection_lost": ["shutdown", "now"]}
 
+    master_image_name, agent_image_name = "determined-master", "determined-agent"
+    if args.enterprise_edition:
+        master_image_name, agent_image_name = "hpe-mlde-master", "hpe-mlde-agent"
+
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
         constants.cloudformation.ENABLE_CORS: args.enable_cors,
@@ -192,6 +196,10 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.AGENT_RECONNECT_ATTEMPTS: args.agent_reconnect_attempts,
         constants.cloudformation.AGENT_RECONNECT_BACKOFF: args.agent_reconnect_backoff,
         constants.cloudformation.AGENT_CONFIG_FILE_CONTENTS: json.dumps(config_file_contents),
+        constants.cloudformation.MASTER_IMAGE_NAME: master_image_name,
+        constants.cloudformation.AGENT_IMAGE_NAME: agent_image_name,
+        constants.cloudformation.DOCKER_USER: args.docker_user,
+        constants.cloudformation.DOCKER_PASS: args.docker_pass,
     }
 
     if args.master_config_template_path:
@@ -542,6 +550,21 @@ args_description = Cmd(
                     dest="yes",
                     action="store_true",
                     help=argparse.SUPPRESS,
+                ),
+                Arg(
+                    "--enterprise-edition",
+                    action="store_true",
+                    help="Deploy the enterprise edition of Determined",
+                ),
+                Arg(
+                    "--docker-user",
+                    type=str,
+                    help="Docker user to pull the Determined master and agent images",
+                ),
+                Arg(
+                    "--docker-pass",
+                    type=str,
+                    help="Docker password used to pull the Determined master and agent images",
                 ),
             ],
         ),

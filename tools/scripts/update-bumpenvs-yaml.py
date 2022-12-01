@@ -69,8 +69,7 @@ PACKER_ARTIFACTS = {
 }
 
 DOCKER_ARTIFACTS = {
-    f"publish-{suffix}-{mpi}"
-    for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
+    f"publish-{suffix}-{mpi}" for (suffix, mpi) in itertools.product(JOB_SUFFIXES, [0, 1])
 } | {f"publish-{suffix}-0" for suffix in JOB_SUFFIXES_WITHOUT_MPI}
 
 
@@ -161,14 +160,10 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
     lines = packer_log.strip().split("\n")
     fields = [line.split(",") for line in lines]
     # We only care about artifact lines with exactly six fields.
-    ArtifactLine = collections.namedtuple(
-        "ArtifactLine", "time builder linetype index msgtype val"
-    )
+    ArtifactLine = collections.namedtuple("ArtifactLine", "time builder linetype index msgtype val")
 
     # We only care about artifact lines with exactly 6 fields.
-    artifact_lines = [
-        ArtifactLine(*f) for f in fields if len(f) == 6 and f[2] == "artifact"
-    ]
+    artifact_lines = [ArtifactLine(*f) for f in fields if len(f) == 6 and f[2] == "artifact"]
 
     # Get the ami images, which should match lines like this one (line break for readability):
     #   1598642161,amazon-ebs,artifact,0,id,us-east-1:
@@ -178,9 +173,7 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
         for a in artifact_lines
         if a.builder.startswith("amazon-ebs") and a.msgtype == "id" and a.val
     ]
-    assert (
-        len(ami_lines) == 2
-    ), f"expected two matching ami ids line but got: {ami_lines}"
+    assert len(ami_lines) == 2, f"expected two matching ami ids line but got: {ami_lines}"
 
     for ami_line in ami_lines:
         ami_fields = ami_line.val.split("%!(PACKER_COMMA)")
@@ -205,9 +198,7 @@ def parse_packer_log(packer_log: str) -> Dict[str, str]:
     # Get the GCP artifact ID by matching a line like this one:
     #    1598642161,det-environments-06318c7,artifact,0,id,det-environments-06318c7
     gcp_ids = [
-        a.val
-        for a in artifact_lines
-        if a.builder == gcp_builder and a.msgtype == "id" and a.val
+        a.val for a in artifact_lines if a.builder == gcp_builder and a.msgtype == "id" and a.val
     ]
     assert len(gcp_ids) == 1, f"expected one matching gcp id line but got: {gcp_ids}"
     out["gcp_env"] = gcp_ids[0]
