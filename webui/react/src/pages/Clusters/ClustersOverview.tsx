@@ -12,8 +12,6 @@ import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
 import { useEnsureAgentsFetched } from 'stores/agents';
-import { useEnsureActiveExperimentsFetched } from 'stores/experiments';
-import { useEnsureActiveTasksFetched } from 'stores/tasks';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 
@@ -93,8 +91,6 @@ const ClusterOverview: React.FC = () => {
 
   const [canceler] = useState(new AbortController());
 
-  const fetchActiveExperiments = useEnsureActiveExperimentsFetched(canceler);
-  const fetchActiveTasks = useEnsureActiveTasksFetched(canceler);
   const fetchAgents = useEnsureAgentsFetched(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
 
@@ -103,11 +99,9 @@ const ClusterOverview: React.FC = () => {
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
   useEffect(() => {
-    fetchActiveExperiments();
-    fetchActiveTasks();
     fetchAgents();
     return () => canceler.abort();
-  }, [canceler, fetchActiveExperiments, fetchActiveTasks, fetchAgents]);
+  }, [canceler, fetchAgents]);
 
   return (
     <div className={css.base}>

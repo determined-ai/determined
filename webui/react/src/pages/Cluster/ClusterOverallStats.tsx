@@ -1,13 +1,15 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
+import { activeRunStates } from 'constants/states';
 import { useStore } from 'contexts/Store';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { useAgents, useClusterOverview } from 'stores/agents';
-import { useExperiments } from 'stores/experiments';
-import { useTasks } from 'stores/tasks';
+import { useExperiments, useFetchExperiments } from 'stores/experiments';
+import { useActiveTasks, useFetchActiveTasks } from 'stores/tasks';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -18,8 +20,21 @@ export const ClusterOverallStats: React.FC = () => {
   const { resourcePools } = useStore();
   const overview = useClusterOverview();
   const agents = useAgents();
-  const activeExperiments = useExperiments(); // { active: true }
-  const activeTasks = useTasks(); // { active: true }
+
+  const [canceler] = useState(new AbortController());
+  const fetchActiveExperiments = useFetchExperiments(
+    { limit: -2, states: activeRunStates },
+    canceler,
+  );
+  const fetchActiveTasks = useFetchActiveTasks(canceler);
+  const fetchActiveRunning = useCallback(async () => {
+    await fetchActiveExperiments();
+    await fetchActiveTasks();
+  }, [fetchActiveExperiments, fetchActiveTasks]);
+
+  usePolling(fetchActiveRunning);
+  const activeExperiments = useExperiments({ limit: -2, states: activeRunStates });
+  const activeTasks = useActiveTasks();
 
   const auxContainers = useMemo(() => {
     const tally = {
@@ -64,10 +79,7 @@ export const ClusterOverallStats: React.FC = () => {
           </OverviewStats>
         ) : null}
         <OverviewStats title="Active Experiments">
-          {Loadable.match(activeExperiments, {
-            Loaded: (activeExperiments) => (activeExperiments ? activeExperiments.length : '?'),
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
+          {activeExperiments.pagination?.total ?? 0}
         </OverviewStats>
         <OverviewStats title="Active JupyterLabs">
           {Loadable.match(activeTasks, {

@@ -6,8 +6,8 @@ import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 type TasksContext = {
-  tasks: Loadable<TaskCounts>;
-  updateTasks: (fn: (ws: Loadable<TaskCounts>) => Loadable<TaskCounts>) => void;
+  activeTasks: Loadable<TaskCounts>;
+  updateActiveTasks: (fn: (ws: Loadable<TaskCounts>) => Loadable<TaskCounts>) => void;
 };
 
 const TasksContext = createContext<TasksContext | null>(null);
@@ -15,27 +15,27 @@ const TasksContext = createContext<TasksContext | null>(null);
 export const TasksProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [state, setState] = useState<Loadable<TaskCounts>>(NotLoaded);
   return (
-    <TasksContext.Provider value={{ tasks: state, updateTasks: setState }}>
+    <TasksContext.Provider value={{ activeTasks: state, updateActiveTasks: setState }}>
       {children}
     </TasksContext.Provider>
   );
 };
 
-export const useFetchTasks = (canceler: AbortController): (() => Promise<void>) => {
+export const useFetchActiveTasks = (canceler: AbortController): (() => Promise<void>) => {
   const context = useContext(TasksContext);
   if (context === null) {
     throw new Error('Attempted to use useFetchTasks outside of Task Context');
   }
-  const { updateTasks } = context;
+  const { updateActiveTasks } = context;
 
   return useCallback(async (): Promise<void> => {
     try {
       const response = await getActiveTasks({}, { signal: canceler.signal });
-      updateTasks(() => Loaded(response));
+      updateActiveTasks(() => Loaded(response));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, updateTasks]);
+  }, [canceler, updateActiveTasks]);
 };
 
 export const useEnsureActiveTasksFetched = (canceler: AbortController): (() => Promise<void>) => {
@@ -43,25 +43,25 @@ export const useEnsureActiveTasksFetched = (canceler: AbortController): (() => P
   if (context === null) {
     throw new Error('Attempted to use useEnsureActiveTasksFetched outside of Task Context');
   }
-  const { tasks, updateTasks } = context;
+  const { activeTasks, updateActiveTasks } = context;
 
   return useCallback(async (): Promise<void> => {
-    if (tasks !== NotLoaded) return;
+    if (activeTasks !== NotLoaded) return;
     try {
       const response = await getActiveTasks({}, { signal: canceler.signal });
-      updateTasks(() => Loaded(response));
+      updateActiveTasks(() => Loaded(response));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, tasks, updateTasks]);
+  }, [canceler, activeTasks, updateActiveTasks]);
 };
 
-export const useTasks = (): Loadable<TaskCounts> => {
+export const useActiveTasks = (): Loadable<TaskCounts> => {
   const context = useContext(TasksContext);
   if (context === null) {
-    throw new Error('Attempted to use useTasks outside of Task Context');
+    throw new Error('Attempted to use useActiveTasks outside of Task Context');
   }
-  const { tasks } = context;
+  const { activeTasks } = context;
 
-  return tasks;
+  return activeTasks;
 };
