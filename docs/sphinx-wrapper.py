@@ -35,9 +35,7 @@ def main(sphinx_build_args: List[str]) -> int:
     if len(download_link_errors) == 0:
         return 0
 
-    sys.stderr.write(
-        "Download links are broken!! ':download:`<path> links`'\n" "Full paths:\n"
-    )
+    sys.stderr.write("Download links are broken!! ':download:`<path> links`'\n" "Full paths:\n")
     for path in download_link_errors:
         sys.stderr.write(f"{path}\n")
 
