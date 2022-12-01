@@ -208,6 +208,11 @@ func (a *apiServer) GetWorkspaces(
 		pinFilterExpr = strconv.FormatBool(req.Pinned.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIds := make([]string, 0, len(req.UserIds))
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetWorkspacesRequest_SortBy]string{
 		apiv1.GetWorkspacesRequest_SORT_BY_UNSPECIFIED: "id",
@@ -238,6 +243,7 @@ func (a *apiServer) GetWorkspaces(
 		[]interface{}{orderExpr},
 		&resp.Workspaces,
 		userFilterExpr,
+		userIDFilterExpr,
 		nameFilter,
 		archFilterExpr,
 		pinFilterExpr,
