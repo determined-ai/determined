@@ -28,11 +28,14 @@ html_css_files = [
     "styles/determined.css",
 ]
 
+
 def env_get_outdated(app, env, added, changed, removed):
-    return ['index']
+    return ["index"]
+
 
 def setup(app):
-    app.connect('env-get-outdated', env_get_outdated)
+    app.connect("env-get-outdated", env_get_outdated)
+
 
 exclude_patterns = [
     "_build",

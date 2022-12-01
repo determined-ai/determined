@@ -63,6 +63,10 @@ class cloudformation:
     AGENT_RECONNECT_ATTEMPTS = "AgentReconnectAttempts"
     AGENT_RECONNECT_BACKOFF = "AgentReconnectBackoff"
     AGENT_CONFIG_FILE_CONTENTS = "AgentConfigFileContents"
+    MASTER_IMAGE_NAME = "MasterImageName"
+    AGENT_IMAGE_NAME = "AgentImageName"
+    DOCKER_USER = "DockerUser"
+    DOCKER_PASS = "DockerPass"
 
 
 class misc:

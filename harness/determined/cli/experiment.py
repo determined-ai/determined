@@ -12,6 +12,7 @@ from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import tabulate
+import urllib3
 
 import determined as det
 import determined.experimental
@@ -527,18 +528,22 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
+    retry = urllib3.util.retry.Retry(
+        raise_on_status=False,
+        total=5,
+        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
+        status_forcelist=[502, 503, 504],  # Bad Gateway  # Service Unavailable  # Gateway Timeout
+    )
+
     while True:
         r = bindings.get_GetExperiment(
-            cli.setup_session(args), experimentId=args.experiment_id
+            session=cli.setup_session(args, max_retries=retry), experimentId=args.experiment_id
         ).experiment
 
-        if r.state.value.replace("STATE_", "") in constants.TERMINAL_STATES:
-            print(
-                "Experiment {} terminated with state {}".format(
-                    args.experiment_id, r.state.value.replace("STATE_", "")
-                )
-            )
-            if r.state.value.replace("STATE_", "") == constants.COMPLETED:
+        state_val = r.state.value.replace("STATE_", "")
+        if state_val in constants.TERMINAL_STATES:
+            print("Experiment {} terminated with state {}".format(args.experiment_id, state_val))
+            if state_val == constants.COMPLETED:
                 sys.exit(0)
             else:
                 sys.exit(1)
