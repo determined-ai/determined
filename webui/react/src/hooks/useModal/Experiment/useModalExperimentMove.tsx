@@ -85,10 +85,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
-      console.log('first', workspaceId);
       setProjectId(workspaceId === 1 && sourceProjectId !== 1 ? 1 : null);
       if (workspaceId !== undefined && typeof workspaceId === 'number') {
-        console.log('second')
         setWorkspaceId(workspaceId);
       }
     },
