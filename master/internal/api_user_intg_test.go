@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/rm/actorrm"
 
@@ -387,12 +386,10 @@ func TestPostUserActivity(t *testing.T) {
 		EntityId:     1,
 	})
 
-	activityEntry := getActivityEntry(ctx, curUser.ID, 1)
-	timestamp := activityEntry.ActivityTime
+	activityCount := getActivityEntry(ctx, curUser.ID, 1)
 
 	require.NoError(t, err)
-
-	time.Sleep(4 * time.Second)
+	require.Equal(t, activityCount, 1, ctx)
 
 	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
 		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
@@ -400,16 +397,14 @@ func TestPostUserActivity(t *testing.T) {
 		EntityId:     1,
 	})
 
-	updatedActivityEntry := getActivityEntry(ctx, curUser.ID, 1)
-	updatedTimestamp := updatedActivityEntry.ActivityTime
+	activityCount = getActivityEntry(ctx, curUser.ID, 1)
 
 	require.NoError(t, err)
-	require.NotEqual(t, timestamp, updatedTimestamp, ctx)
+	require.Equal(t, activityCount, 1, ctx)
 }
 
-func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) model.UserActivity {
-	u := model.UserActivity{}
-	_, _ = db.Bun().NewSelect().Model(&u).Where("user_id = ?",
-		int32(userID)).Where("entity_id = ?", entityID).Exec(ctx)
-	return u
+func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) int {
+	count, _ := db.Bun().NewSelect().Model(model.UserActivity{}).Where("user_id = ?",
+		int32(userID)).Where("entity_id = ?", entityID).Count(ctx)
+	return count
 }
