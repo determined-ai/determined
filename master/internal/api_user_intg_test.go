@@ -388,7 +388,8 @@ func TestPostUserActivity(t *testing.T) {
 
 	require.NoError(t, err)
 
-	activityCount := getActivityEntry(ctx, curUser.ID, 1)
+	activityCount, err := getActivityEntry(ctx, curUser.ID, 1)
+	require.NoError(t, err)
 	require.Equal(t, activityCount, 1, ctx)
 
 	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
@@ -399,12 +400,12 @@ func TestPostUserActivity(t *testing.T) {
 
 	require.NoError(t, err)
 
-	activityCount = getActivityEntry(ctx, curUser.ID, 1)
+	activityCount, err = getActivityEntry(ctx, curUser.ID, 1)
+	require.NoError(t, err)
 	require.Equal(t, activityCount, 1, ctx)
 }
 
-func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) int {
-	count, _ := db.Bun().NewSelect().Model(model.UserActivity{}).Where("user_id = ?",
+func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) (int, error) {
+	return db.Bun().NewSelect().Model(model.UserActivity{}).Where("user_id = ?",
 		int32(userID)).Where("entity_id = ?", entityID).Count(ctx)
-	return count
 }
