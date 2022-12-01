@@ -8304,14 +8304,15 @@ export interface V1TrialExitedEarly {
 }
 
 /**
- * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.
+ * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop, from code  - EXITED_REASON_USER_CANCELED: Indicates the trial exited due to a user requested stop, from the CLI or UI
  * @export
  * @enum {string}
  */
 export enum V1TrialExitedEarlyExitedReason {
     UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
     INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
-    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP'
+    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
+    USERCANCELED = <any> 'EXITED_REASON_USER_CANCELED'
 }
 
 /**

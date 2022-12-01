@@ -857,15 +857,17 @@ func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
 	}
 }
 
-// ToProto converts an ExitedReason to its protobuf representation.
-func (r *ExitedReason) ToProto() experimentv1.TrialExitedEarly_ExitedReason {
+// ToSearcherProto converts an ExitedReason to its protobuf representation for searcher purposes.
+func (r *ExitedReason) ToSearcherProto() experimentv1.TrialExitedEarly_ExitedReason {
 	switch *r {
 	case Errored:
 		return *experimentv1.TrialExitedEarly_EXITED_REASON_UNSPECIFIED.Enum()
 	case InvalidHP:
 		return *experimentv1.TrialExitedEarly_EXITED_REASON_INVALID_HP.Enum()
-	case UserCanceled:
+	case UserRequestedStop:
 		return *experimentv1.TrialExitedEarly_EXITED_REASON_USER_REQUESTED_STOP.Enum()
+	case UserCanceled:
+		return *experimentv1.TrialExitedEarly_EXITED_REASON_USER_CANCELED.Enum()
 	default:
 		panic(fmt.Errorf("unexpected exited reason: %v", r))
 	}
