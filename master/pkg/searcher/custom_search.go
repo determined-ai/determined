@@ -106,7 +106,7 @@ func (s *customSearch) trialExitedEarly(
 		Event: &experimentv1.SearcherEvent_TrialExitedEarly{
 			TrialExitedEarly: &experimentv1.TrialExitedEarly{
 				RequestId:    requestID.String(),
-				ExitedReason: exitedReason.ToProto(),
+				ExitedReason: exitedReason.ToSearcherProto(),
 			},
 		},
 	})
