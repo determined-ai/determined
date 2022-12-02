@@ -696,6 +696,8 @@ commands:
         default: GOOGLE_PROJECT_ID
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
+      environment-image:
+        type: string
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -715,39 +717,37 @@ commands:
       - run:
           command: gcloud container clusters get-credentials ${CLUSTER_ID} --project determined-ai --region <<parameters.region>>
           name: Get Kubeconfig
+      - run:
+          command: |
+            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.gpus-per-machine>>,checkpointStorage.type=gcs,checkpointStorage.bucket=det-ci"' >> "$BASH_ENV"
+          name: Prepare helm overrides
       - when:
           condition: <<parameters.gpus-per-machine>>
           steps:
           - run:
               command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
               name: Install NVIDIA drivers
-          - helm/install-helm-chart:
-              chart: helm/charts/determined
-              helm-version: v3.2.4
-              namespace: "default"
-              wait: true
-              release-name: "ci"
-              values-to-override: |
-                detVersion=<<parameters.det-version>>,\
-                maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
-                checkpointStorage.type=gcs,\
-                checkpointStorage.bucket=det-ci
       - unless:
           condition: <<parameters.gpus-per-machine>>
           steps:
-          - helm/install-helm-chart:
-              chart: helm/charts/determined
-              helm-version: v3.2.4
-              namespace: "default"
-              wait: true
-              release-name: "ci"
-              values-to-override: |
-                detVersion=<<parameters.det-version>>,\
-                maxSlotsPerPod=1,\
-                checkpointStorage.type=gcs,\
-                checkpointStorage.bucket=det-ci,\
-                slotType=<<parameters.slot-type>>,\
-                slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>
+          - run:
+              command: |
+                echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>"' >> "$BASH_ENV"
+              name: CPU setup helm overrides
+      - when:
+          condition: <<parameters.environment-image>>
+          steps:
+          - run:
+              command: |
+                echo 'export HELM_VALUES="${HELM_VALUES},taskContainerDefaults.cpuImage=<<parameters.environment-image>>,taskContainerDefaults.gpuImage=<<parameters.environment-image>>"' >> "$BASH_ENV"
+              name: env image helm overrides
+      - helm/install-helm-chart:
+          chart: helm/charts/determined
+          helm-version: v3.2.4
+          namespace: "default"
+          wait: true
+          release-name: "ci"
+          values-to-override: ${HELM_VALUES}
       - set-master-address-gke:
           release-name: "ci"
           namespace: "default"
@@ -1896,6 +1896,9 @@ jobs:
       environment-gpu-enabled:
         type: string
         default: "1"
+      environment-image:
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
+        type: string
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
@@ -1924,7 +1927,16 @@ jobs:
           slot-resource-requests-cpu: <<parameters.slot-resource-requests-cpu>>
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
+          environment-image: <<parameters.environment-image>>
       - set-google-application-credentials
+      - when:
+          condition: <<parameters.environment-image>>
+          steps:
+          - run:
+              command: |
+                echo 'export TF1_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
+                echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
+              name: override test env images.
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
