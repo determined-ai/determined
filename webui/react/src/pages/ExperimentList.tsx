@@ -82,11 +82,12 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
-import settingsConfig, {
+import {
   DEFAULT_COLUMN_WIDTHS,
   DEFAULT_COLUMNS,
   ExperimentColumnName,
   ExperimentListSettings,
+  settingsConfigForProject,
 } from './ExperimentList.settings';
 import css from './ProjectDetails.module.scss';
 
@@ -125,6 +126,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const permissions = usePermissions();
 
   const id = project?.id;
+
+  const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ExperimentListSettings>(settingsConfig);

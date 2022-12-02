@@ -49,7 +49,7 @@ const routes: RouteConfig[] = [
     id: 'uncategorized',
     needAuth: true,
     path: '/projects',
-    redirect: '/projects/1',
+    redirect: '/projects/1/experiments',
     title: 'Uncategorized',
   },
   {
@@ -57,7 +57,7 @@ const routes: RouteConfig[] = [
     id: 'uncategorized',
     needAuth: true,
     path: '/',
-    redirect: '/projects/1',
+    redirect: '/projects/1/experiments',
     title: 'Uncategorized',
   },
   {

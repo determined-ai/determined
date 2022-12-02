@@ -93,16 +93,17 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
-import settingsConfig, {
+import {
   DEFAULT_COLUMN_WIDTHS,
   DEFAULT_COLUMNS,
   ExperimentColumnName,
-  ProjectDetailsSettings,
-} from './OldProjectDetails.settings';
+  ExperimentListSettings,
+  settingsConfigForProject,
+} from './ExperimentList.settings';
 import css from './ProjectDetails.module.scss';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
 
-const filterKeys: Array<keyof ProjectDetailsSettings> = ['label', 'search', 'state', 'user'];
+const filterKeys: Array<keyof ExperimentListSettings> = ['label', 'search', 'state', 'user'];
 
 type Params = {
   projectId: string;
@@ -138,8 +139,10 @@ const ProjectDetails: React.FC = () => {
 
   const id = parseInt(projectId ?? '1');
 
+  const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
+
   const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ProjectDetailsSettings>(settingsConfig);
+    useSettings<ExperimentListSettings>(settingsConfig);
 
   const tableOffset = (() => {
     if (total && settings.tableOffset >= total) {
@@ -471,7 +474,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: (settings: ProjectDetailsSettings) => !!settings.search,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.search,
         key: V1GetExperimentsRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: experimentNameRenderer,
@@ -490,7 +493,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
         filters: labels.map((label) => ({ text: label, value: label })),
-        isFiltered: (settings: ProjectDetailsSettings) => !!settings.label,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         key: 'labels',
         render: tagsRenderer,
         title: 'Tags',
@@ -591,7 +594,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
-        isFiltered: (settings: ProjectDetailsSettings) => !!settings.user,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
         render: userRenderer,
         sorter: true,
@@ -636,7 +639,7 @@ const ProjectDetails: React.FC = () => {
     } else {
       const columnNames = columns.map((column) => column.dataIndex as ExperimentColumnName);
       const actualColumns = settings.columns.filter((name) => columnNames.includes(name));
-      const newSettings: Partial<ProjectDetailsSettings> = {};
+      const newSettings: Partial<ExperimentListSettings> = {};
       if (actualColumns.length < settings.columns.length) {
         newSettings.columns = actualColumns;
       }
