@@ -62,8 +62,8 @@ export const CANNOT_DELETE_MODAL_PROPS: Partial<ModalFuncProps> = {
 
 const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
   maskClosable: true,
+  open: true,
   style: { minWidth: 280 },
-  visible: true,
 };
 
 type AntModalPromise = (...args: any[]) => any;

@@ -1,5 +1,5 @@
-import { Button, Dropdown, Menu, Space, Typography } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Space, Typography } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -311,7 +311,7 @@ const ModelRegistry: React.FC = () => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (record: ModelItem) => {
+    (record: ModelItem): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
         SwitchArchived: 'switch-archived',
@@ -338,7 +338,7 @@ const ModelRegistry: React.FC = () => {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
-      return <Menu items={menuItems} onClick={onItemClick} />;
+      return { items: menuItems, onClick: onItemClick };
     },
     [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
   );
@@ -363,7 +363,7 @@ const ModelRegistry: React.FC = () => {
     );
 
     const actionRenderer = (_: string, record: ModelItem) => (
-      <Dropdown overlay={() => ModelActionMenu(record)} trigger={['click']}>
+      <Dropdown menu={ModelActionMenu(record)} trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>
@@ -552,9 +552,9 @@ const ModelRegistry: React.FC = () => {
       record: ModelItem;
     }) => (
       <Dropdown
-        overlay={() => ModelActionMenu(record)}
+        menu={ModelActionMenu(record)}
         trigger={['contextMenu']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
     ),

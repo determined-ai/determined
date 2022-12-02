@@ -123,7 +123,7 @@ describe('useModalPasswordChange', () => {
     await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
 
     await waitFor(() => {
-      expect(screen.getAllByRole('alert')).toHaveLength(6);
+      expect(screen.getAllByRole('alert')).toHaveLength(3);
     });
   });
 

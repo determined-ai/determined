@@ -153,7 +153,7 @@ const NotesCard: React.FC<Props> = ({
         )
       }
       headStyle={{ minHeight: 'fit-content', paddingInline: '16px' }}
-      style={{ height: isEditing ? '500px' : '100%', ...style }}
+      style={{ height: '100%', ...style }}
       title={
         <InlineEditor
           disabled={!onSaveTitle || disabled}

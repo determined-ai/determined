@@ -1,5 +1,6 @@
 import { ComponentStory, Meta } from '@storybook/react';
-import { Dropdown, Menu } from 'antd';
+import { Dropdown } from 'antd';
+import type { DropdownProps } from 'antd';
 import React from 'react';
 
 export default {
@@ -23,24 +24,22 @@ export default {
   title: 'Ant Design/Dropdown',
 } as Meta<typeof Dropdown>;
 
-const content = (
-  <Menu
-    items={[
-      ...new Array(3).fill(null).map((_, index) => ({ key: index, label: `Menu Item ${index}` })),
-      { type: 'divider' },
-      { disabled: true, key: 5, label: 'Last Menu Item' },
-    ]}
-  />
-);
+const content: DropdownProps['menu'] = {
+  items: [
+    ...new Array(3).fill(null).map((_, index) => ({ key: index, label: `Menu Item ${index}` })),
+    { type: 'divider' },
+    { disabled: true, key: 5, label: 'Last Menu Item' },
+  ],
+};
 
 export const Default: ComponentStory<typeof Dropdown> = (args) => (
-  <Dropdown {...args} overlay={content}>
+  <Dropdown {...args} menu={content}>
     <a onClick={(e) => e.preventDefault()}>Default Dropdown</a>
   </Dropdown>
 );
 
 export const DropdownButton: ComponentStory<typeof Dropdown.Button> = (args) => (
-  <Dropdown.Button {...args} overlay={content}>
+  <Dropdown.Button {...args} menu={content}>
     Dropdown
   </Dropdown.Button>
 );

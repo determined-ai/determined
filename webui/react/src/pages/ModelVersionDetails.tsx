@@ -1,4 +1,5 @@
 import { Breadcrumb, Card, Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -24,8 +25,6 @@ import { checkpointSize } from 'utils/workload';
 
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
-
-const { TabPane } = Tabs;
 
 const TabType = {
   Model: 'model',
@@ -259,6 +258,47 @@ const ModelVersionDetails: React.FC = () => {
     }));
   }, [modelVersion?.checkpoint]);
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    if (!modelVersion) {
+      return [];
+    }
+
+    return [
+      {
+        children: (
+          <div className={css.base}>
+            <Card title="Model Checkpoint">
+              <InfoBox rows={checkpointInfo} separator />
+            </Card>
+            <Card title="Validation Metrics">
+              <InfoBox rows={validationMetrics} separator />
+            </Card>
+            <MetadataCard
+              disabled={modelVersion.model.archived}
+              metadata={modelVersion.metadata}
+              onSave={saveMetadata}
+            />
+          </div>
+        ),
+        key: TabType.Model,
+        label: 'Model',
+      },
+      {
+        children: (
+          <div className={css.base}>
+            <NotesCard
+              disabled={modelVersion.model.archived}
+              notes={modelVersion.notes ?? ''}
+              onSave={saveNotes}
+            />
+          </div>
+        ),
+        key: TabType.Notes,
+        label: 'Notes',
+      },
+    ];
+  }, [checkpointInfo, modelVersion, saveMetadata, saveNotes, validationMetrics]);
+
   if (!modelId) {
     return <Message title="Model name is empty" />;
   } else if (isNaN(parseInt(versionNum))) {
@@ -286,34 +326,10 @@ const ModelVersionDetails: React.FC = () => {
       id="modelDetails">
       <Tabs
         activeKey={tabKey}
-        style={{ height: 'auto' }}
+        items={tabItems}
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
-        onChange={handleTabChange}>
-        <TabPane key={TabType.Model} tab="Model">
-          <div className={css.base}>
-            <Card title="Model Checkpoint">
-              <InfoBox rows={checkpointInfo} separator />
-            </Card>
-            <Card title="Validation Metrics">
-              <InfoBox rows={validationMetrics} separator />
-            </Card>
-            <MetadataCard
-              disabled={modelVersion.model.archived}
-              metadata={modelVersion.metadata}
-              onSave={saveMetadata}
-            />
-          </div>
-        </TabPane>
-        <TabPane key={TabType.Notes} tab="Notes">
-          <div className={css.base}>
-            <NotesCard
-              disabled={modelVersion.model.archived}
-              notes={modelVersion.notes ?? ''}
-              onSave={saveNotes}
-            />
-          </div>
-        </TabPane>
-      </Tabs>
+        onChange={handleTabChange}
+      />
     </Page>
   );
 };

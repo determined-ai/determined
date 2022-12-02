@@ -40,7 +40,7 @@ if (fs.existsSync(PUBLIC_PATH)) {
 fs.mkdirSync(PUBLIC_PATH, '0755');
 
 // These Ant Design theme files are needed in the PUBLIC folder to support dynamic dark/light modes.
-ANTD_CSS_FILES.forEach(file => {
+ANTD_CSS_FILES.forEach((file) => {
   const srcPath = `${ANTD_CSS_PATH}/${file}`;
   const dstPath = `${PUBLIC_PATH}/${file}`;
 
@@ -53,13 +53,13 @@ ANTD_CSS_FILES.forEach(file => {
   fs.copyFileSync(srcPath, dstPath);
 
   // Lighten main active color for dark theme CSS files.
-  COLOR_UPDATES.forEach(changes => {
+  COLOR_UPDATES.forEach((changes) => {
     if (changes.match.test(file)) {
       try {
         console.log(`Reading content of ${dstPath}.`);
         let content = fs.readFileSync(dstPath, 'utf8');
 
-        changes.updates.forEach(change => {
+        changes.updates.forEach((change) => {
           const regex = new RegExp(change.old, 'ig');
           content = content.replace(regex, change.new);
           console.log(`  Changing ${change.old} to ${change.new}.`);

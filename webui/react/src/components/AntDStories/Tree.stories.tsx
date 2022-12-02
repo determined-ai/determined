@@ -51,7 +51,7 @@ export const Default: ComponentStory<typeof Tree> = (args) => {
 
   // This onDrop implementation comes from antd docs, would require refactoring before using in production code.
   /* eslint-disable */
-  const onDrop: TreeProps['onDrop'] = (info) => {
+  const onDrop: TreeProps['onDrop'] = (info: any) => {
     const dropKey = info.node.key;
     const dragKey = info.dragNode.key;
     const dropPos = info.node.pos.split('-');

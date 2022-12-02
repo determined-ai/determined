@@ -60,9 +60,8 @@ const DynamicTabs: React.FC<DynamicTabBarProps> = ({
         {...props}
         activeKey={activeKey}
         tabBarExtraContent={tabBarExtraContent}
-        onTabClick={handleTabSwitch}>
-        {children}
-      </Tabs>
+        onTabClick={handleTabSwitch}
+      />
     </TabBarContext.Provider>
   );
 };
