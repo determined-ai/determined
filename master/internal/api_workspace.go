@@ -495,6 +495,7 @@ func (a *apiServer) DeleteWorkspace(
 		"",
 		"",
 		"",
+		"",
 	)
 	if err != nil {
 		return nil, err
