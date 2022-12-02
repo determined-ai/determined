@@ -17,9 +17,11 @@ import css from './DesignKit.module.scss';
 const Components = {
   Buttons: 'Buttons',
   Checkboxes: 'Checkboxes',
-  Dropdowns: 'Dropdowns',
+  Dropdowns: 'Comboboxes & Dropdowns',
   Labels: 'Labels',
   Searchboxes: 'Search boxes',
+  Spinbuttons: 'Spin buttons',
+  Textfields: 'Input - text fields',
 } as const;
 
 type ComponentNames = ValueOf<typeof Components>;
@@ -31,6 +33,8 @@ const componentOrder: ComponentIds[] = [
   'Checkboxes',
   'Labels',
   'Searchboxes',
+  'Spinbuttons',
+  'Textfields',
 ];
 
 interface Props {
@@ -210,8 +214,7 @@ const ButtonsSection: React.FC = () => {
 
 const DropdownsSection: React.FC = () => {
   return (
-    <ComponentSection id="Dropdowns" title="Dropdowns">
-      <h3 id="dropdowns_anchor">Comboboxes & Dropdowns</h3>
+    <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <ReviewAlert />
       <Card>
         A dropdown/combo box combines a text field and a dropdown giving people a way to select an
@@ -352,6 +355,341 @@ const DropdownsSection: React.FC = () => {
   );
 };
 
+const CheckboxesSection: React.FC = () => {
+  return (
+    <ComponentSection id="Checkboxes" title="Checkboxes">
+      <ReviewAlert />
+      <Card>
+        Check boxes (Checkbox) give people a way to select one or more items from a group, or
+        switch between two mutually exclusive options (checked or unchecked, on or off).
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Font inconsistency</li>
+          <li>Internal padding inconsistencies</li>
+          <li>Button states do not meet accessibility requirements.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Layout</strong>
+        <ul>
+          <li>
+            Use a single check box when there&apos;s only one selection to make or choice to
+            confirm. Selecting a blank check box selects it. Selecting it again clears the check
+            box.
+          </li>
+          <li>
+            Use multiple check boxes when one or more options can be selected from a group.
+            Unlike radio buttons, selecting one check box will not clear another check box.
+          </li>
+        </ul>
+        <strong>Content</strong>
+        <ul>
+          <li>
+            Separate two groups of check boxes with headings rather than positioning them one
+            after the other.
+          </li>
+          <li>Use sentence-style capitalization—only capitalize the first word.</li>
+          <li>
+            Don&apos;t use end punctuation (unless the check box label absolutely requires
+            multiple sentences).
+          </li>
+          <li>Use a sentence fragment for the label, rather than a full sentence.</li>
+          <li>
+            Make it easy for people to understand what will happen if they select or clear a
+            check box.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Basic checkboxes</strong>
+        <Checkbox>This is a basic checkbox.</Checkbox>
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>8px right margin from the checkbox.</li>
+          <li>5px vertical margins above and below the checkbox</li>
+          <li>5px padding for mandatory and info icons</li>
+          <li>One style of checkboxes throughout the experience.</li>
+        </ul>
+        <strong>Variations</strong>
+        <Checkbox checked>Checked checkbox</Checkbox>
+        <Checkbox checked={false}>Unchecked checkbox</Checkbox>
+        <Checkbox checked disabled>
+          Disabled checked checkbox
+        </Checkbox>
+        <p>Mandatory checkbox - not implemented.</p>
+        <p>Mandatory checkbox with info sign - not implemented.</p>
+        <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const LabelsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Labels" title="Labels">
+      <ReviewAlert />
+      <Card>
+        Labels give a name or title to a control or group of controls, including text fields,
+        check boxes, combo boxes, radio buttons, and drop-down menus.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Font inconsistency</li>
+          <li>Internal padding inconsistencies</li>
+          <li>Button states do not meet accessibility requirements.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Layout</strong>
+        <ul>
+          <li>Labels should be close to the control they&apos;re paired with.</li>
+        </ul>
+        <strong>Content</strong>
+        <ul>
+          <li>Labels should describe the purpose of the control.</li>
+          <li>Use sentence-style capitalization—only capitalize the first word.</li>
+          <li>Be short and concise.</li>
+          <li>Use nouns or short noun phrases.</li>
+          <li>
+            Don&apos;t use labels as instructional text. For example, &quot;Click to get
+            started&quot;.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Basic labels</strong>
+        <Label>I am a label.</Label>
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>8px right margin from the checkbox.</li>
+          <li>5px vertical margins above and below the checkbox</li>
+          <li>5px padding for mandatory and info icons</li>
+          <li>One style of checkboxes throughout the experience.</li>
+        </ul>
+        <strong>Variations</strong>
+        <p>Bold mandatory label - not implemented</p>
+        <p>Disabled label - not implemented</p>
+        <p>Mandatory label with an explanation - not implemented</p>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const SearchboxesSection: React.FC = () => {
+  return (
+    <ComponentSection id="Searchboxes" title="Search boxes">
+      <ReviewAlert />
+      <Card>
+        A search box (SearchBox) provides an input field for searching content within a site or
+        app to find specific items.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Font inconsistency</li>
+          <li>Internal padding inconsistencies</li>
+          <li>Button states do not meet accessibility requirements.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Layout</strong>
+        <ul>
+          <li>
+            Don&apos;t build a custom search control based on the default text box or any other
+            control.
+          </li>
+          <li>
+            Use a search box without a parent container when it&apos;s not restricted to a
+            certain width to accommodate other content. This search box will span the entire
+            width of the space it&apos;s in.
+          </li>
+        </ul>
+        <strong>Content</strong>
+        <ul>
+          <li>
+            Use placeholder text in the search box to describe what people can search for. For
+            example, &quot;Search&quot;, &quot;Search files&quot;, or &quot;Search contacts
+            list&quot;.
+          </li>
+          <li>
+            Although search entry points tend to be similarly visualized, they can provide
+            access to results that range from broad to narrow. By effectively communicating the
+            scope of a search, you can ensure that people&apos;s expectations are met by the
+            capabilities of the search you&apos;re performing, which will reduce the possibility
+            of frustration. The search entry point should be placed near the content being
+            searched.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Default Searchbox</strong>
+        <Input.Search placeholder="input search text" style={{ width: 200 }} />
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>A user should always be able to cancel/clear out a search</li>
+          <li>We need to provide feedback when a search is taking longer than expected</li>
+          <li>Input box experience is from input box component</li>
+        </ul>
+        <strong>Variations</strong>
+        <Input.Search allowClear enterButton style={{ width: 200 }} value="Active search box" />
+        <Input.Search disabled placeholder="disabled search box" style={{ width: 200 }} />
+        <hr />
+        <strong>In-table Searchbox</strong>
+        <p>Not implemented</p>
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>Search input box needs to be at least 30 characters long</li>
+          <li>
+            We need to provide feedback when a search is taking longer than expected (&gt;1.5
+            sec) or when its a long running operation
+          </li>
+        </ul>
+        <hr />
+        <strong>Search box with scopes</strong>
+        <p>Not implemented</p>
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>Search input box needs to be at least 30 characters long</li>
+          <li>
+            We need to provide feedback when a search is taking longer than expected (&gt;1.5
+            sec) or when its a long running operation
+          </li>
+          <li>Dropdown component behavior is the same as the dropdown checkmark component</li>
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const SpinbuttonsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Spinbuttons" title="Spin buttons">
+      <ReviewAlert />
+      <Card>
+        A spin button (SpinButton) allows someone to incrementally adjust a value in small
+        steps. It&apos;s mainly used for numeric values, but other values are supported too.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>
+            Overall value-add to the experience --&gt; removing this component requires less
+            maintenance.{' '}
+          </li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Layout</strong>
+        <ul>
+          <li>
+            Place labels to the left of the spin button control. For example, &quot;Length of
+            ruler (cm)&quot;.
+          </li>
+          <li>Spin button width should adjust to fit the number values.</li>
+        </ul>
+        <strong>Content</strong>
+        <ul>
+          <li>Use a spin button when you need to incrementally change a value.</li>
+          <li>Use a spin button when values are tied to a unit of measure.</li>
+          <li>Don&apos;t use a spin button for binary settings.</li>
+          <li>Don&apos;t use a spin button for a range of three values or less.</li>
+          <li>Include a label indicating what value the spin button changes.</li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Default spin button</strong>
+        <InputNumber defaultValue={3} />
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
+          <li>Number/type input starts 12px from border. </li>
+          <li>When in focus, use arrow up/down of keyboard to facilitate spinning.</li>
+        </ul>
+        <hr />
+        <strong>Variations and states of spin buttons</strong>
+        <InputNumber disabled />
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const TextfieldsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Textfields" title="Input - text fields">
+      <ReviewAlert />
+      <Card>
+        Text fields (TextField) give people a way to enter and edit text. They&apos;re used in
+        forms, modal dialogs, tables, and other surfaces where text input is required.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Component seems to not be used consistently.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Layout</strong>
+        <ul>
+          <li>Use a multiline text field when long entries are expected.</li>
+          <li>
+            Don&apos;t place a text field in the middle of a sentence, because the sentence
+            structure might not make sense in all languages. For example, &quot;Remind me in
+            [textfield] weeks&quot; should instead read, &quot;Remind me in this many weeks:
+            [textfield]&quot;.
+          </li>
+          <li>Format the text field for the expected entry.</li>
+        </ul>
+        <strong>Content</strong>
+        <ul>
+          <li>
+            Include a short label above the text field to communicate what information should be
+            entered. Don&apos;t use placeholder text instead of a label. Placeholder text poses
+            a variety of accessibility issues (including possible problems with color/contrast,
+            and people thinking the form input is already filled out).
+          </li>
+          <li>
+            When part of a form, make it clear which fields are required vs. optional. If the
+            input is required, add an asterisk &quot;*&quot; to the label. For screen readers,
+            make sure the aria-required property is set to true.
+          </li>
+          <li>Use sentence-style capitalization—only capitalize the first word.</li>
+          <li>
+            ALL input fields need to have validation and limitations in-place (length of input
+            especially)
+          </li>
+          <li>Field validation errors need to be provided for every mandatory field. </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Default input - text field</strong>
+        <InputNumber defaultValue={3} />
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
+          <li>Number/type input starts 12px from border. </li>
+          <li>When in focus, use arrow up/down of keyboard to facilitate spinning.</li>
+        </ul>
+        <hr />
+        <strong>Variations and states of spin buttons</strong>
+        <InputNumber disabled />
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
 
@@ -369,7 +707,7 @@ const DesignKit: React.FC = () => {
         <ul>
           {componentOrder.map((componentId) => (
             <li key={componentId}>
-              <Link reloadDocument to={`#${componentId}_anchor`}>
+              <Link reloadDocument to={`#${componentId}`}>
                 {Components[componentId]}
               </Link>
             </li>
@@ -379,321 +717,11 @@ const DesignKit: React.FC = () => {
       <main>
         <ButtonsSection />
         <DropdownsSection />
-        <section>
-          <h3 id="checkboxes_anchor">Checkboxes</h3>
-          <ReviewAlert />
-          <Card>
-            Check boxes (Checkbox) give people a way to select one or more items from a group, or
-            switch between two mutually exclusive options (checked or unchecked, on or off).
-          </Card>
-          <Card title="Design audit">
-            <strong>
-              This component is currently under review and will receive updates to address:
-            </strong>
-            <ul>
-              <li>Font inconsistency</li>
-              <li>Internal padding inconsistencies</li>
-              <li>Button states do not meet accessibility requirements.</li>
-            </ul>
-          </Card>
-          <Card title="Best practices">
-            <strong>Layout</strong>
-            <ul>
-              <li>
-                Use a single check box when there&apos;s only one selection to make or choice to
-                confirm. Selecting a blank check box selects it. Selecting it again clears the check
-                box.
-              </li>
-              <li>
-                Use multiple check boxes when one or more options can be selected from a group.
-                Unlike radio buttons, selecting one check box will not clear another check box.
-              </li>
-            </ul>
-            <strong>Content</strong>
-            <ul>
-              <li>
-                Separate two groups of check boxes with headings rather than positioning them one
-                after the other.
-              </li>
-              <li>Use sentence-style capitalization—only capitalize the first word.</li>
-              <li>
-                Don&apos;t use end punctuation (unless the check box label absolutely requires
-                multiple sentences).
-              </li>
-              <li>Use a sentence fragment for the label, rather than a full sentence.</li>
-              <li>
-                Make it easy for people to understand what will happen if they select or clear a
-                check box.
-              </li>
-            </ul>
-          </Card>
-          <Card title="Usage">
-            <strong>Basic checkboxes</strong>
-            <Checkbox>This is a basic checkbox.</Checkbox>
-            <strong>Guiding principles</strong>
-            <ul>
-              <li>8px right margin from the checkbox.</li>
-              <li>5px vertical margins above and below the checkbox</li>
-              <li>5px padding for mandatory and info icons</li>
-              <li>One style of checkboxes throughout the experience.</li>
-            </ul>
-            <strong>Variations</strong>
-            <Checkbox checked>Checked checkbox</Checkbox>
-            <Checkbox checked={false}>Unchecked checkbox</Checkbox>
-            <Checkbox checked disabled>
-              Disabled checked checkbox
-            </Checkbox>
-            <p>Mandatory checkbox - not implemented.</p>
-            <p>Mandatory checkbox with info sign - not implemented.</p>
-            <Checkbox indeterminate>Indeterminate checkbox</Checkbox>
-          </Card>
-        </section>
-        <section>
-          <h3 id="labels_anchor">Labels</h3>
-          <ReviewAlert />
-          <Card>
-            Labels give a name or title to a control or group of controls, including text fields,
-            check boxes, combo boxes, radio buttons, and drop-down menus.
-          </Card>
-          <Card title="Design audit">
-            <strong>
-              This component is currently under review and will receive updates to address:
-            </strong>
-            <ul>
-              <li>Font inconsistency</li>
-              <li>Internal padding inconsistencies</li>
-              <li>Button states do not meet accessibility requirements.</li>
-            </ul>
-          </Card>
-          <Card title="Best practices">
-            <strong>Layout</strong>
-            <ul>
-              <li>Labels should be close to the control they&apos;re paired with.</li>
-            </ul>
-            <strong>Content</strong>
-            <ul>
-              <li>Labels should describe the purpose of the control.</li>
-              <li>Use sentence-style capitalization—only capitalize the first word.</li>
-              <li>Be short and concise.</li>
-              <li>Use nouns or short noun phrases.</li>
-              <li>
-                Don&apos;t use labels as instructional text. For example, &quot;Click to get
-                started&quot;.
-              </li>
-            </ul>
-          </Card>
-          <Card title="Usage">
-            <strong>Basic labels</strong>
-            <Label>I am a label.</Label>
-            <strong>Guiding principles</strong>
-            <ul>
-              <li>8px right margin from the checkbox.</li>
-              <li>5px vertical margins above and below the checkbox</li>
-              <li>5px padding for mandatory and info icons</li>
-              <li>One style of checkboxes throughout the experience.</li>
-            </ul>
-            <strong>Variations</strong>
-            <p>Bold mandatory label - not implemented</p>
-            <p>Disabled label - not implemented</p>
-            <p>Mandatory label with an explanation - not implemented</p>
-          </Card>
-        </section>
-        <section>
-          <h3 id="searchboxes_anchor">Search boxes</h3>
-          <ReviewAlert />
-          <Card>
-            A search box (SearchBox) provides an input field for searching content within a site or
-            app to find specific items.
-          </Card>
-          <Card title="Design audit">
-            <strong>
-              This component is currently under review and will receive updates to address:
-            </strong>
-            <ul>
-              <li>Font inconsistency</li>
-              <li>Internal padding inconsistencies</li>
-              <li>Button states do not meet accessibility requirements.</li>
-            </ul>
-          </Card>
-          <Card title="Best practices">
-            <strong>Layout</strong>
-            <ul>
-              <li>
-                Don&apos;t build a custom search control based on the default text box or any other
-                control.
-              </li>
-              <li>
-                Use a search box without a parent container when it&apos;s not restricted to a
-                certain width to accommodate other content. This search box will span the entire
-                width of the space it&apos;s in.
-              </li>
-            </ul>
-            <strong>Content</strong>
-            <ul>
-              <li>
-                Use placeholder text in the search box to describe what people can search for. For
-                example, &quot;Search&quot;, &quot;Search files&quot;, or &quot;Search contacts
-                list&quot;.
-              </li>
-              <li>
-                Although search entry points tend to be similarly visualized, they can provide
-                access to results that range from broad to narrow. By effectively communicating the
-                scope of a search, you can ensure that people&apos;s expectations are met by the
-                capabilities of the search you&apos;re performing, which will reduce the possibility
-                of frustration. The search entry point should be placed near the content being
-                searched.
-              </li>
-            </ul>
-          </Card>
-          <Card title="Usage">
-            <strong>Default Searchbox</strong>
-            <Input.Search placeholder="input search text" style={{ width: 200 }} />
-            <strong>Guiding principles</strong>
-            <ul>
-              <li>A user should always be able to cancel/clear out a search</li>
-              <li>We need to provide feedback when a search is taking longer than expected</li>
-              <li>Input box experience is from input box component</li>
-            </ul>
-            <strong>Variations</strong>
-            <Input.Search allowClear enterButton style={{ width: 200 }} value="Active search box" />
-            <Input.Search disabled placeholder="disabled search box" style={{ width: 200 }} />
-            <hr />
-            <strong>In-table Searchbox</strong>
-            <p>Not implemented</p>
-            <strong>Guiding principles</strong>
-            <ul>
-              <li>Search input box needs to be at least 30 characters long</li>
-              <li>
-                We need to provide feedback when a search is taking longer than expected (&gt;1.5
-                sec) or when its a long running operation
-              </li>
-            </ul>
-            <hr />
-            <strong>Search box with scopes</strong>
-            <p>Not implemented</p>
-            <strong>Guiding principles</strong>
-            <ul>
-              <li>Search input box needs to be at least 30 characters long</li>
-              <li>
-                We need to provide feedback when a search is taking longer than expected (&gt;1.5
-                sec) or when its a long running operation
-              </li>
-              <li>Dropdown component behavior is the same as the dropdown checkmark component</li>
-            </ul>
-          </Card>
-        </section>
-        <section>
-          <h3 id="spinbuttons_anchor">Spin buttons</h3>
-          <ReviewAlert />
-          <Card>
-            A spin button (SpinButton) allows someone to incrementally adjust a value in small
-            steps. It&apos;s mainly used for numeric values, but other values are supported too.
-          </Card>
-          <Card title="Design audit">
-            <strong>
-              This component is currently under review and will receive updates to address:
-            </strong>
-            <ul>
-              <li>
-                Overall value-add to the experience --&gt; removing this component requires less
-                maintenance.{' '}
-              </li>
-            </ul>
-          </Card>
-          <Card title="Best practices">
-            <strong>Layout</strong>
-            <ul>
-              <li>
-                Place labels to the left of the spin button control. For example, &quot;Length of
-                ruler (cm)&quot;.
-              </li>
-              <li>Spin button width should adjust to fit the number values.</li>
-            </ul>
-            <strong>Content</strong>
-            <ul>
-              <li>Use a spin button when you need to incrementally change a value.</li>
-              <li>Use a spin button when values are tied to a unit of measure.</li>
-              <li>Don&apos;t use a spin button for binary settings.</li>
-              <li>Don&apos;t use a spin button for a range of three values or less.</li>
-              <li>Include a label indicating what value the spin button changes.</li>
-            </ul>
-          </Card>
-          <Card title="Usage">
-            <strong>Default spin button</strong>
-            <InputNumber defaultValue={3} />
-            <strong>Guiding principles</strong>
-            <ul>
-              <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
-              <li>Number/type input starts 12px from border. </li>
-              <li>When in focus, use arrow up/down of keyboard to facilitate spinning.</li>
-            </ul>
-            <hr />
-            <strong>Variations and states of spin buttons</strong>
-            <InputNumber disabled />
-          </Card>
-        </section>
-        <section>
-          <h3 id="textfields_anchor">Input - text fields</h3>
-          <ReviewAlert />
-          <Card>
-            Text fields (TextField) give people a way to enter and edit text. They&apos;re used in
-            forms, modal dialogs, tables, and other surfaces where text input is required.
-          </Card>
-          <Card title="Design audit">
-            <strong>
-              This component is currently under review and will receive updates to address:
-            </strong>
-            <ul>
-              <li>Component seems to not be used consistently.</li>
-            </ul>
-          </Card>
-          <Card title="Best practices">
-            <strong>Layout</strong>
-            <ul>
-              <li>Use a multiline text field when long entries are expected.</li>
-              <li>
-                Don&apos;t place a text field in the middle of a sentence, because the sentence
-                structure might not make sense in all languages. For example, &quot;Remind me in
-                [textfield] weeks&quot; should instead read, &quot;Remind me in this many weeks:
-                [textfield]&quot;.
-              </li>
-              <li>Format the text field for the expected entry.</li>
-            </ul>
-            <strong>Content</strong>
-            <ul>
-              <li>
-                Include a short label above the text field to communicate what information should be
-                entered. Don&apos;t use placeholder text instead of a label. Placeholder text poses
-                a variety of accessibility issues (including possible problems with color/contrast,
-                and people thinking the form input is already filled out).
-              </li>
-              <li>
-                When part of a form, make it clear which fields are required vs. optional. If the
-                input is required, add an asterisk &quot;*&quot; to the label. For screen readers,
-                make sure the aria-required property is set to true.
-              </li>
-              <li>Use sentence-style capitalization—only capitalize the first word.</li>
-              <li>
-                ALL input fields need to have validation and limitations in-place (length of input
-                especially)
-              </li>
-              <li>Field validation errors need to be provided for every mandatory field. </li>
-            </ul>
-          </Card>
-          <Card title="Usage">
-            <strong>Default input - text field</strong>
-            <InputNumber defaultValue={3} />
-            <strong>Guiding principles</strong>
-            <ul>
-              <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
-              <li>Number/type input starts 12px from border. </li>
-              <li>When in focus, use arrow up/down of keyboard to facilitate spinning.</li>
-            </ul>
-            <hr />
-            <strong>Variations and states of spin buttons</strong>
-            <InputNumber disabled />
-          </Card>
-        </section>
+        <CheckboxesSection />
+        <LabelsSection />
+        <SearchboxesSection />
+        <SpinbuttonsSection />
+        <TextfieldsSection />
       </main>
     </div>
   );
