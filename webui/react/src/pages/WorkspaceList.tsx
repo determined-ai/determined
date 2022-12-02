@@ -80,7 +80,6 @@ const WorkspaceList: React.FC = () => {
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
           users: settings.user,
-          //
         },
         { signal: canceler.signal },
       );
