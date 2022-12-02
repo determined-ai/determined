@@ -19,6 +19,7 @@ const Components = {
   Checkboxes: 'Checkboxes',
   Dropdowns: 'Comboboxes & Dropdowns',
   Labels: 'Labels',
+  Lists: 'Lists (tables)',
   Searchboxes: 'Search boxes',
   Spinbuttons: 'Spin buttons',
   Textfields: 'Input - text fields',
@@ -35,6 +36,7 @@ const componentOrder: ComponentIds[] = [
   'Searchboxes',
   'Spinbuttons',
   'Textfields',
+  'Lists',
 ];
 
 interface Props {
@@ -690,6 +692,44 @@ const TextfieldsSection: React.FC = () => {
   );
 };
 
+const ListsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Lists" title="Lists (tables)">
+      <ReviewAlert />
+      <Card>
+        A  list (DetailsList) is a robust way to display an information-rich collection of items, and allow people to sort, group, and filter the content. Use a details list when information density is critical.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>This is a core experience component</li>
+          <li>Behaviors and densities need to be reviewed</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Layout</strong>
+        <ul>
+          <li>List items are composed of selection, icon, and name columns at minimum. You can include other columns, such as date modified, or any other metadata field associated with the collection.
+          </li>
+          <li>Avoid using file type icon overlays to denote status of a file as it can make the entire icon unclear.
+          </li>
+          <li>If there are multiple lines of text in a column, consider the variable row height variant.
+          </li>
+          <li>Give columns ample default width to display information.</li>
+        </ul>
+        <strong>Content</strong>
+        <ul>
+          <li>
+            Use sentence-style capitalization for column headers—only capitalize the first word.
+          </li>
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
 
@@ -722,6 +762,7 @@ const DesignKit: React.FC = () => {
         <SearchboxesSection />
         <SpinbuttonsSection />
         <TextfieldsSection />
+        <ListsSection />
       </main>
     </div>
   );
