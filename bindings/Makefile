@@ -38,6 +38,7 @@ build/%: $(SWAGGER_SPEC) deps/$(CODEGEN_BIN)
 		-l typescript-fetch \
 		-t templates/ \
 		-o build/typescript-fetch
+	rm build/typescript-fetch/api_test.spec.ts
 	$(MAKE) bindings-copy-over
 	touch build/typescript-fetch
 
