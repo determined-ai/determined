@@ -54,7 +54,7 @@ const LogViewerFilters: React.FC<Props> = ({
       levels: Object.entries(LogLevelFromApi)
         .filter((entry) => entry[1] !== LogLevelFromApi.Unspecified)
         .map(([key, value]) => ({ label: key, value })),
-      rankIds: rankIds ? [-1].concat(rankIds.sortAll(alphaNumericSorter)) : [-1],
+      rankIds: rankIds ? [-1].concat(rankIds).sortAll(alphaNumericSorter) : [-1],
     };
   }, [options]);
 
@@ -64,7 +64,7 @@ const LogViewerFilters: React.FC<Props> = ({
       const options = selectOptions[filterKey];
 
       // !! casts `undefined` into the boolean value of `false`.
-      acc[filterKey] = !!(options && options.length > 1) || filterKey === 'rankIds';
+      acc[filterKey] = !!(options && options.length > 1);
 
       return acc;
     }, {} as Record<keyof Filters, boolean>);

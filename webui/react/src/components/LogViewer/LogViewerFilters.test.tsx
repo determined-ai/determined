@@ -66,13 +66,13 @@ describe('LogViewerFilter', () => {
     });
   });
 
-  it('should render filters with rank 0 and 1', async () => {
+  it('should render filters with rank 0; No Rank added automatically', async () => {
     const values: Filters = {
       agentIds: [],
       allocationIds: [],
       containerIds: [],
       levels: [],
-      rankIds: [0, -1],
+      rankIds: [0],
     };
     const { user } = setup(values, { ...values, rankIds: [] });
 
@@ -83,7 +83,7 @@ describe('LogViewerFilter', () => {
     });
   });
 
-  it('should render filters with no rank', () => {
+  it('should render filters without rank', () => {
     const values: Filters = {
       agentIds: [],
       allocationIds: [],
