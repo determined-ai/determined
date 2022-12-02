@@ -7,7 +7,7 @@ import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperiment
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
-import { ProjectDetailsSettings } from 'pages/OldProjectDetails.settings';
+import { ExperimentListSettings } from 'pages/ExperimentList.settings';
 import {
   activateExperiment,
   archiveExperiment,
@@ -32,7 +32,7 @@ interface Props {
   experiment: ProjectExperiment;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
-  settings: ProjectDetailsSettings;
+  settings: ExperimentListSettings;
   updateSettings: UpdateSettings;
   workspaceId?: number;
 }

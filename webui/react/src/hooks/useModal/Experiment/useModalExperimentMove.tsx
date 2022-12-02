@@ -8,9 +8,7 @@ import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
-import projectDetailConfigSettings, {
-  ProjectDetailsSettings,
-} from 'pages/OldProjectDetails.settings';
+import { ExperimentListSettings, settingsConfigForProject } from 'pages/ExperimentList.settings';
 import { paths } from 'routes/utils';
 import { moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -58,8 +56,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const [workspaceId, setWorkspaceId] = useState<number>(1);
   const [projectId, setProjectId] = useState<number | null>(null);
 
+  const id = projectId ?? 1;
+
+  const experimentSettingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
+
   const { settings: projectSettings, updateSettings: updateProjectSettings } =
-    useSettings<ProjectDetailsSettings>(projectDetailConfigSettings);
+    useSettings<ExperimentListSettings>(experimentSettingsConfig);
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const { canMoveExperimentsTo } = usePermissions();
