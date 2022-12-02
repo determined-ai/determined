@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"golang.org/x/exp/maps"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -214,12 +215,12 @@ func New(
 	if config.ResourceManager.DispatcherRM != nil {
 		// slurm type is configured
 		rm = newDispatcherResourceManager(
-			config.ResourceManager.DispatcherRM, tlsConfig, opts.LoggingOptions,
+			config.ResourceManager.DispatcherRM, config.ResourcePools, tlsConfig, opts.LoggingOptions,
 		)
 	} else {
 		// pbs type is configured
 		rm = newDispatcherResourceManager(
-			config.ResourceManager.PbsRM, tlsConfig, opts.LoggingOptions,
+			config.ResourceManager.PbsRM, config.ResourcePools, tlsConfig, opts.LoggingOptions,
 		)
 	}
 	ref, _ := system.ActorOf(
@@ -232,8 +233,8 @@ func New(
 
 // dispatcherResourceProvider manages the lifecycle of dispatcher resources.
 type dispatcherResourceManager struct {
-	config *config.DispatcherResourceManagerConfig
-
+	rmConfig                 *config.DispatcherResourceManagerConfig
+	poolConfig               []config.ResourcePoolConfig
 	apiClient                *launcher.APIClient
 	hpcResourcesManifest     *launcher.Manifest
 	reqList                  *tasklist.TaskList
@@ -250,7 +251,8 @@ type dispatcherResourceManager struct {
 }
 
 func newDispatcherResourceManager(
-	config *config.DispatcherResourceManagerConfig,
+	rmConfig *config.DispatcherResourceManagerConfig,
+	poolConfig []config.ResourcePoolConfig,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 ) *dispatcherResourceManager {
@@ -260,12 +262,13 @@ func newDispatcherResourceManager(
 	// Host, port, and protocol are configured in the "resource_manager" section
 	// of the "tools/devcluster.yaml" file. The host address and port refer to the
 	// system where the "launcher" is running.
-	clientConfiguration.Host = fmt.Sprintf("%s:%d", config.LauncherHost, config.LauncherPort)
-	clientConfiguration.Scheme = config.LauncherProtocol // "http" or "https"
-	if config.Security != nil {
-		logrus.Debugf("Launcher communications InsecureSkipVerify: %t", config.Security.TLS.SkipVerify)
+	clientConfiguration.Host = fmt.Sprintf("%s:%d", rmConfig.LauncherHost, rmConfig.LauncherPort)
+	clientConfiguration.Scheme = rmConfig.LauncherProtocol // "http" or "https"
+	if rmConfig.Security != nil {
+		logrus.Debugf("Launcher communications InsecureSkipVerify: %t", rmConfig.Security.TLS.SkipVerify)
+		tlsConfig := tls.Config{InsecureSkipVerify: rmConfig.Security.TLS.SkipVerify} //nolint:gosec
 		transCfg := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: config.Security.TLS.SkipVerify}, //nolint:gosec
+			TLSClientConfig: &tlsConfig,
 		}
 		clientConfiguration.HTTPClient = &http.Client{Transport: transCfg}
 	}
@@ -278,10 +281,10 @@ func newDispatcherResourceManager(
 	hpcResourcesManifest := createSlurmResourcesManifest()
 
 	// Authentication token that gets passed to the "launcher" REST API.
-	authToken := loadAuthToken(config)
+	authToken := loadAuthToken(rmConfig)
 
 	return &dispatcherResourceManager{
-		config: config,
+		rmConfig: rmConfig,
 
 		apiClient:                apiClient,
 		hpcResourcesManifest:     hpcResourcesManifest,
@@ -292,9 +295,10 @@ func newDispatcherResourceManager(
 
 		masterTLSConfig:     masterTLSConfig,
 		loggingConfig:       loggingConfig,
-		jobWatcher:          newDispatchWatcher(apiClient, authToken, config.LauncherAuthFile),
+		jobWatcher:          newDispatchWatcher(apiClient, authToken, rmConfig.LauncherAuthFile),
 		authToken:           authToken,
 		launcherVersionIsOK: false,
+		poolConfig:          poolConfig,
 	}
 }
 
@@ -459,7 +463,7 @@ func (m *dispatcherResourceManager) generateGetAgentsResponse(
 // falling back to CUDA if nothing found.
 func computeSlotType(node hpcNodeDetails, m *dispatcherResourceManager) devicev1.Type {
 	for _, partition := range node.Partitions {
-		slotType := m.config.ResolveSlotType(partition)
+		slotType := m.rmConfig.ResolveSlotType(partition)
 		if slotType != nil {
 			return slotType.Proto()
 		}
@@ -522,9 +526,9 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			partition = m.selectDefaultPartition(slotType)
 		}
 
-		tresSupported := m.config.TresSupported
-		gresSupported := m.config.GresSupported
-		if m.config.TresSupported && !m.config.GresSupported {
+		tresSupported := m.rmConfig.TresSupported
+		gresSupported := m.rmConfig.GresSupported
+		if m.rmConfig.TresSupported && !m.rmConfig.GresSupported {
 			ctx.Log().Warnf("tres_supported: true cannot be used when " +
 				"gres_supported: false is specified. Use tres_supported: false instead.")
 			tresSupported = false
@@ -532,9 +536,9 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 		// Create the manifest that will be ultimately sent to the launcher.
 		manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
-			m.config.MasterHost, m.config.MasterPort, m.masterTLSConfig.CertificateName,
+			m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
 			req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
-			m.config.LauncherContainerRunType, m.wlmType == pbsSchedulerType)
+			m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType)
 		if err != nil {
 			sendResourceStateChangedErrorResponse(ctx, err, msg,
 				"unable to create the launcher manifest")
@@ -925,11 +929,11 @@ func (m *dispatcherResourceManager) selectDefaultPools(
 	}
 
 	// If explicitly configured, just override.
-	if m.config.DefaultComputeResourcePool != nil {
-		defaultComputePar = *m.config.DefaultComputeResourcePool
+	if m.rmConfig.DefaultComputeResourcePool != nil {
+		defaultComputePar = *m.rmConfig.DefaultComputeResourcePool
 	}
-	if m.config.DefaultAuxResourcePool != nil {
-		defaultAuxPar = *m.config.DefaultAuxResourcePool
+	if m.rmConfig.DefaultAuxResourcePool != nil {
+		defaultAuxPar = *m.rmConfig.DefaultAuxResourcePool
 	}
 
 	return defaultComputePar, defaultAuxPar
@@ -955,6 +959,8 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 	}
 	wlmName, schedulerType, fittingPolicy := m.getWlmResources()
 	var result []*resourcepoolv1.ResourcePool
+	poolNameMap := make(map[string]*resourcepoolv1.ResourcePool)
+
 	for _, v := range hpcResourceDetails.Partitions {
 		slotType, err := m.resolveSlotType(ctx, v.PartitionName)
 		if err != nil {
@@ -996,9 +1002,45 @@ func (m *dispatcherResourceManager) summarizeResourcePool(
 			InstanceType:                 wlmName,
 			Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		}
+		poolNameMap[pool.Name] = &pool
 		result = append(result, &pool)
 	}
+	result = append(result, m.getLauncherProvidedPools(poolNameMap, ctx)...)
 	return result, nil
+}
+
+// getLauncherProvidedPools provides data for any launcher-provided resource pools
+// from the master configuration.
+func (m *dispatcherResourceManager) getLauncherProvidedPools(
+	poolNameMap map[string]*resourcepoolv1.ResourcePool,
+	ctx *actor.Context,
+) []*resourcepoolv1.ResourcePool {
+	var result []*resourcepoolv1.ResourcePool
+	for _, pool := range m.poolConfig {
+		if pool.Provider != nil && pool.Provider.HPC != nil && pool.Provider.HPC.Partition != "" {
+			basePoolName := pool.Provider.HPC.Partition
+			basePool, found := poolNameMap[basePoolName]
+			if !found {
+				ctx.Log().Debugf("launcher-defined pool %s, base pool %s does not exist",
+					pool.PoolName, basePoolName)
+				continue
+			}
+			// If the base resource pool was located in the map provided, make
+			// a copy, update the name to the launcher-provided pool name, and
+			// include it in the result.
+			launcherPoolResult := duplicateResourcePool(basePool)
+			launcherPoolResult.Name = pool.PoolName
+			if pool.Description != "" {
+				launcherPoolResult.Description = pool.Description
+			}
+			result = append(result, launcherPoolResult)
+		}
+	}
+	return result
+}
+
+func duplicateResourcePool(basePool *resourcepoolv1.ResourcePool) *resourcepoolv1.ResourcePool {
+	return proto.Clone(basePool).(*resourcepoolv1.ResourcePool)
 }
 
 // getWlmResources returns various WLM-dependent resources used in constructing a resource pool.
@@ -1044,7 +1086,7 @@ func (m *dispatcherResourceManager) resolveSlotType(
 	ctx *actor.Context,
 	partition string,
 ) (device.Type, error) {
-	if slotType := m.config.ResolveSlotType(partition); slotType != nil {
+	if slotType := m.rmConfig.ResolveSlotType(partition); slotType != nil {
 		return *slotType, nil
 	}
 
@@ -1120,8 +1162,8 @@ func (m *dispatcherResourceManager) fetchHpcResourceDetails(ctx *actor.Context) 
 			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
 				"{%v}. Reloaded the auth token file {%s}. If this error persists, restart "+
 				"the launcher service followed by a restart of the determined-master service.",
-				err, m.config.LauncherAuthFile)
-			m.authToken = loadAuthToken(m.config)
+				err, m.rmConfig.LauncherAuthFile)
+			m.authToken = loadAuthToken(m.rmConfig)
 			m.jobWatcher.ReloadAuthToken()
 		} else {
 			ctx.Log().Errorf("Failed to communicate with launcher due to error: "+
@@ -1444,8 +1486,8 @@ func (m *dispatcherResourceManager) assignResources(
 			req:                    req,
 			rm:                     ctx.Self(),
 			group:                  m.groups[req.Group],
-			defaultRendezvousIface: m.config.ResolveRendezvousNetworkInterface(req.ResourcePool),
-			defaultProxyIface:      m.config.ResolveProxyNetworkInterface(req.ResourcePool),
+			defaultRendezvousIface: m.rmConfig.ResolveRendezvousNetworkInterface(req.ResourcePool),
+			defaultProxyIface:      m.rmConfig.ResolveProxyNetworkInterface(req.ResourcePool),
 		},
 	}
 

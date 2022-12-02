@@ -98,7 +98,17 @@ $OPT_PARTITIONOVERRIDES
           #     task_container_defaults:
           #       dtrain_network_interface: ib0
           #       force_pull_image: true
-
+        #
+        # Launcher-provided resource pools (example).
+        # resource_pools:
+        #   - pool_name: defq_GPU_tesla
+        #     description: Lands jobs on defq_GPU with tesla GPU selected
+        #     task_container_defaults:
+        #       slurm:
+        #         gpu_type: tesla
+        #     provider:
+        #       type: hpc
+        #       partition: defq_GPU
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.
         root: tools/build

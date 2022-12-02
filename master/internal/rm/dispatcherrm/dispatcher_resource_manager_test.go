@@ -8,6 +8,7 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -17,6 +18,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
+
+const launcherPoolDescription = "launcher-pool-1-description"
 
 func Test_authContext(t *testing.T) {
 	m := &dispatcherResourceManager{
@@ -90,7 +93,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 	}
 
 	m := &dispatcherResourceManager{
-		config: config,
+		rmConfig: config,
 		resourceDetails: hpcResourceDetailsCache{
 			lastSample: *hpcResource,
 			sampleTime: time.Now(),
@@ -206,8 +209,9 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 
 func Test_summarizeResourcePool(t *testing.T) {
 	type args struct {
-		ctx     *actor.Context
-		wlmType string
+		ctx              *actor.Context
+		wlmType          string
+		launcherPoolName string
 	}
 
 	type want struct {
@@ -264,6 +268,37 @@ func Test_summarizeResourcePool(t *testing.T) {
 				pools: []resourcepoolv1.ResourcePool{
 					{
 						Name:           "partition 1",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 5,
+						SlotsUsed:      3,
+						NumAgents:      10,
+					},
+				},
+				location:      "Slurm",
+				schedulerType: resourcepoolv1.SchedulerType_SCHEDULER_TYPE_SLURM,
+				fittingPolicy: resourcepoolv1.FittingPolicy_FITTING_POLICY_SLURM,
+			},
+		},
+		{
+			name:       "One resource pool test, with one launcher-provided resource pool",
+			partitions: []hpcPartitionDetails{p1},
+			args: args{
+				ctx:              &actor.Context{},
+				wlmType:          slurmSchedulerType,
+				launcherPoolName: "launcher-pool",
+			},
+			want: want{
+				pools: []resourcepoolv1.ResourcePool{
+					{
+						Name:           "partition 1",
+						SlotType:       devicev1.Type_TYPE_CUDA,
+						SlotsAvailable: 5,
+						SlotsUsed:      3,
+						NumAgents:      10,
+					},
+					{
+						Name:           "launcher-pool",
+						Description:    launcherPoolDescription,
 						SlotType:       devicev1.Type_TYPE_CUDA,
 						SlotsAvailable: 5,
 						SlotsUsed:      3,
@@ -350,17 +385,36 @@ func Test_summarizeResourcePool(t *testing.T) {
 			}
 
 			overrides := make(map[string]config.DispatcherPartitionOverrideConfigs)
-			config := &config.DispatcherResourceManagerConfig{
+			rmConfig := &config.DispatcherResourceManagerConfig{
 				PartitionOverrides: overrides,
 			}
 
+			dpPools := []config.ResourcePoolConfig{}
+			if tt.args.launcherPoolName != "" {
+				hpcProvider := provconfig.HpcClusterConfig{
+					Partition: tt.partitions[0].PartitionName,
+				}
+
+				dpPool1Provider := provconfig.Config{
+					HPC: &hpcProvider,
+				}
+
+				dpPool1 := config.ResourcePoolConfig{
+					PoolName:    tt.args.launcherPoolName,
+					Description: launcherPoolDescription,
+					Provider:    &dpPool1Provider,
+				}
+				dpPools = []config.ResourcePoolConfig{dpPool1}
+			}
+
 			m := &dispatcherResourceManager{
-				config: config,
+				rmConfig: rmConfig,
 				resourceDetails: hpcResourceDetailsCache{
 					lastSample: *hpcResource,
 					sampleTime: time.Now(),
 				},
-				wlmType: tt.args.wlmType,
+				wlmType:    tt.args.wlmType,
+				poolConfig: dpPools,
 			}
 
 			res, _ := m.summarizeResourcePool(tt.args.ctx)
@@ -372,8 +426,11 @@ func Test_summarizeResourcePool(t *testing.T) {
 				assert.Equal(t, pool.SlotsAvailable, tt.want.pools[i].SlotsAvailable)
 				assert.Equal(t, pool.SlotsUsed, tt.want.pools[i].SlotsUsed)
 				assert.Equal(t, pool.NumAgents, tt.want.pools[i].NumAgents)
-
-				assert.Equal(t, pool.Description, tt.want.location+"-managed pool of resources")
+				wantDescription := tt.want.pools[i].Description
+				if wantDescription == "" {
+					wantDescription = tt.want.location + "-managed pool of resources"
+				}
+				assert.Equal(t, pool.Description, wantDescription)
 				assert.Equal(t, pool.Type, resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC)
 				assert.Equal(t, pool.SlotsPerAgent, tt.want.pools[i].SlotsPerAgent)
 				assert.Equal(t, pool.AuxContainerCapacityPerAgent, int32(0))
@@ -499,7 +556,7 @@ func Test_dispatcherResourceManager_selectDefaultPools(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &dispatcherResourceManager{
-				config:                   tt.fields.config,
+				rmConfig:                 tt.fields.config,
 				apiClient:                tt.fields.apiClient,
 				hpcResourcesManifest:     tt.fields.hpcResourcesManifest,
 				reqList:                  tt.fields.reqList,
