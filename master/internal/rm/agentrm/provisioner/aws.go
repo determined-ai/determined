@@ -31,6 +31,9 @@ type awsCluster struct {
 	spot *spotState
 }
 
+//nolint:lll  // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
+const ec2InstanceID = `$(curl -q -H "X-aws-ec2-metadata-token: $(curl -q -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")"  http://169.254.169.254/latest/meta-data/instance-id)`
+
 func newAWSCluster(
 	resourcePool string, config *provconfig.Config, cert *tls.Certificate,
 ) (*awsCluster, error) {
@@ -109,7 +112,7 @@ func newAWSCluster(
 			AgentFluentImage:             config.AgentFluentImage,
 			AgentReconnectAttempts:       config.AgentReconnectAttempts,
 			AgentReconnectBackoff:        config.AgentReconnectBackoff,
-			AgentID:                      `$(ec2metadata --instance-id)`,
+			AgentID:                      ec2InstanceID,
 			ResourcePool:                 resourcePool,
 			LogOptions:                   config.AWS.BuildDockerLogString(),
 		}),

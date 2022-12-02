@@ -42,23 +42,24 @@ each tagged image needed by your experiments to the image cache.
 
 Each container runtime supports various local container file formats and references them using a
 slightly different syntax. Utilize a cached image by referencing a local path using the experiment
-configuration :ref:`environment.image <exp-environment-image>`.
+configuration :ref:`environment.image <exp-environment-image>`. When using this strategy, the local
+diretory needs to be accessible on all compute nodes.
 
 When using PodMan, you could save images in OCI archive format to files in a local directory
 ``/shared/containers``
 
-      .. code:: bash
+   .. code:: bash
 
-         podman save determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730 \
-           --format=oci-archive \
-           -o /shared/containers/cuda-11.3-pytorch-1.10-tf-2.8-gpu
+      podman save determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730 \
+        --format=oci-archive \
+        -o /shared/containers/cuda-11.3-pytorch-1.10-tf-2.8-gpu
 
-   and then reference the image in your experiment configuration using the syntax below.
+and then reference the image in your experiment configuration using the syntax below.
 
-      .. code:: yaml
+   .. code:: yaml
 
-         environment:
-            image: oci-archive:/shared/containers/cuda-11.3-pytorch-1.10-tf-2.8-gpu
+      environment:
+         image: oci-archive:/shared/containers/cuda-11.3-pytorch-1.10-tf-2.8-gpu
 
 When using Singularity, you could save SIF files in a local directory ``/shared/containers``
 
@@ -91,8 +92,9 @@ Determined.
 When using Singularity, you may use :ref:`referencing-local-image-paths` as described above, or you
 may instead configure a directory tree of images to be searched. To utilize this capability,
 configure a shared directory in :ref:`resource_manager.singularity_image_root
-<cluster-configuration-slurm>`. Whenever an image is referenced, it is translated to a local file
-path as described in :ref:`environment.image <exp-environment-image>`. If found, the local path is
+<cluster-configuration-slurm>`. The shared directory needs to be accessible to the launcher and on
+all compute nodes. Whenever an image is referenced, it is translated to a local file path as
+described in :ref:`environment.image <exp-environment-image>`. If found, the local path is
 substituted in the ``singularity run`` command to avoid the need for Singularity to download and
 convert the image for each user.
 

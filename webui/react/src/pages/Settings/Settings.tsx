@@ -43,7 +43,7 @@ const SettingsContent: React.FC = () => {
   });
 
   const rbacEnabled = useFeature().isOn('rbac');
-  const { canViewUsers } = usePermissions();
+  const { canAdministrateUsers } = usePermissions();
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -59,7 +59,7 @@ const SettingsContent: React.FC = () => {
       { children: <SettingsAccount />, key: TAB_KEYS[TabType.Account], label: TabType.Account },
     ];
 
-    if (canViewUsers) {
+    if (canAdministrateUsers) {
       items.push({
         children: <UserManagement />,
         key: TAB_KEYS[TabType.UserManagement],
@@ -75,7 +75,7 @@ const SettingsContent: React.FC = () => {
       });
     }
     return items;
-  }, [canViewUsers, rbacEnabled]);
+  }, [canAdministrateUsers, rbacEnabled]);
 
   return (
     <Tabs

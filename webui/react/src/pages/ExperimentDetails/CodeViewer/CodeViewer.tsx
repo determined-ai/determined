@@ -439,16 +439,9 @@ const CodeViewer: React.FC<Props> = ({
   }, [resize.width, switchSplitViewToTree]);
 
   // clear the timeout ref from memory
-  // cleanup
   useEffect(() => {
     return () => {
       if (timeout.current) clearTimeout(timeout.current);
-      setPageError(PageError.None);
-      setTreeData([]);
-      setActiveFile(undefined);
-      setIsFetchingFile(false);
-      setIsFetchingTree(false);
-      setDownloadInfo(DEFAULT_DOWNLOAD_INFO);
     };
   }, []);
 

@@ -36,10 +36,7 @@ import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
-import useModalExperimentMove, {
-  Settings as MoveExperimentSettings,
-  settingsConfig as moveExperimentSettingsConfig,
-} from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -68,6 +65,7 @@ import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
+  CommandResponse,
   CommandTask,
   ExperimentItem,
   ExperimentPagination,
@@ -82,7 +80,7 @@ import {
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
 import { getDisplayName } from 'utils/user';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
@@ -123,17 +121,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
-    moveExperimentSettingsConfig,
-  );
 
   const permissions = usePermissions();
 
   const id = project?.id;
-
-  useEffect(() => {
-    updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-  }, [updateDestinationSettings, project?.workspaceId]);
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ExperimentListSettings>(settingsConfig);
@@ -642,7 +633,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     useModalExperimentMove({ onClose: handleActionComplete, user });
 
   const sendBatchActions = useCallback(
-    (action: Action): Promise<void[] | CommandTask> | void => {
+    (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
@@ -690,7 +681,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       try {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
-          openCommand(result as CommandTask);
+          openCommandResponse(result as CommandResponse);
         }
 
         /*
@@ -833,16 +824,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // cleanup
   useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
-
-      setExperiments([]);
-      setLabels([]);
-      setIsLoading(true);
-      setTotal(0);
     };
   }, [canceler, stopPolling]);
 

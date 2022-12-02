@@ -194,13 +194,13 @@ message DeleteModelResponse {}
 // Request for a version of a model in the registry.
 message GetModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "model_name", "model_version" ] }
+    json_schema: { required: [ "model_name", "model_version_num" ] }
   };
 
   // The name of the model.
   string model_name = 3;
-  // The version number.
-  int32 model_version = 2;
+  // Sequential model version number.
+  int32 model_version_num = 2;
 }
 
 // Response for GetModelVersionRequest.
@@ -297,10 +297,10 @@ message PatchModelVersionRequest {
 
   // The name of the model being updated.
   string model_name = 4;
-  // The model version being updated.
+  // Patch payload.
   determined.model.v1.PatchModelVersion model_version = 2;
-  // The id of the model version being updated.
-  int32 model_version_id = 3;
+  // The model version number being updated.
+  int32 model_version_num = 3;
 }
 
 // Response to PatchModelVersionRequest.
@@ -316,13 +316,13 @@ message PatchModelVersionResponse {
 // Request for deleting a model version in the registry.
 message DeleteModelVersionRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "model_name", "model_version_id" ] }
+    json_schema: { required: [ "model_name", "model_version_num" ] }
   };
 
   // The name of the model associated with the model version.
   string model_name = 3;
-  // The id of the model version to delete.
-  int32 model_version_id = 2;
+  // Sequential model version number.
+  int32 model_version_num = 2;
 }
 
 // Response to DeleteModelVersionRequest

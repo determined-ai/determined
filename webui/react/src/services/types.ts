@@ -179,7 +179,7 @@ export interface GetModelDetailsParams extends PaginationParams {
 
 export interface GetModelVersionParams {
   modelName: string;
-  versionId: number;
+  versionNum: number;
 }
 
 export type DeleteModelVersionParams = GetModelVersionParams;
@@ -205,7 +205,7 @@ export interface PatchModelVersionParams {
     notes?: string;
   };
   modelName: string;
-  versionId: number;
+  versionNum: number;
 }
 
 export interface PostModelParams {
@@ -325,12 +325,7 @@ export interface SetUserPasswordParams {
 
 export interface PatchUserParams {
   userId: number;
-  userParams: {
-    active?: boolean;
-    admin?: boolean;
-    displayName?: string;
-    username?: string;
-  };
+  userParams: Api.V1PatchUser;
 }
 
 export interface CreateGroupsParams {

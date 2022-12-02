@@ -2,7 +2,7 @@ WITH mv AS (
   SELECT version, checkpoint_uuid, model_versions.id, creation_time, name, comment, metadata, labels, notes, username, user_id, last_updated_time
     FROM model_versions
     LEFT JOIN users ON users.id = model_versions.user_id
-    WHERE model_id = $1 AND model_versions.id = $2
+    WHERE model_id = $1 AND model_versions.version = $2
 ),
 m AS (
   SELECT m.id, m.name, m.description, m.notes, m.metadata, m.creation_time, m.last_updated_time, array_to_json(m.labels) AS labels, u.username, m.user_id, m.archived, COUNT(mv.version) as num_versions

@@ -46,19 +46,15 @@ def main(ready: Pattern, waiting: Optional[Pattern] = None):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Read STDIN for a match and mark a task as ready"
-    )
+    parser = argparse.ArgumentParser(description="Read STDIN for a match and mark a task as ready")
     parser.add_argument(
         "--ready-regex", type=str, help="the pattern to match task ready", required=True
     )
-    parser.add_argument(
-        "--waiting-regex", type=str, help="the pattern to match task waiting"
-    )
+    parser.add_argument("--waiting-regex", type=str, help="the pattern to match task waiting")
     args = parser.parse_args()
 
     ready_regex = re.compile(args.ready_regex)
-    if args.waiting_regex: 
+    if args.waiting_regex:
         waiting_regrex = re.compile(args.waiting_regex)
         main(ready_regex, waiting_regrex)
     else:

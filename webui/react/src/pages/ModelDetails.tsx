@@ -117,13 +117,17 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveModelVersionTags = useCallback(
-    async (modelName: string, versionId: number, tags: string[]) => {
+    async (modelName: string, versionNum: number, tags: string[]) => {
       try {
-        await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
+        await patchModelVersion({
+          body: { labels: tags, modelName },
+          modelName,
+          versionNum: versionNum,
+        });
         await fetchModel();
       } catch (e) {
         handleError(e, {
-          publicSubject: `Unable to update model version ${versionId} tags.`,
+          publicSubject: `Unable to update model version ${versionNum} tags.`,
           silent: true,
           type: ErrorType.Api,
         });
@@ -133,14 +137,14 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveVersionDescription = useCallback(
-    async (editedDescription: string, versionId: number) => {
+    async (editedDescription: string, versionNum: number) => {
       try {
         const modelName = model?.model.name;
         if (modelName) {
           await patchModelVersion({
             body: { comment: editedDescription, modelName },
             modelName,
-            versionId,
+            versionNum: versionNum,
           });
         }
       } catch (e) {
@@ -166,7 +170,7 @@ const ModelDetails: React.FC = () => {
               compact
               disabled={record.model.archived}
               tags={record.labels ?? []}
-              onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
+              onChange={(tags) => saveModelVersionTags(record.model.name, record.version, tags)}
             />
           </div>
         </Typography.Text>
@@ -185,7 +189,7 @@ const ModelDetails: React.FC = () => {
         disabled={record.model.archived}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         value={record.comment ?? ''}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
+        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.version)}
       />
     );
 

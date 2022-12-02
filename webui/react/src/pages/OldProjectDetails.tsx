@@ -38,10 +38,7 @@ import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
-import useModalExperimentMove, {
-  Settings as MoveExperimentSettings,
-  settingsConfig as moveExperimentSettingsConfig,
-} from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -78,6 +75,7 @@ import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
+  CommandResponse,
   CommandTask,
   ExperimentItem,
   ExperimentPagination,
@@ -137,15 +135,6 @@ const ProjectDetails: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const expPermissions = usePermissions();
-
-  const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
-    moveExperimentSettingsConfig,
-  );
-
-  useEffect(() => {
-    updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.workspaceId]);
 
   const id = parseInt(projectId ?? '1');
 
@@ -670,7 +659,7 @@ const ProjectDetails: React.FC = () => {
     useModalExperimentMove({ onClose: handleActionComplete, user });
 
   const sendBatchActions = useCallback(
-    (action: Action): Promise<void[] | CommandTask> | void => {
+    (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
@@ -904,17 +893,10 @@ const ProjectDetails: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // cleanup
   useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
-
-      setProject(undefined);
-      setExperiments([]);
-      setLabels([]);
-      setIsLoading(true);
-      setTotal(0);
     };
   }, [canceler, stopPolling]);
 

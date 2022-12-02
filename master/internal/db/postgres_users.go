@@ -216,9 +216,10 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 		if err = deleteAgentUserGroup(tx, updated.ID); err != nil {
 			return err
 		}
-
-		if err = addAgentUserGroup(tx, updated.ID, ug); err != nil {
-			return err
+		if *ug != (model.AgentUserGroup{}) {
+			if err = addAgentUserGroup(tx, updated.ID, ug); err != nil {
+				return err
+			}
 		}
 	}
 

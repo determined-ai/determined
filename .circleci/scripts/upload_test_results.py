@@ -12,13 +12,12 @@ def upload_results(status, parallel_run, directory, job_id, access_key, url) -> 
         # Flush write data and reset pointer
         temp_archive.flush()
         temp_archive.seek(0)
-        response = requests.post(url,
-                                 headers={"x-api-key": access_key},
-                                 files={"report": temp_archive},
-                                 data={"status": status,
-                                       "parallel_run": parallel_run,
-                                       "job_id": job_id}
-                                 )
+        response = requests.post(
+            url,
+            headers={"x-api-key": access_key},
+            files={"report": temp_archive},
+            data={"status": status, "parallel_run": parallel_run, "job_id": job_id},
+        )
         print(response)
 
 
@@ -31,9 +30,9 @@ def main() -> None:
     parser.add_argument("access_key", help="Determined CI API key")
     parser.add_argument("url", help="Determined CI server URL")
     args = parser.parse_args()
-    upload_results(args.status, args.parallel_run,
-                   args.filepath, args.job_id,
-                   args.access_key, args.url)
+    upload_results(
+        args.status, args.parallel_run, args.filepath, args.job_id, args.access_key, args.url
+    )
 
 
 if __name__ == "__main__":

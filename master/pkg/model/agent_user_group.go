@@ -5,6 +5,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // An AgentUserGroup represents a username and primary group for a user on an
@@ -75,4 +76,24 @@ func (c *AgentUserGroup) OwnArchive(oldArchive archive.Archive) archive.Archive 
 		newArchive = append(newArchive, newItem)
 	}
 	return newArchive
+}
+
+// AgentUserGroupFromProto convert agent user group from proto to model.
+func AgentUserGroupFromProto(aug *userv1.AgentUserGroup) (*AgentUserGroup, error) {
+	if aug.AgentUid == nil && aug.AgentGid == nil && aug.AgentUser == nil && aug.AgentGroup == nil {
+		return &AgentUserGroup{}, nil
+	}
+	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
+		return nil, errors.New("agentUid, agentGid, agentUser and agentGroup cannot be empty")
+	}
+	agentUserGroup := &AgentUserGroup{
+		UID:   int(*aug.AgentUid),
+		GID:   int(*aug.AgentGid),
+		User:  *aug.AgentUser,
+		Group: *aug.AgentGroup,
+	}
+	if agentUserGroup.User == "" || agentUserGroup.Group == "" {
+		return nil, errors.New("agentUser and agentGroup names cannot be empty")
+	}
+	return agentUserGroup, nil
 }

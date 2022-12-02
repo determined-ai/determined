@@ -439,15 +439,9 @@ const LogViewer: React.FC<Props> = ({
   }, [addLogs, decoder, initialLogs]);
 
   // Abort all outstanding API calls if log viewer unmounts.
-  // cleanup
   useEffect(() => {
     return () => {
       canceler.abort();
-      setIsFetching(false);
-      setFetchDirection(FetchDirection.Older);
-      setIsTailing(false);
-      setShowButtons(false);
-      setLogs([]);
     };
   }, [canceler]);
 

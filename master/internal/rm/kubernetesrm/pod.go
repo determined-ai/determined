@@ -305,9 +305,9 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			// determined containers generates an exit code. To check if this is
 			// the case we check if a deletion timestamp has been set.
 			if p.pod.ObjectMeta.DeletionTimestamp != nil {
-				ctx.Log().Info("unable to get exit code for pod setting exit code to 137")
-				exitCode = 137
-				exitMessage = ""
+				ctx.Log().Info("unable to get exit code for pod, setting exit code to 1025")
+				exitCode = 1025
+				exitMessage = "unable to get exit code or exit message from pod"
 			} else {
 				return err
 			}

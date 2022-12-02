@@ -44,6 +44,7 @@ interface MovePermissionsArgs {
 }
 
 interface PermissionsHook {
+  canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -70,7 +71,6 @@ interface PermissionsHook {
   canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
-  canViewUsers: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
 }
@@ -99,6 +99,7 @@ const usePermissions = (): PermissionsHook => {
 
   const permissions = useMemo(
     () => ({
+      canAdministrateUsers: canAdministrateUsers(rbacOpts),
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
@@ -142,7 +143,6 @@ const usePermissions = (): PermissionsHook => {
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
       canViewGroups: canViewGroups(rbacOpts),
-      canViewUsers: canAdministrateUsers(rbacOpts),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),

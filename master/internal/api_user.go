@@ -50,23 +50,6 @@ func clearUsername(targetUser model.User, name string, minLength int) (*string, 
 	return &clearName, nil
 }
 
-func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
-	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
-		return status.Error(
-			codes.InvalidArgument,
-			"AgentUid, AgentGid, AgentUser and AgentGroup cannot be empty",
-		)
-	}
-	if *aug.AgentUser == "" || *aug.AgentGroup == "" {
-		return status.Error(
-			codes.InvalidArgument,
-			"AgentUser and AgentGroup names cannot be empty",
-		)
-	}
-
-	return nil
-}
-
 // TODO(ilia): We need null.Int32.
 func i64Ptr2i32(v *int64) *int32 {
 	if v == nil {
@@ -276,20 +259,10 @@ func (a *apiServer) PostUser(
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
 		aug := req.User.AgentUserGroup
-		if err := validateProtoAgentUserGroup(aug); err != nil {
-			return nil, err
-		}
-
-		agentUserGroup = &model.AgentUserGroup{
-			UID:   int(*req.User.AgentUserGroup.AgentUid),
-			GID:   int(*req.User.AgentUserGroup.AgentGid),
-			User:  *req.User.AgentUserGroup.AgentUser,
-			Group: *req.User.AgentUserGroup.AgentGroup,
-		}
-		if agentUserGroup.User == "" || agentUserGroup.Group == "" {
+		if agentUserGroup, err = model.AgentUserGroupFromProto(aug); err != nil {
 			return nil, status.Error(
 				codes.InvalidArgument,
-				"AgentUser and AgentGroup names cannot be empty",
+				err.Error(),
 			)
 		}
 	}
@@ -479,14 +452,11 @@ func (a *apiServer) PatchUser(
 
 	var ug *model.AgentUserGroup
 	if aug := req.User.AgentUserGroup; aug != nil {
-		if err = validateProtoAgentUserGroup(aug); err != nil {
-			return nil, err
-		}
-		ug = &model.AgentUserGroup{
-			UID:   int(*req.User.AgentUserGroup.AgentUid),
-			GID:   int(*req.User.AgentUserGroup.AgentGid),
-			User:  *req.User.AgentUserGroup.AgentUser,
-			Group: *req.User.AgentUserGroup.AgentGroup,
+		if ug, err = model.AgentUserGroupFromProto(aug); err != nil {
+			return nil, status.Error(
+				codes.InvalidArgument,
+				err.Error(),
+			)
 		}
 
 		if err = user.AuthZProvider.Get().

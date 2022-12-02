@@ -18,7 +18,7 @@ import {
   TrialWorkloadFilter,
 } from 'types';
 import { canActionExperiment } from 'utils/experiment';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 interface Props {
   experiment: ExperimentBase;
@@ -74,8 +74,8 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
         label: 'TensorBoard',
         onClick: async () => {
           setIsRunningTensorBoard(true);
-          const tensorboard = await openOrCreateTensorBoard({ trialIds: [trial.id] });
-          openCommand(tensorboard);
+          const commandResponse = await openOrCreateTensorBoard({ trialIds: [trial.id] });
+          openCommandResponse(commandResponse);
           await fetchTrialDetails();
           setIsRunningTensorBoard(false);
         },

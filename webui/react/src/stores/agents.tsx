@@ -39,7 +39,7 @@ export const useFetchAgents = (canceler: AbortController): (() => Promise<void>)
 
   return useCallback(async (): Promise<void> => {
     try {
-      const agents = await getAgents({ signal: canceler.signal });
+      const agents = await getAgents({}, { signal: canceler.signal });
       updateAgents(Loaded(agents));
     } catch (e) {
       handleError(e);

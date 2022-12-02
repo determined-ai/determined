@@ -44,9 +44,7 @@ class DownloadExternalFileCollector(asset.DownloadFileCollector):
                 if not os.access(filename, os.R_OK):
                     logger.warning(__("download file not readable: %s") % filename)
                     continue
-                node["filename"] = app.env.dlfiles.add_file(
-                    app.env.docname, rel_filename
-                )
+                node["filename"] = app.env.dlfiles.add_file(app.env.docname, rel_filename)
 
 
 def setup(app: application.Sphinx) -> Dict[str, Any]:

@@ -139,7 +139,7 @@
     "monaco-editor-webpack-plugin": "^3.0.1",
     "morgan": "^1.10.0",
     "npm-force-resolutions": "0.0.10",
-    "prettier": "^2.7.1",
+    "prettier": "^2.8.0",
     "react-app-rewired": "^2.1.6",
     "react-docgen-typescript-loader": "^3.7.2",
     "react-scripts": "^4.0.3",
