@@ -81,127 +81,127 @@ export class RequiredError extends Error {
  * The current state of the checkpoint.   - STATE_UNSPECIFIED: The state of the checkpoint is unknown.  - STATE_ACTIVE: The checkpoint is in an active state.  - STATE_COMPLETED: The checkpoint is persisted to checkpoint storage.  - STATE_ERROR: The checkpoint errored.  - STATE_DELETED: The checkpoint has been deleted.
  * @export
  */
-export type Determinedcheckpointv1State = 'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED';
-
 export const Determinedcheckpointv1State = {
-    UNSPECIFIED: 'STATE_UNSPECIFIED' as Determinedcheckpointv1State,
-    ACTIVE: 'STATE_ACTIVE' as Determinedcheckpointv1State,
-    COMPLETED: 'STATE_COMPLETED' as Determinedcheckpointv1State,
-    ERROR: 'STATE_ERROR' as Determinedcheckpointv1State,
-    DELETED: 'STATE_DELETED' as Determinedcheckpointv1State
-};
+    UNSPECIFIED: 'STATE_UNSPECIFIED',
+    ACTIVE: 'STATE_ACTIVE',
+    COMPLETED: 'STATE_COMPLETED',
+    ERROR: 'STATE_ERROR',
+    DELETED: 'STATE_DELETED',
+} as const;
+
+export type Determinedcheckpointv1State = typeof Determinedcheckpointv1State[keyof typeof Determinedcheckpointv1State];
 /**
  * The current state of the container.   - STATE_UNSPECIFIED: The container state is unknown.  - STATE_ASSIGNED: The container has been assigned to an agent but has not started yet.  - STATE_PULLING: The container's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been built and the container is being started, but the service in the container is not ready yet.  - STATE_RUNNING: The service in the container is able to accept requests.  - STATE_TERMINATED: The container has completely exited or the container has been aborted prior to getting assigned.
  * @export
  */
-export type Determinedcontainerv1State = 'STATE_UNSPECIFIED' | 'STATE_ASSIGNED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING' | 'STATE_TERMINATED';
-
 export const Determinedcontainerv1State = {
-    UNSPECIFIED: 'STATE_UNSPECIFIED' as Determinedcontainerv1State,
-    ASSIGNED: 'STATE_ASSIGNED' as Determinedcontainerv1State,
-    PULLING: 'STATE_PULLING' as Determinedcontainerv1State,
-    STARTING: 'STATE_STARTING' as Determinedcontainerv1State,
-    RUNNING: 'STATE_RUNNING' as Determinedcontainerv1State,
-    TERMINATED: 'STATE_TERMINATED' as Determinedcontainerv1State
-};
+    UNSPECIFIED: 'STATE_UNSPECIFIED',
+    ASSIGNED: 'STATE_ASSIGNED',
+    PULLING: 'STATE_PULLING',
+    STARTING: 'STATE_STARTING',
+    RUNNING: 'STATE_RUNNING',
+    TERMINATED: 'STATE_TERMINATED',
+} as const;
+
+export type Determinedcontainerv1State = typeof Determinedcontainerv1State[keyof typeof Determinedcontainerv1State];
 /**
  * The type of the Device.   - TYPE_UNSPECIFIED: An unspecified device type.  - TYPE_CPU: A CPU device.  - TYPE_CUDA: CUDA device.  - TYPE_ROCM: ROCM.
  * @export
  */
-export type Determineddevicev1Type = 'TYPE_UNSPECIFIED' | 'TYPE_CPU' | 'TYPE_CUDA' | 'TYPE_ROCM';
-
 export const Determineddevicev1Type = {
-    UNSPECIFIED: 'TYPE_UNSPECIFIED' as Determineddevicev1Type,
-    CPU: 'TYPE_CPU' as Determineddevicev1Type,
-    CUDA: 'TYPE_CUDA' as Determineddevicev1Type,
-    ROCM: 'TYPE_ROCM' as Determineddevicev1Type
-};
+    UNSPECIFIED: 'TYPE_UNSPECIFIED',
+    CPU: 'TYPE_CPU',
+    CUDA: 'TYPE_CUDA',
+    ROCM: 'TYPE_ROCM',
+} as const;
+
+export type Determineddevicev1Type = typeof Determineddevicev1Type[keyof typeof Determineddevicev1Type];
 /**
  * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
  * @export
  */
-export type Determinedexperimentv1State = 'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING';
-
 export const Determinedexperimentv1State = {
-    UNSPECIFIED: 'STATE_UNSPECIFIED' as Determinedexperimentv1State,
-    ACTIVE: 'STATE_ACTIVE' as Determinedexperimentv1State,
-    PAUSED: 'STATE_PAUSED' as Determinedexperimentv1State,
-    STOPPINGCOMPLETED: 'STATE_STOPPING_COMPLETED' as Determinedexperimentv1State,
-    STOPPINGCANCELED: 'STATE_STOPPING_CANCELED' as Determinedexperimentv1State,
-    STOPPINGERROR: 'STATE_STOPPING_ERROR' as Determinedexperimentv1State,
-    COMPLETED: 'STATE_COMPLETED' as Determinedexperimentv1State,
-    CANCELED: 'STATE_CANCELED' as Determinedexperimentv1State,
-    ERROR: 'STATE_ERROR' as Determinedexperimentv1State,
-    DELETED: 'STATE_DELETED' as Determinedexperimentv1State,
-    DELETING: 'STATE_DELETING' as Determinedexperimentv1State,
-    DELETEFAILED: 'STATE_DELETE_FAILED' as Determinedexperimentv1State,
-    STOPPINGKILLED: 'STATE_STOPPING_KILLED' as Determinedexperimentv1State,
-    QUEUED: 'STATE_QUEUED' as Determinedexperimentv1State,
-    PULLING: 'STATE_PULLING' as Determinedexperimentv1State,
-    STARTING: 'STATE_STARTING' as Determinedexperimentv1State,
-    RUNNING: 'STATE_RUNNING' as Determinedexperimentv1State
-};
+    UNSPECIFIED: 'STATE_UNSPECIFIED',
+    ACTIVE: 'STATE_ACTIVE',
+    PAUSED: 'STATE_PAUSED',
+    STOPPINGCOMPLETED: 'STATE_STOPPING_COMPLETED',
+    STOPPINGCANCELED: 'STATE_STOPPING_CANCELED',
+    STOPPINGERROR: 'STATE_STOPPING_ERROR',
+    COMPLETED: 'STATE_COMPLETED',
+    CANCELED: 'STATE_CANCELED',
+    ERROR: 'STATE_ERROR',
+    DELETED: 'STATE_DELETED',
+    DELETING: 'STATE_DELETING',
+    DELETEFAILED: 'STATE_DELETE_FAILED',
+    STOPPINGKILLED: 'STATE_STOPPING_KILLED',
+    QUEUED: 'STATE_QUEUED',
+    PULLING: 'STATE_PULLING',
+    STARTING: 'STATE_STARTING',
+    RUNNING: 'STATE_RUNNING',
+} as const;
+
+export type Determinedexperimentv1State = typeof Determinedexperimentv1State[keyof typeof Determinedexperimentv1State];
 /**
  * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
  * @export
  */
-export type Determinedjobv1State = 'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED';
-
 export const Determinedjobv1State = {
-    UNSPECIFIED: 'STATE_UNSPECIFIED' as Determinedjobv1State,
-    QUEUED: 'STATE_QUEUED' as Determinedjobv1State,
-    SCHEDULED: 'STATE_SCHEDULED' as Determinedjobv1State,
-    SCHEDULEDBACKFILLED: 'STATE_SCHEDULED_BACKFILLED' as Determinedjobv1State
-};
+    UNSPECIFIED: 'STATE_UNSPECIFIED',
+    QUEUED: 'STATE_QUEUED',
+    SCHEDULED: 'STATE_SCHEDULED',
+    SCHEDULEDBACKFILLED: 'STATE_SCHEDULED_BACKFILLED',
+} as const;
+
+export type Determinedjobv1State = typeof Determinedjobv1State[keyof typeof Determinedjobv1State];
 /**
  * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
  * @export
  */
-export type Determinedjobv1Type = 'TYPE_UNSPECIFIED' | 'TYPE_EXPERIMENT' | 'TYPE_NOTEBOOK' | 'TYPE_TENSORBOARD' | 'TYPE_SHELL' | 'TYPE_COMMAND' | 'TYPE_CHECKPOINT_GC';
-
 export const Determinedjobv1Type = {
-    UNSPECIFIED: 'TYPE_UNSPECIFIED' as Determinedjobv1Type,
-    EXPERIMENT: 'TYPE_EXPERIMENT' as Determinedjobv1Type,
-    NOTEBOOK: 'TYPE_NOTEBOOK' as Determinedjobv1Type,
-    TENSORBOARD: 'TYPE_TENSORBOARD' as Determinedjobv1Type,
-    SHELL: 'TYPE_SHELL' as Determinedjobv1Type,
-    COMMAND: 'TYPE_COMMAND' as Determinedjobv1Type,
-    CHECKPOINTGC: 'TYPE_CHECKPOINT_GC' as Determinedjobv1Type
-};
+    UNSPECIFIED: 'TYPE_UNSPECIFIED',
+    EXPERIMENT: 'TYPE_EXPERIMENT',
+    NOTEBOOK: 'TYPE_NOTEBOOK',
+    TENSORBOARD: 'TYPE_TENSORBOARD',
+    SHELL: 'TYPE_SHELL',
+    COMMAND: 'TYPE_COMMAND',
+    CHECKPOINTGC: 'TYPE_CHECKPOINT_GC',
+} as const;
+
+export type Determinedjobv1Type = typeof Determinedjobv1Type[keyof typeof Determinedjobv1Type];
 /**
  * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.  - STATE_QUEUED: Additional state to cover queueing operations.
  * @export
  */
-export type Determinedtaskv1State = 'STATE_UNSPECIFIED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING' | 'STATE_TERMINATED' | 'STATE_TERMINATING' | 'STATE_WAITING' | 'STATE_QUEUED';
-
 export const Determinedtaskv1State = {
-    UNSPECIFIED: 'STATE_UNSPECIFIED' as Determinedtaskv1State,
-    PULLING: 'STATE_PULLING' as Determinedtaskv1State,
-    STARTING: 'STATE_STARTING' as Determinedtaskv1State,
-    RUNNING: 'STATE_RUNNING' as Determinedtaskv1State,
-    TERMINATED: 'STATE_TERMINATED' as Determinedtaskv1State,
-    TERMINATING: 'STATE_TERMINATING' as Determinedtaskv1State,
-    WAITING: 'STATE_WAITING' as Determinedtaskv1State,
-    QUEUED: 'STATE_QUEUED' as Determinedtaskv1State
-};
+    UNSPECIFIED: 'STATE_UNSPECIFIED',
+    PULLING: 'STATE_PULLING',
+    STARTING: 'STATE_STARTING',
+    RUNNING: 'STATE_RUNNING',
+    TERMINATED: 'STATE_TERMINATED',
+    TERMINATING: 'STATE_TERMINATING',
+    WAITING: 'STATE_WAITING',
+    QUEUED: 'STATE_QUEUED',
+} as const;
+
+export type Determinedtaskv1State = typeof Determinedtaskv1State[keyof typeof Determinedtaskv1State];
 /**
  * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
  * @export
  */
-export type Determinedtrialv1State = 'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_KILLED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_ERROR' | 'STATE_CANCELED' | 'STATE_COMPLETED' | 'STATE_ERROR';
-
 export const Determinedtrialv1State = {
-    UNSPECIFIED: 'STATE_UNSPECIFIED' as Determinedtrialv1State,
-    ACTIVE: 'STATE_ACTIVE' as Determinedtrialv1State,
-    PAUSED: 'STATE_PAUSED' as Determinedtrialv1State,
-    STOPPINGCANCELED: 'STATE_STOPPING_CANCELED' as Determinedtrialv1State,
-    STOPPINGKILLED: 'STATE_STOPPING_KILLED' as Determinedtrialv1State,
-    STOPPINGCOMPLETED: 'STATE_STOPPING_COMPLETED' as Determinedtrialv1State,
-    STOPPINGERROR: 'STATE_STOPPING_ERROR' as Determinedtrialv1State,
-    CANCELED: 'STATE_CANCELED' as Determinedtrialv1State,
-    COMPLETED: 'STATE_COMPLETED' as Determinedtrialv1State,
-    ERROR: 'STATE_ERROR' as Determinedtrialv1State
-};
+    UNSPECIFIED: 'STATE_UNSPECIFIED',
+    ACTIVE: 'STATE_ACTIVE',
+    PAUSED: 'STATE_PAUSED',
+    STOPPINGCANCELED: 'STATE_STOPPING_CANCELED',
+    STOPPINGKILLED: 'STATE_STOPPING_KILLED',
+    STOPPINGCOMPLETED: 'STATE_STOPPING_COMPLETED',
+    STOPPINGERROR: 'STATE_STOPPING_ERROR',
+    CANCELED: 'STATE_CANCELED',
+    COMPLETED: 'STATE_COMPLETED',
+    ERROR: 'STATE_ERROR',
+} as const;
+
+export type Determinedtrialv1State = typeof Determinedtrialv1State[keyof typeof Determinedtrialv1State];
 /**
  * Series of data points for an experiment trial.
  * @export
@@ -274,24 +274,24 @@ export interface GetHPImportanceResponseMetricHPImportance {
  * - PRODUCT_UNSPECIFIED: Not a Cloud Community offering  - PRODUCT_COMMUNITY: Determined Cloud, Community Edition
  * @export
  */
-export type GetMasterResponseProduct = 'PRODUCT_UNSPECIFIED' | 'PRODUCT_COMMUNITY';
-
 export const GetMasterResponseProduct = {
-    UNSPECIFIED: 'PRODUCT_UNSPECIFIED' as GetMasterResponseProduct,
-    COMMUNITY: 'PRODUCT_COMMUNITY' as GetMasterResponseProduct
-};
+    UNSPECIFIED: 'PRODUCT_UNSPECIFIED',
+    COMMUNITY: 'PRODUCT_COMMUNITY',
+} as const;
+
+export type GetMasterResponseProduct = typeof GetMasterResponseProduct[keyof typeof GetMasterResponseProduct];
 /**
  * Filter workloads with training, validation, and checkpoint information.   - FILTER_OPTION_UNSPECIFIED: Any workload.  - FILTER_OPTION_CHECKPOINT: Only workloads with an associated checkpoint.  - FILTER_OPTION_VALIDATION: Only validation workloads.  - FILTER_OPTION_CHECKPOINT_OR_VALIDATION: Only validation workloads or ones with an associated checkpoint.
  * @export
  */
-export type GetTrialWorkloadsRequestFilterOption = 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION';
-
 export const GetTrialWorkloadsRequestFilterOption = {
-    UNSPECIFIED: 'FILTER_OPTION_UNSPECIFIED' as GetTrialWorkloadsRequestFilterOption,
-    CHECKPOINT: 'FILTER_OPTION_CHECKPOINT' as GetTrialWorkloadsRequestFilterOption,
-    VALIDATION: 'FILTER_OPTION_VALIDATION' as GetTrialWorkloadsRequestFilterOption,
-    CHECKPOINTORVALIDATION: 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION' as GetTrialWorkloadsRequestFilterOption
-};
+    UNSPECIFIED: 'FILTER_OPTION_UNSPECIFIED',
+    CHECKPOINT: 'FILTER_OPTION_CHECKPOINT',
+    VALIDATION: 'FILTER_OPTION_VALIDATION',
+    CHECKPOINTORVALIDATION: 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION',
+} as const;
+
+export type GetTrialWorkloadsRequestFilterOption = typeof GetTrialWorkloadsRequestFilterOption[keyof typeof GetTrialWorkloadsRequestFilterOption];
 /**
  * https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any
  * @export
@@ -315,11 +315,11 @@ export interface ProtobufAny {
  * `NullValue` is a singleton enumeration to represent the null value for the `Value` type union.   The JSON representation for `NullValue` is JSON `null`.   - NULL_VALUE: Null value.
  * @export
  */
-export type ProtobufNullValue = 'NULL_VALUE';
-
 export const ProtobufNullValue = {
-    NULLVALUE: 'NULL_VALUE' as ProtobufNullValue
-};
+    NULLVALUE: 'NULL_VALUE',
+} as const;
+
+export type ProtobufNullValue = typeof ProtobufNullValue[keyof typeof ProtobufNullValue];
 /**
  * 
  * @export
@@ -677,26 +677,26 @@ export interface TrialFiltersRankWithinExp {
  * To distinguish the 2 different categories of metrics.   - PROFILER_METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - PROFILER_METRIC_TYPE_SYSTEM: For systems metrics, like GPU utilization or memory.  - PROFILER_METRIC_TYPE_TIMING: For timing metrics, like how long a backwards pass or getting a batch from the dataloader took.  - PROFILER_METRIC_TYPE_MISC: For other miscellaneous metrics.
  * @export
  */
-export type TrialProfilerMetricLabelsProfilerMetricType = 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC';
-
 export const TrialProfilerMetricLabelsProfilerMetricType = {
-    UNSPECIFIED: 'PROFILER_METRIC_TYPE_UNSPECIFIED' as TrialProfilerMetricLabelsProfilerMetricType,
-    SYSTEM: 'PROFILER_METRIC_TYPE_SYSTEM' as TrialProfilerMetricLabelsProfilerMetricType,
-    TIMING: 'PROFILER_METRIC_TYPE_TIMING' as TrialProfilerMetricLabelsProfilerMetricType,
-    MISC: 'PROFILER_METRIC_TYPE_MISC' as TrialProfilerMetricLabelsProfilerMetricType
-};
+    UNSPECIFIED: 'PROFILER_METRIC_TYPE_UNSPECIFIED',
+    SYSTEM: 'PROFILER_METRIC_TYPE_SYSTEM',
+    TIMING: 'PROFILER_METRIC_TYPE_TIMING',
+    MISC: 'PROFILER_METRIC_TYPE_MISC',
+} as const;
+
+export type TrialProfilerMetricLabelsProfilerMetricType = typeof TrialProfilerMetricLabelsProfilerMetricType[keyof typeof TrialProfilerMetricLabelsProfilerMetricType];
 /**
  * - NAMESPACE_UNSPECIFIED: Namespace for columns in the trials table  - NAMESPACE_HPARAMS: Namespace corrspondings to trials->hparams  - NAMESPACE_TRAINING_METRICS: Namespace corrspondings to steps->avg_metrics  - NAMESPACE_VALIDATION_METRICS: Namespace corrspondings to validations->validation_metrics
  * @export
  */
-export type TrialSorterNamespace = 'NAMESPACE_UNSPECIFIED' | 'NAMESPACE_HPARAMS' | 'NAMESPACE_TRAINING_METRICS' | 'NAMESPACE_VALIDATION_METRICS';
-
 export const TrialSorterNamespace = {
-    UNSPECIFIED: 'NAMESPACE_UNSPECIFIED' as TrialSorterNamespace,
-    HPARAMS: 'NAMESPACE_HPARAMS' as TrialSorterNamespace,
-    TRAININGMETRICS: 'NAMESPACE_TRAINING_METRICS' as TrialSorterNamespace,
-    VALIDATIONMETRICS: 'NAMESPACE_VALIDATION_METRICS' as TrialSorterNamespace
-};
+    UNSPECIFIED: 'NAMESPACE_UNSPECIFIED',
+    HPARAMS: 'NAMESPACE_HPARAMS',
+    TRAININGMETRICS: 'NAMESPACE_TRAINING_METRICS',
+    VALIDATIONMETRICS: 'NAMESPACE_VALIDATION_METRICS',
+} as const;
+
+export type TrialSorterNamespace = typeof TrialSorterNamespace[keyof typeof TrialSorterNamespace];
 /**
  * Trial is a set of workloads and are exploring a determined set of hyperparameters.
  * @export
@@ -2486,16 +2486,16 @@ export interface V1FileNode {
  * The fitting policy of the scheduler.   - FITTING_POLICY_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - FITTING_POLICY_BEST: Best fit. Tasks are preferentially “packed” together on the smallest number of agents  - FITTING_POLICY_WORST: Worst fit. Tasks are placed on under-utilized agents, spreading out the tasks.  - FITTING_POLICY_KUBERNETES: A kubernetes placeholder. In k8s, the task placement is delegated to the k8s scheduler so the fitting policy is not relevant.  - FITTING_POLICY_SLURM: A slurm placeholder. When running on slurm, task placement is delegated.  - FITTING_POLICY_PBS: A PBS placeholder. When running on PBS, task placement is delegated.
  * @export
  */
-export type V1FittingPolicy = 'FITTING_POLICY_UNSPECIFIED' | 'FITTING_POLICY_BEST' | 'FITTING_POLICY_WORST' | 'FITTING_POLICY_KUBERNETES' | 'FITTING_POLICY_SLURM' | 'FITTING_POLICY_PBS';
-
 export const V1FittingPolicy = {
-    UNSPECIFIED: 'FITTING_POLICY_UNSPECIFIED' as V1FittingPolicy,
-    BEST: 'FITTING_POLICY_BEST' as V1FittingPolicy,
-    WORST: 'FITTING_POLICY_WORST' as V1FittingPolicy,
-    KUBERNETES: 'FITTING_POLICY_KUBERNETES' as V1FittingPolicy,
-    SLURM: 'FITTING_POLICY_SLURM' as V1FittingPolicy,
-    PBS: 'FITTING_POLICY_PBS' as V1FittingPolicy
-};
+    UNSPECIFIED: 'FITTING_POLICY_UNSPECIFIED',
+    BEST: 'FITTING_POLICY_BEST',
+    WORST: 'FITTING_POLICY_WORST',
+    KUBERNETES: 'FITTING_POLICY_KUBERNETES',
+    SLURM: 'FITTING_POLICY_SLURM',
+    PBS: 'FITTING_POLICY_PBS',
+} as const;
+
+export type V1FittingPolicy = typeof V1FittingPolicy[keyof typeof V1FittingPolicy];
 /**
  * Response to GetActiveTasksCountRequest.
  * @export
@@ -2544,13 +2544,13 @@ export interface V1GetAgentResponse {
  * Sorts agents by the given field.   - SORT_BY_UNSPECIFIED: Returns agents in an unsorted list.  - SORT_BY_ID: Returns agents sorted by id.  - SORT_BY_TIME: Returns agents sorted by time.
  * @export
  */
-export type V1GetAgentsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME';
-
 export const V1GetAgentsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetAgentsRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetAgentsRequestSortBy,
-    TIME: 'SORT_BY_TIME' as V1GetAgentsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    TIME: 'SORT_BY_TIME',
+} as const;
+
+export type V1GetAgentsRequestSortBy = typeof V1GetAgentsRequestSortBy[keyof typeof V1GetAgentsRequestSortBy];
 /**
  * Response to GetAgentsRequest.
  * @export
@@ -2619,14 +2619,14 @@ export interface V1GetCommandResponse {
  * Sorts commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
  * @export
  */
-export type V1GetCommandsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
-
 export const V1GetCommandsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetCommandsRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetCommandsRequestSortBy,
-    DESCRIPTION: 'SORT_BY_DESCRIPTION' as V1GetCommandsRequestSortBy,
-    STARTTIME: 'SORT_BY_START_TIME' as V1GetCommandsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    STARTTIME: 'SORT_BY_START_TIME',
+} as const;
+
+export type V1GetCommandsRequestSortBy = typeof V1GetCommandsRequestSortBy[keyof typeof V1GetCommandsRequestSortBy];
 /**
  * Response to GetCommandsRequest.
  * @export
@@ -2669,17 +2669,17 @@ export interface V1GetCurrentTrialSearcherOperationResponse {
  * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_TRIAL_ID: Returns checkpoints sorted by trial id.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.  - SORT_BY_SEARCHER_METRIC: Returns checkpoints sorted by the experiment's `searcher.metric` configuration setting.
  * @export
  */
-export type V1GetExperimentCheckpointsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC';
-
 export const V1GetExperimentCheckpointsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetExperimentCheckpointsRequestSortBy,
-    UUID: 'SORT_BY_UUID' as V1GetExperimentCheckpointsRequestSortBy,
-    TRIALID: 'SORT_BY_TRIAL_ID' as V1GetExperimentCheckpointsRequestSortBy,
-    BATCHNUMBER: 'SORT_BY_BATCH_NUMBER' as V1GetExperimentCheckpointsRequestSortBy,
-    ENDTIME: 'SORT_BY_END_TIME' as V1GetExperimentCheckpointsRequestSortBy,
-    STATE: 'SORT_BY_STATE' as V1GetExperimentCheckpointsRequestSortBy,
-    SEARCHERMETRIC: 'SORT_BY_SEARCHER_METRIC' as V1GetExperimentCheckpointsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    UUID: 'SORT_BY_UUID',
+    TRIALID: 'SORT_BY_TRIAL_ID',
+    BATCHNUMBER: 'SORT_BY_BATCH_NUMBER',
+    ENDTIME: 'SORT_BY_END_TIME',
+    STATE: 'SORT_BY_STATE',
+    SEARCHERMETRIC: 'SORT_BY_SEARCHER_METRIC',
+} as const;
+
+export type V1GetExperimentCheckpointsRequestSortBy = typeof V1GetExperimentCheckpointsRequestSortBy[keyof typeof V1GetExperimentCheckpointsRequestSortBy];
 /**
  * Response to GetExperimentCheckpointsRequest.
  * @export
@@ -2735,20 +2735,20 @@ export interface V1GetExperimentResponse {
  * Sorts trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by `searcher.metric` in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.
  * @export
  */
-export type V1GetExperimentTrialsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS';
-
 export const V1GetExperimentTrialsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetExperimentTrialsRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetExperimentTrialsRequestSortBy,
-    STARTTIME: 'SORT_BY_START_TIME' as V1GetExperimentTrialsRequestSortBy,
-    ENDTIME: 'SORT_BY_END_TIME' as V1GetExperimentTrialsRequestSortBy,
-    STATE: 'SORT_BY_STATE' as V1GetExperimentTrialsRequestSortBy,
-    BESTVALIDATIONMETRIC: 'SORT_BY_BEST_VALIDATION_METRIC' as V1GetExperimentTrialsRequestSortBy,
-    LATESTVALIDATIONMETRIC: 'SORT_BY_LATEST_VALIDATION_METRIC' as V1GetExperimentTrialsRequestSortBy,
-    BATCHESPROCESSED: 'SORT_BY_BATCHES_PROCESSED' as V1GetExperimentTrialsRequestSortBy,
-    DURATION: 'SORT_BY_DURATION' as V1GetExperimentTrialsRequestSortBy,
-    RESTARTS: 'SORT_BY_RESTARTS' as V1GetExperimentTrialsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    STARTTIME: 'SORT_BY_START_TIME',
+    ENDTIME: 'SORT_BY_END_TIME',
+    STATE: 'SORT_BY_STATE',
+    BESTVALIDATIONMETRIC: 'SORT_BY_BEST_VALIDATION_METRIC',
+    LATESTVALIDATIONMETRIC: 'SORT_BY_LATEST_VALIDATION_METRIC',
+    BATCHESPROCESSED: 'SORT_BY_BATCHES_PROCESSED',
+    DURATION: 'SORT_BY_DURATION',
+    RESTARTS: 'SORT_BY_RESTARTS',
+} as const;
+
+export type V1GetExperimentTrialsRequestSortBy = typeof V1GetExperimentTrialsRequestSortBy[keyof typeof V1GetExperimentTrialsRequestSortBy];
 /**
  * Response to GetExperimentTrialsRequest.
  * @export
@@ -2785,23 +2785,23 @@ export interface V1GetExperimentValidationHistoryResponse {
  * Sorts experiments by the given field.   - SORT_BY_UNSPECIFIED: Returns experiments in an unsorted list.  - SORT_BY_ID: Returns experiments sorted by id.  - SORT_BY_DESCRIPTION: Returns experiments sorted by description.  - SORT_BY_START_TIME: Return experiments sorted by start time.  - SORT_BY_END_TIME: Return experiments sorted by end time. Experiments without end_time are returned after the ones with end_time.  - SORT_BY_STATE: Return experiments sorted by state.  - SORT_BY_NUM_TRIALS: Return experiments sorted by number of trials.  - SORT_BY_PROGRESS: Return experiments sorted by progress.  - SORT_BY_USER: Return experiments sorted by user.  - SORT_BY_NAME: Returns experiments sorted by name.  - SORT_BY_FORKED_FROM: Returns experiments sorted by originating model.  - SORT_BY_RESOURCE_POOL: Returns experiments sorted by resource pool.  - SORT_BY_PROJECT_ID: Returns experiments sorted by project.
  * @export
  */
-export type V1GetExperimentsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID';
-
 export const V1GetExperimentsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetExperimentsRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetExperimentsRequestSortBy,
-    DESCRIPTION: 'SORT_BY_DESCRIPTION' as V1GetExperimentsRequestSortBy,
-    STARTTIME: 'SORT_BY_START_TIME' as V1GetExperimentsRequestSortBy,
-    ENDTIME: 'SORT_BY_END_TIME' as V1GetExperimentsRequestSortBy,
-    STATE: 'SORT_BY_STATE' as V1GetExperimentsRequestSortBy,
-    NUMTRIALS: 'SORT_BY_NUM_TRIALS' as V1GetExperimentsRequestSortBy,
-    PROGRESS: 'SORT_BY_PROGRESS' as V1GetExperimentsRequestSortBy,
-    USER: 'SORT_BY_USER' as V1GetExperimentsRequestSortBy,
-    NAME: 'SORT_BY_NAME' as V1GetExperimentsRequestSortBy,
-    FORKEDFROM: 'SORT_BY_FORKED_FROM' as V1GetExperimentsRequestSortBy,
-    RESOURCEPOOL: 'SORT_BY_RESOURCE_POOL' as V1GetExperimentsRequestSortBy,
-    PROJECTID: 'SORT_BY_PROJECT_ID' as V1GetExperimentsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    STARTTIME: 'SORT_BY_START_TIME',
+    ENDTIME: 'SORT_BY_END_TIME',
+    STATE: 'SORT_BY_STATE',
+    NUMTRIALS: 'SORT_BY_NUM_TRIALS',
+    PROGRESS: 'SORT_BY_PROGRESS',
+    USER: 'SORT_BY_USER',
+    NAME: 'SORT_BY_NAME',
+    FORKEDFROM: 'SORT_BY_FORKED_FROM',
+    RESOURCEPOOL: 'SORT_BY_RESOURCE_POOL',
+    PROJECTID: 'SORT_BY_PROJECT_ID',
+} as const;
+
+export type V1GetExperimentsRequestSortBy = typeof V1GetExperimentsRequestSortBy[keyof typeof V1GetExperimentsRequestSortBy];
 /**
  * Response to GetExperimentsRequest.
  * @export
@@ -3166,13 +3166,13 @@ export interface V1GetModelVersionResponse {
  * Sort models by the given field.   - SORT_BY_UNSPECIFIED: Returns model versions in an unsorted list.  - SORT_BY_VERSION: Returns model versions sorted by version number.  - SORT_BY_CREATION_TIME: Returns model versions sorted by creation_time.
  * @export
  */
-export type V1GetModelVersionsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME';
-
 export const V1GetModelVersionsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetModelVersionsRequestSortBy,
-    VERSION: 'SORT_BY_VERSION' as V1GetModelVersionsRequestSortBy,
-    CREATIONTIME: 'SORT_BY_CREATION_TIME' as V1GetModelVersionsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    VERSION: 'SORT_BY_VERSION',
+    CREATIONTIME: 'SORT_BY_CREATION_TIME',
+} as const;
+
+export type V1GetModelVersionsRequestSortBy = typeof V1GetModelVersionsRequestSortBy[keyof typeof V1GetModelVersionsRequestSortBy];
 /**
  * Response for GetModelVersionRequest.
  * @export
@@ -3202,16 +3202,16 @@ export interface V1GetModelVersionsResponse {
  * Sort models by the given field.   - SORT_BY_UNSPECIFIED: Returns models in an unsorted list.  - SORT_BY_NAME: Returns models sorted by name.  - SORT_BY_DESCRIPTION: Returns models sorted by description.  - SORT_BY_CREATION_TIME: Returns models sorted by creation time.  - SORT_BY_LAST_UPDATED_TIME: Returns models sorted by last updated time.  - SORT_BY_NUM_VERSIONS: Returns models sorted by number of version.
  * @export
  */
-export type V1GetModelsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS';
-
 export const V1GetModelsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetModelsRequestSortBy,
-    NAME: 'SORT_BY_NAME' as V1GetModelsRequestSortBy,
-    DESCRIPTION: 'SORT_BY_DESCRIPTION' as V1GetModelsRequestSortBy,
-    CREATIONTIME: 'SORT_BY_CREATION_TIME' as V1GetModelsRequestSortBy,
-    LASTUPDATEDTIME: 'SORT_BY_LAST_UPDATED_TIME' as V1GetModelsRequestSortBy,
-    NUMVERSIONS: 'SORT_BY_NUM_VERSIONS' as V1GetModelsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    NAME: 'SORT_BY_NAME',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    CREATIONTIME: 'SORT_BY_CREATION_TIME',
+    LASTUPDATEDTIME: 'SORT_BY_LAST_UPDATED_TIME',
+    NUMVERSIONS: 'SORT_BY_NUM_VERSIONS',
+} as const;
+
+export type V1GetModelsRequestSortBy = typeof V1GetModelsRequestSortBy[keyof typeof V1GetModelsRequestSortBy];
 /**
  * Response to GetModelsRequest.
  * @export
@@ -3254,14 +3254,14 @@ export interface V1GetNotebookResponse {
  * Sorts notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
  * @export
  */
-export type V1GetNotebooksRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
-
 export const V1GetNotebooksRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetNotebooksRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetNotebooksRequestSortBy,
-    DESCRIPTION: 'SORT_BY_DESCRIPTION' as V1GetNotebooksRequestSortBy,
-    STARTTIME: 'SORT_BY_START_TIME' as V1GetNotebooksRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    STARTTIME: 'SORT_BY_START_TIME',
+} as const;
+
+export type V1GetNotebooksRequestSortBy = typeof V1GetNotebooksRequestSortBy[keyof typeof V1GetNotebooksRequestSortBy];
 /**
  * Response to GetNotebooksRequest.
  * @export
@@ -3426,14 +3426,14 @@ export interface V1GetShellResponse {
  * Sorts shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
  * @export
  */
-export type V1GetShellsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
-
 export const V1GetShellsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetShellsRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetShellsRequestSortBy,
-    DESCRIPTION: 'SORT_BY_DESCRIPTION' as V1GetShellsRequestSortBy,
-    STARTTIME: 'SORT_BY_START_TIME' as V1GetShellsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    STARTTIME: 'SORT_BY_START_TIME',
+} as const;
+
+export type V1GetShellsRequestSortBy = typeof V1GetShellsRequestSortBy[keyof typeof V1GetShellsRequestSortBy];
 /**
  * Response to GetShellsRequest.
  * @export
@@ -3528,12 +3528,12 @@ export interface V1GetTemplateResponse {
  * Sorts templates by the given field.   - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.  - SORT_BY_NAME: Returns templates sorted by name.
  * @export
  */
-export type V1GetTemplatesRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME';
-
 export const V1GetTemplatesRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetTemplatesRequestSortBy,
-    NAME: 'SORT_BY_NAME' as V1GetTemplatesRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    NAME: 'SORT_BY_NAME',
+} as const;
+
+export type V1GetTemplatesRequestSortBy = typeof V1GetTemplatesRequestSortBy[keyof typeof V1GetTemplatesRequestSortBy];
 /**
  * Response to GetTemplatesRequest.
  * @export
@@ -3576,14 +3576,14 @@ export interface V1GetTensorboardResponse {
  * Sorts tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
  * @export
  */
-export type V1GetTensorboardsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME';
-
 export const V1GetTensorboardsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetTensorboardsRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetTensorboardsRequestSortBy,
-    DESCRIPTION: 'SORT_BY_DESCRIPTION' as V1GetTensorboardsRequestSortBy,
-    STARTTIME: 'SORT_BY_START_TIME' as V1GetTensorboardsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    STARTTIME: 'SORT_BY_START_TIME',
+} as const;
+
+export type V1GetTensorboardsRequestSortBy = typeof V1GetTensorboardsRequestSortBy[keyof typeof V1GetTensorboardsRequestSortBy];
 /**
  * Response to GetTensorboardsRequest.
  * @export
@@ -3607,15 +3607,15 @@ export interface V1GetTensorboardsResponse {
  * Sorts checkpoints by the given field.   - SORT_BY_UNSPECIFIED: Returns checkpoints in an unsorted list.  - SORT_BY_UUID: Returns checkpoints sorted by UUID.  - SORT_BY_BATCH_NUMBER: Returns checkpoints sorted by batch number.  - SORT_BY_END_TIME: Returns checkpoints sorted by end time.  - SORT_BY_STATE: Returns checkpoints sorted by state.
  * @export
  */
-export type V1GetTrialCheckpointsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE';
-
 export const V1GetTrialCheckpointsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetTrialCheckpointsRequestSortBy,
-    UUID: 'SORT_BY_UUID' as V1GetTrialCheckpointsRequestSortBy,
-    BATCHNUMBER: 'SORT_BY_BATCH_NUMBER' as V1GetTrialCheckpointsRequestSortBy,
-    ENDTIME: 'SORT_BY_END_TIME' as V1GetTrialCheckpointsRequestSortBy,
-    STATE: 'SORT_BY_STATE' as V1GetTrialCheckpointsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    UUID: 'SORT_BY_UUID',
+    BATCHNUMBER: 'SORT_BY_BATCH_NUMBER',
+    ENDTIME: 'SORT_BY_END_TIME',
+    STATE: 'SORT_BY_STATE',
+} as const;
+
+export type V1GetTrialCheckpointsRequestSortBy = typeof V1GetTrialCheckpointsRequestSortBy[keyof typeof V1GetTrialCheckpointsRequestSortBy];
 /**
  * Response to GetTrialCheckpointsRequest.
  * @export
@@ -3749,16 +3749,16 @@ export interface V1GetUserSettingResponse {
  * Sort users by the given field.   - SORT_BY_UNSPECIFIED: Returns users in an unsorted list.  - SORT_BY_DISPLAY_NAME: Returns users sorted by display name.  - SORT_BY_USER_NAME: Returns users sorted by user name.  - SORT_BY_ADMIN: Returns users sorted by if they are admin.  - SORT_BY_ACTIVE: Returns users sorted by if they are active.  - SORT_BY_MODIFIED_TIME: Returns users sorted by modified time.
  * @export
  */
-export type V1GetUsersRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME';
-
 export const V1GetUsersRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetUsersRequestSortBy,
-    DISPLAYNAME: 'SORT_BY_DISPLAY_NAME' as V1GetUsersRequestSortBy,
-    USERNAME: 'SORT_BY_USER_NAME' as V1GetUsersRequestSortBy,
-    ADMIN: 'SORT_BY_ADMIN' as V1GetUsersRequestSortBy,
-    ACTIVE: 'SORT_BY_ACTIVE' as V1GetUsersRequestSortBy,
-    MODIFIEDTIME: 'SORT_BY_MODIFIED_TIME' as V1GetUsersRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    DISPLAYNAME: 'SORT_BY_DISPLAY_NAME',
+    USERNAME: 'SORT_BY_USER_NAME',
+    ADMIN: 'SORT_BY_ADMIN',
+    ACTIVE: 'SORT_BY_ACTIVE',
+    MODIFIEDTIME: 'SORT_BY_MODIFIED_TIME',
+} as const;
+
+export type V1GetUsersRequestSortBy = typeof V1GetUsersRequestSortBy[keyof typeof V1GetUsersRequestSortBy];
 /**
  * Response to GetUsersRequest.
  * @export
@@ -3795,16 +3795,16 @@ export interface V1GetWebhooksResponse {
  * Sort associated projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
  * @export
  */
-export type V1GetWorkspaceProjectsRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID';
-
 export const V1GetWorkspaceProjectsRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetWorkspaceProjectsRequestSortBy,
-    CREATIONTIME: 'SORT_BY_CREATION_TIME' as V1GetWorkspaceProjectsRequestSortBy,
-    LASTEXPERIMENTSTARTTIME: 'SORT_BY_LAST_EXPERIMENT_START_TIME' as V1GetWorkspaceProjectsRequestSortBy,
-    NAME: 'SORT_BY_NAME' as V1GetWorkspaceProjectsRequestSortBy,
-    DESCRIPTION: 'SORT_BY_DESCRIPTION' as V1GetWorkspaceProjectsRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetWorkspaceProjectsRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    CREATIONTIME: 'SORT_BY_CREATION_TIME',
+    LASTEXPERIMENTSTARTTIME: 'SORT_BY_LAST_EXPERIMENT_START_TIME',
+    NAME: 'SORT_BY_NAME',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+    ID: 'SORT_BY_ID',
+} as const;
+
+export type V1GetWorkspaceProjectsRequestSortBy = typeof V1GetWorkspaceProjectsRequestSortBy[keyof typeof V1GetWorkspaceProjectsRequestSortBy];
 /**
  * Response to GetWorkspaceProjectsRequest.
  * @export
@@ -3841,13 +3841,13 @@ export interface V1GetWorkspaceResponse {
  * Sort workspaces by the given field.   - SORT_BY_UNSPECIFIED: Returns workspaces in an unsorted list.  - SORT_BY_ID: Returns workspaces sorted by id.  - SORT_BY_NAME: Returns workspaces sorted by name.
  * @export
  */
-export type V1GetWorkspacesRequestSortBy = 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME';
-
 export const V1GetWorkspacesRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED' as V1GetWorkspacesRequestSortBy,
-    ID: 'SORT_BY_ID' as V1GetWorkspacesRequestSortBy,
-    NAME: 'SORT_BY_NAME' as V1GetWorkspacesRequestSortBy
-};
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    ID: 'SORT_BY_ID',
+    NAME: 'SORT_BY_NAME',
+} as const;
+
+export type V1GetWorkspacesRequestSortBy = typeof V1GetWorkspacesRequestSortBy[keyof typeof V1GetWorkspacesRequestSortBy];
 /**
  * Response to GetWorkspacesRequest.
  * @export
@@ -4466,12 +4466,12 @@ export interface V1LaunchTensorboardResponse {
  * Enum values for warnings when launching commands.   - LAUNCH_WARNING_UNSPECIFIED: Default value  - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: For a default webhook
  * @export
  */
-export type V1LaunchWarning = 'LAUNCH_WARNING_UNSPECIFIED' | 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED';
-
 export const V1LaunchWarning = {
-    UNSPECIFIED: 'LAUNCH_WARNING_UNSPECIFIED' as V1LaunchWarning,
-    CURRENTSLOTSEXCEEDED: 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED' as V1LaunchWarning
-};
+    UNSPECIFIED: 'LAUNCH_WARNING_UNSPECIFIED',
+    CURRENTSLOTSEXCEEDED: 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED',
+} as const;
+
+export type V1LaunchWarning = typeof V1LaunchWarning[keyof typeof V1LaunchWarning];
 /**
  * ListRolesRequest is the body of the request for the call to search for a role.
  * @export
@@ -4545,17 +4545,17 @@ export interface V1LogEntry {
  * LogLevel specifies the level for a log.   - LOG_LEVEL_UNSPECIFIED: Unspecified log level.  - LOG_LEVEL_TRACE: A log level of TRACE.  - LOG_LEVEL_DEBUG: A log level of DEBUG.  - LOG_LEVEL_INFO: A log level of INFO.  - LOG_LEVEL_WARNING: A log level of WARNING.  - LOG_LEVEL_ERROR: A log level of ERROR.  - LOG_LEVEL_CRITICAL: A log level of CRITICAL.
  * @export
  */
-export type V1LogLevel = 'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL';
-
 export const V1LogLevel = {
-    UNSPECIFIED: 'LOG_LEVEL_UNSPECIFIED' as V1LogLevel,
-    TRACE: 'LOG_LEVEL_TRACE' as V1LogLevel,
-    DEBUG: 'LOG_LEVEL_DEBUG' as V1LogLevel,
-    INFO: 'LOG_LEVEL_INFO' as V1LogLevel,
-    WARNING: 'LOG_LEVEL_WARNING' as V1LogLevel,
-    ERROR: 'LOG_LEVEL_ERROR' as V1LogLevel,
-    CRITICAL: 'LOG_LEVEL_CRITICAL' as V1LogLevel
-};
+    UNSPECIFIED: 'LOG_LEVEL_UNSPECIFIED',
+    TRACE: 'LOG_LEVEL_TRACE',
+    DEBUG: 'LOG_LEVEL_DEBUG',
+    INFO: 'LOG_LEVEL_INFO',
+    WARNING: 'LOG_LEVEL_WARNING',
+    ERROR: 'LOG_LEVEL_ERROR',
+    CRITICAL: 'LOG_LEVEL_CRITICAL',
+} as const;
+
+export type V1LogLevel = typeof V1LogLevel[keyof typeof V1LogLevel];
 /**
  * Login the user.
  * @export
@@ -4688,13 +4688,13 @@ export interface V1MetricNamesResponse {
  * To distinguish the 2 different categories of metrics.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.
  * @export
  */
-export type V1MetricType = 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION';
-
 export const V1MetricType = {
-    UNSPECIFIED: 'METRIC_TYPE_UNSPECIFIED' as V1MetricType,
-    TRAINING: 'METRIC_TYPE_TRAINING' as V1MetricType,
-    VALIDATION: 'METRIC_TYPE_VALIDATION' as V1MetricType
-};
+    UNSPECIFIED: 'METRIC_TYPE_UNSPECIFIED',
+    TRAINING: 'METRIC_TYPE_TRAINING',
+    VALIDATION: 'METRIC_TYPE_VALIDATION',
+} as const;
+
+export type V1MetricType = typeof V1MetricType[keyof typeof V1MetricType];
 /**
  * 
  * @export
@@ -5125,13 +5125,13 @@ export interface V1NotifyContainerRunningResponse {
  * Order records in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
  * @export
  */
-export type V1OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
-
 export const V1OrderBy = {
-    UNSPECIFIED: 'ORDER_BY_UNSPECIFIED' as V1OrderBy,
-    ASC: 'ORDER_BY_ASC' as V1OrderBy,
-    DESC: 'ORDER_BY_DESC' as V1OrderBy
-};
+    UNSPECIFIED: 'ORDER_BY_UNSPECIFIED',
+    ASC: 'ORDER_BY_ASC',
+    DESC: 'ORDER_BY_DESC',
+} as const;
+
+export type V1OrderBy = typeof V1OrderBy[keyof typeof V1OrderBy];
 /**
  * Pagination provides information about the offset, limit, and total number of records returned in the results.
  * @export
@@ -5537,32 +5537,32 @@ export interface V1Permission {
  * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata like experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  */
-export type V1PermissionType = 'PERMISSION_TYPE_UNSPECIFIED' | 'PERMISSION_TYPE_ADMINISTRATE_USER' | 'PERMISSION_TYPE_CREATE_EXPERIMENT' | 'PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS' | 'PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA' | 'PERMISSION_TYPE_UPDATE_EXPERIMENT' | 'PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA' | 'PERMISSION_TYPE_DELETE_EXPERIMENT' | 'PERMISSION_TYPE_UPDATE_GROUP' | 'PERMISSION_TYPE_CREATE_WORKSPACE' | 'PERMISSION_TYPE_VIEW_WORKSPACE' | 'PERMISSION_TYPE_UPDATE_WORKSPACE' | 'PERMISSION_TYPE_DELETE_WORKSPACE' | 'PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP' | 'PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG' | 'PERMISSION_TYPE_CREATE_PROJECT' | 'PERMISSION_TYPE_VIEW_PROJECT' | 'PERMISSION_TYPE_UPDATE_PROJECT' | 'PERMISSION_TYPE_DELETE_PROJECT' | 'PERMISSION_TYPE_UPDATE_ROLES' | 'PERMISSION_TYPE_ASSIGN_ROLES' | 'PERMISSION_TYPE_EDIT_WEBHOOKS';
-
 export const V1PermissionType = {
-    UNSPECIFIED: 'PERMISSION_TYPE_UNSPECIFIED' as V1PermissionType,
-    ADMINISTRATEUSER: 'PERMISSION_TYPE_ADMINISTRATE_USER' as V1PermissionType,
-    CREATEEXPERIMENT: 'PERMISSION_TYPE_CREATE_EXPERIMENT' as V1PermissionType,
-    VIEWEXPERIMENTARTIFACTS: 'PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS' as V1PermissionType,
-    VIEWEXPERIMENTMETADATA: 'PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA' as V1PermissionType,
-    UPDATEEXPERIMENT: 'PERMISSION_TYPE_UPDATE_EXPERIMENT' as V1PermissionType,
-    UPDATEEXPERIMENTMETADATA: 'PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA' as V1PermissionType,
-    DELETEEXPERIMENT: 'PERMISSION_TYPE_DELETE_EXPERIMENT' as V1PermissionType,
-    UPDATEGROUP: 'PERMISSION_TYPE_UPDATE_GROUP' as V1PermissionType,
-    CREATEWORKSPACE: 'PERMISSION_TYPE_CREATE_WORKSPACE' as V1PermissionType,
-    VIEWWORKSPACE: 'PERMISSION_TYPE_VIEW_WORKSPACE' as V1PermissionType,
-    UPDATEWORKSPACE: 'PERMISSION_TYPE_UPDATE_WORKSPACE' as V1PermissionType,
-    DELETEWORKSPACE: 'PERMISSION_TYPE_DELETE_WORKSPACE' as V1PermissionType,
-    SETWORKSPACEAGENTUSERGROUP: 'PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP' as V1PermissionType,
-    SETWORKSPACECHECKPOINTSTORAGECONFIG: 'PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG' as V1PermissionType,
-    CREATEPROJECT: 'PERMISSION_TYPE_CREATE_PROJECT' as V1PermissionType,
-    VIEWPROJECT: 'PERMISSION_TYPE_VIEW_PROJECT' as V1PermissionType,
-    UPDATEPROJECT: 'PERMISSION_TYPE_UPDATE_PROJECT' as V1PermissionType,
-    DELETEPROJECT: 'PERMISSION_TYPE_DELETE_PROJECT' as V1PermissionType,
-    UPDATEROLES: 'PERMISSION_TYPE_UPDATE_ROLES' as V1PermissionType,
-    ASSIGNROLES: 'PERMISSION_TYPE_ASSIGN_ROLES' as V1PermissionType,
-    EDITWEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS' as V1PermissionType
-};
+    UNSPECIFIED: 'PERMISSION_TYPE_UNSPECIFIED',
+    ADMINISTRATEUSER: 'PERMISSION_TYPE_ADMINISTRATE_USER',
+    CREATEEXPERIMENT: 'PERMISSION_TYPE_CREATE_EXPERIMENT',
+    VIEWEXPERIMENTARTIFACTS: 'PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS',
+    VIEWEXPERIMENTMETADATA: 'PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA',
+    UPDATEEXPERIMENT: 'PERMISSION_TYPE_UPDATE_EXPERIMENT',
+    UPDATEEXPERIMENTMETADATA: 'PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA',
+    DELETEEXPERIMENT: 'PERMISSION_TYPE_DELETE_EXPERIMENT',
+    UPDATEGROUP: 'PERMISSION_TYPE_UPDATE_GROUP',
+    CREATEWORKSPACE: 'PERMISSION_TYPE_CREATE_WORKSPACE',
+    VIEWWORKSPACE: 'PERMISSION_TYPE_VIEW_WORKSPACE',
+    UPDATEWORKSPACE: 'PERMISSION_TYPE_UPDATE_WORKSPACE',
+    DELETEWORKSPACE: 'PERMISSION_TYPE_DELETE_WORKSPACE',
+    SETWORKSPACEAGENTUSERGROUP: 'PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP',
+    SETWORKSPACECHECKPOINTSTORAGECONFIG: 'PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG',
+    CREATEPROJECT: 'PERMISSION_TYPE_CREATE_PROJECT',
+    VIEWPROJECT: 'PERMISSION_TYPE_VIEW_PROJECT',
+    UPDATEPROJECT: 'PERMISSION_TYPE_UPDATE_PROJECT',
+    DELETEPROJECT: 'PERMISSION_TYPE_DELETE_PROJECT',
+    UPDATEROLES: 'PERMISSION_TYPE_UPDATE_ROLES',
+    ASSIGNROLES: 'PERMISSION_TYPE_ASSIGN_ROLES',
+    EDITWEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS',
+} as const;
+
+export type V1PermissionType = typeof V1PermissionType[keyof typeof V1PermissionType];
 /**
  * Response to PinWorkspaceRequest.
  * @export
@@ -6404,13 +6404,13 @@ export interface V1ResourceAllocationAggregatedResponse {
  * The period over which to perform aggregation.   - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY: Aggregation by day.  - RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY: Aggregation by month.
  * @export
  */
-export type V1ResourceAllocationAggregationPeriod = 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY';
-
 export const V1ResourceAllocationAggregationPeriod = {
-    UNSPECIFIED: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' as V1ResourceAllocationAggregationPeriod,
-    DAILY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' as V1ResourceAllocationAggregationPeriod,
-    MONTHLY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY' as V1ResourceAllocationAggregationPeriod
-};
+    UNSPECIFIED: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED',
+    DAILY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY',
+    MONTHLY: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY',
+} as const;
+
+export type V1ResourceAllocationAggregationPeriod = typeof V1ResourceAllocationAggregationPeriod[keyof typeof V1ResourceAllocationAggregationPeriod];
 /**
  * One instance of slots in the cluster being allocated to a task.
  * @export
@@ -6974,15 +6974,15 @@ export interface V1ResourcePoolPrioritySchedulerDetail {
  * The type of the ResourcePool.   - RESOURCE_POOL_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - RESOURCE_POOL_TYPE_AWS: An AWS resource pool.  - RESOURCE_POOL_TYPE_GCP: A GCP resource pool.  - RESOURCE_POOL_TYPE_STATIC: A static resource pool.  - RESOURCE_POOL_TYPE_K8S: The kubernetes resource pool.
  * @export
  */
-export type V1ResourcePoolType = 'RESOURCE_POOL_TYPE_UNSPECIFIED' | 'RESOURCE_POOL_TYPE_AWS' | 'RESOURCE_POOL_TYPE_GCP' | 'RESOURCE_POOL_TYPE_STATIC' | 'RESOURCE_POOL_TYPE_K8S';
-
 export const V1ResourcePoolType = {
-    UNSPECIFIED: 'RESOURCE_POOL_TYPE_UNSPECIFIED' as V1ResourcePoolType,
-    AWS: 'RESOURCE_POOL_TYPE_AWS' as V1ResourcePoolType,
-    GCP: 'RESOURCE_POOL_TYPE_GCP' as V1ResourcePoolType,
-    STATIC: 'RESOURCE_POOL_TYPE_STATIC' as V1ResourcePoolType,
-    K8S: 'RESOURCE_POOL_TYPE_K8S' as V1ResourcePoolType
-};
+    UNSPECIFIED: 'RESOURCE_POOL_TYPE_UNSPECIFIED',
+    AWS: 'RESOURCE_POOL_TYPE_AWS',
+    GCP: 'RESOURCE_POOL_TYPE_GCP',
+    STATIC: 'RESOURCE_POOL_TYPE_STATIC',
+    K8S: 'RESOURCE_POOL_TYPE_K8S',
+} as const;
+
+export type V1ResourcePoolType = typeof V1ResourcePoolType[keyof typeof V1ResourcePoolType];
 /**
  * 
  * @export
@@ -7112,13 +7112,13 @@ export interface V1RunnableOperation {
  * RunnableType defines the type of operation that should be executed by trial runners.   - RUNNABLE_TYPE_UNSPECIFIED: Denotes an unknown runnable type.  - RUNNABLE_TYPE_TRAIN: Signals to a trial runner that it should run a train.  - RUNNABLE_TYPE_VALIDATE: Signals to a trial runner it should compute validation metrics.
  * @export
  */
-export type V1RunnableType = 'RUNNABLE_TYPE_UNSPECIFIED' | 'RUNNABLE_TYPE_TRAIN' | 'RUNNABLE_TYPE_VALIDATE';
-
 export const V1RunnableType = {
-    UNSPECIFIED: 'RUNNABLE_TYPE_UNSPECIFIED' as V1RunnableType,
-    TRAIN: 'RUNNABLE_TYPE_TRAIN' as V1RunnableType,
-    VALIDATE: 'RUNNABLE_TYPE_VALIDATE' as V1RunnableType
-};
+    UNSPECIFIED: 'RUNNABLE_TYPE_UNSPECIFIED',
+    TRAIN: 'RUNNABLE_TYPE_TRAIN',
+    VALIDATE: 'RUNNABLE_TYPE_VALIDATE',
+} as const;
+
+export type V1RunnableType = typeof V1RunnableType[keyof typeof V1RunnableType];
 /**
  * Describe one SSO provider.
  * @export
@@ -7142,28 +7142,28 @@ export interface V1SSOProvider {
  * Scale options available in metrics charts.   - SCALE_UNSPECIFIED: Unknown scale.  - SCALE_LINEAR: Downsample points with closeness plotted on a linear y-axis.  - SCALE_LOG: Downsample points with closeness plotted on a logarithmic y-axis.
  * @export
  */
-export type V1Scale = 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG';
-
 export const V1Scale = {
-    UNSPECIFIED: 'SCALE_UNSPECIFIED' as V1Scale,
-    LINEAR: 'SCALE_LINEAR' as V1Scale,
-    LOG: 'SCALE_LOG' as V1Scale
-};
+    UNSPECIFIED: 'SCALE_UNSPECIFIED',
+    LINEAR: 'SCALE_LINEAR',
+    LOG: 'SCALE_LOG',
+} as const;
+
+export type V1Scale = typeof V1Scale[keyof typeof V1Scale];
 /**
  * The type of the Scheduler.   - SCHEDULER_TYPE_UNSPECIFIED: Unspecified. This value will never actually be returned by the API, it is just an artifact of using protobuf.  - SCHEDULER_TYPE_PRIORITY: The priority scheduler.  - SCHEDULER_TYPE_FAIR_SHARE: The fair share scheduler.  - SCHEDULER_TYPE_ROUND_ROBIN: The round robin scheduler  - SCHEDULER_TYPE_KUBERNETES: The kubernetes scheduler.  - SCHEDULER_TYPE_SLURM: A slurm placeholder. When running on slurm, all scheduling behavior is delegated.  - SCHEDULER_TYPE_PBS: A PBS placeholder. When running on PBS, all scheduling behavior is delegated.
  * @export
  */
-export type V1SchedulerType = 'SCHEDULER_TYPE_UNSPECIFIED' | 'SCHEDULER_TYPE_PRIORITY' | 'SCHEDULER_TYPE_FAIR_SHARE' | 'SCHEDULER_TYPE_ROUND_ROBIN' | 'SCHEDULER_TYPE_KUBERNETES' | 'SCHEDULER_TYPE_SLURM' | 'SCHEDULER_TYPE_PBS';
-
 export const V1SchedulerType = {
-    UNSPECIFIED: 'SCHEDULER_TYPE_UNSPECIFIED' as V1SchedulerType,
-    PRIORITY: 'SCHEDULER_TYPE_PRIORITY' as V1SchedulerType,
-    FAIRSHARE: 'SCHEDULER_TYPE_FAIR_SHARE' as V1SchedulerType,
-    ROUNDROBIN: 'SCHEDULER_TYPE_ROUND_ROBIN' as V1SchedulerType,
-    KUBERNETES: 'SCHEDULER_TYPE_KUBERNETES' as V1SchedulerType,
-    SLURM: 'SCHEDULER_TYPE_SLURM' as V1SchedulerType,
-    PBS: 'SCHEDULER_TYPE_PBS' as V1SchedulerType
-};
+    UNSPECIFIED: 'SCHEDULER_TYPE_UNSPECIFIED',
+    PRIORITY: 'SCHEDULER_TYPE_PRIORITY',
+    FAIRSHARE: 'SCHEDULER_TYPE_FAIR_SHARE',
+    ROUNDROBIN: 'SCHEDULER_TYPE_ROUND_ROBIN',
+    KUBERNETES: 'SCHEDULER_TYPE_KUBERNETES',
+    SLURM: 'SCHEDULER_TYPE_SLURM',
+    PBS: 'SCHEDULER_TYPE_PBS',
+} as const;
+
+export type V1SchedulerType = typeof V1SchedulerType[keyof typeof V1SchedulerType];
 /**
  * 
  * @export
@@ -7960,13 +7960,13 @@ export interface V1TrialEarlyExit {
  * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_INIT_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter in the trial init.
  * @export
  */
-export type V1TrialEarlyExitExitedReason = 'EXITED_REASON_UNSPECIFIED' | 'EXITED_REASON_INVALID_HP' | 'EXITED_REASON_INIT_INVALID_HP';
-
 export const V1TrialEarlyExitExitedReason = {
-    UNSPECIFIED: 'EXITED_REASON_UNSPECIFIED' as V1TrialEarlyExitExitedReason,
-    INVALIDHP: 'EXITED_REASON_INVALID_HP' as V1TrialEarlyExitExitedReason,
-    INITINVALIDHP: 'EXITED_REASON_INIT_INVALID_HP' as V1TrialEarlyExitExitedReason
-};
+    UNSPECIFIED: 'EXITED_REASON_UNSPECIFIED',
+    INVALIDHP: 'EXITED_REASON_INVALID_HP',
+    INITINVALIDHP: 'EXITED_REASON_INIT_INVALID_HP',
+} as const;
+
+export type V1TrialEarlyExitExitedReason = typeof V1TrialEarlyExitExitedReason[keyof typeof V1TrialEarlyExitExitedReason];
 /**
  * TrialExitedEarly is a searcher event triggered when a trial exited prematurely.
  * @export
@@ -7990,14 +7990,14 @@ export interface V1TrialExitedEarly {
  * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop, from code.  - EXITED_REASON_USER_CANCELED: Indicates the trial exited due to a user requested stop, from the CLI or UI.
  * @export
  */
-export type V1TrialExitedEarlyExitedReason = 'EXITED_REASON_UNSPECIFIED' | 'EXITED_REASON_INVALID_HP' | 'EXITED_REASON_USER_REQUESTED_STOP' | 'EXITED_REASON_USER_CANCELED';
-
 export const V1TrialExitedEarlyExitedReason = {
-    UNSPECIFIED: 'EXITED_REASON_UNSPECIFIED' as V1TrialExitedEarlyExitedReason,
-    INVALIDHP: 'EXITED_REASON_INVALID_HP' as V1TrialExitedEarlyExitedReason,
-    USERREQUESTEDSTOP: 'EXITED_REASON_USER_REQUESTED_STOP' as V1TrialExitedEarlyExitedReason,
-    USERCANCELED: 'EXITED_REASON_USER_CANCELED' as V1TrialExitedEarlyExitedReason
-};
+    UNSPECIFIED: 'EXITED_REASON_UNSPECIFIED',
+    INVALIDHP: 'EXITED_REASON_INVALID_HP',
+    USERREQUESTEDSTOP: 'EXITED_REASON_USER_REQUESTED_STOP',
+    USERCANCELED: 'EXITED_REASON_USER_CANCELED',
+} as const;
+
+export type V1TrialExitedEarlyExitedReason = typeof V1TrialExitedEarlyExitedReason[keyof typeof V1TrialExitedEarlyExitedReason];
 /**
  * Filters to be applied to trials. Can be used to query, patch, and create dynamic collections of trials.
  * @export
@@ -8561,13 +8561,13 @@ export interface V1Trigger {
  * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
  * @export
  */
-export type V1TriggerType = 'TRIGGER_TYPE_UNSPECIFIED' | 'TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE' | 'TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED';
-
 export const V1TriggerType = {
-    UNSPECIFIED: 'TRIGGER_TYPE_UNSPECIFIED' as V1TriggerType,
-    EXPERIMENTSTATECHANGE: 'TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE' as V1TriggerType,
-    METRICTHRESHOLDEXCEEDED: 'TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED' as V1TriggerType
-};
+    UNSPECIFIED: 'TRIGGER_TYPE_UNSPECIFIED',
+    EXPERIMENTSTATECHANGE: 'TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE',
+    METRICTHRESHOLDEXCEEDED: 'TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED',
+} as const;
+
+export type V1TriggerType = typeof V1TriggerType[keyof typeof V1TriggerType];
 /**
  * Response to UnarchiveExperimentRequest.
  * @export
@@ -8902,13 +8902,13 @@ export interface V1Webhook {
  * Enum values for expected webhook types.   - WEBHOOK_TYPE_UNSPECIFIED: Default value  - WEBHOOK_TYPE_DEFAULT: For a default webhook  - WEBHOOK_TYPE_SLACK: For a slack webhook.
  * @export
  */
-export type V1WebhookType = 'WEBHOOK_TYPE_UNSPECIFIED' | 'WEBHOOK_TYPE_DEFAULT' | 'WEBHOOK_TYPE_SLACK';
-
 export const V1WebhookType = {
-    UNSPECIFIED: 'WEBHOOK_TYPE_UNSPECIFIED' as V1WebhookType,
-    DEFAULT: 'WEBHOOK_TYPE_DEFAULT' as V1WebhookType,
-    SLACK: 'WEBHOOK_TYPE_SLACK' as V1WebhookType
-};
+    UNSPECIFIED: 'WEBHOOK_TYPE_UNSPECIFIED',
+    DEFAULT: 'WEBHOOK_TYPE_DEFAULT',
+    SLACK: 'WEBHOOK_TYPE_SLACK',
+} as const;
+
+export type V1WebhookType = typeof V1WebhookType[keyof typeof V1WebhookType];
 /**
  * WorkloadContainer is a wrapper for Determined workloads to allow repeated oneof types.
  * @export
@@ -9023,14 +9023,14 @@ export interface V1Workspace {
  * WorkspaceState is used to track progress during a deletion.   - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.  - WORKSPACE_STATE_DELETING: The object is being deleted.  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.  - WORKSPACE_STATE_DELETED: The object finished deleting.
  * @export
  */
-export type V1WorkspaceState = 'WORKSPACE_STATE_UNSPECIFIED' | 'WORKSPACE_STATE_DELETING' | 'WORKSPACE_STATE_DELETE_FAILED' | 'WORKSPACE_STATE_DELETED';
-
 export const V1WorkspaceState = {
-    UNSPECIFIED: 'WORKSPACE_STATE_UNSPECIFIED' as V1WorkspaceState,
-    DELETING: 'WORKSPACE_STATE_DELETING' as V1WorkspaceState,
-    DELETEFAILED: 'WORKSPACE_STATE_DELETE_FAILED' as V1WorkspaceState,
-    DELETED: 'WORKSPACE_STATE_DELETED' as V1WorkspaceState
-};
+    UNSPECIFIED: 'WORKSPACE_STATE_UNSPECIFIED',
+    DELETING: 'WORKSPACE_STATE_DELETING',
+    DELETEFAILED: 'WORKSPACE_STATE_DELETE_FAILED',
+    DELETED: 'WORKSPACE_STATE_DELETED',
+} as const;
+
+export type V1WorkspaceState = typeof V1WorkspaceState[keyof typeof V1WorkspaceState];
 /**
  * AuthenticationApi - fetch parameter creator
  * @export
