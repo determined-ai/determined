@@ -685,7 +685,7 @@ export const openOrCreateTensorBoard = async (
       !terminalCommandStates.has(tensorboard.state) &&
       tensorBoardMatchesSource(tensorboard, params),
   );
-  if (match) return { command: match, warnings: [1] };
+  if (match) return { command: match, warnings: [Api.V1LaunchWarning.UNSPECIFIED] };
   return launchTensorBoard(params);
 };
 

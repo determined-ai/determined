@@ -155,6 +155,7 @@ const config: SettingsConfig<ProjectDetailsSettings> = {
         literal(V1GetExperimentsRequestSortBy.STARTTIME),
         literal(V1GetExperimentsRequestSortBy.STATE),
         literal(V1GetExperimentsRequestSortBy.UNSPECIFIED),
+        literal(V1GetExperimentsRequestSortBy.USER),
       ]),
     },
     state: {

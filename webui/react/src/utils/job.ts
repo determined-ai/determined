@@ -11,7 +11,7 @@ export const unsupportedQPosSchedulers = new Set([
   Api.V1SchedulerType.FAIRSHARE,
   Api.V1SchedulerType.PBS,
   Api.V1SchedulerType.SLURM,
-]);
+] as Array<string>);
 
 export const jobTypeIconName = (jobType: JobType): string => {
   const type = jobTypeToCommandType(jobType);
@@ -42,7 +42,7 @@ export const jobTypeToCommandType = (jobType: JobType): CommandType | undefined 
 export const orderedSchedulers = new Set([
   Api.V1SchedulerType.PRIORITY,
   Api.V1SchedulerType.KUBERNETES,
-]);
+] as Array<string>);
 
 /**
  * Create the update request based on a given position for a job.
