@@ -12,7 +12,6 @@ from determined.cli import render
 from determined.common import api, constants
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Determined
 
 from .checkpoint import render_checkpoint
 
@@ -158,7 +157,7 @@ def describe_trial(args: Namespace) -> None:
 
 def download(args: Namespace) -> None:
     checkpoint = (
-        Determined(args.master, None)
+        cli.setup_determined(args)
         .get_trial(args.trial_id)
         .select_checkpoint(
             latest=args.latest,

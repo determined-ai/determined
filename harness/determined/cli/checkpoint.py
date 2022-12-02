@@ -6,8 +6,7 @@ from determined import cli
 from determined.common import experimental
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import Determined
-from determined.experimental.client import DownloadMode
+from determined.experimental import client
 
 from . import render
 
@@ -94,7 +93,7 @@ def list_checkpoints(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = cli.setup_determined(args).get_checkpoint(args.uuid)
 
     path = checkpoint.download(path=args.output_dir, mode=args.mode)
 
@@ -105,7 +104,7 @@ def download(args: Namespace) -> None:
 
 
 def describe(args: Namespace) -> None:
-    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
+    checkpoint = cli.setup_determined(args).get_checkpoint(args.uuid)
     render_checkpoint(checkpoint)
 
 
@@ -148,15 +147,15 @@ main_cmd = Cmd(
                 ),
                 Arg(
                     "--mode",
-                    choices=list(DownloadMode),
-                    default=DownloadMode.AUTO,
-                    type=DownloadMode,
+                    choices=list(client.DownloadMode),
+                    default=client.DownloadMode.AUTO,
+                    type=client.DownloadMode,
                     help=(
                         "Select different download modes: "
-                        f"'{DownloadMode.DIRECT}' to directly download from checkpoint storage; "
-                        f"'{DownloadMode.MASTER}' to download via the master; "
-                        f"'{DownloadMode.AUTO}' to first attempt a direct download and fall "
-                        f"back to '{DownloadMode.MASTER}'."
+                        f"'{client.DownloadMode.DIRECT}' to directly download from checkpoint "
+                        f"storage; '{client.DownloadMode.MASTER}' to download via the master; "
+                        f"'{client.DownloadMode.AUTO}' to first attempt a direct download and fall "
+                        f"back to '{client.DownloadMode.MASTER}'."
                     ),
                 ),
             ],

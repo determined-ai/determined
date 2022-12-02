@@ -2,21 +2,16 @@ import json
 from argparse import Namespace
 from typing import Any, List
 
+from determined import cli
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
-from determined.common.experimental import (
-    Determined,
-    Model,
-    ModelOrderBy,
-    ModelSortBy,
-    ModelVersion,
-)
+from determined.experimental import client
 
 from . import render
 
 
-def render_model(model: Model) -> None:
+def render_model(model: client.Model) -> None:
     table = [
         ["ID", model.model_id],
         ["Name", model.name],
@@ -31,7 +26,7 @@ def render_model(model: Model) -> None:
     render.tabulate_or_csv(headers, [values], False)
 
 
-def render_model_version(model_version: ModelVersion) -> None:
+def render_model_version(model_version: client.ModelVersion) -> None:
     checkpoint = model_version.checkpoint
     headers = [
         "Version #",
@@ -61,8 +56,9 @@ def render_model_version(model_version: ModelVersion) -> None:
 
 
 def list_models(args: Namespace) -> None:
-    models = Determined(args.master, None).get_models(
-        sort_by=ModelSortBy[args.sort_by.upper()], order_by=ModelOrderBy[args.order_by.upper()]
+    models = cli.setup_determined(args).get_models(
+        sort_by=client.ModelSortBy[args.sort_by.upper()],
+        order_by=client.ModelOrderBy[args.order_by.upper()],
     )
     if args.json:
         print(json.dumps([m.to_json() for m in models], indent=2))
@@ -83,8 +79,8 @@ def list_models(args: Namespace) -> None:
         render.tabulate_or_csv(headers, values, False)
 
 
-def model_by_name(args: Namespace) -> Model:
-    models = Determined(args.master, None).get_models(name=args.name)
+def model_by_name(args: Namespace) -> client.Model:
+    models = cli.setup_determined(args).get_models(name=args.name)
     if len(models) == 0:
         raise Exception("No model was found with the given name.")
     if len(models) > 1:
@@ -133,7 +129,7 @@ def list_versions(args: Namespace) -> None:
 
 
 def create(args: Namespace) -> None:
-    model = Determined(args.master, None).create_model(args.name, args.description)
+    model = cli.setup_determined(args).create_model(args.name, args.description)
 
     if args.json:
         print(json.dumps(model.to_json(), indent=2))

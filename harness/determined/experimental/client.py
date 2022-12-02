@@ -60,7 +60,12 @@ from determined.common.experimental.experiment import (  # noqa: F401
     ExperimentReference,
     ExperimentState,
 )
-from determined.common.experimental.model import Model, ModelOrderBy, ModelSortBy
+from determined.common.experimental.model import (  # noqa: F401
+    Model,
+    ModelOrderBy,
+    ModelSortBy,
+    ModelVersion,
+)
 from determined.common.experimental.trial import (  # noqa: F401
     TrialOrderBy,
     TrialReference,

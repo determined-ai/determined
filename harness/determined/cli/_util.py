@@ -93,10 +93,22 @@ def login_sdk_client(func: Callable[[argparse.Namespace], Any]) -> Callable[...,
 
 
 def setup_session(args: argparse.Namespace) -> api.Session:
-    master_url = args.master or util.get_default_master_address()
-    cert = certs.default_load(master_url)
+    """
+    Setup a client.Session, which is useful for arbitrary calls against the REST API bindings.
+    """
+    return api.Session(args.master, args.user, authentication.cli_auth, certs.cli_cert)
 
-    return api.Session(master_url, args.user, authentication.cli_auth, cert)
+
+def setup_determined(args: argparse.Namespace) -> client.Determined:
+    """
+    Setup a client.Determined, which is useful for when a cli is really just calling functionality
+    that already exists in the python sdk.
+
+    Maybe in the future the sdk and the cli are 1:1 and setup_session() is never used anymore.
+    """
+    # TODO: this is going to duplicate the cli_auth object created by @authentication.required.
+    # TODO: this is going to duplicate the cli_cert object that the cli already creates.
+    return client.Determined(args.master, args.user)
 
 
 def require_feature_flag(feature_flag: str, error_message: str) -> Callable[..., Any]:
