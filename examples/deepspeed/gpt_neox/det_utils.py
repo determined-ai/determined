@@ -1,5 +1,6 @@
 from attrdict import AttrMap
 import logging
+import os
 import numpy as np
 
 from megatron.neox_arguments import NeoXArgs
@@ -31,7 +32,7 @@ def get_neox_args(context):
             "train_iters": exp_config["searcher"]["max_length"]["batches"],
             "save_interval": exp_config["min_validation_period"]["batches"],
             "eval_interval": exp_config["min_validation_period"]["batches"],
-            "global_num_gpus": context.distributed.get_size(),
+            "hostfile": os.environ["DET_DEEPSPEED_HOSTFILE_PATH"],
             "seed": context.env.trial_seed,
         }
     )

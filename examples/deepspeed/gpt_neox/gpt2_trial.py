@@ -38,6 +38,7 @@ class GPT2Trial(DeepSpeedTrial):
         except:
             traceback.print_exc()
             raise InvalidHP("Could not parse neox_args.")
+        print(self.neox_args)
         self.wrapped_writer = TorchWriter()
         self.neox_args.tensorboard_writer = self.wrapped_writer.writer
         self.neox_args.configure_distributed_args()
@@ -51,11 +52,12 @@ class GPT2Trial(DeepSpeedTrial):
 
         # Model, optimizer, and learning rate.
         self.timers("model and optimizer").start()
-        (
-            model,
-            self.optimizer,
-            self.lr_scheduler,
-        ) = megatron_train.setup_model_and_optimizer(neox_args=self.neox_args)
+        with deepspeed.zero.Init(enabled=self.neox_args.zero_optimization["stage"]==3):
+            (
+                model,
+                self.optimizer,
+                self.lr_scheduler,
+            ) = megatron_train.setup_model_and_optimizer(neox_args=self.neox_args)
         self.model = self.context.wrap_model_engine(model)
         self.timers("model and optimizer").stop()
 
