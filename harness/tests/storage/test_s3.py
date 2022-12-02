@@ -129,6 +129,7 @@ def get_tensorboard_fetcher_s3(
 
 @pytest.mark.cloud
 def test_tensorboard_fetcher_s3(require_secrets: bool, tmp_path: Path) -> None:
+
     local_sync_dir = os.path.join(tmp_path, "sync_dir")
     storage_relpath = os.path.join(local_sync_dir, BUCKET_NAME)
 

@@ -5,7 +5,7 @@ import pathlib
 from typing import Any, Callable, Dict, Iterator, Optional, Union
 
 # Selector accepts a path relative to the checkpoint root, and returns a boolean indicating if the
-# path should be downloaded.  For every path selected, all parent directories are also selected
+# path should be downloaded. For every path selected, all parent directories are also selected
 # (even if the selector returns False for them).
 Selector = Callable[[str], bool]
 
@@ -115,7 +115,7 @@ class StorageManager(metaclass=abc.ABCMeta):
     ) -> None:
         """
         `selector` should be a callable accepting a string parameter, ending in an os.sep if it is a
-        directory, and should return bool: True for files/directories that should be downloaded;
+        directory, and should return True for files/directories that should be downloaded;
         False otherwise.
         """
         pass

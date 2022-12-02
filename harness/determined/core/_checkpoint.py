@@ -34,57 +34,94 @@ class DownloadMode(enum.Enum):
     NoSharedDownload = "NO_SHARED_DOWNLOAD"
 
 
-def merge_metadata(all_metadata: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], Dict[str, List]]:
+def _merge_metadata(
+    merged: Dict[str, Any],
+    rank_metadata: Dict[str, Any],
+    rank: int,
+    key_ranks: Dict[str, Any],
+    key_conflicts: Dict[str, List[int]],
+    prev_key: str,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+
+    for key, metadata in rank_metadata.items():
+
+        # First, update key_ranks. We will use it later
+        if key not in key_ranks:
+            key_ranks[key] = {"_ranks_": []}
+        key_ranks[key]["_ranks_"].append(rank)
+
+        full_key = f"{prev_key}/{key}"
+
+        # Merge metadata. We consider two possibilities:
+        # 1. metadata is dictionary AND :
+        #   * if key is not in merged, then recursively unroll and merge metadata; OR
+        #   * if key is in merged, and metadata and merged[key] are dictionaries, merge recursively.
+        # 2. otherwise:
+        #   * key is in merged, then updated key_conflicts and don't merge,
+        #   * key is not in merged, then add key and metadata to merged.
+        if (key not in merged and isinstance(metadata, dict)) or (
+            key in merged and isinstance(metadata, dict) and isinstance(merged[key], dict)
+        ):
+            merged[key], key_ranks[key] = _merge_metadata(
+                {} if key not in merged else merged[key],
+                metadata,
+                rank,
+                key_ranks[key],
+                key_conflicts,
+                full_key,
+            )
+        else:
+            if key in merged:
+                if full_key not in key_conflicts:
+                    key_conflicts[full_key] = key_ranks[key]["_ranks_"].copy()
+                else:
+                    key_conflicts[full_key].append(rank)
+            else:
+                merged[key] = metadata
+
+    return merged, key_ranks
+
+
+def merge_metadata(
+    all_metadata: List[Dict[str, Any]]
+) -> Tuple[Dict[str, Any], Dict[str, List[int]]]:
     """
-      Given a list of metadata, return:
-        - merged metadata
-        - a dict mapping conflicting keys to ranks that would upload them
+    Given a list of metadata, return:
+      - merged metadata
+      - a dict mapping conflicting keys to ranks that would upload them
 
     Merging scenarios:
-    #  Metadata 1        | Metadata 2          | Conflict |  Result
-    # -------------------|---------------------|----------|-------------------------------
-    #  key1: val         | key2: val           | no       | {key1: val, key2: val}
-    #  key1: val         | key1: val           | yes      | n/a
-    #  key1: [val]       | key1: [val]         | no       | {key1: [val, val]}
-    #  key1: [val]       | key1: val           | yes      | n/a
-    #  key1: [val]       | key1: {key3: val}   | yes      | n/a
-    #  key1: {key3: val} | key1: {key4: val}   | no       | key1: {key3: val, key4: val}
-    #  key1: {key3: val} | key1: val           | yes      | n/a
-    #  key1: {key3: val} | key1: [val]         | yes      | n/a
+      - merge dictionaries under the same key
+      - report conflicts for any repeated key that is not a dictionary
+
+    Examples:
+    #  Metadata 1     | Metadata 2       | Conflict |  Result
+    # ----------------|------------------|----------|-----------------
+    #  a: 1           | b: 2             | no       | {a: 1, b: 2}
+    #  a: 1           | a: 1             | yes      | n/a
+    #  a: []          | a: []            | yes      | n/a
+    #  a: []          | a: 1             | yes      | n/a
+    #  a: []          | a: {c: 1}        | yes      | n/a
+    #  a: {c: 1}      | a: {d: 1}        | no       | a: {c: 1, d: 1}
+    #  a: {c: 1}      | a: 1             | yes      | n/a
     """
+
+    # Stores merged metadata.
     merged: Dict[str, Any] = {}
-    conflicts: Dict[str, List] = {}
+
+    # Maps keys to reporting ranks. It has the same structure as merged with each key
+    # having a list of ranks that reports it. Helps to detect conflicts.
+    key_ranks: Dict[str, Any] = {}
+
+    # Maps fullpath keys (from root) to the list of rank reporting it.
+    key_conflicts: Dict[str, List[int]] = {}
+
     for rank, rank_metadata in enumerate(all_metadata):
+        merged, key_ranks = _merge_metadata(
+            merged, rank_metadata, rank, key_ranks, key_conflicts, ""
+        )
 
-        for key in rank_metadata:
-            metadata = rank_metadata[key]
-            if key not in merged:
-                merged[key] = metadata
-                conflicts[key] = [rank]
-            else:
-                if not isinstance(metadata, type(merged[key])):
-                    # if values under the same keys have different types
-                    # report conflict and skip merging
-                    conflicts[key].append(rank)
-                elif isinstance(metadata, list):
-                    # merge two lists
-                    merged[key].extend(metadata)
-                elif isinstance(metadata, dict):
-                    # recursively merge dictionaries and collect conflicts
-                    merged[key], nested_conflicts = merge_metadata([merged[key], metadata])
-
-                    # pre-append current key to conflicted nested keys reported
-                    # to distinguish between nested and not-nested keys
-                    for k in nested_conflicts:
-                        local_rank = nested_conflicts[k]
-                        abs_k = key + "/" + k
-                        conflicts.setdefault(abs_k, []).extend(local_rank)
-                else:
-                    # unknown merging scenario; report conflict and skip merging
-                    conflicts[key].append(rank)
-
-    conflicts = {k: v for k, v in conflicts.items() if len(v) > 1}
-    return merged, conflicts
+    return merged, key_conflicts
 
 
 def merge_resources(
@@ -243,14 +280,14 @@ class CheckpointContext:
         else:
             resources = {}
 
-        # Merge resources, detect conflicts
+        # Merge resources, detect conflicts.
         all_resources = self._dist.allgather(resources)
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
             self._print_conflict_error(conflicts, "files")
 
         # The lowest rank that is uploading ckpt_dir collects
-        # and saves metadata
+        # and saves metadata.
         metadata_writer_rank = ckpt_dir_mask.index(True)
         all_metadata = self._merge_and_save_metadata(
             ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {}
@@ -260,7 +297,7 @@ class CheckpointContext:
             assert ckpt_dir
             self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
 
-        # synchronize workers
+        # Synchronize workers.
         _ = self._dist.allgather(None)
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)
@@ -319,7 +356,7 @@ class CheckpointContext:
                 upload_path = self._dist.gather_local(
                     selector(path) if selector is not None else False
                 )
-                # upload_path is not None when we are on the local chief
+                # Upload_path is not None when we are on the local chief.
                 assert upload_path
                 return any(upload_path)
 
@@ -413,7 +450,7 @@ class CheckpointContext:
             if self._dist.rank == 0:
                 resources = self._storage_manager._list_directory(ckpt_dir)
 
-            # Metadata should not be counted among resources. Why is that?
+            # Metadata should not be counted among resources.
             # Chief handles merging and saving metadata to ckpt_dir.
             all_metadata = self._merge_and_save_metadata(
                 ckpt_dir, writer_rank=0, metadata=metadata or {}
@@ -439,7 +476,7 @@ class CheckpointContext:
         else:
             resources = {}
 
-        # Merge resources, detect conflicts
+        # Merge resources, detect conflicts.
         all_resources = self._dist.allgather(resources)
 
         merged_resources, conflicts = merge_resources(all_resources)
@@ -458,13 +495,13 @@ class CheckpointContext:
         # ckpt_dir, writer_rank=metadata_writer_rank, metadata=metadata or {})
 
         if want_upload:
-            # use post_store_path to upload and clean up ckpt_dir after uploading
+            # Use post_store_path to upload and clean up ckpt_dir after uploading.
             self._storage_manager.post_store_path(src=ckpt_dir, dst=storage_id)
 
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)
 
-        # synchronize workers
+        # Synchronize workers.
         _ = self._dist.allgather(None)
 
         return storage_id
@@ -532,12 +569,12 @@ class CheckpointContext:
                 upload_path = self._dist.gather_local(
                     selector(path) if selector is not None else False
                 )
-                # upload_path is not None when we are on the local chief
+                # Upload_path is not None when we are on the local chief.
                 assert upload_path
                 return any(upload_path)
 
             with self._storage_manager.restore_path(storage_id, _selector) as path:
-                # tell local workers that download is finished
+                # Tell local workers that download is finished.
                 _ = self._dist.broadcast_local(None)
                 # Broadcast to local workers.
                 _ = self._dist.broadcast_local(path)
