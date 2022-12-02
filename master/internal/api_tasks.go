@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -429,9 +430,10 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 		}
 	}
 
+	// Allow a value in a list of numbers, or a NULL represented as -1.
 	addNullInclusiveFilter := func(field string, values []int32) {
 		if values != nil {
-			if slices.Contains(values, -100) {
+			if slices.Contains(values, -1) {
 				filters = append(filters, api.Filter{
 					Field:     field,
 					Operation: api.FilterOperationInOrNull,
@@ -444,7 +446,6 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 	}
 
 	addNullInclusiveFilter("rank_id", req.RankIds)
-	// agent_id / allocation_id?
 
 	addInFilter("allocation_id", req.AllocationIds, len(req.AllocationIds))
 	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
