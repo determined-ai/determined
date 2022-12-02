@@ -592,7 +592,7 @@ commands:
           no_output_timeout: 30m
           command: |
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
-            pytest -vv -s \
+            pytest --capture=tee-sys -vv -s \
             -m '<<parameters.mark>>' \
             --durations=0 \
             --master-scheme="<<parameters.master-scheme>>" \
@@ -602,6 +602,14 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
+
+            pytest_status=$?
+            echo Pytest exited with $pytest_status
+            exit $pytest_status
+
+      - upload-test-job:
+          only_on_branch: main
+          test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
     parameters:
@@ -2847,6 +2855,53 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-enroot
+          requires:
+            - package-and-push-system-local
+          master_config: |
+            task_container_defaults:
+              # Image must be created in the launcher account before running this test
+              # cd /lustre/ssd/foundation_engineering/
+              # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730.sqsh
+              # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730.sqsh
+              image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730
+              environment_variables:
+                  # Some ports are not working, disable them so distributed jobs work.
+                  - NCCL_IB_HCA=mlx6_0:0
+                  # Workaround XDG_RUNTIME_DIR not provided by Slurm
+                  - ENROOT_RUNTIME_PATH=/tmp/launcher
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: launcher
+            resource_manager:
+              type: slurm
+              master_host: $HOSTNAME
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              container_run_type: enroot
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+
 
       - test-e2e-slurm:
           name: test-e2e-slurm
