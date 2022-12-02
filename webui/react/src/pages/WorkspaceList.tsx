@@ -101,6 +101,7 @@ const WorkspaceList: React.FC = () => {
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
+      setIsLoading(true);
       updateSettings({ whose: value as WhoseWorkspaces | undefined });
     },
     [updateSettings],
