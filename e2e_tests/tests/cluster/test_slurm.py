@@ -1,3 +1,4 @@
+import sys
 from typing import List
 
 import pytest
@@ -28,6 +29,16 @@ def run_failure_test_multiple(config_file: str, model_def_file: str, errors: Lis
         totalAssertion = False
         for e in errors:
             totalAssertion = totalAssertion or any(e in line for line in logs)
+        if not totalAssertion:
+            print("******** Start of logs for trial {} ********".format(trial.id), file=sys.stderr)
+            print("".join(logs), file=sys.stderr)
+            print("******** End of logs for trial {} ********".format(trial.id), file=sys.stderr)
+            newline = "\n"
+            print(
+                f"Trial {trial.id} log did not contain any of the "
+                + f"expected messages:{newline.join(errors)}",
+                file=sys.stderr,
+            )
         assert totalAssertion
     return experiment_id
 
@@ -50,11 +61,20 @@ def test_unsupported_option() -> None:
 @pytest.mark.e2e_slurm
 def test_docker_image() -> None:
     # Creates an experiment with a bad docker image file that will error
-    exp.run_failure_test(
-        conf.fixtures_path("failures/bad-image.yaml"),
-        conf.fixtures_path("failures/"),
+    errors = [
+        # Singularity message
         "FATAL:   Unable to handle docker://missing.image uri: "
         + "failed to get checksum for docker://missing.image",
+        # PodMan message
+        "Error: initializing source docker://missing.image:latest:",
+        # Enroot message is:
+        # `No such file or directory: /home/launcher/.local/share/enroot/missing.image`
+        # But error message does not support patterning, so just match the partial file name.
+        ".local/share/enroot/missing.image",
+    ]
+
+    run_failure_test_multiple(
+        conf.fixtures_path("failures/bad-image.yaml"), conf.fixtures_path("failures/"), errors
     )
 
 
