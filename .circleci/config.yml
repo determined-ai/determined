@@ -2409,18 +2409,6 @@ workflows:
             - build-docs
           filters: *any-upstream
 
-      # Deploy full cluster
-      - request-dev-deploy:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - deploy:
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-dev-deploy
-            - package-and-push-system-dev
-
       # Distributed tests
       - request-e2e-cpu-distributed:
           type: approval
