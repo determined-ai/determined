@@ -57,6 +57,19 @@ describe('Spinner', () => {
     document.body.appendChild(style);
   });
 
+  it('blocks inner content while spinning', async () => {
+    const { handleButtonClick } = setup(true);
+    const button = await screen.findByTestId('inside-button');
+    let error = null;
+    try {
+      await waitFor(() => user.click(button));
+    } catch (e) {
+      error = e;
+    }
+    expect(error).not.toBeNull();
+    expect(handleButtonClick).toHaveBeenCalledTimes(0);
+  });
+
   it('doesnt block inner content when not spinning', async () => {
     const { handleButtonClick } = setup(false);
     const button = screen.getByTestId('inside-button');
@@ -77,11 +90,11 @@ describe('Spinner', () => {
   it('goes away when spinning is updated to false', async () => {
     const { container } = setup(true);
 
-    waitFor(() => {
+    await waitFor(() => {
       expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
     });
     await user.click(screen.getByTestId('toogle-button'));
-    waitFor(() => {
+    await waitFor(() => {
       expect(container.getElementsByClassName('ant-spin-spinning')?.[0] ?? false).toBeFalsy();
     });
   });
@@ -90,7 +103,7 @@ describe('Spinner', () => {
     const { container } = setup(false);
     expect(container.getElementsByClassName('ant-spin-spinning')?.[0]).toBeFalsy();
     await user.click(screen.getByTestId('toogle-button'));
-    waitFor(() => {
+    await waitFor(() => {
       expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
     });
   });
