@@ -25,7 +25,7 @@ Version 0.19.8
 
 -  Experiment: Fix an issue where experiments created before version 0.16.0 could have issues
    loading.
--  Python SDK: Fix an issue where Model Registry call ``model.get_version(version)`` did not work
+-  Python SDK: Fix an issue where the Model Registry call ``model.get_version(version)`` did not work
    when a specific version was passed.
 
 **Improvements**
