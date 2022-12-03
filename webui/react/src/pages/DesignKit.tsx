@@ -1,11 +1,12 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Checkbox, Input, InputNumber, Space } from 'antd';
+import { Alert, Breadcrumb, Button, Card, Checkbox, Input, InputNumber, Space, Table } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import Label from 'components/Label';
 import Logo from 'components/Logo';
 import SelectFilter from 'components/SelectFilter';
+import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
@@ -15,6 +16,7 @@ import { BrandingType } from 'types';
 import css from './DesignKit.module.scss';
 
 const Components = {
+  Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Checkboxes: 'Checkboxes',
   Dropdowns: 'Comboboxes & Dropdowns',
@@ -37,6 +39,7 @@ const componentOrder: ComponentIds[] = [
   'Spinbuttons',
   'Textfields',
   'Lists',
+  'Breadcrumbs',
 ];
 
 interface Props {
@@ -693,6 +696,22 @@ const TextfieldsSection: React.FC = () => {
 };
 
 const ListsSection: React.FC = () => {
+  const mockColumns = [{
+    dataIndex: 'id',
+    sorter: true,
+    title: 'ID',
+  },
+  {
+    dataIndex: 'name',
+    sorter: true,
+    title: 'Name',
+  }];
+
+  const mockRows = [{
+    id: 'Row id',
+    name: 'Row name',
+  }];
+
   return (
     <ComponentSection id="Lists" title="Lists (tables)">
       <ReviewAlert />
@@ -725,6 +744,68 @@ const ListsSection: React.FC = () => {
             Use sentence-style capitalization for column headers—only capitalize the first word.
           </li>
         </ul>
+        <strong>Accessibility</strong>
+        <ul>
+          <li>
+            When creating a DetailsList where one column is clearly the primary label for the row, it's best to use isRowHeader on that column to create a better screen reader experience navigating the table. For selectable DetailsLists, specifying a row header also gives the checkboxes a better accessible label.
+          </li>
+        </ul>
+        <strong>Keyboard hotkeys</strong>
+        <ul>
+          <li>
+            DetailsList supports different selection modes with keyboard behavior differing based on the current selection mode.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Default list</strong>
+        <Table columns={mockColumns} dataSource={mockRows} rowKey="id" />
+        <ResponsiveTable columns={mockColumns} dataSource={mockRows} rowKey="id" />
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const BreadcrumbsSection: React.FC = () => {
+  return (
+    <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
+      <ReviewAlert />
+      <Card>
+        <p>
+          Breadcrumbs should be used as a navigational aid in your app or site. They indicate the current page’s location within a hierarchy and help the user understand where they are in relation to the rest of that hierarchy. They also afford one-click access to higher levels of that hierarchy.
+        </p>
+        <p>
+          Breadcrumbs are typically placed, in horizontal form, under the masthead or navigation of an experience, above the primary content area.
+        </p>
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Different breadcrumbs are currently being used. This needs to be standardized. </li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Accessibility</strong>
+        <ul>
+          <li>By default, Breadcrumb uses arrow keys to cycle through each item. </li>
+          <li>Place Breadcrumbs at the top of a page, above a list of items, or above the main content of a page.  </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Breadcrumb</strong>
+        <Breadcrumb>
+          <Breadcrumb.Item>
+            Level 0
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>
+            Level 1
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>
+            Level 2
+          </Breadcrumb.Item>
+        </Breadcrumb>
       </Card>
     </ComponentSection>
   );
@@ -763,6 +844,7 @@ const DesignKit: React.FC = () => {
         <SpinbuttonsSection />
         <TextfieldsSection />
         <ListsSection />
+        <BreadcrumbsSection />
       </main>
     </div>
   );
