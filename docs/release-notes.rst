@@ -17,8 +17,8 @@ Version 0.19.8
 
 **Breaking Changes**
 
--  REST APIs: ``GetModelVersion``, ``PatchModelVersion``, ``DeleteModelVersion`` APIs now take
-   sequential model version number ``model_version_num`` instead of a surrogate key
+-  API: The ``GetModelVersion``, ``PatchModelVersion``, and ``DeleteModelVersion`` APIs now take
+   a sequential model version number ``model_version_num`` instead of a surrogate key
    ``model_version_id``.
 
 **Bug Fixes**
