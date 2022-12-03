@@ -31,15 +31,15 @@ Version 0.19.8
 **Improvements**
 
 -  Kubernetes: If a pod exits and Determined cannot get the exit code, the code will be set to
-   1025 instead of the previously set 137 to avoid confusion with potential out of memory issues.
--  API: Patch user won't make partial updates if an error happens on another field.
+   1025 instead of 137 to avoid confusion with potential out-of-memory issues.
+-  API: Patching a user will no longer make partial updates if an error occurs.
 -  Kubernetes: Specifying ``tensorboardTimeout`` in Helm will cause the specified timeout to be
    applied.
 -  AWS: ``det deploy aws`` will use IMDSv2 for improved security.
 
 **New Features**
 
--  Experiment: Determined Enterprise Edition now allows control of the GPU type within a Slurm gres
+-  Experiment: Determined Enterprise Edition now allows control of the GPU type within a Slurm GRES
    expression. If you have partitions with mixed GPU types, you may now specify the desired type
    using the ``slurm.gpu_type`` attribute of the experiment configuration.
 
