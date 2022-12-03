@@ -10,6 +10,39 @@
  Version 0.19
 **************
 
+Version 0.19.8
+==============
+
+**Release Date:** December 02, 2022
+
+**Breaking Changes**
+
+-  REST APIs: ``GetModelVersion``, ``PatchModelVersion``, ``DeleteModelVersion`` APIs now take
+   sequential model version number ``model_version_num`` instead of a surrogate key
+   ``model_version_id``.
+
+**Bug Fixes**
+
+-  Experiment: Fix an issue where experiments created before version 0.16.0 could have issues
+   loading.
+-  Python SDK: Fix an issue where Model Registry call ``model.get_version(version)`` did not work
+   when a specific version was passed.
+
+**Improvements**
+
+-  Kubernetes: If a pod exits and Determined can not get the exit status, the code will be set to
+   1025 instead of the previously set 137 to avoid confusion with potential out of memory issues.
+-  API: Patch user won't make partial updates if an error happens on another field.
+-  Kubernetes: Specifying ``tensorboardTimeout`` in Helm will cause the specified timeout to be
+   applied.
+-  AWS: ``det deploy aws`` will use IMDSv2 for improved security.
+
+**New Features**
+
+-  Experiment: Determined Enterprise Edition now allows control of the GPU type within a Slurm gres
+   expression. If you have partitions with mixed GPU types, you may now specify the desired type
+   using the ``slurm.gpu_type`` attribute of the experiment configuration.
+
 Version 0.19.7
 ==============
 
