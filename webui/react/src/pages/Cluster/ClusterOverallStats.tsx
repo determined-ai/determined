@@ -6,6 +6,7 @@ import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
 import Spinner from 'shared/components/Spinner';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { useResourcePools } from 'stores/resourcePools';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -13,7 +14,9 @@ import { Loadable } from 'utils/loadable';
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
-  const { activeExperiments, activeTasks, resourcePools } = useStore();
+  const { activeExperiments, activeTasks } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools);
   const overview = useClusterOverview();
   const agents = useAgents();
 

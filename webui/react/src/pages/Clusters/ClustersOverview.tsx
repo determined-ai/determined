@@ -5,19 +5,16 @@ import Link from 'components/Link';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
-import { useStore } from 'contexts/Store';
-import {
-  useFetchActiveExperiments,
-  useFetchActiveTasks,
-  useFetchResourcePools,
-} from 'hooks/useFetch';
+import { useFetchActiveExperiments, useFetchActiveTasks } from 'hooks/useFetch';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
 import { useEnsureAgentsFetched } from 'stores/agents';
+import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
@@ -89,7 +86,8 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const { resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools);
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 

@@ -5,15 +5,7 @@ import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import {
-  Auth,
-  DetailedUser,
-  DeterminedInfo,
-  ResourcePool,
-  UserAssignment,
-  UserRole,
-  Workspace,
-} from 'types';
+import { Auth, DetailedUser, DeterminedInfo, UserAssignment, UserRole, Workspace } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
 
 const logger = rootLogger.extend('store');
@@ -41,7 +33,6 @@ interface State {
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
 
-  resourcePools: ResourcePool[];
   ui: {
     omnibar: OmnibarState;
   };
@@ -86,9 +77,6 @@ export const StoreAction = {
   // PinnedWorkspaces
   SetPinnedWorkspaces: 'SetPinnedWorkspaces',
 
-  // ResourcePools
-  SetResourcePools: 'SetResourcePools',
-
   SetUserAssignments: 'SetUserAssignments',
 
   SetUserRoles: 'SetUserRoles',
@@ -110,7 +98,6 @@ type Action =
   | { type: typeof StoreAction.SetInfoCheck }
   | { type: typeof StoreAction.SetUsers; value: DetailedUser[] }
   | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
-  | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
@@ -158,7 +145,6 @@ const initState: State = {
   info: initInfo,
   knownRoles: [],
   pinnedWorkspaces: [],
-  resourcePools: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
   userRoles: [
@@ -227,9 +213,6 @@ const reducer = (state: State, action: Action): State => {
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }
-    case StoreAction.SetResourcePools:
-      if (isEqual(state.resourcePools, action.value)) return state;
-      return { ...state, resourcePools: action.value };
     case StoreAction.SetPinnedWorkspaces:
       if (isEqual(state.pinnedWorkspaces, action.value)) return state;
       return { ...state, pinnedWorkspaces: action.value };
