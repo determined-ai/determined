@@ -1,2 +1,8 @@
 # Empty checks to allow compatability with main repo using pre-commit :)
-repos: []
+repos:
+- repo: https://github.com/jumanjihouse/pre-commit-hooks
+  rev: 3.0.0
+  hooks:
+  - id: markdownlint # Configure in .mdlrc
+  - id: git-check
+  - id: git-dirty
