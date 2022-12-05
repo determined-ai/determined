@@ -17,8 +17,8 @@ Show current version of determined-ai in repo:
 Install current version with completely minimal defaults:
 `helm install --generate-name determined-ai/determined --set maxSlotsPerPod=1`
 
-More information on values that can be set in the helm chart:
-<https://docs.determined.ai/latest/reference/reference-deploy/config/helm-config-reference.html>
+[More information on values that can be set in the helm chart](
+https://docs.determined.ai/latest/reference/reference-deploy/config/helm-config-reference.html)
 
-More information on installing under Kubernetes:
-<https://docs.determined.ai/latest/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/install-on-kubernetes.html>
+[More information on installing under Kubernetes](
+https://docs.determined.ai/latest/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-k8s/install-on-kubernetes.html)

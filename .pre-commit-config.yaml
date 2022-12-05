@@ -1,8 +1,49 @@
-# Empty checks to allow compatability with main repo using pre-commit :)
+---
+# special pre-commit for helm chart repo
 repos:
-- repo: https://github.com/jumanjihouse/pre-commit-hooks
-  rev: 3.0.0
-  hooks:
-  - id: markdownlint # Configure in .mdlrc
-  - id: git-check
-  - id: git-dirty
+  - repo: https://github.com/hcodes/yaspeller.git
+    rev: v8.0.1
+    hooks:
+      - id: yaspeller  # configure in .yaspellerrc
+        types:
+          - file
+          - markdown
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.19.2
+    hooks:
+      # - id: check-dependabot
+      - id: check-github-actions
+      - id: check-github-workflows
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.15.2
+    hooks:
+      - id: gitleaks-docker
+        name: Detect hardcoded secrets
+        description: Detect hardcoded secrets using Gitleaks
+        entry: zricethezav/gitleaks protect --verbose --redact --staged
+        language: docker_image
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.28.0
+    hooks:
+      - id: yamllint
+        name: yaml lint all but helm-generated file
+        exclude: index.yaml
+      - id: yamllint
+        name: special lint for helm index.yaml
+        files: index.yaml
+        args:
+          - -c
+          - .index.yaml.yamllint.yaml
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: forbid-binary
+        exclude: >
+          (?x)^(
+            favicon.ico
+            |
+            .*helm-chart.*\.tgz
+          )$
+      - id: markdownlint  # Configure in .mdlrc
+      - id: git-check
+      - id: git-dirty
