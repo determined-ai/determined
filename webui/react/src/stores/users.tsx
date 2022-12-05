@@ -208,5 +208,3 @@ export const useAuth = (): UseAuthReturn => {
     setAuthCheck,
   };
 };
-
-// TODO: check for usage of currentUser and auth accross the app
