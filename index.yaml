@@ -10,7 +10,7 @@ entries:
     icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
     name: determined
     urls:
-    - https://github.com/determined-ai/determined/releases/download/0.19.8-ee/determined-helm-chart_0.19.8.tgz
+    - https://github.com/determined-ai/determined/releases/download/0.19.8/determined-helm-chart_0.19.8.tgz
     version: 0.19.8
   - apiVersion: v1
     appVersion: 0.19.7
