@@ -2,7 +2,6 @@ import { Button, Form, Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { useFetchMyRoles } from 'hooks/useFetch';
 import { paths } from 'routes/utils';
@@ -13,6 +12,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
+import { useAuth } from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -31,7 +31,7 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
-  const storeDispatch = useStoreDispatch();
+  const { setAuth } = useAuth();
   const fetchMyRoles = useFetchMyRoles(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
@@ -52,10 +52,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           { signal: canceler.signal },
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
-        storeDispatch({
-          type: StoreAction.SetAuth,
-          value: { isAuthenticated: true, token, user },
-        });
+        setAuth({ isAuthenticated: true, token, user });
         if (rbacEnabled) {
           await fetchMyRoles();
         }
@@ -78,7 +75,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setIsSubmitted(false);
       }
     },
-    [canceler, storeDispatch, uiActions, fetchMyRoles, rbacEnabled],
+    [canceler, setAuth, uiActions, fetchMyRoles, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

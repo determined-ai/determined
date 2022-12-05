@@ -13,6 +13,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { useAuth } from 'stores/users';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -43,7 +44,8 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { auth } = useAuth();
+  const { resourcePools, info, pinnedWorkspaces } = useStore();
   const { ui } = useUI();
   const overview = useClusterOverview();
   const agents = useAgents();

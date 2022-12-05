@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { useStore } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
+import { useAuth } from 'stores/users';
 import handleError from 'utils/error';
 
 const SignOut: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { info } = useStore();
-  const storeDispatch = useStoreDispatch();
+  const { resetAuth } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ const SignOut: React.FC = () => {
         }
       }
       updateDetApi({ apiKey: undefined });
-      storeDispatch({ type: StoreAction.ResetAuth });
+      resetAuth();
 
       if (info.externalLogoutUri) {
         routeAll(info.externalLogoutUri);
@@ -42,7 +43,7 @@ const SignOut: React.FC = () => {
     };
 
     if (!isSigningOut) signOut();
-  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, storeDispatch]);
+  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, resetAuth]);
 
   return null;
 };

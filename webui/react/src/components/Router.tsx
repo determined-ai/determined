@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
+import { useAuth } from 'stores/users';
 
 interface Props {
   routes: RouteConfig[];
 }
 
 const Router: React.FC<Props> = (props: Props) => {
-  const { auth } = useStore();
+  const { auth } = useAuth();
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();

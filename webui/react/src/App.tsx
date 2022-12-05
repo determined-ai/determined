@@ -11,7 +11,6 @@ import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { useFetchInfo } from 'hooks/useFetch';
-import { useFetchUsers } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import useResize from 'hooks/useResize';
@@ -25,6 +24,7 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
+import { useAuth, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -32,7 +32,8 @@ import css from './App.module.scss';
 const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
-  const { auth, info, ui } = useStore();
+  const { info, ui } = useStore();
+  const { auth } = useAuth();
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck(canceler);

@@ -2,8 +2,9 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
+import { useAuth, useUsers } from 'stores/users';
 import { ALL_VALUE, User } from 'types';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import SelectFilter from './SelectFilter';
@@ -22,7 +23,8 @@ const userToSelectOption = (user: User): React.ReactNode => (
 );
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
-  const { auth, users } = useStore();
+  const users = Loadable.getOrElse([], useUsers().users);
+  const { auth } = useAuth();
 
   const handleSelect = useCallback(
     (newValue: SelectValue) => {

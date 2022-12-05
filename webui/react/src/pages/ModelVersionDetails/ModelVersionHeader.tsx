@@ -9,7 +9,6 @@ import Link from 'components/Link';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
-import { useStore } from 'contexts/Store';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import { paths } from 'routes/utils';
@@ -17,7 +16,9 @@ import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
+import { useUsers } from 'stores/users';
 import { ModelVersion } from 'types';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
@@ -43,7 +44,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const { users } = useStore();
+  const users = Loadable.getOrElse([], useUsers().users);
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =

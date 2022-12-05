@@ -3,11 +3,11 @@ import React, { useCallback } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
 import Avatar from 'components/UserAvatar';
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
+import { useAuth, useUsers } from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './SettingsAccount.module.scss';
@@ -19,8 +19,8 @@ export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
-  const { auth } = useStore();
-  const storeDispatch = useStoreDispatch();
+  const { auth } = useAuth();
+  const { updateCurrentUser } = useUsers();
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
     useModalPasswordChange();
@@ -36,7 +36,7 @@ const SettingsAccount: React.FC = () => {
           userId: auth.user?.id || 0,
           userParams: { displayName: newValue },
         });
-        storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+        updateCurrentUser(user);
         message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
       } catch (e) {
         message.error(API_DISPLAYNAME_ERROR_MESSAGE);
@@ -44,7 +44,7 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, storeDispatch],
+    [auth.user, updateCurrentUser],
   );
 
   const handleSaveUsername = useCallback(
@@ -54,7 +54,7 @@ const SettingsAccount: React.FC = () => {
           userId: auth.user?.id || 0,
           userParams: { username: newValue },
         });
-        storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+        updateCurrentUser(user);
         message.success(API_USERNAME_SUCCESS_MESSAGE);
       } catch (e) {
         message.error(API_USERNAME_ERROR_MESSAGE);
@@ -62,7 +62,7 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, storeDispatch],
+    [auth.user, updateCurrentUser],
   );
 
   return (

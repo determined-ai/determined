@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
+import { useAuth } from 'stores/users';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -76,11 +77,9 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const {
-    auth: { user },
-    userAssignments,
-    userRoles,
-  } = useStore();
+  const { auth } = useAuth();
+  const user = auth.user as DetailedUser | undefined;
+  const { userAssignments, userRoles } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;

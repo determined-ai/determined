@@ -20,6 +20,7 @@ import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { useAuth } from 'stores/users';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -110,7 +111,8 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const { auth, resourcePools, info, pinnedWorkspaces } = useStore();
+  const { resourcePools, info, pinnedWorkspaces } = useStore();
+  const { auth } = useAuth();
   const { ui } = useUI();
   const agents = useAgents();
   const overview = useClusterOverview();

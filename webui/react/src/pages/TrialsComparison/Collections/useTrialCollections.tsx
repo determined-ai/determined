@@ -4,13 +4,13 @@ import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { useStore } from 'contexts/Store';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { useAuth } from 'stores/users';
 import handleError from 'utils/error';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
@@ -85,7 +85,7 @@ export const useTrialCollections = (
 
   const {
     auth: { user },
-  } = useStore();
+  } = useAuth();
 
   const userId = useMemo(() => (user?.id ? String(user?.id) : ''), [user?.id]);
 

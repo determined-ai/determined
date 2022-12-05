@@ -2,10 +2,10 @@ import { Form, Input, message } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback } from 'react';
 
-import { useStore } from 'contexts/Store';
 import { login, setUserPassword } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
+import { useAuth } from 'stores/users';
 import handleError from 'utils/error';
 
 interface Props {
@@ -97,7 +97,7 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const { auth } = useStore();
+  const { auth } = useAuth();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 

@@ -32,9 +32,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
-import { useFetchUsers } from 'hooks/useFetch';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
@@ -63,6 +61,7 @@ import { RecordKey, ValueOf } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { useAuth, useEnsureUsersFetched, useUsers } from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -79,6 +78,7 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
@@ -110,10 +110,10 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
+  const users = Loadable.getOrElse([], useUsers().users);
   const {
-    users,
     auth: { user },
-  } = useStore();
+  } = useAuth();
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -224,7 +224,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [canceler.signal, id]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchExperiments(), fetchUsers(), fetchLabels()]);

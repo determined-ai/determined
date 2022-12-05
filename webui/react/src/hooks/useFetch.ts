@@ -8,7 +8,6 @@ import {
   getInfo,
   getPermissionsSummary,
   getResourcePools,
-  getUsers,
   getWorkspaces,
   listRoles,
 } from 'services/api';
@@ -47,19 +46,6 @@ export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) =
       storeDispatch({ type: StoreAction.SetInfo, value: response });
     } catch (e) {
       storeDispatch({ type: StoreAction.SetInfoCheck });
-      handleError(e);
-    }
-  }, [canceler, storeDispatch]);
-};
-
-export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-
-  return useCallback(async (): Promise<void> => {
-    try {
-      const usersResponse = await getUsers({}, { signal: canceler.signal });
-      storeDispatch({ type: StoreAction.SetUsers, value: usersResponse.users });
-    } catch (e) {
       handleError(e);
     }
   }, [canceler, storeDispatch]);

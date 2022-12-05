@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useAuth } from 'stores/users';
 
 import NavigationTabbar from './NavigationTabbar';
 
@@ -11,11 +11,11 @@ export default {
 };
 
 const NavigationTabbarLoggedIn = () => {
-  const storeDispatch = useStoreDispatch();
+  const { setAuth } = useAuth();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+  }, [setAuth]);
 
   return <NavigationTabbar />;
 };
