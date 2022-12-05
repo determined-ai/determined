@@ -1,6 +1,7 @@
 package dispatcherrm
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -671,4 +672,128 @@ func Test_dispatcherResourceManager_checkLauncherVersion(t *testing.T) {
 	assert.Equal(t, checkMinimumLauncherVersion("3.0.3"), false)
 	assert.Equal(t, checkMinimumLauncherVersion("x.y.z"), false)
 	assert.Equal(t, checkMinimumLauncherVersion("abc"), false)
+}
+
+func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T) {
+	type fields struct {
+		poolConfig []config.ResourcePoolConfig
+	}
+	type args struct {
+		hpcDetails          hpcResources
+		targetPartitionName string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   hasSlurmPartitionResponse
+	}{
+		{
+			name:   "resource pool not found",
+			fields: fields{},
+			args: args{
+				hpcDetails:          hpcResources{},
+				targetPartitionName: "partition-is-not-present",
+			},
+			want: hasSlurmPartitionResponse{},
+		},
+		{
+			name:   "resource pool is a discovered partition",
+			fields: fields{},
+			args: args{
+				hpcDetails: hpcResources{
+					Partitions: []hpcPartitionDetails{{
+						PartitionName: "target-pool",
+					}},
+				},
+				targetPartitionName: "target-pool",
+			},
+			want: hasSlurmPartitionResponse{
+				HasResourcePool: true,
+			},
+		},
+		{
+			name: "resource pool is launcher-provided, but partition not present",
+			fields: fields{
+				poolConfig: []config.ResourcePoolConfig{{
+					PoolName:    "partition-is-launcher-provided",
+					Description: launcherPoolDescription,
+					Provider: &provconfig.Config{
+						HPC: &provconfig.HpcClusterConfig{
+							Partition: "target-pool",
+						},
+					},
+				}},
+			},
+			args: args{
+				hpcDetails:          hpcResources{},
+				targetPartitionName: "partition-is-launcher-provided",
+			},
+			want: hasSlurmPartitionResponse{
+				HasResourcePool:    false,
+				ProvidingPartition: "target-pool",
+			},
+		},
+		{
+			name: "resource pool is launcher-provided, and providing partition is present",
+			fields: fields{
+				poolConfig: []config.ResourcePoolConfig{{
+					PoolName:    "partition-is-launcher-provided",
+					Description: launcherPoolDescription,
+					Provider: &provconfig.Config{
+						HPC: &provconfig.HpcClusterConfig{
+							Partition: "target-pool",
+						},
+					},
+				}},
+			},
+			args: args{
+				hpcDetails: hpcResources{
+					Partitions: []hpcPartitionDetails{{
+						PartitionName: "target-pool",
+					}},
+				},
+				targetPartitionName: "partition-is-launcher-provided",
+			},
+			want: hasSlurmPartitionResponse{
+				HasResourcePool:    true,
+				ProvidingPartition: "target-pool",
+			},
+		},
+		{
+			name: "resource pool is launcher-provided, but providing partition definition absent",
+			fields: fields{
+				poolConfig: []config.ResourcePoolConfig{{
+					PoolName:    "partition-is-launcher-provided",
+					Description: launcherPoolDescription,
+					Provider: &provconfig.Config{
+						HPC: &provconfig.HpcClusterConfig{},
+					},
+				}},
+			},
+			args: args{
+				hpcDetails: hpcResources{
+					Partitions: []hpcPartitionDetails{{
+						PartitionName: "target-pool",
+					}},
+				},
+				targetPartitionName: "partition-is-launcher-provided",
+			},
+			want: hasSlurmPartitionResponse{
+				HasResourcePool: false,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &dispatcherResourceManager{
+				poolConfig: tt.fields.poolConfig,
+			}
+			if got := m.getPartitionValidationResponse(
+				tt.args.hpcDetails, tt.args.targetPartitionName); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("dispatcherResourceManager.getPartitionValidationResponse() = %v, want %v",
+					got, tt.want)
+			}
+		})
+	}
 }
