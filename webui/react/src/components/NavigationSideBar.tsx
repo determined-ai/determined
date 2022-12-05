@@ -112,7 +112,7 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const { auth, info, pinnedWorkspaces } = useStore();
-  const loadableResourcePools = useResourcePools();
+  const { resourcePools: loadableResourcePools } = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools);
   const { ui } = useUI();
   const agents = useAgents();

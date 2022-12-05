@@ -35,7 +35,7 @@ const Clusters: React.FC = () => {
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const loadableResourcePools = useResourcePools();
+  const { resourcePools: loadableResourcePools } = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools);
   const overview = useClusterOverview();
   const agents = useAgents();

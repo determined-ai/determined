@@ -109,7 +109,7 @@ const useModalHyperparameterSearch = ({
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
       SEARCH_METHODS.ASHA,
   );
-  const loadableResourcePools = useResourcePools();
+  const { resourcePools: loadableResourcePools } = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools);
   const canceler = useRef<AbortController>();
   const fetchResourcePools = useFetchResourcePools(canceler.current ?? new AbortController());

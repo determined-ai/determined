@@ -40,12 +40,12 @@ export const useFetchResourcePools = (canceler: AbortController): (() => Promise
   }, [canceler, updateResourcePools]);
 };
 
-export const useResourcePools = (): Loadable<ResourcePool[]> => {
+export const useResourcePools = (): ResourcePoolsContext => {
   const context = useContext(ResourcePoolsContext);
   if (context === null) {
     throw new Error('Attempted to use useWorkspaces outside of Workspace Context');
   }
-  const { resourcePools } = context;
+  const { resourcePools, updateResourcePools } = context;
 
-  return resourcePools;
+  return { resourcePools, updateResourcePools };
 };

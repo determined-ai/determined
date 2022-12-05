@@ -45,7 +45,7 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
 const NavigationTabbar: React.FC = () => {
   const { auth, info, pinnedWorkspaces } = useStore();
-  const loadableResourcePools = useResourcePools();
+  const { resourcePools: loadableResourcePools } = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools);
   const { ui } = useUI();
   const overview = useClusterOverview();

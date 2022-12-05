@@ -86,7 +86,7 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const loadableResourcePools = useResourcePools();
+  const { resourcePools: loadableResourcePools } = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools);
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();

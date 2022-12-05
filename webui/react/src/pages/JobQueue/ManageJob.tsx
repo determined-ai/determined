@@ -81,7 +81,7 @@ const ManageJob: React.FC<Props> = ({
 }) => {
   const formRef = useRef<FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
-  const loadableResourcePools = useResourcePools();
+  const { resourcePools: loadableResourcePools } = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools);
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 

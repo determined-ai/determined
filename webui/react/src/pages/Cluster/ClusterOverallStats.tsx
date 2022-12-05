@@ -15,7 +15,7 @@ import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
   const { activeExperiments, activeTasks } = useStore();
-  const loadableResourcePools = useResourcePools();
+  const { resourcePools: loadableResourcePools } = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools);
   const overview = useClusterOverview();
   const agents = useAgents();
