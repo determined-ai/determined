@@ -110,8 +110,20 @@ func (a *apiServer) IdleNotebook(
 func (a *apiServer) KillNotebook(
 	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
-	if _, err := a.GetNotebook(ctx,
-		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: req.NotebookId})
+	if err != nil {
+		return nil, err
+	}
+	// CHECK should we delegate to AuthZProvider?
+	/* not sure if this is Go friendly but maybe the interface allows for a nil user to be passed in
+	so that if the `curUser` isn't in scope already we just delegate to the AuthZProvider
+	*/
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = command.AuthZProvider.Get().CanTerminateCommand(ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), model.JobTypeNotebook); err != nil {
 		return nil, err
 	}
 
@@ -163,18 +175,11 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
-	/*
-		TODO:
-		- get the requesting user
-		- ? add workspace to command config
-		- check for workspace existence and archived status
-		- default to Uncategorized workspace
-	*/
 	workspace, err := a.getValidatedWorkspaceForNewJob(ctx, req.WorkspaceId)
 	if err != nil {
 		return nil, err
 	}
-	if err = command.AuthZProvider.Get().CanCreateCommand(ctx, *user, workspace, nil); err != nil {
+	if err = command.AuthZProvider.Get().CanCreateCommand(ctx, *user, model.AccessScopeID(workspace.ID), model.JobTypeNotebook); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 

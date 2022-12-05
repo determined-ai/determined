@@ -32,11 +32,13 @@ type CommandAuthZ interface {
 	) (*bun.SelectQuery, error)
 
 	// POST /api/v1/commands/:cmd_id/kill
-	CanTerminateCommand(ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec) error
+	CanTerminateCommand(
+		ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
+	) error
 
 	// POST /api/v1/commands
 	CanCreateCommand(
-		ctx context.Context, curUser model.User, workspace *model.Workspace, c *tasks.GenericCommandSpec,
+		ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
 	) error
 
 	// PATCH /commands/:cmd_id

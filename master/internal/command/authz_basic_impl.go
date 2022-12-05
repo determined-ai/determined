@@ -39,14 +39,14 @@ func (a *CommandAuthZBasic) FilterCommandsQuery(
 
 // CanTerminateCommand always returns a nil error.
 func (a *CommandAuthZBasic) CanTerminateCommand(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
+	ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
 ) error {
 	return nil
 }
 
 // CanCreateCommand always returns a nil error.
 func (a *CommandAuthZBasic) CanCreateCommand(
-	ctx context.Context, curUser model.User, workspace *model.Workspace, c *tasks.GenericCommandSpec,
+	ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
 ) error {
 	return nil
 }
