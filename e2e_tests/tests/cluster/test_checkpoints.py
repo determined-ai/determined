@@ -23,7 +23,7 @@ EXPECT_TIMEOUT = 5
 
 def wait_for_gc_to_finish(experiment_id: int) -> None:
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     saw_gc = False
     # Don't wait longer than 5 minutes (as 600 half-seconds to improve our sampling resolution).
     for _ in range(600):

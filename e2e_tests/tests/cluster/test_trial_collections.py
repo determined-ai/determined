@@ -128,7 +128,7 @@ def assert_collection_is_uniquely_represented_in_collections(
 def test_trial_collections() -> None:
 
     master_url = conf.make_master_url()
-    authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(master_url)
     sess = utils.determined_test_session()
 
     experiment_id = exp.create_experiment(
