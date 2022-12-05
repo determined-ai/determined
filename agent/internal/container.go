@@ -191,7 +191,7 @@ func (c *containerActor) Receive(ctx *actor.Context) error {
 		}
 
 	case aproto.ContainerLog:
-		msg.Container = c.Container
+		msg.ContainerID = c.Container.ID
 		ctx.Log().Debug(msg)
 		ctx.Tell(ctx.Self().Parent(), c.makeTaskLog(msg))
 	case actor.ChildStopped:
