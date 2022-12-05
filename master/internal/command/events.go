@@ -134,14 +134,24 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	curUser := c.(*context.DetContext).MustGetUser()
 	taskID := model.TaskID(ctx.Self().Parent().Address().Local())
-	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), taskID)
-	if err != nil {
+
+	// CHECK why did we go to the DB and not actorysystem? logs for terminated ntsc?
+
+	snapshot := CommandSnapshot{}
+
+	reqCtx := c.Request().Context()
+	if err := db.Bun().NewSelect().Model(&snapshot).
+		// Relation("Task").
+		Relation("Task.Job").
+		Where("task.task_id = ?", taskID).
+		Scan(reqCtx); err != nil {
 		return err
 	}
 
-	reqCtx := c.Request().Context()
 	// TODO go from echo and actor context to workspace id and if tsb then which experiment and access
-	if ok, err := AuthZProvider.Get().CanGetCommand(reqCtx, curUser, ownerID, PlaceHolderWorkspace, PlaceHolderJobType); err != nil {
+	if ok, err := AuthZProvider.Get().CanGetCommand(reqCtx, curUser, *snapshot.Task.Job.OwnerID,
+		snapshot.GenericCommandSpec.Metadata.WorkspaceID, snapshot.Task.Job.JobType,
+	); err != nil {
 		return err
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
