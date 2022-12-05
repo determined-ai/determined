@@ -26,6 +26,7 @@ import { Loadable } from 'utils/loadable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;
@@ -111,9 +112,10 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const { auth, info, pinnedWorkspaces } = useStore();
+  const { auth, pinnedWorkspaces } = useStore();
   const loadableResourcePools = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();
   const agents = useAgents();
   const overview = useClusterOverview();
