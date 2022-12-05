@@ -121,11 +121,10 @@ export const useFetchMyRoles = (canceler: AbortController): (() => Promise<void>
   const storeDispatch = useStoreDispatch();
   return useCallback(async (): Promise<void> => {
     try {
-      const { assignments, roles } = await getPermissionsSummary(
+      const { assignments } = await getPermissionsSummary(
         { limit: 0 },
         { signal: canceler.signal },
       );
-      storeDispatch({ type: StoreAction.SetUserRoles, value: roles });
       storeDispatch({ type: StoreAction.SetUserAssignments, value: assignments });
     } catch (e) {
       handleError(e);

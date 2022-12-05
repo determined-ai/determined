@@ -1,14 +1,13 @@
 import { Form, Input, InputNumber, message, Select, Switch, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import {
   assignRolesToUser,
-  getUserRoles,
   patchUser,
   postUser,
   removeRolesFromUser,
@@ -18,9 +17,10 @@ import { V1AgentUserGroup, V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
+import { useEnsureUserRolesFetched, useUserRoles } from 'stores/userRoles';
 import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
-
+import { Loadable } from 'utils/loadable';
 export const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
 export const API_SUCCESS_MESSAGE_CREATE = `New user with empty password has been created,
@@ -204,24 +204,15 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
   const [form] = Form.useForm();
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
   const rbacEnabled = useFeature().isOn('rbac');
-  // Null means the roles have not yet loaded
-  const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
-  const { canAssignRoles, canModifyPermissions } = usePermissions();
 
-  const fetchUserRoles = useCallback(async () => {
-    if (user !== undefined && rbacEnabled && canAssignRoles({})) {
-      try {
-        const roles = await getUserRoles({ userId: user.id });
-        setUserRoles(roles);
-      } catch (e) {
-        handleError(e, { publicSubject: "Unable to fetch this user's roles." });
-      }
-    }
-  }, [user, canAssignRoles]);
+  const { canAssignRoles, canModifyPermissions } = usePermissions();
+  const canceler = useRef(new AbortController());
+  const userRoles = Loadable.getOrElse([], useUserRoles());
+  const fetchUserRoles = useEnsureUserRolesFetched(canceler.current, user?.id);
 
   useEffect(() => {
-    fetchUserRoles();
-  }, [fetchUserRoles]);
+    if (canAssignRoles({}) && rbacEnabled) fetchUserRoles();
+  }, [canAssignRoles, fetchUserRoles, rbacEnabled]);
 
   const handleCancel = useCallback(() => {
     form.resetFields();
@@ -286,7 +277,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         throw e;
       }
     },
-    [form, onClose, user, handleCancel, userRoles, canModifyPermissions, fetchUserRoles],
+    [form, onClose, user, handleCancel, fetchUserRoles, userRoles, canModifyPermissions],
   );
 
   const modalOpen = useCallback(
