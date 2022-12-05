@@ -119,7 +119,8 @@ type (
 
 	// hasSlurmPartitionResponse is the response to HasResourcePoolRequest.
 	hasSlurmPartitionResponse struct {
-		HasResourcePool bool
+		HasResourcePool    bool
+		ProvidingPartition string // Set for launcher-provided resource pools
 	}
 )
 
@@ -159,23 +160,37 @@ func (d *DispatcherResourceManager) ResolveResourcePool(
 		}
 		return resp.PoolName, nil
 	}
-
-	if err := d.ValidateResourcePool(ctx, name); err != nil {
+	providingPartition, err := d.validateResourcePool(ctx, name)
+	if err != nil {
 		return "", fmt.Errorf("validating resource pool: %w", err)
+	}
+	if providingPartition != "" {
+		return providingPartition, nil
 	}
 	return name, nil
 }
 
 // ValidateResourcePool validates that the given resource pool exists.
 func (d *DispatcherResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
+	_, err := d.validateResourcePool(ctx, name)
+	return err
+}
+
+func (d *DispatcherResourceManager) validateResourcePool(ctx actor.Messenger,
+	name string,
+) (string, error) {
 	var resp hasSlurmPartitionResponse
 	switch err := d.Ask(ctx, hasSlurmPartitionRequest{PoolName: name}, &resp); {
 	case err != nil:
-		return fmt.Errorf("requesting resource pool: %w", err)
+		return "", fmt.Errorf("requesting resource pool: %w", err)
+	case !resp.HasResourcePool && resp.ProvidingPartition != "":
+		return "", fmt.Errorf(
+			"resource pool %s is configured to use partition %s that does not exist "+
+				"-- verify the cluster configuration", name, resp.ProvidingPartition)
 	case !resp.HasResourcePool:
-		return fmt.Errorf("resource pool not found: %s", name)
+		return "", fmt.Errorf("resource pool not found: %s", name)
 	default:
-		return nil
+		return resp.ProvidingPartition, nil
 	}
 }
 
@@ -386,16 +401,13 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	case hasSlurmPartitionRequest:
 		// This is a query to see if the specified resource pool exists
 		hpcDetails, err := m.fetchHpcResourceDetailsCached(ctx)
-		result := false
-		if err == nil {
-			for _, p := range hpcDetails.Partitions {
-				if p.PartitionName == msg.PoolName {
-					result = true
-					break
-				}
-			}
+		var response hasSlurmPartitionResponse
+		if err != nil {
+			response = hasSlurmPartitionResponse{HasResourcePool: false}
+		} else {
+			response = m.getPartitionValidationResponse(hpcDetails, msg.PoolName)
 		}
-		ctx.Respond(hasSlurmPartitionResponse{HasResourcePool: result})
+		ctx.Respond(response)
 
 	case sproto.ValidateCommandResourcesRequest:
 		// TODO(HAL-2862): Use inferred value here if possible.
@@ -415,6 +427,44 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
+}
+
+// getPartitionValidationResponse computes a response to a resource pool
+// validation request. The target may be either a HPC native partition/queue,
+// or a launcher-provided pool. In the latter case we verify that the providing
+// partition exists on the cluster.
+func (m *dispatcherResourceManager) getPartitionValidationResponse(
+	hpcDetails hpcResources, targetPartitionName string,
+) hasSlurmPartitionResponse {
+	result := false
+	providingPartition := ""
+	result = partitionExists(targetPartitionName, hpcDetails.Partitions)
+	if !result {
+		for _, pool := range m.poolConfig {
+			if pool.PoolName == targetPartitionName && isValidProvider(pool) {
+				basePartition := pool.Provider.HPC.Partition
+				providingPartition = basePartition
+				if partitionExists(basePartition, hpcDetails.Partitions) {
+					result = true
+				}
+				break // on the first name match
+			}
+		}
+	}
+	return hasSlurmPartitionResponse{
+		HasResourcePool:    result,
+		ProvidingPartition: providingPartition,
+	}
+}
+
+// partitionExists return true if the specified partition exists on the HPC cluster.
+func partitionExists(targetPartition string, knowPartitions []hpcPartitionDetails) bool {
+	for _, p := range knowPartitions {
+		if p.PartitionName == targetPartition {
+			return true
+		}
+	}
+	return false
 }
 
 // generateGetAgentsResponse returns a suitable response to the GetAgentsRequest request.
@@ -1017,7 +1067,7 @@ func (m *dispatcherResourceManager) getLauncherProvidedPools(
 ) []*resourcepoolv1.ResourcePool {
 	var result []*resourcepoolv1.ResourcePool
 	for _, pool := range m.poolConfig {
-		if pool.Provider != nil && pool.Provider.HPC != nil && pool.Provider.HPC.Partition != "" {
+		if isValidProvider(pool) {
 			basePoolName := pool.Provider.HPC.Partition
 			basePool, found := poolNameMap[basePoolName]
 			if !found {
@@ -1037,6 +1087,11 @@ func (m *dispatcherResourceManager) getLauncherProvidedPools(
 		}
 	}
 	return result
+}
+
+// isValidProvider returns true is a usable Provider definition has been provided.
+func isValidProvider(pool config.ResourcePoolConfig) bool {
+	return pool.Provider != nil && pool.Provider.HPC != nil
 }
 
 func duplicateResourcePool(basePool *resourcepoolv1.ResourcePool) *resourcepoolv1.ResourcePool {
