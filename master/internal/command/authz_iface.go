@@ -14,10 +14,11 @@ import (
 // DISCUSS should we start moving to using NTSC in code, anything other than "command" is more clear IMO.
 type CommandAuthZ interface {
 	// TODO request ownerID for some checks.
+	// TODO skip jobType. directly use epxeriment rbac for tsb?
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
-		ctx context.Context, curUser model.User, ownerID model.UserID, c *tasks.GenericCommandSpec,
+		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceId model.AccessScopeID, jobType model.JobType,
 	) (canGetCmd bool, serverError error)
 
 	// GET /api/v1/tasks/count

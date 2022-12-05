@@ -17,7 +17,7 @@ type CommandAuthZBasic struct{}
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the task and a nil error.
 func (a *CommandAuthZBasic) CanGetCommand(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, ownerID model.UserID,
+	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceId model.AccessScopeID, jobType model.JobType,
 ) (canGetCmd bool, serverError error) {
 	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
 		return true, nil

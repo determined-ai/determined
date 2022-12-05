@@ -56,7 +56,7 @@ func (a *apiServer) GetShells(
 			return false
 		}
 		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
-			ctx, *curUser, model.UserID(resp.Shells[i].UserId))
+			ctx, *curUser, model.UserID(resp.Shells[i].UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType)
 		if serverError != nil {
 			err = serverError
 		}
@@ -84,7 +84,7 @@ func (a *apiServer) GetShell(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetCommand(
-		ctx, *curUser, model.UserID(resp.Shell.UserId)); err != nil {
+		ctx, *curUser, model.UserID(resp.Shell.UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)

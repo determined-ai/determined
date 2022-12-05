@@ -60,7 +60,7 @@ func (a *apiServer) GetNotebooks(
 			return false
 		}
 		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
-			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId))
+			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId), model.AccessScopeID(resp.Notebooks[i].WorkspaceId), model.JobTypeNotebook)
 		if serverError != nil {
 			err = serverError
 		}
@@ -88,7 +88,7 @@ func (a *apiServer) GetNotebook(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetCommand(
-		ctx, *curUser, model.UserID(resp.Notebook.UserId)); err != nil {
+		ctx, *curUser, model.UserID(resp.Notebook.UserId), model.AccessScopeID(resp.Notebook.WorkspaceId), model.JobTypeNotebook); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)

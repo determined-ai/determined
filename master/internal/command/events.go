@@ -140,7 +140,8 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	}
 
 	reqCtx := c.Request().Context()
-	if ok, err := AuthZProvider.Get().CanGetCommand(reqCtx, curUser, ownerID); err != nil {
+	// TODO go from echo and actor context to workspace id and if tsb then which experiment and access
+	if ok, err := AuthZProvider.Get().CanGetCommand(reqCtx, curUser, ownerID, PlaceHolderWorkspace, PlaceHolderJobType); err != nil {
 		return err
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")

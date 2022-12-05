@@ -181,7 +181,7 @@ func (a *apiServer) GetCommands(
 			return false
 		}
 		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
-			ctx, *curUser, model.UserID(resp.Commands[i].UserId))
+			ctx, *curUser, model.UserID(resp.Commands[i].UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType)
 		if serverError != nil {
 			err = serverError
 		}
@@ -209,7 +209,7 @@ func (a *apiServer) GetCommand(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetCommand(
-		ctx, *curUser, model.UserID(resp.Command.UserId)); err != nil {
+		ctx, *curUser, model.UserID(resp.Command.UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
