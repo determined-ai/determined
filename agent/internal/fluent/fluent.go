@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
@@ -184,8 +183,8 @@ func (f *Fluent) run(ctx context.Context) error {
 	}
 
 	f.printRecentLogs()
-	if err := f.docker.SignalContainer(ctx, cID, syscall.SIGKILL); err != nil {
-		f.log.WithError(err).Debug("tried but could not signal fluent after crash, may be gone")
+	if err := f.docker.RemoveContainer(ctx, cID, true); err != nil {
+		f.log.WithError(err).Debug("ensuring Fluent Bit is cleaned up")
 	}
 	select {
 	case err := <-errC:

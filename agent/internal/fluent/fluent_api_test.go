@@ -50,12 +50,12 @@ func TestFluentPostgresLogging(t *testing.T) {
 	t.Log("building docker client")
 	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	require.NoError(t, err)
-	cl := docker.NewClient(rawCl)
 	defer func() {
-		if cErr := cl.Close(); cErr != nil {
+		if cErr := rawCl.Close(); cErr != nil {
 			t.Logf("closing docker client: %s", cErr)
 		}
 	}()
+	cl := docker.NewClient(rawCl)
 
 	t.Log("building mock log acceptor")
 	logBuffer, logsCloser := mockLogAcceptor(t, opts.MasterPort)
@@ -92,8 +92,6 @@ func TestFluentPostgresLogging(t *testing.T) {
 }
 
 func TestFluentLoggingElastic(t *testing.T) {
-	// TODO(Brad): Move elastic package.
-	// elastic.ElasticTimeWindowDelay = 0
 	log.SetLevel(log.TraceLevel)
 	ctx := context.Background()
 	opts := atestutils.DefaultAgentConfig(1)
@@ -107,12 +105,12 @@ func TestFluentLoggingElastic(t *testing.T) {
 	t.Log("building client")
 	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	require.NoError(t, err)
-	cl := docker.NewClient(rawCl)
 	defer func() {
-		if cErr := cl.Close(); cErr != nil {
+		if cErr := rawCl.Close(); cErr != nil {
 			t.Logf("closing docker client: %s", cErr)
 		}
 	}()
+	cl := docker.NewClient(rawCl)
 
 	t.Log("starting fluentbit")
 	f, err := fluent.Start(ctx, opts, mopts, cl)
@@ -156,12 +154,12 @@ func TestFluentSadPaths(t *testing.T) {
 	t.Log("building docker client")
 	rawCl, err := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	require.NoError(t, err)
-	cl := docker.NewClient(rawCl)
 	defer func() {
-		if cErr := cl.Close(); cErr != nil {
+		if cErr := rawCl.Close(); cErr != nil {
 			t.Logf("closing docker client: %s", cErr)
 		}
 	}()
+	cl := docker.NewClient(rawCl)
 
 	t.Log("_not_ starting log acceptor")
 	t.Log("starting fluentbit")
@@ -179,7 +177,7 @@ func TestFluentSadPaths(t *testing.T) {
 	t.Log("checking fluentbit failure logs for intermittent failure")
 	found := false
 	for e := range logC {
-		if strings.Contains(e.Message, "no upstream connections available") {
+		if strings.Contains(e.Message, "failed to flush chunk") {
 			found = true
 			break
 		}
