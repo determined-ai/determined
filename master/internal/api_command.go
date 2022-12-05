@@ -180,7 +180,7 @@ func (a *apiServer) GetCommands(
 		if err != nil {
 			return false
 		}
-		ok, serverError := command.AuthZProvider.Get().CanAccessNTSCTask(
+		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
 			ctx, *curUser, model.UserID(resp.Commands[i].UserId))
 		if serverError != nil {
 			err = serverError
@@ -208,7 +208,7 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanAccessNTSCTask(
+	if ok, err := command.AuthZProvider.Get().CanGetCommand(
 		ctx, *curUser, model.UserID(resp.Command.UserId)); err != nil {
 		return nil, err
 	} else if !ok {

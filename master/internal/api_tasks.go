@@ -76,7 +76,7 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return command.AuthZProvider.Get().CanAccessNTSCTask(ctx, curUser, taskOwnerID)
+	return command.AuthZProvider.Get().CanGetCommand(ctx, curUser, taskOwnerID)
 }
 
 func (a *apiServer) canDoActionsOnTask(
