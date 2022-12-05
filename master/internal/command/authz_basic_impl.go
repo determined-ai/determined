@@ -13,19 +13,12 @@ import (
 // CommandAuthZBasic is basic OSS controls.
 type CommandAuthZBasic struct{}
 
-// CanGetCommand always returns true and a nill error.
-func (a *CommandAuthZBasic) CanGetCommand(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
-) (canGetCmd bool, serverError error) {
-	return true, nil
-}
-
-// CanAccessNTSCTask returns true and nil error unless the developer master config option
+// CanGetCommand returns true and nil error unless the developer master config option
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the task and a nil error.
-func (a *CommandAuthZBasic) CanAccessNTSCTask(
-	ctx context.Context, curUser model.User, ownerID model.UserID,
-) (bool, error) {
+func (a *CommandAuthZBasic) CanGetCommand(
+	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, ownerID model.UserID,
+) (canGetCmd bool, serverError error) {
 	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
 		return true, nil
 	}

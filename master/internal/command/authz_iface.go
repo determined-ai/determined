@@ -17,11 +17,8 @@ type CommandAuthZ interface {
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec,
+		ctx context.Context, curUser model.User, ownerID model.UserID, c *tasks.GenericCommandSpec,
 	) (canGetCmd bool, serverError error)
-
-	CanAccessNTSCTask(ctx context.Context, curUser model.User, ownerID model.UserID) (
-		canView bool, serverError error)
 
 	// GET /api/v1/tasks/count
 	// TODO(nick) move this when we add an AuthZ for notebooks.
