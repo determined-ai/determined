@@ -43,9 +43,9 @@ export const useFetchUserRolesAndAssignments = (
 
   return useCallback(async (): Promise<void> => {
     try {
-      const response = await getPermissionsSummary({ signal: canceler.signal });
-      updateUserRoles(() => Loaded(response.roles));
-      updateUserAssignments(() => Loaded(response.assignments));
+      const { roles, assignments } = await getPermissionsSummary({ signal: canceler.signal });
+      updateUserRoles(() => Loaded(roles));
+      updateUserAssignments(() => Loaded(assignments));
     } catch (e) {
       handleError(e);
     }
@@ -66,9 +66,9 @@ export const useEnsureUserRolesAndAssignmentsFetched = (
   return useCallback(async (): Promise<void> => {
     if (userRoles !== NotLoaded && userAssignments !== NotLoaded) return;
     try {
-      const response = await getPermissionsSummary({ signal: canceler.signal });
-      updateUserRoles(() => Loaded(response.roles));
-      updateUserAssignments(() => Loaded(response.assignments));
+      const { roles, assignments } = await getPermissionsSummary({ signal: canceler.signal });
+      updateUserRoles(() => Loaded(roles));
+      updateUserAssignments(() => Loaded(assignments));
     } catch (e) {
       handleError(e);
     }
