@@ -8,7 +8,7 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -163,9 +163,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
-      ({
-        ...(state.get(config.applicableRoutespace) ?? {}),
-      } as SettingsRecord<T>),
+    ({
+      ...(state.get(config.applicableRoutespace) ?? {}),
+    } as SettingsRecord<T>),
     [config, state],
   );
 

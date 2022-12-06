@@ -29,7 +29,8 @@ import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth, useUsers } from 'stores/users';
+import { useAuth } from 'stores/auth';
+import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -55,7 +56,7 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,7 +112,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       updateSettings({
         sortDesc:
           value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+            value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
             ? false
             : true,
         sortKey: value as V1GetWorkspaceProjectsRequestSortBy | undefined,

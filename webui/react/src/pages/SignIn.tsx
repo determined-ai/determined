@@ -21,7 +21,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -79,7 +79,7 @@ const SignIn: React.FC = () => {
       if (!queries.redirect) {
         routeToReactUrl(
           locationToPath(location.state?.loginRedirect) ||
-            (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
+          (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
         );
       } else {
         routeAll(queries.redirect);

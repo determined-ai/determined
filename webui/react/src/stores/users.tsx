@@ -1,18 +1,12 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
-import { globalStorage } from 'globalStorage';
 import { getUsers } from 'services/api';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
-import { isEqual } from 'shared/utils/data';
-import { Auth, DetailedUser } from 'types';
-import { getCookie, setCookie } from 'utils/browser';
+import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-export type CurrentUser = Auth & { checked: boolean };
 type UsersContext = {
-  auth: Loadable<CurrentUser>;
-  updateAuth: (fn: (users: Loadable<CurrentUser>) => Loadable<CurrentUser>) => void;
   updateUsers: (fn: (users: Loadable<DetailedUser[]>) => Loadable<DetailedUser[]>) => void;
   users: Loadable<DetailedUser[]>;
 };
@@ -24,32 +18,14 @@ type FetchUsersConfig = {
   sortBy: V1GetUsersRequestSortBy;
 };
 
-type UseUsersReturn = {
-  auth: Loadable<CurrentUser>;
-  updateCurrentUser: (user: DetailedUser) => void;
-  users: Loadable<DetailedUser[]>;
-};
-
-type UseAuthReturn = {
-  auth: Loadable<CurrentUser>;
-  resetAuth: () => void;
-  setAuth: (auth: Auth) => void;
-  setAuthCheck: () => void;
-};
-
-export const AUTH_COOKIE_KEY = 'auth';
-
 const UsersContext = createContext<UsersContext | null>(null);
 
 export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [users, setUsers] = useState<Loadable<DetailedUser[]>>(NotLoaded);
-  const [auth, setAuth] = useState<Loadable<CurrentUser>>(NotLoaded);
 
   return (
     <UsersContext.Provider
       value={{
-        auth,
-        updateAuth: setAuth,
         updateUsers: setUsers,
         users,
       }}>
@@ -108,96 +84,12 @@ export const useEnsureUsersFetched = (canceler: AbortController): (() => Promise
   );
 };
 
-export const useUsers = (): UseUsersReturn => {
+export const useUsers = (): Loadable<DetailedUser[]> => {
   const context = useContext(UsersContext);
 
   if (context === null) {
     throw new Error('Attempted to use useUsers outside of Users Context');
   }
-  const { users, auth, updateAuth: setCurrentUser } = context;
 
-  const updateCurrentUser = useCallback(
-    (user: DetailedUser) => {
-      const usersArray = Loadable.getOrElse([], users);
-
-      setCurrentUser((prevState) => {
-        const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, prevState);
-        if (isEqual(auth, user)) return prevState;
-
-        const userIdx = usersArray.findIndex((user) => user.id === user.id);
-
-        if (userIdx > -1) usersArray[userIdx] = { ...usersArray[userIdx], ...user };
-
-        return Loaded({ ...auth, user: user });
-      });
-    },
-    [setCurrentUser, users],
-  );
-
-  return {
-    auth,
-    updateCurrentUser,
-    users,
-  };
-};
-
-const clearAuthCookie = (): void => {
-  document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-};
-
-/**
- * set the auth cookie if it's not already set.
- * @param token auth token
- */
-const ensureAuthCookieSet = (token: string): void => {
-  if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
-};
-
-export const useAuth = (): UseAuthReturn => {
-  const context = useContext(UsersContext);
-
-  if (context === null) {
-    throw new Error('Attempted to use useAuth outside of Users Context');
-  }
-  const { auth, updateAuth } = context;
-
-  const resetAuth = useCallback(() => {
-    clearAuthCookie();
-    globalStorage.removeAuthToken();
-
-    updateAuth(() => NotLoaded);
-  }, [updateAuth]);
-
-  const setAuth = useCallback(
-    (auth: Auth) => {
-      if (auth.token) {
-        /**
-         * project Samuel provisioned auth doesn't set a cookie
-         * like our other auth methods do.
-         *
-         */
-        ensureAuthCookieSet(auth.token);
-        globalStorage.authToken = auth.token;
-      }
-
-      updateAuth(() => Loaded({ ...auth, checked: true }));
-    },
-    [updateAuth],
-  );
-
-  const setAuthCheck = useCallback(() => {
-    updateAuth((prevState) => {
-      const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, prevState);
-      if (auth.checked) return prevState;
-
-      return Loaded({ ...auth, checked: true });
-    });
-  }, [updateAuth]);
-
-  return {
-    auth,
-    resetAuth,
-    setAuth,
-    setAuthCheck,
-  };
+  return context.users;
 };

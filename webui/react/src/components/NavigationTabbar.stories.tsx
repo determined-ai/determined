@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 
 import NavigationTabbar from './NavigationTabbar';
 

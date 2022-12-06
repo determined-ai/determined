@@ -27,7 +27,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   const [chartSeries, setChartSeries] = useState<ResourceAllocationChartSeries>();
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {

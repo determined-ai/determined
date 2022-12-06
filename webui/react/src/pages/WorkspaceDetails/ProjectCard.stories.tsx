@@ -1,7 +1,7 @@
 import { Meta } from '@storybook/react';
 import React, { useMemo } from 'react';
 
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import { generateTestProjectData } from 'storybook/shared/generateTestData';
 import { Project } from 'types';
 import { Loadable } from 'utils/loadable';

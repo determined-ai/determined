@@ -7,7 +7,8 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth, useUsers } from 'stores/users';
+import { useAuth } from 'stores/auth';
+import { useUsers } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -20,8 +21,9 @@ export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
-  const { updateCurrentUser } = useUsers();
+  const { auth: loadableAuth, updateCurrentUser } = useAuth();
+  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, loadableAuth);
+  const users = Loadable.getOrElse([], useUsers());
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
     useModalPasswordChange();
@@ -37,7 +39,7 @@ const SettingsAccount: React.FC = () => {
           userId: auth.user?.id || 0,
           userParams: { displayName: newValue },
         });
-        updateCurrentUser(user);
+        updateCurrentUser(user, users);
         message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
       } catch (e) {
         message.error(API_DISPLAYNAME_ERROR_MESSAGE);
@@ -45,7 +47,7 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, updateCurrentUser],
+    [auth.user, updateCurrentUser, users],
   );
 
   const handleSaveUsername = useCallback(
@@ -55,7 +57,7 @@ const SettingsAccount: React.FC = () => {
           userId: auth.user?.id || 0,
           userParams: { username: newValue },
         });
-        updateCurrentUser(user);
+        updateCurrentUser(user, users);
         message.success(API_USERNAME_SUCCESS_MESSAGE);
       } catch (e) {
         message.error(API_USERNAME_ERROR_MESSAGE);
@@ -63,7 +65,7 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, updateCurrentUser],
+    [auth.user, updateCurrentUser, users],
   );
 
   return (

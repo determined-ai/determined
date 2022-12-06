@@ -1,7 +1,7 @@
 import { Meta } from '@storybook/react';
 import React, { useEffect } from 'react';
 
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 
 import NavigationSideBar from './NavigationSideBar';
 

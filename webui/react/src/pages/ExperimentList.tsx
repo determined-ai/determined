@@ -61,7 +61,8 @@ import { RecordKey, ValueOf } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useAuth, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -110,7 +111,7 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);

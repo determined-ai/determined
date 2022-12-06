@@ -44,7 +44,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =

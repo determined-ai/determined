@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { resetUserSetting } from 'services/api';
 import { StorageManager } from 'shared/utils/storage';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import { Loadable } from 'utils/loadable';
 
 export const userPreferencesStorage = (): (() => void) => {

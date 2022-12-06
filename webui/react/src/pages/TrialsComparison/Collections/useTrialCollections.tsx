@@ -10,7 +10,7 @@ import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } f
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -343,31 +343,31 @@ export const useTrialCollections = (
             menu={{
               items: collectionIsActive
                 ? [
-                    {
-                      disabled: !userOwnsCollection,
-                      key: 'ren',
-                      label: 'Rename Collection',
-                      onClick: renameCollection,
-                    },
-                    {
-                      disabled: !userOwnsCollection,
-                      key: 'del',
-                      label: 'Delete Collection',
-                      onClick: deleteCollection,
-                    },
-                    {
-                      key: 'clr',
-                      label: 'Clear Filters',
-                      onClick: clearFilters,
-                    },
-                  ]
+                  {
+                    disabled: !userOwnsCollection,
+                    key: 'ren',
+                    label: 'Rename Collection',
+                    onClick: renameCollection,
+                  },
+                  {
+                    disabled: !userOwnsCollection,
+                    key: 'del',
+                    label: 'Delete Collection',
+                    onClick: deleteCollection,
+                  },
+                  {
+                    key: 'clr',
+                    label: 'Clear Filters',
+                    onClick: clearFilters,
+                  },
+                ]
                 : [
-                    {
-                      key: 'clr',
-                      label: 'Clear Filters',
-                      onClick: clearFilters,
-                    },
-                  ],
+                  {
+                    key: 'clr',
+                    label: 'Clear Filters',
+                    onClick: clearFilters,
+                  },
+                ],
             }}
             trigger={['click']}>
             <Button

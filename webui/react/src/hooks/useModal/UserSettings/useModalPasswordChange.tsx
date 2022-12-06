@@ -5,7 +5,7 @@ import React, { useCallback } from 'react';
 import { login, setUserPassword } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

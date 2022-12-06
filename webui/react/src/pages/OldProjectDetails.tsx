@@ -71,7 +71,8 @@ import { ErrorLevel } from 'shared/utils/error';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useAuth, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -122,7 +123,7 @@ const batchActions = [
 ];
 
 const ProjectDetails: React.FC = () => {
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const { projectId } = useParams<Params>();
   const [project, setProject] = useState<Project>();

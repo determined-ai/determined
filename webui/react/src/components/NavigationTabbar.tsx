@@ -13,7 +13,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAgents, useClusterOverview } from 'stores/agents';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 

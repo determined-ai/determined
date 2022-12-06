@@ -5,7 +5,7 @@ import { paths } from 'routes/utils';
 import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import { Loadable } from 'utils/loadable';
 
 interface Props {

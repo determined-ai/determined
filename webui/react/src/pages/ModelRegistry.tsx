@@ -42,7 +42,8 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useAuth, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -59,7 +60,7 @@ import settingsConfig, {
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
 const ModelRegistry: React.FC = () => {
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);

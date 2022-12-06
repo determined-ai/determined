@@ -17,7 +17,7 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';

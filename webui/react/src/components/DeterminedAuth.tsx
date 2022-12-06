@@ -12,7 +12,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';

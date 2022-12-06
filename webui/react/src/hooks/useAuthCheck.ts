@@ -9,7 +9,7 @@ import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
-import { AUTH_COOKIE_KEY, useAuth } from 'stores/users';
+import { AUTH_COOKIE_KEY, useAuth } from 'stores/auth';
 import { getCookie } from 'utils/browser';
 import handleError from 'utils/error';
 

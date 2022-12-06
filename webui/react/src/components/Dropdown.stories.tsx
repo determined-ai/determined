@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import AvatarCard from 'shared/components/AvatarCard';
 import useUI from 'shared/contexts/stores/UI';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import { Loadable } from 'utils/loadable';
 
 import Dropdown, { Placement } from './Dropdown';

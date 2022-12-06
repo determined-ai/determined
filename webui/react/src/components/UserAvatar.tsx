@@ -11,7 +11,7 @@ export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
 }
 
 const UserAvatar: React.FC<Props> = ({ userId, ...rest }) => {
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const { ui } = useUI();
   const displayName = getDisplayName(users.find((user) => user.id === userId));
 

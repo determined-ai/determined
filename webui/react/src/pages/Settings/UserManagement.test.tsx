@@ -9,7 +9,8 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
-import { useFetchUsers, UsersProvider, useUsers } from 'stores/users';
+import { AuthProvider, useAuth } from 'stores/auth';
+import { useFetchUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
@@ -64,14 +65,14 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const { updateCurrentUser } = useUsers();
+  const { updateCurrentUser } = useAuth();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
 
-    updateCurrentUser(currentUser);
+    updateCurrentUser(currentUser, [currentUser]);
   }, [fetchUsers, updateCurrentUser]);
 
   useEffect(() => {
@@ -85,15 +86,17 @@ const setup = () =>
   render(
     <StoreProvider>
       <UsersProvider>
-        <DndProvider backend={HTML5Backend}>
-          <SettingsProvider>
-            <HelmetProvider>
-              <HistoryRouter history={history}>
-                <Container />
-              </HistoryRouter>
-            </HelmetProvider>
-          </SettingsProvider>
-        </DndProvider>
+        <AuthProvider>
+          <DndProvider backend={HTML5Backend}>
+            <SettingsProvider>
+              <HelmetProvider>
+                <HistoryRouter history={history}>
+                  <Container />
+                </HistoryRouter>
+              </HelmetProvider>
+            </SettingsProvider>
+          </DndProvider>
+        </AuthProvider>
       </UsersProvider>
     </StoreProvider>,
   );

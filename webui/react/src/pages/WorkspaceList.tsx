@@ -31,7 +31,8 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth, useUsers } from 'stores/users';
+import { useAuth } from 'stores/auth';
+import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -49,7 +50,7 @@ import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [total, setTotal] = useState(0);

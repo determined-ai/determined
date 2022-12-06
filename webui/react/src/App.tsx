@@ -24,7 +24,8 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
-import { useAuth, useFetchUsers } from 'stores/users';
+import { useAuth } from 'stores/auth';
+import { useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
 

@@ -7,7 +7,7 @@ import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
-import { useAuth } from 'stores/users';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
 
 const SignOut: React.FC = () => {

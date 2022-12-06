@@ -47,7 +47,7 @@ const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
-  const users = Loadable.getOrElse([], useUsers().users);
+  const users = Loadable.getOrElse([], useUsers());
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -212,8 +212,8 @@ const WorkspaceDetails: React.FC = () => {
   // Users and Groups that are not already a part of the workspace
   const addableGroups: V1Group[] = groups
     ? groups
-        .map((groupDetails) => groupDetails.group)
-        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
+      .map((groupDetails) => groupDetails.group)
+      .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
     : [];
   const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
   const addableUsersAndGroups = [...addableGroups, ...addableUsers];
