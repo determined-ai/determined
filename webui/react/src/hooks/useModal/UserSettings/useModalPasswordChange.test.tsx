@@ -1,11 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import { V1LoginRequest } from 'services/api-ts-sdk';
 import { SetUserPasswordParams } from 'services/types';
+import { useFetchUsers, UsersProvider, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import useModalPasswordChange, {
@@ -20,7 +21,32 @@ import useModalPasswordChange, {
 
 const mockSetUserPassword = jest.fn();
 
+const OPEN_MODAL_TEXT = 'Open Modal';
+const USERNAME = 'test_username1';
+const USER_ID = 1;
+const FIRST_PASSWORD_VALUE = 'Password1';
+const SECOND_PASSWORD_VALUE = 'Password2';
+const CURRENT_USER: DetailedUser = {
+  displayName: 'Test Name',
+  id: USER_ID,
+  isActive: true,
+  isAdmin: false,
+  username: USERNAME,
+};
+
 jest.mock('services/api', () => ({
+  getUsers: () =>
+    Promise.resolve({
+      users: [
+        {
+          displayName: 'Test Name',
+          id: 1,
+          isActive: true,
+          isAdmin: false,
+          username: 'test_username1',
+        },
+      ],
+    }),
   login: ({ password, username }: V1LoginRequest) => {
     if (password === FIRST_PASSWORD_VALUE && username === USERNAME) {
       return Promise.resolve();
@@ -33,34 +59,22 @@ jest.mock('services/api', () => ({
   },
 }));
 
-const OPEN_MODAL_TEXT = 'Open Modal';
-const USERNAME = 'test_username1';
-const USER_ID = 1;
-const FIRST_PASSWORD_VALUE = 'Password1';
-const SECOND_PASSWORD_VALUE = 'Password2';
-
-const CURRENT_USER: DetailedUser = {
-  displayName: 'Test Name',
-  id: USER_ID,
-  isActive: true,
-  isAdmin: false,
-  username: USERNAME,
-};
-
-const USERS: Array<DetailedUser> = [CURRENT_USER];
-
 const user = userEvent.setup();
 
 const Container: React.FC = () => {
   const { contextHolder, modalOpen } = useModalPasswordChange();
-  const storeDispatch = useStoreDispatch();
+  const { updateCurrentUser } = useUsers();
+  const [canceler] = useState(new AbortController());
+  const fetchUsers = useFetchUsers(canceler);
 
-  const loadUsers = useCallback(() => {
-    storeDispatch({ type: StoreAction.SetUsers, value: USERS });
-    storeDispatch({ type: StoreAction.SetCurrentUser, value: CURRENT_USER });
-  }, [storeDispatch]);
+  const loadUsers = useCallback(async () => {
+    await fetchUsers();
+    updateCurrentUser(CURRENT_USER);
+  }, [fetchUsers, updateCurrentUser]);
 
-  useEffect(() => loadUsers(), [loadUsers]);
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   return (
     <div>
@@ -73,7 +87,9 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <StoreProvider>
-      <Container />
+      <UsersProvider>
+        <Container />
+      </UsersProvider>
     </StoreProvider>,
   );
 

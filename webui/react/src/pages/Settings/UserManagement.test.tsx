@@ -1,14 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
+import { useFetchUsers, UsersProvider, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
@@ -54,26 +55,28 @@ jest.mock('hooks/useTelemetry', () => ({
   },
 }));
 
+const currentUser: DetailedUser = {
+  displayName: DISPLAY_NAME,
+  id: 1,
+  isActive: true,
+  isAdmin: true,
+  username: USERNAME,
+};
+
 const Container: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
+  const { updateCurrentUser } = useUsers();
+  const [canceler] = useState(new AbortController());
+  const fetchUsers = useFetchUsers(canceler);
 
-  const currentUser: DetailedUser = useMemo(
-    () => ({
-      displayName: DISPLAY_NAME,
-      id: 1,
-      isActive: true,
-      isAdmin: true,
-      username: USERNAME,
-    }),
-    [],
-  );
+  const loadUsers = useCallback(async () => {
+    await fetchUsers();
 
-  const loadUsers = useCallback(() => {
-    storeDispatch({ type: StoreAction.SetUsers, value: [currentUser] });
-    storeDispatch({ type: StoreAction.SetCurrentUser, value: currentUser });
-  }, [storeDispatch, currentUser]);
+    updateCurrentUser(currentUser);
+  }, [fetchUsers, updateCurrentUser]);
 
-  useEffect(() => loadUsers(), [loadUsers]);
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   return <UserManagement />;
 };
@@ -81,15 +84,17 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <StoreProvider>
-      <DndProvider backend={HTML5Backend}>
-        <SettingsProvider>
-          <HelmetProvider>
-            <HistoryRouter history={history}>
-              <Container />
-            </HistoryRouter>
-          </HelmetProvider>
-        </SettingsProvider>
-      </DndProvider>
+      <UsersProvider>
+        <DndProvider backend={HTML5Backend}>
+          <SettingsProvider>
+            <HelmetProvider>
+              <HistoryRouter history={history}>
+                <Container />
+              </HistoryRouter>
+            </HelmetProvider>
+          </SettingsProvider>
+        </DndProvider>
+      </UsersProvider>
     </StoreProvider>,
   );
 

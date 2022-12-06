@@ -6,6 +6,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
+import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import * as hook from './useSettings';
@@ -113,9 +114,11 @@ const setup = async (
 }> => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <StoreProvider>
-      <SettingsProvider>
-        <HistoryRouter history={history}>{children}</HistoryRouter>
-      </SettingsProvider>
+      <UsersProvider>
+        <SettingsProvider>
+          <HistoryRouter history={history}>{children}</HistoryRouter>
+        </SettingsProvider>
+      </UsersProvider>
     </StoreProvider>
   );
   const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {

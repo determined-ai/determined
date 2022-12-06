@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
+import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import useModalJupyterLab from './useModalJupyterLab';
@@ -60,9 +61,11 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <StoreProvider>
-        <SettingsProvider>
-          <ModalTrigger />
-        </SettingsProvider>
+        <UsersProvider>
+          <SettingsProvider>
+            <ModalTrigger />
+          </SettingsProvider>
+        </UsersProvider>
       </StoreProvider>
     </BrowserRouter>,
   );

@@ -5,6 +5,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import history from 'shared/routes/history';
+import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import Settings from './Settings';
@@ -38,11 +39,13 @@ const Container: React.FC = () => {
 const setup = () => {
   return render(
     <StoreProvider>
-      <HelmetProvider>
-        <HistoryRouter history={history}>
-          <Container />
-        </HistoryRouter>
-      </HelmetProvider>
+      <UsersProvider>
+        <HelmetProvider>
+          <HistoryRouter history={history}>
+            <Container />
+          </HistoryRouter>
+        </HelmetProvider>
+      </UsersProvider>
     </StoreProvider>,
   );
 };

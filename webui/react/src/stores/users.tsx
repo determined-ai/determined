@@ -121,13 +121,14 @@ export const useUsers = (): UseUsersReturn => {
       const usersArray = Loadable.getOrElse([], users);
 
       setCurrentUser((prevState) => {
-        if (isEqual(prevState, user)) return prevState;
+        const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, prevState);
+        if (isEqual(auth, user)) return prevState;
 
         const userIdx = usersArray.findIndex((user) => user.id === user.id);
 
         if (userIdx > -1) usersArray[userIdx] = { ...usersArray[userIdx], ...user };
 
-        return { ...prevState, user: user };
+        return Loaded({ ...auth, user: user });
       });
     },
     [setCurrentUser, users],
