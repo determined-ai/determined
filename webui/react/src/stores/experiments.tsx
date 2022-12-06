@@ -20,7 +20,7 @@ type ExperimentsContext = {
 
 const ExperimentsContext = createContext<ExperimentsContext | null>(null);
 
-const encodeArgs = (args: { [key: string]: any }): string => {
+const encodeParams = (args: { [key: string]: any }): string => {
   const orderedKeys = Object.keys(args).sort();
   return orderedKeys.map((key: string) => `${key}=${JSON.stringify(args[key])}`).join(',');
 };
@@ -37,8 +37,8 @@ export const ExperimentsProvider: React.FC<PropsWithChildren> = ({ children }) =
 };
 
 export const useFetchExperiments = (
-  filters: GetExperimentsParams,
   canceler: AbortController,
+  params: GetExperimentsParams,
 ): (() => Promise<void>) => {
   const context = useContext(ExperimentsContext);
   if (context === null) {
@@ -48,20 +48,20 @@ export const useFetchExperiments = (
 
   return useCallback(async (): Promise<void> => {
     try {
-      const response = await getExperiments(filters, { signal: canceler.signal });
-      updateExperimentsIndex(experimentsIndex.set(encodeArgs(filters), response));
+      const response = await getExperiments(params, { signal: canceler.signal });
+      updateExperimentsIndex(experimentsIndex.set(encodeParams(params), response));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, experimentsIndex, filters, getExperiments, updateExperimentsIndex]);
+  }, [canceler, experimentsIndex, params, getExperiments, updateExperimentsIndex]);
 };
 
-export const useExperiments = (filters: GetExperimentsParams): Loadable<ExperimentPagination> => {
+export const useExperiments = (params: GetExperimentsParams): Loadable<ExperimentPagination> => {
   const context = useContext(ExperimentsContext);
   if (context === null) {
     throw new Error('Attempted to use useExperiments outside of Experiment Context');
   }
-  const loadedVal = context.experimentsIndex.get(encodeArgs(filters));
+  const loadedVal = context.experimentsIndex.get(encodeParams(params));
 
   return loadedVal ? Loaded(loadedVal) : NotLoaded;
 };
