@@ -13,8 +13,7 @@ import (
 // CommandAuthZ describes authz methods for commands.
 // DISCUSS should we start moving to using NTSC in code, anything other than "command" is more clear IMO.
 type CommandAuthZ interface {
-	// TODO request ownerID for some checks.
-	// TODO skip jobType. directly use epxeriment rbac for tsb?
+	// TODO do we really want jobType? should we directly go to experiment rbac instead? we might have to.
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
@@ -22,7 +21,6 @@ type CommandAuthZ interface {
 	) (canGetCmd bool, serverError error)
 
 	// GET /api/v1/tasks/count
-	// TODO(nick) move this when we add an AuthZ for notebooks.
 	CanGetActiveTasksCount(ctx context.Context, curUser model.User) error
 
 	// GET /api/v1/commands
