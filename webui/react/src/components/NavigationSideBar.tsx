@@ -112,8 +112,8 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const { auth, info, pinnedWorkspaces } = useStore();
-  const { resourcePools: loadableResourcePools } = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools);
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const { ui } = useUI();
   const agents = useAgents();
   const overview = useClusterOverview();

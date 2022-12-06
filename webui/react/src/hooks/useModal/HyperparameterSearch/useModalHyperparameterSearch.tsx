@@ -109,10 +109,10 @@ const useModalHyperparameterSearch = ({
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
       SEARCH_METHODS.ASHA,
   );
-  const { resourcePools: loadableResourcePools } = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools);
-  const canceler = useRef<AbortController>();
-  const fetchResourcePools = useFetchResourcePools(canceler.current ?? new AbortController());
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  const canceler = useRef<AbortController>(new AbortController());
+  const fetchResourcePools = useFetchResourcePools(canceler.current);
   const [resourcePool, setResourcePool] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );
@@ -128,10 +128,9 @@ const useModalHyperparameterSearch = ({
   }, [fetchResourcePools, resourcePools]);
 
   useEffect(() => {
-    canceler.current = new AbortController();
+    const cancelerTemp = canceler.current;
     return () => {
-      canceler.current?.abort();
-      canceler.current = undefined;
+      cancelerTemp.abort();
     };
   }, []);
 

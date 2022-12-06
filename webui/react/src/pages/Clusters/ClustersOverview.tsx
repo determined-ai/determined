@@ -86,8 +86,8 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const { resourcePools: loadableResourcePools } = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools);
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 

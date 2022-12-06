@@ -49,8 +49,8 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
-  const { resourcePools: loadableResourcePools } = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools);
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const agents = Loadable.getOrElse([], useAgents());
 
   const pool = useMemo(() => {

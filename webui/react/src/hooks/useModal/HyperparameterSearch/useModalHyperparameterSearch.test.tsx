@@ -1,20 +1,71 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import { Button } from 'antd';
-import React, { useEffect } from 'react';
+import React from 'react';
 
-import { V1FittingPolicy, V1ResourcePoolType, V1SchedulerType } from 'services/api-ts-sdk';
 import { CreateExperimentParams } from 'services/types';
-import { ResourcePoolsProvider, useResourcePools } from 'stores/resourcePools';
+import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-import { ResourcePool, ResourceType } from 'types';
-import { Loaded } from 'utils/loadable';
+import type { ResourcePool } from 'types';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
 const MODAL_TITLE = 'Hyperparameter Search';
 
 const mockCreateExperiment = jest.fn();
+
+jest.mock('stores/resourcePools', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const types = require('types');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const sdkTypes = require('services/api-ts-sdk');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const loadable = require('utils/loadable');
+
+  const value: ResourcePool[] = [
+    {
+      agentDockerImage: '',
+      agentDockerNetwork: '',
+      agentDockerRuntime: '',
+      agentFluentImage: '',
+      auxContainerCapacity: 0,
+      auxContainerCapacityPerAgent: 0,
+      auxContainersRunning: 0,
+      containerStartupScript: '',
+      defaultAuxPool: false,
+      defaultComputePool: true,
+      description: '',
+      details: {},
+      imageId: '',
+      instanceType: '',
+      location: '',
+      masterCertName: '',
+      masterUrl: '',
+      maxAgents: 1,
+      maxAgentStartingPeriod: 1000,
+      maxIdleAgentPeriod: 1000,
+      minAgents: 0,
+      name: 'default',
+      numAgents: 1,
+      preemptible: false,
+      schedulerFittingPolicy: sdkTypes.V1FittingPolicy.UNSPECIFIED,
+      schedulerType: sdkTypes.V1SchedulerType.UNSPECIFIED,
+      slotsAvailable: 1,
+      slotsUsed: 0,
+      slotType: types.ResourceType.CUDA,
+      startupScript: '',
+      type: sdkTypes.V1ResourcePoolType.UNSPECIFIED,
+    },
+  ];
+
+  return {
+    __esModule: true,
+    ...jest.requireActual('stores/resourcePools'),
+    useResourcePools: () => {
+      return loadable.Loaded(value);
+    },
+  };
+});
 
 jest.mock('services/api', () => ({
   createExperiment: (params: CreateExperimentParams) => {
@@ -26,48 +77,7 @@ jest.mock('services/api', () => ({
 const { experiment } = generateTestExperimentData();
 
 const ModalTrigger: React.FC = () => {
-  const { updateResourcePools } = useResourcePools();
-
   const { contextHolder, modalOpen } = useModalHyperparameterSearch({ experiment: experiment });
-
-  useEffect(() => {
-    const value: ResourcePool[] = [
-      {
-        agentDockerImage: '',
-        agentDockerNetwork: '',
-        agentDockerRuntime: '',
-        agentFluentImage: '',
-        auxContainerCapacity: 0,
-        auxContainerCapacityPerAgent: 0,
-        auxContainersRunning: 0,
-        containerStartupScript: '',
-        defaultAuxPool: false,
-        defaultComputePool: true,
-        description: '',
-        details: {},
-        imageId: '',
-        instanceType: '',
-        location: '',
-        masterCertName: '',
-        masterUrl: '',
-        maxAgents: 1,
-        maxAgentStartingPeriod: 1000,
-        maxIdleAgentPeriod: 1000,
-        minAgents: 0,
-        name: 'default',
-        numAgents: 1,
-        preemptible: false,
-        schedulerFittingPolicy: V1FittingPolicy.UNSPECIFIED,
-        schedulerType: V1SchedulerType.UNSPECIFIED,
-        slotsAvailable: 1,
-        slotsUsed: 0,
-        slotType: ResourceType.CUDA,
-        startupScript: '',
-        type: V1ResourcePoolType.UNSPECIFIED,
-      },
-    ];
-    updateResourcePools(() => Loaded(value));
-  }, [updateResourcePools]);
 
   return (
     <>
