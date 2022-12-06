@@ -20,10 +20,8 @@ type ExperimentsContext = {
 
 const ExperimentsContext = createContext<ExperimentsContext | null>(null);
 
-const encodeParams = (args: { [key: string]: any }): string => {
-  const orderedKeys = Object.keys(args).sort();
-  return orderedKeys.map((key: string) => `${key}=${JSON.stringify(args[key])}`).join(',');
-};
+const encodeParams = (params: { [key: string]: any }) =>
+  JSON.stringify([...Object.entries(params ?? {})].sort());
 
 export const ExperimentsProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [experimentsIndex, updateExperimentsIndex] = useState<Map<string, ExperimentPagination>>(
@@ -37,8 +35,8 @@ export const ExperimentsProvider: React.FC<PropsWithChildren> = ({ children }) =
 };
 
 export const useFetchExperiments = (
-  canceler: AbortController,
   params: GetExperimentsParams,
+  canceler: AbortController,
 ): (() => Promise<void>) => {
   const context = useContext(ExperimentsContext);
   if (context === null) {
@@ -53,7 +51,7 @@ export const useFetchExperiments = (
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, experimentsIndex, params, getExperiments, updateExperimentsIndex]);
+  }, [canceler, experimentsIndex, params, updateExperimentsIndex]);
 };
 
 export const useExperiments = (params: GetExperimentsParams): Loadable<ExperimentPagination> => {
