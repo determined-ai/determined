@@ -65,7 +65,7 @@ func filterToSQL(
 		}
 		_, _ = fragment.WriteString(strings.Join(paramFragments, ","))
 		_, _ = fragment.WriteString(")")
-		return fmt.Sprintf(fragment.String(), field)
+		return fmt.Sprintf(fragment.String(), field, field)
 	case api.FilterOperationGreaterThan:
 		return fmt.Sprintf("AND %s > $%d", field, paramID)
 	case api.FilterOperationLessThanEqual:

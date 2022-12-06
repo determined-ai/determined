@@ -432,17 +432,14 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 
 	// Allow a value in a list of numbers, or a NULL represented as -1.
 	addNullInclusiveFilter := func(field string, values []int32) {
-		if values != nil {
-			if slices.Contains(values, -1) {
-				filters = append(filters, api.Filter{
-					Field:     field,
-					Operation: api.FilterOperationInOrNull,
-					Values:    values,
-				})
-			} else {
-				addInFilter(field, values, len(values))
-			}
+		if values == nil || !slices.Contains(values, -1) {
+			return addInFilter(field, values, len(values))
 		}
+		filters = append(filters, api.Filter{
+			Field:     field,
+			Operation: api.FilterOperationInOrNull,
+			Values:    values,
+		})
 	}
 
 	addNullInclusiveFilter("rank_id", req.RankIds)
