@@ -1,5 +1,16 @@
 import { PoweroffOutlined } from '@ant-design/icons';
-import { Alert, Breadcrumb, Button, Card, Checkbox, Input, InputNumber, Space, Table } from 'antd';
+import {
+  Alert,
+  Breadcrumb,
+  Button,
+  Card,
+  Checkbox,
+  Input,
+  InputNumber,
+  Space,
+  Table,
+  Tabs,
+} from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -8,20 +19,26 @@ import Logo from 'components/Logo';
 import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
+import UserAvatar from 'components/UserAvatar';
 import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
+import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { BrandingType } from 'types';
 
 import css from './DesignKit.module.scss';
+import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader';
 
 const Components = {
+  ActionBar: 'ActionBar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Checkboxes: 'Checkboxes',
   Dropdowns: 'Comboboxes & Dropdowns',
+  Facepile: 'Facepile',
   Labels: 'Labels',
   Lists: 'Lists (tables)',
+  Pivot: 'Pivot',
   Searchboxes: 'Search boxes',
   Spinbuttons: 'Spin buttons',
   Textfields: 'Input - text fields',
@@ -40,6 +57,9 @@ const componentOrder: ComponentIds[] = [
   'Textfields',
   'Lists',
   'Breadcrumbs',
+  'Facepile',
+  'ActionBar',
+  'Pivot',
 ];
 
 interface Props {
@@ -365,8 +385,8 @@ const CheckboxesSection: React.FC = () => {
     <ComponentSection id="Checkboxes" title="Checkboxes">
       <ReviewAlert />
       <Card>
-        Check boxes (Checkbox) give people a way to select one or more items from a group, or
-        switch between two mutually exclusive options (checked or unchecked, on or off).
+        Check boxes (Checkbox) give people a way to select one or more items from a group, or switch
+        between two mutually exclusive options (checked or unchecked, on or off).
       </Card>
       <Card title="Design audit">
         <strong>
@@ -387,25 +407,25 @@ const CheckboxesSection: React.FC = () => {
             box.
           </li>
           <li>
-            Use multiple check boxes when one or more options can be selected from a group.
-            Unlike radio buttons, selecting one check box will not clear another check box.
+            Use multiple check boxes when one or more options can be selected from a group. Unlike
+            radio buttons, selecting one check box will not clear another check box.
           </li>
         </ul>
         <strong>Content</strong>
         <ul>
           <li>
-            Separate two groups of check boxes with headings rather than positioning them one
-            after the other.
+            Separate two groups of check boxes with headings rather than positioning them one after
+            the other.
           </li>
           <li>Use sentence-style capitalization—only capitalize the first word.</li>
           <li>
-            Don&apos;t use end punctuation (unless the check box label absolutely requires
-            multiple sentences).
+            Don&apos;t use end punctuation (unless the check box label absolutely requires multiple
+            sentences).
           </li>
           <li>Use a sentence fragment for the label, rather than a full sentence.</li>
           <li>
-            Make it easy for people to understand what will happen if they select or clear a
-            check box.
+            Make it easy for people to understand what will happen if they select or clear a check
+            box.
           </li>
         </ul>
       </Card>
@@ -438,8 +458,8 @@ const LabelsSection: React.FC = () => {
     <ComponentSection id="Labels" title="Labels">
       <ReviewAlert />
       <Card>
-        Labels give a name or title to a control or group of controls, including text fields,
-        check boxes, combo boxes, radio buttons, and drop-down menus.
+        Labels give a name or title to a control or group of controls, including text fields, check
+        boxes, combo boxes, radio buttons, and drop-down menus.
       </Card>
       <Card title="Design audit">
         <strong>
@@ -492,8 +512,8 @@ const SearchboxesSection: React.FC = () => {
     <ComponentSection id="Searchboxes" title="Search boxes">
       <ReviewAlert />
       <Card>
-        A search box (SearchBox) provides an input field for searching content within a site or
-        app to find specific items.
+        A search box (SearchBox) provides an input field for searching content within a site or app
+        to find specific items.
       </Card>
       <Card title="Design audit">
         <strong>
@@ -513,9 +533,9 @@ const SearchboxesSection: React.FC = () => {
             control.
           </li>
           <li>
-            Use a search box without a parent container when it&apos;s not restricted to a
-            certain width to accommodate other content. This search box will span the entire
-            width of the space it&apos;s in.
+            Use a search box without a parent container when it&apos;s not restricted to a certain
+            width to accommodate other content. This search box will span the entire width of the
+            space it&apos;s in.
           </li>
         </ul>
         <strong>Content</strong>
@@ -526,12 +546,11 @@ const SearchboxesSection: React.FC = () => {
             list&quot;.
           </li>
           <li>
-            Although search entry points tend to be similarly visualized, they can provide
-            access to results that range from broad to narrow. By effectively communicating the
-            scope of a search, you can ensure that people&apos;s expectations are met by the
-            capabilities of the search you&apos;re performing, which will reduce the possibility
-            of frustration. The search entry point should be placed near the content being
-            searched.
+            Although search entry points tend to be similarly visualized, they can provide access to
+            results that range from broad to narrow. By effectively communicating the scope of a
+            search, you can ensure that people&apos;s expectations are met by the capabilities of
+            the search you&apos;re performing, which will reduce the possibility of frustration. The
+            search entry point should be placed near the content being searched.
           </li>
         </ul>
       </Card>
@@ -554,8 +573,8 @@ const SearchboxesSection: React.FC = () => {
         <ul>
           <li>Search input box needs to be at least 30 characters long</li>
           <li>
-            We need to provide feedback when a search is taking longer than expected (&gt;1.5
-            sec) or when its a long running operation
+            We need to provide feedback when a search is taking longer than expected (&gt;1.5 sec)
+            or when its a long running operation
           </li>
         </ul>
         <hr />
@@ -565,8 +584,8 @@ const SearchboxesSection: React.FC = () => {
         <ul>
           <li>Search input box needs to be at least 30 characters long</li>
           <li>
-            We need to provide feedback when a search is taking longer than expected (&gt;1.5
-            sec) or when its a long running operation
+            We need to provide feedback when a search is taking longer than expected (&gt;1.5 sec)
+            or when its a long running operation
           </li>
           <li>Dropdown component behavior is the same as the dropdown checkmark component</li>
         </ul>
@@ -580,8 +599,8 @@ const SpinbuttonsSection: React.FC = () => {
     <ComponentSection id="Spinbuttons" title="Spin buttons">
       <ReviewAlert />
       <Card>
-        A spin button (SpinButton) allows someone to incrementally adjust a value in small
-        steps. It&apos;s mainly used for numeric values, but other values are supported too.
+        A spin button (SpinButton) allows someone to incrementally adjust a value in small steps.
+        It&apos;s mainly used for numeric values, but other values are supported too.
       </Card>
       <Card title="Design audit">
         <strong>
@@ -598,8 +617,8 @@ const SpinbuttonsSection: React.FC = () => {
         <strong>Layout</strong>
         <ul>
           <li>
-            Place labels to the left of the spin button control. For example, &quot;Length of
-            ruler (cm)&quot;.
+            Place labels to the left of the spin button control. For example, &quot;Length of ruler
+            (cm)&quot;.
           </li>
           <li>Spin button width should adjust to fit the number values.</li>
         </ul>
@@ -661,14 +680,14 @@ const TextfieldsSection: React.FC = () => {
         <ul>
           <li>
             Include a short label above the text field to communicate what information should be
-            entered. Don&apos;t use placeholder text instead of a label. Placeholder text poses
-            a variety of accessibility issues (including possible problems with color/contrast,
-            and people thinking the form input is already filled out).
+            entered. Don&apos;t use placeholder text instead of a label. Placeholder text poses a
+            variety of accessibility issues (including possible problems with color/contrast, and
+            people thinking the form input is already filled out).
           </li>
           <li>
-            When part of a form, make it clear which fields are required vs. optional. If the
-            input is required, add an asterisk &quot;*&quot; to the label. For screen readers,
-            make sure the aria-required property is set to true.
+            When part of a form, make it clear which fields are required vs. optional. If the input
+            is required, add an asterisk &quot;*&quot; to the label. For screen readers, make sure
+            the aria-required property is set to true.
           </li>
           <li>Use sentence-style capitalization—only capitalize the first word.</li>
           <li>
@@ -696,27 +715,33 @@ const TextfieldsSection: React.FC = () => {
 };
 
 const ListsSection: React.FC = () => {
-  const mockColumns = [{
-    dataIndex: 'id',
-    sorter: true,
-    title: 'ID',
-  },
-  {
-    dataIndex: 'name',
-    sorter: true,
-    title: 'Name',
-  }];
+  const mockColumns = [
+    {
+      dataIndex: 'id',
+      sorter: true,
+      title: 'ID',
+    },
+    {
+      dataIndex: 'name',
+      sorter: true,
+      title: 'Name',
+    },
+  ];
 
-  const mockRows = [{
-    id: 'Row id',
-    name: 'Row name',
-  }];
+  const mockRows = [
+    {
+      id: 'Row id',
+      name: 'Row name',
+    },
+  ];
 
   return (
     <ComponentSection id="Lists" title="Lists (tables)">
       <ReviewAlert />
       <Card>
-        A  list (DetailsList) is a robust way to display an information-rich collection of items, and allow people to sort, group, and filter the content. Use a details list when information density is critical.
+        A list (DetailsList) is a robust way to display an information-rich collection of items, and
+        allow people to sort, group, and filter the content. Use a details list when information
+        density is critical.
       </Card>
       <Card title="Design audit">
         <strong>
@@ -730,11 +755,18 @@ const ListsSection: React.FC = () => {
       <Card title="Best practices">
         <strong>Layout</strong>
         <ul>
-          <li>List items are composed of selection, icon, and name columns at minimum. You can include other columns, such as date modified, or any other metadata field associated with the collection.
+          <li>
+            List items are composed of selection, icon, and name columns at minimum. You can include
+            other columns, such as date modified, or any other metadata field associated with the
+            collection.
           </li>
-          <li>Avoid using file type icon overlays to denote status of a file as it can make the entire icon unclear.
+          <li>
+            Avoid using file type icon overlays to denote status of a file as it can make the entire
+            icon unclear.
           </li>
-          <li>If there are multiple lines of text in a column, consider the variable row height variant.
+          <li>
+            If there are multiple lines of text in a column, consider the variable row height
+            variant.
           </li>
           <li>Give columns ample default width to display information.</li>
         </ul>
@@ -747,13 +779,17 @@ const ListsSection: React.FC = () => {
         <strong>Accessibility</strong>
         <ul>
           <li>
-            When creating a DetailsList where one column is clearly the primary label for the row, it's best to use isRowHeader on that column to create a better screen reader experience navigating the table. For selectable DetailsLists, specifying a row header also gives the checkboxes a better accessible label.
+            When creating a DetailsList where one column is clearly the primary label for the row,
+            it&apos;s best to use isRowHeader on that column to create a better screen reader
+            experience navigating the table. For selectable DetailsLists, specifying a row header
+            also gives the checkboxes a better accessible label.
           </li>
         </ul>
         <strong>Keyboard hotkeys</strong>
         <ul>
           <li>
-            DetailsList supports different selection modes with keyboard behavior differing based on the current selection mode.
+            DetailsList supports different selection modes with keyboard behavior differing based on
+            the current selection mode.
           </li>
         </ul>
       </Card>
@@ -772,10 +808,14 @@ const BreadcrumbsSection: React.FC = () => {
       <ReviewAlert />
       <Card>
         <p>
-          Breadcrumbs should be used as a navigational aid in your app or site. They indicate the current page’s location within a hierarchy and help the user understand where they are in relation to the rest of that hierarchy. They also afford one-click access to higher levels of that hierarchy.
+          Breadcrumbs should be used as a navigational aid in your app or site. They indicate the
+          current page’s location within a hierarchy and help the user understand where they are in
+          relation to the rest of that hierarchy. They also afford one-click access to higher levels
+          of that hierarchy.
         </p>
         <p>
-          Breadcrumbs are typically placed, in horizontal form, under the masthead or navigation of an experience, above the primary content area.
+          Breadcrumbs are typically placed, in horizontal form, under the masthead or navigation of
+          an experience, above the primary content area.
         </p>
       </Card>
       <Card title="Design audit">
@@ -790,22 +830,213 @@ const BreadcrumbsSection: React.FC = () => {
         <strong>Accessibility</strong>
         <ul>
           <li>By default, Breadcrumb uses arrow keys to cycle through each item. </li>
-          <li>Place Breadcrumbs at the top of a page, above a list of items, or above the main content of a page.  </li>
+          <li>
+            Place Breadcrumbs at the top of a page, above a list of items, or above the main content
+            of a page.{' '}
+          </li>
         </ul>
       </Card>
       <Card title="Usage">
         <strong>Breadcrumb</strong>
         <Breadcrumb>
-          <Breadcrumb.Item>
-            Level 0
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            Level 1
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            Level 2
-          </Breadcrumb.Item>
+          <Breadcrumb.Item>Level 0</Breadcrumb.Item>
+          <Breadcrumb.Item>Level 1</Breadcrumb.Item>
+          <Breadcrumb.Item>Level 2</Breadcrumb.Item>
         </Breadcrumb>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const FacepileSection: React.FC = () => {
+  return (
+    <ComponentSection id="Facepile" title="Facepile">
+      <ReviewAlert />
+      <Card>
+        A face pile (Facepile) displays a list of personas. Each circle represents a person and
+        contains their image or initials. Often this control is used when sharing who has access to
+        a specific view or file, or when assigning someone a task within a workflow.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Need to revise current functionality with proposed interaction/user value.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>
+            The face pile empty state should only include an &quot;Add&quot; button. Another variant
+            is to use an input field with placeholder text instructing people to add a person. See
+            the people picker component for the menu used to add people to the face pile list.
+          </li>
+          <li>
+            When there is only one person in the face pile, consider using their name next to the
+            face or initials.
+          </li>
+          <li>
+            When there is a need to show the face pile expanded into a vertical list, include a
+            downward chevron button. Selecting the chevron opens a standard list view of people.
+          </li>
+          <li>
+            When the face pile exceeds a max number of 5 people, show a button at the end of the
+            list indicating how many are not being shown. Clicking or tapping on the overflow would
+            open a standard list view of people.
+          </li>
+          <li>
+            The component can include an &quot;Add&quot; button which can be used for quickly adding
+            a person to the list.
+          </li>
+          <li>
+            When hovering over a person in the face pile, include a tooltip or people card that
+            offers more information about that person.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Facepile</strong>
+        <UserAvatar />
+        <strong>Guiding principles</strong>
+        <ul>
+          <li>Each facepile item needs to have its own color</li>
+          <li>4px of space between faces</li>
+          <li>If more than 4 faces: add a “+ n” where the 5th face would be.</li>
+        </ul>
+        <strong>Variations</strong>
+        <ul>
+          <li>Facepile with 8 people</li>
+          <p>Not implemented</p>
+          <li>Facepile with both name initials</li>
+          <p>Not implemented</p>
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const ActionBarSection: React.FC = () => {
+  const { experiment } = generateTestExperimentData();
+  return (
+    <ComponentSection id="ActionBar" title="ActionBar">
+      <ReviewAlert />
+      <Card>
+        <p>
+          ActionBar is a surface that houses commands that operate on the content of the window,
+          panel, or parent region it resides above. ActionBar are one of the most visible and
+          recognizable ways to surface commands, and can be an intuitive method for interacting with
+          content on the page; however, if overloaded or poorly organized, they can be difficult to
+          use and hide valuable commands from your user. ActionBar can also display a search box for
+          finding content, hold simple commands as well as menus, or display the status of ongoing
+          actions.
+        </p>
+        <p>
+          Commands should be sorted in order of importance, from left-to-right or right-to-left
+          depending on the culture. Secondarily, organize commands in logical groupings for easier
+          recall. ActionBars work best when they display no more than 5-7 commands. This helps users
+          quickly find your most valuable features. If you need to show more commands, consider
+          using the overflow menu. If you need to render status or viewing controls, these go on the
+          right side of the ActionBar (or left side if in a left-to-right experience). Do not
+          display more than 2-3 items on the right side as it will make the overall ActionBar
+          difficult to parse.
+        </p>
+        <p>
+          All command items should have an icon and a label. Commands can render as labels only as
+          well. In smaller widths, commands can just use icon only, but only for the most
+          recognizable and frequently used commands. All other commands should go into an overflow
+          where text labels can be shown.
+        </p>
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Need to revise current functionality with proposed interaction/user value.</li>
+          <li>
+            Look deeper at top tier actions to be served to users + Breadcrumb standardization
+          </li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>
+            Sort commands in order of importance from left to right or right to left depending on
+            the culture.
+          </li>
+          <li>Use overflow to house less frequently-used commands.</li>
+          <li>
+            In small breakpoints, only have the most recognizable commands render as icon only.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Actionbar defaults</strong>
+        <ExperimentDetailsHeader
+          experiment={experiment}
+          fetchExperimentDetails={() => {
+            return;
+          }}
+        />
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const PivotSection: React.FC = () => {
+  return (
+    <ComponentSection id="Pivot" title="Pivot">
+      <ReviewAlert />
+      <Card>
+        <p>
+          The Pivot control and related tabs pattern are used for navigating frequently accessed,
+          distinct content categories. Pivots allow for navigation between two or more content views
+          and relies on text headers to articulate the different sections of content.
+        </p>
+        <p>Tapping on a pivot item header navigates to that header&apos;s section content.</p>
+        <p>
+          Tabs are a visual variant of Pivot that use a combination of icons and text or just icons
+          to articulate section content.
+        </p>
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>
+            Look deeper at options served to users and whether this reduces the number of
+            navigational steps.
+          </li>
+          <li>Contrast of in-focus tab is not accessible.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>
+            Be concise on the navigation labels, ideally one or two words rather than a phrase.
+          </li>
+          <li>
+            Use on content-heavy pages that require a significant amount of scrolling to access the
+            various sections.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Pivot</strong>
+        <Tabs>
+          <Tabs.TabPane key="overview" tab="Overview" />
+          <Tabs.TabPane key="hyperparameters" tab="Hyperparameters" />
+          <Tabs.TabPane key="checkpoints" tab="Checkpoints" />
+          <Tabs.TabPane key="code" tab="Code" />
+          <Tabs.TabPane key="notes" tab="Notes" />
+          <Tabs.TabPane key="profiler" tab="Profiler" />
+          <Tabs.TabPane key="logs" tab="Logs" />
+        </Tabs>
       </Card>
     </ComponentSection>
   );
@@ -845,6 +1076,9 @@ const DesignKit: React.FC = () => {
         <TextfieldsSection />
         <ListsSection />
         <BreadcrumbsSection />
+        <FacepileSection />
+        <ActionBarSection />
+        <PivotSection />
       </main>
     </div>
   );
