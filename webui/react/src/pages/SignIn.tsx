@@ -41,7 +41,7 @@ const logoConfig: Record<RecordKey, string> = {
 const SignIn: React.FC = () => {
   const { actions: uiActions } = useUI();
   const location = useLocation();
-  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const { info } = useStore();
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');

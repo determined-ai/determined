@@ -18,7 +18,7 @@ export const useStorage = (
   basePath: string,
   store: Storage = window.localStorage,
 ): StorageManager => {
-  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const userNamespace = auth.user ? `u:${auth.user.id}` : '';
   const [storage] = useState(
     new StorageManager({ basePath: `${userNamespace}/${basePath}`, store }),

@@ -13,7 +13,7 @@ interface Props {
 }
 
 const Router: React.FC<Props> = (props: Props) => {
-  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();

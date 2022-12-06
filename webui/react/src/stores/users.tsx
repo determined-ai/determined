@@ -121,7 +121,7 @@ export const useUsers = (): UseUsersReturn => {
       const usersArray = Loadable.getOrElse([], users);
 
       setCurrentUser((prevState) => {
-        const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, prevState);
+        const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, prevState);
         if (isEqual(auth, user)) return prevState;
 
         const userIdx = usersArray.findIndex((user) => user.id === user.id);
@@ -187,7 +187,7 @@ export const useAuth = (): UseAuthReturn => {
 
   const setAuthCheck = useCallback(() => {
     updateAuth((prevState) => {
-      const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, prevState);
+      const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, prevState);
       if (auth.checked) return prevState;
 
       return Loaded({ ...auth, checked: true });

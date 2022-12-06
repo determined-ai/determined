@@ -78,7 +78,7 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const user = auth.user as DetailedUser | undefined;
   const { userAssignments, userRoles } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');

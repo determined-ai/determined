@@ -20,7 +20,7 @@ export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
-  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const { updateCurrentUser } = useUsers();
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =

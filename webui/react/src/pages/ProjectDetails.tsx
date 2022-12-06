@@ -34,7 +34,7 @@ type Params = {
 };
 
 const ProjectDetails: React.FC = () => {
-  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const { projectId } = useParams<Params>();
 
   const [project, setProject] = useState<Project>();

@@ -112,7 +112,7 @@ const NavigationSideBar: React.FC = () => {
   const nodeRef = useRef(null);
 
   const { resourcePools, info, pinnedWorkspaces } = useStore();
-  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const { ui } = useUI();
   const agents = useAgents();
   const overview = useClusterOverview();

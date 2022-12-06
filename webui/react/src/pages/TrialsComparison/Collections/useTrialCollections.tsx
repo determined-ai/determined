@@ -84,7 +84,7 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
 
   const userId = useMemo(() => (user?.id ? String(user?.id) : ''), [user?.id]);
 

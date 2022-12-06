@@ -135,7 +135,7 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
+  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
   const pathname = window.location.pathname;
