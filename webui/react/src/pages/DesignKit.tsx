@@ -7,6 +7,7 @@ import {
   Checkbox,
   Input,
   InputNumber,
+  Pagination,
   Space,
   Table,
   Tabs,
@@ -38,6 +39,7 @@ const Components = {
   Facepile: 'Facepile',
   Labels: 'Labels',
   Lists: 'Lists (tables)',
+  Pagination: 'Pagination',
   Pivot: 'Pivot',
   Searchboxes: 'Search boxes',
   Spinbuttons: 'Spin buttons',
@@ -60,6 +62,7 @@ const componentOrder: ComponentIds[] = [
   'Facepile',
   'ActionBar',
   'Pivot',
+  'Pagination',
 ];
 
 interface Props {
@@ -1042,6 +1045,57 @@ const PivotSection: React.FC = () => {
   );
 };
 
+const PaginationSection: React.FC = () => {
+  return (
+    <ComponentSection id="Pagination" title="Pagination">
+      <ReviewAlert />
+      <Card>
+        Pagination is the process of splitting the contents of a website, or section of contents
+        from a website, into discrete pages. This user interface design pattern is used so users are
+        not overwhelmed by a mass of data on one page. Page breaks are automatically set.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>What are the better recommended table lists (10-100-500?)</li>
+          <li>Discoverability of the control vs. user interaction.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>Use ordinal numerals or letters of the alphabet.</li>
+          <li>
+            Indentify the current page in addition to the pages in immediate context/surrounding.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Pagination default</strong>
+        <Pagination total={500} />
+        <strong>Considerations</strong>
+        <ul>
+          <li>
+            Always give the user the option to navigate to the first & last page -- this helps with
+            sorts.
+          </li>
+          <li>
+            Provide the user with 2 pages before/after when navigating &apos;island&apos;
+            page-counts.
+          </li>
+          <li>Provide the user with the first 4 or last 4 pages of the page-range.</li>
+          <li>
+            Ensure the FocusTrap is set to the whole pagination component so that user doesn&apos;t
+            tabs in/out accidentally.
+          </li>
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
 
@@ -1079,6 +1133,7 @@ const DesignKit: React.FC = () => {
         <FacepileSection />
         <ActionBarSection />
         <PivotSection />
+        <PaginationSection />
       </main>
     </div>
   );
