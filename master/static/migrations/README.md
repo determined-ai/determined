@@ -1,6 +1,6 @@
 # Database Migrations
 
-We use `go-pg/migrations`: https://github.com/go-pg/migrations
+We use `go-pg/migrations`: <https://github.com/go-pg/migrations>
 
 ## Running migrations manually
 

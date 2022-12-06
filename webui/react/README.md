@@ -148,9 +148,9 @@ The bundle analyzer will look at the generated source maps for the `build` direc
 We are heavily leveraging a lot of goodness from **Create React App** discussed above. To continue benefitting from it, we need to avoid ejecting the project. Meaning we do not want to start managing the webpack configuration. The `npm run eject` command is a one-way operation and once you do it, **there is no going back**! The following describes what exactly happens when you do eject.
 
 > If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
+>
 > Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
+>
 > You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
 All that being said, we do require some customization for library support, so we have a way around it described in the next section.

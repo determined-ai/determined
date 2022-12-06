@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useState } from 'react';
+import type { TabsProps } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -11,8 +12,6 @@ import SettingsAccount from 'pages/Settings/SettingsAccount';
 import UserManagement from 'pages/Settings/UserManagement';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
-
-const { TabPane } = Tabs;
 
 export const TabType = {
   Account: 'Account',
@@ -55,27 +54,38 @@ const SettingsContent: React.FC = () => {
     [navigate, updateSettings],
   );
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    const items: TabsProps['items'] = [
+      { children: <SettingsAccount />, key: TAB_KEYS[TabType.Account], label: TabType.Account },
+    ];
+
+    if (canAdministrateUsers) {
+      items.push({
+        children: <UserManagement />,
+        key: TAB_KEYS[TabType.UserManagement],
+        label: TabType.UserManagement,
+      });
+    }
+
+    if (rbacEnabled) {
+      items.push({
+        children: <GroupManagement />,
+        key: TAB_KEYS[TabType.GroupManagement],
+        label: TabType.GroupManagement,
+      });
+    }
+    return items;
+  }, [canAdministrateUsers, rbacEnabled]);
+
   return (
     <Tabs
       activeKey={tab}
       className="no-padding"
       defaultActiveKey={tabKey}
       destroyInactiveTabPane
-      onChange={handleTabChange}>
-      <TabPane key={TAB_KEYS[TabType.Account]} tab={TabType.Account}>
-        <SettingsAccount />
-      </TabPane>
-      {canAdministrateUsers && (
-        <TabPane key={TAB_KEYS[TabType.UserManagement]} tab={TabType.UserManagement}>
-          <UserManagement />
-        </TabPane>
-      )}
-      {rbacEnabled && (
-        <TabPane key={TAB_KEYS[TabType.GroupManagement]} tab={TabType.GroupManagement}>
-          <GroupManagement />
-        </TabPane>
-      )}
-    </Tabs>
+      items={tabItems}
+      onChange={handleTabChange}
+    />
   );
 };
 

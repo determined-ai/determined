@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Menu } from 'antd';
-import type { MenuProps } from 'antd';
+import { Dropdown } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { Modal } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
@@ -48,7 +48,7 @@ export const TaskBar: React.FC<Props> = ({
     });
   }, []);
 
-  const dropdownOverlay = useMemo(() => {
+  const dropdownOverlay: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       Kill: 'kill',
       ViewLogs: 'viewLogs',
@@ -72,7 +72,7 @@ export const TaskBar: React.FC<Props> = ({
       { key: MenuKey.ViewLogs, label: 'View Logs' },
     ];
 
-    return <Menu items={menuItems} onClick={onItemClick} />;
+    return { items: menuItems, onClick: onItemClick };
   }, [task, deleteTask, handleViewLogsClick]);
 
   return (
@@ -80,7 +80,7 @@ export const TaskBar: React.FC<Props> = ({
       <div className={css.barContent}>
         <span>{name}</span>
         <span>&#8212;</span>
-        <Dropdown overlay={dropdownOverlay} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={dropdownOverlay} placement="bottomRight" trigger={['click']}>
           <div className={css.dropdownTrigger} data-testid="task-action-dropdown-trigger">
             <span className={css.dropdownTrigger}>{resourcePool}</span>
             <Icon name="arrow-down" size="tiny" />

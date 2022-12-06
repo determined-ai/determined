@@ -1,6 +1,7 @@
 package aproto
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"time"
@@ -52,6 +53,15 @@ type ContainerReattachAck struct {
 	Failure   *ContainerFailure
 }
 
+// FromContainerStateChanged forms a container reattach ack from a state change message.
+func FromContainerStateChanged(csc *ContainerStateChanged) *ContainerReattachAck {
+	ack := ContainerReattachAck{Container: csc.Container}
+	if csc.ContainerStopped != nil {
+		ack.Failure = csc.ContainerStopped.Failure
+	}
+	return &ack
+}
+
 // ID is an identifier for an agent.
 type ID string
 
@@ -77,12 +87,8 @@ type ContainerStarted struct {
 	ContainerInfo types.ContainerJSON
 }
 
-// ContainerStatsRecord notifies the master that about the container stats of docker.
-// For now this carries stats of docker image pull.
-type ContainerStatsRecord struct {
-	EndStats bool
-	Stats    *model.TaskStats
-	TaskType model.TaskType
+func (c ContainerStarted) String() string {
+	return fmt.Sprintf("docker container %s running", c.ContainerInfo.ID)
 }
 
 // Addresses calculates the address of containers and hosts based on the container
@@ -167,7 +173,7 @@ func (c ContainerStopped) String() string {
 
 // ContainerLog notifies the master that a new log message is available for the container.
 type ContainerLog struct {
-	Container   cproto.Container
+	ContainerID cproto.ID
 	Timestamp   time.Time
 	Level       *string
 	PullMessage *string
@@ -179,4 +185,12 @@ type ContainerLog struct {
 type RunMessage struct {
 	Value   string
 	StdType stdcopy.StdType
+}
+
+// ContainerStatsRecord notifies the master that about the container stats of docker.
+// For now this carries stats of docker image pull.
+type ContainerStatsRecord struct {
+	EndStats bool
+	Stats    *model.TaskStats
+	TaskType model.TaskType
 }

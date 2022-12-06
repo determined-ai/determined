@@ -216,7 +216,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 	case sproto.ContainerLog:
 		if log, err := t.enrichTaskLog(model.TaskLog{
-			ContainerID: ptrs.Ptr(string(msg.Container.ID)),
+			ContainerID: ptrs.Ptr(string(msg.ContainerID)),
 			Log:         msg.Message(),
 			Level:       msg.Level,
 		}); err != nil {
@@ -436,7 +436,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		ExperimentID:     t.experimentID,
 		TrialID:          t.id,
 		TrialRunID:       t.runID,
-		ExperimentConfig: schemas.Copy(t.config).(expconf.ExperimentConfig),
+		ExperimentConfig: schemas.Copy(t.config),
 		HParams:          t.searcher.Create.Hparams,
 		TrialSeed:        t.searcher.Create.TrialSeed,
 		StepsCompleted:   stepsCompleted,

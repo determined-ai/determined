@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Select, Tooltip } from 'antd';
+import { Button, Dropdown, Select, Tooltip } from 'antd';
 import { string } from 'io-ts';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -341,39 +341,35 @@ export const useTrialCollections = (
             />
           </Tooltip>
           <Dropdown
-            overlay={
-              <Menu
-                items={
-                  collectionIsActive
-                    ? [
-                        {
-                          disabled: !userOwnsCollection,
-                          key: 'ren',
-                          label: 'Rename Collection',
-                          onClick: renameCollection,
-                        },
-                        {
-                          disabled: !userOwnsCollection,
-                          key: 'del',
-                          label: 'Delete Collection',
-                          onClick: deleteCollection,
-                        },
-                        {
-                          key: 'clr',
-                          label: 'Clear Filters',
-                          onClick: clearFilters,
-                        },
-                      ]
-                    : [
-                        {
-                          key: 'clr',
-                          label: 'Clear Filters',
-                          onClick: clearFilters,
-                        },
-                      ]
-                }
-              />
-            }
+            menu={{
+              items: collectionIsActive
+                ? [
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'ren',
+                      label: 'Rename Collection',
+                      onClick: renameCollection,
+                    },
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'del',
+                      label: 'Delete Collection',
+                      onClick: deleteCollection,
+                    },
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ]
+                : [
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ],
+            }}
             trigger={['click']}>
             <Button
               className={[css.optionsDropdown, css.optionsDropdownFourChild].join(' ')}

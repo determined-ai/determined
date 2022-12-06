@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 
 import css from './Queue.module.scss';
 
-const Queue: React.FC = () => {
+interface Props {
+  // only height, width, opacity, and backgroundColor are available
+  style?: CSSProperties;
+}
+
+const Queue: React.FC<Props> = ({ style }) => {
+  const spinnerStyle = useMemo(() => {
+    return { backgroundColor: style?.backgroundColor, opacity: style?.opacity };
+  }, [style?.backgroundColor, style?.opacity]);
+
   return (
-    <div className={css.base}>
-      <div className={css.spinner}>
-        <div className={css.inner_spinner} />
-      </div>
+    <div className={css.base} style={{ height: style?.height, width: style?.width }}>
+      <div className={css.spinner} style={spinnerStyle} />
+      <div className={css.innerSpinner} style={spinnerStyle} />
     </div>
   );
 };

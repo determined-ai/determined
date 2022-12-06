@@ -20,8 +20,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
-import { useStore } from 'contexts/Store';
-import { useFetchResourcePools } from 'hooks/useFetch';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -34,6 +32,7 @@ import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error'
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
+import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
 import {
   ExperimentItem,
   ExperimentSearcherName,
@@ -45,6 +44,7 @@ import {
   TrialItem,
 } from 'types';
 import { handleWarning } from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './useModalHyperparameterSearch.module.scss';
 
@@ -109,8 +109,9 @@ const useModalHyperparameterSearch = ({
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
       SEARCH_METHODS.ASHA,
   );
-  const { resourcePools } = useStore();
-  const canceler = useRef<AbortController>();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  const canceler = useRef<AbortController>(new AbortController());
   const fetchResourcePools = useFetchResourcePools(canceler.current);
   const [resourcePool, setResourcePool] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
@@ -127,10 +128,9 @@ const useModalHyperparameterSearch = ({
   }, [fetchResourcePools, resourcePools]);
 
   useEffect(() => {
-    canceler.current = new AbortController();
+    const cancelerTemp = canceler.current;
     return () => {
-      canceler.current?.abort();
-      canceler.current = undefined;
+      cancelerTemp.abort();
     };
   }, []);
 
@@ -400,7 +400,7 @@ const useModalHyperparameterSearch = ({
         <div
           className={css.hyperparameterContainer}
           style={{
-            gridTemplateColumns: `180px minmax(100px, 1.4fr) 
+            gridTemplateColumns: `180px minmax(100px, 1.4fr)
               repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(60px, 1fr))`,
           }}>
           <label id="hyperparameter">

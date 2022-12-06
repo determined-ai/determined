@@ -19,7 +19,7 @@ def cluster_slots() -> Dict[str, Any]:
     """
     # TODO: refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     r = api.get(conf.make_master_url(), "api/v1/agents")
     assert r.status_code == requests.codes.ok, r.text
     jvals = r.json()  # type: Dict[str, Any]

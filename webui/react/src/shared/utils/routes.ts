@@ -24,8 +24,10 @@ export const locationToPath = (location?: Location): string | null => {
   return location.pathname + location.search + location.hash;
 };
 export const windowOpenFeatures = ['noopener', 'noreferrer'];
-export const openBlank = (url: string): void => {
-  window.open(url, '_blank', windowOpenFeatures.join(','));
+export const openBlank = (url: string, childId?: string): void => {
+  const target = childId ? childId : '_blank';
+  const windowFeatures = childId ? '' : windowOpenFeatures.join(',');
+  window.open(url, target, windowFeatures);
 };
 export type AnyMouseEvent = MouseEvent | React.MouseEvent;
 export type AnyMouseEventHandler = (event: AnyMouseEvent) => void;

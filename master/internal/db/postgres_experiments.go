@@ -1239,7 +1239,7 @@ WHERE id = $1`, id)
 	if err != nil {
 		return expconf.ExperimentConfig{}, errors.WithStack(err)
 	}
-	return schemas.WithDefaults(expConfig).(expconf.ExperimentConfig), nil
+	return schemas.WithDefaults(expConfig), nil
 }
 
 // ExperimentTotalStepTime returns the total elapsed time for all allocations of the experiment

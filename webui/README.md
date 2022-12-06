@@ -4,8 +4,8 @@ We use [React](https://reactjs.org/) as a WebUI framework. React has been the mo
 popular frontend framework and enjoys the benefits of being a mature and stable
 framework. As a result we see these benefits:
 
-* True live development where new written code instantly transpiles into updated
-browser experience via Hot Module Replacement (HMR).
+* True live development where new written code instantly transpiles into
+  updated browser experience via Hot Module Replacement (HMR).
 * A very large number of supporting libraries and frameworks specific to React.
 * Many of the bugs and kinks have been identified and fixed.
 * Stable design patterns have mostly been figured out.
@@ -18,21 +18,20 @@ Before starting this section, please get Determined set up properly by following
 the [Determined setup instructions](https://github.com/determined-ai/determined).
 
 Starting the master kick-starts a Go web server that serves WebUI static files.
-There are two ways to start master. The more common way is to run master via Docker.
-The other method is to run natively (without Docker) via `determined-master`.
+There are two ways to start master. The more common way is to run master via
+Docker.  The other method is to run natively (without Docker) via
+`determined-master`.
 
 1. [Running Master via Docker](https://github.com/determined-ai/determined#local-deployment)
-2. [Running Master without Docker (Natively)](https://github.com/determined-ai/determined/wiki/Useful-tools#master)
-
+1. [Running Master without Docker (Natively)](https://github.com/determined-ai/determined/wiki/Useful-tools#master)
 
 ## Local Development
 
 For local development, our goal is to set up an environment to...
 
 * Auto detect changes in the source code and update the WebUI on the browser to
-speed up development. Also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/)
+  speed up development. Also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/)
 * Provide a debugging environment via source maps. Only applicable to the React SPA.
-
 
 ### Running React Live
 
@@ -59,7 +58,7 @@ Couple of things to note:
 
 To run unit tests for each of the SPAs issue `make test` in their respective directories.
 
-```
+```sh
 make -C webui/react test
 ```
 

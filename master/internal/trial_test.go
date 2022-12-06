@@ -232,7 +232,7 @@ func setup(t *testing.T) (*actor.System, *mocks.DB, model.RequestID, *trial, *ac
 					RawContainerPath: ptrs.Ptr("determined-sharedfs"),
 				},
 			},
-		}).(expconf.ExperimentConfig),
+		}),
 		&model.Checkpoint{},
 		&tasks.TaskSpec{
 			AgentUserGroup: &model.AgentUserGroup{},

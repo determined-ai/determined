@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Menu, Modal } from 'antd';
-import type { MenuProps } from 'antd';
+import { Dropdown, Modal } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
@@ -82,19 +82,19 @@ const TaskActionDropdown: React.FC<Props> = ({
     label: <Link path={paths.taskLogs(task as CommandTask)}>View Logs</Link>,
   });
 
-  const menu = <Menu items={menuItems} onClick={handleMenuClick} />;
+  const menu: DropDownProps['menu'] = { items: menuItems, onClick: handleMenuClick };
 
   return children ? (
     <Dropdown
-      overlay={menu}
+      menu={menu}
       placement="bottomLeft"
       trigger={['contextMenu']}
-      onVisibleChange={onVisibleChange}>
+      onOpenChange={onVisibleChange}>
       {children}
     </Dropdown>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>

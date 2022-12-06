@@ -1,11 +1,15 @@
-import React, { ReactNode, useMemo } from 'react';
+import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
-import { useStore } from 'contexts/Store';
+import { activeRunStates } from 'constants/states';
 import Spinner from 'shared/components/Spinner';
+import usePolling from 'shared/hooks/usePolling';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { useExperiments, useFetchExperiments } from 'stores/experiments';
+import { useResourcePools } from 'stores/resourcePools';
+import { useActiveTasks, useFetchActiveTasks } from 'stores/tasks';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -13,9 +17,25 @@ import { Loadable } from 'utils/loadable';
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
-  const { activeExperiments, activeTasks, resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const overview = useClusterOverview();
   const agents = useAgents();
+
+  const [canceler] = useState(new AbortController());
+  const fetchActiveExperiments = useFetchExperiments(
+    { limit: -2, states: activeRunStates },
+    canceler,
+  );
+  const fetchActiveTasks = useFetchActiveTasks(canceler);
+  const fetchActiveRunning = useCallback(async () => {
+    await fetchActiveExperiments();
+    await fetchActiveTasks();
+  }, [fetchActiveExperiments, fetchActiveTasks]);
+
+  usePolling(fetchActiveRunning);
+  const activeExperiments = useExperiments({ limit: -2, states: activeRunStates });
+  const activeTasks = useActiveTasks();
 
   const auxContainers = useMemo(() => {
     const tally = {
@@ -59,21 +79,36 @@ export const ClusterOverallStats: React.FC = () => {
             {auxContainers.running} <small>/ {auxContainers.total}</small>
           </OverviewStats>
         ) : null}
-        {activeExperiments ? (
-          <OverviewStats title="Active Experiments">{activeExperiments}</OverviewStats>
-        ) : null}
-        {activeTasks.notebooks ? (
-          <OverviewStats title="Active JupyterLabs">{activeTasks.notebooks}</OverviewStats>
-        ) : null}
-        {activeTasks.tensorboards ? (
-          <OverviewStats title="Active TensorBoards">{activeTasks.tensorboards}</OverviewStats>
-        ) : null}
-        {activeTasks.shells ? (
-          <OverviewStats title="Active Shells">{activeTasks.shells}</OverviewStats>
-        ) : null}
-        {activeTasks.commands ? (
-          <OverviewStats title="Active Commands">{activeTasks.commands}</OverviewStats>
-        ) : null}
+        <OverviewStats title="Active Experiments">
+          {Loadable.match(activeExperiments, {
+            Loaded: (activeExperiments) => activeExperiments.pagination?.total ?? 0,
+            NotLoaded: (): ReactNode => <Spinner />,
+          })}
+        </OverviewStats>
+        <OverviewStats title="Active JupyterLabs">
+          {Loadable.match(activeTasks, {
+            Loaded: (activeTasks) => activeTasks.notebooks ?? 0,
+            NotLoaded: (): ReactNode => <Spinner />,
+          })}
+        </OverviewStats>
+        <OverviewStats title="Active TensorBoards">
+          {Loadable.match(activeTasks, {
+            Loaded: (activeTasks) => activeTasks.tensorboards ?? 0,
+            NotLoaded: (): ReactNode => <Spinner />,
+          })}
+        </OverviewStats>
+        <OverviewStats title="Active Shells">
+          {Loadable.match(activeTasks, {
+            Loaded: (activeTasks) => activeTasks.shells ?? 0,
+            NotLoaded: (): ReactNode => <Spinner />,
+          })}
+        </OverviewStats>
+        <OverviewStats title="Active Commands">
+          {Loadable.match(activeTasks, {
+            Loaded: (activeTasks) => activeTasks.commands ?? 0,
+            NotLoaded: (): ReactNode => <Spinner />,
+          })}
+        </OverviewStats>
       </Grid>
     </Section>
   );

@@ -280,7 +280,7 @@ const ScatterPlots: React.FC<Props> = ({
       </Section>
       <GalleryModal
         height={galleryHeight}
-        visible={!!activeHParam}
+        open={!!activeHParam}
         onCancel={handleGalleryClose}
         onNext={handleGalleryNext}
         onPrevious={handleGalleryPrevious}>

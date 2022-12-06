@@ -629,7 +629,7 @@ func (e *experiment) processOperations(
 				ctx.Log().Error(err)
 				return
 			}
-			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+			config := schemas.Copy(e.Config)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(

@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { TabsProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -136,6 +137,44 @@ const WorkspaceDetails: React.FC = () => {
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    if (!workspace) {
+      return [];
+    }
+
+    return [
+      {
+        children: <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />,
+        key: WorkspaceDetailsTab.Projects,
+        label: 'Projects',
+      },
+      {
+        children: (
+          <WorkspaceMembers
+            assignments={workspaceAssignments}
+            fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
+            groupsAssignedDirectly={groupsAssignedDirectly}
+            pageRef={pageRef}
+            rolesAssignableToScope={rolesAssignableToScope}
+            usersAssignedDirectly={usersAssignedDirectly}
+            workspace={workspace}
+            onFilterUpdate={handleFilterUpdate}
+          />
+        ),
+        key: WorkspaceDetailsTab.Members,
+        label: 'Members',
+      },
+    ];
+  }, [
+    fetchGroupsAndUsersAssignedToWorkspace,
+    groupsAssignedDirectly,
+    id,
+    rolesAssignableToScope,
+    usersAssignedDirectly,
+    workspace,
+    workspaceAssignments,
+  ]);
+
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([
       fetchWorkspace(),
@@ -211,23 +250,12 @@ const WorkspaceDetails: React.FC = () => {
       }
       id="workspaceDetails">
       {rbacEnabled ? (
-        <Tabs activeKey={tabKey} destroyInactiveTabPane onChange={handleTabChange}>
-          <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Projects} tab="Projects">
-            <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
-          </Tabs.TabPane>
-          <Tabs.TabPane destroyInactiveTabPane key={WorkspaceDetailsTab.Members} tab="Members">
-            <WorkspaceMembers
-              assignments={workspaceAssignments}
-              fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
-              groupsAssignedDirectly={groupsAssignedDirectly}
-              pageRef={pageRef}
-              rolesAssignableToScope={rolesAssignableToScope}
-              usersAssignedDirectly={usersAssignedDirectly}
-              workspace={workspace}
-              onFilterUpdate={handleFilterUpdate}
-            />
-          </Tabs.TabPane>
-        </Tabs>
+        <Tabs
+          activeKey={tabKey}
+          destroyInactiveTabPane
+          items={tabItems}
+          onChange={handleTabChange}
+        />
       ) : (
         <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
       )}

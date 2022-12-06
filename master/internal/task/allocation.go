@@ -1023,9 +1023,6 @@ func (a *Allocation) enrichEvent(ctx *actor.Context, ev sproto.Event) sproto.Eve
 	ev.ParentID = ctx.Self().Parent().Address().Local()
 	ev.Description = a.req.Name
 	ev.IsReady = coalesceBool(a.model.IsReady, false)
-	if ev.State == "" {
-		ev.State = string(a.getModelState())
-	}
 	if ev.Time.IsZero() {
 		ev.Time = time.Now().UTC()
 	}

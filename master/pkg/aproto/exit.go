@@ -47,6 +47,34 @@ func ContainerError(failureType FailureType, err error) ContainerStopped {
 	}
 }
 
+// NewContainerFailure returns a container failure wrapping the provided error. If the error is nil,
+// a stack trace is provided instead.
+func NewContainerFailure(failureType FailureType, err error) *ContainerFailure {
+	if err == nil {
+		return &ContainerFailure{
+			FailureType: failureType,
+			ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
+		}
+	}
+	return &ContainerFailure{
+		FailureType: failureType,
+		ErrMsg:      err.Error(),
+	}
+}
+
+// NewContainerExit returns a container failure with the encoded exit code. If the exit code is a
+// the zero value, no failure is returned.
+func NewContainerExit(code ExitCode) *ContainerFailure {
+	if code == SuccessExitCode {
+		return nil
+	}
+	return &ContainerFailure{
+		FailureType: ContainerFailed,
+		ErrMsg:      errors.Errorf("%s: %d", ContainerFailed, code).Error(),
+		ExitCode:    &code,
+	}
+}
+
 // ContainerExited returns a container failure with the encoded exit code. If the exit code is a
 // the zero value, no failure is returned.
 func ContainerExited(code ExitCode) ContainerStopped {

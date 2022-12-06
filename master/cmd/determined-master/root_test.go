@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 func TestUnmarshalMasterConfigurationViaViper(t *testing.T) {
@@ -106,7 +105,7 @@ func TestUnmarshalMasterConfiguration(t *testing.T) {
 	config, err := getConfig(v.AllSettings())
 	assert.NilError(t, err)
 
-	c := schemas.WithDefaults(config.CheckpointStorage).(expconf.CheckpointStorageConfig)
+	c := schemas.WithDefaults(config.CheckpointStorage)
 
 	if f := c.SaveTrialBest(); f <= 0 {
 		t.Errorf("SaveTrialBest %d <= 0", f)

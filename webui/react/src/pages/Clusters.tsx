@@ -1,20 +1,19 @@
 import { Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { useResourcePools } from 'stores/resourcePools';
 import { Loadable } from 'utils/loadable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
 import css from './Clusters.module.scss';
 import ClustersOverview, { clusterStatusText } from './Clusters/ClustersOverview';
-
-const { TabPane } = Tabs;
 
 const TabType = {
   HistoricalUsage: 'historical-usage',
@@ -36,7 +35,8 @@ const Clusters: React.FC = () => {
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const { resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const overview = useClusterOverview();
   const agents = useAgents();
 
@@ -55,19 +55,34 @@ const Clusters: React.FC = () => {
     [basePath, navigate],
   );
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    return [
+      { children: <ClustersOverview />, key: TabType.Overview, label: 'Overview' },
+      {
+        children: (
+          <div className={css.tab}>
+            <ClusterHistoricalUsage />
+          </div>
+        ),
+        key: TabType.HistoricalUsage,
+        label: 'Historical Usage',
+      },
+      {
+        children: <ClusterLogs />,
+        key: TabType.Logs,
+        label: 'Master Logs',
+      },
+    ];
+  }, []);
+
   return (
     <Page bodyNoPadding id="cluster" title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
-      <Tabs className="no-padding" defaultActiveKey={tabKey} onChange={handleTabChange}>
-        <TabPane key="overview" tab="Overview">
-          <ClustersOverview />
-        </TabPane>
-        <TabPane className={css.tab} key="historical-usage" tab="Historical Usage">
-          <ClusterHistoricalUsage />
-        </TabPane>
-        <TabPane key="logs" tab="Master Logs">
-          <ClusterLogs />
-        </TabPane>
-      </Tabs>
+      <Tabs
+        className="no-padding"
+        defaultActiveKey={tabKey}
+        items={tabItems}
+        onChange={handleTabChange}
+      />
     </Page>
   );
 };

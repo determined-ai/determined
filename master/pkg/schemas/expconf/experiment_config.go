@@ -82,17 +82,17 @@ func (e *ExperimentConfigV0) Scan(src interface{}) error {
 	// This *should* be a copy without any changes, unless perhaps we just shimmed the bytes that
 	// were in the database, but to ensure we never allow any un-defaulted experiments anywhere
 	// inside the system, we call WithDefaults here.
-	*e = schemas.WithDefaults(config).(ExperimentConfigV0)
+	*e = schemas.WithDefaults(config)
 	return nil
 }
 
 // AsLegacy converts a current ExperimentConfig to a (limited capacity) LegacyConfig.
 func (e ExperimentConfig) AsLegacy() LegacyConfig {
 	return LegacyConfig{
-		checkpointStorage: schemas.Copy(e.CheckpointStorage()).(CheckpointStorageConfig),
-		bindMounts:        schemas.Copy(e.BindMounts()).(BindMountsConfig),
-		envvars:           schemas.Copy(e.Environment().EnvironmentVariables()).(EnvironmentVariablesMap),
-		podSpec:           schemas.Copy(e.Environment().PodSpec()).(*PodSpec),
+		checkpointStorage: schemas.Copy(e.CheckpointStorage()),
+		bindMounts:        schemas.Copy(e.BindMounts()),
+		envvars:           schemas.Copy(e.Environment().EnvironmentVariables()),
+		podSpec:           schemas.Copy(e.Environment().PodSpec()),
 	}
 }
 
@@ -103,8 +103,8 @@ type Name struct {
 	RawString *string
 }
 
-// WithDefaults implements the Defaultable interface.
-func (d Name) WithDefaults() interface{} {
+// WithDefaults implements the Defaultable psuedointerface.
+func (d Name) WithDefaults() Name {
 	var s string
 	if d.RawString != nil {
 		s = *d.RawString
@@ -243,8 +243,7 @@ type BindMountsConfigV0 []BindMountV0
 // is that if either the user-provided config or the template config is broken, it would be
 // confusing that Merge() would silently fix them.  However it would also be confusing if two valid
 // configs got merged together and resulted in a clearly invalid config.
-func (b BindMountsConfigV0) Merge(other interface{}) interface{} {
-	tOther := other.(BindMountsConfigV0)
+func (b BindMountsConfigV0) Merge(other BindMountsConfigV0) BindMountsConfigV0 {
 	out := BindMountsConfigV0{}
 	out = append(out, b...)
 
@@ -253,7 +252,7 @@ func (b BindMountsConfigV0) Merge(other interface{}) interface{} {
 	for _, mount := range b {
 		paths[mount.ContainerPath()] = true
 	}
-	for _, mount := range tOther {
+	for _, mount := range other {
 		if _, ok := paths[mount.ContainerPath()]; !ok {
 			out = append(out, mount)
 		}
@@ -291,8 +290,7 @@ type DevicesConfigV0 []DeviceV0
 
 // Merge is just merge-by-appending, with a specific form of deduplication.
 // See the comment on BindMountsConfigV0.Merge() for details.
-func (d DevicesConfigV0) Merge(other interface{}) interface{} {
-	tOther := other.(DevicesConfigV0)
+func (d DevicesConfigV0) Merge(other DevicesConfigV0) DevicesConfigV0 {
 	out := DevicesConfigV0{}
 	out = append(out, d...)
 
@@ -301,7 +299,7 @@ func (d DevicesConfigV0) Merge(other interface{}) interface{} {
 	for _, mount := range d {
 		paths[mount.ContainerPath()] = true
 	}
-	for _, mount := range tOther {
+	for _, mount := range other {
 		if _, ok := paths[mount.ContainerPath()]; !ok {
 			out = append(out, mount)
 		}
@@ -343,8 +341,8 @@ type ReproducibilityConfigV0 struct {
 	RawExperimentSeed *uint32 `json:"experiment_seed"`
 }
 
-// WithDefaults implements the Defaultable interface.
-func (r ReproducibilityConfigV0) WithDefaults() interface{} {
+// WithDefaults implements the Defaultable psuedointerface.
+func (r ReproducibilityConfigV0) WithDefaults() ReproducibilityConfigV0 {
 	var seed uint32
 	if r.RawExperimentSeed != nil {
 		seed = *r.RawExperimentSeed

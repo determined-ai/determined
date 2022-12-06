@@ -31,7 +31,7 @@ type SearcherConfigV0 struct {
 }
 
 // Merge implements schemas.Mergeable.
-func (s SearcherConfigV0) Merge(other interface{}) interface{} {
+func (s SearcherConfigV0) Merge(other SearcherConfigV0) SearcherConfigV0 {
 	return schemas.UnionMerge(s, other)
 }
 

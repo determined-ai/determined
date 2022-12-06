@@ -223,7 +223,7 @@ func (a *apiServer) LaunchTensorboard(
 				RawContainerPath: expconf.DefaultSharedFSContainerPath,
 				RawHostPath:      c.HostPath(),
 				RawPropagation:   ptrs.Ptr(expconf.DefaultSharedFSPropagation),
-			}).(expconf.BindMount)
+			})
 			uniqMounts[sharedFSMount.ContainerPath()] = model.ToModelBindMount(sharedFSMount)
 			logBasePath = c.PathInContainer()
 
@@ -313,7 +313,7 @@ func (a *apiServer) LaunchTensorboard(
 	if err != nil {
 		return nil, errors.Wrapf(err, "error parsing experiment config: %d", mostRecentExpID)
 	}
-	expConf = schemas.WithDefaults(expConf).(expconf.ExperimentConfig)
+	expConf = schemas.WithDefaults(expConf)
 
 	spec.Config.Entrypoint = append(
 		[]string{tensorboardEntrypointFile, expConfPath, strings.Join(logDirs, ",")},

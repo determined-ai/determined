@@ -98,6 +98,10 @@ const WorkspaceList: React.FC = () => {
 
   usePolling(fetchWorkspaces);
 
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
+
   const handleViewSelect = useCallback(
     (value: unknown) => {
       updateSettings({ whose: value as WhoseWorkspaces | undefined });

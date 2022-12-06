@@ -99,3 +99,14 @@ class Session:
         timeout: Optional[int] = None,
     ) -> requests.Response:
         return self._do_request("PUT", path, params, json, data, headers, timeout, False)
+
+    def with_retry(self, retry: Optional[urllib3.util.retry.Retry]) -> "Session":
+        """Return a copy of this session with different max_retries."""
+
+        return type(self)(
+            master=self._master,
+            user=self._user,
+            auth=self._auth,
+            cert=self._cert,
+            max_retries=retry,
+        )

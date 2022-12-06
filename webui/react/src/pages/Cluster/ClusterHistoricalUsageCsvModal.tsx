@@ -46,8 +46,8 @@ const ClusterHistoricalUsageCsvModal: React.FC<Props> = ({
   return (
     <Modal
       okText="Proceed to Download"
+      open={true}
       title="Download Resource Usage Data in CSV"
-      visible={true}
       onCancel={() => onVisibleChange(false)}
       onOk={handleOk}>
       <Form form={form} initialValues={{ afterDate, beforeDate }} labelCol={{ span: 8 }}>

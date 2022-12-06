@@ -36,7 +36,7 @@
     "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
     "ansi_up": "^5.1.0",
     "ansi-to-html": "^0.7.1",
-    "antd": "^4.21.4",
+    "antd": "^4.24.4",
     "dayjs": "^1.10.7",
     "debug": "^4.3.4",
     "dompurify": "^2.4.0",

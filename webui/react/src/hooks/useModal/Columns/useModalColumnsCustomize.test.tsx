@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { DEFAULT_COLUMNS } from 'pages/OldProjectDetails.settings';
+import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import {
   camelCaseToSentence,
   generateAlphaNumeric,
