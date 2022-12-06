@@ -163,9 +163,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
-    ({
-      ...(state.get(config.applicableRoutespace) ?? {}),
-    } as SettingsRecord<T>),
+      ({
+        ...(state.get(config.applicableRoutespace) ?? {}),
+      } as SettingsRecord<T>),
     [config, state],
   );
 

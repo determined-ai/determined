@@ -212,8 +212,8 @@ const WorkspaceDetails: React.FC = () => {
   // Users and Groups that are not already a part of the workspace
   const addableGroups: V1Group[] = groups
     ? groups
-      .map((groupDetails) => groupDetails.group)
-      .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
+        .map((groupDetails) => groupDetails.group)
+        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
     : [];
   const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
   const addableUsersAndGroups = [...addableGroups, ...addableUsers];

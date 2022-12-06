@@ -343,31 +343,31 @@ export const useTrialCollections = (
             menu={{
               items: collectionIsActive
                 ? [
-                  {
-                    disabled: !userOwnsCollection,
-                    key: 'ren',
-                    label: 'Rename Collection',
-                    onClick: renameCollection,
-                  },
-                  {
-                    disabled: !userOwnsCollection,
-                    key: 'del',
-                    label: 'Delete Collection',
-                    onClick: deleteCollection,
-                  },
-                  {
-                    key: 'clr',
-                    label: 'Clear Filters',
-                    onClick: clearFilters,
-                  },
-                ]
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'ren',
+                      label: 'Rename Collection',
+                      onClick: renameCollection,
+                    },
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'del',
+                      label: 'Delete Collection',
+                      onClick: deleteCollection,
+                    },
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ]
                 : [
-                  {
-                    key: 'clr',
-                    label: 'Clear Filters',
-                    onClick: clearFilters,
-                  },
-                ],
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ],
             }}
             trigger={['click']}>
             <Button

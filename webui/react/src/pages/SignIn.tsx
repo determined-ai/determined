@@ -79,7 +79,7 @@ const SignIn: React.FC = () => {
       if (!queries.redirect) {
         routeToReactUrl(
           locationToPath(location.state?.loginRedirect) ||
-          (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
+            (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
         );
       } else {
         routeAll(queries.redirect);
