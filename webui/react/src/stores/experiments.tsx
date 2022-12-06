@@ -14,8 +14,8 @@ type ExperimentPagination = {
 };
 
 type ExperimentsContext = {
-  experimentsIndex: Map<string, ExperimentPagination>;
-  updateExperimentsIndex: (ws: Map<string, ExperimentPagination>) => void;
+  experimentsCache: Map<string, ExperimentPagination>;
+  updateExperimentsCache: (ws: Map<string, ExperimentPagination>) => void;
 };
 
 const ExperimentsContext = createContext<ExperimentsContext | null>(null);
@@ -24,11 +24,11 @@ const encodeParams = (params: { [key: string]: any }) =>
   JSON.stringify([...Object.entries(params ?? {})].sort());
 
 export const ExperimentsProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [experimentsIndex, updateExperimentsIndex] = useState<Map<string, ExperimentPagination>>(
+  const [experimentsCache, updateExperimentsCache] = useState<Map<string, ExperimentPagination>>(
     Map<string, ExperimentPagination>(),
   );
   return (
-    <ExperimentsContext.Provider value={{ experimentsIndex, updateExperimentsIndex }}>
+    <ExperimentsContext.Provider value={{ experimentsCache, updateExperimentsCache }}>
       {children}
     </ExperimentsContext.Provider>
   );
@@ -42,16 +42,16 @@ export const useFetchExperiments = (
   if (context === null) {
     throw new Error('Attempted to use useFetchExperiments outside of Experiment Context');
   }
-  const { experimentsIndex, updateExperimentsIndex } = context;
+  const { experimentsCache, updateExperimentsCache } = context;
 
   return useCallback(async (): Promise<void> => {
     try {
       const response = await getExperiments(params, { signal: canceler.signal });
-      updateExperimentsIndex(experimentsIndex.set(encodeParams(params), response));
+      updateExperimentsCache(experimentsCache.set(encodeParams(params), response));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, experimentsIndex, params, updateExperimentsIndex]);
+  }, [canceler, experimentsCache, params, updateExperimentsCache]);
 };
 
 export const useExperiments = (params: GetExperimentsParams): Loadable<ExperimentPagination> => {
@@ -59,7 +59,7 @@ export const useExperiments = (params: GetExperimentsParams): Loadable<Experimen
   if (context === null) {
     throw new Error('Attempted to use useExperiments outside of Experiment Context');
   }
-  const loadedVal = context.experimentsIndex.get(encodeParams(params));
+  const loadedVal = context.experimentsCache.get(encodeParams(params));
 
   return loadedVal ? Loaded(loadedVal) : NotLoaded;
 };
