@@ -260,7 +260,7 @@ class ClusterInfo:
             "DET_SLOT_IDS",
             "DET_TASK_ID",
             "DET_ALLOCATION_ID",
-            "DET_SESSION_TOKEN",
+            "DET_USER_TOKEN",
             "DET_TASK_TYPE",
         ]
         missing = [r for r in required if r not in os.environ]
@@ -275,7 +275,7 @@ class ClusterInfo:
             slot_ids=json.loads(os.environ["DET_SLOT_IDS"]),
             task_id=os.environ["DET_TASK_ID"],
             allocation_id=os.environ["DET_ALLOCATION_ID"],
-            session_token=os.environ["DET_SESSION_TOKEN"],
+            session_token=os.environ["DET_USER_TOKEN"],
             task_type=os.environ["DET_TASK_TYPE"],
             # Optional info:
             master_cert_name=os.environ.get("DET_MASTER_CERT_NAME"),

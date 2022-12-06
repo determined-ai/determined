@@ -169,7 +169,6 @@ type (
 	}
 	// ResourcesRuntimeInfo is all the inforamation provided at runtime to make a task spec.
 	ResourcesRuntimeInfo struct {
-		Token        string
 		AgentRank    int
 		IsMultiAgent bool
 	}

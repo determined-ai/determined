@@ -44,8 +44,5 @@ func Setup(opts *config.DBConfig) (*PgDB, error) {
 	if err = db.initAuthKeys(); err != nil {
 		return nil, err
 	}
-	if err = db.initAllocationSessions(); err != nil {
-		return nil, err
-	}
 	return db, nil
 }

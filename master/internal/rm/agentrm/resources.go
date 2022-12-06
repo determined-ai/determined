@@ -49,7 +49,6 @@ func (c containerResources) Start(
 	spec.ContainerID = string(c.containerID)
 	spec.ResourcesID = string(c.containerID)
 	spec.AllocationID = string(c.req.AllocationID)
-	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(c.req.TaskID)
 	if spec.LoggingFields == nil {
 		spec.LoggingFields = map[string]string{}

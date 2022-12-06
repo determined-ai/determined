@@ -9,8 +9,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	"github.com/o1egl/paseto"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -22,16 +20,14 @@ import (
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const (
 	// nolint:gosec // These are not potential hardcoded credentials.
-	gatewayTokenHeader    = "grpcgateway-authorization"
-	allocationTokenHeader = "x-allocation-token"
-	userTokenHeader       = "x-user-token"
-	cookieName            = "auth"
+	gatewayTokenHeader = "grpcgateway-authorization"
+	userTokenHeader    = "x-user-token"
+	cookieName         = "auth"
 )
 
 type (
@@ -56,55 +52,6 @@ var (
 	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
 )
 
-func allocationSessionByTokenBun(token string) (*model.AllocationSession, error) {
-	v2 := paseto.NewV2()
-
-	var session model.AllocationSession
-	err := v2.Verify(token, db.GetTokenKeys().PublicKey, &session, nil)
-	if err != nil {
-		log.WithError(err).Debug("failed to verify allocation_session token")
-		return nil, db.ErrNotFound
-	}
-
-	err = db.Bun().NewSelect().Model(&session).Where("id = ?", session.ID).Scan(context.Background())
-	if errors.Cause(err) == sql.ErrNoRows {
-		log.WithField("allocation_sessions.id", session.ID).Debug("allocation_session not found")
-		return nil, db.ErrNotFound
-	} else if err != nil {
-		log.WithError(err).WithField("allocation_sessions.id", session.ID).
-			Debug("failed to lookup allocation_session")
-		return nil, err
-	}
-
-	return &session, nil
-}
-
-func getAllocationSessionBun(ctx context.Context) (*model.AllocationSession, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, ErrTokenMissing
-	}
-	tokens := md[allocationTokenHeader]
-	if len(tokens) == 0 {
-		return nil, ErrTokenMissing
-	}
-
-	token := tokens[0]
-	if !strings.HasPrefix(token, "Bearer ") {
-		return nil, ErrInvalidCredentials
-	}
-	token = strings.TrimPrefix(token, "Bearer ")
-
-	switch session, err := allocationSessionByTokenBun(token); err {
-	case nil:
-		return session, nil
-	case db.ErrNotFound:
-		return nil, ErrInvalidCredentials
-	default:
-		return nil, err
-	}
-}
-
 // GetUser returns the currently logged in user.
 func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	if user, ok := ctx.Value(userContextKey{}).(*model.User); ok {
@@ -123,21 +70,6 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	tokens := md[userTokenHeader]
 	if len(tokens) == 0 {
 		tokens = md[gatewayTokenHeader]
-	}
-	if len(tokens) == 0 {
-		allocationSession, err := getAllocationSessionBun(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
-		if allocationSession.OwnerID == nil {
-			return nil, nil, status.Error(codes.InvalidArgument,
-				"allocation session has no associated user")
-		}
-		u, err := user.UserByID(*allocationSession.OwnerID)
-		if err != nil {
-			return nil, nil, err
-		}
-		return ptrs.Ptr(u.ToUser()), nil, nil
 	}
 
 	token := tokens[0]

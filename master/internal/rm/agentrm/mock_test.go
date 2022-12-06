@@ -78,7 +78,6 @@ func (t *MockTask) Receive(ctx *actor.Context) error {
 		rank := 0
 		for _, allocation := range msg.Resources {
 			if err := allocation.Start(ctx, nil, tasks.TaskSpec{}, sproto.ResourcesRuntimeInfo{
-				Token:        "",
 				AgentRank:    rank,
 				IsMultiAgent: len(msg.Resources) > 1,
 			}); err != nil {

@@ -346,20 +346,6 @@ func (_m *DB) CompleteAllocationTelemetry(aID model.AllocationID) ([]byte, error
 	return r0, r1
 }
 
-// DeleteAllocationSession provides a mock function with given fields: allocationID
-func (_m *DB) DeleteAllocationSession(allocationID model.AllocationID) error {
-	ret := _m.Called(allocationID)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(model.AllocationID) error); ok {
-		r0 = rf(allocationID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // DeleteExperiment provides a mock function with given fields: id
 func (_m *DB) DeleteExperiment(id int) error {
 	ret := _m.Called(id)
@@ -1564,27 +1550,6 @@ func (_m *DB) SetHPImportance(experimentID int, value model.ExperimentHPImportan
 	}
 
 	return r0
-}
-
-// StartAllocationSession provides a mock function with given fields: allocationID, owner
-func (_m *DB) StartAllocationSession(allocationID model.AllocationID, owner *model.User) (string, error) {
-	ret := _m.Called(allocationID, owner)
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(model.AllocationID, *model.User) string); ok {
-		r0 = rf(allocationID, owner)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(model.AllocationID, *model.User) error); ok {
-		r1 = rf(allocationID, owner)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // StartUserSession provides a mock function with given fields: user

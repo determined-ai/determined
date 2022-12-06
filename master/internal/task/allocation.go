@@ -456,14 +456,8 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 	}
 
 	if !a.req.Restore {
-		token, err := a.db.StartAllocationSession(a.model.AllocationID, spec.Owner)
-		if err != nil {
-			return errors.Wrap(err, "starting a new allocation session")
-		}
-
 		for cID, r := range a.resources {
 			if err := r.Start(ctx, a.logCtx, spec, sproto.ResourcesRuntimeInfo{
-				Token:        token,
 				AgentRank:    a.resources[cID].Rank,
 				IsMultiAgent: len(a.resources) > 1,
 			}); err != nil {
@@ -965,9 +959,6 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 // markResourcesReleased persists completion information.
 func (a *Allocation) markResourcesReleased(ctx *actor.Context) {
 	a.model.EndTime = ptrs.Ptr(time.Now().UTC())
-	if err := a.db.DeleteAllocationSession(a.model.AllocationID); err != nil {
-		ctx.Log().WithError(err).Error("error deleting allocation session")
-	}
 	if err := a.db.CompleteAllocation(&a.model); err != nil {
 		ctx.Log().WithError(err).Error("failed to mark allocation completed")
 	}

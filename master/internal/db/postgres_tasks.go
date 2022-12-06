@@ -12,21 +12,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
-
-// initAllocationSessions purges sessions of all closed allocations.
-func (db *PgDB) initAllocationSessions() error {
-	_, err := db.sql.Exec(`
-DELETE FROM allocation_sessions WHERE allocation_id in (
-	SELECT allocation_id FROM allocations
-	WHERE start_time IS NOT NULL AND end_time IS NOT NULL
-)`)
-	return err
-}
 
 // queryHandler is an interface for a query handler to use tx/db for same queries.
 type queryHandler interface {
@@ -149,39 +138,6 @@ WHERE allocation_id = $1
 		return nil, errors.Wrap(err, "querying allocation")
 	}
 	return &a, nil
-}
-
-// StartAllocationSession creates a row in the allocation_sessions table.
-func (db *PgDB) StartAllocationSession(
-	allocationID model.AllocationID, owner *model.User,
-) (string, error) {
-	taskSession := &model.AllocationSession{
-		AllocationID: allocationID,
-	}
-	if owner != nil {
-		taskSession.OwnerID = &owner.ID
-	}
-
-	query := `
-INSERT INTO allocation_sessions (allocation_id, owner_id) VALUES
-	(:allocation_id, :owner_id) RETURNING id`
-	if err := db.namedGet(&taskSession.ID, query, *taskSession); err != nil {
-		return "", err
-	}
-
-	v2 := paseto.NewV2()
-	token, err := v2.Sign(db.tokenKeys.PrivateKey, taskSession, nil)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to generate task authentication token")
-	}
-	return token, nil
-}
-
-// DeleteAllocationSession deletes the task session with the given AllocationID.
-func (db *PgDB) DeleteAllocationSession(allocationID model.AllocationID) error {
-	_, err := db.sql.Exec(
-		"DELETE FROM allocation_sessions WHERE allocation_id=$1", allocationID)
-	return err
 }
 
 // UpdateAllocationState stores the latest task state and readiness.

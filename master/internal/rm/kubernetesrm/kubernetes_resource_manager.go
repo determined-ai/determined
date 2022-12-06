@@ -785,7 +785,6 @@ func (p k8sPodResources) Start(
 	spec.ContainerID = string(p.containerID)
 	spec.ResourcesID = string(p.containerID)
 	spec.AllocationID = string(p.req.AllocationID)
-	spec.AllocationSessionToken = rri.Token
 	spec.TaskID = string(p.req.TaskID)
 	spec.UseHostMode = rri.IsMultiAgent
 	spec.ResourcesConfig.SetPriority(p.group.Priority)
