@@ -179,6 +179,7 @@ require (
 require (
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
+	golang.org/x/sync v0.1.0
 )
 
 replace github.com/determined-ai/determined/proto => ../proto

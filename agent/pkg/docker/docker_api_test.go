@@ -171,7 +171,7 @@ func TestRunContainer(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("running simple container")
-	c, err := cl.RunContainer(ctx, dockerID)
+	c, err := cl.RunContainer(ctx, ctx, dockerID)
 	require.NoError(t, err)
 
 	close(evs)
@@ -238,7 +238,7 @@ func TestRunContainerWithService(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Log("running simple container")
-	c, err := cl.RunContainer(ctx, dockerID)
+	c, err := cl.RunContainer(ctx, ctx, dockerID)
 	require.NoError(t, err)
 
 	close(evs)
