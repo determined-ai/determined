@@ -57,10 +57,7 @@ class Determined:
             explicit_noverify=noverify,
         )
 
-        # TODO: This should probably be try_reauth=False, but it appears that would break the case
-        # where the default credentials are available from the master and could be discovered by
-        # a REST API call against the master.
-        auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
+        auth = authentication.Authentication(master, user, password, cert=cert)
         self._session = api.Session(master, user, auth, cert)
 
     def _from_bindings(self, raw: bindings.v1User) -> user.User:

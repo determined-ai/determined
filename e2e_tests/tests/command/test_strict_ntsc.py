@@ -19,7 +19,7 @@ from tests.cluster.test_users import (
 def assert_shell_access(creds: authentication.Credentials, shell_id: str, can_access: bool) -> None:
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(
-        master_url, creds.username, creds.password, try_reauth=True
+        master_url, creds.username, creds.password
     )
     sess = api.Session(master_url, None, None, None)
 
@@ -57,7 +57,7 @@ def assert_notebook_access(
 ) -> None:
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(
-        master_url, creds.username, creds.password, try_reauth=True
+        master_url, creds.username, creds.password
     )
     sess = api.Session(master_url, None, None, None)
 
@@ -104,7 +104,7 @@ def assert_command_access(
 ) -> None:
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(
-        master_url, creds.username, creds.password, try_reauth=True
+        master_url, creds.username, creds.password
     )
     sess = api.Session(master_url, None, None, None)
 
@@ -144,7 +144,7 @@ def assert_tensorboard_access(
 ) -> None:
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(
-        master_url, creds.username, creds.password, try_reauth=True
+        master_url, creds.username, creds.password
     )
     sess = api.Session(master_url, None, None, None)
 
@@ -184,7 +184,7 @@ def assert_tensorboard_access(
 def assert_access_task(creds: authentication.Credentials, task_id: str, can_access: bool) -> None:
     master_url = conf.make_master_url()
     authentication.cli_auth = authentication.Authentication(
-        master_url, creds.username, creds.password, try_reauth=True
+        master_url, creds.username, creds.password
     )
     sess = api.Session(master_url, None, None, None)
 

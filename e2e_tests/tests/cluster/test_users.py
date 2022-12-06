@@ -980,7 +980,7 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(master_url)
     authentication.cli_auth = authentication.Authentication(
-        conf.make_master_url(), requested_user=original_name, password="", try_reauth=True
+        conf.make_master_url(), requested_user=original_name, password=""
     )
     sess = api.Session(master_url, original_name, authentication.cli_auth, certs.cli_cert)
 
