@@ -202,7 +202,7 @@ def copyfile(src, dst, *, follow_symlinks=True):
     symlink will be created instead of copying the file it points to.
 
     """
-    sys.audit("shutil.copyfile", src, dst)
+    # sys.audit("shutil.copyfile", src, dst)
 
     if _samefile(src, dst):
         raise SameFileError("{!r} and {!r} are the same file".format(src, dst))
@@ -259,7 +259,7 @@ def copymode(src, dst, *, follow_symlinks=True):
     (e.g. Linux) this method does nothing.
 
     """
-    sys.audit("shutil.copymode", src, dst)
+    # sys.audit("shutil.copymode", src, dst)
 
     if not follow_symlinks and _islink(src) and os.path.islink(dst):
         if hasattr(os, "lchmod"):
@@ -317,7 +317,7 @@ def copystat(src, dst, *, follow_symlinks=True):
     If the optional flag `follow_symlinks` is not set, symlinks aren't
     followed if and only if both `src` and `dst` are symlinks.
     """
-    sys.audit("shutil.copystat", src, dst)
+    # sys.audit("shutil.copystat", src, dst)
 
     def _nop(*args, ns=None, follow_symlinks=None):
         pass
@@ -550,7 +550,7 @@ def copytree(
     function that supports the same signature (like copy()) can be used.
 
     """
-    sys.audit("shutil.copytree", src, dst)
+    # sys.audit("shutil.copytree", src, dst)
     with os.scandir(src) as itr:
         entries = list(itr)
     return _copytree(
