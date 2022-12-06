@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
-import { useUserRoles } from 'stores/userRoles';
+import { useUserAssignments, useUserRoles } from 'stores/userRoles';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -18,6 +18,7 @@ import {
   WorkspacePermissionsArgs,
 } from 'types';
 import { Loadable } from 'utils/loadable';
+
 interface ModelPermissionsArgs {
   model: ModelItem;
 }
@@ -79,14 +80,12 @@ interface PermissionsHook {
 const usePermissions = (): PermissionsHook => {
   const {
     auth: { user },
-    userAssignments,
   } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-
-  const userRoles = Loadable.getOrElse([], useUserRoles());
-
+  const userAssignments = Loadable.waitFor(useUserAssignments());
+  const userRoles = Loadable.waitFor(useUserRoles());
   const rbacOpts = useMemo(
     () => ({
       rbacAllPermission,

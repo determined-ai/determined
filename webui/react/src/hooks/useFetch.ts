@@ -6,7 +6,6 @@ import {
   getActiveTasks,
   getExperiments,
   getInfo,
-  getPermissionsSummary,
   getResourcePools,
   getUsers,
   getWorkspaces,
@@ -111,21 +110,6 @@ export const useFetchKnownRoles = (canceler: AbortController): (() => Promise<vo
     try {
       const roles = await listRoles({ limit: 0 }, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetKnownRoles, value: roles });
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, storeDispatch]);
-};
-
-export const useFetchMyRoles = (canceler: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-  return useCallback(async (): Promise<void> => {
-    try {
-      const { assignments } = await getPermissionsSummary(
-        { limit: 0 },
-        { signal: canceler.signal },
-      );
-      storeDispatch({ type: StoreAction.SetUserAssignments, value: assignments });
     } catch (e) {
       handleError(e);
     }

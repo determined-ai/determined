@@ -1,75 +1,94 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
-import { getUserRoles } from 'services/api';
-import { UserRole } from 'types';
+import { getPermissionsSummary } from 'services/api';
+import { UserAssignment, UserRole } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-type UserRolesContext = {
+type UserRolesAndAssignmentsContext = {
+  updateUserAssignments: (
+    fn: (r: Loadable<UserAssignment[]>) => Loadable<UserAssignment[]>,
+  ) => void;
   updateUserRoles: (fn: (r: Loadable<UserRole[]>) => Loadable<UserRole[]>) => void;
+  userAssignments: Loadable<UserAssignment[]>;
   userRoles: Loadable<UserRole[]>;
 };
 
-const UserRolesContext = createContext<UserRolesContext | null>(null);
+const UserRolesAndAssignmentsContext = createContext<UserRolesAndAssignmentsContext | null>(null);
 
 export const UserRolesProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [state, setState] = useState<Loadable<UserRole[]>>(NotLoaded);
+  const [userRoles, setUserRoles] = useState<Loadable<UserRole[]>>(NotLoaded);
+  const [userAssignments, setUserAssignments] = useState<Loadable<UserAssignment[]>>(NotLoaded);
   return (
-    <UserRolesContext.Provider value={{ updateUserRoles: setState, userRoles: state }}>
+    <UserRolesAndAssignmentsContext.Provider
+      value={{
+        updateUserAssignments: setUserAssignments,
+        updateUserRoles: setUserRoles,
+        userAssignments: userAssignments,
+        userRoles: userRoles,
+      }}>
       {children}
-    </UserRolesContext.Provider>
+    </UserRolesAndAssignmentsContext.Provider>
   );
 };
 
-export const useFetchUserRoles = (
+export const useFetchUserRolesAndAssignments = (
   canceler: AbortController,
-  userId?: number,
 ): (() => Promise<void>) => {
-  const context = useContext(UserRolesContext);
+  const context = useContext(UserRolesAndAssignmentsContext);
   if (context === null) {
-    throw new Error('Attempted to use useFetchUserRoles outside of UserRoles Context');
+    throw new Error('Attempted to use useFetchUserRoles outside of UserRolesAndAssignmentsContext');
   }
-  const { updateUserRoles } = context;
+  const { updateUserRoles, updateUserAssignments } = context;
 
   return useCallback(async (): Promise<void> => {
-    if (!userId) return;
     try {
-      const response = await getUserRoles({ userId }, { signal: canceler.signal });
-      updateUserRoles(() => Loaded(response));
+      const response = await getPermissionsSummary({ signal: canceler.signal });
+      updateUserRoles(() => Loaded(response.roles));
+      updateUserAssignments(() => Loaded(response.assignments));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, updateUserRoles, userId]);
+  }, [canceler, updateUserRoles, updateUserAssignments]);
 };
 
-export const useEnsureUserRolesFetched = (
+export const useEnsureUserRolesAndAssignmentsFetched = (
   canceler: AbortController,
-  userId?: number,
 ): (() => Promise<void>) => {
-  const context = useContext(UserRolesContext);
+  const context = useContext(UserRolesAndAssignmentsContext);
   if (context === null) {
-    throw new Error('Attempted to use useEnsureFetchUserRoles outside of UserRoles Context');
+    throw new Error(
+      'Attempted to use useEnsureFetchUserRoles outside of UserRolesAndAssignments Context',
+    );
   }
-  const { userRoles, updateUserRoles } = context;
+  const { userRoles, updateUserRoles, userAssignments, updateUserAssignments } = context;
 
   return useCallback(async (): Promise<void> => {
-    if (userRoles !== NotLoaded) return;
-    if (!userId) return;
+    if (userRoles !== NotLoaded && userAssignments !== NotLoaded) return;
     try {
-      const response = await getUserRoles({ userId }, { signal: canceler.signal });
-      updateUserRoles(() => Loaded(response));
+      const response = await getPermissionsSummary({ signal: canceler.signal });
+      updateUserRoles(() => Loaded(response.roles));
+      updateUserAssignments(() => Loaded(response.assignments));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, userId, userRoles, updateUserRoles]);
+  }, [canceler, userRoles, updateUserRoles, userAssignments, updateUserAssignments]);
 };
 
 export const useUserRoles = (): Loadable<UserRole[]> => {
-  const context = useContext(UserRolesContext);
+  const context = useContext(UserRolesAndAssignmentsContext);
   if (context === null) {
-    throw new Error('Attempted to use useUserRoles outside of UserRoles Context');
+    throw new Error('Attempted to use useUserRoles outside of UserRolesAndAssignmentss Context');
   }
-  const { userRoles } = context;
+  return context.userRoles;
+};
 
-  return userRoles;
+export const useUserAssignments = (): Loadable<UserAssignment[]> => {
+  const context = useContext(UserRolesAndAssignmentsContext);
+  if (context === null) {
+    throw new Error(
+      'Attempted to use useUserAssignments outside of UserRolesAndAssignmentss Context',
+    );
+  }
+  return context.userAssignments;
 };
