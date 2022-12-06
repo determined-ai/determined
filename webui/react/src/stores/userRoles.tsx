@@ -80,7 +80,10 @@ export const useUserRoles = (): Loadable<UserRole[]> => {
   if (context === null) {
     throw new Error('Attempted to use useUserRoles outside of UserRolesAndAssignmentss Context');
   }
-  return context.userRoles;
+
+  const { userRoles } = context;
+
+  return userRoles;
 };
 
 export const useUserAssignments = (): Loadable<UserAssignment[]> => {
@@ -90,5 +93,7 @@ export const useUserAssignments = (): Loadable<UserAssignment[]> => {
       'Attempted to use useUserAssignments outside of UserRolesAndAssignmentss Context',
     );
   }
-  return context.userAssignments;
+  const { userAssignments } = context;
+
+  return userAssignments;
 };
