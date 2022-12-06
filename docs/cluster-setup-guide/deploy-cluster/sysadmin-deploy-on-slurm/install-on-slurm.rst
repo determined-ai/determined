@@ -97,14 +97,15 @@ fulfilled and configured, install and configure the Determined master:
    |                            | directory must be visible to the launcher and from the compute |
    |                            | nodes.                                                         |
    +----------------------------+----------------------------------------------------------------+
-   | ``container_run_type``     | The container type to be launched on Slurm (``singularity`` or |
-   |                            | ``podman``). The default type is ``singularity``. Specify      |
-   |                            | ``singularity`` when using Apptainer.                          |
+   | ``container_run_type``     | The container type to be launched on Slurm (``singularity``,   |
+   |                            | ``enroot``, or ``podman``). The default type is                |
+   |                            | ``singularity``. Specify ``singularity`` when using Apptainer. |
    +----------------------------+----------------------------------------------------------------+
-   | ``singularity_image_root`` | Shared directory where Singularity/Apptainer images are        |
-   |                            | hosted. Unused unless ``container_run_type`` is                |
-   |                            | ``singularity``. See :ref:`slurm-image-config` for details on  |
-   |                            | how this option is used.                                       |
+   | ``singularity_image_root`` | Shared directory on all compute nodes where                    |
+   |                            | Singularity/Apptainer images are hosted. Unused unless         |
+   |                            | ``container_run_type`` is ``singularity``. See                 |
+   |                            | :ref:`slurm-image-config` for details on how this option is    |
+   |                            | used.                                                          |
    +----------------------------+----------------------------------------------------------------+
    | ``user_name`` and          | By default, the launcher runs from the root account. Create a  |
    | ``group_name``             | local account and group and update these values to enable      |
@@ -155,7 +156,15 @@ fulfilled and configured, install and configure the Determined master:
    see :ref:`slurm-image-config`.
 
 #. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
-   cluster, see :ref:`run-as-user`.
+   cluster. If logged in with a Determined administrator account, the following example creates a
+   Determined user account that is linked to the current user's Linux account. For more details see
+   :ref:`run-as-user`.
+
+   .. code:: bash
+
+      det user create $USER
+      det user link-with-agent-user --agent-uid $(id -u) --agent-gid $(id -g) --agent-user $USER --agent-group employee $USER
+      det user login $USER
 
 #. Verify the configuration by sanity-checking your Determined configuration:
 
