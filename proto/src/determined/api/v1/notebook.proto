@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 
+import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/notebook/v1/notebook.proto";
 import "determined/util/v1/util.proto";
@@ -125,4 +126,6 @@ message LaunchNotebookResponse {
   determined.notebook.v1.Notebook notebook = 1;
   // The config;
   google.protobuf.Struct config = 2;
+  // List of any related warnings.
+  repeated LaunchWarning warnings = 3;
 }

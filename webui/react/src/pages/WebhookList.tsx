@@ -1,5 +1,5 @@
-import { Button, Dropdown, Menu, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Space } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -85,7 +85,7 @@ const WebhooksView: React.FC = () => {
   );
 
   const WebhookActionMenu = useCallback(
-    (record: Webhook) => {
+    (record: Webhook): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteWebhook: 'delete-webhook',
         TestWebhook: 'test-webhook',
@@ -116,14 +116,14 @@ const WebhooksView: React.FC = () => {
         { danger: true, key: MenuKey.DeleteWebhook, label: 'Delete Webhook' },
       ];
 
-      return <Menu items={menuItems} onClick={onItemClick} />;
+      return { items: menuItems, onClick: onItemClick };
     },
     [showConfirmDelete],
   );
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
-      <Dropdown overlay={() => WebhookActionMenu(record)} trigger={['click']}>
+      <Dropdown menu={WebhookActionMenu(record)} trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>

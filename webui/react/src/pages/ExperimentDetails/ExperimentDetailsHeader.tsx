@@ -2,6 +2,7 @@ import { Button, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import ExperimentIcons from 'components/ExperimentIcons';
 import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import PageHeaderFoldable, { Option } from 'components/PageHeaderFoldable';
@@ -33,12 +34,67 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import { getDuration } from 'shared/utils/datetime';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { getStateColorCssVar } from 'themes';
-import { ExperimentAction as Action, ExperimentBase, RunState, TrialItem } from 'types';
+import {
+  ExperimentAction as Action,
+  CompoundRunState,
+  ExperimentBase,
+  JobState,
+  RunState,
+  TrialItem,
+} from 'types';
 import handleError from 'utils/error';
 import { canActionExperiment, getActionsForExperiment } from 'utils/experiment';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
+
+// Actionable means that user can take an action, such as pause, stop
+const isActionableIcon = (state: CompoundRunState): boolean => {
+  switch (state) {
+    case JobState.SCHEDULED:
+    case JobState.SCHEDULEDBACKFILLED:
+    case JobState.QUEUED:
+    case RunState.Queued:
+    case RunState.Starting:
+    case RunState.Pulling:
+    case RunState.Running:
+    case RunState.Paused:
+    case RunState.Active:
+    case RunState.Unspecified:
+    case JobState.UNSPECIFIED:
+      return true;
+    case RunState.Completed:
+    case RunState.Error:
+    case RunState.Deleted:
+    case RunState.Deleting:
+    case RunState.DeleteFailed:
+      return false;
+    default:
+      return false;
+  }
+};
+
+// If status(state) icon has actionable butotn(s) and animation fits the design,
+// show  animation around the icon
+const isShownAnimation = (state: CompoundRunState): boolean => {
+  switch (state) {
+    case JobState.SCHEDULED:
+    case JobState.SCHEDULEDBACKFILLED:
+    case JobState.QUEUED:
+    case RunState.Queued:
+    case RunState.Starting:
+    case RunState.Pulling:
+    case RunState.Running:
+      return true;
+    case RunState.Active:
+    case RunState.Paused:
+    case RunState.Unspecified:
+    case JobState.UNSPECIFIED:
+      return false;
+    default:
+      return false;
+  }
+};
 
 interface Props {
   experiment: ExperimentBase;
@@ -299,8 +355,10 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         onClick: async () => {
           setIsRunningTensorBoard(true);
           try {
-            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [experiment.id] });
-            openCommand(tensorboard);
+            const commandResponse = await openOrCreateTensorBoard({
+              experimentIds: [experiment.id],
+            });
+            openCommandResponse(commandResponse);
             setIsRunningTensorBoard(false);
           } catch (e) {
             setIsRunningTensorBoard(false);
@@ -349,6 +407,38 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     if (isFirstJob) return 'No jobs ahead of this one';
     return `${experiment.jobSummary.jobsAhead} jobs ahead of this one`;
   }, [experiment.jobSummary]);
+
+  const returnStatusIcon = useCallback(
+    (iconNode: React.ReactNode): React.ReactNode => {
+      {
+        const cssProps: React.CSSProperties = { height: '32px', width: '32px' };
+        switch (experiment.state) {
+          case JobState.SCHEDULED:
+          case JobState.SCHEDULEDBACKFILLED:
+          case JobState.QUEUED:
+          case RunState.Queued:
+            cssProps['backgroundColor'] = 'white';
+            cssProps['opacity'] = '0.25';
+            break;
+          case RunState.Running:
+            cssProps['borderColor'] = 'white';
+            break;
+          default:
+            break;
+        }
+
+        return isShownAnimation(experiment.state) ? (
+          <>
+            <ExperimentIcons isTooltipVisible={false} state={experiment.state} style={cssProps} />
+            <div className={css.icon}>{iconNode}</div>
+          </>
+        ) : (
+          <>{iconNode}</>
+        );
+      }
+    },
+    [experiment.state],
+  );
 
   return (
     <>
@@ -404,35 +494,49 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         leftContent={
           <Space align="center" className={css.base}>
             <Spinner spinning={isChangingState}>
-              <div className={classes.join(' ')} style={stateStyle}>
-                {isPausable && (
-                  <Button
-                    className={css.buttonPause}
-                    disabled={!canPausePlay}
-                    icon={<Icon name="pause" size="large" />}
-                    shape="circle"
-                    onClick={handlePauseClick}
-                  />
+              <div className={css.stateIcon}>
+                {isActionableIcon(experiment.state) ? (
+                  <div className={classes.join(' ')} style={stateStyle}>
+                    {isPausable && (
+                      <Button
+                        className={
+                          isShownAnimation(experiment.state)
+                            ? css.buttonWithAnimation
+                            : css.buttonPause
+                        }
+                        disabled={!canPausePlay}
+                        icon={returnStatusIcon(<Icon name="pause" size="large" />)}
+                        shape="circle"
+                        onClick={handlePauseClick}
+                      />
+                    )}
+                    {isPaused && (
+                      <Button
+                        className={
+                          isShownAnimation(experiment.state)
+                            ? css.buttonWithAnimation
+                            : css.buttonPlay
+                        }
+                        disabled={!canPausePlay}
+                        icon={returnStatusIcon(<Icon name="play" size="large" />)}
+                        shape="circle"
+                        onClick={handlePlayClick}
+                      />
+                    )}
+                    {!isTerminated && (
+                      <Button
+                        className={css.buttonStop}
+                        disabled={!canPausePlay}
+                        icon={<Icon name="stop" size="large" />}
+                        shape="circle"
+                        onClick={handleStopClick}
+                      />
+                    )}
+                    <label>{stateToLabel(experiment.state)}</label>
+                  </div>
+                ) : (
+                  <ExperimentIcons state={experiment.state} />
                 )}
-                {isPaused && (
-                  <Button
-                    className={css.buttonPlay}
-                    disabled={!canPausePlay}
-                    icon={<Icon name="play" size="large" />}
-                    shape="circle"
-                    onClick={handlePlayClick}
-                  />
-                )}
-                {!isTerminated && (
-                  <Button
-                    className={css.buttonStop}
-                    disabled={!canPausePlay}
-                    icon={<Icon name="stop" size="large" />}
-                    shape="circle"
-                    onClick={handleStopClick}
-                  />
-                )}
-                <label>{stateToLabel(experiment.state)}</label>
               </div>
             </Spinner>
             <div className={css.id}>Experiment {experiment.id}</div>

@@ -584,12 +584,12 @@ const TaskList: React.FC = () => {
       </div>
       <Modal
         footer={null}
+        open={!!sourcesModal}
         style={{ minWidth: '600px' }}
         title={`
           ${sourcesModal?.sources.length}
           TensorBoard Source${sourcesModal?.plural}
         `}
-        visible={!!sourcesModal}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.Medium} minItemWidth={120}>

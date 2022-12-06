@@ -1,3 +1,4 @@
+import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
@@ -6,8 +7,9 @@ import TaskBar from 'components/TaskBar';
 import { getTask } from 'services/api';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
+import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { CommandState, CommandType } from 'types';
-import handleError from 'utils/error';
+import handleError, { handleWarning } from 'utils/error';
 
 import css from './InteractiveTask.module.scss';
 import TaskLogs from './TaskLogs';
@@ -19,6 +21,10 @@ type Params = {
   taskType: CommandType;
   taskUrl: string;
 };
+
+interface Queries {
+  currentSlotsExceeded?: string;
+}
 
 const PageView = {
   IFRAME: 'Iframe',
@@ -59,7 +65,10 @@ export const InteractiveTask: React.FC = () => {
     taskUrl: tUrl,
   } = useParams<Params>();
   const [taskState, setTaskState] = useState<CommandState>();
+  const { currentSlotsExceeded }: Queries = queryString.parse(location.search);
   const { actions: uiActions, ui } = useUI();
+
+  const slotsExceeded = currentSlotsExceeded ? currentSlotsExceeded === 'true' : false;
 
   const taskId = tId ?? '';
   const taskName = tName ?? '';
@@ -71,6 +80,19 @@ export const InteractiveTask: React.FC = () => {
     uiActions.hideChrome();
     return uiActions.showChrome;
   }, [uiActions]);
+
+  useEffect(() => {
+    if (slotsExceeded) {
+      handleWarning({
+        level: ErrorLevel.Warn,
+        publicMessage:
+          'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
+        publicSubject: 'Current Slots Exceeded',
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [slotsExceeded]);
 
   useEffect(() => {
     const queryTask = setInterval(async () => {
@@ -95,7 +117,6 @@ export const InteractiveTask: React.FC = () => {
   }, [taskId]);
 
   const title = ui.isPageHidden ? getTitleState(taskState, taskName) : taskName;
-
   return (
     <>
       <Helmet defer={false}>

@@ -131,15 +131,9 @@ const BreadcrumbBar: React.FC<Props> = ({
     setWorkspace(workspaceIn);
   }, [workspaceIn]);
 
-  // cleanup
   useEffect(() => {
     return () => {
       stopPolling();
-
-      setWorkspace(undefined);
-      setProject(undefined);
-      setExperiment(undefined);
-      setTrial(undefined);
     };
   }, [stopPolling]);
 

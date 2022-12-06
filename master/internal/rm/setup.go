@@ -3,6 +3,9 @@ package rm
 import (
 	"crypto/tls"
 
+	"github.com/determined-ai/determined/master/internal/rm/agentrm"
+	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
+
 	"github.com/labstack/echo/v4"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -22,9 +25,9 @@ func New(
 ) ResourceManager {
 	switch {
 	case config.ResourceManager.AgentRM != nil:
-		return NewAgentResourceManager(system, db, echo, config, opts, cert)
+		return agentrm.New(system, db, echo, config, opts, cert)
 	case config.ResourceManager.KubernetesRM != nil:
-		return NewKubernetesResourceManager(system, db, echo, config, opts, cert)
+		return kubernetesrm.New(system, db, echo, config, opts, cert)
 	default:
 		panic("no expected resource manager config is defined")
 	}

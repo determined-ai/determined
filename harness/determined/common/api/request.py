@@ -1,17 +1,20 @@
 import json as _json
 import os
+import sys
 import webbrowser
 from types import TracebackType
-from typing import Any, Dict, Iterator, Optional, Tuple, Union
+from typing import Any, Dict, Iterator, Optional, Sequence, Tuple, Union
 from urllib import parse
 
 import lomond
 import requests
 import urllib3
+from termcolor import colored
 
 import determined as det
 import determined.common.requests
-from determined.common.api import authentication, certs, errors
+from determined.common import api
+from determined.common.api import authentication, bindings, certs, errors
 
 
 def parse_master_address(master_address: str) -> parse.ParseResult:
@@ -44,7 +47,12 @@ def maybe_upgrade_ws_scheme(master_address: str) -> str:
 
 
 def make_interactive_task_url(
-    task_id: str, service_address: str, description: str, resource_pool: str, task_type: str
+    task_id: str,
+    service_address: str,
+    description: str,
+    resource_pool: str,
+    task_type: str,
+    currentSlotsExceeded: bool,
 ) -> str:
     wait_path = (
         "/notebooks/{}/events".format(task_id)
@@ -56,13 +64,14 @@ def make_interactive_task_url(
     wait_page_url = "{}/wait/{}/{}?eventUrl={}&serviceAddr={}".format(
         public_url, task_type, task_id, wait_path_url, service_address
     )
-    task_web_url = "{}/interactive/{}/{}/{}/{}/{}".format(
+    task_web_url = "{}/interactive/{}/{}/{}/{}/{}?{}".format(
         public_url,
         task_id,
         task_type,
         parse.quote(description),
         resource_pool,
         parse.quote_plus(wait_page_url),
+        f"currentSlotsExceeded={str(currentSlotsExceeded).lower()}",
     )
     return task_web_url
 
@@ -356,3 +365,9 @@ def ws(host: str, path: str) -> WebSocket:
     token = authentication.must_cli_auth().get_session_token()
     websocket.add_header("Authorization".encode(), "Bearer {}".format(token).encode())
     return WebSocket(websocket)
+
+
+def handle_warnings(warnings: Optional[Sequence[bindings.v1LaunchWarning]]) -> None:
+    if warnings:
+        for warning in warnings:
+            print(colored(api.WARNING_MESSAGE_MAP[warning], "yellow"), file=sys.stderr)

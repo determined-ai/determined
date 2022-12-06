@@ -24,7 +24,7 @@ import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { AgentsProvider } from 'stores/agents';
+import { StoreContext } from 'stores';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -158,11 +158,11 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <StoreProvider>
-        <AgentsProvider>
+        <StoreContext>
           <DndProvider backend={HTML5Backend}>
             <AppView />
           </DndProvider>
-        </AgentsProvider>
+        </StoreContext>
       </StoreProvider>
     </HelmetProvider>
   );

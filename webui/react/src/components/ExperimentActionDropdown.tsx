@@ -1,5 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Menu, Modal, notification } from 'antd';
+import { Dropdown, Modal, notification } from 'antd';
+import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo } from 'react';
 
@@ -7,7 +8,7 @@ import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperiment
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings } from 'hooks/useSettings';
-import { ProjectDetailsSettings } from 'pages/OldProjectDetails.settings';
+import { ExperimentListSettings } from 'pages/ExperimentList.settings';
 import {
   activateExperiment,
   archiveExperiment,
@@ -25,14 +26,14 @@ import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, ProjectExperiment } from 'types';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 interface Props {
   children?: React.ReactNode;
   experiment: ProjectExperiment;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
-  settings: ProjectDetailsSettings;
+  settings: ExperimentListSettings;
   updateSettings: UpdateSettings;
   workspaceId?: number;
 }
@@ -102,8 +103,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             if (onComplete) onComplete(action);
             break;
           case Action.OpenTensorBoard: {
-            const tensorboard = await openOrCreateTensorBoard({ experimentIds: [id] });
-            openCommand(tensorboard);
+            const commandResponse = await openOrCreateTensorBoard({ experimentIds: [id] });
+            openCommandResponse(commandResponse);
             break;
           }
           case Action.SwitchPin: {
@@ -208,10 +209,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     },
   );
 
-  const menu = useMemo(
-    () => <Menu items={menuItems} onClick={handleMenuClick} />,
-    [menuItems, handleMenuClick],
-  );
+  const menu: DropdownProps['menu'] = useMemo(() => {
+    return { items: [...menuItems], onClick: handleMenuClick };
+  }, [menuItems, handleMenuClick]);
 
   if (menuItems.length === 0) {
     return (
@@ -228,10 +228,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   return children ? (
     <>
       <Dropdown
-        overlay={menu}
+        menu={menu}
         placement="bottomLeft"
         trigger={['contextMenu']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
       {modalExperimentMoveContextHolder}
@@ -239,7 +239,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     </>
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
         <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </button>

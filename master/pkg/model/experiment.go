@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -349,6 +350,7 @@ type ExperimentDescriptor struct {
 	Archived bool                     `json:"archived"`
 	Config   expconf.ExperimentConfig `json:"config"`
 	Labels   []string                 `json:"labels"`
+	Warnings []command.LaunchWarning  `json:"warnings"`
 }
 
 // NewExperiment creates a new experiment struct in the paused state.  Note
@@ -855,15 +857,17 @@ func ExitedReasonFromProto(r trialv1.TrialEarlyExit_ExitedReason) ExitedReason {
 	}
 }
 
-// ToProto converts an ExitedReason to its protobuf representation.
-func (r *ExitedReason) ToProto() experimentv1.TrialExitedEarly_ExitedReason {
-	switch *r {
+// ToSearcherProto converts an ExitedReason to its protobuf representation for searcher purposes.
+func (r ExitedReason) ToSearcherProto() experimentv1.TrialExitedEarly_ExitedReason {
+	switch r {
 	case Errored:
-		return *experimentv1.TrialExitedEarly_EXITED_REASON_UNSPECIFIED.Enum()
+		return experimentv1.TrialExitedEarly_EXITED_REASON_UNSPECIFIED
 	case InvalidHP:
-		return *experimentv1.TrialExitedEarly_EXITED_REASON_INVALID_HP.Enum()
+		return experimentv1.TrialExitedEarly_EXITED_REASON_INVALID_HP
+	case UserRequestedStop:
+		return experimentv1.TrialExitedEarly_EXITED_REASON_USER_REQUESTED_STOP
 	case UserCanceled:
-		return *experimentv1.TrialExitedEarly_EXITED_REASON_USER_REQUESTED_STOP.Enum()
+		return experimentv1.TrialExitedEarly_EXITED_REASON_USER_CANCELED
 	default:
 		panic(fmt.Errorf("unexpected exited reason: %v", r))
 	}

@@ -18,9 +18,7 @@ import requests
 import yaml
 
 
-def get_ubuntu_ami(
-    table: List[List[str]], release: str, region: str
-) -> Union[None, str]:
+def get_ubuntu_ami(table: List[List[str]], release: str, region: str) -> Union[None, str]:
     def filters(line: List[str]) -> bool:
         return all(
             [

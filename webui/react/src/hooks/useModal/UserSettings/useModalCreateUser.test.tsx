@@ -124,6 +124,8 @@ describe('useModalCreateUser', () => {
     });
 
     // Check that the API method was called with the correct parameters.
-    expect(mockCreateUser).toHaveBeenCalledWith({ username: USERNAME });
+    expect(mockCreateUser).toHaveBeenCalledWith({
+      user: { active: true, username: USERNAME },
+    });
   });
 });

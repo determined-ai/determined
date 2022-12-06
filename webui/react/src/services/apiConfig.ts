@@ -123,21 +123,13 @@ export const getUser: DetApi<Service.GetUserParams, Api.V1GetUserResponse, Type.
 };
 
 export const postUser: DetApi<
-  Service.PostUserParams,
+  Api.V1PostUserRequest,
   Api.V1PostUserResponse,
   Api.V1PostUserResponse
 > = {
   name: 'postUser',
   postProcess: (response) => response,
-  request: (params) =>
-    detApi.Users.postUser({
-      user: {
-        active: true,
-        admin: params.admin,
-        displayName: params.displayName,
-        username: params.username,
-      },
-    }),
+  request: (params) => detApi.Users.postUser(params),
 };
 
 export const setUserPassword: DetApi<
@@ -616,11 +608,14 @@ export const getExperiment: DetApi<
 export const createExperiment: DetApi<
   Service.CreateExperimentParams,
   Api.V1CreateExperimentResponse,
-  Type.ExperimentBase
+  Type.CreateExperimentResponse
 > = {
   name: 'createExperiment',
   postProcess: (resp: Api.V1CreateExperimentResponse) => {
-    return decoder.mapV1GetExperimentDetailsResponse(resp);
+    return {
+      experiment: decoder.mapV1GetExperimentDetailsResponse(resp),
+      warnings: resp.warnings || [],
+    };
   },
   request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
@@ -1057,7 +1052,7 @@ export const getModelVersion: DetApi<
     return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
   },
   request: (params: Service.GetModelVersionParams) =>
-    detApi.Models.getModelVersion(params.modelName, params.versionId),
+    detApi.Models.getModelVersion(params.modelName, params.versionNum),
 };
 
 export const patchModel: DetApi<
@@ -1080,7 +1075,7 @@ export const patchModelVersion: DetApi<
   postProcess: (response) =>
     response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined,
   request: (params: Service.PatchModelVersionParams) =>
-    detApi.Models.patchModelVersion(params.modelName, params.versionId, params.body),
+    detApi.Models.patchModelVersion(params.modelName, params.versionNum, params.body),
 };
 
 export const archiveModel: DetApi<Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void> = {
@@ -1113,7 +1108,7 @@ export const deleteModelVersion: DetApi<
   name: 'deleteModelVersion',
   postProcess: noOp,
   request: (params: Service.GetModelVersionParams) =>
-    detApi.Models.deleteModelVersion(params.modelName, params.versionId),
+    detApi.Models.deleteModelVersion(params.modelName, params.versionNum),
 };
 
 export const getModelLabels: DetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]> = {
@@ -1556,10 +1551,15 @@ export const getTemplates: DetApi<
 export const launchJupyterLab: DetApi<
   Service.LaunchJupyterLabParams,
   Api.V1LaunchNotebookResponse,
-  Type.CommandTask
+  Type.CommandResponse
 > = {
   name: 'launchJupyterLab',
-  postProcess: (response) => decoder.mapV1Notebook(response.notebook),
+  postProcess: (response) => {
+    return {
+      command: decoder.mapV1Notebook(response.notebook),
+      warnings: response.warnings || [],
+    };
+  },
   request: (params: Service.LaunchJupyterLabParams) => detApi.Notebooks.launchNotebook(params),
 };
 
@@ -1576,10 +1576,15 @@ export const previewJupyterLab: DetApi<
 export const launchTensorBoard: DetApi<
   Service.LaunchTensorBoardParams,
   Api.V1LaunchTensorboardResponse,
-  Type.CommandTask
+  Type.CommandResponse
 > = {
   name: 'launchTensorBoard',
-  postProcess: (response) => decoder.mapV1TensorBoard(response.tensorboard),
+  postProcess: (response) => {
+    return {
+      command: decoder.mapV1TensorBoard(response.tensorboard),
+      wanrings: response.warnings || [],
+    };
+  },
   request: (params: Service.LaunchTensorBoardParams) =>
     detApi.TensorBoards.launchTensorboard(params),
 };

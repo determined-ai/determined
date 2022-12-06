@@ -69,15 +69,15 @@ type HyperparameterV0 struct {
 // is a nested hyperparameter.  When h is a nested hyperparameter,
 // we merge fields of h and other into a single map.
 // A new HyperparameterV0 instance is returned.
-func (h HyperparameterV0) Merge(other interface{}) interface{} {
+func (h HyperparameterV0) Merge(other HyperparameterV0) HyperparameterV0 {
 	// Only merge nested hyperparameters.
-	if h.RawNestedHyperparameter != nil && other.(HyperparameterV0).RawNestedHyperparameter != nil {
+	if h.RawNestedHyperparameter != nil && other.RawNestedHyperparameter != nil {
 		newNestedHP := make(map[string]HyperparameterV0)
 		target := *h.RawNestedHyperparameter
-		source := *other.(HyperparameterV0).RawNestedHyperparameter
+		source := *other.RawNestedHyperparameter
 		for key, val := range target {
 			if sourceVal, inSource := source[key]; inSource {
-				newNestedHP[key] = val.Merge(sourceVal).(HyperparameterV0)
+				newNestedHP[key] = val.Merge(sourceVal)
 			} else {
 				newNestedHP[key] = val
 			}

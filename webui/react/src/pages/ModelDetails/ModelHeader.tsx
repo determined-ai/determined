@@ -1,6 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Alert, Breadcrumb, Button, Dropdown, Space } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -80,7 +80,7 @@ const ModelHeader: React.FC<Props> = ({
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
-  const menu = useMemo(() => {
+  const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
       SwitchArchived: 'switch-archive',
@@ -107,7 +107,7 @@ const ModelHeader: React.FC<Props> = ({
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
-    return <Menu items={menuItems} onClick={onItemClick} />;
+    return { items: menuItems, onClick: onItemClick };
   }, [canDeleteModel, handleDelete, model, onSwitchArchive]);
 
   return (
@@ -151,7 +151,7 @@ const ModelHeader: React.FC<Props> = ({
             </h1>
           </Space>
           <Space size="small">
-            <Dropdown overlay={menu} trigger={['click']}>
+            <Dropdown menu={menu} trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>

@@ -7,6 +7,7 @@ import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
+import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/common/v1/common.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
@@ -313,6 +314,8 @@ message CreateExperimentResponse {
   determined.experiment.v1.Experiment experiment = 1;
   // The created experiment config.
   google.protobuf.Struct config = 2;
+  // List of any related warnings.
+  repeated LaunchWarning warnings = 3;
 }
 
 // Request for the set of metrics recorded by an experiment.

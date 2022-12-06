@@ -57,9 +57,7 @@ class License:
         assert text.strip(), "License text not found"
         assert name is not None, "a Name header is required"
         assert type is not None, "a Type header is required"
-        assert (
-            type.lower() in known_licenses
-        ), f"Type header must be one of {known_licenses}"
+        assert type.lower() in known_licenses, f"Type header must be one of {known_licenses}"
         assert master.lower() in {"true", "false"}, "Master must be true or false"
         assert agent.lower() in {"true", "false"}, "Agent must be true or false"
         assert webui.lower() in {"true", "false"}, "Webui must be true or false"
@@ -230,9 +228,7 @@ def main(build_type: str, path_out: Optional[str]) -> int:
             our_license_path,
         )
     elif sys.argv[1] == "agent":
-        gen = build_ascii(
-            [license for license in licenses if license.agent], our_license_path
-        )
+        gen = build_ascii([license for license in licenses if license.agent], our_license_path)
 
     gen = post_process(gen)
 

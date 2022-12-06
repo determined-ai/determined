@@ -19,7 +19,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { numericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
-  CommandTask,
+  CommandResponse,
   ExperimentBase,
   Hyperparameter,
   HyperparameterType,
@@ -31,7 +31,7 @@ import {
 import { defaultNumericRange, getColorScale, getNumericRange, updateRange } from 'utils/chart';
 import handleError from 'utils/error';
 import { metricToStr } from 'utils/metric';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
@@ -325,7 +325,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       try {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
-          openCommand(result as CommandTask);
+          openCommandResponse(result as CommandResponse);
         }
       } catch (e) {
         const publicSubject =

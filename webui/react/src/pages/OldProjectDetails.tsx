@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input, Menu, Modal, Space, Typography } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Input, Modal, Space, Typography } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -38,10 +38,7 @@ import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
 import { useFetchUsers } from 'hooks/useFetch';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
-import useModalExperimentMove, {
-  Settings as MoveExperimentSettings,
-  settingsConfig as moveExperimentSettingsConfig,
-} from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -78,6 +75,7 @@ import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service
 import { alphaNumericSorter } from 'shared/utils/sort';
 import {
   ExperimentAction as Action,
+  CommandResponse,
   CommandTask,
   ExperimentItem,
   ExperimentPagination,
@@ -95,16 +93,17 @@ import {
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
-import settingsConfig, {
+import {
   DEFAULT_COLUMN_WIDTHS,
   DEFAULT_COLUMNS,
   ExperimentColumnName,
-  ProjectDetailsSettings,
-} from './OldProjectDetails.settings';
+  ExperimentListSettings,
+  settingsConfigForProject,
+} from './ExperimentList.settings';
 import css from './ProjectDetails.module.scss';
 import ProjectDetailsTabs, { TabInfo } from './ProjectDetails/ProjectDetailsTabs';
 
-const filterKeys: Array<keyof ProjectDetailsSettings> = ['label', 'search', 'state', 'user'];
+const filterKeys: Array<keyof ExperimentListSettings> = ['label', 'search', 'state', 'user'];
 
 type Params = {
   projectId: string;
@@ -138,19 +137,12 @@ const ProjectDetails: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const expPermissions = usePermissions();
 
-  const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
-    moveExperimentSettingsConfig,
-  );
-
-  useEffect(() => {
-    updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [project?.workspaceId]);
-
   const id = parseInt(projectId ?? '1');
 
+  const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
+
   const { settings, updateSettings, resetSettings, activeSettings } =
-    useSettings<ProjectDetailsSettings>(settingsConfig);
+    useSettings<ExperimentListSettings>(settingsConfig);
 
   const tableOffset = (() => {
     if (total && settings.tableOffset >= total) {
@@ -482,7 +474,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: (settings: ProjectDetailsSettings) => !!settings.search,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.search,
         key: V1GetExperimentsRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: experimentNameRenderer,
@@ -501,7 +493,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
         filters: labels.map((label) => ({ text: label, value: label })),
-        isFiltered: (settings: ProjectDetailsSettings) => !!settings.label,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.label,
         key: 'labels',
         render: tagsRenderer,
         title: 'Tags',
@@ -602,7 +594,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
-        isFiltered: (settings: ProjectDetailsSettings) => !!settings.user,
+        isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
         render: userRenderer,
         sorter: true,
@@ -647,7 +639,7 @@ const ProjectDetails: React.FC = () => {
     } else {
       const columnNames = columns.map((column) => column.dataIndex as ExperimentColumnName);
       const actualColumns = settings.columns.filter((name) => columnNames.includes(name));
-      const newSettings: Partial<ProjectDetailsSettings> = {};
+      const newSettings: Partial<ExperimentListSettings> = {};
       if (actualColumns.length < settings.columns.length) {
         newSettings.columns = actualColumns;
       }
@@ -670,7 +662,7 @@ const ProjectDetails: React.FC = () => {
     useModalExperimentMove({ onClose: handleActionComplete, user });
 
   const sendBatchActions = useCallback(
-    (action: Action): Promise<void[] | CommandTask> | void => {
+    (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
@@ -904,22 +896,15 @@ const ProjectDetails: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // cleanup
   useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
-
-      setProject(undefined);
-      setExperiments([]);
-      setLabels([]);
-      setIsLoading(true);
-      setTotal(0);
     };
   }, [canceler, stopPolling]);
 
   const ExperimentTabOptions = useMemo(() => {
-    const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {
+    const getMenuProps = (): DropDownProps['menu'] => {
       const MenuKey = {
         Columns: 'columns',
         ResultFilter: 'resetFilters',
@@ -967,10 +952,7 @@ const ProjectDetails: React.FC = () => {
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
-          <Dropdown
-            overlay={<Menu {...getMenuProps()} />}
-            placement="bottomRight"
-            trigger={['click']}>
+          <Dropdown menu={getMenuProps()} placement="bottomRight" trigger={['click']}>
             <div>
               <Icon name="overflow-vertical" />
             </div>

@@ -466,17 +466,19 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 			return nil, nil, false, nil, yerr
 		}
 		// Merge the template into the config.
-		config = schemas.Merge(config, tc).(expconf.ExperimentConfig)
+		config = schemas.Merge(config, tc)
 	}
 
-	defaulted := schemas.WithDefaults(config).(expconf.ExperimentConfig)
+	defaulted := schemas.WithDefaults(config)
 	resources := defaulted.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial(), false)
+		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
 	if err != nil {
 		return nil, nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
-
+	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
+		return nil, nil, false, nil, errors.Wrapf(err, "error validating resources")
+	}
 	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
@@ -496,15 +498,15 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		return nil, nil, false, nil, err
 	}
 	config.RawCheckpointStorage = schemas.Merge(
-		config.RawCheckpointStorage, w.CheckpointStorageConfig).(*expconf.CheckpointStorageConfig)
+		config.RawCheckpointStorage, w.CheckpointStorageConfig)
 
 	// Merge in the master's checkpoint storage into the config.
 	config.RawCheckpointStorage = schemas.Merge(
 		config.RawCheckpointStorage, &m.config.CheckpointStorage,
-	).(*expconf.CheckpointStorageConfig)
+	)
 
 	// Lastly, apply any json-schema-defined defaults.
-	config = schemas.WithDefaults(config).(expconf.ExperimentConfig)
+	config = schemas.WithDefaults(config)
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {
@@ -597,14 +599,11 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		}
 	}
 
-	e, err := newExperiment(m, dbExp, taskSpec)
+	e, launchWarnings, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
-	config, ok := schemas.Copy(e.Config).(expconf.ExperimentConfig)
-	if !ok {
-		return nil, errors.Errorf("could not copy experiment's config to return")
-	}
+	config := schemas.Copy(e.Config)
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
 	if params.Activate {
@@ -625,6 +624,7 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		Archived: false,
 		Config:   config,
 		Labels:   make([]string, 0),
+		Warnings: launchWarnings,
 	}
 	return response, nil
 }

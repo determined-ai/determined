@@ -1,26 +1,23 @@
 import { Empty, notification, Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
-import { number, undefined as undefinedType, union } from 'io-ts';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
-import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import projectDetailConfigSettings, {
-  ProjectDetailsSettings,
-} from 'pages/OldProjectDetails.settings';
+import { useSettings } from 'hooks/useSettings';
+import { ExperimentListSettings, settingsConfigForProject } from 'pages/ExperimentList.settings';
 import { paths } from 'routes/utils';
-import { getWorkspaceProjects, getWorkspaces, moveExperiment } from 'services/api';
+import { moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { isEqual } from 'shared/utils/data';
-import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { DetailedUser, Project, Workspace } from 'types';
-import handleError from 'utils/error';
+import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
+import { DetailedUser, Project } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
 
@@ -42,30 +39,6 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: (props: ShowModalProps) => void;
 }
 
-export interface Settings {
-  projectId?: number;
-  workspaceId?: number;
-}
-
-export const settingsConfig: SettingsConfig<Settings> = {
-  applicableRoutespace: 'experiment-destination',
-  settings: {
-    projectId: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'projectId',
-      type: union([undefinedType, number]),
-    },
-    workspaceId: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'workspaceId',
-      type: union([undefinedType, number]),
-    },
-  },
-  storagePath: 'experiment-destination',
-};
-
 const moveExperimentWithHandler = async (
   experimentId: number,
   destinationProjectId: number,
@@ -79,105 +52,80 @@ const moveExperimentWithHandler = async (
 };
 
 const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
-  const { settings: destSettings, updateSettings: updateDestSettings } =
-    useSettings<Settings>(settingsConfig);
+  const canceler = useRef(new AbortController());
+  const [workspaceId, setWorkspaceId] = useState<number>(1);
+  const [projectId, setProjectId] = useState<number | null>(null);
+
+  const id = projectId ?? 1;
+
+  const experimentSettingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
   const { settings: projectSettings, updateSettings: updateProjectSettings } =
-    useSettings<ProjectDetailsSettings>(projectDetailConfigSettings);
+    useSettings<ExperimentListSettings>(experimentSettingsConfig);
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const { canMoveExperimentsTo } = usePermissions();
+  const workspaces = Loadable.map(useWorkspaces(), (ws) =>
+    ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
+  );
+  const projects = useWorkspaceProjects(workspaceId);
+  const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
-  const fetchWorkspaces = useCallback(async () => {
-    try {
-      const response = await getWorkspaces({ limit: 0 });
-      setWorkspaces(
-        response.workspaces.filter(
-          (w) => !w.immutable && canMoveExperimentsTo({ destination: { id: w.id } }),
-        ),
-      );
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to fetch workspaces.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [canMoveExperimentsTo]);
-
-  const fetchProjects = useCallback(async () => {
-    if (!destSettings.workspaceId) return;
-    try {
-      const response = await getWorkspaceProjects({
-        id: destSettings.workspaceId,
-        limit: 0,
-        // users: (!user || user.isAdmin) ? [] : [ user.username ],
-      });
-      setProjects((prev) => (isEqual(prev, response.projects) ? prev : response.projects));
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to fetch projects.',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, [destSettings.workspaceId]);
-
   useEffect(() => {
-    fetchWorkspaces();
-    fetchProjects();
+    ensureWorkspacesFetched();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    ensureProjectsFetched(workspaceId);
+  }, [workspaceId]);
+
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
-      updateDestSettings({
-        projectId: workspaceId === 1 && sourceProjectId !== 1 ? 1 : undefined,
-        workspaceId: workspaceId as number,
-      });
-      setProjects([]);
+      setProjectId(workspaceId === 1 && sourceProjectId !== 1 ? 1 : null);
+      if (workspaceId !== undefined && typeof workspaceId === 'number') {
+        setWorkspaceId(workspaceId);
+      }
     },
-    [sourceProjectId, updateDestSettings],
+    [sourceProjectId],
   );
 
   const handleProjectSelect = useCallback(
     (project: Project) => {
       if (project.archived || project.id === sourceProjectId) return;
-      updateDestSettings({ projectId: project.id });
+      setProjectId(project.id);
     },
-    [sourceProjectId, updateDestSettings],
+    [sourceProjectId],
   );
 
   const renderRow = useCallback(
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
-      if (!destSettings.projectId) return <Spinner spinning />;
-
-      const disabled = projects[index].archived || projects[index].id === sourceProjectId;
-      const selected = projects[index].id === destSettings.projectId;
-      return (
-        <li
-          className={disabled ? css.disabled : selected ? css.selected : css.default}
-          style={style}
-          onClick={() => handleProjectSelect(projects[index])}>
-          <Typography.Text disabled={disabled} ellipsis={true}>
-            {projects[index].name}
-          </Typography.Text>
-          {projects[index].archived && <Icon name="archive" />}
-          {projects[index].id === sourceProjectId && <Icon name="checkmark" />}
-        </li>
-      );
+      return Loadable.match(projects, {
+        Loaded: (projects) => {
+          const disabled = projects[index].archived || projects[index].id === sourceProjectId;
+          const selected = projects[index].id === projectId;
+          return (
+            <li
+              className={disabled ? css.disabled : selected ? css.selected : css.default}
+              style={style}
+              onClick={() => handleProjectSelect(projects[index])}>
+              <Typography.Text disabled={disabled} ellipsis={true}>
+                {projects[index].name}
+              </Typography.Text>
+              {projects[index].archived && <Icon name="archive" />}
+              {projects[index].id === sourceProjectId && <Icon name="checkmark" />}
+            </li>
+          );
+        },
+        NotLoaded: () => <Spinner spinning />,
+      });
     },
-    [destSettings.projectId, handleProjectSelect, projects, sourceProjectId],
+    [projectId, handleProjectSelect, projects, sourceProjectId],
   );
   const modalContent = useMemo(() => {
     return (
@@ -191,9 +139,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             placeholder="Select a destination workspace."
             showSearch={false}
             style={{ width: '100%' }}
-            value={destSettings.workspaceId}
+            value={workspaceId ?? undefined}
             onSelect={handleWorkspaceSelect}>
-            {workspaces.map((workspace) => {
+            {Loadable.getOrElse([], workspaces).map((workspace) => {
               return (
                 <Option disabled={workspace.archived} key={workspace.id} value={workspace.id}>
                   <div className={workspace.archived ? css.workspaceOptionDisabled : ''}>
@@ -205,16 +153,16 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             })}
           </SelectFilter>
         </div>
-        {destSettings.workspaceId && destSettings.workspaceId !== 1 && (
+        {workspaceId && workspaceId !== 1 && (
           <div>
             <label className={css.label} htmlFor="project">
               Project
             </label>
-            {destSettings.workspaceId === undefined ? (
+            {workspaceId === undefined ? (
               <div className={css.emptyContainer}>
                 <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </div>
-            ) : projects.length === 0 ? (
+            ) : Loadable.quickMatch(projects, false, (ps) => ps.length === 0) ? (
               <div className={css.emptyContainer}>
                 <Empty
                   description="Workspace contains no projects"
@@ -226,7 +174,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
                 className={css.listContainer}
                 height={200}
                 innerElementType="ul"
-                itemCount={projects.length}
+                itemCount={Loadable.quickMatch(projects, 1, (ps) => ps.length)}
                 itemSize={24}
                 width="100%">
                 {renderRow}
@@ -236,17 +184,21 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         )}
       </div>
     );
-  }, [handleWorkspaceSelect, projects.length, renderRow, destSettings.workspaceId, workspaces]);
+  }, [handleWorkspaceSelect, projects, renderRow, workspaceId, workspaces]);
 
   const closeNotification = useCallback(() => notification.destroy(), []);
 
   const handleOk = useCallback(async () => {
-    if (!destSettings.projectId || !experimentIds?.length || !projectSettings.pinned) return;
+    if (
+      !projectId ||
+      !experimentIds?.length ||
+      !projectSettings.pinned ||
+      Loadable.isLoading(projects)
+    )
+      return;
 
     const results = await Promise.allSettled(
-      experimentIds.map((experimentId) =>
-        moveExperimentWithHandler(experimentId, destSettings.projectId as number),
-      ),
+      experimentIds.map((experimentId) => moveExperimentWithHandler(experimentId, projectId)),
     );
     const numFailures = results.filter(
       (res) => res.status !== 'fulfilled' || res.value === 1,
@@ -257,8 +209,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         ? `Experiment ${experimentIds[0]}`
         : `${experimentIds.length} experiments`;
 
-    const destinationProjectName =
-      projects.find((p) => p.id === destSettings.projectId)?.name ?? '';
+    const destinationProjectName = projects.data.find((p) => p.id === projectId)?.name ?? '';
 
     if (numFailures === 0) {
       notification.open({
@@ -268,7 +219,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             <p>
               {experimentText} moved to project {destinationProjectName}
             </p>
-            <Link path={paths.projectDetails(destSettings.projectId)}>View Project</Link>
+            <Link path={paths.projectDetails(projectId)}>View Project</Link>
           </div>
         ),
         message: 'Move Success',
@@ -295,7 +246,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
               {numFailures} out of {experimentIds.length} experiments failed to move to project{' '}
               {destinationProjectName}
             </p>
-            <Link path={paths.projectDetails(destSettings.projectId)}>View Project</Link>
+            <Link path={paths.projectDetails(projectId)}>View Project</Link>
           </div>
         ),
         key: 'move-notification',
@@ -304,8 +255,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     }
   }, [
     closeNotification,
-    destSettings.projectId,
     experimentIds,
+    projectId,
     projectSettings.pinned,
     projects,
     sourceProjectId,
@@ -335,30 +286,20 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
       sourceWorkspaceId,
       sourceProjectId,
     }: ShowModalProps = {}) => {
-      if (!destSettings.workspaceId || destSettings.projectId) return;
+      if (!workspaceId || projectId) return;
 
       setExperimentIds(experimentIds);
-      if (!destSettings.workspaceId)
-        updateDestSettings({ projectId: undefined, workspaceId: sourceWorkspaceId });
+      if (!workspaceId) setProjectId(null);
+      setWorkspaceId(sourceWorkspaceId ?? 1);
+
       setSourceProjectId(sourceProjectId);
-      if (!workspaces.length) fetchWorkspaces();
-      if (!projects.length) fetchProjects();
+
       openOrUpdate({
-        ...getModalProps(experimentIds, destSettings.projectId),
+        ...getModalProps(experimentIds, projectId ?? undefined),
         ...initialModalProps,
       });
     },
-    [
-      fetchWorkspaces,
-      getModalProps,
-      openOrUpdate,
-      fetchProjects,
-      workspaces.length,
-      projects.length,
-      destSettings.projectId,
-      destSettings.workspaceId,
-      updateDestSettings,
-    ],
+    [getModalProps, openOrUpdate, projectId, workspaceId],
   );
 
   /**
@@ -366,9 +307,9 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current && destSettings.projectId)
-      openOrUpdate(getModalProps(experimentIds, destSettings.projectId));
-  }, [destSettings.projectId, getModalProps, modalRef, openOrUpdate, experimentIds]);
+    if (modalRef.current) openOrUpdate(getModalProps(experimentIds, projectId ?? undefined));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, projects._tag, workspaceId, experimentIds]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

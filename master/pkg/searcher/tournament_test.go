@@ -19,11 +19,11 @@ func TestRandomTournamentSearcher(t *testing.T) {
 		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
 			RawMaxTrials: ptrs.Ptr(2),
 			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300)),
-		}).(expconf.RandomConfig)),
+		})),
 		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
 			RawMaxTrials: ptrs.Ptr(3),
 			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(200)),
-		}).(expconf.RandomConfig)),
+		})),
 	)
 	expected := [][]ValidateAfter{
 		toOps("300B"),
@@ -39,7 +39,7 @@ func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 	conf := expconf.RandomConfig{
 		RawMaxTrials: ptrs.Ptr(5), RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(800)),
 	}
-	conf = schemas.WithDefaults(conf).(expconf.RandomConfig)
+	conf = schemas.WithDefaults(conf)
 	gen := func() SearchMethod {
 		return newTournamentSearch(
 			RandomTournamentSearch,
@@ -69,7 +69,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			RawDivisor:   ptrs.Ptr[float64](3),
 		},
 	}
-	adaptiveConfig1 = schemas.WithDefaults(adaptiveConfig1).(expconf.SearcherConfig)
+	adaptiveConfig1 = schemas.WithDefaults(adaptiveConfig1)
 	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1)
 
 	adaptiveConfig2 := expconf.SearcherConfig{
@@ -80,7 +80,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			RawDivisor:   ptrs.Ptr[float64](3),
 		},
 	}
-	adaptiveConfig2 = schemas.WithDefaults(adaptiveConfig2).(expconf.SearcherConfig)
+	adaptiveConfig2 = schemas.WithDefaults(adaptiveConfig2)
 	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2)
 
 	params := expconf.Hyperparameters{}

@@ -3,7 +3,7 @@ import pathlib
 import subprocess
 import tempfile
 import time
-from typing import List, Optional
+from typing import Iterator, List, Optional
 
 import pytest
 import yaml
@@ -17,6 +17,13 @@ from tests import experiment as exp
 from tests.fixtures.custom_searcher import searchers
 
 TIMESTAMP = int(time.time())
+
+
+@pytest.fixture
+def client_login() -> Iterator[None]:
+    client.login(master=conf.make_master_url())
+    yield
+    client._determined = None
 
 
 @pytest.mark.e2e_cpu
@@ -293,7 +300,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 
 
 @pytest.mark.nightly
-def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
+def test_run_asha_batches_exp(tmp_path: pathlib.Path, client_login: None) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
@@ -448,7 +455,7 @@ def test_run_asha_searcher_exp_core_api(
         ],
     ],
 )
-def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
+def test_resume_asha_batches_exp(exceptions: List[str], client_login: None) -> None:
     config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",

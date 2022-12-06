@@ -1,5 +1,5 @@
-import type { MenuProps } from 'antd';
-import { Button, Dropdown, Form, Input, Menu } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
+import { Button, Dropdown, Form, Input } from 'antd';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import React, { useMemo } from 'react';
 
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
-  const menu = useMemo(() => {
+  const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteMetadataRow: 'delete-metadata-row',
     } as const;
@@ -36,7 +36,7 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
       { danger: true, key: MenuKey.DeleteMetadataRow, label: 'Delete Row' },
     ];
 
-    return <Menu items={menuItems} onClick={onItemClick} />;
+    return { items: menuItems, onClick: onItemClick };
   }, [onDelete]);
 
   return (
@@ -52,7 +52,7 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
           <Dropdown
             className={css.overflow}
             getPopupContainer={(triggerNode) => triggerNode}
-            overlay={menu}
+            menu={menu}
             trigger={['click']}>
             <Button aria-label="action" type="text">
               <Icon name="overflow-vertical" size="tiny" />

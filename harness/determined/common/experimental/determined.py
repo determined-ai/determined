@@ -57,10 +57,7 @@ class Determined:
             explicit_noverify=noverify,
         )
 
-        # TODO: This should probably be try_reauth=False, but it appears that would break the case
-        # where the default credentials are available from the master and could be discovered by
-        # a REST API call against the master.
-        auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
+        auth = authentication.Authentication(master, user, password, cert=cert)
         self._session = api.Session(master, user, auth, cert)
 
     def _from_bindings(self, raw: bindings.v1User) -> user.User:
@@ -112,7 +109,17 @@ class Determined:
         return self._from_bindings(resp.user)
 
     def logout(self) -> None:
-        bindings.post_Logout(self._session)
+        auth = self._session._auth
+        # auth should only be None in the special login Session, which must not be used in a
+        # Determined object.
+        assert auth, "Determined.logout() found an unauthorized Session"
+
+        user = auth.get_session_user()
+        # get_session_user() is allowed to return an empty string, which seems dumb, but in that
+        # case we do not want to trigger the authentication.logout default username lookup logic.
+        assert user, "Determined.logout() couldn't find a valid username"
+
+        authentication.logout(self._session._master, user, self._session._cert)
 
     def list_users(self) -> Sequence[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users

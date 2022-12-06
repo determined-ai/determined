@@ -8,17 +8,13 @@ import subprocess
 
 def web_lint_check():
     parser = argparse.ArgumentParser(description="Lint Check for Web")
-    parser.add_argument(
-        "target", help="Either js, css, or misc", choices=["js", "css", "misc"]
-    )
+    parser.add_argument("target", help="Either js, css, or misc", choices=["js", "css", "misc"])
     parser.add_argument("file_paths", help="1 or more file paths", nargs="+")
     args = parser.parse_args()
     DIR = "webui/react/"
 
     target: str = args.target
-    file_paths: str = " ".join(
-        [os.path.relpath(file_path, DIR) for file_path in args.file_paths]
-    )
+    file_paths: str = " ".join([os.path.relpath(file_path, DIR) for file_path in args.file_paths])
     nproc: int = multiprocessing.cpu_count()
     run_command: list[str] = [
         "make",

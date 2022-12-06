@@ -94,6 +94,15 @@ message LaunchCommandRequest {
   // Additional data.
   bytes data = 4;
 }
+
+// Enum values for warnings when launching commands.
+enum LaunchWarning {
+  // Default value
+  LAUNCH_WARNING_UNSPECIFIED = 0;
+  // For a default webhook
+  LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED = 1;
+}
+
 // Response to LaunchCommandRequest.
 message LaunchCommandResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
@@ -103,4 +112,6 @@ message LaunchCommandResponse {
   determined.command.v1.Command command = 1;
   // The config;
   google.protobuf.Struct config = 2;
+  // If the requested slots exceeded the current max available.
+  repeated LaunchWarning warnings = 3;
 }

@@ -204,6 +204,12 @@ telemetry:
 ## A user-friendly name to identify this cluster by.
 # clusterName: Dev
 
+## Specifies the duration in seconds before idle
+# TensorBoard instances are automatically terminated.
+# A TensorBoard instance is considered to be idle if
+# it does not receive any HTTP traffic. The default timeout is 300 seconds (5 minutes).
+# tensorboardTimeout: 300
+
 # defaultPassword sets the password for the admin and determined user accounts.
 # defaultPassword:
 

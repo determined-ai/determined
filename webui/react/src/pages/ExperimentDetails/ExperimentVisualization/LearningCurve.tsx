@@ -18,7 +18,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
-  CommandTask,
+  CommandResponse,
   ExperimentBase,
   Hyperparameter,
   Metric,
@@ -27,7 +27,7 @@ import {
   Scale,
 } from 'types';
 import handleError from 'utils/error';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import TrialsComparisonModal from '../TrialsComparisonModal';
 
@@ -206,7 +206,7 @@ const LearningCurve: React.FC<Props> = ({
       try {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
-          openCommand(result as CommandTask);
+          openCommandResponse(result as CommandResponse);
         }
       } catch (e) {
         const publicSubject =
