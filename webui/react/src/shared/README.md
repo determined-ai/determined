@@ -4,8 +4,8 @@ We use this directory for shareable code snippets, UI components, etc.
 
 - separate reusable and shareable code across different Determined UIs
 - leave build and transpliation to target projects
-- stepping stone for going to a solution such as packaging the components individually
-  or separately using Bit or Node registry.
+- stepping stone for going to a solution such as packaging the components
+  individually or separately using Bit or Node registry.
 - assume mostly similar build and dev environments:
   - lower overhead, faster start up, simpler, faster, and smaller builds
   - familiarity: no new code management tool to learn
@@ -19,7 +19,8 @@ Read more about the methodology and tradeoffs [here](https://hpe-my.sharepoint.c
 
 ## How
 
-Code in this directory should not depend on internal dependencies that leave outside this directory
+Code in this directory should not depend on internal dependencies that leave
+outside this directory
 
 ## TODO
 

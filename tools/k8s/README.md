@@ -23,7 +23,7 @@ create an API server that is not generally accessible.
 Read `tools/k8s/my-service-account.yaml` so you know what it's doing, then apply
 it:
 
-```
+```sh
 kubectl apply -f tools/k8s/my-service-account.yaml
 ```
 
@@ -33,6 +33,6 @@ This step is only required once after creating your cluster.
 
 Read `tools/k8s/devcluster.yaml` so you know what it's doing, then run it:
 
-```
+```sh
 devcluster -c tools/k8s/devcluster.yaml
 ```

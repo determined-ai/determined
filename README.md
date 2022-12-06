@@ -1,17 +1,17 @@
-<p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
-
 # Determined: Deep Learning Training Platform
+
+<p align="center"><img src="determined-logo.png" alt="Determined AI Logo"></p>
 
 Determined is an open-source deep learning training platform that makes building
 models fast and easy. Determined enables you to:
 
-- **Train models faster** using state-of-the-art distributed training, without
+* **Train models faster** using state-of-the-art distributed training, without
   changing your model code
-- **Automatically find high-quality models** with advanced hyperparameter tuning
+* **Automatically find high-quality models** with advanced hyperparameter tuning
   from the creators of Hyperband
-- **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
+* **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
   seamlessly using preemptible instances
-- **Track and reproduce your work** with experiment tracking that works
+* **Track and reproduce your work** with experiment tracking that works
   out-of-the-box, covering code versions, metrics, checkpoints, and
   hyperparameters
 
