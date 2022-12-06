@@ -100,9 +100,6 @@ message SetNotebookPriorityResponse {
 
 // Request to launch a notebook.
 message LaunchNotebookRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workspace_id" ] }
-  };
   // Notebook config (JSON).
   google.protobuf.Struct config = 1;
   // Template name.
@@ -116,7 +113,7 @@ message LaunchNotebookRequest {
   if we want to go hirearchical it might make sense to set this up
   for that future. eg take a list of scope_ids, dir_ids, or a path? cc @ilia
   */
-  // Workspace ID.
+  // Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
   int32 workspace_id = 5;
 }
 // Response to LaunchNotebookRequest.

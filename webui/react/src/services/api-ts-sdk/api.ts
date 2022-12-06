@@ -4489,11 +4489,11 @@ export interface V1LaunchNotebookRequest {
      */
     preview?: boolean;
     /**
-     * Workspace ID.
+     * Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
      * @type {number}
      * @memberof V1LaunchNotebookRequest
      */
-    workspaceId: number;
+    workspaceId?: number;
 }
 
 /**
