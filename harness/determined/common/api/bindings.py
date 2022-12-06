@@ -13813,6 +13813,7 @@ def get_GetWorkspaceProjects(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetWorkspaceProjectsRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspaceProjectsResponse":
     _params = {
@@ -13822,6 +13823,7 @@ def get_GetWorkspaceProjects(
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -13848,6 +13850,7 @@ def get_GetWorkspaces(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     pinned: "typing.Optional[bool]" = None,
     sortBy: "typing.Optional[v1GetWorkspacesRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspacesResponse":
     _params = {
@@ -13858,6 +13861,7 @@ def get_GetWorkspaces(
         "orderBy": orderBy.value if orderBy is not None else None,
         "pinned": str(pinned).lower() if pinned is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
