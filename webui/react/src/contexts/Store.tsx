@@ -88,8 +88,6 @@ export const StoreAction = {
   // ResourcePools
   SetResourcePools: 'SetResourcePools',
 
-  SetUserAssignments: 'SetUserAssignments',
-
   // Users
   SetUsers: 'SetUsers',
   // User Settings
@@ -121,8 +119,7 @@ type Action =
       };
     }
   | { type: typeof StoreAction.SetActiveExperiments; value: number }
-  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
+  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -237,9 +234,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetKnownRoles:
       if (isEqual(state.knownRoles, action.value)) return state;
       return { ...state, knownRoles: action.value };
-    case StoreAction.SetUserAssignments:
-      if (isEqual(state.userAssignments, action.value)) return state;
-      return { ...state, userAssignments: action.value };
     default:
       return state;
   }
