@@ -18,7 +18,7 @@ type DataLayerConfigV0 struct {
 }
 
 // Merge implements schemas.Mergeable.
-func (d DataLayerConfigV0) Merge(other interface{}) interface{} {
+func (d DataLayerConfigV0) Merge(other DataLayerConfigV0) DataLayerConfigV0 {
 	return schemas.UnionMerge(d, other)
 }
 

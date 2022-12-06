@@ -436,7 +436,7 @@ func (t *trial) buildTaskSpec(ctx *actor.Context) (tasks.TaskSpec, error) {
 		ExperimentID:     t.experimentID,
 		TrialID:          t.id,
 		TrialRunID:       t.runID,
-		ExperimentConfig: schemas.Copy(t.config).(expconf.ExperimentConfig),
+		ExperimentConfig: schemas.Copy(t.config),
 		HParams:          t.searcher.Create.Hparams,
 		TrialSeed:        t.searcher.Create.TrialSeed,
 		StepsCompleted:   stepsCompleted,

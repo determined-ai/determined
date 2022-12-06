@@ -293,7 +293,7 @@ func TestGetExperiments(t *testing.T) {
 			RawDescription: ptrs.Ptr("12345"),
 			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
 			RawLabels:      expconf.Labels{"l0": true, "l1": true},
-		}).(expconf.ExperimentConfig),
+		}),
 		OwnerID:   ptrs.Ptr(model.UserID(1)),
 		ProjectID: int(pid),
 	}
@@ -346,7 +346,7 @@ func TestGetExperiments(t *testing.T) {
 			RawDescription: ptrs.Ptr("234"),
 			RawName:        expconf.Name{RawString: ptrs.Ptr("longername")},
 			RawLabels:      expconf.Labels{"l0": true},
-		}).(expconf.ExperimentConfig),
+		}),
 		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
 		ProjectID: int(pid),
 	}
@@ -565,7 +565,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 		Config: schemas.Merge(minExpConfig, expconf.ExperimentConfig{
 			RawDescription: ptrs.Ptr("desc"),
 			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-		}).(expconf.ExperimentConfig),
+		}),
 		OwnerID:   ptrs.Ptr(model.UserID(userResp.User.Id)),
 		ProjectID: 1,
 	}
@@ -620,7 +620,7 @@ func createTestExpWithProjectID(
 			RawLabels:      labelMap,
 			RawDescription: ptrs.Ptr("desc"),
 			RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-		}).(expconf.ExperimentConfig),
+		}),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp))
 

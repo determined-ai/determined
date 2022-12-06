@@ -16,7 +16,7 @@ func TestASHASearcherRecords(t *testing.T) {
 		RawDivisor:   ptrs.Ptr[float64](3),
 		RawMaxTrials: ptrs.Ptr(12),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("64000R"), toOps("64000R"), toOps("64000R"),
 		toOps("64000R"), toOps("64000R"), toOps("64000R"),
@@ -36,7 +36,7 @@ func TestASHASearcherBatches(t *testing.T) {
 		RawDivisor:   ptrs.Ptr[float64](3),
 		RawMaxTrials: ptrs.Ptr(12),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
 		toOps("1000B"), toOps("1000B"), toOps("1000B"),
@@ -56,7 +56,7 @@ func TestASHASearcherEpochs(t *testing.T) {
 		RawDivisor:   ptrs.Ptr[float64](3),
 		RawMaxTrials: ptrs.Ptr(12),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.AsyncHalvingConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("1E"), toOps("1E"), toOps("1E"),
 		toOps("1E"), toOps("1E"), toOps("1E"),
