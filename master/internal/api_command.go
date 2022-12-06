@@ -103,7 +103,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		return nil, launchWarnings, fmt.Errorf("checking respurce availability: %v", err.Error())
 	}
 	// Get the base TaskSpec.
-	taskContainerDefaults := a.m.getTaskContainerDefaults(poolName)
+	taskContainerDefaults := a.m.getTaskContainerDefaults(resources.ResourcePool) // not the resolved pool name
 	taskSpec := *a.m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup
@@ -111,9 +111,6 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 
 	// Get the full configuration.
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
-	// Copy discovered (default) resource pool name and slot count.
-	config.Resources.ResourcePool = poolName
-	config.Resources.Slots = resources.Slots
 
 	workDirInDefaults := config.WorkDir
 	if req.TemplateName != "" {
@@ -137,6 +134,10 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 					"unable to decode the merged config: %s", string(configBytes)).Error())
 		}
 	}
+	// Copy discovered (default) resource pool name and slot count.
+	config.Resources.ResourcePool = poolName
+	config.Resources.Slots = resources.Slots
+
 	if req.MustZeroSlot {
 		config.Resources.Slots = 0
 	}

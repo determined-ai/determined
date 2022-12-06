@@ -132,17 +132,38 @@ func (m *Master) getTaskContainerDefaults(poolName string) model.TaskContainerDe
 
 	// Only look for pool settings with Agent resource managers.
 	if m.config.ResourceManager.AgentRM != nil {
-		// Iterate through configured pools looking for a TaskContainerDefaults setting.
-		for _, pool := range m.config.ResourcePools {
-			if poolName == pool.PoolName {
-				if pool.TaskContainerDefaults == nil {
-					break
-				}
-				taskContainerDefaults = *pool.TaskContainerDefaults
+		m.getDefaultFromPools(poolName, &taskContainerDefaults)
+	}
+
+	if drm := m.config.ResourceManager.DispatcherRM; drm != nil {
+		if tcd := drm.ResolveTaskContainerDefaults(poolName); tcd != nil {
+			taskContainerDefaults = *tcd
+		}
+		// If defaults exist in the pool definitions, take those instead.
+		m.getDefaultFromPools(poolName, &taskContainerDefaults)
+	}
+
+	if pbsRm := m.config.ResourceManager.PbsRM; pbsRm != nil {
+		if tcd := pbsRm.ResolveTaskContainerDefaults(poolName); tcd != nil {
+			taskContainerDefaults = *tcd
+		}
+		// If defaults exist in the pool definitions, take those instead.
+		m.getDefaultFromPools(poolName, &taskContainerDefaults)
+	}
+
+	return taskContainerDefaults
+}
+
+// getDefaultFromPools iterates through configured pools looking for a TaskContainerDefaults setting.
+func (m *Master) getDefaultFromPools(poolName string, taskContainerDefaults *model.TaskContainerDefaultsConfig) {
+	for _, pool := range m.config.ResourcePools {
+		if poolName == pool.PoolName {
+			if pool.TaskContainerDefaults == nil {
+				break
 			}
+			*taskContainerDefaults = *pool.TaskContainerDefaults
 		}
 	}
-	return taskContainerDefaults
 }
 
 // Info returns this master's information.
