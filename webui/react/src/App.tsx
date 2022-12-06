@@ -8,7 +8,7 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import StoreProvider, { useStore } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { useFetchInfo } from 'hooks/useFetch';
 import { useFetchUsers } from 'hooks/useFetch';
@@ -25,14 +25,15 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
+import { useOmnibarContext } from 'stores/omnibar';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const storeDispatch = useStoreDispatch();
-  const { auth, info, ui } = useStore();
+  const { auth, info } = useStore();
+  const { isShowing: isShowingOmnibar, updateShowing: updateShowingOmnibar } = useOmnibarContext();
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck(canceler);
@@ -106,13 +107,9 @@ const AppView: React.FC = () => {
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
       if (e.code === KeyCode.Space && e.ctrlKey) {
-        if (ui.omnibar.isShowing) {
-          storeDispatch({ type: StoreAction.HideOmnibar });
-        } else {
-          storeDispatch({ type: StoreAction.ShowOmnibar });
-        }
-      } else if (ui.omnibar.isShowing && e.code === KeyCode.Escape) {
-        storeDispatch({ type: StoreAction.HideOmnibar });
+        updateShowingOmnibar(!isShowingOmnibar);
+      } else if (isShowingOmnibar && e.code === KeyCode.Escape) {
+        updateShowingOmnibar(false);
       }
     };
 
@@ -121,7 +118,7 @@ const AppView: React.FC = () => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [ui.omnibar.isShowing, storeDispatch]);
+  }, [isShowingOmnibar, updateShowingOmnibar]);
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);

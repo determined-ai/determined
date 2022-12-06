@@ -1,11 +1,11 @@
 import OmnibarNpm from 'omnibar';
 import React, { useCallback, useEffect } from 'react';
 
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
+import { useOmnibarContext } from 'stores/omnibar';
 import handleError from 'utils/error';
 
 import css from './Omnibar.module.scss';
@@ -19,12 +19,11 @@ const omnibarInput = () =>
   document.querySelector('#omnibar input[type="text"]') as HTMLInputElement | null;
 
 const Omnibar: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
-  const { ui } = useStore();
+  const { isShowing, updateShowing } = useOmnibarContext();
 
   const hideBar = useCallback(() => {
-    storeDispatch({ type: StoreAction.HideOmnibar });
-  }, [storeDispatch]);
+    updateShowing(false);
+  }, [updateShowing]);
 
   const onAction = useCallback(
     async (item: unknown, query: (inputEl: string) => void) => {
@@ -47,16 +46,16 @@ const Omnibar: React.FC = () => {
 
   useEffect(() => {
     const input: HTMLInputElement | null = omnibarInput();
-    if (ui.omnibar.isShowing) {
+    if (isShowing) {
       if (input) {
         input.focus();
         input.select();
       }
     }
-  }, [ui.omnibar.isShowing]);
+  }, [isShowing]);
 
   return (
-    <div className={css.base} style={{ display: ui.omnibar.isShowing ? 'unset' : 'none' }}>
+    <div className={css.base} style={{ display: isShowing ? 'unset' : 'none' }}>
       <div className={css.backdrop} onClick={hideBar} />
       <div className={css.bar} id="omnibar">
         <OmnibarNpm<BaseNode>

@@ -21,11 +21,6 @@ const logger = rootLogger.extend('store');
 interface Props {
   children?: React.ReactNode;
 }
-
-interface OmnibarState {
-  isShowing: boolean;
-}
-
 interface State {
   activeExperiments: number;
   activeTasks: {
@@ -40,20 +35,13 @@ interface State {
   info: DeterminedInfo;
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
-
   resourcePools: ResourcePool[];
-  ui: {
-    omnibar: OmnibarState;
-  };
   userAssignments: UserAssignment[];
   userRoles: UserRole[];
   users: DetailedUser[];
 }
 
 export const StoreAction = {
-  // Omnibar
-  HideOmnibar: 'HideOmnibar',
-
   Reset: 'Reset',
   // Auth
   ResetAuth: 'ResetAuth',
@@ -97,7 +85,6 @@ export const StoreAction = {
   SetUsers: 'SetUsers',
   // User Settings
   SetUserSettings: 'SetUserSettings',
-  ShowOmnibar: 'ShowOmnibar',
 } as const;
 
 type Action =
@@ -112,17 +99,15 @@ type Action =
   | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
   | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
-  | { type: typeof StoreAction.HideOmnibar }
-  | { type: typeof StoreAction.ShowOmnibar }
   | {
-      type: typeof StoreAction.SetActiveTasks;
-      value: {
-        commands: number;
-        notebooks: number;
-        shells: number;
-        tensorboards: number;
-      };
-    }
+    type: typeof StoreAction.SetActiveTasks;
+    value: {
+      commands: number;
+      notebooks: number;
+      shells: number;
+      tensorboards: number;
+    };
+  }
   | { type: typeof StoreAction.SetActiveExperiments; value: number }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
@@ -159,7 +144,6 @@ const initState: State = {
   knownRoles: [],
   pinnedWorkspaces: [],
   resourcePools: [],
-  ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
   userRoles: [
     {
@@ -233,12 +217,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetPinnedWorkspaces:
       if (isEqual(state.pinnedWorkspaces, action.value)) return state;
       return { ...state, pinnedWorkspaces: action.value };
-    case StoreAction.HideOmnibar:
-      if (!state.ui.omnibar.isShowing) return state;
-      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: false } } };
-    case StoreAction.ShowOmnibar:
-      if (state.ui.omnibar.isShowing) return state;
-      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
     case StoreAction.SetActiveExperiments:
       if (isEqual(state.activeExperiments, action.value)) return state;
       return { ...state, activeExperiments: action.value };
