@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { useAuth } from 'stores/users';
 import { generateTestProjectData } from 'storybook/shared/generateTestData';
 import { Project } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import ProjectCard from './ProjectCard';
 
@@ -20,9 +21,7 @@ export default {
 const args: Partial<Project> = { name: 'Project Name', numExperiments: 1 };
 
 export const Default = (args: Partial<Project>): React.ReactElement => {
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const project = useMemo(() => generateTestProjectData(args), [args]);
 
   return <ProjectCard curUser={user} project={project} />;

@@ -17,6 +17,7 @@ import {
   UserRole,
   WorkspacePermissionsArgs,
 } from 'types';
+import { Loadable } from 'utils/loadable';
 
 interface ModelPermissionsArgs {
   model: ModelItem;
@@ -77,7 +78,7 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const { auth } = useAuth();
+  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const user = auth.user as DetailedUser | undefined;
   const { userAssignments, userRoles } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');

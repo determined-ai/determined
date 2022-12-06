@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import AvatarCard from 'shared/components/AvatarCard';
 import useUI from 'shared/contexts/stores/UI';
 import { useAuth } from 'stores/users';
+import { Loadable } from 'utils/loadable';
 
 import Dropdown, { Placement } from './Dropdown';
 
@@ -26,9 +27,7 @@ export const Default: ComponentStory<typeof Dropdown> = (args) => (
 );
 
 export const Settings: ComponentStory<typeof Dropdown> = (args) => {
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const { ui } = useUI();
   const menuItems = useMemo(() => {
     return (

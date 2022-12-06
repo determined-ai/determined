@@ -24,7 +24,7 @@ const userToSelectOption = (user: User): React.ReactNode => (
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const users = Loadable.getOrElse([], useUsers().users);
-  const { auth } = useAuth();
+  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
 
   const handleSelect = useCallback(
     (newValue: SelectValue) => {

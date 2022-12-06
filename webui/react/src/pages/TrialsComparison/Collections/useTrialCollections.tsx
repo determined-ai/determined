@@ -12,6 +12,7 @@ import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { useAuth } from 'stores/users';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
@@ -83,9 +84,7 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
 
   const userId = useMemo(() => (user?.id ? String(user?.id) : ''), [user?.id]);
 

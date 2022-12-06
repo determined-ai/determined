@@ -6,13 +6,14 @@ import useUI from 'shared/contexts/stores/UI';
 import { RouteConfig } from 'shared/types';
 import { filterOutLoginLocation } from 'shared/utils/routes';
 import { useAuth } from 'stores/users';
+import { Loadable } from 'utils/loadable';
 
 interface Props {
   routes: RouteConfig[];
 }
 
 const Router: React.FC<Props> = (props: Props) => {
-  const { auth } = useAuth();
+  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();

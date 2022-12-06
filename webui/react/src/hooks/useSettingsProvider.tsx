@@ -6,6 +6,7 @@ import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { useAuth } from 'stores/users';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 /*
  * UserSettingsState contains all the settings for a user
@@ -32,9 +33,10 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const {
-    auth: { user, checked },
-  } = useAuth();
+  const { user, checked } = Loadable.getOrElse(
+    { checked: true, isAuthenticated: false },
+    useAuth().auth,
+  );
   const [canceler] = useState(new AbortController());
   const [isLoading, setIsLoading] = useState(true);
   const querySettings = useRef('');

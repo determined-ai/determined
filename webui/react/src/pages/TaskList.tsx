@@ -81,9 +81,7 @@ const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
 const TaskList: React.FC = () => {
   const users = Loadable.getOrElse([], useUsers().users);
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const [canceler] = useState(new AbortController());
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();

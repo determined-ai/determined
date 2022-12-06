@@ -7,6 +7,7 @@ import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { useAuth } from 'stores/users';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 interface Props {
   form: FormInstance;
@@ -97,7 +98,7 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const { auth } = useAuth();
+  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 

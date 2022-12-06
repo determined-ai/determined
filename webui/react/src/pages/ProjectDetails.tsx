@@ -20,6 +20,7 @@ import { isNotFound } from 'shared/utils/service';
 import { useAuth } from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import ExperimentList from './ExperimentList';
 import NoPermissions from './NoPermissions';
@@ -33,9 +34,7 @@ type Params = {
 };
 
 const ProjectDetails: React.FC = () => {
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const { projectId } = useParams<Params>();
 
   const [project, setProject] = useState<Project>();

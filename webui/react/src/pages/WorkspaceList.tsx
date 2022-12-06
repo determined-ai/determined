@@ -50,9 +50,7 @@ const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
   const users = Loadable.getOrElse([], useUsers().users);
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [total, setTotal] = useState(0);
   const [pageError, setPageError] = useState<Error>();

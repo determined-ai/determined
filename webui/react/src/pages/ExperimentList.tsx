@@ -111,9 +111,7 @@ interface Props {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const users = Loadable.getOrElse([], useUsers().users);
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);

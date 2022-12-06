@@ -26,6 +26,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
 import { useAuth, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
+import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';
 
@@ -33,7 +34,7 @@ const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
   const { info, ui } = useStore();
-  const { auth } = useAuth();
+  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck(canceler);

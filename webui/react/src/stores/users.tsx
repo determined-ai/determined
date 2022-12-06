@@ -11,8 +11,8 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 export type CurrentUser = Auth & { checked: boolean };
 type UsersContext = {
-  auth: CurrentUser;
-  updateAuth: (fn: (users: CurrentUser) => CurrentUser) => void;
+  auth: Loadable<CurrentUser>;
+  updateAuth: (fn: (users: Loadable<CurrentUser>) => Loadable<CurrentUser>) => void;
   updateUsers: (fn: (users: Loadable<DetailedUser[]>) => Loadable<DetailedUser[]>) => void;
   users: Loadable<DetailedUser[]>;
 };
@@ -25,15 +25,14 @@ type FetchUsersConfig = {
 };
 
 type UseUsersReturn = {
-  auth: CurrentUser;
+  auth: Loadable<CurrentUser>;
   updateCurrentUser: (user: DetailedUser) => void;
   users: Loadable<DetailedUser[]>;
 };
 
 type UseAuthReturn = {
-  auth: CurrentUser;
+  auth: Loadable<CurrentUser>;
   resetAuth: () => void;
-  resetAuthCheck: () => void;
   setAuth: (auth: Auth) => void;
   setAuthCheck: () => void;
 };
@@ -44,7 +43,7 @@ const UsersContext = createContext<UsersContext | null>(null);
 
 export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [users, setUsers] = useState<Loadable<DetailedUser[]>>(NotLoaded);
-  const [auth, setAuth] = useState<CurrentUser>({ checked: false, isAuthenticated: false });
+  const [auth, setAuth] = useState<Loadable<CurrentUser>>(NotLoaded);
 
   return (
     <UsersContext.Provider
@@ -165,14 +164,7 @@ export const useAuth = (): UseAuthReturn => {
     clearAuthCookie();
     globalStorage.removeAuthToken();
 
-    updateAuth((prevState) => ({ ...prevState, isAuthenticated: false }));
-  }, [updateAuth]);
-
-  const resetAuthCheck = useCallback(() => {
-    updateAuth((prevState) => {
-      if (!prevState.checked) return prevState;
-      return { ...prevState, checked: false };
-    });
+    updateAuth(() => NotLoaded);
   }, [updateAuth]);
 
   const setAuth = useCallback(
@@ -187,23 +179,23 @@ export const useAuth = (): UseAuthReturn => {
         globalStorage.authToken = auth.token;
       }
 
-      updateAuth(() => ({ ...auth, checked: true }));
+      updateAuth(() => Loaded({ ...auth, checked: true }));
     },
     [updateAuth],
   );
 
   const setAuthCheck = useCallback(() => {
     updateAuth((prevState) => {
-      if (prevState.checked) return prevState;
+      const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, prevState);
+      if (auth.checked) return prevState;
 
-      return { ...prevState, checked: true };
+      return Loaded({ ...auth, checked: true });
     });
   }, [updateAuth]);
 
   return {
     auth,
     resetAuth,
-    resetAuthCheck,
     setAuth,
     setAuthCheck,
   };

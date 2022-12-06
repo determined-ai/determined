@@ -123,9 +123,7 @@ const batchActions = [
 
 const ProjectDetails: React.FC = () => {
   const users = Loadable.getOrElse([], useUsers().users);
-  const {
-    auth: { user },
-  } = useAuth();
+  const { user } = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const { projectId } = useParams<Params>();
   const [project, setProject] = useState<Project>();
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);

@@ -23,6 +23,7 @@ import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import { useAuth } from 'stores/users';
 import { BrandingType } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import css from './SignIn.module.scss';
 
@@ -40,7 +41,7 @@ const logoConfig: Record<RecordKey, string> = {
 const SignIn: React.FC = () => {
   const { actions: uiActions } = useUI();
   const location = useLocation();
-  const { auth } = useAuth();
+  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const { info } = useStore();
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');

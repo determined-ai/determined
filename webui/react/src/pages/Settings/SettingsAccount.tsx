@@ -9,6 +9,7 @@ import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
 import { useAuth, useUsers } from 'stores/users';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './SettingsAccount.module.scss';
 
@@ -19,7 +20,7 @@ export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
-  const { auth } = useAuth();
+  const auth = Loadable.getOrElse({ checked: true, isAuthenticated: false }, useAuth().auth);
   const { updateCurrentUser } = useUsers();
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
