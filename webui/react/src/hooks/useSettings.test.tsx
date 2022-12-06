@@ -6,6 +6,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -115,9 +116,11 @@ const setup = async (
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <StoreProvider>
       <UsersProvider>
-        <SettingsProvider>
-          <HistoryRouter history={history}>{children}</HistoryRouter>
-        </SettingsProvider>
+        <AuthProvider>
+          <SettingsProvider>
+            <HistoryRouter history={history}>{children}</HistoryRouter>
+          </SettingsProvider>
+        </AuthProvider>
       </UsersProvider>
     </StoreProvider>
   );

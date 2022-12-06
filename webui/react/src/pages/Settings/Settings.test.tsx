@@ -3,8 +3,9 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -14,7 +15,7 @@ const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
 const Container: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
+  const { updateCurrentUser } = useAuth();
 
   const currentUser: DetailedUser = useMemo(
     () => ({
@@ -28,8 +29,8 @@ const Container: React.FC = () => {
   );
 
   const loadUser = useCallback(() => {
-    storeDispatch({ type: StoreAction.SetCurrentUser, value: currentUser });
-  }, [storeDispatch, currentUser]);
+    updateCurrentUser(currentUser, [currentUser]);
+  }, [updateCurrentUser, currentUser]);
 
   useEffect(() => loadUser(), [loadUser]);
 
@@ -40,11 +41,13 @@ const setup = () => {
   return render(
     <StoreProvider>
       <UsersProvider>
-        <HelmetProvider>
-          <HistoryRouter history={history}>
-            <Container />
-          </HistoryRouter>
-        </HelmetProvider>
+        <AuthProvider>
+          <HelmetProvider>
+            <HistoryRouter history={history}>
+              <Container />
+            </HistoryRouter>
+          </HelmetProvider>
+        </AuthProvider>
       </UsersProvider>
     </StoreProvider>,
   );

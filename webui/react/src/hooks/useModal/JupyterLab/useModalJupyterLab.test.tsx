@@ -4,8 +4,9 @@ import { Button } from 'antd';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -40,12 +41,13 @@ jest.mock('components/MonacoEditor', () => ({
 }));
 
 const ModalTrigger: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
+  const { setAuth } = useAuth();
   const { contextHolder, modalOpen } = useModalJupyterLab();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -62,9 +64,11 @@ const setup = async () => {
     <BrowserRouter>
       <StoreProvider>
         <UsersProvider>
-          <SettingsProvider>
-            <ModalTrigger />
-          </SettingsProvider>
+          <AuthProvider>
+            <SettingsProvider>
+              <ModalTrigger />
+            </SettingsProvider>
+          </AuthProvider>
         </UsersProvider>
       </StoreProvider>
     </BrowserRouter>,

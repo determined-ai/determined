@@ -6,6 +6,7 @@ import React from 'react';
 import StoreProvider from 'contexts/Store';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { CreateGroupsParams, GetGroupParams } from 'services/types';
+import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -74,7 +75,9 @@ const setup = async (group?: V1GroupSearchResult) => {
   const view = render(
     <StoreProvider>
       <UsersProvider>
-        <Container group={group} />
+        <AuthProvider>
+          <Container group={group} />
+        </AuthProvider>
       </UsersProvider>
     </StoreProvider>,
   );

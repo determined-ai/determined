@@ -12,6 +12,7 @@ import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -115,9 +116,14 @@ const setup = (
     <HistoryRouter history={history}>
       <StoreProvider>
         <UsersProvider>
-          <SettingsProvider>
-            <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
-          </SettingsProvider>
+          <AuthProvider>
+            <SettingsProvider>
+              <CodeViewer
+                experimentId={props.experimentId}
+                submittedConfig={props.submittedConfig}
+              />
+            </SettingsProvider>
+          </AuthProvider>
         </UsersProvider>
       </StoreProvider>
     </HistoryRouter>,

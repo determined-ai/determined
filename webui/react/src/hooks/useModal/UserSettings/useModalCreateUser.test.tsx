@@ -5,6 +5,7 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
+import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
@@ -45,7 +46,9 @@ const setup = async () => {
   const view = render(
     <StoreProvider>
       <UsersProvider>
-        <Container />
+        <AuthProvider>
+          <Container />
+        </AuthProvider>
       </UsersProvider>
     </StoreProvider>,
   );

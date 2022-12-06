@@ -13,6 +13,7 @@ import {
   getWorkspace,
 } from 'services/api';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
 import { ProjectsProvider } from 'stores/projects';
 import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
@@ -71,11 +72,13 @@ const setup = () => {
       <HelmetProvider>
         <WorkspacesProvider>
           <UsersProvider>
-            <ProjectsProvider>
-              <HistoryRouter history={history}>
-                <ExperimentDetails />
-              </HistoryRouter>
-            </ProjectsProvider>
+            <AuthProvider>
+              <ProjectsProvider>
+                <HistoryRouter history={history}>
+                  <ExperimentDetails />
+                </HistoryRouter>
+              </ProjectsProvider>
+            </AuthProvider>
           </UsersProvider>
         </WorkspacesProvider>
       </HelmetProvider>
