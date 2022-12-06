@@ -84,8 +84,8 @@ const usePermissions = (): PermissionsHook => {
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-  const userAssignments = Loadable.waitFor(useUserAssignments());
-  const userRoles = Loadable.waitFor(useUserRoles());
+  const userAssignments = Loadable.getOrElse([], useUserAssignments());
+  const userRoles = Loadable.getOrElse([], useUserRoles());
   const rbacOpts = useMemo(
     () => ({
       rbacAllPermission,
