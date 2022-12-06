@@ -14,6 +14,7 @@ import {
 } from 'services/api';
 import history from 'shared/routes/history';
 import { ProjectsProvider } from 'stores/projects';
+import { UserRolesProvider } from 'stores/userRoles';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -67,15 +68,17 @@ jest.mock('./ExperimentVisualization', () => ({
 const setup = () => {
   const view = render(
     <StoreProvider>
-      <HelmetProvider>
-        <WorkspacesProvider>
-          <ProjectsProvider>
-            <HistoryRouter history={history}>
-              <ExperimentDetails />
-            </HistoryRouter>
-          </ProjectsProvider>
-        </WorkspacesProvider>
-      </HelmetProvider>
+      <UserRolesProvider>
+        <HelmetProvider>
+          <WorkspacesProvider>
+            <ProjectsProvider>
+              <HistoryRouter history={history}>
+                <ExperimentDetails />
+              </HistoryRouter>
+            </ProjectsProvider>
+          </WorkspacesProvider>
+        </HelmetProvider>
+      </UserRolesProvider>
     </StoreProvider>,
   );
   return { view };
