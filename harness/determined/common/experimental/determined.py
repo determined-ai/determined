@@ -59,22 +59,13 @@ class Determined:
         self._master = master or util.get_default_master_address()
 
         cert = certs.default_load(
-<<<<<<< HEAD
-            master_url=master,
-=======
             master_url=self._master,
->>>>>>> 5ce325f29 (fix init fields)
             explicit_path=cert_path,
             explicit_cert_name=cert_name,
             explicit_noverify=noverify,
         )
 
-        # TODO: This should probably be try_reauth=False, but it appears that would break the case
-        # where the default credentials are available from the master and could be discovered by
-        # a REST API call against the master.
-        auth = authentication.Authentication(
-            self._master, user, password, cert=cert
-        )
+        auth = authentication.Authentication(self._master, user, password, cert=cert)
         self._session = api.Session(self._master, user, auth, cert)
         token_user = auth.token_store.get_active_user()
         if token_user is not None:
