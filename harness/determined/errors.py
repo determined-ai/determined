@@ -1,6 +1,12 @@
 from typing import Any, Dict, Type
 
 
+class EnterpriseOnlyError(Exception):
+    """Exception indicating the master may be missing an EE-only feature."""
+
+    pass
+
+
 class InternalException(Exception):
     def __init__(self, message: str) -> None:
         self.message = (
