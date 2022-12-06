@@ -50,8 +50,9 @@ from determined.common.util import (
     get_default_master_address,
     safe_load_yaml_with_exceptions,
 )
+from determined.errors import EnterpriseOnlyError
 
-from .errors import EnterpriseOnlyError, FeatureFlagDisabled
+from .errors import FeatureFlagDisabled
 
 
 @authentication.required
