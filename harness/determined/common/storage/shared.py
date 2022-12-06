@@ -3,10 +3,12 @@ import logging
 import os
 import pathlib
 import shutil
+import sys
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 from determined import errors
 from determined.common import check, storage
+from determined.common.storage import _shutil
 
 
 def _full_storage_path(
@@ -99,7 +101,13 @@ class SharedFSStorageManager(storage.StorageManager):
 
     def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
         src = os.fspath(src)
-        shutil.copytree(src, os.path.join(self._base_path, dst))
+        python_version = sys.version_info
+
+        if python_version.major == 3 and python_version.minor <= 7:
+            # Workaround for Python3.7 not having dirs_exist_ok for shutil.copytree.
+            _shutil.copytree(src, os.path.join(self._base_path, dst), dirs_exist_ok=True)
+        else:
+            shutil.copytree(src, os.path.join(self._base_path, dst), dirs_exist_ok=True)
 
     def download(
         self,

@@ -352,9 +352,9 @@ class CheckpointContext:
                 # all workers.  But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
-                # If selector is None return False => do not download the file
+                # If selector is None return True => all files will be downloaded.
                 upload_path = self._dist.gather_local(
-                    selector(path) if selector is not None else False
+                    selector(path) if selector is not None else True
                 )
                 # Upload_path is not None when we are on the local chief.
                 assert upload_path
@@ -370,7 +370,7 @@ class CheckpointContext:
                     # Chief is done downloading files.
                     break
                 assert want_filter, "want_filter is not set but name was not None"
-                _ = self._dist.gather_local(selector(name) if selector is not None else False)
+                _ = self._dist.gather_local(selector(name) if selector is not None else True)
 
     def get_metadata(self, storage_id: str) -> Dict[str, Any]:
         """
@@ -566,8 +566,9 @@ class CheckpointContext:
                 # all workers. But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
+                # If selector is None return True => all files will be downloaded.
                 upload_path = self._dist.gather_local(
-                    selector(path) if selector is not None else False
+                    selector(path) if selector is not None else True
                 )
                 # Upload_path is not None when we are on the local chief.
                 assert upload_path
@@ -590,7 +591,7 @@ class CheckpointContext:
                     # Chief is done downloading files.
                     break
                 assert want_filter, "want_filter is not set but name was not None"
-                _ = self._dist.gather_local(selector(name) if selector is not None else False)
+                _ = self._dist.gather_local(selector(name) if selector is not None else True)
 
             # Wait for local chief to broadcast.
             path = self._dist.broadcast_local(None)

@@ -167,7 +167,6 @@ def test_live_s3_sharded_upload_download(require_secrets: bool, tmp_path: Path) 
 
         @pex.run
         def do_test() -> None:
-            # init storage manager
             tmp_path_storage = tmp_path.joinpath("storage")
             storage_manager = get_live_manager(require_secrets, tmp_path_storage, None)
             util.run_storage_upload_download_sharded_test(pex, storage_manager, tmp_path, clean_up)
@@ -180,7 +179,6 @@ def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) ->
 
         @pex.run
         def do_test() -> None:
-            # init storage manager
             tmp_path_storage = tmp_path.joinpath(f"storage_{pex.distributed.rank}")
             storage_manager = get_live_manager(require_secrets, tmp_path_storage, None)
             util.run_storage_store_restore_sharded_test(pex, storage_manager, clean_up)
