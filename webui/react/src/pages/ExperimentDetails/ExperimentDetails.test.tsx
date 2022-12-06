@@ -14,6 +14,7 @@ import {
 } from 'services/api';
 import history from 'shared/routes/history';
 import { ProjectsProvider } from 'stores/projects';
+import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -69,11 +70,13 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <WorkspacesProvider>
-          <ProjectsProvider>
-            <HistoryRouter history={history}>
-              <ExperimentDetails />
-            </HistoryRouter>
-          </ProjectsProvider>
+          <ResourcePoolsProvider>
+            <ProjectsProvider>
+              <HistoryRouter history={history}>
+                <ExperimentDetails />
+              </HistoryRouter>
+            </ProjectsProvider>
+          </ResourcePoolsProvider>
         </WorkspacesProvider>
       </HelmetProvider>
     </StoreProvider>,

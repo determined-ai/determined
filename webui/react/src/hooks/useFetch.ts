@@ -1,14 +1,7 @@
 import { useCallback } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import {
-  getInfo,
-  getPermissionsSummary,
-  getResourcePools,
-  getUsers,
-  getWorkspaces,
-  listRoles,
-} from 'services/api';
+import { getInfo, getPermissionsSummary, getUsers, getWorkspaces, listRoles } from 'services/api';
 import handleError from 'utils/error';
 
 export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) => {
@@ -32,18 +25,6 @@ export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) 
     try {
       const usersResponse = await getUsers({}, { signal: canceler.signal });
       storeDispatch({ type: StoreAction.SetUsers, value: usersResponse.users });
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, storeDispatch]);
-};
-
-export const useFetchResourcePools = (canceler?: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-  return useCallback(async (): Promise<void> => {
-    try {
-      const resourcePools = await getResourcePools({}, { signal: canceler?.signal });
-      storeDispatch({ type: StoreAction.SetResourcePools, value: resourcePools });
     } catch (e) {
       handleError(e);
     }

@@ -3,6 +3,7 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { ExperimentsProvider } from 'stores/experiments';
+import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { TasksProvider } from 'stores/tasks';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
@@ -17,7 +18,9 @@ const setup = () => {
     <StoreProvider>
       <ExperimentsProvider>
         <TasksProvider>
-          <ClusterOverallStats />
+          <ResourcePoolsProvider>
+            <ClusterOverallStats />
+          </ResourcePoolsProvider>
         </TasksProvider>
       </ExperimentsProvider>
     </StoreProvider>,

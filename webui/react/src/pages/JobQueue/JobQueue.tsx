@@ -10,8 +10,6 @@ import {
   getFullPaginationConfig,
 } from 'components/Table/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
-import { useStore } from 'contexts/Store';
-import { useFetchResourcePools } from 'hooks/useFetch';
 import { useSettings } from 'hooks/useSettings';
 import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';
@@ -24,6 +22,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
+import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import {
@@ -33,6 +32,7 @@ import {
   orderedSchedulers,
   unsupportedQPosSchedulers,
 } from 'utils/job';
+import { Loadable } from 'utils/loadable';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
@@ -45,7 +45,8 @@ interface Props {
 }
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
-  const { resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(
     resourcePools.map(

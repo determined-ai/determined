@@ -4,11 +4,11 @@ import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useExperiments, useFetchExperiments } from 'stores/experiments';
+import { useResourcePools } from 'stores/resourcePools';
 import { useActiveTasks, useFetchActiveTasks } from 'stores/tasks';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
@@ -17,7 +17,8 @@ import { Loadable } from 'utils/loadable';
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 export const ClusterOverallStats: React.FC = () => {
-  const { resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const overview = useClusterOverview();
   const agents = useAgents();
 
