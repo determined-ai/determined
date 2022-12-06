@@ -27,14 +27,6 @@ interface OmnibarState {
 }
 
 interface State {
-  activeExperiments: number;
-  activeTasks: {
-    commands: number;
-    notebooks: number;
-    shells: number;
-    tensorboards: number;
-  };
-
   auth: Auth & { checked: boolean };
 
   info: DeterminedInfo;
@@ -59,12 +51,6 @@ export const StoreAction = {
   ResetAuth: 'ResetAuth',
 
   ResetAuthCheck: 'ResetAuthCheck',
-
-  // Active Experiments
-  SetActiveExperiments: 'SetActiveExperiments',
-
-  // Tasks
-  SetActiveTasks: 'SetActiveTasks',
 
   // Agents
   SetAgents: 'SetAgents',
@@ -114,16 +100,6 @@ type Action =
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
-  | {
-      type: typeof StoreAction.SetActiveTasks;
-      value: {
-        commands: number;
-        notebooks: number;
-        shells: number;
-        tensorboards: number;
-      };
-    }
-  | { type: typeof StoreAction.SetActiveExperiments; value: number }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
@@ -147,13 +123,6 @@ export const initInfo: DeterminedInfo = {
 };
 
 const initState: State = {
-  activeExperiments: 0,
-  activeTasks: {
-    commands: 0,
-    notebooks: 0,
-    shells: 0,
-    tensorboards: 0,
-  },
   auth: initAuth,
   info: initInfo,
   knownRoles: [],
@@ -239,12 +208,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.ShowOmnibar:
       if (state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
-    case StoreAction.SetActiveExperiments:
-      if (isEqual(state.activeExperiments, action.value)) return state;
-      return { ...state, activeExperiments: action.value };
-    case StoreAction.SetActiveTasks:
-      if (isEqual(state.activeTasks, action.value)) return state;
-      return { ...state, activeTasks: action.value };
     case StoreAction.SetKnownRoles:
       if (isEqual(state.knownRoles, action.value)) return state;
       return { ...state, knownRoles: action.value };

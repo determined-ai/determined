@@ -6,11 +6,7 @@ import ResourcePoolCard from 'components/ResourcePoolCard';
 import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { useStore } from 'contexts/Store';
-import {
-  useFetchActiveExperiments,
-  useFetchActiveTasks,
-  useFetchResourcePools,
-} from 'hooks/useFetch';
+import { useFetchResourcePools } from 'hooks/useFetch';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
@@ -95,24 +91,15 @@ const ClusterOverview: React.FC = () => {
 
   const [canceler] = useState(new AbortController());
 
-  const fetchActiveExperiments = useFetchActiveExperiments(canceler);
-  const fetchActiveTasks = useFetchActiveTasks(canceler);
   const fetchAgents = useEnsureAgentsFetched(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
 
-  const fetchActiveRunning = useCallback(async () => {
-    await fetchActiveExperiments();
-    await fetchActiveTasks();
-  }, [fetchActiveExperiments, fetchActiveTasks]);
-
-  usePolling(fetchActiveRunning);
   usePolling(fetchResourcePools, { interval: 10000 });
 
   const hideModal = useCallback(() => setRpDetail(undefined), []);
 
   useEffect(() => {
     fetchAgents();
-
     return () => canceler.abort();
   }, [canceler, fetchAgents]);
 
