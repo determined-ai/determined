@@ -100,14 +100,14 @@ type Action =
   | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | {
-    type: typeof StoreAction.SetActiveTasks;
-    value: {
-      commands: number;
-      notebooks: number;
-      shells: number;
-      tensorboards: number;
-    };
-  }
+      type: typeof StoreAction.SetActiveTasks;
+      value: {
+        commands: number;
+        notebooks: number;
+        shells: number;
+        tensorboards: number;
+      };
+    }
   | { type: typeof StoreAction.SetActiveExperiments; value: number }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
