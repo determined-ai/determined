@@ -288,7 +288,7 @@ func (a *apiServer) LaunchCommand(
 	}
 	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCommand)}
 
-	// TODO add workspaceID to rest of ntsc
+	// TODO(8676): add workspaceID to rest of ntsc.
 
 	// Launch a command actor.
 	var cmdID model.TaskID

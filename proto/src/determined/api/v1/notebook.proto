@@ -109,11 +109,6 @@ message LaunchNotebookRequest {
   repeated determined.util.v1.File files = 3;
   // Preview a launching request without actually creating a Notebook.
   bool preview = 4;
-  /* CHAT: we could have this as part of task config and it'll share
-  between ntsc but we'd like to move away from it
-  if we want to go hirearchical it might make sense to set this up
-  for that future. eg take a list of scope_ids, dir_ids, or a path? cc @ilia
-  */
   // Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
   int32 workspace_id = 5;
 }
