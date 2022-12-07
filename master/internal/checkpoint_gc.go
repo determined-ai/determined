@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
 type checkpointGCTask struct {
@@ -131,6 +132,13 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}
 		if err := t.db.MarkCheckpointsDeleted(deleteCheckpoints); err != nil {
 			ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
+			return err
+		}
+		if err := t.db.QueryProto(
+			"update_checkpoint_size_to_experiment", &experimentv1.Experiment{}, t.taskID,
+		); err != nil {
+			ctx.Log().WithError(err).Errorf(
+				"updating checkpoints size to experiment %d", t.GCCkptSpec.ExperimentID)
 			return err
 		}
 

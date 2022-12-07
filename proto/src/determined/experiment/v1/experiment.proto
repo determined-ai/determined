@@ -127,6 +127,8 @@ message Experiment {
   string original_config = 27;
   // The id of the user who created the parent project.
   int32 project_owner_id = 28;
+  // The total size of checkpoints.
+  int64 checkpoint_size = 29;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

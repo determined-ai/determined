@@ -21,6 +21,7 @@ SELECT
     e.job_id AS job_id,
     e.parent_id AS forked_from,
     e.owner_id AS user_id,
+    e.checkpoint_size AS checkpoint_size,
     u.username AS username,
     (SELECT json_agg(id) FROM trial_ids) AS trial_ids,
 	  (SELECT count(id) FROM trial_ids) AS num_trials,

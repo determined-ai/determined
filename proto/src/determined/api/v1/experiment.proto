@@ -74,6 +74,8 @@ message GetExperimentsRequest {
     SORT_BY_RESOURCE_POOL = 13;
     // Returns experiments sorted by project.
     SORT_BY_PROJECT_ID = 14;
+    // Returns experiments sorted by checkpoint size.
+    SORT_BY_CHECKPOINT_SIZE = 15;
   }
   // Sort experiments by the given field.
   SortBy sort_by = 1;

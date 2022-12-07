@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -143,6 +144,11 @@ func TestCheckpointMetadata(t *testing.T) {
 				},
 			}
 			err := db.AddCheckpointMetadata(context.TODO(), &ckpt)
+			require.NoError(t, err)
+
+			err = db.QueryProto(
+				"update_checkpoint_size_to_experiment", &experimentv1.Experiment{}, tr.TaskID,
+			)
 			require.NoError(t, err)
 
 			var m *trialv1.TrialMetrics
