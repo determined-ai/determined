@@ -52,7 +52,7 @@ const settingsConfig: SettingsConfig<JupyterLabOptions> = {
       type: union([number, undefinedType]),
     },
     template: {
-      defaultValue: '',
+      defaultValue: undefined,
       skipUrlEncoding: true,
       storageKey: 'template',
       type: union([string, undefinedType]),
@@ -78,15 +78,15 @@ const useModalJupyterLab = (): ModalHooks => {
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const previousConfig = usePrevious(config, config);
   const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<JupyterLabOptions>();
 
   const { settings: defaults, updateSettings: updateDefaults } =
     useSettings<JupyterLabOptions>(settingsConfig);
 
   const handleModalClose = useCallback(() => {
+    setVisible(false);
     const fields: JupyterLabOptions = form.getFieldsValue(true);
     updateDefaults(fields);
-    setVisible(false);
   }, [form, updateDefaults]);
 
   const {
@@ -138,11 +138,6 @@ const useModalJupyterLab = (): ModalHooks => {
     setConfigError(undefined);
   }, []);
 
-  const formContent = useMemo(
-    () => <JupyterLabForm defaults={defaults} form={form} />,
-    [defaults, form],
-  );
-
   const bodyContent = useMemo(() => {
     return showFullConfig ? (
       <JupyterLabFullConfig
@@ -152,9 +147,9 @@ const useModalJupyterLab = (): ModalHooks => {
         onChange={handleConfigChange}
       />
     ) : (
-      formContent
+      <JupyterLabForm defaults={defaults} form={form} />
     );
-  }, [config, configError, formContent, handleConfigChange, showFullConfig]);
+  }, [config, configError, handleConfigChange, showFullConfig, defaults, form]);
 
   const content = useMemo(
     () => (
