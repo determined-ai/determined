@@ -205,8 +205,8 @@ def test_deepspeed_pipeline_parallel() -> None:
 
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
-def test_gpt_neox_zero_medium() -> None:
-    config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero3_medium.yaml"))
+def test_gpt_neox_zero1() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero1.yaml"))
     config = conf.set_max_length(config, {"batches": 100})
     config = conf.set_min_validation_period(config, {"batches": 100})
 
@@ -215,8 +215,8 @@ def test_gpt_neox_zero_medium() -> None:
 
 @pytest.mark.deepspeed
 @pytest.mark.gpu_required
-def test_gpt_neox_zero_3D_parallel() -> None:
-    config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero1_3d_parallel.yaml"))
+def test_gpt_neox_zero3() -> None:
+    config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero3.yaml"))
     config = conf.set_max_length(config, {"batches": 100})
     config = conf.set_min_validation_period(config, {"batches": 100})
 
