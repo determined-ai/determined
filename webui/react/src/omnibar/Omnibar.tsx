@@ -1,11 +1,11 @@
 import OmnibarNpm from 'omnibar';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
+import { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import * as Tree from 'omnibar/tree-extension/index';
 import TreeNode from 'omnibar/tree-extension/TreeNode';
 import { BaseNode } from 'omnibar/tree-extension/types';
 import { isTreeNode } from 'omnibar/tree-extension/utils';
-import { useOmnibarContext } from 'stores/omnibar';
 import handleError from 'utils/error';
 
 import css from './Omnibar.module.scss';
@@ -19,11 +19,27 @@ const omnibarInput = () =>
   document.querySelector('#omnibar input[type="text"]') as HTMLInputElement | null;
 
 const Omnibar: React.FC = () => {
-  const { isShowing, updateShowing } = useOmnibarContext();
+  const [showing, setShowing] = useState(false);
+
+  useEffect(() => {
+    const keyDownListener = (e: KeyboardEvent) => {
+      if (e.code === KeyCode.Space && e.ctrlKey) {
+        setShowing(!showing);
+      } else if (showing && e.code === KeyCode.Escape) {
+        setShowing(false);
+      }
+    };
+
+    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
+
+    return () => {
+      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
+    };
+  }, [showing, setShowing]);
 
   const hideBar = useCallback(() => {
-    updateShowing(false);
-  }, [updateShowing]);
+    setShowing(false);
+  }, [setShowing]);
 
   const onAction = useCallback(
     async (item: unknown, query: (inputEl: string) => void) => {
@@ -46,16 +62,16 @@ const Omnibar: React.FC = () => {
 
   useEffect(() => {
     const input: HTMLInputElement | null = omnibarInput();
-    if (isShowing) {
+    if (showing) {
       if (input) {
         input.focus();
         input.select();
       }
     }
-  }, [isShowing]);
+  }, [showing]);
 
   return (
-    <div className={css.base} style={{ display: isShowing ? 'unset' : 'none' }}>
+    <div className={css.base} style={{ display: showing ? 'unset' : 'none' }}>
       <div className={css.backdrop} onClick={hideBar} />
       <div className={css.bar} id="omnibar">
         <OmnibarNpm<BaseNode>

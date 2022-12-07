@@ -12,7 +12,7 @@ import StoreProvider, { useStore } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import { useFetchInfo } from 'hooks/useFetch';
 import { useFetchUsers } from 'hooks/useFetch';
-import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -25,7 +25,6 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
-import { useOmnibarContext } from 'stores/omnibar';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -33,7 +32,6 @@ import css from './App.module.scss';
 const AppView: React.FC = () => {
   const resize = useResize();
   const { auth, info } = useStore();
-  const { isShowing: isShowingOmnibar, updateShowing: updateShowingOmnibar } = useOmnibarContext();
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck(canceler);
@@ -102,23 +100,6 @@ const AppView: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [canceler]);
-
-  // Detect and handle key events.
-  useEffect(() => {
-    const keyDownListener = (e: KeyboardEvent) => {
-      if (e.code === KeyCode.Space && e.ctrlKey) {
-        updateShowingOmnibar(!isShowingOmnibar);
-      } else if (isShowingOmnibar && e.code === KeyCode.Escape) {
-        updateShowingOmnibar(false);
-      }
-    };
-
-    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
-
-    return () => {
-      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
-    };
-  }, [isShowingOmnibar, updateShowingOmnibar]);
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);
