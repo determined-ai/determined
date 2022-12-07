@@ -17,7 +17,6 @@ interface OmnibarState {
 }
 
 interface State {
-
   info: DeterminedInfo;
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
