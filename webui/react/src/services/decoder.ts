@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { date } from 'fp-ts';
 
 import * as ioTypes from 'ioTypes';
 import { Pagination, RawJson } from 'shared/types';
@@ -476,6 +477,7 @@ export const mapV1Experiment = (
   }) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
+    checkpointSize: parseInt(data?.checkpointSize || '0'),
     config: ioToExperimentConfig(ioConfig),
     configRaw: data.config,
     description: data.description,
@@ -613,6 +615,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     totalBatchesProcessed: data.totalBatchesProcessed,
+    totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };
 };
 

@@ -73,6 +73,7 @@ import { ErrorLevel } from 'shared/utils/error';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { humanReadableBytes } from 'shared/utils/string';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -458,6 +459,8 @@ const ProjectDetails: React.FC = () => {
     const forkedFromRenderer = (value: string | number | undefined): React.ReactNode =>
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
+    const checkpointSizeRenderer = (value: number) => value ? humanReadableBytes(value) : '';
+
     return [
       {
         align: 'right',
@@ -580,6 +583,15 @@ const ProjectDetails: React.FC = () => {
         render: experimentProgressRenderer,
         sorter: true,
         title: 'Progress',
+      },
+      {
+        align: 'right',
+        dataIndex: 'checkpointSize',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointSize'],
+        key: V1GetExperimentsRequestSortBy.CHECKPOINTSIZE,
+        render: checkpointSizeRenderer,
+        sorter: true,
+        title: 'Checkpoint Size',
       },
       {
         align: 'center',

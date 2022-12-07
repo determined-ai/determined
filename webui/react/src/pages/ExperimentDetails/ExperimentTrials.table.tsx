@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { ColumnDef } from 'components/Table/InteractiveTable';
 import { durationRenderer, expStateRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
+import { humanReadableBytes } from 'shared/utils/string';
 import { TrialItem } from 'types';
 
 import { DEFAULT_COLUMN_WIDTHS } from './ExperimentTrials.settings';
@@ -73,6 +74,13 @@ export const columns: ColumnDef<TrialItem>[] = [
     defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
     key: 'checkpoint',
     title: 'Checkpoint',
+  },
+  {
+    dataIndex: 'totalCheckpointSize',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
+    key: 'totalCheckpointSize',
+    title: 'Checkpoint Size',
+    // sorter: true,
   },
   {
     align: 'right',

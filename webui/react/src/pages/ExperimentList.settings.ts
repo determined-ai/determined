@@ -18,6 +18,7 @@ import { RunState } from 'types';
 export type ExperimentColumnName =
   | 'action'
   | 'archived'
+  | 'checkpointSize'
   | 'description'
   | 'duration'
   | 'forkedFrom'
@@ -47,6 +48,7 @@ export const DEFAULT_COLUMNS: ExperimentColumnName[] = [
 export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   action: 46,
   archived: 80,
+  checkpointSize: 160,
   description: 148,
   duration: 96,
   forkedFrom: 128,
@@ -89,6 +91,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
         union([
           literal('action'),
           literal('archived'),
+          literal('checkpointSize'),
           literal('description'),
           literal('duration'),
           literal('forkedFrom'),

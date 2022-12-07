@@ -500,11 +500,11 @@ export interface TrialItem extends StartEndTimes {
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
   totalBatchesProcessed: number;
+  totalCheckpointSize: number;
 }
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  totalCheckpointSize: number;
 }
 
 export interface TrialWorkloads extends WithPagination {
@@ -535,6 +535,7 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
+  checkpointSize?: number;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   description?: string;
