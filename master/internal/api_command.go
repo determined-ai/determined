@@ -18,13 +18,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
+	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -54,7 +53,7 @@ type protoCommandParams struct {
 }
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
-	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
+	*tasks.GenericCommandSpec, []command.LaunchWarning, error,
 ) {
 	var err error
 
@@ -193,8 +192,8 @@ func (a *apiServer) GetCommands(
 		if err != nil {
 			return false
 		}
-		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
-			ctx, *curUser, model.UserID(resp.Commands[i].UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType)
+		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
+			ctx, *curUser, model.UserID(resp.Commands[i].UserId))
 		if serverError != nil {
 			err = serverError
 		}
@@ -221,8 +220,8 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetCommand(
-		ctx, *curUser, model.UserID(resp.Command.UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType); err != nil {
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
+		ctx, *curUser, model.UserID(resp.Command.UserId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -289,8 +288,6 @@ func (a *apiServer) LaunchCommand(
 	}
 	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCommand)}
 
-	// TODO add workspaceID to rest of ntsc
-
 	// Launch a command actor.
 	var cmdID model.TaskID
 	if err = a.ask(commandsAddr, *spec, &cmdID); err != nil {
@@ -305,6 +302,6 @@ func (a *apiServer) LaunchCommand(
 	return &apiv1.LaunchCommandResponse{
 		Command:  cmd,
 		Config:   protoutils.ToStruct(spec.Config),
-		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
+		Warnings: command.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
