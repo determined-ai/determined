@@ -62,13 +62,6 @@ export const StoreAction = {
   // PinnedWorkspaces
   SetPinnedWorkspaces: 'SetPinnedWorkspaces',
 
-  // ResourcePools
-  SetResourcePools: 'SetResourcePools',
-
-  SetUserAssignments: 'SetUserAssignments',
-
-  SetUserRoles: 'SetUserRoles',
-
   // Users
   SetUsers: 'SetUsers',
   // User Settings
