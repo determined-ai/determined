@@ -64,14 +64,15 @@ const user = userEvent.setup();
 
 const Container: React.FC = () => {
   const { contextHolder, modalOpen } = useModalPasswordChange();
-  const { updateCurrentUser } = useAuth();
+  const { updateCurrentUser, setAuth } = useAuth();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
+    setAuth({ isAuthenticated: true });
     updateCurrentUser(CURRENT_USER, [CURRENT_USER]);
-  }, [fetchUsers, updateCurrentUser]);
+  }, [fetchUsers, updateCurrentUser, setAuth]);
 
   useEffect(() => {
     loadUsers();

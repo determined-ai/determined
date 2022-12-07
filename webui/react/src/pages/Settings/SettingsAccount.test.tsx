@@ -54,7 +54,7 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const { updateCurrentUser } = useAuth();
+  const { updateCurrentUser, setAuth } = useAuth();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
 
@@ -67,6 +67,7 @@ const Container: React.FC = () => {
 
   useEffect(() => {
     (async () => await getUsers())();
+    setAuth({ isAuthenticated: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
