@@ -873,6 +873,16 @@ export interface V1ActivateExperimentResponse {
 }
 
 /**
+ * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
+ * @export
+ * @enum {string}
+ */
+export enum V1ActivityType {
+    UNSPECIFIED = <any> 'ACTIVITY_TYPE_UNSPECIFIED',
+    GET = <any> 'ACTIVITY_TYPE_GET'
+}
+
+/**
  * Response to AddProjectNoteRequest.
  * @export
  * @interface V1AddProjectNoteResponse
@@ -2220,6 +2230,16 @@ export interface V1EnableSlotResponse {
      * @memberof V1EnableSlotResponse
      */
     slot?: V1Slot;
+}
+
+/**
+ * - ENTITY_TYPE_UNSPECIFIED: Default entity type.  - ENTITY_TYPE_PROJECT: Represents a project.
+ * @export
+ * @enum {string}
+ */
+export enum V1EntityType {
+    UNSPECIFIED = <any> 'ENTITY_TYPE_UNSPECIFIED',
+    PROJECT = <any> 'ENTITY_TYPE_PROJECT'
 }
 
 /**
@@ -6073,6 +6093,40 @@ export interface V1PostTrialProfilerMetricsBatchResponse {
  * @interface V1PostTrialRunnerMetadataResponse
  */
 export interface V1PostTrialRunnerMetadataResponse {
+}
+
+/**
+ * Update user activity.
+ * @export
+ * @interface V1PostUserActivityRequest
+ */
+export interface V1PostUserActivityRequest {
+    /**
+     * The type of the activity.
+     * @type {V1ActivityType}
+     * @memberof V1PostUserActivityRequest
+     */
+    activityType: V1ActivityType;
+    /**
+     * The type of the entity.
+     * @type {V1EntityType}
+     * @memberof V1PostUserActivityRequest
+     */
+    entityType: V1EntityType;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PostUserActivityRequest
+     */
+    entityId: number;
+}
+
+/**
+ * Response to PostUserActivityRequest.
+ * @export
+ * @interface V1PostUserActivityResponse
+ */
+export interface V1PostUserActivityResponse {
 }
 
 /**
@@ -25628,6 +25682,46 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Patch a user's activity
+         * @param {V1PostUserActivityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserActivity(body: V1PostUserActivityRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserActivity.');
+            }
+            const localVarPath = `/api/v1/users/activity`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostUserActivityRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Patch a user's settings for website
          * @param {V1PostUserSettingRequest} body 
          * @param {*} [options] Override http request option.
@@ -25889,6 +25983,25 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch a user's activity
+         * @param {V1PostUserActivityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserActivity(body: V1PostUserActivityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserActivityResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserActivity(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Patch a user's settings for website
          * @param {V1PostUserSettingRequest} body 
          * @param {*} [options] Override http request option.
@@ -26027,6 +26140,16 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Patch a user's activity
+         * @param {V1PostUserActivityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserActivity(body: V1PostUserActivityRequest, options?: any) {
+            return UsersApiFp(configuration).postUserActivity(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Patch a user's settings for website
          * @param {V1PostUserSettingRequest} body 
          * @param {*} [options] Override http request option.
@@ -26149,6 +26272,18 @@ export class UsersApi extends BaseAPI {
      */
     public postUser(body: V1PostUserRequest, options?: any) {
         return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a user's activity
+     * @param {V1PostUserActivityRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public postUserActivity(body: V1PostUserActivityRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUserActivity(body, options)(this.fetch, this.basePath);
     }
 
     /**
