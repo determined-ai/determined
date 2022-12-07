@@ -7,7 +7,18 @@ import pathlib
 import platform
 import random
 import sys
-from typing import IO, Any, Callable, Iterator, Optional, Sequence, TypeVar, Union, overload
+from typing import (
+    IO,
+    Any,
+    Callable,
+    Iterator,
+    Optional,
+    Sequence,
+    TypeVar,
+    Union,
+    no_type_check,
+    overload,
+)
 
 import urllib3
 
@@ -160,19 +171,23 @@ def get_max_retries_config() -> urllib3.util.retry.Retry:
         config = json.loads(config_data)
         return urllib3.util.retry.Retry(**config)
 
-    # Defaults.
-    try:
-        return urllib3.util.retry.Retry(
-            total=20,
-            backoff_factor=0.5,
-            allowed_methods=False,
-        )
-    except TypeError:  # Support urllib3 prior to 1.26
-        return urllib3.util.retry.Retry(
-            total=20,
-            backoff_factor=0.5,
-            method_whitelist=False,  # type: ignore
-        )
+    # Default retry is different with different versions of urllib3, which mypy doesn't understand.
+    @no_type_check
+    def make_default_retry():
+        try:
+            return urllib3.util.retry.Retry(
+                total=20,
+                backoff_factor=0.5,
+                allowed_methods=False,
+            )
+        except TypeError:  # Support urllib3 prior to 1.26
+            return urllib3.util.retry.Retry(
+                total=20,
+                backoff_factor=0.5,
+                method_whitelist=False,
+            )
+
+    return make_default_retry()  # type: ignore
 
 
 def parse_protobuf_timestamp(ts: str) -> datetime.datetime:
