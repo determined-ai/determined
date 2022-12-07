@@ -103,7 +103,11 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		return nil, launchWarnings, fmt.Errorf("checking respurce availability: %v", err.Error())
 	}
 	// Get the base TaskSpec.
-	taskContainerDefaults := a.m.getTaskContainerDefaults(resources.ResourcePool) // not the resolved pool name
+	taskContainerDefaults := a.m.rm.TaskContainerDefaults(
+		a.m.system,
+		resources.ResourcePool,
+		a.m.config.TaskContainerDefaults,
+	)
 	taskSpec := *a.m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup

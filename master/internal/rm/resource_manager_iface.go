@@ -67,6 +67,11 @@ type ResourceManager interface {
 		ctx actor.Messenger,
 		name string,
 		slots int) ([]command.LaunchWarning, error)
+	TaskContainerDefaults(
+		ctx actor.Messenger,
+		resourcePoolName string,
+		defaultConfig model.TaskContainerDefaultsConfig,
+	) model.TaskContainerDefaultsConfig
 
 	// Agents
 	GetAgents(actor.Messenger, *apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)

@@ -18,8 +18,8 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 			CUDA: []string{"cuda=default"},
 			ROCM: []string{"rocm=default"},
 		},
-		Slurm:                  expconf.SlurmConfigV0{
-			RawGpuType:      &gpuType,
+		Slurm: expconf.SlurmConfigV0{
+			RawGpuType: &gpuType,
 		},
 		Pbs: expconf.PbsConfigV0{
 			RawSlotsPerNode: &pbsSlotsPerNode,

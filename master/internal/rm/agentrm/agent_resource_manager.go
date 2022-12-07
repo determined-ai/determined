@@ -366,10 +366,29 @@ func (a *agentResourceManager) Receive(ctx *actor.Context) error {
 	case sproto.GetJobQStats:
 		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
 		ctx.Respond(resp)
+	case taskContainerDefaults:
+		ctx.Respond(a.getTaskContainerDefaults(msg))
+
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
+}
+
+func (a *agentResourceManager) getTaskContainerDefaults(
+	msg taskContainerDefaults,
+) model.TaskContainerDefaultsConfig {
+	result := msg.fallbackDefault
+	// Iterate through configured pools looking for a TaskContainerDefaults setting.
+	for _, pool := range a.poolsConfig {
+		if msg.resourcePool == pool.PoolName {
+			if pool.TaskContainerDefaults == nil {
+				break
+			}
+			result = *pool.TaskContainerDefaults
+		}
+	}
+	return result
 }
 
 func (a *agentResourceManager) createResourcePool(
@@ -734,4 +753,21 @@ func (a ResourceManager) NotifyContainerRunning(
 	// (High Performance Computing).
 	return errors.New(
 		"the NotifyContainerRunning message is unsupported for AgentResourceManager")
+}
+
+type taskContainerDefaults struct {
+	fallbackDefault model.TaskContainerDefaultsConfig
+	resourcePool    string
+}
+
+// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
+func (a ResourceManager) TaskContainerDefaults(
+	ctx actor.Messenger,
+	pool string,
+	defaultConfig model.TaskContainerDefaultsConfig,
+) model.TaskContainerDefaultsConfig {
+	result := model.TaskContainerDefaultsConfig{}
+	a.Ask(ctx,
+		taskContainerDefaults{fallbackDefault: defaultConfig, resourcePool: pool}, &result)
+	return result
 }

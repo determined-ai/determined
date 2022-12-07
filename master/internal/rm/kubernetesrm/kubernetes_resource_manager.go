@@ -826,3 +826,12 @@ func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 func (p k8sPodResources) Persist() error {
 	return nil
 }
+
+// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
+func (k ResourceManager) TaskContainerDefaults(
+	ctx actor.Messenger,
+	pool string,
+	defaultConfig model.TaskContainerDefaultsConfig,
+) model.TaskContainerDefaultsConfig {
+	return model.TaskContainerDefaultsConfig{}
+}
