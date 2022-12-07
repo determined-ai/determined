@@ -101,9 +101,6 @@ message SetNotebookPriorityResponse {
 
 // Request to launch a notebook.
 message LaunchNotebookRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workspace_id" ] }
-  };
   // Notebook config (JSON).
   google.protobuf.Struct config = 1;
   // Template name.

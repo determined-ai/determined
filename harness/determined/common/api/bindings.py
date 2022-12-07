@@ -5330,17 +5330,17 @@ class v1LaunchNotebookRequest:
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     preview: "typing.Optional[bool]" = None
     templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        workspaceId: int,
         config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         preview: "typing.Union[bool, None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
-        self.workspaceId = workspaceId
         if not isinstance(config, Unset):
             self.config = config
         if not isinstance(files, Unset):
@@ -5349,11 +5349,12 @@ class v1LaunchNotebookRequest:
             self.preview = preview
         if not isinstance(templateName, Unset):
             self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchNotebookRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "workspaceId": obj["workspaceId"],
         }
         if "config" in obj:
             kwargs["config"] = obj["config"]
@@ -5363,11 +5364,12 @@ class v1LaunchNotebookRequest:
             kwargs["preview"] = obj["preview"]
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
@@ -5377,6 +5379,8 @@ class v1LaunchNotebookRequest:
             out["preview"] = self.preview
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchNotebookResponse:

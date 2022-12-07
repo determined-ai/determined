@@ -4505,7 +4505,7 @@ export interface V1LaunchNotebookRequest {
      * @type {number}
      * @memberof V1LaunchNotebookRequest
      */
-    workspaceId: number;
+    workspaceId?: number;
 }
 
 /**
