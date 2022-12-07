@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// DefaultWorkspaceId is a special, always-existing, workspace titled "Uncategorized"
-	DefaultWorkspaceId = 1
+	// DefaultWorkspaceID is a special, always-existing, workspace titled "Uncategorized"
+	DefaultWorkspaceID = 1
 )
 
 // Workspace is the bun model of a workspace.

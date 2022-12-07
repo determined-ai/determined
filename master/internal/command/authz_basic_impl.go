@@ -17,7 +17,7 @@ type CommandAuthZBasic struct{}
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the task and a nil error.
 func (a *CommandAuthZBasic) CanGetCommand(
-	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceId model.AccessScopeID, jobType model.JobType,
+	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID, jobType model.JobType,
 ) (canGetCmd bool, serverError error) {
 	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
 		return true, nil
@@ -39,14 +39,14 @@ func (a *CommandAuthZBasic) FilterCommandsQuery(
 
 // CanTerminateCommand always returns a nil error.
 func (a *CommandAuthZBasic) CanTerminateCommand(
-	ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
+	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, jobType model.JobType,
 ) error {
 	return nil
 }
 
 // CanCreateCommand always returns a nil error.
 func (a *CommandAuthZBasic) CanCreateCommand(
-	ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
+	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, jobType model.JobType,
 ) error {
 	return nil
 }

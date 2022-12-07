@@ -17,7 +17,7 @@ type CommandAuthZ interface {
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
-		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceId model.AccessScopeID, jobType model.JobType,
+		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID, jobType model.JobType,
 	) (canGetCmd bool, serverError error)
 
 	// GET /api/v1/tasks/count
@@ -31,12 +31,12 @@ type CommandAuthZ interface {
 
 	// POST /api/v1/commands/:cmd_id/kill
 	CanTerminateCommand(
-		ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, jobType model.JobType,
 	) error
 
 	// POST /api/v1/commands
 	CanCreateCommand(
-		ctx context.Context, curUser model.User, workspaceId model.AccessScopeID, jobType model.JobType,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, jobType model.JobType,
 	) error
 
 	// PATCH /commands/:cmd_id

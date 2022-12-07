@@ -143,14 +143,14 @@ func (a *apiServer) SetNotebookPriority(
 }
 
 // TODO create experiment could use this?
-func (a *apiServer) getValidatedWorkspaceForNewJob(ctx context.Context, workspaceId int32) (*model.Workspace, error) {
-	wId := model.DefaultWorkspaceId
-	if workspaceId != 0 {
-		wId = int(workspaceId)
+func (a *apiServer) getValidatedWorkspaceForNewJob(ctx context.Context, workspaceID int32) (*model.Workspace, error) {
+	defaultedWID := model.DefaultWorkspaceID
+	if workspaceID != 0 {
+		defaultedWID = int(workspaceID)
 	}
 	var w model.Workspace
 	if err := db.Bun().NewSelect().Model(&w).
-		Where("id = ?", wId).
+		Where("id = ?", defaultedWID).
 		Scan(ctx); err != nil {
 		// TODO figure out the proper error code
 		return nil, err
