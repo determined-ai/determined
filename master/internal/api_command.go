@@ -24,7 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -54,7 +54,7 @@ type protoCommandParams struct {
 }
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
-	*tasks.GenericCommandSpec, []command.LaunchWarning, error,
+	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
 ) {
 	var err error
 
@@ -305,6 +305,6 @@ func (a *apiServer) LaunchCommand(
 	return &apiv1.LaunchCommandResponse{
 		Command:  cmd,
 		Config:   protoutils.ToStruct(spec.Config),
-		Warnings: command.LaunchWarningToProto(launchWarnings),
+		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }

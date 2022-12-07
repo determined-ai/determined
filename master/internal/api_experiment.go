@@ -36,7 +36,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
@@ -1174,7 +1174,7 @@ func (a *apiServer) CreateExperiment(
 	return &apiv1.CreateExperimentResponse{
 		Experiment: protoExp,
 		Config:     protoutils.ToStruct(e.Config),
-		Warnings:   command.LaunchWarningToProto(launchWarnings),
+		Warnings:   pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
 

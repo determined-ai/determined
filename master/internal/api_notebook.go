@@ -20,7 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -269,6 +269,6 @@ func (a *apiServer) LaunchNotebook(
 	return &apiv1.LaunchNotebookResponse{
 		Notebook: notebook,
 		Config:   protoutils.ToStruct(spec.Config),
-		Warnings: command.LaunchWarningToProto(launchWarnings),
+		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }

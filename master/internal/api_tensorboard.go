@@ -29,7 +29,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -391,7 +391,7 @@ func (a *apiServer) LaunchTensorboard(
 	return &apiv1.LaunchTensorboardResponse{
 		Tensorboard: tb,
 		Config:      protoutils.ToStruct(spec.Config),
-		Warnings:    command.LaunchWarningToProto(launchWarnings),
+		Warnings:    pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, err
 }
 
