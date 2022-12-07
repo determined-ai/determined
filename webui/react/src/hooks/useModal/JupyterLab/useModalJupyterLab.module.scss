@@ -11,6 +11,9 @@
 .loading {
   padding: 40px;
 }
+.noFooter :global(.ant-modal-confirm-btns) {
+  display: none;
+}
 .line {
   &:global(.ant-form-item) {
     margin: 0;
@@ -36,9 +39,6 @@
   flex-direction: column;
   gap: 10px;
   padding-top: 10px;
-}
-.noFooter :global(.ant-modal-confirm-btns) {
-  display: none;
 }
 .buttons {
   display: flex;
