@@ -26,7 +26,7 @@ const SettingsAccount: React.FC = () => {
     Loaded: (auth) => auth.user,
     NotLoaded: () => undefined,
   });
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
     useModalPasswordChange();

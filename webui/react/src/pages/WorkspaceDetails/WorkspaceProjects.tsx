@@ -56,7 +56,7 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
   const loadableAuth = useAuth();
   const user = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.user,

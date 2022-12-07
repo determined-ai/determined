@@ -33,10 +33,15 @@ export const UserSettings = createContext<UserSettingsContext>({
 });
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { user, checked } = Loadable.getOrElse(
-    { checked: true, isAuthenticated: false },
-    useAuth().auth,
-  );
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
+  const checked = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.checked,
+    NotLoaded: () => false,
+  });
   const [canceler] = useState(new AbortController());
   const [isLoading, setIsLoading] = useState(true);
   const querySettings = useRef('');

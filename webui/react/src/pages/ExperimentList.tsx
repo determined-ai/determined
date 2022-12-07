@@ -111,7 +111,7 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
   const loadableAuth = useAuth();
   const user = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.user,

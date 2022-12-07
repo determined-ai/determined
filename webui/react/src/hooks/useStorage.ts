@@ -19,11 +19,10 @@ export const useStorage = (
   store: Storage = window.localStorage,
 ): StorageManager => {
   const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
-    NotLoaded: () => undefined,
+  const userNamespace = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => (auth.user ? `u:${auth.user.id}` : ''),
+    NotLoaded: () => '',
   });
-  const userNamespace = user ? `u:${user.id}` : '';
   const [storage] = useState(
     new StorageManager({ basePath: `${userNamespace}/${basePath}`, store }),
   );

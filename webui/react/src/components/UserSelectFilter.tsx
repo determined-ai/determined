@@ -24,7 +24,7 @@ const userToSelectOption = (user: User): React.ReactNode => (
 );
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state // TODO: handle loading state
   const loadableAuth = useAuth();
   const authUser = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.user,
