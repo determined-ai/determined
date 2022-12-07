@@ -20,13 +20,13 @@ import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
-import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 
 interface ItemProps extends LinkProps {
   action?: React.ReactNode;

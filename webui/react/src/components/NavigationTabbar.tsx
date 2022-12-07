@@ -13,8 +13,8 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAgents, useClusterOverview } from 'stores/agents';
-import { useResourcePools } from 'stores/resourcePools';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
+import { useResourcePools } from 'stores/resourcePools';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
