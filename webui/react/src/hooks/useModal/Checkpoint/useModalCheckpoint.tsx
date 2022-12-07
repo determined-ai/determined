@@ -144,7 +144,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
             <span>Batch {checkpoint.totalBatches}</span>
           </div>,
         )}
-        {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
+        {renderRow('Status', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
         {searcherMetric &&
@@ -157,7 +157,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
           )}
         {'endTime' in checkpoint &&
           checkpoint?.endTime &&
-          renderRow('End Time', formatDatetime(checkpoint.endTime))}
+          renderRow('Ended', formatDatetime(checkpoint.endTime))}
         {renderRow(
           'Total Size',
           <div className={css.size}>

@@ -33,7 +33,7 @@ export const columns: ColumnDef<CoreApiGenericCheckpoint>[] = [
     key: V1GetExperimentCheckpointsRequestSortBy.STATE,
     render: stateRenderer,
     sorter: true,
-    title: 'State',
+    title: 'Status',
   },
   {
     dataIndex: 'checkpoint',
