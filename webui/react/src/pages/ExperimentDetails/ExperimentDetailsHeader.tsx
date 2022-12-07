@@ -459,7 +459,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               />
             </div>
             <div className={css.foldableItem}>
-              <span className={css.foldableItemLabel}>Start Time:</span>
+              <span className={css.foldableItemLabel}>Started:</span>
               <TimeAgo datetime={experiment.startTime} long />
             </div>
             {experiment.endTime != null && (

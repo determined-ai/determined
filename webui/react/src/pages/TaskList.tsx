@@ -372,7 +372,7 @@ const TaskList: React.FC = () => {
         sorter: (a: CommandTask, b: CommandTask): number => {
           return dateTimeStringSorter(a.startTime, b.startTime);
         },
-        title: 'Start Time',
+        title: 'Started',
       },
       {
         dataIndex: 'state',
@@ -386,7 +386,7 @@ const TaskList: React.FC = () => {
         key: 'state',
         render: stateRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => commandStateSorter(a.state, b.state),
-        title: 'State',
+        title: 'Status',
       },
       {
         dataIndex: 'resourcePool',

@@ -480,7 +480,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         onCell: onRightClickableCell,
         render: forkedFromRenderer,
         sorter: true,
-        title: 'Forked From',
+        title: 'Forked',
       },
       {
         align: 'right',
@@ -491,7 +491,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
-        title: 'Start Time',
+        title: 'Started',
       },
       {
         align: 'right',
@@ -529,14 +529,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         key: V1GetExperimentsRequestSortBy.STATE,
         render: expStateRenderer,
         sorter: true,
-        title: 'State',
+        title: 'Status',
       },
       {
         dataIndex: 'searcherType',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
         key: 'searcherType',
         onCell: onRightClickableCell,
-        title: 'Searcher Type',
+        title: 'Searcher',
       },
       {
         dataIndex: 'resourcePool',

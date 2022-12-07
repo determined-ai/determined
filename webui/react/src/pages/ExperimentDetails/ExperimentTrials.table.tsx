@@ -21,7 +21,7 @@ export const columns: ColumnDef<TrialItem>[] = [
     key: V1GetExperimentTrialsRequestSortBy.STATE,
     render: expStateRenderer,
     sorter: true,
-    title: 'State',
+    title: 'Status',
   },
   {
     dataIndex: 'totalBatchesProcessed',
@@ -51,7 +51,7 @@ export const columns: ColumnDef<TrialItem>[] = [
     render: (_: string, record: TrialItem): ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
     sorter: true,
-    title: 'Start Time',
+    title: 'Started',
   },
   {
     dataIndex: 'duration',
