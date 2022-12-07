@@ -35,7 +35,7 @@ const AppView: React.FC = () => {
   const storeDispatch = useStoreDispatch();
   const { auth, ui } = useStore();
   const infoLoadable = useDeterminedInfo();
-  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck(canceler);

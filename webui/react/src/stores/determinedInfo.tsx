@@ -8,7 +8,7 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
 type DeterminedInfoContext = {
   info: Loadable<DeterminedInfo>;
-  updateInfo: (a: Loadable<DeterminedInfo>) => void;
+  updateInfo: React.Dispatch<React.SetStateAction<Loadable<DeterminedInfo>>>;
 };
 
 export const initInfo: DeterminedInfo = {
@@ -31,7 +31,7 @@ const DeterminedInfoContext = createContext<DeterminedInfoContext>({
 export const DeterminedInfoProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [info, setInfo] = useState<Loadable<DeterminedInfo>>(NotLoaded);
   return (
-    <DeterminedInfoContext.Provider value={{ info: info, updateInfo: setInfo }}>
+    <DeterminedInfoContext.Provider value={{ info, updateInfo: setInfo }}>
       {children}
     </DeterminedInfoContext.Provider>
   );
@@ -42,16 +42,19 @@ export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) =
   if (context === null) {
     throw new Error('Attempted to use useDeterminedInfo outside of Determinednfo Context');
   }
-  const { updateInfo, info } = context;
+  const { updateInfo } = context;
   return useCallback(async (): Promise<void> => {
     try {
       const response = await getInfo({ signal: canceler.signal });
       updateInfo(Loaded(response));
     } catch (e) {
-      updateInfo(Loaded({ ...Loadable.getOrElse(initInfo, info), checked: true }));
+      updateInfo((prevInfo) => {
+        const info = Loadable.getOrElse(initInfo, prevInfo);
+        return Loaded({ ...info, checked: true });
+      });
       handleError(e);
     }
-  }, [canceler, updateInfo, info]);
+  }, [canceler, updateInfo]);
 };
 
 export const useEnsureInfoFetched = (canceler: AbortController): (() => Promise<void>) => {
