@@ -210,13 +210,7 @@ OPT_MASTERHOST_casablanca=casablanca-mgmt1.us.cray.com
 OPT_MASTERPORT_casablanca=$USERPORT
 OPT_TRESSUPPORTED_casablanca=true
 OPT_PROTOCOL_casablanca=http
-# Indentation of task_container_defaults must match devcluster-slurm.yaml
-OPT_TASKCONTAINERDEFAULTS_casablanca=$(
-    cat <<EOF
-          environment_variables:
-            - ENROOT_RUNTIME_PATH=/tmp/\$\$(whoami)
-EOF
-)
+
 
 # Configuration for horizon
 OPT_name_horizon=horizon.us.cray.com
@@ -238,13 +232,7 @@ OPT_CHECKPOINTPATH_casablanca_login=/mnt/lustre/foundation_engineering/determine
 OPT_MASTERHOST_casablanca_login=casablanca-login
 OPT_MASTERPORT_casablanca_login=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login=true
-# Indentation of task_container_defaults must match devcluster-slurm.yaml
-OPT_TASKCONTAINERDEFAULTS_casablanca_login=$(
-    cat <<EOF
-          environment_variables:
-            - ENROOT_RUNTIME_PATH=/tmp/\$\$(whoami)
-EOF
-)
+
 
 # Configuration for casablanca-login2 (uses suffix casablanca_login2)
 OPT_name_casablanca_login2=casablanca-login2.us.cray.com
@@ -255,15 +243,7 @@ OPT_CHECKPOINTPATH_casablanca_login2=/mnt/lustre/foundation_engineering/determin
 OPT_MASTERHOST_casablanca_login2=casablanca-login2
 OPT_MASTERPORT_casablanca_login2=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login2=false
-# Indentation of task_container_defaults must match devcluster-slurm.yaml
-# This actuallly does not work with PBS+Enroot because the variable is passed to the container
-# not visible to enroot start command.
-OPT_TASKCONTAINERDEFAULTS_casablanca_login2=$(
-    cat <<EOF
-          environment_variables:
-            - ENROOT_RUNTIME_PATH=/tmp/\$\$(whoami)
-EOF
-)
+
 
 # Configuration for sawmill (10.100.97.101)
 OPT_name_sawmill=10.100.97.101
@@ -370,6 +350,16 @@ OPT_GRESSUPPORTED_o184i023=false
 OPT_PROTOCOL_o184i023=http
 OPT_SLOTTYPE_o184i023=rocm
 
+# enroot-specific task container default if not otherwise defined
+# Indentation of task_container_defaults must match devcluster-slurm.yaml
+enroot_OPT_TASKCONTAINERDEFAULTS=$(
+    cat <<EOF
+          environment_variables:
+            - ENROOT_RUNTIME_PATH=/tmp/\$\$(whoami)
+EOF
+)
+
+
 # This is the list of options that can be injected into devcluster-slurm.yaml
 # If a value is not configured for a specific target cluster, it will be
 # blank and get the default value.   OPT_TASKCONTAINERDEFAULTS & OPT_PARTITIONOVERRIDES
@@ -440,6 +430,11 @@ fi
 
 if [[ -n $ENROOT ]]; then
     export OPT_CONTAINER_RUN_TYPE='enroot'
+    # If we have not otherwise setup OPT_TASKCONTAINERDEFAULTS, add default for Enroot
+    # config to define ENROOT_RUNTIME_PATH
+    if [[ -z $OPT_TASKCONTAINERDEFAULTS ]]; then
+        OPT_TASKCONTAINERDEFAULTS=$enroot_OPT_TASKCONTAINERDEFAULTS
+    fi
 fi
 
 if [[ -r ~/.${CLUSTER}.token ]]; then
