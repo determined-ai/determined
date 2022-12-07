@@ -1,0 +1,5 @@
+# include the "custom" style
+# (we have to use a style definition to change rule parameters)
+style File.join(File.dirname(__FILE__), '.determined_markdown.style')
+# # enable parser warnings from Ruby
+# show_kramdown_warnings true

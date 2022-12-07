@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { TabsProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -24,8 +25,6 @@ import { isAborted, isNotFound } from 'shared/utils/service';
 import { ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
-
-const { TabPane } = Tabs;
 
 const TabType = {
   Hyperparameters: 'hyperparameters',
@@ -123,6 +122,39 @@ const TrialDetailsComp: React.FC = () => {
     navigate(`${basePath}/${TabType.Logs}?tail`, { replace: true });
   }, [basePath, navigate]);
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    if (!experiment || !trial) {
+      return [];
+    }
+
+    return [
+      {
+        children: <TrialDetailsOverview experiment={experiment} trial={trial} />,
+        key: TabType.Overview,
+        label: 'Overview',
+      },
+      {
+        children: isSingleTrialExperiment(experiment) ? (
+          <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
+        ) : (
+          <TrialRangeHyperparameters experiment={experiment} trial={trial} />
+        ),
+        key: TabType.Hyperparameters,
+        label: 'Hyperparameters',
+      },
+      {
+        children: <TrialDetailsProfiles experiment={experiment} trial={trial} />,
+        key: TabType.Profiler,
+        label: 'Profiler',
+      },
+      {
+        children: <TrialDetailsLogs experiment={experiment} trial={trial} />,
+        key: TabType.Logs,
+        label: 'Logs',
+      },
+    ];
+  }, [experiment, trial]);
+
   const { stopPolling } = usePolling(fetchTrialDetails);
 
   useEffect(() => {
@@ -185,6 +217,7 @@ const TrialDetailsComp: React.FC = () => {
           <Tabs
             activeKey={tabKey}
             className="no-padding"
+            items={tabItems}
             tabBarExtraContent={
               <RoutePagination
                 currentId={trialId}
@@ -195,24 +228,8 @@ const TrialDetailsComp: React.FC = () => {
                 }}
               />
             }
-            onChange={handleTabChange}>
-            <TabPane key={TabType.Overview} tab="Overview">
-              <TrialDetailsOverview experiment={experiment} trial={trial} />
-            </TabPane>
-            <TabPane key={TabType.Hyperparameters} tab="Hyperparameters">
-              {isSingleTrialExperiment(experiment) ? (
-                <TrialDetailsHyperparameters pageRef={pageRef} trial={trial} />
-              ) : (
-                <TrialRangeHyperparameters experiment={experiment} trial={trial} />
-              )}
-            </TabPane>
-            <TabPane key={TabType.Profiler} tab="Profiler">
-              <TrialDetailsProfiles experiment={experiment} trial={trial} />
-            </TabPane>
-            <TabPane key={TabType.Logs} tab="Logs">
-              <TrialDetailsLogs experiment={experiment} trial={trial} />
-            </TabPane>
-          </Tabs>
+            onChange={handleTabChange}
+          />
         </Spinner>
       </TrialLogPreview>
     </Page>

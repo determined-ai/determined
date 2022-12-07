@@ -38,9 +38,9 @@ const ResourcePoolDetails: React.FC<Props> = ({ resourcePool: pool, ...props }: 
       cancelButtonProps={{ style: { display: 'none' } }}
       cancelText=""
       mask
+      open={props.visible}
       style={{ minWidth: '600px' }}
       title={title}
-      visible={props.visible}
       onCancel={props.finally}
       onOk={props.finally}>
       <Json json={mainSection} translateLabel={camelCaseToSentence} />

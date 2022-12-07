@@ -54,11 +54,12 @@ def test_create_with_model_def(requests_mock: requests_mock.Mocker, tmp_path: Pa
     )
 
     requests_mock.post(
-        "/experiments", status_code=requests.codes.created, headers={"Location": "/experiments/1"}
+        "/experiments",
+        status_code=requests.codes.created,
+        headers={"Location": "/experiments/1"},
+        json={"experiment": {}},
     )
 
-    tempfile.mkstemp(dir=str(tmp_path))
-    tempfile.mkstemp(dir=str(tmp_path))
     tempfile.mkstemp(dir=str(tmp_path))
 
     with FileTree(tmp_path, {"config.yaml": MINIMAL_CONFIG}) as tree:
@@ -111,7 +112,6 @@ def test_uuid_prefix(requests_mock: requests_mock.Mocker) -> None:
         cli.main(["shell", "config", "x"])
 
 
-@pytest.mark.slow
 def test_create_reject_large_model_def(requests_mock: requests_mock.Mocker, tmp_path: Path) -> None:
     requests_mock.get("/info", status_code=200, json={"version": "1.0"})
 

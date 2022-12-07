@@ -41,7 +41,7 @@ export const getUser = generateDetApi<
 >(Config.getUser);
 
 export const postUser = generateDetApi<
-  Service.PostUserParams,
+  Api.V1PostUserRequest,
   Api.V1PostUserResponse,
   Api.V1PostUserResponse
 >(Config.postUser);
@@ -293,7 +293,7 @@ export const getTrialWorkloads = generateDetApi<
 export const createExperiment = generateDetApi<
   Service.CreateExperimentParams,
   Api.V1CreateExperimentResponse,
-  Type.ExperimentBase
+  Type.CreateExperimentResponse
 >(Config.createExperiment);
 
 export const archiveExperiment = generateDetApi<
@@ -661,7 +661,7 @@ export const getTaskTemplates = generateDetApi<
 export const launchJupyterLab = generateDetApi<
   Service.LaunchJupyterLabParams,
   Api.V1LaunchNotebookResponse,
-  Type.CommandTask
+  Type.CommandResponse
 >(Config.launchJupyterLab);
 
 export const previewJupyterLab = generateDetApi<
@@ -673,19 +673,19 @@ export const previewJupyterLab = generateDetApi<
 export const launchTensorBoard = generateDetApi<
   Service.LaunchTensorBoardParams,
   Api.V1LaunchTensorboardResponse,
-  Type.CommandTask
+  Type.CommandResponse
 >(Config.launchTensorBoard);
 
 export const openOrCreateTensorBoard = async (
   params: Service.LaunchTensorBoardParams,
-): Promise<Type.CommandTask> => {
+): Promise<Type.CommandResponse> => {
   const tensorboards = await getTensorBoards({});
   const match = tensorboards.find(
     (tensorboard) =>
       !terminalCommandStates.has(tensorboard.state) &&
       tensorBoardMatchesSource(tensorboard, params),
   );
-  if (match) return match;
+  if (match) return { command: match, warnings: [1] };
   return launchTensorBoard(params);
 };
 

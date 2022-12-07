@@ -1,12 +1,12 @@
 import { Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './Markdown.module.scss';
 
-const { TabPane } = Tabs;
 const MonacoEditor = React.lazy(() => import('components/MonacoEditor'));
 
 interface Props {
@@ -48,11 +48,11 @@ const Markdown: React.FC<Props> = ({
   onChange,
   onClick,
 }: Props) => {
-  return (
-    <div aria-label="markdown-editor" className={css.base} tabIndex={0}>
-      {editing && !disabled ? (
-        <Tabs className="no-padding">
-          <TabPane className={css.noOverflow} key={TabType.Edit} tab="Edit">
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    return [
+      {
+        children: (
+          <div className={css.noOverflow}>
             <React.Suspense
               fallback={
                 <div>
@@ -76,11 +76,23 @@ const Markdown: React.FC<Props> = ({
                 onChange={onChange}
               />
             </React.Suspense>
-          </TabPane>
-          <TabPane key={TabType.Preview} tab="Preview">
-            <MarkdownRender markdown={markdown} onClick={onClick} />
-          </TabPane>
-        </Tabs>
+          </div>
+        ),
+        key: TabType.Edit,
+        label: 'Edit',
+      },
+      {
+        children: <MarkdownRender markdown={markdown} onClick={onClick} />,
+        key: TabType.Preview,
+        label: 'Preview',
+      },
+    ];
+  }, [markdown, onChange, onClick]);
+
+  return (
+    <div aria-label="markdown-editor" className={css.base} tabIndex={0}>
+      {editing && !disabled ? (
+        <Tabs className="no-padding" items={tabItems} />
       ) : (
         <MarkdownRender
           markdown={markdown}

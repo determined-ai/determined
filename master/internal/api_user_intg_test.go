@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
@@ -21,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -37,7 +38,7 @@ var (
 	pgDB      *db.PgDB
 	authzUser *mocks.UserAuthZ
 	system    *actor.System
-	mockRM    *rm.ActorResourceManager
+	mockRM    *actorrm.ResourceManager
 )
 
 func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
@@ -51,7 +52,7 @@ func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 			func(context *actor.Context) error {
 				return nil
 			}))
-		mockRM = rm.WrapRMActor(ref)
+		mockRM = actorrm.Wrap(ref)
 	}
 
 	api := &apiServer{

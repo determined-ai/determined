@@ -140,7 +140,7 @@ func TestShipper(t *testing.T) {
 			require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
 				ID:     id,
 				State:  model.CompletedState,
-				Config: schemas.WithDefaults(conf).(expconf.ExperimentConfigV0),
+				Config: schemas.WithDefaults(conf),
 			}))
 			progress.Store(int64(id))
 		}

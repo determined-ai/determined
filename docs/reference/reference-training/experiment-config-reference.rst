@@ -1108,8 +1108,6 @@ workloads for this experiment. For more information on customizing the trial env
    Just like ``add_capabilities`` but corresponding to the ``--cap-drop`` argument of ``docker run``
    rather than ``--cap-add``.
 
-.. _exp-environment-slurm:
-
 ***************
  Optimizations
 ***************
@@ -1295,6 +1293,18 @@ The ``slurm`` section specifies configuration options applicable when the cluste
 :ref:`resource_manager.type: slurm <cluster-configuration-slurm>`.
 
 **Optional Fields**
+
+``gpu_type``
+   An optional GPU type name to be included in the generated Slurm ``--gpus`` or ``--gres`` option
+   if you have configured GPU types within your Slurm gres configuration. Specify this option to
+   select that specific GPU type when there are multiple GPU types within the Slurm partition. The
+   default is to select GPUs without regard to their type. For example, you can request the
+   ``tesla`` GPU type with:
+
+   .. code:: yaml
+
+      slurm:
+         gpu_type: tesla
 
 ``sbatch_args``
    Additional Slurm options to be passed when launching trials with ``sbatch``. These options enable

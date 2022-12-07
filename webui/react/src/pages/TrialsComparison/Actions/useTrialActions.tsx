@@ -1,4 +1,5 @@
-import { Dropdown, Menu } from 'antd';
+import { Dropdown } from 'antd';
+import { array, number } from 'io-ts';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, {
   Dispatch,
@@ -10,7 +11,7 @@ import React, {
 } from 'react';
 
 import TableBatch from 'components/Table/TableBulkActions';
-import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
@@ -48,17 +49,16 @@ interface Props {
   sorter: TrialSorter;
 }
 
-export const settingsConfig: SettingsConfig = {
+export const settingsConfig: SettingsConfig<{ ids: number[] }> = {
   applicableRoutespace: '/trials',
-  settings: [
-    {
+  settings: {
+    ids: {
       defaultValue: [],
-      key: 'ids',
       // skipUrlEncoding: true,
       storageKey: 'selectedTrialIds',
-      type: { baseType: BaseType.Integer, isArray: true },
+      type: array(number),
     },
-  ],
+  },
   storagePath: 'trials-selection',
 };
 
@@ -71,7 +71,7 @@ const useTrialActions = ({
 }: Props): TrialActionsInterface => {
   const { settings, updateSettings } = useSettings<{ ids: number[] }>(settingsConfig);
 
-  const [selectedTrials, setSelectedTrials] = useState<number[]>(settings.ids);
+  const [selectedTrials, setSelectedTrials] = useState<number[]>(settings.ids ?? []);
 
   const previouslySelectedTrials = usePrevious(selectedTrials, undefined);
 
@@ -143,34 +143,32 @@ const useTrialActions = ({
       { key: TrialAction.AddTags, label: 'Add Tags' },
     ];
 
-    const menu = (
-      <Menu
-        items={menuItems}
-        onClick={(params: MenuInfo) => {
-          params.domEvent.stopPropagation();
-          const { key: action } = params;
-          dispatchTrialAction(
-            action as TrialAction,
-            { trialIds: [id] },
-            action === TrialAction.OpenTensorBoard
-              ? openTensorBoard
-              : action === TrialAction.AddTags
-              ? modalOpen
-              : noOp,
-          );
-        }}
-      />
-    );
+    const menu = {
+      items: menuItems,
+      onClick: (params: MenuInfo) => {
+        params.domEvent.stopPropagation();
+        const { key: action } = params;
+        dispatchTrialAction(
+          action as TrialAction,
+          { trialIds: [id] },
+          action === TrialAction.OpenTensorBoard
+            ? openTensorBoard
+            : action === TrialAction.AddTags
+            ? modalOpen
+            : noOp,
+        );
+      },
+    };
 
     return children ? (
       <>
-        <Dropdown overlay={menu} placement="bottomLeft" trigger={['contextMenu']}>
+        <Dropdown menu={menu} placement="bottomLeft" trigger={['contextMenu']}>
           {children}
         </Dropdown>
       </>
     ) : (
       <div className={css.base} title="Open actions menu" onClick={(e) => e.stopPropagation()}>
-        <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+        <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
           <button onClick={(e) => e.stopPropagation()}>
             <Icon name="overflow-vertical" />
           </button>

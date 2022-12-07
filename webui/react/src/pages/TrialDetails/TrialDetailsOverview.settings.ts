@@ -1,5 +1,7 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { TrialWorkloadFilter } from 'types';
 
 export interface Settings {
@@ -11,44 +13,45 @@ export interface Settings {
   tableOffset: number;
 }
 
-const config: SettingsConfig = {
+const config: SettingsConfig<Settings> = {
   applicableRoutespace: 'overview',
-  settings: [
-    {
+  settings: {
+    filter: {
       defaultValue: TrialWorkloadFilter.CheckpointOrValidation,
-      key: 'filter',
       storageKey: 'filter',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(TrialWorkloadFilter.All),
+        literal(TrialWorkloadFilter.Checkpoint),
+        literal(TrialWorkloadFilter.CheckpointOrValidation),
+        literal(TrialWorkloadFilter.Validation),
+      ]),
     },
-    {
-      key: 'metric',
+    metric: {
+      defaultValue: undefined,
       storageKey: 'metric',
-      type: { baseType: BaseType.String, isArray: true },
+      type: union([undefinedType, array(string)]),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: 'batches',
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: string,
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
+  },
   storagePath: 'trial-detail',
 };
 

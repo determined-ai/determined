@@ -10,13 +10,14 @@ import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig, relativeTimeRenderer } from 'components/Table/Table';
 import TableFilterMultiSearch from 'components/Table/TableFilterMultiSearch';
 import TableFilterRank from 'components/Table/TableFilterRank';
 import UserAvatar from 'components/UserAvatar';
 import { useStore } from 'contexts/Store';
 import { Highlights } from 'hooks/useHighlight';
-import { SettingsHook, UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, UseSettingsReturn } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
 import { Determinedtrialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
@@ -41,7 +42,7 @@ interface Props {
   containerRef: MutableRefObject<HTMLElement | null>;
   highlights: Highlights<V1AugmentedTrial>;
   loading?: boolean;
-  tableSettingsHook: SettingsHook<InteractiveTableSettings>;
+  tableSettingsHook: UseSettingsReturn<InteractiveTableSettings>;
   trialsWithMetadata: TrialsWithMetadata;
 }
 
@@ -534,8 +535,8 @@ const TrialTable: React.FC<Props> = ({
   }, [availableColumns]);
 
   const pagination = useMemo(() => {
-    const limit = settings.tableLimit;
-    const offset = settings.tableOffset;
+    const limit = settings.tableLimit || 0;
+    const offset = settings.tableOffset || 0;
     // we fetched 3 * params.limit to be able to see ahead like this
     // also has bonus side effect of giving us a better hit rate
     // for the relevant dynamic columns
@@ -551,28 +552,32 @@ const TrialTable: React.FC<Props> = ({
 
   return (
     <div className={css.base}>
-      <InteractiveTable<V1AugmentedTrial>
-        columns={columns}
-        containerRef={containerRef}
-        ContextMenu={ContextMenu}
-        dataSource={trials.data.slice(0, settings.tableLimit)}
-        interactiveColumns={false}
-        pagination={pagination}
-        rowClassName={highlights.rowClassName}
-        rowKey="trialId"
-        rowSelection={{
-          getCheckboxProps: () => ({ disabled: selectAllMatching }),
-          onChange: selectTrials,
-          preserveSelectedRowKeys: true,
-          selectedRowKeys: (selectAllMatching ? trials.ids : selectedTrials) as number[],
-        }}
-        scroll={{ x: 'max-content', y: '40vh' }}
-        settings={settings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-        onRow={highlights.onRow}
-      />
+      {settings ? (
+        <InteractiveTable<V1AugmentedTrial>
+          columns={columns}
+          containerRef={containerRef}
+          ContextMenu={ContextMenu}
+          dataSource={trials.data.slice(0, settings.tableLimit)}
+          interactiveColumns={false}
+          pagination={pagination}
+          rowClassName={highlights.rowClassName}
+          rowKey="trialId"
+          rowSelection={{
+            getCheckboxProps: () => ({ disabled: selectAllMatching }),
+            onChange: selectTrials,
+            preserveSelectedRowKeys: true,
+            selectedRowKeys: (selectAllMatching ? trials.ids : selectedTrials) as number[],
+          }}
+          scroll={{ x: 'max-content', y: '40vh' }}
+          settings={settings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+          onRow={highlights.onRow}
+        />
+      ) : (
+        <SkeletonTable columns={columns.length} />
+      )}
     </div>
   );
 };

@@ -150,7 +150,7 @@ func TestModels(t *testing.T) {
 			requireModelVersionOK(expected, &mv)
 
 			var retMv modelv1.ModelVersion
-			err = db.QueryProto("get_model_version", &retMv, pmdl.Id, mv.Id)
+			err = db.QueryProto("get_model_version", &retMv, pmdl.Id, mv.Version)
 			require.NoError(t, err)
 			requireModelVersionOK(expected, &mv)
 

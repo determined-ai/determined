@@ -120,6 +120,14 @@ const isLoadable = <T, Z>(l: Loadable<T> | Z): l is Loadable<T> => {
   return ['Loaded', 'NotLoaded', 'NotFound'].includes((l as Loadable<T>)?._tag);
 };
 
+const isLoading = <T>(l: Loadable<T>): l is { _tag: 'NotLoaded' } => {
+  return l === NotLoaded;
+};
+
+const isLoaded = <T>(l: Loadable<T>): l is { _tag: 'Loaded'; data: T } => {
+  return l !== NotLoaded;
+};
+
 /**
  * Groups up all passed Loadables. NotFound takes priority over
  * NotLoaded so all([NotLoaded, NotFound, Loaded(4)]) returns NotFound
@@ -163,6 +171,8 @@ export const Loadable = {
   forEach,
   getOrElse,
   isLoadable,
+  isLoaded,
+  isLoading,
   map,
   match,
   quickMatch,

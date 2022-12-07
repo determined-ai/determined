@@ -64,7 +64,7 @@ func TestComputeHPImportance(t *testing.T) {
 			},
 		},
 	}
-	expConfig = schemas.WithDefaults(expConfig).(expconf.ExperimentConfig)
+	expConfig = schemas.WithDefaults(expConfig)
 
 	data := map[int][]model.HPImportanceTrialData{
 		10: {

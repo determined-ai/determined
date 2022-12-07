@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 
+import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/notebook/v1/notebook.proto";
 import "determined/util/v1/util.proto";
@@ -116,7 +117,7 @@ message LaunchNotebookRequest {
   if we want to go hirearchical it might make sense to set this up
   for that future. eg take a list of scope_ids, dir_ids, or a path? cc @ilia
   */
-  // Workspace ID.
+  // Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
   int32 workspace_id = 5;
 }
 // Response to LaunchNotebookRequest.
@@ -128,4 +129,6 @@ message LaunchNotebookResponse {
   determined.notebook.v1.Notebook notebook = 1;
   // The config;
   google.protobuf.Struct config = 2;
+  // List of any related warnings.
+  repeated LaunchWarning warnings = 3;
 }

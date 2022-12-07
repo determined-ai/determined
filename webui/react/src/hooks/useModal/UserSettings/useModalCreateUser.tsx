@@ -1,4 +1,4 @@
-import { Form, Input, message, Select, Switch, Typography } from 'antd';
+import { Form, Input, InputNumber, message, Select, Switch, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ import {
   removeRolesFromUser,
   updateGroup,
 } from 'services/api';
-import { V1GroupSearchResult } from 'services/api-ts-sdk';
+import { V1AgentUserGroup, V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
@@ -58,12 +58,31 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
   const { canAssignRoles, canModifyPermissions } = usePermissions();
   const { knownRoles } = useStore();
 
+  const useAgent = Form.useWatch<FormValues>('useAgent', form);
+
   useEffect(() => {
     form.setFieldsValue({
       [ADMIN_NAME]: user?.isAdmin,
       [DISPLAY_NAME_NAME]: user?.displayName,
       [ROLE_NAME]: roles?.map((r) => r.id),
     });
+    if (user?.agentUserGroup) {
+      form.setFieldsValue({
+        agentGid: user?.agentUserGroup.agentGid,
+        agentGroup: user?.agentUserGroup.agentGroup,
+        agentUid: user?.agentUserGroup.agentUid,
+        agentUser: user?.agentUserGroup.agentUser,
+        useAgent: true,
+      });
+    } else {
+      form.setFieldsValue({
+        agentGid: undefined,
+        agentGroup: undefined,
+        agentUid: undefined,
+        agentUser: undefined,
+        useAgent: false,
+      });
+    }
   }, [form, user, roles]);
 
   if (user !== undefined && roles === null && rbacEnabled && canAssignRoles({})) {
@@ -89,6 +108,37 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
       <Form.Item label={DISPLAY_NAME_LABEL} name={DISPLAY_NAME_NAME}>
         <Input disabled={viewOnly} maxLength={128} placeholder="Display Name" />
       </Form.Item>
+      <Form.Item label="Configure Agent" name="useAgent" valuePropName="checked">
+        <Switch disabled={viewOnly} />
+      </Form.Item>
+      {useAgent && (
+        <>
+          <Form.Item
+            label="Agent User ID"
+            name="agentUid"
+            rules={[{ message: 'Agent User ID is required ', required: true }]}>
+            <InputNumber disabled={viewOnly} />
+          </Form.Item>
+          <Form.Item
+            label="Agent User Name"
+            name="agentUser"
+            rules={[{ message: 'Agent User Name is required ', required: true }]}>
+            <Input disabled={viewOnly} maxLength={100} />
+          </Form.Item>
+          <Form.Item
+            label="Agent User Group ID"
+            name="agentGid"
+            rules={[{ message: 'Agent User Group ID is required ', required: true }]}>
+            <InputNumber disabled={viewOnly} />
+          </Form.Item>
+          <Form.Item
+            label="Agent Group Name"
+            name="agentGroup"
+            rules={[{ message: 'Agent Group Name is required ', required: true }]}>
+            <Input disabled={viewOnly} maxLength={100} />
+          </Form.Item>
+        </>
+      )}
       {!rbacEnabled && (
         <Form.Item label={ADMIN_LABEL} name={ADMIN_NAME} valuePropName="checked">
           <Switch disabled={viewOnly} />
@@ -192,6 +242,14 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
       const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
       const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
+      if (formData.useAgent || user) {
+        const { agentUid, agentUser, agentGid, agentGroup } = formData;
+        const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
+        formData.agentUserGroup = agentUserGroup;
+      }
+
+      delete formData.useAgent;
+
       try {
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
@@ -204,7 +262,8 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
           fetchUserRoles();
           message.success(API_SUCCESS_MESSAGE_EDIT);
         } else {
-          const u = await postUser(formData);
+          formData['active'] = true;
+          const u = await postUser({ user: formData });
           const uid = u.user?.id;
           if (uid && formData.groups) {
             (formData.groups as number[]).forEach(async (gid) => {
@@ -257,6 +316,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
               : MODAL_HEADER_LABEL_CREATE}
           </h5>
         ),
+        width: 520,
       });
     },
     [form, handleCancel, handleOk, openOrUpdate, user, groups, userRoles],

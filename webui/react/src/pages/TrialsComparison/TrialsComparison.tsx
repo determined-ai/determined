@@ -8,7 +8,7 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
@@ -39,8 +39,8 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
 
   const { trials, refetch, loading } = useFetchTrials({
     filters: collections.filters,
-    limit: tableSettings.tableLimit,
-    offset: tableSettings.tableOffset,
+    limit: tableSettings.tableLimit || 0,
+    offset: tableSettings.tableOffset || 0,
     sorter: collections.sorter,
   });
 

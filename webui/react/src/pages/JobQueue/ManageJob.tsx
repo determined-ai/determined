@@ -172,8 +172,8 @@ const ManageJob: React.FC<Props> = ({
   return (
     <Modal
       mask
+      open={true}
       title={'Manage Job ' + truncate(job.jobId, 6, '')}
-      visible={true}
       onCancel={onFinish}
       onOk={onOk}>
       {isOrderedQ && (

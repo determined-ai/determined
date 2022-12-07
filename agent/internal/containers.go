@@ -26,16 +26,16 @@ import (
 )
 
 const (
-	dockerContainerTypeLabel    = "ai.determined.container.type"
-	dockerContainerTypeValue    = "task-container"
-	dockerContainerIDLabel      = "ai.determined.container.id"
-	dockerContainerParentLabel  = "ai.determined.container.parent"
-	dockerContainerDevicesLabel = "ai.determined.container.devices"
-	dockerAgentLabel            = "ai.determined.container.agent"
-	dockerClusterLabel          = "ai.determined.container.cluster"
-	dockerMasterLabel           = "ai.determined.container.master"
-	dockerContainerVersionLabel = "ai.determined.container.version"
-	dockerContainerVersionValue = "0"
+	dockerContainerTypeLabel        = "ai.determined.container.type"
+	dockerContainerTypeValue        = "task-container"
+	dockerContainerIDLabel          = "ai.determined.container.id"
+	dockerContainerDescriptionLabel = "ai.determined.container.description"
+	dockerContainerDevicesLabel     = "ai.determined.container.devices"
+	dockerAgentLabel                = "ai.determined.container.agent"
+	dockerClusterLabel              = "ai.determined.container.cluster"
+	dockerMasterLabel               = "ai.determined.container.master"
+	dockerContainerVersionLabel     = "ai.determined.container.version"
+	dockerContainerVersionValue     = "0"
 )
 
 const recentExitsKept = 32
@@ -176,10 +176,10 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 			// Fallback state change if the original is already gone from recent exits.
 			csc := aproto.ContainerStateChanged{
 				Container: cproto.Container{
-					Parent:  ctx.Self().Address(),
-					ID:      msg.ContainerID,
-					State:   cproto.Terminated,
-					Devices: nil,
+					ID:          msg.ContainerID,
+					State:       cproto.Terminated,
+					Devices:     nil,
+					Description: "unknown",
 				},
 				ContainerStopped: &aproto.ContainerStopped{
 					Failure: &aproto.ContainerFailure{
@@ -283,7 +283,7 @@ func overwriteSpec(
 			"mode":                         "non-blocking",
 			"max-buffer-size":              "10m",
 			"env":                          strings.Join(fluentEnvVarNames, ","),
-			"labels":                       dockerContainerParentLabel,
+			"labels":                       dockerContainerDescriptionLabel,
 		},
 	}
 
@@ -488,7 +488,7 @@ func makeContainerDockerLabels(cont cproto.Container) map[string]string {
 	labels := map[string]string{}
 	labels[dockerContainerVersionLabel] = dockerContainerVersionValue
 	labels[dockerContainerIDLabel] = cont.ID.String()
-	labels[dockerContainerParentLabel] = cont.Parent.String()
+	labels[dockerContainerDescriptionLabel] = cont.Description
 	var slotIds []string
 	for _, d := range cont.Devices {
 		slotIds = append(slotIds, strconv.Itoa(int(d.ID)))
@@ -528,10 +528,10 @@ func (c *containerManager) unmakeContainerDockerLabels(ctx *actor.Context, cont 
 	}
 
 	return &cproto.Container{
-		ID:      cproto.ID(cont.Labels[dockerContainerIDLabel]),
-		Parent:  actor.AddrFromString(cont.Labels[dockerContainerParentLabel]),
-		Devices: devices,
-		State:   state,
+		ID:          cproto.ID(cont.Labels[dockerContainerIDLabel]),
+		Description: cont.Labels[dockerContainerDescriptionLabel],
+		Devices:     devices,
+		State:       state,
 	}, nil
 }
 

@@ -27,7 +27,7 @@ def test_streaming_observability_metrics_apis(
 ) -> None:
     # TODO: refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
 
     config_path = conf.tutorials_path(f"../{framework_base_experiment}/const.yaml")
     model_def_path = conf.tutorials_path(f"../{framework_base_experiment}")

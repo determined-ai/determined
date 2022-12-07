@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
+	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -115,7 +116,7 @@ func (a *apiServer) SetShellPriority(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
-	spec, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
+	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
 		Files:        req.Files,
@@ -200,7 +201,8 @@ func (a *apiServer) LaunchShell(
 	}
 
 	return &apiv1.LaunchShellResponse{
-		Shell:  shell,
-		Config: protoutils.ToStruct(spec.Config),
+		Shell:    shell,
+		Config:   protoutils.ToStruct(spec.Config),
+		Warnings: command.LaunchWarningToProto(launchWarnings),
 	}, nil
 }

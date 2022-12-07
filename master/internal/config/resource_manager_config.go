@@ -3,9 +3,10 @@ package config
 import (
 	"encoding/json"
 
+	"github.com/determined-ai/determined/master/pkg/aproto"
+
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/rm/kubernetes"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/union"
@@ -98,27 +99,27 @@ func (a AgentResourceManagerConfig) Validate() []error {
 
 // KubernetesResourceManagerConfig hosts configuration fields for the kubernetes resource manager.
 type KubernetesResourceManagerConfig struct {
-	Namespace                string                             `json:"namespace"`
-	MaxSlotsPerPod           int                                `json:"max_slots_per_pod"`
-	MasterServiceName        string                             `json:"master_service_name"`
-	LeaveKubernetesResources bool                               `json:"leave_kubernetes_resources"`
-	DefaultScheduler         string                             `json:"default_scheduler"`
-	SlotType                 device.Type                        `json:"slot_type"`
-	SlotResourceRequests     kubernetes.PodSlotResourceRequests `json:"slot_resource_requests"`
-	Fluent                   kubernetes.FluentConfig            `json:"fluent"`
-	CredsDir                 string                             `json:"_creds_dir,omitempty"`
-	MasterIP                 string                             `json:"_master_ip,omitempty"`
-	MasterPort               int32                              `json:"_master_port,omitempty"`
+	Namespace                string                  `json:"namespace"`
+	MaxSlotsPerPod           int                     `json:"max_slots_per_pod"`
+	MasterServiceName        string                  `json:"master_service_name"`
+	LeaveKubernetesResources bool                    `json:"leave_kubernetes_resources"`
+	DefaultScheduler         string                  `json:"default_scheduler"`
+	SlotType                 device.Type             `json:"slot_type"`
+	SlotResourceRequests     PodSlotResourceRequests `json:"slot_resource_requests"`
+	Fluent                   FluentConfig            `json:"fluent"`
+	CredsDir                 string                  `json:"_creds_dir,omitempty"`
+	MasterIP                 string                  `json:"_master_ip,omitempty"`
+	MasterPort               int32                   `json:"_master_port,omitempty"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
 	SlotType: device.CUDA, // default to CUDA-backed slots.
-	Fluent:   kubernetes.DefaultFluentConfig,
+	Fluent:   DefaultFluentConfig,
 }
 
 // GetPreemption returns whether the RM is set to preempt.
 func (k *KubernetesResourceManagerConfig) GetPreemption() bool {
-	return k.DefaultScheduler == kubernetes.PreemptionScheduler
+	return k.DefaultScheduler == PreemptionScheduler
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -155,3 +156,25 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 		checkCPUResource,
 	}
 }
+
+// PodSlotResourceRequests contains the per-slot container requests.
+type PodSlotResourceRequests struct {
+	CPU float32 `json:"cpu"`
+}
+
+// FluentConfig stores k8s-configurable Fluent Bit-related options.
+type FluentConfig struct {
+	Image string `json:"image"`
+	UID   int    `json:"uid"`
+	GID   int    `json:"gid"`
+}
+
+// DefaultFluentConfig stores defaults for k8s-configurable Fluent Bit-related options.
+var DefaultFluentConfig = FluentConfig{
+	Image: aproto.FluentImage,
+}
+
+// PreemptionScheduler is the name of the preemption scheduler for k8.
+// HACK(Brad): Here because circular imports; Kubernetes probably needs its own
+// configuration package.
+const PreemptionScheduler = "preemption"

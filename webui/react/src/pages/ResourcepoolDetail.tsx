@@ -1,4 +1,5 @@
 import { Divider, Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -14,7 +15,6 @@ import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'serv
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
@@ -35,7 +35,6 @@ type Params = {
   poolname?: string;
   tab?: TabType;
 };
-const { TabPane } = Tabs;
 
 const TabType = {
   Active: 'active',
@@ -92,7 +91,10 @@ const ResourcepoolDetailInner: React.FC = () => {
     }
   }, [canceler.signal, poolname]);
 
-  usePolling(fetchStats, { rerunOnNewFn: true });
+  useEffect(() => {
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (tab || !pool) return;
@@ -140,6 +142,35 @@ const ResourcepoolDetailInner: React.FC = () => {
     );
   }, [pool]);
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    if (!pool) {
+      return [];
+    }
+
+    return [
+      {
+        children: <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />,
+        key: TabType.Active,
+        label: `${poolStats?.stats.scheduledCount ?? ''} Active`,
+      },
+      {
+        children: <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />,
+        key: TabType.Queued,
+        label: `${poolStats?.stats.queuedCount ?? ''} Queued`,
+      },
+      {
+        children: <ClustersQueuedChart poolStats={poolStats} />,
+        key: TabType.Stats,
+        label: 'Stats',
+      },
+      {
+        children: renderPoolConfig(),
+        key: TabType.Configuration,
+        label: 'Configuration',
+      },
+    ];
+  }, [pool, poolStats, renderPoolConfig]);
+
   if (!pool) return <div />;
 
   return (
@@ -179,20 +210,9 @@ const ResourcepoolDetailInner: React.FC = () => {
             activeKey={tabKey}
             className="no-padding"
             destroyInactiveTabPane={true}
-            onChange={handleTabChange}>
-            <TabPane key={TabType.Active} tab={`${poolStats?.stats.scheduledCount ?? ''} Active`}>
-              <JobQueue bodyNoPadding jobState={JobState.SCHEDULED} selectedRp={pool} />
-            </TabPane>
-            <TabPane key={TabType.Queued} tab={`${poolStats?.stats.queuedCount ?? ''} Queued`}>
-              <JobQueue bodyNoPadding jobState={JobState.QUEUED} selectedRp={pool} />
-            </TabPane>
-            <TabPane key={TabType.Stats} tab="Stats">
-              <ClustersQueuedChart poolStats={poolStats} />
-            </TabPane>
-            <TabPane key={TabType.Configuration} tab="Configuration">
-              {renderPoolConfig()}
-            </TabPane>
-          </Tabs>
+            items={tabItems}
+            onChange={handleTabChange}
+          />
         )}
       </Section>
     </Page>

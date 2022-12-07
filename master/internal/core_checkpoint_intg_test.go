@@ -312,7 +312,7 @@ func mockExperimentS3(
 			},
 			RawMetric: ptrs.Ptr("okness"),
 		},
-	}).(expconf.ExperimentConfigV0)
+	})
 
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),

@@ -16,7 +16,7 @@ from tests import experiment as exp
 def test_streaming_metrics_api() -> None:
     # TODO: refactor tests to not use cli singleton auth.
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
 
     pool = mp.pool.ThreadPool(processes=7)
 
@@ -67,7 +67,7 @@ def test_streaming_metrics_api() -> None:
 @pytest.mark.timeout(1800)
 def test_hp_importance_api() -> None:
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
 
     pool = mp.pool.ThreadPool(processes=1)
 

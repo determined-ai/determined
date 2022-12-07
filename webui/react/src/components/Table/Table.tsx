@@ -29,6 +29,7 @@ import {
   Workspace,
 } from 'types';
 import { canBeOpened } from 'utils/task';
+import { openCommand } from 'utils/wait';
 
 import css from './Table.module.scss';
 
@@ -117,7 +118,7 @@ export const taskIdRenderer: TaskRenderer = (_, record) => (
     <div className={css.centerVertically}>
       <ConditionalWrapper
         condition={canBeOpened(record)}
-        wrapper={(children) => <Link path={paths.interactive(record)}>{children}</Link>}>
+        wrapper={(children) => <Link onClick={() => openCommand(record)}>{children}</Link>}>
         <Badge type={BadgeType.Id}>{record.id.split('-')[0]}</Badge>
       </ConditionalWrapper>
     </div>
@@ -137,10 +138,7 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
     <ConditionalWrapper
       condition={canBeOpened(record)}
       wrapper={(ch) => (
-        <a
-          href={`${process.env.PUBLIC_URL}${paths.interactive(record)}`}
-          rel="noopener noreferrer"
-          target="_blank">
+        <a href={`${process.env.PUBLIC_URL}${paths.interactive(record)}`} target={record.id}>
           {ch}
         </a>
       )}>
@@ -182,7 +180,7 @@ export const modelNameRenderer = (value: string, record: ModelItem): React.React
 );
 
 export const modelVersionNameRenderer = (value: string, record: ModelVersion): React.ReactNode => (
-  <Link path={paths.modelVersionDetails(String(record.model.id), record.id)}>
+  <Link path={paths.modelVersionDetails(String(record.model.id), record.version)}>
     {value ? value : 'Version ' + record.version}
   </Link>
 );
@@ -193,7 +191,7 @@ export const modelVersionNumberRenderer = (
 ): React.ReactNode => (
   <Link
     className={css.versionBox}
-    path={paths.modelVersionDetails(String(record.model.id), record.id)}>
+    path={paths.modelVersionDetails(String(record.model.id), record.version)}>
     V{record.version}
   </Link>
 );

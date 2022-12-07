@@ -49,7 +49,7 @@ const routes: RouteConfig[] = [
     id: 'uncategorized',
     needAuth: true,
     path: '/projects',
-    redirect: '/projects/1',
+    redirect: '/projects/1/experiments',
     title: 'Uncategorized',
   },
   {
@@ -57,7 +57,7 @@ const routes: RouteConfig[] = [
     id: 'uncategorized',
     needAuth: true,
     path: '/',
-    redirect: '/projects/1',
+    redirect: '/projects/1/experiments',
     title: 'Uncategorized',
   },
   {
@@ -119,13 +119,13 @@ const routes: RouteConfig[] = [
   {
     id: 'modelVersionDetails',
     needAuth: true,
-    path: '/models/:modelId/versions/:versionId/:tab',
+    path: '/models/:modelId/versions/:versionNum/:tab',
     title: 'Version Details',
   },
   {
     id: 'modelVersionDetails',
     needAuth: true,
-    path: '/models/:modelId/versions/:versionId',
+    path: '/models/:modelId/versions/:versionNum',
     title: 'Version Details',
   },
   {

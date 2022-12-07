@@ -46,8 +46,8 @@ const TextEditorModal: React.FC<Props> = ({ disabled, onSave, title, placeholder
       </Button>
       <Modal
         confirmLoading={isConfirmLoading}
+        open={isModalOpen}
         title={title}
-        visible={isModalOpen}
         onCancel={onHideModal}
         onOk={onSubmit}>
         <Form form={form} layout="vertical">

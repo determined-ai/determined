@@ -50,7 +50,7 @@ class ModelVersion:
         self.name = name
         req = bindings.v1PatchModelVersion(name=name)
         bindings.patch_PatchModelVersion(
-            self._session, body=req, modelName=self.model_name, modelVersionId=self.model_version_id
+            self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
     def set_notes(self, notes: str) -> None:
@@ -64,7 +64,7 @@ class ModelVersion:
         self.notes = notes
         req = bindings.v1PatchModelVersion(notes=notes)
         bindings.patch_PatchModelVersion(
-            self._session, body=req, modelName=self.model_name, modelVersionId=self.model_version_id
+            self._session, body=req, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
     def delete(self) -> None:
@@ -72,7 +72,7 @@ class ModelVersion:
         Deletes the model version in the registry
         """
         bindings.delete_DeleteModelVersion(
-            self._session, modelName=self.model_name, modelVersionId=self.model_version_id
+            self._session, modelName=self.model_name, modelVersionNum=self.model_version
         )
 
     @classmethod
@@ -223,7 +223,9 @@ class Model:
                 return None
             return ModelVersion._from_bindings(resp.modelVersions[0], self._session)
 
-        r = bindings.get_GetModelVersion(self._session, modelName=self.name, modelVersion=version)
+        r = bindings.get_GetModelVersion(
+            self._session, modelName=self.name, modelVersionNum=version
+        )
 
         return ModelVersion._from_bindings(r.modelVersion, self._session)
 

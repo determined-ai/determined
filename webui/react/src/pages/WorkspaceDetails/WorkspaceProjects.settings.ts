@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { GridListView } from 'components/GridListRadioGroup';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import { ValueOf } from 'shared/types';
 
@@ -51,84 +53,91 @@ export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   whose: WhoseProjects;
 }
 
-const config: SettingsConfig = {
+const config: SettingsConfig<WorkspaceDetailsSettings> = {
   applicableRoutespace: 'projects',
-  settings: [
-    {
+  settings: {
+    archived: {
       defaultValue: false,
-      key: 'archived',
       storageKey: 'archived',
-      type: { baseType: BaseType.Boolean },
+      type: union([undefinedType, boolean]),
     },
-    {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
+      skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([
+          literal('action'),
+          literal('archived'),
+          literal('description'),
+          literal('lastUpdated'),
+          literal('name'),
+          literal('numExperiments'),
+          literal('state'),
+          literal('userId'),
+        ]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: ProjectColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'name',
-      type: { baseType: BaseType.String },
+    name: {
+      defaultValue: undefined,
+      storageKey: 'name',
+      type: union([undefinedType, string]),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME,
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(V1GetWorkspaceProjectsRequestSortBy.CREATIONTIME),
+        literal(V1GetWorkspaceProjectsRequestSortBy.DESCRIPTION),
+        literal(V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME),
+        literal(V1GetWorkspaceProjectsRequestSortBy.ID),
+        literal(V1GetWorkspaceProjectsRequestSortBy.NAME),
+        literal(V1GetWorkspaceProjectsRequestSortBy.UNSPECIFIED),
+      ]),
     },
-    {
+    tableLimit: {
       defaultValue: 100,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-    {
-      key: 'user',
+    user: {
+      defaultValue: undefined,
       storageKey: 'user',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([undefinedType, array(string)]),
     },
-    {
+    view: {
       defaultValue: GridListView.Grid,
-      key: 'view',
       skipUrlEncoding: true,
       storageKey: 'view',
-      type: { baseType: BaseType.String },
+      type: union([literal(GridListView.Grid), literal(GridListView.List)]),
     },
-    {
+    whose: {
       defaultValue: WhoseProjects.All,
-      key: 'whose',
       skipUrlEncoding: true,
       storageKey: 'whose',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(WhoseProjects.All),
+        literal(WhoseProjects.Mine),
+        literal(WhoseProjects.Others),
+      ]),
     },
-  ],
+  },
   storagePath: 'workspace-details',
 };
 

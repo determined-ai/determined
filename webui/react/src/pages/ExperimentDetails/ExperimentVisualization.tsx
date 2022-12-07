@@ -1,4 +1,5 @@
 import { Alert, Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -181,6 +182,109 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     [basePath, navigate],
   );
 
+  const visualizationFilters = useMemo(() => {
+    return (
+      <ExperimentVisualizationFilters
+        batches={batches || []}
+        filters={filters}
+        fullHParams={fullHParams.current}
+        hpImportance={hpImportance}
+        metrics={metrics}
+        type={typeKey}
+        onChange={handleFiltersChange}
+        onMetricChange={handleMetricChange}
+        onReset={handleFiltersReset}
+      />
+    );
+  }, [
+    batches,
+    filters,
+    handleFiltersChange,
+    handleFiltersReset,
+    handleMetricChange,
+    hpImportance,
+    metrics,
+    typeKey,
+  ]);
+
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    return [
+      {
+        children: (
+          <LearningCurve
+            experiment={experiment}
+            filters={visualizationFilters}
+            fullHParams={fullHParams.current}
+            selectedMaxTrial={filters.maxTrial}
+            selectedMetric={filters.metric}
+            selectedScale={filters.scale}
+          />
+        ),
+        key: ExperimentVisualizationType.LearningCurve,
+        label: 'Learning Curve',
+      },
+      {
+        children: (
+          <HpParallelCoordinates
+            experiment={experiment}
+            filters={visualizationFilters}
+            fullHParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
+            selectedScale={filters.scale}
+          />
+        ),
+        key: ExperimentVisualizationType.HpParallelCoordinates,
+        label: 'HP Parallel Coordinates',
+      },
+      {
+        children: (
+          <HpScatterPlots
+            experiment={experiment}
+            filters={visualizationFilters}
+            fullHParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
+            selectedScale={filters.scale}
+          />
+        ),
+        key: ExperimentVisualizationType.HpScatterPlots,
+        label: 'HP Scatter Plots',
+      },
+      {
+        children: (
+          <HpHeatMaps
+            experiment={experiment}
+            filters={visualizationFilters}
+            fullHParams={fullHParams.current}
+            selectedBatch={filters.batch}
+            selectedBatchMargin={filters.batchMargin}
+            selectedHParams={filters.hParams}
+            selectedMetric={filters.metric}
+            selectedScale={filters.scale}
+            selectedView={filters.view}
+          />
+        ),
+        key: ExperimentVisualizationType.HpHeatMap,
+        label: 'HP Heat Map',
+      },
+    ];
+  }, [
+    experiment,
+    filters.batch,
+    filters.batchMargin,
+    filters.hParams,
+    filters.maxTrial,
+    filters.metric,
+    filters.scale,
+    filters.view,
+    visualizationFilters,
+  ]);
+
   // Sets the default sub route.
   useEffect(() => {
     const isVisualizationRoute = location.pathname.includes(basePath);
@@ -316,73 +420,15 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     );
   }
 
-  const visualizationFilters = (
-    <ExperimentVisualizationFilters
-      batches={batches || []}
-      filters={filters}
-      fullHParams={fullHParams.current}
-      hpImportance={hpImportance}
-      metrics={metrics}
-      type={typeKey}
-      onChange={handleFiltersChange}
-      onMetricChange={handleMetricChange}
-      onReset={handleFiltersReset}
-    />
-  );
-
   return (
     <div className={css.base}>
-      <Tabs activeKey={typeKey} destroyInactiveTabPane type="card" onChange={handleTabChange}>
-        <Tabs.TabPane key={ExperimentVisualizationType.LearningCurve} tab="Learning Curve">
-          <LearningCurve
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedMaxTrial={filters.maxTrial}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        </Tabs.TabPane>
-        <Tabs.TabPane
-          key={ExperimentVisualizationType.HpParallelCoordinates}
-          tab="HP Parallel Coordinates">
-          <HpParallelCoordinates
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        </Tabs.TabPane>
-        <Tabs.TabPane key={ExperimentVisualizationType.HpScatterPlots} tab="HP Scatter Plots">
-          <HpScatterPlots
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-          />
-        </Tabs.TabPane>
-        <Tabs.TabPane key={ExperimentVisualizationType.HpHeatMap} tab="HP Heat Map">
-          <HpHeatMaps
-            experiment={experiment}
-            filters={visualizationFilters}
-            fullHParams={fullHParams.current}
-            selectedBatch={filters.batch}
-            selectedBatchMargin={filters.batchMargin}
-            selectedHParams={filters.hParams}
-            selectedMetric={filters.metric}
-            selectedScale={filters.scale}
-            selectedView={filters.view}
-          />
-        </Tabs.TabPane>
-      </Tabs>
+      <Tabs
+        activeKey={typeKey}
+        destroyInactiveTabPane
+        items={tabItems}
+        type="card"
+        onChange={handleTabChange}
+      />
     </div>
   );
 };

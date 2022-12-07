@@ -6,8 +6,13 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
+import StoreProvider from 'contexts/Store';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
+import history from 'shared/routes/history';
+import { DetailedUser } from 'types';
 
 import CodeViewer, { Props } from './CodeViewer';
 
@@ -68,12 +73,18 @@ jest.mock('services/api', () => {
           path: 'model_def.py',
         },
       ]),
+    getUserSetting: () => Promise.resolve({ settings: [] }),
   };
 });
 
 jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
   default: () => MonacoEditorMock,
+}));
+jest.mock('contexts/Store', () => ({
+  __esModule: true,
+  ...jest.requireActual('contexts/Store'),
+  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
 }));
 
 jest.mock('hooks/useSettings', () => {
@@ -82,7 +93,7 @@ jest.mock('hooks/useSettings', () => {
     const settings = { filePath: 'single-in-records.yaml' };
     const updateSettings = jest.fn();
 
-    return { settings, updateSettings };
+    return { isLoading: false, settings, updateSettings };
   });
 
   return {
@@ -92,13 +103,22 @@ jest.mock('hooks/useSettings', () => {
   };
 });
 
+global.URL.createObjectURL = jest.fn();
 const experimentIdMock = 123;
 const user = userEvent.setup();
 
 const setup = (
   props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
 ) => {
-  render(<CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />);
+  render(
+    <HistoryRouter history={history}>
+      <StoreProvider>
+        <SettingsProvider>
+          <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+        </SettingsProvider>
+      </StoreProvider>
+    </HistoryRouter>,
+  );
 };
 
 const getElements = async () => {
@@ -124,12 +144,12 @@ describe('CodeViewer', () => {
 
     const { treeNodes } = await getElements();
 
-    await waitFor(() => act(() => user.click(treeNodes[1])));
+    await act(() => user.click(treeNodes[1]));
 
     const button = await screen.findByLabelText('download');
 
-    await waitFor(() => user.click(button));
+    await act(() => user.click(button));
 
-    expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'single-in-records.yaml');
+    waitFor(() => expect(pathBuilderSpy).toHaveBeenCalledWith(123, 'model_def.py'));
   });
 });

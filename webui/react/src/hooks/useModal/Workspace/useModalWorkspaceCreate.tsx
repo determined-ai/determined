@@ -227,8 +227,6 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           checkpointStorageConfig?: unknown;
           name: string;
         } = {
-          agentUserGroup: {},
-          checkpointStorageConfig: undefined,
           name: workspaceName,
         };
 

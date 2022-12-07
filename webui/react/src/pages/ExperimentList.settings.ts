@@ -1,6 +1,17 @@
+import {
+  array,
+  boolean,
+  literal,
+  number,
+  record,
+  string,
+  undefined as undefinedType,
+  union,
+} from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { RunState } from 'types';
 
@@ -62,111 +73,132 @@ export interface ExperimentListSettings extends InteractiveTableSettings {
   state?: RunState[];
   user?: string[];
 }
-
-const config: SettingsConfig = {
-  applicableRoutespace: '/experiments',
-  settings: [
-    {
-      defaultValue: { 1: [] },
-      key: 'pinned',
-      skipUrlEncoding: true,
-      storageKey: 'pinned',
-      type: { baseType: BaseType.Object },
-    },
-    {
+export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentListSettings> => ({
+  applicableRoutespace: `projects/${id}/experiments`,
+  settings: {
+    archived: {
       defaultValue: false,
-      key: 'archived',
       storageKey: 'archived',
-      type: { baseType: BaseType.Boolean },
+      type: union([boolean, undefinedType]),
     },
-    {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([
+          literal('action'),
+          literal('archived'),
+          literal('description'),
+          literal('duration'),
+          literal('forkedFrom'),
+          literal('id'),
+          literal('name'),
+          literal('progress'),
+          literal('resourcePool'),
+          literal('searcherType'),
+          literal('startTime'),
+          literal('state'),
+          literal('tags'),
+          literal('numTrials'),
+          literal('user'),
+        ]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: ExperimentColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      key: 'label',
+    label: {
+      defaultValue: undefined,
       storageKey: 'label',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([undefinedType, array(string)]),
     },
-    {
-      key: 'row',
+    pinned: {
+      defaultValue: { 1: [] },
+      skipUrlEncoding: true,
+      storageKey: 'pinned',
+      type: record(number, array(number)),
+    },
+    row: {
+      defaultValue: undefined,
       storageKey: 'row',
-      type: { baseType: BaseType.Integer, isArray: true },
+      type: union([undefinedType, array(number)]),
     },
-    {
-      key: 'search',
+    search: {
+      defaultValue: undefined,
       storageKey: 'search',
-      type: { baseType: BaseType.String },
+      type: union([undefinedType, string]),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: V1GetExperimentsRequestSortBy.STARTTIME,
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([
+        literal(V1GetExperimentsRequestSortBy.DESCRIPTION),
+        literal(V1GetExperimentsRequestSortBy.ENDTIME),
+        literal(V1GetExperimentsRequestSortBy.FORKEDFROM),
+        literal(V1GetExperimentsRequestSortBy.ID),
+        literal(V1GetExperimentsRequestSortBy.NAME),
+        literal(V1GetExperimentsRequestSortBy.NUMTRIALS),
+        literal(V1GetExperimentsRequestSortBy.PROGRESS),
+        literal(V1GetExperimentsRequestSortBy.PROJECTID),
+        literal(V1GetExperimentsRequestSortBy.RESOURCEPOOL),
+        literal(V1GetExperimentsRequestSortBy.STARTTIME),
+        literal(V1GetExperimentsRequestSortBy.STATE),
+        literal(V1GetExperimentsRequestSortBy.UNSPECIFIED),
+        literal(V1GetExperimentsRequestSortBy.USER),
+      ]),
     },
-    {
-      key: 'state',
+    state: {
+      defaultValue: undefined,
       storageKey: 'state',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(RunState.Active),
+            literal(RunState.Canceled),
+            literal(RunState.Completed),
+            literal(RunState.DeleteFailed),
+            literal(RunState.Deleted),
+            literal(RunState.Deleting),
+            literal(RunState.Error),
+            literal(RunState.Paused),
+            literal(RunState.Pulling),
+            literal(RunState.Queued),
+            literal(RunState.Running),
+            literal(RunState.Starting),
+            literal(RunState.StoppingCanceled),
+            literal(RunState.StoppingCompleted),
+            literal(RunState.StoppingError),
+            literal(RunState.StoppingKilled),
+            literal(RunState.Unspecified),
+          ]),
+        ),
+      ]),
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
       storageKey: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
-      key: 'type',
-      storageKey: 'type',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
-    },
-    {
-      key: 'user',
+    user: {
+      defaultValue: undefined,
       storageKey: 'user',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: union([undefinedType, array(string)]),
     },
-  ],
+  },
   storagePath: 'project-details',
-};
-
-export default config;
+});

@@ -8,7 +8,6 @@ import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
-  InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
 import {
@@ -22,7 +21,7 @@ import Toggle from 'components/Toggle';
 import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
@@ -30,6 +29,7 @@ import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
+import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { ShirtSize } from 'themes';
@@ -68,6 +68,8 @@ const WorkspaceList: React.FC = () => {
   const handleWorkspaceCreateClick = useCallback(() => modalOpen(), [modalOpen]);
 
   const fetchWorkspaces = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const response = await getWorkspaces(
         {
@@ -92,20 +94,13 @@ const WorkspaceList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    canceler.signal,
-    pageError,
-    settings.archived,
-    settings.name,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.tableLimit,
-    settings.tableOffset,
-    settings.user,
-    settings.view,
-  ]);
+  }, [canceler.signal, pageError, settings]);
 
   usePolling(fetchWorkspaces);
+
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
@@ -131,7 +126,10 @@ const WorkspaceList: React.FC = () => {
     [updateSettings],
   );
 
+  const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
+    if (settings.whose === prevWhose || !settings.whose) return;
+
     switch (settings.whose) {
       case WhoseWorkspaces.All:
         updateSettings({ user: undefined });
@@ -143,7 +141,7 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
         break;
     }
-  }, [updateSettings, user, users, settings.whose]);
+  }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
@@ -209,6 +207,8 @@ const WorkspaceList: React.FC = () => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
+
       let newColumns: WorkspaceColumnName[];
       let newColumnWidths: number[];
 
@@ -263,6 +263,8 @@ const WorkspaceList: React.FC = () => {
   );
 
   const workspacesList = useMemo(() => {
+    if (!settings) return <Spinner spinning />;
+
     switch (settings.view) {
       case GridListView.Grid:
         return (
@@ -294,7 +296,7 @@ const WorkspaceList: React.FC = () => {
             rowKey="id"
             settings={settings}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
           />
         );
     }
@@ -312,7 +314,8 @@ const WorkspaceList: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchWorkspaces().then(() => setIsLoading(false));
-  }, [fetchWorkspaces]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     return () => canceler.abort();
@@ -361,7 +364,7 @@ const WorkspaceList: React.FC = () => {
             <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
             <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
           </SelectFilter>
-          <GridListRadioGroup value={settings.view} onChange={handleViewChange} />
+          {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
         </Space>
       </div>
       <Spinner spinning={isLoading}>

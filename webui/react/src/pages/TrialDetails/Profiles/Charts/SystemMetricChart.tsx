@@ -1,8 +1,9 @@
+import { string, undefined as undefinedType, union } from 'io-ts';
 import React, { useEffect, useMemo } from 'react';
 
 import Section from 'components/Section';
 import UPlotChart from 'components/UPlot/UPlotChart';
-import useSettings, { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
@@ -17,21 +18,25 @@ export interface Settings {
   name?: string;
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
-      key: 'name',
-      type: { baseType: BaseType.String },
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'profiler-filters',
+  settings: {
+    agentId: {
+      defaultValue: undefined,
+      storageKey: 'agentId',
+      type: union([undefinedType, string]),
     },
-    {
-      key: 'agentId',
-      type: { baseType: BaseType.String },
+    gpuUuid: {
+      defaultValue: undefined,
+      storageKey: 'gpuUuid',
+      type: union([undefinedType, string]),
     },
-    {
-      key: 'gpuUuid',
-      type: { baseType: BaseType.String },
+    name: {
+      defaultValue: undefined,
+      storageKey: 'name',
+      type: union([undefinedType, string]),
     },
-  ],
+  },
   storagePath: 'profiler-filters',
 };
 
@@ -77,11 +82,13 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
       bodyBorder
       bodyNoPadding
       filters={
-        <SystemMetricFilter
-          settings={settings}
-          systemSeries={systemSeries}
-          updateSettings={updateSettings}
-        />
+        settings && (
+          <SystemMetricFilter
+            settings={settings}
+            systemSeries={systemSeries}
+            updateSettings={updateSettings}
+          />
+        )
       }
       title="System Metrics">
       <UPlotChart data={systemMetrics.data} options={options} />
