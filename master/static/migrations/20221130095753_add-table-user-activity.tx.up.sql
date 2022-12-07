@@ -1,9 +1,9 @@
 CREATE TYPE public.activity_type as ENUM (
-  'GET',
+  'GET'
 );
 
 CREATE TYPE public.entity_type as ENUM (
-  'Project',
+  'Project'
 );
 
 CREATE TABLE activity (
