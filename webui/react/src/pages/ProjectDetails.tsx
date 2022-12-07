@@ -34,7 +34,11 @@ type Params = {
 };
 
 const ProjectDetails: React.FC = () => {
-  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { projectId } = useParams<Params>();
 
   const [project, setProject] = useState<Project>();

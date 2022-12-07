@@ -13,16 +13,24 @@ interface Props {
 }
 
 const Router: React.FC<Props> = (props: Props) => {
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const isAuthenticated = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
+  const authChecked = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.checked,
+    NotLoaded: () => false,
+  });
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();
 
   useEffect(() => {
-    if (auth.isAuthenticated) {
+    if (isAuthenticated) {
       uiActions.hideSpinner();
     }
-  }, [auth.isAuthenticated, uiActions]);
+  }, [isAuthenticated, uiActions]);
 
   useEffect(() => {
     return () => canceler.abort();
@@ -33,9 +41,9 @@ const Router: React.FC<Props> = (props: Props) => {
       {props.routes.map((config) => {
         const { element, ...route } = config;
 
-        if (route.needAuth && !auth.isAuthenticated) {
+        if (route.needAuth && !isAuthenticated) {
           // Do not mount login page until auth is checked.
-          if (!auth.checked) return <Route {...route} element={element} key={route.id} />;
+          if (!authChecked) return <Route {...route} element={element} key={route.id} />;
           return (
             <Route
               {...route}

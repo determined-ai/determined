@@ -1,7 +1,6 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { isEqual } from 'shared/utils/data';
 import { Auth, DetailedUser } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -62,8 +61,9 @@ export const useAuth = (): UseAuthReturn => {
   const updateCurrentUser = useCallback(
     (user: DetailedUser, users: DetailedUser[]) => {
       updateAuth((prevState) => {
-        const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, prevState);
-        if (isEqual(auth, user)) return prevState;
+        if (!Loadable.isLoaded(prevState)) return prevState;
+
+        const auth = prevState.data;
 
         const userIdx = users.findIndex((user) => user.id === user.id);
 
@@ -101,7 +101,10 @@ export const useAuth = (): UseAuthReturn => {
 
   const setAuthCheck = useCallback(() => {
     updateAuth((prevState) => {
-      const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, prevState);
+      if (!Loadable.isLoaded(prevState)) return prevState;
+
+      const auth = prevState.data;
+
       if (auth.checked) return prevState;
 
       return Loaded({ ...auth, checked: true });

@@ -35,7 +35,11 @@ const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
   const { info, ui } = useStore();
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const auth = useAuth().auth;
+  const isAuthenticated = Loadable.match(auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck(canceler);
@@ -58,10 +62,10 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    if (auth.isAuthenticated) {
+    if (isAuthenticated) {
       fetchUsers();
     }
-  }, [auth.isAuthenticated, fetchUsers]);
+  }, [isAuthenticated, fetchUsers]);
 
   useEffect(() => {
     /*

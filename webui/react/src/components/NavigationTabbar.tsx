@@ -45,7 +45,15 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const isAuthenticated = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
+  const authUser = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { info, pinnedWorkspaces } = useStore();
   const loadableResourcePools = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
@@ -61,7 +69,7 @@ const NavigationTabbar: React.FC = () => {
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab();
 
-  const showNavigation = auth.isAuthenticated && ui.showChrome;
+  const showNavigation = isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
@@ -124,7 +132,7 @@ const NavigationTabbar: React.FC = () => {
                 className={css.user}
                 darkLight={ui.darkLight}
                 key="avatar"
-                user={auth.user}
+                user={authUser}
               />
             ),
           },

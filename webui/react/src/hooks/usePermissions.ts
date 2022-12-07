@@ -78,8 +78,11 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
-  const user = auth.user as DetailedUser | undefined;
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { userAssignments, userRoles } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');

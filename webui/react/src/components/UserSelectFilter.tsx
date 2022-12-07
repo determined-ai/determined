@@ -25,7 +25,11 @@ const userToSelectOption = (user: User): React.ReactNode => (
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const users = Loadable.getOrElse([], useUsers());
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const authUser = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const handleSelect = useCallback(
     (newValue: SelectValue) => {
@@ -37,7 +41,6 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   );
 
   const options = useMemo(() => {
-    const authUser = auth.user;
     const list: React.ReactNode[] = [
       <Option key={ALL_VALUE} value={ALL_VALUE}>
         All
@@ -61,7 +64,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     }
 
     return list;
-  }, [auth.user, users]);
+  }, [authUser, users]);
 
   return (
     <SelectFilter

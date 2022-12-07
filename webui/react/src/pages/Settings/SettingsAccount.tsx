@@ -22,7 +22,10 @@ export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
   const { auth: loadableAuth, updateCurrentUser } = useAuth();
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, loadableAuth);
+  const authUser = Loadable.match(loadableAuth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const users = Loadable.getOrElse([], useUsers());
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
@@ -36,7 +39,7 @@ const SettingsAccount: React.FC = () => {
     async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
-          userId: auth.user?.id || 0,
+          userId: authUser?.id || 0,
           userParams: { displayName: newValue },
         });
         updateCurrentUser(user, users);
@@ -47,14 +50,14 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, updateCurrentUser, users],
+    [authUser, updateCurrentUser, users],
   );
 
   const handleSaveUsername = useCallback(
     async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
-          userId: auth.user?.id || 0,
+          userId: authUser?.id || 0,
           userParams: { username: newValue },
         });
         updateCurrentUser(user, users);
@@ -65,13 +68,13 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, updateCurrentUser, users],
+    [authUser, updateCurrentUser, users],
   );
 
   return (
     <div className={css.base}>
       <div className={css.avatar}>
-        <Avatar hideTooltip size={Size.ExtraLarge} userId={auth.user?.id} />
+        <Avatar hideTooltip size={Size.ExtraLarge} userId={authUser?.id} />
       </div>
       <Divider />
       <div className={css.row}>
@@ -80,7 +83,7 @@ const SettingsAccount: React.FC = () => {
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9]*$', 'i')}
           placeholder="Add username"
-          value={auth.user?.username || ''}
+          value={authUser?.username || ''}
           onSave={handleSaveUsername}
         />
       </div>
@@ -91,7 +94,7 @@ const SettingsAccount: React.FC = () => {
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           placeholder="Add display name"
-          value={auth.user?.displayName || ''}
+          value={authUser?.displayName || ''}
           onSave={handleSaveDisplayName}
         />
       </div>

@@ -61,7 +61,11 @@ const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description
 
 const ModelRegistry: React.FC = () => {
   const users = Loadable.getOrElse([], useUsers());
-  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);

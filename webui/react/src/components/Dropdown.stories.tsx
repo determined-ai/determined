@@ -27,7 +27,10 @@ export const Default: ComponentStory<typeof Dropdown> = (args) => (
 );
 
 export const Settings: ComponentStory<typeof Dropdown> = (args) => {
-  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const user = Loadable.match(useAuth().auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { ui } = useUI();
   const menuItems = useMemo(() => {
     return (

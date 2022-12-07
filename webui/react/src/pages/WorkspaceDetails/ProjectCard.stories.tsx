@@ -21,7 +21,11 @@ export default {
 const args: Partial<Project> = { name: 'Project Name', numExperiments: 1 };
 
 export const Default = (args: Partial<Project>): React.ReactElement => {
-  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const project = useMemo(() => generateTestProjectData(args), [args]);
 
   return <ProjectCard curUser={user} project={project} />;

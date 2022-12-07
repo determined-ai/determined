@@ -98,7 +98,11 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const authUser = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
@@ -109,7 +113,7 @@ const useModalPasswordChange = (): ModalHooks => {
 
     try {
       const password = form.getFieldValue(NEW_PASSWORD_NAME);
-      await setUserPassword({ password, userId: auth.user?.id ?? 0 });
+      await setUserPassword({ password, userId: authUser?.id ?? 0 });
       message.success(API_SUCCESS_MESSAGE);
       form.resetFields();
     } catch (e) {
@@ -119,19 +123,19 @@ const useModalPasswordChange = (): ModalHooks => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [auth.user?.id, form]);
+  }, [authUser?.id, form]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
       closable: true,
-      content: <ModalForm form={form} username={auth.user?.username} />,
+      content: <ModalForm form={form} username={authUser?.username} />,
       icon: null,
       okText: OK_BUTTON_LABEL,
       onCancel: handleCancel,
       onOk: handleOkay,
       title: <h5>{MODAL_HEADER_LABEL}</h5>,
     });
-  }, [auth.user?.username, form, handleCancel, handleOkay, openOrUpdate]);
+  }, [authUser?.username, form, handleCancel, handleOkay, openOrUpdate]);
 
   return { modalOpen, ...modalHook };
 };

@@ -18,8 +18,12 @@ export const useStorage = (
   basePath: string,
   store: Storage = window.localStorage,
 ): StorageManager => {
-  const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
-  const userNamespace = auth.user ? `u:${auth.user.id}` : '';
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
+  const userNamespace = user ? `u:${user.id}` : '';
   const [storage] = useState(
     new StorageManager({ basePath: `${userNamespace}/${basePath}`, store }),
   );

@@ -57,7 +57,11 @@ interface Props {
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const users = Loadable.getOrElse([], useUsers());
-  const { user } = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
