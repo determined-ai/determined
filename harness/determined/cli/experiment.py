@@ -234,10 +234,10 @@ def describe(args: Namespace) -> None:
     # Display overall experiment information.
     headers = [
         "Experiment ID",
-        "State",
+        "Status",
         "Progress",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
         "Name",
         "Description",
         "Archived",
@@ -281,7 +281,7 @@ def describe(args: Namespace) -> None:
 
     trials_for_experiment = {exp.id: get_all_trials(exp.id) for exp in exps}
 
-    headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
+    headers = ["Trial ID", "Experiment ID", "Status", "Started", "Ended", "H-Params"]
     values = [
         [
             trial.id,
@@ -571,10 +571,10 @@ def list_experiments(args: Namespace) -> None:
         "Owner",
         "Name",
         "Parent ID",
-        "State",
+        "Status",
         "Progress",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
         "Resource Pool",
     ]
     if args.show_project:
@@ -639,7 +639,7 @@ def list_trials(args: Namespace) -> None:
     resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
     all_trials = [t for r in resps for t in r.trials]
 
-    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
+    headers = ["Trial ID", "State", "H-Params", "Started", "Ended", "# of Batches"]
     values = [
         [
             t.id,
@@ -742,7 +742,7 @@ def set_gc_policy(args: Namespace) -> None:
         headers = [
             "Trial ID",
             "# of Batches",
-            "State",
+            "Status",
             "Validation Metric\n({})".format(metric_name),
             "UUID",
             "Resources",
