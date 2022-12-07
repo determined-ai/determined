@@ -15,17 +15,26 @@ import {
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+import Grid, { GridMode } from 'components/Grid';
 import Label from 'components/Label';
 import Logo from 'components/Logo';
+import LogViewer from 'components/LogViewer/LogViewer';
+import OverviewStats from 'components/OverviewStats';
+import Page from 'components/Page';
+import ResourcePoolCard from 'components/ResourcePoolCard';
 import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import ThemeToggle from 'components/ThemeToggle';
 import UserAvatar from 'components/UserAvatar';
+import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
+import { V1LogLevel } from 'services/api-ts-sdk';
+import { mapV1LogsResponse } from 'services/decoder';
 import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-import { BrandingType } from 'types';
+import { ShirtSize } from 'themes';
+import { BrandingType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader';
@@ -35,10 +44,12 @@ const Components = {
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
   Checkboxes: 'Checkboxes',
+  DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Facepile: 'Facepile',
   Labels: 'Labels',
   Lists: 'Lists (tables)',
+  LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
   Searchboxes: 'Search boxes',
@@ -63,6 +74,8 @@ const componentOrder: ComponentIds[] = [
   'ActionBar',
   'Pivot',
   'Pagination',
+  'DataCards',
+  'LogViewer',
 ];
 
 interface Props {
@@ -812,9 +825,9 @@ const BreadcrumbsSection: React.FC = () => {
       <Card>
         <p>
           Breadcrumbs should be used as a navigational aid in your app or site. They indicate the
-          current page’s location within a hierarchy and help the user understand where they are in
-          relation to the rest of that hierarchy. They also afford one-click access to higher levels
-          of that hierarchy.
+          current page&apos;s location within a hierarchy and help the user understand where they
+          are in relation to the rest of that hierarchy. They also afford one-click access to higher
+          levels of that hierarchy.
         </p>
         <p>
           Breadcrumbs are typically placed, in horizontal form, under the masthead or navigation of
@@ -1096,6 +1109,163 @@ const PaginationSection: React.FC = () => {
   );
 };
 
+const DataCardsSection: React.FC = () => {
+  const rps = resourcePools as unknown as ResourcePool[];
+
+  return (
+    <ComponentSection id="DataCards" title="DataCards">
+      <ReviewAlert />
+      <Card>
+        A DataCard contains additional metadata or actions. This offers people a richer view into a
+        file than the typical grid view.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Consistency misalignment between various sections of the web UI</li>
+          <li>Density issues</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>Incorporate metadata that is relevant and useful in this particular view.</li>
+          <li>
+            Don&apos;t use a document card in views where someone is likely to be performing bulk
+            operations in files, or when the list may get very long. Specifically, if you&apos;re
+            showing all the items inside an actual folder, a card may be overkill because the
+            majority of the items in the folder may not have interesting metadata.
+          </li>
+          <li>
+            Don&apos;t use a document card if space is at a premium or you can&apos;t show relevant
+            and timely commands or metadata. Cards are useful because they can expose on-item
+            interactions like “Share” buttons or view counts.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>DataCard default</strong>
+        <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
+          <OverviewStats title="Last Runner State">Validating</OverviewStats>
+          <OverviewStats title="Start time">7 mo ago</OverviewStats>
+          <OverviewStats title="Total Checkpoint size">14.4 MB</OverviewStats>
+          <OverviewStats clickable title="Best Checkpoint">
+            Batch 1000
+          </OverviewStats>
+        </Grid>
+        <strong>Considerations</strong>
+        <ul>
+          <li>Ensure links are tab-able.</li>
+          <li>Ensure data is relevant and if not, remove it.</li>
+          <li>We need to revisit the density of each of the cards and content.</li>
+          <li>
+            Implement quick actions inside of the card as to prevent the user from providing
+            additional clicks.
+          </li>
+        </ul>
+        <strong>DataCard variations</strong>
+        <ul>
+          <li>Resource pool card</li>
+          <ResourcePoolCard resourcePool={rps[0]} />
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const LogViewerSection: React.FC = () => {
+  const sampleLogs = [
+    {
+      id: 1,
+      level: V1LogLevel.INFO,
+      message: 'Determined master 0.19.7-dev0 (built with go1.18.7)',
+      timestamp: '2022-06-02T21:48:07.456381-06:00',
+    },
+    {
+      id: 2,
+      level: V1LogLevel.INFO,
+      message:
+        'connecting to database determined-master-database-tytmqsutj5d1.cluster-csrkoc1nkoog.us-west-2.rds.amazonaws.com:5432',
+      timestamp: '2022-07-02T21:48:07.456381-06:00',
+    },
+    {
+      id: 3,
+      level: V1LogLevel.INFO,
+      message:
+        'running DB migrations from file:///usr/share/determined/master/static/migrations; this might take a while...',
+      timestamp: '2022-08-02T21:48:07.456381-06:00',
+    },
+    {
+      id: 4,
+      level: V1LogLevel.INFO,
+      message: 'no migrations to apply; version: 20221026124235',
+      timestamp: '2022-09-02T21:48:07.456381-06:00',
+    },
+    {
+      id: 5,
+      level: V1LogLevel.ERROR,
+      message:
+        'failed to aggregate resource allocation: failed to add aggregate allocation: ERROR: range lower bound must be less than or equal to range upper bound (SQLSTATE 22000)  actor-local-addr="allocation-aggregator" actor-system="master" go-type="allocationAggregator"',
+      timestamp: '2022-10-02T21:48:07.456381-06:00',
+    },
+    {
+      id: 6,
+      level: V1LogLevel.WARNING,
+      message:
+        'received update on unknown agent  actor-local-addr="aux-pool" actor-system="master" agent-id="i-018fadb36ddbfe97a" go-type="ResourcePool" resource-pool="aux-pool"',
+      timestamp: '2022-11-02T21:48:07.456381-06:00',
+    },
+  ];
+  return (
+    <ComponentSection id="LogViewer" title="LogViewer">
+      <ReviewAlert />
+      <Card>
+        A Logview prints events that have been configured to be triggered and return them to the
+        user in a running stream.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>We need to streamline the wrapping of specific errors as to enhance readability.</li>
+          <li>There is a set of UI bugs in the parsing of the log entry.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content considerations</strong>
+        <ul>
+          <li>
+            Prioritize accessibility and readability of the log entry as details can always be
+            generated afterwards.
+          </li>
+          <li>
+            Prioritize IntelliSense type of readability improvements as it helps scannability of the
+            text.
+          </li>
+          <li>Provide the user with ways of searching & filtering down logs.</li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>LogViewer default</strong>
+        <div style={{ height: '300px' }}>
+          <LogViewer decoder={mapV1LogsResponse} initialLogs={sampleLogs} sortKey="id" />
+        </div>
+        <strong>Considerations</strong>
+        <ul>
+          <li>
+            Ensure that we don&apos;t overload the users with information --&gt; we need to know
+            what events we&apos;re listening to.
+          </li>
+          <li>Ensure the capability of searching/filtering log entries.</li>
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
 
@@ -1104,38 +1274,42 @@ const DesignKit: React.FC = () => {
   }, [actions]);
 
   return (
-    <div className={css.base}>
-      <nav>
-        <Link reloadDocument to={{}}>
-          <Logo branding={BrandingType.Determined} orientation="horizontal" />
-        </Link>
-        <ThemeToggle />
-        <ul>
-          {componentOrder.map((componentId) => (
-            <li key={componentId}>
-              <Link reloadDocument to={`#${componentId}`}>
-                {Components[componentId]}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <main>
-        <ButtonsSection />
-        <DropdownsSection />
-        <CheckboxesSection />
-        <LabelsSection />
-        <SearchboxesSection />
-        <SpinbuttonsSection />
-        <TextfieldsSection />
-        <ListsSection />
-        <BreadcrumbsSection />
-        <FacepileSection />
-        <ActionBarSection />
-        <PivotSection />
-        <PaginationSection />
-      </main>
-    </div>
+    <Page bodyNoPadding docTitle="Design Kit">
+      <div className={css.base}>
+        <nav>
+          <Link reloadDocument to={{}}>
+            <Logo branding={BrandingType.Determined} orientation="horizontal" />
+          </Link>
+          <ThemeToggle />
+          <ul>
+            {componentOrder.map((componentId) => (
+              <li key={componentId}>
+                <Link reloadDocument to={`#${componentId}`}>
+                  {Components[componentId]}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <main>
+          <ButtonsSection />
+          <DropdownsSection />
+          <CheckboxesSection />
+          <LabelsSection />
+          <SearchboxesSection />
+          <SpinbuttonsSection />
+          <TextfieldsSection />
+          <ListsSection />
+          <BreadcrumbsSection />
+          <FacepileSection />
+          <ActionBarSection />
+          <PivotSection />
+          <PaginationSection />
+          <DataCardsSection />
+          <LogViewerSection />
+        </main>
+      </div>
+    </Page>
   );
 };
 

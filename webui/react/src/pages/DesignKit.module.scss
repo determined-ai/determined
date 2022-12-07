@@ -4,7 +4,7 @@
   height: 100%;
   overflow: auto;
 
-  nav {
+  & nav {
     background-color: var(--theme-surface);
     box-shadow: var(--theme-elevation);
     display: flex;
@@ -37,7 +37,7 @@
       }
     }
   }
-  main {
+  & main {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -70,10 +70,14 @@
         border: solid var(--theme-stage-border-weak) 1px;
         width: 100%;
       }
-      :global(.ant-card-body) {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+      :global(.ant-card) {
+        background-color: var(--theme-surface-weak);
+
+        :global(.ant-card-body) {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
       }
     }
   }
