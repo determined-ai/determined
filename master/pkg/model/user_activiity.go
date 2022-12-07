@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/determined-ai/determined/proto/pkg/userv1"
 	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 // ActivityType describes a user activity.
