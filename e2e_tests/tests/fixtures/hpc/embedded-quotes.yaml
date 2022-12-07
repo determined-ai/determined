@@ -1,0 +1,11 @@
+description: metric_maker
+data:
+  user_defined_key: datakey="datavalue with embedded "
+
+searcher:
+  name: single
+  metric: error
+  max_length: 
+    batches: 1000
+max_restarts: 0
+entrypoint: python3 data_validator.py 
