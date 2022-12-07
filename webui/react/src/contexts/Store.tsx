@@ -4,7 +4,7 @@ import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import { DeterminedInfo, ResourcePool, UserAssignment, UserRole, Workspace } from 'types';
+import { DeterminedInfo, UserAssignment, UserRole, Workspace } from 'types';
 
 const logger = rootLogger.extend('store');
 
@@ -17,19 +17,11 @@ interface OmnibarState {
 }
 
 interface State {
-  activeExperiments: number;
-  activeTasks: {
-    commands: number;
-    notebooks: number;
-    shells: number;
-    tensorboards: number;
-  };
 
   info: DeterminedInfo;
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
 
-  resourcePools: ResourcePool[];
   ui: {
     omnibar: OmnibarState;
   };
@@ -42,12 +34,6 @@ export const StoreAction = {
   HideOmnibar: 'HideOmnibar',
 
   Reset: 'Reset',
-
-  // Active Experiments
-  SetActiveExperiments: 'SetActiveExperiments',
-
-  // Tasks
-  SetActiveTasks: 'SetActiveTasks',
 
   // Agents
   SetAgents: 'SetAgents',
@@ -63,9 +49,6 @@ export const StoreAction = {
   // PinnedWorkspaces
   SetPinnedWorkspaces: 'SetPinnedWorkspaces',
 
-  // ResourcePools
-  SetResourcePools: 'SetResourcePools',
-
   SetUserAssignments: 'SetUserAssignments',
 
   SetUserRoles: 'SetUserRoles',
@@ -79,20 +62,9 @@ type Action =
   | { type: typeof StoreAction.Reset }
   | { type: typeof StoreAction.SetInfo; value: DeterminedInfo }
   | { type: typeof StoreAction.SetInfoCheck }
-  | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
-  | {
-      type: typeof StoreAction.SetActiveTasks;
-      value: {
-        commands: number;
-        notebooks: number;
-        shells: number;
-        tensorboards: number;
-      };
-    }
-  | { type: typeof StoreAction.SetActiveExperiments; value: number }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
@@ -110,17 +82,9 @@ export const initInfo: DeterminedInfo = {
 };
 
 const initState: State = {
-  activeExperiments: 0,
-  activeTasks: {
-    commands: 0,
-    notebooks: 0,
-    shells: 0,
-    tensorboards: 0,
-  },
   info: initInfo,
   knownRoles: [],
   pinnedWorkspaces: [],
-  resourcePools: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
   userRoles: [
@@ -145,9 +109,6 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, info: action.value };
     case StoreAction.SetInfoCheck:
       return { ...state, info: { ...state.info, checked: true } };
-    case StoreAction.SetResourcePools:
-      if (isEqual(state.resourcePools, action.value)) return state;
-      return { ...state, resourcePools: action.value };
     case StoreAction.SetPinnedWorkspaces:
       if (isEqual(state.pinnedWorkspaces, action.value)) return state;
       return { ...state, pinnedWorkspaces: action.value };
@@ -157,12 +118,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.ShowOmnibar:
       if (state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
-    case StoreAction.SetActiveExperiments:
-      if (isEqual(state.activeExperiments, action.value)) return state;
-      return { ...state, activeExperiments: action.value };
-    case StoreAction.SetActiveTasks:
-      if (isEqual(state.activeTasks, action.value)) return state;
-      return { ...state, activeTasks: action.value };
     case StoreAction.SetKnownRoles:
       if (isEqual(state.knownRoles, action.value)) return state;
       return { ...state, knownRoles: action.value };

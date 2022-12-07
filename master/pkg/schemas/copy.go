@@ -5,17 +5,54 @@ import (
 	"reflect"
 )
 
-// Copyable means an object can have custom behvaiors for schemas.Copy.  Mostly this is useful for
-// working around types which we do not own and which schemas.Copy() would puke on.
-type Copyable interface {
-	// Copy should return the same type.  It must not be defined as a method against a pointer of
-	// the type or it will not work.
-	Copy() interface{}
+// copyIfCopyable checks if v implements our Copyable psuedointerface and calls .Copy if it does.
+//
+// The Copyable psuedointerface is defined as:
+//
+//     "x.Copy() returns another object with the same type as x".
+//
+// It is a "psuedointerface", not a real interface, because it can't actually be expressed in go
+// generics.  If you wanted to approximate it, you would end up with something like:
+//
+//     // CopyReturnsT has a Copy() that returns a T.
+//     type CopyReturnsT[T any] interface {
+//         Copy() T
+//     }
+//
+//     // Operates on any type T which has have a .Copy() that returns a T.
+//     func Copy[T CopyReturnsT[T]](src T) T { ... }
+//
+// But since the resulting constraint [T CopyReturns[T]] isn't a concrete interface, we can't check
+// for it in reflect code, and instead we just manually check if an object meets our definition of
+// "Copyable".
+//
+// In practice, Copyable means an object can have custom behvaiors for schemas.Copy.  Mostly this is
+// useful for working around types which we do not own and which schemas.Copy() would puke on.
+func copyIfCopyable(v reflect.Value) (reflect.Value, bool) {
+	var out reflect.Value
+
+	// Look for the .Copy method.
+	meth, ok := v.Type().MethodByName("Copy")
+	if !ok {
+		return out, false
+	}
+
+	// Verify the signature matches our Copyable psuedointerface:
+	// - one input (the receiver), and one output
+	// - input type matches output type exactly (without the usual pointer receiver semantics)
+	if meth.Type.NumIn() != 1 || meth.Type.NumOut() != 1 || meth.Type.In(0) != meth.Type.Out(0) {
+		return out, false
+	}
+
+	// Psuedointerface matches, call the .Copy method.
+	out = meth.Func.Call([]reflect.Value{v})[0]
+
+	return out, true
 }
 
 // Copy is a reflect-based deep copy.  It's only generally safe to use on schema objects.
-func Copy(src interface{}) interface{} {
-	return cpy(reflect.ValueOf(src)).Interface()
+func Copy[T any](src T) T {
+	return cpy(reflect.ValueOf(src)).Interface().(T)
 }
 
 // cpy is for deep copying, but it will only work on "nice" objects, which should include our
@@ -24,14 +61,10 @@ func cpy(v reflect.Value) reflect.Value {
 	// fmt.Printf("cpy(%T)\n", v.Interface())
 	var out reflect.Value
 
-	// Detect Copyables, but disallow pointers.  The reason is that if you have a method like:
-	//    func (t Thing) Copy() interface{}
-	// then Copy() will return a plain Thing object, but a pointer to a Thing will still be treated
-	// as copyable.  Then, schemas.Copy(&t).(*Thing) would panic because it returns the wrong type.
-	if v.Kind() != reflect.Ptr {
-		if copyable, ok := v.Interface().(Copyable); ok {
-			return reflect.ValueOf(copyable.Copy())
-		}
+	// Detect values which match the Copyable pseudointerface.
+	var ok bool
+	if out, ok = copyIfCopyable(v); ok {
+		return out
 	}
 
 	switch v.Kind() {

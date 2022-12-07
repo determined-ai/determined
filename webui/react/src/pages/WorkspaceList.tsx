@@ -104,6 +104,7 @@ const WorkspaceList: React.FC = () => {
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
+      setIsLoading(true);
       updateSettings({ whose: value as WhoseWorkspaces | undefined });
     },
     [updateSettings],
@@ -135,10 +136,10 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: undefined });
         break;
       case WhoseWorkspaces.Mine:
-        updateSettings({ user: user ? [user.username] : undefined });
+        updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseWorkspaces.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
         break;
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);

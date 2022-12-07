@@ -9,11 +9,11 @@ import os
 import shlex
 import subprocess
 import sys
-import tempfile
 import time
 from typing import List, Optional
 
 import deepspeed
+import filelock
 from deepspeed.launcher.runner import DEEPSPEED_ENVIRONMENT_NAME
 from packaging import version
 
@@ -24,6 +24,7 @@ from determined.common import api
 from determined.common.api import certs
 
 hostfile_path = None
+deepspeed_version = version.parse(deepspeed.__version__)
 
 
 def is_using_cuda() -> bool:
@@ -46,35 +47,18 @@ def is_nccl_socket_ifname_env_var_set() -> bool:
         return True
 
 
-def get_hostfile_path(multi_machine: bool) -> Optional[str]:
+def get_hostfile_path(multi_machine: bool, allocation_id: str) -> Optional[str]:
     if not multi_machine:
         return None
 
-    global hostfile_path
-
-    # Ensure that "hostfile_path" is initialized only once. All subsquent calls
-    # will return the same file name.  The production code calls this only once,
-    # but the tests call it multiple times and the tests will fail if a
-    # a different name is returned, because the expected value will not match
-    # the actual value of the command line that the test creates due to the
-    # difference in the file name.
-    if hostfile_path is None:
-        # When the task container uses "/tmp" from the host, having a file with
-        # a well-known name in a world writable directory is not only a security
-        # issue, but it can also cause a user's experiment to fail due to the
-        # file being owned by another user.  Create the file securely with a
-        # random name to avoid file name clashes between two different
-        # experiments.
-        temp_hostfile = tempfile.NamedTemporaryFile(
-            prefix="/tmp/hostfile-", suffix=".txt", delete=False
-        )
-        hostfile_path = temp_hostfile.name
-        temp_hostfile.close()
-
+    # When the task container uses "/tmp" from the host, having a file with
+    # a well-known name in a world writable directory is not only a security
+    # issue, but it can also cause a user's experiment to fail due to the
+    # file being owned by another user. Hence we suffix the hostfile by
+    # the allocation_id so it should be unique per trial launch.
+    hostfile_path = f"/tmp/hostfile-{allocation_id}.txt"
+    os.environ["DET_DEEPSPEED_HOSTFILE_PATH"] = hostfile_path
     return hostfile_path
-
-
-deepspeed_version = version.parse(deepspeed.__version__)
 
 
 def create_hostlist_file(
@@ -86,7 +70,7 @@ def create_hostlist_file(
     if len(ip_addresses) == 1:
         trial_runner_hosts[0] = "localhost"
 
-    if hostfile_path is not None:
+    if hostfile_path is not None and not os.path.exists(hostfile_path):
         os.makedirs(os.path.dirname(hostfile_path), exist_ok=True)
         with open(hostfile_path, "w") as hostfile:
             lines = [f"{host} slots={num_proc_per_machine}\n" for host in trial_runner_hosts]
@@ -157,6 +141,7 @@ def create_deepspeed_env_file() -> None:
         "USE_DEEPSPEED",
         "DET_CHIEF_IP",
         "DET_MANUAL_INIT_DISTRIBUTED",
+        "DET_DEEPSPEED_HOSTFILE_PATH",
     ]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = os.environ.copy()
@@ -236,6 +221,21 @@ def main(script: List[str]) -> int:
         if dtrain_network_interface is not None and len(dtrain_network_interface) > 0:
             os.environ["NCCL_SOCKET_IFNAME"] = dtrain_network_interface
 
+    # In some downstream training code, the hostfile is expected on all nodes so we create the
+    # hostfile on all nodes here before opening the non-chief node subprocess.  Since we
+    # use the allocation id to create the hostfile path, we register that path to an environment
+    # variable for access downstream.  A filelock is used to ensure we do not have clashing writes
+    # if the hostfile_path is on a shared filesystem.
+    hostfile_path = get_hostfile_path(multi_machine, info.allocation_id)
+
+    lock = str(hostfile_path) + ".lock"
+    with filelock.FileLock(lock):
+        master_address = create_hostlist_file(
+            hostfile_path=hostfile_path,
+            num_proc_per_machine=len(info.slot_ids),
+            ip_addresses=info.container_addrs,
+        )
+
     # All ranks will need to run sshd.
     run_sshd_command = create_sshd_cmd()
 
@@ -276,13 +276,6 @@ def main(script: List[str]) -> int:
 
     pid_server_cmd = create_pid_server_cmd(info.allocation_id, len(info.slot_ids))
 
-    hostfile_path = get_hostfile_path(multi_machine)
-
-    master_address = create_hostlist_file(
-        hostfile_path=hostfile_path,
-        num_proc_per_machine=len(info.slot_ids),
-        ip_addresses=info.container_addrs,
-    )
     cmd = create_run_command(master_address, hostfile_path)
 
     pid_client_cmd = create_pid_client_cmd(info.allocation_id)

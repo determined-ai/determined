@@ -236,7 +236,6 @@ type Event struct {
 	Time        time.Time `json:"time"`
 	Description string    `json:"description"`
 	IsReady     bool      `json:"is_ready"`
-	State       string    `json:"state"`
 	ContainerID string    `json:"container_id"`
 	Level       *string   `json:"level"`
 

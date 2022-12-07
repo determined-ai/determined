@@ -14,6 +14,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
+import { useResourcePools } from 'stores/resourcePools';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -45,7 +46,9 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 
 const NavigationTabbar: React.FC = () => {
   const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
-  const { resourcePools, info, pinnedWorkspaces } = useStore();
+  const { info, pinnedWorkspaces } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const { ui } = useUI();
   const overview = useClusterOverview();
   const agents = useAgents();

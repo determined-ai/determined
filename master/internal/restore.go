@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
@@ -161,7 +160,7 @@ func (e *experiment) restoreTrial(
 		return
 	}
 
-	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+	config := schemas.Copy(e.Config)
 	t := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.taskLogger, e.rm, e.db, config, ckpt, e.taskSpec, true,

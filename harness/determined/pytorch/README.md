@@ -3,7 +3,6 @@
 "Most of PyTorchTrial is simple.  But the Horovod / AMP / Gradient Aggregation
 combo is not."
 
-
 ## Basics of PyTorch
 
 ### The forward pass
@@ -23,7 +22,6 @@ left in-place on the tensors to which they apply.
 Gather up all of the gradents for the tensors this optimizer is responsible for
 tuning, and apply the `gradient * learning_rate` to each weight.  Now you have
 new weights, congratulations!
-
 
 ## Horovod optimizer
 
@@ -75,7 +73,6 @@ This is not AMP, and it does not behave like the GradScaler.  It just blindly
 casts gradient update tensors to fp16 for network communication and blindly
 casts them back to fp32 afterwards.
 
-
 ## Gradient Aggregation:
 
 Gradient aggregation by a factor of N is just like multiplying the batch size
@@ -87,16 +84,15 @@ such as with batch norm).
 
 The only operation required for gradient aggregation are:
 
- * do N forward/backward passes before doing anything with the gradients that
-   result from those backward passes.  Those in-place gradients will add
-   together naturally.
+* do N forward/backward passes before doing anything with the gradients that
+  result from those backward passes.  Those in-place gradients will add
+  together naturally.
 
- * Divide the gradients by N to match the behavior of an N-times-larger batch
-   size.
+* Divide the gradients by N to match the behavior of an N-times-larger batch
+  size.
 
- * Call optimizer.step() after every N batches to act on the aggregated
-   gradients.
-
+* Call optimizer.step() after every N batches to act on the aggregated
+  gradients.
 
 ## PyTorch-Native AMP:
 

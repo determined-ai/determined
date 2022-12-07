@@ -234,7 +234,7 @@ def wait_for_trial_state(
 
 def experiment_has_active_workload(experiment_id: int) -> bool:
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     r = api.get(conf.make_master_url(), "tasks").json()
     for task in r.values():
         if "Experiment {}".format(experiment_id) in task["name"] and len(task["resources"]) > 0:
@@ -290,7 +290,7 @@ def wait_for_experiment_workload_progress(
 
 def experiment_has_completed_workload(experiment_id: int) -> bool:
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     trials = experiment_trials(experiment_id)
 
     if not any(trials):
@@ -324,7 +324,7 @@ def determined_test_session(admin: bool = False) -> api.Session:
     certs.cli_cert = certs.default_load(murl)
     username = "admin" if admin else "determined"
     authentication.cli_auth = authentication.Authentication(
-        murl, requested_user=username, password="", try_reauth=True
+        murl, requested_user=username, password=""
     )
     return api.Session(murl, username, authentication.cli_auth, certs.cli_cert)
 
@@ -386,7 +386,7 @@ def is_terminal_state(state: determinedexperimentv1State) -> bool:
 
 def trial_metrics(trial_id: int) -> Dict[str, Any]:
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
     json = r.json()  # type: Dict[str, Any]
     return json

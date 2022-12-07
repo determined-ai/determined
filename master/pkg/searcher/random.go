@@ -46,7 +46,7 @@ func newSingleSearch(config expconf.SingleConfig) SearchMethod {
 			RawMaxTrials:           ptrs.Ptr(1),
 			RawMaxLength:           ptrs.Ptr(config.MaxLength()),
 			RawMaxConcurrentTrials: ptrs.Ptr(1),
-		}).(expconf.RandomConfig),
+		}),
 		randomSearchState: randomSearchState{
 			SearchMethodType: SingleSearch,
 		},

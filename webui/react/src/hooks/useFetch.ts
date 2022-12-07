@@ -1,41 +1,8 @@
 import { useCallback } from 'react';
 
-import { activeRunStates } from 'constants/states';
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import {
-  getActiveTasks,
-  getExperiments,
-  getInfo,
-  getPermissionsSummary,
-  getResourcePools,
-  getWorkspaces,
-  listRoles,
-} from 'services/api';
-import { ErrorType } from 'shared/utils/error';
+import { getInfo, getPermissionsSummary, getWorkspaces, listRoles } from 'services/api';
 import handleError from 'utils/error';
-
-export const useFetchActiveExperiments = (canceler: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-
-  return useCallback(async (): Promise<void> => {
-    try {
-      const response = await getExperiments(
-        { limit: -2, states: activeRunStates },
-        { signal: canceler.signal },
-      );
-      storeDispatch({
-        type: StoreAction.SetActiveExperiments,
-        value: response.pagination.total || 0,
-      });
-    } catch (e) {
-      handleError({
-        message: 'Unable to fetch active experiments.',
-        silent: true,
-        type: ErrorType.Api,
-      });
-    }
-  }, [canceler, storeDispatch]);
-};
 
 export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();
@@ -47,31 +14,6 @@ export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) =
     } catch (e) {
       storeDispatch({ type: StoreAction.SetInfoCheck });
       handleError(e);
-    }
-  }, [canceler, storeDispatch]);
-};
-
-export const useFetchResourcePools = (canceler?: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-  return useCallback(async (): Promise<void> => {
-    try {
-      const resourcePools = await getResourcePools({}, { signal: canceler?.signal });
-      storeDispatch({ type: StoreAction.SetResourcePools, value: resourcePools });
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, storeDispatch]);
-};
-
-export const useFetchActiveTasks = (canceler: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-
-  return useCallback(async (): Promise<void> => {
-    try {
-      const counts = await getActiveTasks({}, { signal: canceler.signal });
-      storeDispatch({ type: StoreAction.SetActiveTasks, value: counts });
-    } catch (e) {
-      handleError({ message: 'Unable to fetch task counts.', silent: true, type: ErrorType.Api });
     }
   }, [canceler, storeDispatch]);
 };

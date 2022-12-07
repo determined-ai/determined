@@ -26658,11 +26658,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Limit the projects to those matching the name.
          * @param {boolean} [archived] Limit the projects to those with an archived status.
-         * @param {Array<string>} [users] Limit the projects to those from particular users.
+         * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspaceProjects.');
@@ -26710,6 +26711,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarQueryParameter['users'] = users;
             }
 
+            if (userIds) {
+                localVarQueryParameter['userIds'] = userIds;
+            }
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -26729,12 +26734,13 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options: any = {}): FetchArgs {
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -26775,6 +26781,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
 
             if (users) {
                 localVarQueryParameter['users'] = users;
+            }
+
+            if (userIds) {
+                localVarQueryParameter['userIds'] = userIds;
             }
 
             if (pinned !== undefined) {
@@ -27064,12 +27074,13 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Limit the projects to those matching the name.
          * @param {boolean} [archived] Limit the projects to those with an archived status.
-         * @param {Array<string>} [users] Limit the projects to those from particular users.
+         * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27089,13 +27100,14 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27251,12 +27263,13 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Limit the projects to those matching the name.
          * @param {boolean} [archived] Limit the projects to those with an archived status.
-         * @param {Array<string>} [users] Limit the projects to those from particular users.
+         * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(fetch, basePath);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -27267,13 +27280,14 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(fetch, basePath);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(fetch, basePath);
         },
         /**
          * 
@@ -27382,13 +27396,14 @@ export class WorkspacesApi extends BaseAPI {
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
      * @param {string} [name] Limit the projects to those matching the name.
      * @param {boolean} [archived] Limit the projects to those with an archived status.
-     * @param {Array<string>} [users] Limit the projects to those from particular users.
+     * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+     * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(this.fetch, this.basePath);
+    public getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27400,14 +27415,15 @@ export class WorkspacesApi extends BaseAPI {
      * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
      * @param {string} [name] Limit the workspaces to those matching the name.
      * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-     * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+     * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+     * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
      * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(this.fetch, this.basePath);
+    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(this.fetch, this.basePath);
     }
 
     /**

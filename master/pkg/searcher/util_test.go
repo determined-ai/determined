@@ -64,7 +64,7 @@ func checkSimulation(
 func checkReproducibility(
 	t assert.TestingT, methodGen func() SearchMethod, hparams expconf.Hyperparameters, metric string,
 ) {
-	hparams = schemas.WithDefaults(hparams).(expconf.Hyperparameters)
+	hparams = schemas.WithDefaults(hparams)
 	seed := int64(17)
 	searcher1 := NewSearcher(uint32(seed), methodGen(), hparams)
 	searcher2 := NewSearcher(uint32(seed), methodGen(), hparams)
@@ -254,8 +254,8 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			// Apply WithDefaults in one place to make tests easyto write.
-			config := schemas.WithDefaults(tc.config).(expconf.SearcherConfig)
-			hparams := schemas.WithDefaults(tc.hparams).(expconf.Hyperparameters)
+			config := schemas.WithDefaults(tc.config)
+			hparams := schemas.WithDefaults(tc.hparams)
 			method := NewSearchMethod(config)
 			err := checkValueSimulation(t, method, hparams, tc.expectedTrials)
 			assert.NilError(t, err)

@@ -28,7 +28,7 @@ func TestBindMountsMerge(t *testing.T) {
 			},
 		},
 	}
-	out := schemas.Merge(e1, e2).(ExperimentConfig)
+	out := schemas.Merge(e1, e2)
 	assert.Assert(t, len(out.RawBindMounts) == 2)
 	assert.Assert(t, out.RawBindMounts[0].RawHostPath == "/host/e1")
 	assert.Assert(t, out.RawBindMounts[1].RawHostPath == "/host/e2")

@@ -21,6 +21,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
+import { useResourcePools } from 'stores/resourcePools';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -111,8 +112,10 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const { resourcePools, info, pinnedWorkspaces } = useStore();
+  const { info, pinnedWorkspaces } = useStore();
   const auth = Loadable.getOrElse({ checked: false, isAuthenticated: false }, useAuth().auth);
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const { ui } = useUI();
   const agents = useAgents();
   const overview = useClusterOverview();
