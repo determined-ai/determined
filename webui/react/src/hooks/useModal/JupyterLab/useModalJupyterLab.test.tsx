@@ -6,7 +6,8 @@ import { BrowserRouter } from 'react-router-dom';
 
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
-import { DetailedUser } from 'types';
+import { DetailedUser, ResourcePool } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import useModalJupyterLab from './useModalJupyterLab';
 
@@ -26,6 +27,12 @@ jest.mock('contexts/Store', () => ({
   __esModule: true,
   ...jest.requireActual('contexts/Store'),
   useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
+}));
+
+jest.mock('stores/resourcePools', () => ({
+  __esModule: true,
+  ...jest.requireActual('stores/resourcePools'),
+  useResourcePools: (): Loadable<ResourcePool[]> => ({ _tag: 'Loaded', data: [] }),
 }));
 
 jest.mock('utils/wait', () => ({
