@@ -43,8 +43,11 @@ export const StoreAction = {
 
   ResetAuthCheck: 'ResetAuthCheck',
 
-  // Agents
-  SetAgents: 'SetAgents',
+  // Active Experiments
+  SetActiveExperiments: 'SetActiveExperiments',
+
+  // Tasks
+  SetActiveTasks: 'SetActiveTasks',
 
   SetAuth: 'SetAuth',
 
