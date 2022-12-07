@@ -8,7 +8,6 @@ import Page from 'components/Page';
 import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
 import { V1SchedulerTypeToLabel } from 'constants/states';
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { getJobQStats } from 'services/api';
 import { V1GetJobQueueStatsResponse, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
@@ -20,6 +19,7 @@ import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence, floatToPercent } from 'shared/utils/string';
 import { useAgents } from 'stores/agents';
+import { useResourcePools } from 'stores/resourcePools';
 import { ShirtSize } from 'themes';
 import { JobState, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
@@ -49,7 +49,8 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
-  const { resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const agents = Loadable.getOrElse([], useAgents());
 
   const pool = useMemo(() => {

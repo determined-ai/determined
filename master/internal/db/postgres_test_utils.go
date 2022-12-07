@@ -138,7 +138,7 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 			},
 			RawMetric: ptrs.Ptr(defaultSearcherMetric),
 		},
-	}).(expconf.ExperimentConfigV0)
+	})
 
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),

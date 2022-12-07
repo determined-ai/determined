@@ -9,7 +9,7 @@ to get support and talk with other users and developers in real-time.
 
 ## Project Roadmap
 
-https://github.com/determined-ai/determined/wiki/Project-Roadmap
+<https://github.com/determined-ai/determined/wiki/Project-Roadmap>
 
 ## Contributing Changes
 
@@ -52,9 +52,9 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 
 - Go (>= 1.18)
 - Python (>= 3.6, <= 3.9), including:
-   - python3-venv
-   - python3-wheel
-   - python3-dev
+  - python3-venv
+  - python3-wheel
+  - python3-dev
 - Node (>= 16.13, < 17)
 - NPM (>= 8)
 - Docker (>= 19.03)
@@ -65,14 +65,14 @@ git clone --recurse-submodules https://github.com/determined-ai/determined.git
 - jq (>= 1.6)
 - socat (>= 1.7)
 
-If you are installing prerequisites from your Linux distribution's package 
-repository, ensure that they meet the version requirements above, particularly 
+If you are installing prerequisites from your Linux distribution's package
+repository, ensure that they meet the version requirements above, particularly
 Python and Node.
 
 #### Install Prerequisites with Homebrew for Linux and macOS
 
-Because the versions of prerequisites from Linux distribution package 
-repositories can vary widely, we recommend installing the Determined build 
+Because the versions of prerequisites from Linux distribution package
+repositories can vary widely, we recommend installing the Determined build
 prerequisites with [Homebrew](https://brew.sh/).
 
 The following instructions are also applicable for building Determined on macOS.
@@ -135,12 +135,12 @@ or [direnv](https://direnv.net/) may help streamline the process.
 
 ### Building Errata
 
-If you are building Determined using Python 3.9, you must manually change the 
+If you are building Determined using Python 3.9, you must manually change the
 version of TensorFlow to 2.8.0 in the [end-to-end testing requirements file](https://github.com/determined-ai/determined/blob/master/e2e_tests/tests/requirements.txt#L8)
 because the version of TensorFlow currently set in the end-to-end requirements
 file is not compatible with Python 3.9:
 
-```
+```plain
 tensorflow==2.8.0; sys_platform != 'darwin' or platform_machine != 'arm64'
 ```
 
@@ -157,7 +157,7 @@ of master and one or more local agents.
 ### Accessing Determined
 
 After following either set of instructions above, the WebUI will be available at
-http://localhost:8080. You can also use our command-line tool, `det`, to
+`http://localhost:8080`. You can also use our command-line tool, `det`, to
 interact with Determined. For example, `det slot list` should print out a line
 for each GPU on your machine, if you have any, or a line for your CPU, if not.
 For more information, see [the reference
@@ -242,7 +242,6 @@ If this command displays one or more GPUs, the Determined agent should
 automatically detect the system's GPUs and make them available for
 running experiments.
 
-
 ### Secrets
 
 To prevent cloud credentials from accidentally being exposed on GitHub, install
@@ -253,6 +252,7 @@ For Mac, the tool can be installed via `brew install git-secrets`. For other
 OSes see installation instructions [here](https://github.com/awslabs/git-secrets#installing-git-secrets).
 
 Then navigate to the repository, set up the git hooks, and define the regexes:
+
 ```shell
 cd /path/to/my/repository
 

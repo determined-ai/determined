@@ -77,8 +77,8 @@ type TestRuntimeDefaultable struct {
 	RawInt *int
 }
 
-// WithDefaults implements the Defaultable interface.
-func (t TestRuntimeDefaultable) WithDefaults() interface{} {
+// WithDefaults implements the Defaultable psuedointerface.
+func (t TestRuntimeDefaultable) WithDefaults() TestRuntimeDefaultable {
 	var i int
 	if t.RawInt != nil {
 		i = *t.RawInt

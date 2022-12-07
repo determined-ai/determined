@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 
 import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
-import { useFetchPinnedWorkspaces, useFetchResourcePools } from 'hooks/useFetch';
+import { useFetchPinnedWorkspaces} from 'hooks/useFetch';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterOverview, useFetchAgents } from 'stores/agents';
 import { useFetchUserRolesAndAssignments } from 'stores/userRoles';
+import { useFetchResourcePools } from 'stores/resourcePools';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { Loadable } from 'utils/loadable';

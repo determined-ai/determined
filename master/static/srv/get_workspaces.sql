@@ -1,7 +1,7 @@
 WITH pins AS (
   SELECT id, workspace_id, created_at
   FROM workspace_pins
-  WHERE user_id = $5
+  WHERE user_id = $6
 ),
 exp_count_by_project AS (
   SELECT COUNT(*) AS count, project_id FROM experiments
@@ -21,7 +21,8 @@ LEFT JOIN users as u ON u.id = w.user_id
 LEFT JOIN pins ON pins.workspace_id = w.id
 
 WHERE ($1 = '' OR (u.username IN (SELECT unnest(string_to_array($1, ',')))))
-AND ($2 = '' OR w.name ILIKE $2)
-AND ($3 = '' OR w.archived = $3::BOOL)
-AND ($4 = '' OR (pins.id IS NOT NULL) = $4::BOOL)
+AND ($2 = '' OR w.user_id IN (SELECT unnest(string_to_array($2, ',')::int [])))
+AND ($3 = '' OR w.name ILIKE $3)
+AND ($4 = '' OR w.archived = $4::BOOL)
+AND ($5 = '' OR (pins.id IS NOT NULL) = $5::BOOL)
 ORDER BY %s, pins.created_at DESC;

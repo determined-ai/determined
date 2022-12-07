@@ -38,7 +38,6 @@ def mock_det_auth(user: str = "test", master_url: str = "http://localhost:8888")
             master_address=master_url,
             requested_user=user,
             password="password1",
-            try_reauth=True,
             cert=certs.Cert(noverify=True),
         )
         return auth

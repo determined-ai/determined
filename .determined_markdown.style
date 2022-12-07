@@ -1,0 +1,11 @@
+# determiend-ai project markdown style
+all
+
+# line-length
+exclude_rule 'MD013'
+# inline HTML
+exclude_rule 'MD033'
+## trailing punctuation in header
+#exclude_rule 'MD026'
+# remove colon from default trailing punctuation chars
+rule 'MD026', :punctuation => '.,;!?'

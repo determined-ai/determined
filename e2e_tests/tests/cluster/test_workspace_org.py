@@ -20,10 +20,10 @@ def test_workspace_org() -> None:
     with logged_in_user(ADMIN_CREDENTIALS):
         change_user_password("determined", "")
     master_url = conf.make_master_url()
-    authentication.cli_auth = authentication.Authentication(master_url, try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(master_url)
     sess = api.Session(master_url, None, None, None)
     admin_auth = authentication.Authentication(
-        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password, try_reauth=True
+        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password
     )
     admin_sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
 

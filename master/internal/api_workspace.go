@@ -133,6 +133,11 @@ func (a *apiServer) GetWorkspaceProjects(
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIds := make([]string, 0, len(req.UserIds))
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	// Construct the ordering expression.
 	startTime := apiv1.GetWorkspaceProjectsRequest_SORT_BY_LAST_EXPERIMENT_START_TIME
 	sortColMap := map[apiv1.GetWorkspaceProjectsRequest_SortBy]string{
@@ -168,6 +173,7 @@ func (a *apiServer) GetWorkspaceProjects(
 		&resp.Projects,
 		req.Id,
 		userFilterExpr,
+		userIDFilterExpr,
 		nameFilter,
 		archFilterExpr,
 	)
@@ -202,6 +208,11 @@ func (a *apiServer) GetWorkspaces(
 		pinFilterExpr = strconv.FormatBool(req.Pinned.Value)
 	}
 	userFilterExpr := strings.Join(req.Users, ",")
+	userIds := make([]string, 0, len(req.UserIds))
+	for _, userID := range req.UserIds {
+		userIds = append(userIds, strconv.Itoa(int(userID)))
+	}
+	userIDFilterExpr := strings.Join(userIds, ",")
 	// Construct the ordering expression.
 	sortColMap := map[apiv1.GetWorkspacesRequest_SortBy]string{
 		apiv1.GetWorkspacesRequest_SORT_BY_UNSPECIFIED: "id",
@@ -232,6 +243,7 @@ func (a *apiServer) GetWorkspaces(
 		[]interface{}{orderExpr},
 		&resp.Workspaces,
 		userFilterExpr,
+		userIDFilterExpr,
 		nameFilter,
 		archFilterExpr,
 		pinFilterExpr,
@@ -480,6 +492,7 @@ func (a *apiServer) DeleteWorkspace(
 		[]interface{}{"id ASC"},
 		&projects,
 		req.Id,
+		"",
 		"",
 		"",
 		"",

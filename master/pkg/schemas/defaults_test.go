@@ -1,6 +1,7 @@
 package schemas
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/santhosh-tekuri/jsonschema/v2"
@@ -46,12 +47,12 @@ func TestFillEmptyDefaults(t *testing.T) {
 	}
 
 	obj := BindMountV0{}
-	out := WithDefaults(obj).(BindMountV0)
+	out := WithDefaults(obj)
 	assertDefaults(out)
 
 	// Make sure pointers on the input are ok.
 	objRef := &BindMountV0{}
-	objRef = WithDefaults(objRef).(*BindMountV0)
+	objRef = WithDefaults(objRef)
 	assertDefaults(*objRef)
 
 	// Make sure input interfaces are ok.
@@ -62,7 +63,7 @@ func TestFillEmptyDefaults(t *testing.T) {
 
 func TestNonEmptyDefaults(t *testing.T) {
 	obj := BindMountV0{ReadOnly: ptrs.Ptr(true), Propagation: ptrs.Ptr("asdf")}
-	out := WithDefaults(obj).(BindMountV0)
+	out := WithDefaults(obj)
 	assert.Assert(t, *out.ReadOnly == true)
 	assert.Assert(t, *out.Propagation == "asdf")
 }
@@ -73,7 +74,7 @@ func TestArrayOfDefautables(t *testing.T) {
 	obj = append(obj, BindMountV0{})
 	obj = append(obj, BindMountV0{})
 
-	out := WithDefaults(obj).([]BindMountV0)
+	out := WithDefaults(obj)
 
 	for _, b := range out {
 		assert.Assert(t, b.ReadOnly != nil)
@@ -81,4 +82,66 @@ func TestArrayOfDefautables(t *testing.T) {
 		assert.Assert(t, b.Propagation != nil)
 		assert.Assert(t, *b.Propagation == rprivate)
 	}
+}
+
+// Y is Defaultable.
+type Y int
+
+func (y Y) WithDefaults() Y {
+	return Y(0)
+}
+
+// Wrong number of inputs is not Defaultable.
+// type F int // defined in merge_test.go
+
+func (f F) WithDefaults(f2 F) F {
+	return F(0)
+}
+
+// Wrong type of inputs is not Defaultable.
+// type G int // defined in merge_test.go
+
+func (g *G) WithDefaults() G {
+	return G(0)
+}
+
+// Wrong number of outputs is not Defaultable.
+// type H int // defined in merge_test.go
+
+func (h H) WithDefaults() (H, H) {
+	return H(0), H(1)
+}
+
+// Wrong type of output is not Defaultable.
+// type I int // defined in merge_test.go
+
+func (i I) WithDefaults() *I {
+	return &i
+}
+
+func TestDefaultIfDefaultable(t *testing.T) {
+	// Y is Defaultable.
+	vobj := reflect.ValueOf(Y(0))
+	_, ok := defaultIfDefaultable(vobj)
+	assert.Assert(t, ok)
+
+	// Pointer to a Defaultable is not Defaultable
+	vobj = reflect.ValueOf(&E{})
+	_, ok = defaultIfDefaultable(vobj)
+	assert.Assert(t, !ok)
+
+	// Wrong num inputs is not Defaultable.
+	vobj = reflect.ValueOf(F(1))
+	_, ok = defaultIfDefaultable(vobj)
+	assert.Assert(t, !ok)
+
+	// Wrong type of inputs is not Defaultable.
+	vobj = reflect.ValueOf(G(1))
+	_, ok = defaultIfDefaultable(vobj)
+	assert.Assert(t, !ok)
+
+	// Wrong type of output is not Defaultable.
+	vobj = reflect.ValueOf(H(1))
+	_, ok = defaultIfDefaultable(vobj)
+	assert.Assert(t, !ok)
 }

@@ -41,9 +41,9 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 	var defaultConfig expconf.ExperimentConfig
 	g.Base.TaskContainerDefaults.MergeIntoExpConfig(&defaultConfig)
 	if defaultConfig.RawEnvironment != nil {
-		env = schemas.Merge(env, *defaultConfig.RawEnvironment).(expconf.EnvironmentConfig)
+		env = schemas.Merge(env, *defaultConfig.RawEnvironment)
 	}
-	res.Environment = schemas.WithDefaults(env).(expconf.EnvironmentConfig)
+	res.Environment = schemas.WithDefaults(env)
 	res.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCheckpointGC)}
 
 	res.WorkDir = DefaultWorkDir

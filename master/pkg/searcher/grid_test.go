@@ -245,7 +245,7 @@ func TestGridIntCountNegative(t *testing.T) {
 
 func TestGridSearcherRecords(t *testing.T) {
 	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(19200))}
-	actual = schemas.WithDefaults(actual).(expconf.GridConfig)
+	actual = schemas.WithDefaults(actual)
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]ValidateAfter{
 		toOps("19200R"), toOps("19200R"), toOps("19200R"),
@@ -257,7 +257,7 @@ func TestGridSearcherRecords(t *testing.T) {
 
 func TestGridSearcherBatches(t *testing.T) {
 	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300))}
-	actual = schemas.WithDefaults(actual).(expconf.GridConfig)
+	actual = schemas.WithDefaults(actual)
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]ValidateAfter{
 		toOps("300B"), toOps("300B"), toOps("300B"),
@@ -269,7 +269,7 @@ func TestGridSearcherBatches(t *testing.T) {
 
 func TestGridSearcherEpochs(t *testing.T) {
 	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInEpochs(3))}
-	actual = schemas.WithDefaults(actual).(expconf.GridConfig)
+	actual = schemas.WithDefaults(actual)
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]ValidateAfter{
 		toOps("3E"), toOps("3E"), toOps("3E"),

@@ -25,13 +25,13 @@ be registered in the determined repo. Here is the process:
    ./refresh-ubuntu-amis.py --packer-json /path/to/environments-packer.json
    ```
 
-2. Wait for the post-merge-to-master CircleCI jobs on the environments repo to
+1. Wait for the post-merge-to-master CircleCI jobs on the environments repo to
    finish. These will publish the relevant Docker/AWS/GCP images and create
    machine-readable artifacts containing the image tags.
 
-3. Enter the `tools/scripts` directory of the determined repo.
+1. Enter the `tools/scripts` directory of the determined repo.
 
-4. Run `./update-bumpenvs-yaml.py bumpenvs.yaml THECOMMIT`. This will fetch the
+1. Run `./update-bumpenvs-yaml.py bumpenvs.yaml THECOMMIT`. This will fetch the
    above-mentioned machine-readable artifacts from the CircleCI jobs of the
    environments repository, parse out the image tags, and update the relevant
    entries in `bumpenvs.yaml`.  For every artifact found, this will set that
@@ -39,13 +39,13 @@ be registered in the determined repo. Here is the process:
    value to the artifact produced by CI, including the task environments and
    the agent AMIs.
 
-5. Run `./refresh-ubuntu-amis.py --bumpenvs-yaml bumpenvs.yaml`.  This will
+1. Run `./refresh-ubuntu-amis.py --bumpenvs-yaml bumpenvs.yaml`.  This will
    fetch the up-to-date Ubuntu AMIs for each region for each of the
    `*_master_ami` and `*_bastion_ami` image tags in bumpenvs.yaml.  This isn't
    strictly necessary; we just need to run it periodically, and now is a fine
    time.
 
-6. Run `./bumpenvs.py bumpenvs.yaml`.  This will do a simple string replacement
+1. Run `./bumpenvs.py bumpenvs.yaml`.  This will do a simple string replacement
    in the repository, replacing the `old` values with the `new` values for
    every image type identified in `bumpenvs.yaml`.
 
@@ -67,20 +67,34 @@ headers contain metadata about the license and everything after the empty line
 should be the exact copy/pasted license text from the project in question.
 Here is an example:
 
-    Name: github.com/lib/pq
-    Type: mit
-    Agent: false
-    Master: true
-    Webui: false
+```plain
+Name: github.com/lib/pq
+Type: mit
+Agent: false
+Master: true
+Webui: false
 
-    Copyright (c) 2011-2013, 'pq' Contributors
-    Portions Copyright (C) 2011 Blake Mizerany
+Copyright (c) 2011-2013, 'pq' Contributors
+Portions Copyright (C) 2011 Blake Mizerany
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 The relevant metadata are:
 
