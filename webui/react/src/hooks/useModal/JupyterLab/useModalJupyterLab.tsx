@@ -19,9 +19,11 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
+import { useResourcePools } from 'stores/resourcePools';
 import { ResourcePool, Template } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
+import { Loadable } from 'utils/loadable';
 
 import css from './useModalJupyterLab.module.scss';
 
@@ -291,7 +293,9 @@ const JupyterLabForm: React.FC<{
   form: FormInstance<JupyterLabOptions>;
 }> = ({ form, defaults }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [resourcePools, setResourcePools] = useState<ResourcePool[]>([]);
+
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
 
   const selectedPoolName = Form.useWatch('pool', form);
 
@@ -324,14 +328,6 @@ const JupyterLabForm: React.FC<{
     }
   }, [resourceInfo, form]);
 
-  const fetchResourcePools = useCallback(async () => {
-    try {
-      setResourcePools(await getResourcePools({}));
-    } catch (e) {
-      handleError(e);
-    }
-  }, []);
-
   const fetchTemplates = useCallback(async () => {
     try {
       setTemplates(await getTaskTemplates({}));
@@ -339,10 +335,6 @@ const JupyterLabForm: React.FC<{
       handleError(e);
     }
   }, []);
-
-  useEffect(() => {
-    fetchResourcePools();
-  }, [fetchResourcePools]);
 
   useEffect(() => {
     fetchTemplates();
