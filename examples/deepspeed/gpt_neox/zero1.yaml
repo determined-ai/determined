@@ -27,7 +27,7 @@ environment:
         - NCCL_SOCKET_IFNAME=ens,eth,ib
     force_pull_image: true
     image:
-      gpu: liamdetermined/gpt-neox:52013a2
+      gpu: determinedai/gpt-neox:912cb32
 resources:
   slots_per_trial: 8
 searcher:
