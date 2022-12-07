@@ -766,8 +766,7 @@ func (a ResourceManager) TaskContainerDefaults(
 	pool string,
 	defaultConfig model.TaskContainerDefaultsConfig,
 ) model.TaskContainerDefaultsConfig {
-	result := model.TaskContainerDefaultsConfig{}
-	a.Ask(ctx,
-		taskContainerDefaults{fallbackDefault: defaultConfig, resourcePool: pool}, &result)
-	return result
+	request := taskContainerDefaults{fallbackDefault: defaultConfig, resourcePool: pool}
+	response := a.Ref().System().Ask(a.Ref(), request).Get()
+	return response.(model.TaskContainerDefaultsConfig)
 }
