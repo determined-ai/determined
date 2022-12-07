@@ -43,12 +43,6 @@ export const StoreAction = {
 
   ResetAuthCheck: 'ResetAuthCheck',
 
-  // Active Experiments
-  SetActiveExperiments: 'SetActiveExperiments',
-
-  // Tasks
-  SetActiveTasks: 'SetActiveTasks',
-
   SetAuth: 'SetAuth',
 
   SetAuthCheck: 'SetAuthCheck',
