@@ -62,12 +62,12 @@ export const StoreAction = {
   // PinnedWorkspaces
   SetPinnedWorkspaces: 'SetPinnedWorkspaces',
 
+  // ResourcePools
+  SetResourcePools: 'SetResourcePools',
+
   SetUserAssignments: 'SetUserAssignments',
 
   SetUserRoles: 'SetUserRoles',
-
-  // ResourcePools
-  SetResourcePools: 'SetResourcePools',
 
   // Users
   SetUsers: 'SetUsers',
@@ -89,23 +89,7 @@ type Action =
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
-<<<<<<< HEAD
-  | {
-      type: typeof StoreAction.SetActiveTasks;
-      value: {
-        commands: number;
-        notebooks: number;
-        shells: number;
-        tensorboards: number;
-      };
-    }
-  | { type: typeof StoreAction.SetActiveExperiments; value: number }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
-=======
-  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
->>>>>>> master
 
 export const AUTH_COOKIE_KEY = 'auth';
 

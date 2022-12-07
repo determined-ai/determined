@@ -1,20 +1,7 @@
 import { useCallback } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-<<<<<<< HEAD
-import {
-  getActiveTasks,
-  getExperiments,
-  getInfo,
-  getResourcePools,
-  getUsers,
-  getWorkspaces,
-  listRoles,
-} from 'services/api';
-import { ErrorType } from 'shared/utils/error';
-=======
-import { getInfo, getPermissionsSummary, getUsers, getWorkspaces, listRoles } from 'services/api';
->>>>>>> master
+import { getInfo, getUsers, getWorkspaces, listRoles } from 'services/api';
 import handleError from 'utils/error';
 
 export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) => {
