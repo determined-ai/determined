@@ -13,6 +13,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import { useAuth } from 'stores/auth';
+import { useCurrentUsers } from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -32,6 +33,7 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
   const { setAuth } = useAuth();
+  const { updateCurrentUser } = useCurrentUsers();
   const fetchMyRoles = useFetchMyRoles(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
@@ -53,6 +55,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
         setAuth({ isAuthenticated: true, token, user });
+        updateCurrentUser(user);
         if (rbacEnabled) {
           await fetchMyRoles();
         }
@@ -75,7 +78,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setIsSubmitted(false);
       }
     },
-    [canceler, setAuth, uiActions, fetchMyRoles, rbacEnabled],
+    [canceler, setAuth, uiActions, fetchMyRoles, updateCurrentUser, rbacEnabled],
   );
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {

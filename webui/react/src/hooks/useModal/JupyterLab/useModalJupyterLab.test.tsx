@@ -21,6 +21,7 @@ const MonacoEditorMock: React.FC = () => <></>;
 jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
+  getUsers: () => Promise.resolve({ users: [] }),
   getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));

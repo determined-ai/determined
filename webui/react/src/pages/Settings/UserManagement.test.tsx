@@ -9,8 +9,8 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
-import { AuthProvider, useAuth } from 'stores/auth';
-import { useFetchUsers, UsersProvider } from 'stores/users';
+import { AuthProvider } from 'stores/auth';
+import { useCurrentUsers, useFetchUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
@@ -65,14 +65,14 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const { updateCurrentUser } = useAuth();
+  const { updateCurrentUser } = useCurrentUsers();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
 
-    updateCurrentUser(currentUser, [currentUser]);
+    updateCurrentUser(currentUser);
   }, [fetchUsers, updateCurrentUser]);
 
   useEffect(() => {

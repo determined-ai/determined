@@ -7,8 +7,7 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/auth';
-import { useUsers } from 'stores/users';
+import { useCurrentUsers, useUsers } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -21,9 +20,9 @@ export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
-  const { auth: loadableAuth, updateCurrentUser } = useAuth();
-  const authUser = Loadable.match(loadableAuth, {
-    Loaded: (auth) => auth.user,
+  const { updateCurrentUser, currentUser: loadableCurrentUser } = useCurrentUsers();
+  const currentUser = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
@@ -39,7 +38,7 @@ const SettingsAccount: React.FC = () => {
     async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
-          userId: authUser?.id || 0,
+          userId: currentUser?.id || 0,
           userParams: { displayName: newValue },
         });
         updateCurrentUser(user, users);
@@ -50,14 +49,14 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [authUser, updateCurrentUser, users],
+    [currentUser, updateCurrentUser, users],
   );
 
   const handleSaveUsername = useCallback(
     async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
-          userId: authUser?.id || 0,
+          userId: currentUser?.id || 0,
           userParams: { username: newValue },
         });
         updateCurrentUser(user, users);
@@ -68,13 +67,13 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [authUser, updateCurrentUser, users],
+    [currentUser, updateCurrentUser, users],
   );
 
   return (
     <div className={css.base}>
       <div className={css.avatar}>
-        <Avatar hideTooltip size={Size.ExtraLarge} userId={authUser?.id} />
+        <Avatar hideTooltip size={Size.ExtraLarge} userId={currentUser?.id} />
       </div>
       <Divider />
       <div className={css.row}>
@@ -83,7 +82,7 @@ const SettingsAccount: React.FC = () => {
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9]*$', 'i')}
           placeholder="Add username"
-          value={authUser?.username || ''}
+          value={currentUser?.username || ''}
           onSave={handleSaveUsername}
         />
       </div>
@@ -94,7 +93,7 @@ const SettingsAccount: React.FC = () => {
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           placeholder="Add display name"
-          value={authUser?.displayName || ''}
+          value={currentUser?.displayName || ''}
           onSave={handleSaveDisplayName}
         />
       </div>

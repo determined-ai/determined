@@ -1,13 +1,13 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
+import { useCurrentUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import * as hook from './useSettings';
@@ -113,13 +113,31 @@ const setup = async (
   extraResult: ExtraHookReturn;
   result: HookReturn;
 }> => {
+  const ComponentWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => {
+    const { updateCurrentUser } = useCurrentUsers();
+
+    useEffect(() => {
+      updateCurrentUser({
+        displayName: 'Test User',
+        id: 0,
+        isActive: true,
+        isAdmin: false,
+        username: 'test_user',
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return (
+      <SettingsProvider>
+        <HistoryRouter history={history}>{children}</HistoryRouter>
+      </SettingsProvider>
+    );
+  };
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <StoreProvider>
       <UsersProvider>
         <AuthProvider>
-          <SettingsProvider>
-            <HistoryRouter history={history}>{children}</HistoryRouter>
-          </SettingsProvider>
+          <ComponentWrapper>{children}</ComponentWrapper>
         </AuthProvider>
       </UsersProvider>
     </StoreProvider>

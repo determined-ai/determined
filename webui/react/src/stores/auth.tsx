@@ -1,7 +1,7 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
 import { globalStorage } from 'globalStorage';
-import { Auth, DetailedUser } from 'types';
+import { Auth } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -17,7 +17,6 @@ type UseAuthReturn = {
   resetAuth: () => void;
   setAuth: (auth: Auth) => void;
   setAuthCheck: () => void;
-  updateCurrentUser: (user: DetailedUser, users: DetailedUser[]) => void;
 };
 
 export const AUTH_COOKIE_KEY = 'auth';
@@ -57,23 +56,6 @@ export const useAuth = (): UseAuthReturn => {
     throw new Error('Attempted to use useAuth outside of Auth Context');
   }
   const { auth, updateAuth } = context;
-
-  const updateCurrentUser = useCallback(
-    (user: DetailedUser, users: DetailedUser[]) => {
-      updateAuth((prevState) => {
-        if (!Loadable.isLoaded(prevState)) return prevState;
-
-        const auth = prevState.data;
-
-        const userIdx = users.findIndex((user) => user.id === user.id);
-
-        if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...user };
-
-        return Loaded({ ...auth, user: user });
-      });
-    },
-    [updateAuth],
-  );
 
   const resetAuth = useCallback(() => {
     clearAuthCookie();
@@ -116,6 +98,5 @@ export const useAuth = (): UseAuthReturn => {
     resetAuth,
     setAuth,
     setAuthCheck,
-    updateCurrentUser,
   };
 };
