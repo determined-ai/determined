@@ -14,13 +14,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import { getResourcePools, getTaskTemplates } from 'services/api';
+import { getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
 import { useResourcePools } from 'stores/resourcePools';
-import { ResourcePool, Template } from 'types';
+import { Template } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 import { Loadable } from 'utils/loadable';
