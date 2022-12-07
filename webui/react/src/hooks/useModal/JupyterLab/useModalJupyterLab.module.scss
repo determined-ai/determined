@@ -12,18 +12,23 @@
   padding: 40px;
 }
 .line {
-  align-items: center;
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-  width: 100%;
-}
-.line p {
-  margin: 0;
-  min-width: 100px;
-}
-.line > :not(p) {
-  flex-grow: 1;
+  &:global(.ant-form-item) {
+    margin: 0;
+  }
+  & > div {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    width: 100%;
+    label {
+      margin: 0;
+      min-width: 110px;
+    }
+    :global(.ant-input-number) {
+      width: 100%;
+    }
+  }
 }
 .form {
   display: flex;
