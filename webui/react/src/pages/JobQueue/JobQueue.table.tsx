@@ -169,7 +169,7 @@ export const columns: ColumnDef<Job>[] = [
         </div>
       );
     },
-    title: 'Status',
+    title: 'State',
   },
   {
     align: 'center',

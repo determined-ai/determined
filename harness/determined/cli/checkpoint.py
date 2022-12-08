@@ -71,7 +71,7 @@ def list_checkpoints(args: Namespace) -> None:
     headers = [
         "Trial ID",
         "# of Batches",
-        "Status",
+        "State",
         "Validation Metric",
         "UUID",
         "Resources",

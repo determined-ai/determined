@@ -386,7 +386,7 @@ const TaskList: React.FC = () => {
         key: 'state',
         render: stateRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => commandStateSorter(a.state, b.state),
-        title: 'Status',
+        title: 'State',
       },
       {
         dataIndex: 'resourcePool',

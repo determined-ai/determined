@@ -105,7 +105,7 @@ const ManageJob: React.FC<Props> = ({
       { label: 'UUID', value: job.jobId },
       tableDetails.submitted,
       {
-        label: 'Status',
+        label: 'State',
         value: <Badge state={job.summary.state} type={BadgeType.State} />,
       },
       {

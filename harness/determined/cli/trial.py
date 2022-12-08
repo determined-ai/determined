@@ -68,7 +68,7 @@ def _workloads_tabulate(
     # Print information about individual steps.
     headers = [
         "# of Batches",
-        "Status",
+        "State",
         "Report Time",
         "Checkpoint",
         "Checkpoint UUID",
@@ -132,7 +132,7 @@ def describe_trial(args: Namespace) -> None:
     # Print information about the trial itself.
     headers = [
         "Experiment ID",
-        "Status",
+        "State",
         "H-Params",
         "Started",
         "Ended",

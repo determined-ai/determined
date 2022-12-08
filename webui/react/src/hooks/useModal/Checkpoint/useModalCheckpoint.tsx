@@ -144,7 +144,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
             <span>Batch {checkpoint.totalBatches}</span>
           </div>,
         )}
-        {renderRow('Status', <Badge state={state} type={BadgeType.State} />)}
+        {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
         {searcherMetric &&

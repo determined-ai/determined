@@ -34,7 +34,7 @@ def render_experiments(args: Namespace, experiments: Sequence[bindings.v1Experim
         "Owner",
         "Name",
         "Parent ID",
-        "Status",
+        "State",
         "Progress",
         "Started",
         "Ended",

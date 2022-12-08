@@ -330,7 +330,7 @@ const TrialTable: React.FC<Props> = ({
         </div>
       ),
       sorter: true,
-      title: 'Status',
+      title: 'State',
     }),
     [setFilters, filters],
   );

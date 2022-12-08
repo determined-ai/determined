@@ -21,7 +21,7 @@ export const columns: ColumnDef<TrialItem>[] = [
     key: V1GetExperimentTrialsRequestSortBy.STATE,
     render: expStateRenderer,
     sorter: true,
-    title: 'Status',
+    title: 'State',
   },
   {
     dataIndex: 'totalBatchesProcessed',

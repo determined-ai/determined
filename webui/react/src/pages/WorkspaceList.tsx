@@ -191,7 +191,7 @@ const WorkspaceList: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['state'],
         key: 'state',
         render: stateRenderer,
-        title: 'Status',
+        title: 'State',
       },
       {
         align: 'right',

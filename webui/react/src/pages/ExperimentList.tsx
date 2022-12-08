@@ -529,7 +529,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         key: V1GetExperimentsRequestSortBy.STATE,
         render: expStateRenderer,
         sorter: true,
-        title: 'Status',
+        title: 'State',
       },
       {
         dataIndex: 'searcherType',

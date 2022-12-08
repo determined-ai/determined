@@ -19,8 +19,6 @@ const camelCaseToListItem = (columnName: string) => {
   switch (columnName) {
     case 'id':
       return 'ID';
-    case 'state':
-      return 'Status';
     case 'startTime':
       return 'Started';
     case 'searcherType':

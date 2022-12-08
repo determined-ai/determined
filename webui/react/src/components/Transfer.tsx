@@ -82,8 +82,6 @@ const Transfer: React.FC<Props> = ({
         switch (entryName) {
           case 'id':
             return 'ID';
-          case 'state':
-            return 'Status';
           case 'startTime':
             return 'Started';
           case 'searcherType':

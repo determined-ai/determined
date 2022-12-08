@@ -234,7 +234,7 @@ def describe(args: Namespace) -> None:
     # Display overall experiment information.
     headers = [
         "Experiment ID",
-        "Status",
+        "State",
         "Progress",
         "Started",
         "Ended",
@@ -281,7 +281,7 @@ def describe(args: Namespace) -> None:
 
     trials_for_experiment = {exp.id: get_all_trials(exp.id) for exp in exps}
 
-    headers = ["Trial ID", "Experiment ID", "Status", "Started", "Ended", "H-Params"]
+    headers = ["Trial ID", "Experiment ID", "State", "Started", "Ended", "H-Params"]
     values = [
         [
             trial.id,
@@ -571,7 +571,7 @@ def list_experiments(args: Namespace) -> None:
         "Owner",
         "Name",
         "Parent ID",
-        "Status",
+        "State",
         "Progress",
         "Started",
         "Ended",
@@ -742,7 +742,7 @@ def set_gc_policy(args: Namespace) -> None:
         headers = [
             "Trial ID",
             "# of Batches",
-            "Status",
+            "State",
             "Validation Metric\n({})".format(metric_name),
             "UUID",
             "Resources",
