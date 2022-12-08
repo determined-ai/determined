@@ -55,11 +55,9 @@ type Fluent struct {
 	// Internal state.
 	fluentLogs      []*aproto.RunMessage
 	fluentLogsCount int
-
-	wg      errgroupx.Group // Fluentbit-scoped group.
-	err     error
-	started chan struct{} // Closed when FluentBit is actually started.
-	Done    chan struct{} // Closed when FluentBit exits.
+	wg              errgroupx.Group // Fluentbit-scoped group.
+	err             error
+	Done            chan struct{} // Closed when FluentBit exits.
 }
 
 // Start constructs and runs a Fluent Bit daemon, and returns a handle to interact with it.
@@ -78,13 +76,17 @@ func Start(
 
 		fluentLogs: make([]*aproto.RunMessage, 50),
 		wg:         errgroupx.WithContext(context.Background()),
-		started:    make(chan struct{}),
 		Done:       make(chan struct{}),
+	}
+
+	cID, err := f.startContainer(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("starting logging container: %w", err)
 	}
 
 	f.wg.Go(func(ctx context.Context) error {
 		defer f.wg.Cancel()
-		switch err := f.run(ctx); {
+		switch err := f.monitor(ctx, cID); {
 		case errors.Is(err, context.Canceled):
 			return nil
 		case err != nil:
@@ -99,14 +101,7 @@ func Start(
 		close(f.Done)
 	}()
 
-	select {
-	case <-f.started:
-		return f, nil
-	case <-f.Done:
-		return nil, f.err
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
+	return f, nil
 }
 
 // Error returns the error associated with an exit, if there is any. It returns nil when running.
@@ -124,16 +119,7 @@ func (f *Fluent) Close() error {
 	return f.wg.Close()
 }
 
-func (f *Fluent) run(ctx context.Context) error {
-	f.log.Trace("starting fluent container")
-	t0 := time.Now()
-	cID, err := f.startContainer(ctx)
-	if err != nil {
-		return fmt.Errorf("starting logging container: %w", err)
-	}
-	close(f.started)
-	log.Infof("Fluent Bit started in %s", time.Since(t0))
-
+func (f *Fluent) monitor(ctx context.Context, cID string) error {
 	exitC, errC := f.docker.Inner().ContainerWait(
 		ctx,
 		cID,
@@ -203,8 +189,8 @@ func (f *Fluent) run(ctx context.Context) error {
 // that Fluent Bit is listening on and the ID of the container.
 // TODO(Brad): make fluent just use "containers" package, or do the move fluent tech debt.
 func (f *Fluent) startContainer(ctx context.Context) (string, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	f.log.Trace("starting fluent container")
+	t0 := time.Now()
 
 	imageName := f.opts.Fluent.Image
 
@@ -349,6 +335,8 @@ func (f *Fluent) startContainer(ctx context.Context) (string, error) {
 		eopts := f.mopts.LoggingOptions.ElasticLoggingConfig
 		log.Infof("Fluent Bit shipping to Elastic at %s:%d", eopts.Host, eopts.Port)
 	}
+
+	f.log.Infof("Fluent Bit started in %s", time.Since(t0))
 	return createResponse.ID, nil
 }
 
