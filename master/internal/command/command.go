@@ -56,12 +56,6 @@ func enrichState(state model.AllocationState) taskv1.State {
 	return state.Proto()
 }
 
-const (
-	// FIXME
-	PlaceHolderJobType   = model.JobTypeCommand
-	PlaceHolderWorkspace = 0
-)
-
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
