@@ -39,12 +39,6 @@ type CommandAuthZ interface {
 	) error
 
 	// PATCH /commands/:cmd_id
-	CanSetCommandsMaxSlots(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, slots int,
-	) error
-	CanSetCommandsWeight(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, weight float64,
-	) error
 	CanSetCommandsPriority(
 		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
 	) error

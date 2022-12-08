@@ -51,20 +51,6 @@ func (a *CommandAuthZBasic) CanCreateCommand(
 	return nil
 }
 
-// CanSetCommandsMaxSlots always returns a nil error.
-func (a *CommandAuthZBasic) CanSetCommandsMaxSlots(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, slots int,
-) error {
-	return nil
-}
-
-// CanSetCommandsWeight always returns a nil error.
-func (a *CommandAuthZBasic) CanSetCommandsWeight(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, weight float64,
-) error {
-	return nil
-}
-
 // CanSetCommandsPriority always returns a nil error.
 func (a *CommandAuthZBasic) CanSetCommandsPriority(
 	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
