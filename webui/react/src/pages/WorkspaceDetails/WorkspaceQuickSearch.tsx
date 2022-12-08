@@ -28,8 +28,8 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const workspaceResponse = await getWorkspaces({ limit: 0, sortBy: 'SORT_BY_NAME' });
-      const filteredWorkspaces = workspaceResponse.workspaces.filter((w) => !w.immutable);
+      const workspaceResponse = await getWorkspaces({ archived: false });
+      const filteredWorkspaces = workspaceResponse.workspaces;
       const projectResponse = await getWorkspaceProjects({ id: 0, sortBy: 'SORT_BY_NAME' });
 
       const projectMap = new Map<number, Project[]>();

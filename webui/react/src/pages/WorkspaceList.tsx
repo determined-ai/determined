@@ -30,9 +30,6 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
-import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
-import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -78,11 +75,7 @@ const WorkspaceList: React.FC = () => {
       const response = await getWorkspaces(
         {
           archived: settings.archived ? undefined : false,
-          limit: settings.view === GridListView.Grid ? 0 : settings.tableLimit,
           name: settings.name,
-          offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
           users: settings.user,
         },
         { signal: canceler.signal },

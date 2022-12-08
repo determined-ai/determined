@@ -2,7 +2,6 @@ import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import usePermissions from 'hooks/usePermissions';
@@ -10,6 +9,7 @@ import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } fr
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
+import { useFetchWorkspaces } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -35,7 +35,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   onVisibleChange,
 }: Props) => {
   const [canceler] = useState(new AbortController());
-  const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
+  const fetchPinnedWorkspaces = useFetchWorkspaces({ pinned: true }, canceler);
   const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
     useModalWorkspaceDelete({ onClose: onComplete, workspace });
   const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =

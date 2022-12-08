@@ -8,7 +8,6 @@ import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
-import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
@@ -23,6 +22,7 @@ import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
+import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -113,7 +113,6 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const { pinnedWorkspaces } = useStore();
   const loadableAuth = useAuth();
   const isAuthenticated = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.isAuthenticated,
@@ -194,6 +193,8 @@ const NavigationSideBar: React.FC = () => {
   const handleCreateWorkspace = useCallback(() => {
     openWorkspaceCreateModal();
   }, [openWorkspaceCreateModal]);
+
+  const pinnedWorkspaces = Loadable.getOrElse([], useWorkspaces({ pinned: true }));
 
   if (!showNavigation) return null;
 

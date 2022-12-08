@@ -1164,10 +1164,10 @@ export const getWorkspaces: DetApi<
   },
   request: (params, options) => {
     return detApi.Workspaces.getWorkspaces(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
       params.name,
       params.archived,
       undefined,
