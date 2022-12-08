@@ -40,8 +40,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-        children: JSX.Element;
-      }
+          children: JSX.Element;
+        }
       | undefined,
   ) => void;
 };
@@ -50,8 +50,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-        children: JSX.Element;
-      }
+          children: JSX.Element;
+        }
       | undefined,
   ) => void;
 };
