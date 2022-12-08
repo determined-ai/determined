@@ -2,7 +2,6 @@ import queryString from 'query-string';
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { useStore } from 'contexts/Store';
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { getCurrentUser } from 'services/api';

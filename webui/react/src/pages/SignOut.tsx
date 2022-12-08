@@ -14,10 +14,8 @@ import { Loadable } from 'utils/loadable';
 const SignOut: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { info } = useStore();
   const { resetAuth } = useAuth();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
-  const storeDispatch = useStoreDispatch();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
