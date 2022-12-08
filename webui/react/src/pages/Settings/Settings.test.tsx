@@ -7,6 +7,7 @@ import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
 import { useCurrentUsers, UsersProvider } from 'stores/users';
+import { UserRolesProvider } from 'stores/userRoles';
 import { DetailedUser } from 'types';
 
 import Settings from './Settings';
@@ -42,11 +43,13 @@ const setup = () => {
     <StoreProvider>
       <UsersProvider>
         <AuthProvider>
-          <HelmetProvider>
-            <HistoryRouter history={history}>
-              <Container />
-            </HistoryRouter>
-          </HelmetProvider>
+          <UserRolesProvider>
+            <HelmetProvider>
+              <HistoryRouter history={history}>
+                <Container />
+              </HistoryRouter>
+            </HelmetProvider>
+          </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
     </StoreProvider>,

@@ -11,6 +11,7 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { useCurrentUsers, useFetchUsers, UsersProvider } from 'stores/users';
+import { UserRolesProvider } from 'stores/userRoles';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
@@ -96,9 +97,11 @@ const setup = () =>
     <StoreProvider>
       <UsersProvider>
         <AuthProvider>
-          <DndProvider backend={HTML5Backend}>
-            <Container />
-          </DndProvider>
+          <UserRolesProvider>
+            <DndProvider backend={HTML5Backend}>
+              <Container />
+            </DndProvider>
+          </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
     </StoreProvider>,

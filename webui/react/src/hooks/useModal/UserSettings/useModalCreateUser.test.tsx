@@ -7,6 +7,7 @@ import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
 import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
+import { UserRolesProvider } from 'stores/userRoles';
 
 import useModalCreateUser, {
   ADMIN_LABEL,
@@ -47,7 +48,9 @@ const setup = async () => {
     <StoreProvider>
       <UsersProvider>
         <AuthProvider>
-          <Container />
+          <UserRolesProvider>
+            <Container />
+          </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
     </StoreProvider>,

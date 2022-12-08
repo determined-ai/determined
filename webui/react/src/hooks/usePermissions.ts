@@ -4,6 +4,7 @@ import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
 import { useAuth } from 'stores/auth';
+import { useUserAssignments, useUserRoles } from 'stores/userRoles';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -83,11 +84,11 @@ const usePermissions = (): PermissionsHook => {
     Loaded: (auth) => auth.user,
     NotLoaded: () => undefined,
   });
-  const { userAssignments, userRoles } = useStore();
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-
+  const userAssignments = Loadable.getOrElse([], useUserAssignments());
+  const userRoles = Loadable.getOrElse([], useUserRoles());
   const rbacOpts = useMemo(
     () => ({
       rbacAllPermission,

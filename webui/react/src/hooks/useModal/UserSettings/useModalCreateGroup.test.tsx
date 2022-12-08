@@ -8,6 +8,7 @@ import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
+import { UserRolesProvider } from 'stores/userRoles';
 import { DetailedUser } from 'types';
 
 import useModalCreateGroup, {
@@ -76,7 +77,9 @@ const setup = async (group?: V1GroupSearchResult) => {
     <StoreProvider>
       <UsersProvider>
         <AuthProvider>
-          <Container group={group} />
+          <UserRolesProvider>
+            <Container group={group} />
+          </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
     </StoreProvider>,

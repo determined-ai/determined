@@ -3,7 +3,6 @@ import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
-import { useFetchMyRoles } from 'hooks/useFetch';
 import { paths } from 'routes/utils';
 import { login } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
@@ -14,6 +13,7 @@ import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import { useAuth } from 'stores/auth';
 import { useCurrentUsers } from 'stores/users';
+import { useEnsureUserRolesAndAssignmentsFetched } from 'stores/userRoles';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -34,7 +34,8 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
   const { setAuth } = useAuth();
   const { updateCurrentUser } = useCurrentUsers();
-  const fetchMyRoles = useFetchMyRoles(canceler);
+  const storeDispatch = useStoreDispatch();
+  const fetchMyRoles = useEnsureUserRolesAndAssignmentsFetched(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));

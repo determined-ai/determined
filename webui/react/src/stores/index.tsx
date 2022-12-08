@@ -8,6 +8,7 @@ import { ProjectsProvider } from './projects';
 import { ResourcePoolsProvider } from './resourcePools';
 import { TasksProvider } from './tasks';
 import { UsersProvider } from './users';
+import { UserRolesProvider } from './userRoles';
 import { WorkspacesProvider } from './workspaces';
 
 export const StoreContext = ({ children }: { children: ReactNode }): ReactElement => (
@@ -19,7 +20,9 @@ export const StoreContext = ({ children }: { children: ReactNode }): ReactElemen
             <WorkspacesProvider>
               <ResourcePoolsProvider>
                 <DeterminedInfoProvider>
-                  <ProjectsProvider>{children}</ProjectsProvider>
+                  <UserRolesProvider>
+                    <ProjectsProvider>{children}</ProjectsProvider>
+                  </UserRolesProvider>
                 </DeterminedInfoProvider>
               </ResourcePoolsProvider>
             </WorkspacesProvider>

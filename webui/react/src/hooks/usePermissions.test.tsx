@@ -5,6 +5,7 @@ import StoreProvider from 'contexts/Store';
 import { GetWorkspaceParams } from 'services/types';
 import { AuthProvider } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
+import { UserRolesProvider } from 'stores/userRoles';
 
 import useFeature from './useFeature';
 import usePermissions from './usePermissions';
@@ -52,7 +53,9 @@ const setup = async () => {
     <StoreProvider>
       <UsersProvider>
         <AuthProvider>
-          <PermissionRenderer workspaceId={1} />
+          <UserRolesProvider>
+            <PermissionRenderer workspaceId={1} />
+          </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
     </StoreProvider>,
