@@ -4500,6 +4500,12 @@ export interface V1LaunchNotebookRequest {
      * @memberof V1LaunchNotebookRequest
      */
     preview?: boolean;
+    /**
+     * Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
+     * @type {number}
+     * @memberof V1LaunchNotebookRequest
+     */
+    workspaceId?: number;
 }
 
 /**
@@ -5272,6 +5278,12 @@ export interface V1Notebook {
      * @memberof V1Notebook
      */
     jobId: string;
+    /**
+     * Workspace ID.
+     * @type {number}
+     * @memberof V1Notebook
+     */
+    workspaceId: number;
 }
 
 /**

@@ -5330,6 +5330,7 @@ class v1LaunchNotebookRequest:
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     preview: "typing.Optional[bool]" = None
     templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5338,6 +5339,7 @@ class v1LaunchNotebookRequest:
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         preview: "typing.Union[bool, None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5347,6 +5349,8 @@ class v1LaunchNotebookRequest:
             self.preview = preview
         if not isinstance(templateName, Unset):
             self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchNotebookRequest":
@@ -5360,6 +5364,8 @@ class v1LaunchNotebookRequest:
             kwargs["preview"] = obj["preview"]
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5373,6 +5379,8 @@ class v1LaunchNotebookRequest:
             out["preview"] = self.preview
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchNotebookResponse:
@@ -6232,6 +6240,7 @@ class v1Notebook:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
+        workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         exitStatus: "typing.Union[str, None, Unset]" = _unset,
@@ -6245,6 +6254,7 @@ class v1Notebook:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(container, Unset):
             self.container = container
         if not isinstance(displayName, Unset):
@@ -6266,6 +6276,7 @@ class v1Notebook:
             "startTime": obj["startTime"],
             "state": determinedtaskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "container" in obj:
             kwargs["container"] = v1Container.from_json(obj["container"]) if obj["container"] is not None else None
@@ -6288,6 +6299,7 @@ class v1Notebook:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "container" in vars(self):
             out["container"] = None if self.container is None else self.container.to_json(omit_unset)

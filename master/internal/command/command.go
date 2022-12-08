@@ -575,6 +575,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
