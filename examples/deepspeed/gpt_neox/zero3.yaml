@@ -1,4 +1,4 @@
-name: gpt-neox-zero1-3d-parallel
+name: gpt-neox-zero3-2-7B
 debug: false
 profiling:
     enabled: false
@@ -9,12 +9,14 @@ hyperparameters:
   search_world_size: false
   conf_dir: /gpt-neox/configs
   conf_file:
-      - medium.yml
+      - 2-7B.yml
       - determined_cluster.yml
   overwrite_values:
-     pipe_parallel_size: 2
+     zero_optimization:
+       stage: 3
+     pipe_parallel_size: 0
      model_parallel_size: 2
-     partition_activations: false
+     partition_activations: true
      train_batch_size: 32
      train_micro_batch_size_per_gpu: 4
   wandb_group: null
@@ -28,7 +30,7 @@ environment:
         - NCCL_SOCKET_IFNAME=ens,eth,ib
     force_pull_image: true
     image:
-      gpu: liamdetermined/gpt-neox
+      gpu: determinedai/gpt-neox:912cb32
 resources:
   slots_per_trial: 8
 searcher:

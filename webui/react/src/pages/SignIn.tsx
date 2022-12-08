@@ -21,7 +21,9 @@ import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { BrandingType } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import css from './SignIn.module.scss';
 
@@ -39,7 +41,8 @@ const logoConfig: Record<RecordKey, string> = {
 const SignIn: React.FC = () => {
   const { actions: uiActions } = useUI();
   const location = useLocation();
-  const { auth, info } = useStore();
+  const { auth } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');
 

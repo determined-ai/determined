@@ -83,6 +83,7 @@ func (c ContainerLog) ToEvent() Event {
 		ContainerID: c.ContainerID.String(),
 		Time:        c.Timestamp.UTC(),
 		LogEvent:    ptrs.Ptr(c.Message()),
+		Level:       c.Level,
 	}
 }
 

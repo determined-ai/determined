@@ -2,18 +2,20 @@ import queryString from 'query-string';
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { AUTH_COOKIE_KEY, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import { AUTH_COOKIE_KEY, StoreAction, useStoreDispatch } from 'contexts/Store';
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
-  const { info } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const location = useLocation();
   const storeDispatch = useStoreDispatch();
 

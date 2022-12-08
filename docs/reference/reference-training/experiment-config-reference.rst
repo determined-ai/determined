@@ -1069,6 +1069,18 @@ workloads for this experiment. For more information on customizing the trial env
    <https://docs.podman.io/en/latest/markdown/podman-run.1.html>`__ command documentation for a full
    description of the capabilities.
 
+   When the cluster is configured with :ref:`resource_manager.type: slurm
+   <cluster-configuration-slurm>` and ``container_run_type: enroot``, images are executed using the
+   Enroot container runtime. The image name must resolve to an Enroot container name created by the
+   user before launching the Determined task. To enable the default docker image references used by
+   Determined to be found in the Enroot container list the following transformations are applied to
+   the image name (this is the same transformation performed by the ``enroot import`` command):
+
+      -  Any forward slash character in the image name (``/``) is replaced with a plus sign (``+``)
+      -  Any colon (``:``) is replaced with a plus sign (``+``)
+
+   See :ref:`enroot-config-requirements` for more information.
+
 ``force_pull_image``
    Forcibly pull the image from the Docker registry, bypassing the Docker or Singularity built-in
    cache. Defaults to ``false``.
