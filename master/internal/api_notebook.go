@@ -101,39 +101,44 @@ func (a *apiServer) GetNotebook(
 	return resp, nil
 }
 
+func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID string) error {
+	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: notebookID})
+	if err != nil {
+		return err
+	}
+	// CHECK should we delegate to AuthZProvider?
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	/* not sure if this is Go friendly but maybe the interface allows for a nil user to be passed in
+	so that if the `curUser` isn't in scope already we just delegate to the AuthZProvider
+	*/
+	err = command.AuthZProvider.Get().CanTerminateCommand(
+		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
+	)
+
+	return err
+}
+
 func (a *apiServer) IdleNotebook(
 	ctx context.Context, req *apiv1.IdleNotebookRequest,
 ) (resp *apiv1.IdleNotebookResponse, err error) {
-	if _, err := a.GetNotebook(ctx,
-		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	if err != nil {
 		return nil, err
 	}
-
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
 	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
-	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: req.NotebookId})
+	err = a.validateAndKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
-	// CHECK should we delegate to AuthZProvider?
-	/* not sure if this is Go friendly but maybe the interface allows for a nil user to be passed in
-	so that if the `curUser` isn't in scope already we just delegate to the AuthZProvider
-	*/
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = command.AuthZProvider.Get().CanTerminateCommand(
-		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
-	); err != nil {
-		return nil, err
-	}
-
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
