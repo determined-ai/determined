@@ -433,7 +433,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     const forkedFromRenderer = (value: string | number | undefined): React.ReactNode =>
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
-    const checkpointSizeRenderer = (value: number) => value ? humanReadableBytes(value) : '';
+    const checkpointSizeRenderer = (value: number) => (value ? humanReadableBytes(value) : '');
 
     return [
       {

@@ -233,7 +233,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
       } else if (column.key === V1GetExperimentTrialsRequestSortBy.CHECKPOINTSIZE) {
-        column.render = (value: number) => value ? humanReadableBytes(value) : '';
+        column.render = (value: number) => (value ? humanReadableBytes(value) : '');
       }
       if (column.key === settings.sortKey) {
         column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';
