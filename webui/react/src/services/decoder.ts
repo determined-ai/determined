@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { date } from 'fp-ts';
 
 import * as ioTypes from 'ioTypes';
 import { Pagination, RawJson } from 'shared/types';

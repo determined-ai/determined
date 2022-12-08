@@ -232,7 +232,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.render = autoRestartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
-      } else if (column.key === 'totalCheckpointSize') {
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.CHECKPOINTSIZE) {
         column.render = (value: number) => value ? humanReadableBytes(value) : '';
       }
       if (column.key === settings.sortKey) {

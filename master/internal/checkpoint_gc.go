@@ -135,7 +135,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			return err
 		}
 		if err := t.db.QueryProto(
-			"update_checkpoint_size_to_experiment", &experimentv1.Experiment{}, t.taskID,
+			"update_checkpoint_size", &experimentv1.Experiment{}, t.taskID,
 		); err != nil {
 			ctx.Log().WithError(err).Errorf(
 				"updating checkpoints size to experiment %d", t.GCCkptSpec.ExperimentID)

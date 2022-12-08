@@ -1,3 +1,13 @@
+UPDATE trials set checkpoint_size = (
+    SELECT coalesce(sum((size_tuple).value::text::bigint), 0)
+    from (
+    SELECT jsonb_each(c.resources) AS size_tuple
+            FROM checkpoints_view c
+            WHERE state != 'DELETED'
+            AND trial_id = (SELECT trial_id from checkpoints_view where task_id = $1 LIMIT 1)
+            AND c.resources != 'null'::jsonb) r)
+    WHERE trials.id = (SELECT trial_id from checkpoints_view where task_id = $1 LIMIT 1
+),
 UPDATE experiments set checkpoint_size = (
     SELECT coalesce(sum((size_tuple).value::text::bigint), 0)
     from (

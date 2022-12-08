@@ -534,6 +534,7 @@ func (a *apiServer) GetExperimentTrials(
 		apiv1.GetExperimentTrialsRequest_SORT_BY_BATCHES_PROCESSED:        "total_batches_processed",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_DURATION:                 "duration",
 		apiv1.GetExperimentTrialsRequest_SORT_BY_RESTARTS:                 "restarts",
+		apiv1.GetExperimentTrialsRequest_SORT_BY_CHECKPOINT_SIZE:          "checkpoint_size",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -563,7 +564,7 @@ func (a *apiServer) GetExperimentTrials(
 		req.Offset,
 		req.Limit,
 	); err != nil {
-		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+		return nil, errors.Wrapf(err, "failed to get trial ids for experiment %d", req.ExperimentId)
 	} else if len(resp.Trials) == 0 {
 		return resp, nil
 	}
@@ -587,7 +588,7 @@ func (a *apiServer) GetExperimentTrials(
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIDs)
 	case err != nil:
-		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+		return nil, errors.Wrapf(err, "failed to get trials detail for experiment %d", req.ExperimentId)
 	}
 
 	if err = a.enrichTrialState(resp.Trials...); err != nil {
@@ -1195,7 +1196,7 @@ func (a *apiServer) ReportCheckpoint(
 		return nil, err
 	}
 	if err := a.m.db.QueryProto(
-		"update_checkpoint_size_to_experiment", &experimentv1.Experiment{}, req.Checkpoint.TaskId,
+		"update_checkpoint_size", &experimentv1.Experiment{}, req.Checkpoint.TaskId,
 	); err != nil {
 		return nil, err
 	}

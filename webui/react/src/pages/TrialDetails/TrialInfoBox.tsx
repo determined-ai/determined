@@ -28,8 +28,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   }, [trial]);
 
   const totalCheckpointsSize = useMemo(() => {
-    const totalBytes = experiment?.checkpointSize;
-    if (!totalBytes || totalBytes === 0) return;
+    const totalBytes = trial?.totalCheckpointSize;
+    if (!totalBytes) return;
     return humanReadableBytes(totalBytes);
   }, [trial?.totalCheckpointSize]);
 
