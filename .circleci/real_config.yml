@@ -3129,6 +3129,15 @@ workflows:
           devcluster-config: double-priority.devcluster.yaml
 
       - test-e2e:
+          name: test-e2e-cpu-oauth
+          requires:
+            - build-go
+          parallelism: 1
+          devcluster-config: oauth.devcluster.yaml
+          mark: test_oauth
+          target-stage: agent1
+
+      - test-e2e:
           name: test-e2e-managed-devcluster
           requires:
             - build-go
