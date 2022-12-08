@@ -28,7 +28,6 @@ interface State {
     omnibar: OmnibarState;
   };
   userAssignments: UserAssignment[];
-  userRoles: UserRole[];
   users: DetailedUser[];
 }
 
@@ -54,10 +53,6 @@ export const StoreAction = {
   // PinnedWorkspaces
   SetPinnedWorkspaces: 'SetPinnedWorkspaces',
 
-  SetUserAssignments: 'SetUserAssignments',
-
-  SetUserRoles: 'SetUserRoles',
-
   // Users
   SetUsers: 'SetUsers',
   // User Settings
@@ -76,9 +71,7 @@ type Action =
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
-  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
+  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -93,13 +86,6 @@ const initState: State = {
   pinnedWorkspaces: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
-  userRoles: [
-    {
-      id: -10,
-      name: 'INITIALIZATION',
-      permissions: [],
-    },
-  ],
   users: [],
 };
 
@@ -166,12 +152,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetKnownRoles:
       if (isEqual(state.knownRoles, action.value)) return state;
       return { ...state, knownRoles: action.value };
-    case StoreAction.SetUserRoles:
-      if (isEqual(state.userRoles, action.value)) return state;
-      return { ...state, userRoles: action.value };
-    case StoreAction.SetUserAssignments:
-      if (isEqual(state.userAssignments, action.value)) return state;
-      return { ...state, userAssignments: action.value };
     default:
       return state;
   }
