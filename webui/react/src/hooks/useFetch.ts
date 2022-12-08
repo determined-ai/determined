@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import {getUsers, getWorkspaces, listRoles } from 'services/api';
+import { getUsers, getWorkspaces, listRoles } from 'services/api';
 import handleError from 'utils/error';
 
 export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) => {

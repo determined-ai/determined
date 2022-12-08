@@ -16,8 +16,8 @@ export const StoreContext = ({ children }: { children: ReactNode }): ReactElemen
         <WorkspacesProvider>
           <ResourcePoolsProvider>
             <DeterminedInfoProvider>
-            <UserRolesProvider>
-              <ProjectsProvider>{children}</ProjectsProvider>
+              <UserRolesProvider>
+                <ProjectsProvider>{children}</ProjectsProvider>
               </UserRolesProvider>
             </DeterminedInfoProvider>
           </ResourcePoolsProvider>
