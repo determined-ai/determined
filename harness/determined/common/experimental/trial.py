@@ -242,6 +242,7 @@ class TrialSortBy(enum.Enum):
     BATCHES_PROCESSED = _tsb.SORT_BY_BATCHES_PROCESSED.value
     DURATION = _tsb.SORT_BY_DURATION.value
     RESTARTS = _tsb.SORT_BY_RESTARTS.value
+    CHECKPOINT_SIZE = _tsb.SORT_BY_CHECKPOINT_SIZE.value
 
     def _to_bindings(self) -> bindings.v1GetExperimentTrialsRequestSortBy:
         return _tsb(self.value)
