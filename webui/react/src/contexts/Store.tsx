@@ -54,8 +54,7 @@ const initState: State = {
   knownRoles: [],
   pinnedWorkspaces: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
-  userAssignments: [],cccccbcdgihhjguikhfcneiiejneffdnlbrbejrcvkkf
-  
+  userAssignments: [],
 };
 
 const StateContext = React.createContext<State | undefined>(undefined);

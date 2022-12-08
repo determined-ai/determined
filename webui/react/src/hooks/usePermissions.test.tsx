@@ -4,8 +4,8 @@ import React from 'react';
 import StoreProvider from 'contexts/Store';
 import { GetWorkspaceParams } from 'services/types';
 import { AuthProvider } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 
 import useFeature from './useFeature';
 import usePermissions from './usePermissions';

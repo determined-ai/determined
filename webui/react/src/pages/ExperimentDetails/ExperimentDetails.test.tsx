@@ -16,8 +16,8 @@ import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
 import { ProjectsProvider } from 'stores/projects';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
-import { UsersProvider } from 'stores/users';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';

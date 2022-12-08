@@ -6,8 +6,8 @@ import React from 'react';
 import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
 import { AuthProvider } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
   ADMIN_LABEL,

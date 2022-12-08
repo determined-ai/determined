@@ -7,8 +7,8 @@ import StoreProvider from 'contexts/Store';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { AuthProvider } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import useModalCreateGroup, {

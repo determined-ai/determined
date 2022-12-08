@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
 import { useAuth } from 'stores/auth';

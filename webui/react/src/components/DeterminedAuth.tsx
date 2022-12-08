@@ -12,8 +12,8 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import { useAuth } from 'stores/auth';
-import { useCurrentUsers } from 'stores/users';
 import { useEnsureUserRolesAndAssignmentsFetched } from 'stores/userRoles';
+import { useCurrentUsers } from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -32,9 +32,8 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
-  const { setAuth } = useAuth();
   const { updateCurrentUser } = useCurrentUsers();
-  const storeDispatch = useStoreDispatch();
+  const { setAuth } = useAuth();
   const fetchMyRoles = useEnsureUserRolesAndAssignmentsFetched(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
