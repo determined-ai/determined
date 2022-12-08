@@ -57,12 +57,13 @@ func TestDeleteCheckpoints(t *testing.T) {
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
 		Username:        user.Username,
+		WorkspaceID:     1,
 	}
 	mdlNotes := "some notes2"
 	var pmdl modelv1.Model
 	err = db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-		strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
 	)
 
 	require.NoError(t, err)
