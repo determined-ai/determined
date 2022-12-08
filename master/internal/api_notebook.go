@@ -106,15 +106,11 @@ func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID stri
 	if err != nil {
 		return err
 	}
-	// CHECK should we delegate to AuthZProvider?
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return err
 	}
 
-	/* not sure if this is Go friendly but maybe the interface allows for a nil user to be passed in
-	so that if the `curUser` isn't in scope already we just delegate to the AuthZProvider
-	*/
 	err = command.AuthZProvider.Get().CanTerminateCommand(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)

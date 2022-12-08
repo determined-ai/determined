@@ -9,7 +9,7 @@ import (
 )
 
 // CommandAuthZ describes authz methods for commands.
-// DISCUSS should we start moving to using NTSC in code, anything other than "command".
+// TODO: rename to Command to NSC.
 type CommandAuthZ interface {
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
