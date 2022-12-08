@@ -129,19 +129,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       }
 
       return detApi.StreamingExperiments.trialLogs(
-        trial?.id ?? 0,
-        options.limit,
-        options.follow,
-        settings.agentId,
-        settings.containerId,
-        settings.rankId,
-        settings.level,
-        undefined,
-        undefined,
-        options.timestampBefore ? new Date(options.timestampBefore) : undefined,
-        options.timestampAfter ? new Date(options.timestampAfter) : undefined,
-        options.orderBy as OrderBy,
-        settings.searchText,
+        {
+          trialId: trial?.id ?? 0,
+          ...options,
+          ...settings,
+          orderBy: options.orderBy as OrderBy,
+          timestampAfter: options.timestampAfter ? new Date(options.timestampAfter) : undefined,
+          timestampBefore: options.timestampBefore ? new Date(options.timestampBefore) : undefined,
+        },
         { signal: config.canceler.signal },
       );
     },
@@ -155,7 +150,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     const canceler = new AbortController();
 
     readStream(
-      detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: canceler.signal }),
+      detApi.StreamingExperiments.trialLogsFields(
+        { follow: true, trialId: trial.id },
+        { signal: canceler.signal },
+      ),
       (event) => setFilterOptions(event as Filters),
     );
 

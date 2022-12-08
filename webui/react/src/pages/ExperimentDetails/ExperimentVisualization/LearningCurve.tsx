@@ -113,14 +113,13 @@ const LearningCurve: React.FC<Props> = ({
 
     readStream<V1TrialsSampleResponse>(
       detApi.StreamingInternal.trialsSample(
-        experiment.id,
-        selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
-        selectedMaxTrial,
-        MAX_DATAPOINTS,
-        undefined,
-        undefined,
-        undefined,
+        {
+          experimentId: experiment.id,
+          maxDatapoints: MAX_DATAPOINTS,
+          maxTrials: selectedMaxTrial,
+          metricName: selectedMetric.name,
+          metricType: metricTypeParamMap[selectedMetric.type],
+        },
         { signal: canceler.signal },
       ),
       (event) => {

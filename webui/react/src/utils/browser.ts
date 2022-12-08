@@ -42,13 +42,16 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
   const MAX_PART_SIZE = 128 * Math.pow(2, 20); // 128m * CHAR_SIZE
   const parts: BlobPart[] = [];
   let downloadStringBuffer = '';
-  await readStream<V1TrialLogsResponse>(detApi.StreamingExperiments.trialLogs(trialId), (ev) => {
-    downloadStringBuffer += ev.message;
-    if (downloadStringBuffer.length > MAX_PART_SIZE) {
-      parts.push(downloadStringBuffer);
-      downloadStringBuffer = '';
-    }
-  });
+  await readStream<V1TrialLogsResponse>(
+    detApi.StreamingExperiments.trialLogs({ trialId }),
+    (ev) => {
+      downloadStringBuffer += ev.message;
+      if (downloadStringBuffer.length > MAX_PART_SIZE) {
+        parts.push(downloadStringBuffer);
+        downloadStringBuffer = '';
+      }
+    },
+  );
   if (downloadStringBuffer !== '') parts.push(downloadStringBuffer);
   const trial = await getTrialDetails({ id: trialId });
   downloadText(`experiment_${trial.experimentId}_trial_${trialId}_logs.txt`, parts);

@@ -84,7 +84,7 @@ export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, Service.Logi
   postProcess: (resp) => ({ token: resp.token, user: decoder.mapV1User(resp.user) }),
   request: (params, options) =>
     detApi.Auth.login(
-      { ...params, isHashed: true, password: saltAndHashPassword(params.password) },
+      { body: { ...params, isHashed: true, password: saltAndHashPassword(params.password) } },
       options,
     ),
 };
@@ -92,7 +92,7 @@ export const login: DetApi<Api.V1LoginRequest, Api.V1LoginResponse, Service.Logi
 export const logout: DetApi<EmptyParams, Api.V1LogoutResponse, void> = {
   name: 'logout',
   postProcess: noOp,
-  request: () => detApi.Auth.logout(),
+  request: () => detApi.Auth.logout({}),
 };
 
 export const getCurrentUser: DetApi<EmptyParams, Api.V1CurrentUserResponse, Type.DetailedUser> = {
@@ -112,14 +112,13 @@ export const getUsers: DetApi<
     pagination: decoder.mapV1Pagination(response.pagination),
     users: decoder.mapV1UserList(response),
   }),
-  request: (params) =>
-    detApi.Users.getUsers(params.sortBy, params.orderBy, params.offset, params.limit),
+  request: (params) => detApi.Users.getUsers(params),
 };
 
 export const getUser: DetApi<Service.GetUserParams, Api.V1GetUserResponse, Type.DetailedUser> = {
   name: 'getUser',
   postProcess: (response) => decoder.mapV1User(response.user),
-  request: (params) => detApi.Users.getUser(params.userId),
+  request: (params) => detApi.Users.getUser(params),
 };
 
 export const postUser: DetApi<
@@ -129,7 +128,7 @@ export const postUser: DetApi<
 > = {
   name: 'postUser',
   postProcess: (response) => response,
-  request: (params) => detApi.Users.postUser(params),
+  request: (params) => detApi.Users.postUser({ body: params }),
 };
 
 export const setUserPassword: DetApi<
@@ -139,7 +138,8 @@ export const setUserPassword: DetApi<
 > = {
   name: 'setUserPassword',
   postProcess: (response) => response,
-  request: (params) => detApi.Users.setUserPassword(params.userId, params.password),
+  request: (params) =>
+    detApi.Users.setUserPassword({ body: params.password, userId: params.userId }),
 };
 
 export const patchUser: DetApi<
@@ -149,7 +149,7 @@ export const patchUser: DetApi<
 > = {
   name: 'patchUser',
   postProcess: (response) => decoder.mapV1User(response.user),
-  request: (params) => detApi.Users.patchUser(params.userId, params.userParams),
+  request: (params) => detApi.Users.patchUser({ body: params.userParams, userId: params.userId }),
 };
 
 export const getUserSetting: DetApi<
@@ -159,7 +159,7 @@ export const getUserSetting: DetApi<
 > = {
   name: 'getUserSetting',
   postProcess: (response) => response,
-  request: () => detApi.Users.getUserSetting(),
+  request: () => detApi.Users.getUserSetting({}),
 };
 
 export const updateUserSetting: DetApi<
@@ -171,8 +171,10 @@ export const updateUserSetting: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.Users.postUserSetting({
-      setting: params.setting,
-      storagePath: params.storagePath,
+      body: {
+        setting: params.setting,
+        storagePath: params.storagePath,
+      },
     }),
 };
 
@@ -183,7 +185,7 @@ export const resetUserSetting: DetApi<
 > = {
   name: 'resetUserSetting',
   postProcess: (response) => response,
-  request: () => detApi.Users.resetUserSetting(),
+  request: () => detApi.Users.resetUserSetting({}),
 };
 
 /**
@@ -218,7 +220,7 @@ export const getPermissionsSummary: DetApi<
     assignments: response.assignments.map(decoder.mapV1UserAssignment),
     roles: response.roles.map(decoder.mapV1Role),
   }),
-  request: () => detApi.RBAC.getPermissionsSummary(),
+  request: () => detApi.RBAC.getPermissionsSummary({}),
 };
 
 /* Group */
@@ -232,8 +234,10 @@ export const createGroup: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.Internal.createGroup({
-      addUsers: params.addUsers,
-      name: params.name,
+      body: {
+        addUsers: params.addUsers,
+        name: params.name,
+      },
     }),
 };
 
@@ -244,7 +248,7 @@ export const getGroup: DetApi<
 > = {
   name: 'getGroup',
   postProcess: (response) => response,
-  request: (params) => detApi.Internal.getGroup(params.groupId),
+  request: (params) => detApi.Internal.getGroup(params),
 };
 
 export const getGroups: DetApi<
@@ -256,8 +260,10 @@ export const getGroups: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.Internal.getGroups({
-      limit: params.limit || 10,
-      offset: params.offset,
+      body: {
+        limit: params.limit || 10,
+        offset: params.offset,
+      },
     }),
 };
 
@@ -269,11 +275,14 @@ export const updateGroup: DetApi<
   name: 'updateGroup',
   postProcess: (response) => response,
   request: (params) =>
-    detApi.Internal.updateGroup(params.groupId, {
-      addUsers: params.addUsers,
+    detApi.Internal.updateGroup({
+      body: {
+        addUsers: params.addUsers,
+        groupId: params.groupId,
+        name: params.name,
+        removeUsers: params.removeUsers,
+      },
       groupId: params.groupId,
-      name: params.name,
-      removeUsers: params.removeUsers,
     }),
 };
 
@@ -284,7 +293,7 @@ export const deleteGroup: DetApi<
 > = {
   name: 'deleteGroup',
   postProcess: (response) => response,
-  request: (params) => detApi.Internal.deleteGroup(params.groupId),
+  request: (params) => detApi.Internal.deleteGroup(params),
 };
 
 /* Roles */
@@ -298,7 +307,7 @@ export const getGroupRoles: DetApi<
 > = {
   name: 'getRolesAssignedToGroup',
   postProcess: (response) => decoder.mapV1GroupRole(response),
-  request: (params) => detApi.RBAC.getRolesAssignedToGroup(params.groupId),
+  request: (params) => detApi.RBAC.getRolesAssignedToGroup(params),
 };
 
 export const getUserRoles: DetApi<
@@ -308,7 +317,7 @@ export const getUserRoles: DetApi<
 > = {
   name: 'getRolesAssignedToUser',
   postProcess: (response) => response.roles.map((rwa) => decoder.mapV1UserRole(rwa)),
-  request: (params) => detApi.RBAC.getRolesAssignedToUser(params.userId),
+  request: (params) => detApi.RBAC.getRolesAssignedToUser(params),
 };
 
 export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse, Type.UserRole[]> =
@@ -317,8 +326,10 @@ export const listRoles: DetApi<Service.ListRolesParams, Api.V1ListRolesResponse,
     postProcess: (response) => response.roles.map(decoder.mapV1Role),
     request: (params) =>
       detApi.RBAC.listRoles({
-        limit: params.limit || 0,
-        offset: params.offset || 0,
+        body: {
+          limit: params.limit || 0,
+          offset: params.offset || 0,
+        },
       }),
   };
 
@@ -331,13 +342,15 @@ export const assignRolesToGroup: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.assignRoles({
-      groupRoleAssignments: params.roleIds.map((roleId) => ({
-        groupId: params.groupId,
-        roleAssignment: {
-          role: { roleId },
-          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
-        },
-      })),
+      body: {
+        groupRoleAssignments: params.roleIds.map((roleId) => ({
+          groupId: params.groupId,
+          roleAssignment: {
+            role: { roleId },
+            scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+          },
+        })),
+      },
     }),
 };
 
@@ -350,13 +363,15 @@ export const removeRolesFromGroup: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.removeAssignments({
-      groupRoleAssignments: params.roleIds.map((roleId) => ({
-        groupId: params.groupId,
-        roleAssignment: {
-          role: { roleId },
-          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
-        },
-      })),
+      body: {
+        groupRoleAssignments: params.roleIds.map((roleId) => ({
+          groupId: params.groupId,
+          roleAssignment: {
+            role: { roleId },
+            scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+          },
+        })),
+      },
     }),
 };
 
@@ -369,13 +384,15 @@ export const assignRolesToUser: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.assignRoles({
-      userRoleAssignments: params.roleIds.map((roleId) => ({
-        roleAssignment: {
-          role: { roleId },
-          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
-        },
-        userId: params.userId,
-      })),
+      body: {
+        userRoleAssignments: params.roleIds.map((roleId) => ({
+          roleAssignment: {
+            role: { roleId },
+            scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+          },
+          userId: params.userId,
+        })),
+      },
     }),
 };
 
@@ -388,13 +405,15 @@ export const removeRolesFromUser: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.removeAssignments({
-      userRoleAssignments: params.roleIds.map((roleId) => ({
-        roleAssignment: {
-          role: { roleId },
-          scopeWorkspaceId: params.scopeWorkspaceId || undefined,
-        },
-        userId: params.userId,
-      })),
+      body: {
+        userRoleAssignments: params.roleIds.map((roleId) => ({
+          roleAssignment: {
+            role: { roleId },
+            scopeWorkspaceId: params.scopeWorkspaceId || undefined,
+          },
+          userId: params.userId,
+        })),
+      },
     }),
 };
 
@@ -407,9 +426,10 @@ export const searchRolesAssignableToScope: DetApi<
   postProcess: (response) => response,
   request: (params) =>
     detApi.RBAC.searchRolesAssignableToScope({
-      limit: params.limit || ROLES_LIMIT,
-      offset: params.offset,
-      workspaceId: params.workspaceId,
+      body: {
+        ...params,
+        limit: params.limit || ROLES_LIMIT,
+      },
     }),
 };
 
@@ -418,13 +438,13 @@ export const searchRolesAssignableToScope: DetApi<
 export const getInfo: DetApi<EmptyParams, Api.V1GetMasterResponse, Type.DeterminedInfo> = {
   name: 'getInfo',
   postProcess: (response) => decoder.mapV1MasterInfo(response),
-  request: () => detApi.Cluster.getMaster(),
+  request: () => detApi.Cluster.getMaster({}),
 };
 
 export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Type.Telemetry> = {
   name: 'getTelemetry',
   postProcess: (response) => response,
-  request: () => detApi.Internal.getTelemetry(),
+  request: () => detApi.Internal.getTelemetry({}),
 };
 
 /* Cluster */
@@ -432,7 +452,7 @@ export const getTelemetry: DetApi<EmptyParams, Api.V1GetTelemetryResponse, Type.
 export const getAgents: DetApi<EmptyParams, Api.V1GetAgentsResponse, Type.Agent[]> = {
   name: 'getAgents',
   postProcess: (response) => decoder.jsonToAgents(response.agents || []),
-  request: () => detApi.Cluster.getAgents(),
+  request: () => detApi.Cluster.getAgents({}),
 };
 
 export const getResourcePools: DetApi<
@@ -444,7 +464,7 @@ export const getResourcePools: DetApi<
   postProcess: (response) => {
     return response.resourcePools?.map(decoder.mapV1ResourcePool) || [];
   },
-  request: () => detApi.Internal.getResourcePools(),
+  request: () => detApi.Internal.getResourcePools({}),
 };
 
 export const getResourceAllocationAggregated: DetApi<
@@ -458,9 +478,11 @@ export const getResourceAllocationAggregated: DetApi<
     const dateFormat =
       params.period === 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY' ? 'YYYY-MM' : 'YYYY-MM-DD';
     return detApi.Cluster.resourceAllocationAggregated(
-      params.startDate.format(dateFormat),
-      params.endDate.format(dateFormat),
-      params.period,
+      {
+        endDate: params.endDate.format(dateFormat),
+        period: params.period,
+        startDate: params.startDate.format(dateFormat),
+      },
       options,
     );
   },
@@ -478,8 +500,10 @@ export const queryTrials: DetApi<
   },
   request: (params: Api.V1QueryTrialsRequest) => {
     return detApi.TrialsComparison.queryTrials({
-      ...params,
-      limit: params?.limit ? 3 * params.limit : 30,
+      body: {
+        ...params,
+        limit: params?.limit ? 3 * params.limit : 30,
+      },
     });
   },
 };
@@ -494,7 +518,7 @@ export const updateTrialTags: DetApi<
     return { rowsAffected: response.rowsAffected };
   },
   request: (params: Api.V1UpdateTrialTagsRequest) => {
-    return detApi.TrialsComparison.updateTrialTags(params);
+    return detApi.TrialsComparison.updateTrialTags({ body: params });
   },
 };
 
@@ -507,7 +531,7 @@ export const createTrialCollection: DetApi<
   postProcess: (response: Api.V1CreateTrialsCollectionResponse) =>
     response.collection ? decodeTrialsCollection(response.collection) : undefined,
   request: (params: Api.V1CreateTrialsCollectionRequest) => {
-    return detApi.TrialsComparison.createTrialsCollection(params);
+    return detApi.TrialsComparison.createTrialsCollection({ body: params });
   },
 };
 
@@ -521,7 +545,7 @@ export const getTrialsCollections: DetApi<
     return { collections: response.collections };
   },
   request: (projectId: number) => {
-    return detApi.TrialsComparison.getTrialsCollections(projectId);
+    return detApi.TrialsComparison.getTrialsCollections({ projectId });
   },
 };
 
@@ -534,7 +558,7 @@ export const patchTrialsCollection: DetApi<
   postProcess: (response: Api.V1PatchTrialsCollectionResponse) =>
     response.collection ? decodeTrialsCollection(response.collection) : undefined,
   request: (params: Api.V1PatchTrialsCollectionRequest) => {
-    return detApi.TrialsComparison.patchTrialsCollection(params);
+    return detApi.TrialsComparison.patchTrialsCollection({ body: params });
   },
 };
 
@@ -546,7 +570,7 @@ export const deleteTrialsCollection: DetApi<
   name: 'deleteTrialsCollection',
   postProcess: (response: Api.V1DeleteTrialsCollectionResponse) => response,
   request: (id: number) => {
-    return detApi.TrialsComparison.deleteTrialsCollection(id);
+    return detApi.TrialsComparison.deleteTrialsCollection({ id });
   },
 };
 
@@ -566,24 +590,13 @@ export const getExperiments: DetApi<
   },
   request: (params: Service.GetExperimentsParams, options) => {
     return detApi.Experiments.getExperiments(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.description,
-      params.name,
-      params.labels,
-      params.archived,
-      params.states,
-      undefined,
-      getUserIds(params.users),
-      params.projectId ?? 0,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      params.experimentIdFilter?.incl,
-      params.experimentIdFilter?.notIn,
+      {
+        ...params,
+        experimentIdFilterIncl: params.experimentIdFilter?.incl,
+        experimentIdFilterNotIn: params.experimentIdFilter?.notIn,
+        projectId: params.projectId ?? 0,
+        userIds: getUserIds(params.users),
+      },
       options,
     );
   },
@@ -601,7 +614,7 @@ export const getExperiment: DetApi<
     return exp;
   },
   request: (params: Service.GetExperimentParams) => {
-    return detApi.Experiments.getExperiment(params.id);
+    return detApi.Experiments.getExperiment({ experimentId: params.id });
   },
 };
 
@@ -620,10 +633,10 @@ export const createExperiment: DetApi<
   request: (params: Service.CreateExperimentParams, options) => {
     return detApi.Internal.createExperiment(
       {
-        activate: params.activate,
-        config: params.experimentConfig,
-        parentId: params.parentId,
-        projectId: params.projectId,
+        body: {
+          ...params,
+          config: params.experimentConfig,
+        },
       },
       options,
     );
@@ -638,7 +651,7 @@ export const archiveExperiment: DetApi<
   name: 'archiveExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
-    return detApi.Experiments.archiveExperiment(params.experimentId, options);
+    return detApi.Experiments.archiveExperiment({ id: params.experimentId }, options);
   },
 };
 
@@ -650,7 +663,7 @@ export const deleteExperiment: DetApi<
   name: 'deleteExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
-    return detApi.Experiments.deleteExperiment(params.experimentId, options);
+    return detApi.Experiments.deleteExperiment(params, options);
   },
 };
 
@@ -662,7 +675,7 @@ export const unarchiveExperiment: DetApi<
   name: 'unarchiveExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
-    return detApi.Experiments.unarchiveExperiment(params.experimentId, options);
+    return detApi.Experiments.unarchiveExperiment({ id: params.experimentId }, options);
   },
 };
 
@@ -674,7 +687,7 @@ export const activateExperiment: DetApi<
   name: 'activateExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
-    return detApi.Experiments.activateExperiment(params.experimentId, options);
+    return detApi.Experiments.activateExperiment({ id: params.experimentId }, options);
   },
 };
 
@@ -686,7 +699,7 @@ export const pauseExperiment: DetApi<
   name: 'pauseExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
-    return detApi.Experiments.pauseExperiment(params.experimentId, options);
+    return detApi.Experiments.pauseExperiment({ id: params.experimentId }, options);
   },
 };
 
@@ -698,7 +711,7 @@ export const cancelExperiment: DetApi<
   name: 'cancelExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
-    return detApi.Experiments.cancelExperiment(params.experimentId, options);
+    return detApi.Experiments.cancelExperiment({ id: params.experimentId }, options);
   },
 };
 
@@ -710,7 +723,7 @@ export const killExperiment: DetApi<
   name: 'killExperiment',
   postProcess: noOp,
   request: (params: Service.ExperimentIdParams, options) => {
-    return detApi.Experiments.killExperiment(params.experimentId, options);
+    return detApi.Experiments.killExperiment({ id: params.experimentId }, options);
   },
 };
 
@@ -723,8 +736,10 @@ export const patchExperiment: DetApi<
   postProcess: noOp,
   request: (params: Service.PatchExperimentParams, options) => {
     return detApi.Experiments.patchExperiment(
-      params.experimentId,
-      params.body as Api.V1Experiment,
+      {
+        body: params.body as Api.V1Experiment,
+        experimentId: params.experimentId,
+      },
       options,
     );
   },
@@ -737,7 +752,8 @@ export const getExperimentDetails: DetApi<
 > = {
   name: 'getExperimentDetails',
   postProcess: (response) => decoder.mapV1GetExperimentDetailsResponse(response),
-  request: (params, options) => detApi.Experiments.getExperiment(params.id, options),
+  request: (params, options) =>
+    detApi.Experiments.getExperiment({ experimentId: params.id }, options),
 };
 
 export const getExperimentCheckpoints: DetApi<
@@ -747,16 +763,7 @@ export const getExperimentCheckpoints: DetApi<
 > = {
   name: 'getExperimentCheckpoints',
   postProcess: (response) => decoder.decodeCheckpoints(response),
-  request: (params, options) =>
-    detApi.Experiments.getExperimentCheckpoints(
-      params.id,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.states,
-      options,
-    ),
+  request: (params, options) => detApi.Experiments.getExperimentCheckpoints(params, options),
 };
 
 export const getExpValidationHistory: DetApi<
@@ -774,7 +781,7 @@ export const getExpValidationHistory: DetApi<
     }));
   },
   request: (params, options) => {
-    return detApi.Experiments.getExperimentValidationHistory(params.id, options);
+    return detApi.Experiments.getExperimentValidationHistory({ experimentId: params.id }, options);
   },
 };
 
@@ -792,12 +799,10 @@ export const getExpTrials: DetApi<
   },
   request: (params, options) => {
     return detApi.Experiments.getExperimentTrials(
-      params.id,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.states,
+      {
+        ...params,
+        experimentId: params.id,
+      },
       options,
     );
   },
@@ -810,7 +815,7 @@ export const getExperimentLabels: DetApi<
 > = {
   name: 'getExperimentLabels',
   postProcess: (response) => response.labels || [],
-  request: (params, options) => detApi.Experiments.getExperimentLabels(params.project_id, options),
+  request: (params, options) => detApi.Experiments.getExperimentLabels(params, options),
 };
 
 export const getTrialDetails: DetApi<
@@ -822,7 +827,8 @@ export const getTrialDetails: DetApi<
   postProcess: (response: Api.V1GetTrialResponse) => {
     return decoder.decodeTrialResponseToTrialDetails(response);
   },
-  request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
+  request: (params: Service.TrialDetailsParams) =>
+    detApi.Experiments.getTrial({ trialId: params.id }),
 };
 
 export const moveExperiment: DetApi<
@@ -833,10 +839,7 @@ export const moveExperiment: DetApi<
   name: 'moveExperiment',
   postProcess: noOp,
   request: (params) =>
-    detApi.Experiments.moveExperiment(params.experimentId, {
-      destinationProjectId: params.destinationProjectId,
-      experimentId: params.experimentId,
-    }),
+    detApi.Experiments.moveExperiment({ body: params, experimentId: params.experimentId }),
 };
 
 export const compareTrials: DetApi<
@@ -849,15 +852,14 @@ export const compareTrials: DetApi<
     return response.trials.map(decoder.decodeTrialSummary);
   },
   request: (params: Service.CompareTrialsParams) =>
-    detApi.Experiments.compareTrials(
-      params.trialIds,
-      params.maxDatapoints,
-      params.metricNames.map((m) => m.name),
-      params.startBatches,
-      params.endBatches,
-      params.metricType ? Type.metricTypeParamMap[params.metricType] : 'METRIC_TYPE_UNSPECIFIED',
-      params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
-    ),
+    detApi.Experiments.compareTrials({
+      ...params,
+      metricNames: params.metricNames.map((m) => m.name),
+      metricType: params.metricType
+        ? Type.metricTypeParamMap[params.metricType]
+        : 'METRIC_TYPE_UNSPECIFIED',
+      scale: params.scale === Type.Scale.Log ? 'SCALE_LOG' : 'SCALE_LINEAR',
+    }),
 };
 
 export const getExperimentFileTree: DetApi<
@@ -868,7 +870,7 @@ export const getExperimentFileTree: DetApi<
   name: 'getModelDefTree',
   postProcess: (response) => response.files || [],
   request: (params) => {
-    return detApi.Experiments.getModelDefTree(params.experimentId);
+    return detApi.Experiments.getModelDefTree(params);
   },
 };
 
@@ -882,7 +884,7 @@ export const getExperimentFileFromTree: DetApi<
   request: (params) => {
     return detApi.Experiments.getModelDefFile(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      params.experimentId!,
+      { body: {}, experimentId: params.experimentId! },
       { path: params.path },
     );
   },
@@ -911,21 +913,19 @@ export const getTrialWorkloads: DetApi<
     return decoder.decodeTrialWorkloads(response);
   },
   request: (params: Service.TrialWorkloadsParams) =>
-    detApi.Internal.getTrialWorkloads(
-      params.id,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.sortKey || 'batches',
-      WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
+    detApi.Internal.getTrialWorkloads({
+      ...params,
+      filter:
+        WorkloadFilterParamMap[params.filter || 'FILTER_OPTION_UNSPECIFIED'] ||
         'FILTER_OPTION_UNSPECIFIED',
-      undefined,
-      params.metricType
+      metricType: params.metricType
         ? params.metricType === Type.MetricType.Training
           ? 'METRIC_TYPE_TRAINING'
           : 'METRIC_TYPE_VALIDATION'
         : undefined,
-    ),
+      sortKey: params.sortKey || 'batches',
+      trialId: params.id,
+    }),
 };
 
 /* Tasks */
@@ -939,7 +939,7 @@ export const getTask: DetApi<
   postProcess: (response) => {
     return response.task ? decoder.mapV1Task(response.task) : undefined;
   },
-  request: (params: Service.GetTaskParams) => detApi.Tasks.getTask(params.taskId),
+  request: (params: Service.GetTaskParams) => detApi.Tasks.getTask(params),
 };
 
 export const getActiveTasks: DetApi<
@@ -949,7 +949,7 @@ export const getActiveTasks: DetApi<
 > = {
   name: 'getActiveTasksCount',
   postProcess: (response) => response,
-  request: () => detApi.Tasks.getActiveTasksCount(),
+  request: () => detApi.Tasks.getActiveTasksCount({}),
 };
 
 /* Webhooks */
@@ -957,13 +957,13 @@ export const getActiveTasks: DetApi<
 export const createWebhook: DetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook> = {
   name: 'createWebhook',
   postProcess: (response) => decoder.mapV1Webhook(response.webhook),
-  request: (params, options) => detApi.Webhooks.postWebhook(params, options),
+  request: (params, options) => detApi.Webhooks.postWebhook({ body: params }, options),
 };
 
 export const deleteWebhook: DetApi<Service.GetWebhookParams, Api.V1DeleteWebhookResponse, void> = {
   name: 'deleteWebhook',
   postProcess: noOp,
-  request: (params: Service.GetWebhookParams) => detApi.Webhooks.deleteWebhook(params.id),
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.deleteWebhook(params),
 };
 
 export const getWebhooks: DetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.Webhook[]> = {
@@ -971,13 +971,13 @@ export const getWebhooks: DetApi<EmptyParams, Api.V1GetWebhooksResponse, Type.We
   postProcess: (response) => {
     return response.webhooks.map((hook) => decoder.mapV1Webhook(hook));
   },
-  request: () => detApi.Webhooks.getWebhooks(),
+  request: () => detApi.Webhooks.getWebhooks({}),
 };
 
 export const testWebhook: DetApi<Service.GetWebhookParams, Api.V1TestWebhookResponse, void> = {
   name: 'testWebhook',
   postProcess: noOp,
-  request: (params: Service.GetWebhookParams) => detApi.Webhooks.testWebhook(params.id),
+  request: (params: Service.GetWebhookParams) => detApi.Webhooks.testWebhook(params),
 };
 
 /* Models */
@@ -995,18 +995,10 @@ export const getModels: DetApi<
     };
   },
   request: (params: Service.GetModelsParams) =>
-    detApi.Models.getModels(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-      params.description,
-      params.labels,
-      params.archived,
-      undefined,
-      getUserIds(params.users),
-    ),
+    detApi.Models.getModels({
+      ...params,
+      userIds: getUserIds(params.users),
+    }),
 };
 
 export const getModel: DetApi<
@@ -1018,7 +1010,7 @@ export const getModel: DetApi<
   postProcess: (response) => {
     return response.model ? decoder.mapV1Model(response.model) : undefined;
   },
-  request: (params: Service.GetModelParams) => detApi.Models.getModel(params.modelName),
+  request: (params: Service.GetModelParams) => detApi.Models.getModel(params),
 };
 
 export const getModelDetails: DetApi<
@@ -1032,14 +1024,7 @@ export const getModelDetails: DetApi<
       ? decoder.mapV1ModelDetails(response)
       : undefined;
   },
-  request: (params: Service.GetModelDetailsParams) =>
-    detApi.Models.getModelVersions(
-      params.modelName,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-    ),
+  request: (params: Service.GetModelDetailsParams) => detApi.Models.getModelVersions(params),
 };
 
 export const getModelVersion: DetApi<
@@ -1052,7 +1037,10 @@ export const getModelVersion: DetApi<
     return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
   },
   request: (params: Service.GetModelVersionParams) =>
-    detApi.Models.getModelVersion(params.modelName, params.versionNum),
+    detApi.Models.getModelVersion({
+      modelName: params.modelName,
+      modelVersionNum: params.versionNum,
+    }),
 };
 
 export const patchModel: DetApi<
@@ -1062,8 +1050,7 @@ export const patchModel: DetApi<
 > = {
   name: 'patchModel',
   postProcess: (response) => (response.model ? decoder.mapV1Model(response.model) : undefined),
-  request: (params: Service.PatchModelParams) =>
-    detApi.Models.patchModel(params.modelName, params.body),
+  request: (params: Service.PatchModelParams) => detApi.Models.patchModel(params),
 };
 
 export const patchModelVersion: DetApi<
@@ -1075,13 +1062,16 @@ export const patchModelVersion: DetApi<
   postProcess: (response) =>
     response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined,
   request: (params: Service.PatchModelVersionParams) =>
-    detApi.Models.patchModelVersion(params.modelName, params.versionNum, params.body),
+    detApi.Models.patchModelVersion({
+      ...params,
+      modelVersionNum: params.versionNum,
+    }),
 };
 
 export const archiveModel: DetApi<Service.ArchiveModelParams, Api.V1ArchiveModelResponse, void> = {
   name: 'archiveModel',
   postProcess: noOp,
-  request: (params: Service.GetModelParams) => detApi.Models.archiveModel(params.modelName),
+  request: (params: Service.GetModelParams) => detApi.Models.archiveModel(params),
 };
 
 export const unarchiveModel: DetApi<
@@ -1091,13 +1081,13 @@ export const unarchiveModel: DetApi<
 > = {
   name: 'unarchiveModel',
   postProcess: noOp,
-  request: (params: Service.GetModelParams) => detApi.Models.unarchiveModel(params.modelName),
+  request: (params: Service.GetModelParams) => detApi.Models.unarchiveModel(params),
 };
 
 export const deleteModel: DetApi<Service.DeleteModelParams, Api.V1DeleteModelResponse, void> = {
   name: 'deleteModel',
   postProcess: noOp,
-  request: (params: Service.GetModelParams) => detApi.Models.deleteModel(params.modelName),
+  request: (params: Service.GetModelParams) => detApi.Models.deleteModel(params),
 };
 
 export const deleteModelVersion: DetApi<
@@ -1108,7 +1098,10 @@ export const deleteModelVersion: DetApi<
   name: 'deleteModelVersion',
   postProcess: noOp,
   request: (params: Service.GetModelVersionParams) =>
-    detApi.Models.deleteModelVersion(params.modelName, params.versionNum),
+    detApi.Models.deleteModelVersion({
+      modelName: params.modelName,
+      modelVersionNum: params.versionNum,
+    }),
 };
 
 export const getModelLabels: DetApi<EmptyParams, Api.V1GetModelLabelsResponse, string[]> = {
@@ -1126,13 +1119,7 @@ export const postModel: DetApi<
   postProcess: (response) => {
     return response.model ? decoder.mapV1Model(response.model) : undefined;
   },
-  request: (params: Service.PostModelParams) =>
-    detApi.Models.postModel({
-      description: params.description,
-      labels: params.labels,
-      metadata: params.metadata,
-      name: params.name,
-    }),
+  request: (params: Service.PostModelParams) => detApi.Models.postModel({ body: params }),
 };
 
 export const postModelVersion: DetApi<
@@ -1144,8 +1131,7 @@ export const postModelVersion: DetApi<
   postProcess: (response) => {
     return response.modelVersion ? decoder.mapV1ModelVersion(response.modelVersion) : undefined;
   },
-  request: (params: Service.PostModelVersionParams) =>
-    detApi.Models.postModelVersion(params.modelName, params.body),
+  request: (params: Service.PostModelVersionParams) => detApi.Models.postModelVersion(params),
 };
 
 /* Workspaces */
@@ -1163,17 +1149,7 @@ export const getWorkspaces: DetApi<
     };
   },
   request: (params, options) => {
-    return detApi.Workspaces.getWorkspaces(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-      params.archived,
-      params.users,
-      params.pinned,
-      options,
-    );
+    return detApi.Workspaces.getWorkspaces(params, options);
   },
 };
 
@@ -1186,7 +1162,7 @@ export const getWorkspace: DetApi<
   postProcess: (response) => {
     return decoder.mapV1Workspace(response.workspace);
   },
-  request: (params) => detApi.Workspaces.getWorkspace(params.id),
+  request: (params) => detApi.Workspaces.getWorkspace(params),
 };
 
 export const createWorkspace: DetApi<
@@ -1199,7 +1175,7 @@ export const createWorkspace: DetApi<
     return decoder.mapV1Workspace(response.workspace);
   },
   request: (params, options) =>
-    detApi.Workspaces.postWorkspace({ ...params, name: params.name.trim() }, options),
+    detApi.Workspaces.postWorkspace({ body: { ...params, name: params.name.trim() } }, options),
 };
 
 export const getWorkspaceMembers: DetApi<
@@ -1214,7 +1190,7 @@ export const getWorkspaceMembers: DetApi<
     usersAssignedDirectly: response.usersAssignedDirectly.map(decoder.mapV1User),
   }),
   request: (params) => {
-    return detApi.RBAC.getGroupsAndUsersAssignedToWorkspace(params.workspaceId, params.nameFilter);
+    return detApi.RBAC.getGroupsAndUsersAssignedToWorkspace(params);
   },
 };
 
@@ -1231,17 +1207,7 @@ export const getWorkspaceProjects: DetApi<
     };
   },
   request: (params, options) => {
-    return detApi.Workspaces.getWorkspaceProjects(
-      params.id,
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-      params.archived,
-      params.users,
-      options,
-    );
+    return detApi.Workspaces.getWorkspaceProjects(params, options);
   },
 };
 
@@ -1252,7 +1218,7 @@ export const deleteWorkspace: DetApi<
 > = {
   name: 'deleteWorkspace',
   postProcess: decoder.mapDeletionStatus,
-  request: (params) => detApi.Workspaces.deleteWorkspace(params.id),
+  request: (params) => detApi.Workspaces.deleteWorkspace(params),
 };
 
 export const patchWorkspace: DetApi<
@@ -1266,8 +1232,10 @@ export const patchWorkspace: DetApi<
   },
   request: (params, options) => {
     return detApi.Workspaces.patchWorkspace(
-      params.id,
-      { name: params.name?.trim(), ...params },
+      {
+        body: { name: params.name?.trim(), ...params },
+        id: params.id,
+      },
       options,
     );
   },
@@ -1280,7 +1248,7 @@ export const archiveWorkspace: DetApi<
 > = {
   name: 'archiveWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.archiveWorkspace(params.id),
+  request: (params) => detApi.Workspaces.archiveWorkspace(params),
 };
 
 export const unarchiveWorkspace: DetApi<
@@ -1290,13 +1258,13 @@ export const unarchiveWorkspace: DetApi<
 > = {
   name: 'unarchiveWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.unarchiveWorkspace(params.id),
+  request: (params) => detApi.Workspaces.unarchiveWorkspace(params),
 };
 
 export const pinWorkspace: DetApi<Service.PinWorkspaceParams, Api.V1PinWorkspaceResponse, void> = {
   name: 'pinWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.pinWorkspace(params.id),
+  request: (params) => detApi.Workspaces.pinWorkspace(params),
 };
 
 export const unpinWorkspace: DetApi<
@@ -1306,7 +1274,7 @@ export const unpinWorkspace: DetApi<
 > = {
   name: 'unpinWorkspace',
   postProcess: noOp,
-  request: (params) => detApi.Workspaces.unpinWorkspace(params.id),
+  request: (params) => detApi.Workspaces.unpinWorkspace(params),
 };
 
 /* Projects */
@@ -1317,7 +1285,7 @@ export const getProject: DetApi<Service.GetProjectParams, Api.V1GetProjectRespon
     postProcess: (response) => {
       return decoder.mapV1Project(response.project);
     },
-    request: (params) => detApi.Projects.getProject(params.id),
+    request: (params) => detApi.Projects.getProject(params),
   };
 
 export const addProjectNote: DetApi<
@@ -1330,9 +1298,12 @@ export const addProjectNote: DetApi<
     return response.notes as Type.Note[];
   },
   request: (params) =>
-    detApi.Projects.addProjectNote(params.id, {
-      contents: params.contents,
-      name: params.name,
+    detApi.Projects.addProjectNote({
+      body: {
+        contents: params.contents,
+        name: params.name,
+      },
+      projectId: params.id,
     }),
 };
 
@@ -1346,8 +1317,11 @@ export const setProjectNotes: DetApi<
     return response.notes as Type.Note[];
   },
   request: (params) =>
-    detApi.Projects.putProjectNotes(params.projectId, {
-      notes: params.notes,
+    detApi.Projects.putProjectNotes({
+      body: {
+        notes: params.notes,
+        projectId: params.projectId,
+      },
       projectId: params.projectId,
     }),
 };
@@ -1362,9 +1336,12 @@ export const createProject: DetApi<
     return decoder.mapV1Project(response.project);
   },
   request: (params) =>
-    detApi.Projects.postProject(params.workspaceId, {
-      description: params.description?.trim(),
-      name: params.name.trim(),
+    detApi.Projects.postProject({
+      body: {
+        description: params.description?.trim(),
+        name: params.name.trim(),
+        workspaceId: params.workspaceId,
+      },
       workspaceId: params.workspaceId,
     }),
 };
@@ -1379,9 +1356,12 @@ export const patchProject: DetApi<
     return decoder.mapV1Project(response.project);
   },
   request: (params) =>
-    detApi.Projects.patchProject(params.id, {
-      description: params.description?.trim(),
-      name: params.name?.trim(),
+    detApi.Projects.patchProject({
+      body: {
+        description: params.description?.trim(),
+        name: params.name?.trim(),
+      },
+      id: params.id,
     }),
 };
 
@@ -1392,15 +1372,18 @@ export const deleteProject: DetApi<
 > = {
   name: 'deleteProject',
   postProcess: decoder.mapDeletionStatus,
-  request: (params) => detApi.Projects.deleteProject(params.id),
+  request: (params) => detApi.Projects.deleteProject(params),
 };
 
 export const moveProject: DetApi<Api.V1MoveProjectRequest, Api.V1MoveProjectResponse, void> = {
   name: 'moveProject',
   postProcess: noOp,
   request: (params) =>
-    detApi.Projects.moveProject(params.projectId, {
-      destinationWorkspaceId: params.destinationWorkspaceId,
+    detApi.Projects.moveProject({
+      body: {
+        destinationWorkspaceId: params.destinationWorkspaceId,
+        projectId: params.projectId,
+      },
       projectId: params.projectId,
     }),
 };
@@ -1412,7 +1395,7 @@ export const archiveProject: DetApi<
 > = {
   name: 'archiveProject',
   postProcess: noOp,
-  request: (params) => detApi.Projects.archiveProject(params.id),
+  request: (params) => detApi.Projects.archiveProject(params),
 };
 
 export const unarchiveProject: DetApi<
@@ -1422,7 +1405,7 @@ export const unarchiveProject: DetApi<
 > = {
   name: 'unarchiveProject',
   postProcess: noOp,
-  request: (params) => detApi.Projects.unarchiveProject(params.id),
+  request: (params) => detApi.Projects.unarchiveProject(params),
 };
 
 /* Tasks */
@@ -1438,14 +1421,11 @@ export const getCommands: DetApi<
   postProcess: (response) =>
     (response.commands || []).map((command) => decoder.mapV1Command(command)),
   request: (params: Service.GetCommandsParams) =>
-    detApi.Commands.getCommands(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit ?? TASK_LIMIT,
-      undefined,
-      getUserIds(params.users),
-    ),
+    detApi.Commands.getCommands({
+      ...params,
+      limit: params.limit ?? TASK_LIMIT,
+      userIds: getUserIds(params.users),
+    }),
 };
 
 export const getJupyterLabs: DetApi<
@@ -1457,14 +1437,11 @@ export const getJupyterLabs: DetApi<
   postProcess: (response) =>
     (response.notebooks || []).map((jupyterLab) => decoder.mapV1Notebook(jupyterLab)),
   request: (params: Service.GetJupyterLabsParams) =>
-    detApi.Notebooks.getNotebooks(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit ?? TASK_LIMIT,
-      undefined,
-      getUserIds(params.users),
-    ),
+    detApi.Notebooks.getNotebooks({
+      ...params,
+      limit: params.limit ?? TASK_LIMIT,
+      userIds: getUserIds(params.users),
+    }),
 };
 
 export const getShells: DetApi<
@@ -1475,14 +1452,11 @@ export const getShells: DetApi<
   name: 'getShells',
   postProcess: (response) => (response.shells || []).map((shell) => decoder.mapV1Shell(shell)),
   request: (params: Service.GetShellsParams) =>
-    detApi.Shells.getShells(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit ?? TASK_LIMIT,
-      undefined,
-      getUserIds(params.users),
-    ),
+    detApi.Shells.getShells({
+      ...params,
+      limit: params.limit ?? TASK_LIMIT,
+      userIds: getUserIds(params.users),
+    }),
 };
 
 export const getTensorBoards: DetApi<
@@ -1494,32 +1468,31 @@ export const getTensorBoards: DetApi<
   postProcess: (response) =>
     (response.tensorboards || []).map((tensorboard) => decoder.mapV1TensorBoard(tensorboard)),
   request: (params: Service.GetTensorBoardsParams) =>
-    detApi.TensorBoards.getTensorboards(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit ?? TASK_LIMIT,
-      undefined,
-      getUserIds(params.users),
-    ),
+    detApi.TensorBoards.getTensorboards({
+      ...params,
+      limit: params.limit ?? TASK_LIMIT,
+      userIds: getUserIds(params.users),
+    }),
 };
 
 export const killCommand: DetApi<Service.CommandIdParams, Api.V1KillCommandResponse, void> = {
   name: 'killCommand',
   postProcess: noOp,
-  request: (params: Service.CommandIdParams) => detApi.Commands.killCommand(params.commandId),
+  request: (params: Service.CommandIdParams) => detApi.Commands.killCommand(params),
 };
 
 export const killJupyterLab: DetApi<Service.CommandIdParams, Api.V1KillNotebookResponse, void> = {
   name: 'killJupyterLab',
   postProcess: noOp,
-  request: (params: Service.CommandIdParams) => detApi.Notebooks.killNotebook(params.commandId),
+  request: (params: Service.CommandIdParams) =>
+    detApi.Notebooks.killNotebook({ notebookId: params.commandId }),
 };
 
 export const killShell: DetApi<Service.CommandIdParams, Api.V1KillShellResponse, void> = {
   name: 'killShell',
   postProcess: noOp,
-  request: (params: Service.CommandIdParams) => detApi.Shells.killShell(params.commandId),
+  request: (params: Service.CommandIdParams) =>
+    detApi.Shells.killShell({ shellId: params.commandId }),
 };
 
 export const killTensorBoard: DetApi<Service.CommandIdParams, Api.V1KillTensorboardResponse, void> =
@@ -1527,7 +1500,7 @@ export const killTensorBoard: DetApi<Service.CommandIdParams, Api.V1KillTensorbo
     name: 'killTensorBoard',
     postProcess: noOp,
     request: (params: Service.CommandIdParams) =>
-      detApi.TensorBoards.killTensorboard(params.commandId),
+      detApi.TensorBoards.killTensorboard({ tensorboardId: params.commandId }),
   };
 
 export const getTemplates: DetApi<
@@ -1538,14 +1511,7 @@ export const getTemplates: DetApi<
   name: 'getTemplates',
   postProcess: (response) =>
     (response.templates || []).map((template) => decoder.mapV1Template(template)),
-  request: (params: Service.GetTemplatesParams) =>
-    detApi.Templates.getTemplates(
-      params.sortBy,
-      params.orderBy,
-      params.offset,
-      params.limit,
-      params.name,
-    ),
+  request: (params: Service.GetTemplatesParams) => detApi.Templates.getTemplates(params),
 };
 
 export const launchJupyterLab: DetApi<
@@ -1560,7 +1526,8 @@ export const launchJupyterLab: DetApi<
       warnings: response.warnings || [],
     };
   },
-  request: (params: Service.LaunchJupyterLabParams) => detApi.Notebooks.launchNotebook(params),
+  request: (params: Service.LaunchJupyterLabParams) =>
+    detApi.Notebooks.launchNotebook({ body: params }),
 };
 
 export const previewJupyterLab: DetApi<
@@ -1570,7 +1537,8 @@ export const previewJupyterLab: DetApi<
 > = {
   name: 'previewJupyterLab',
   postProcess: (response) => response.config,
-  request: (params: Service.LaunchJupyterLabParams) => detApi.Notebooks.launchNotebook(params),
+  request: (params: Service.LaunchJupyterLabParams) =>
+    detApi.Notebooks.launchNotebook({ body: params }),
 };
 
 export const launchTensorBoard: DetApi<
@@ -1586,7 +1554,7 @@ export const launchTensorBoard: DetApi<
     };
   },
   request: (params: Service.LaunchTensorBoardParams) =>
-    detApi.TensorBoards.launchTensorboard(params),
+    detApi.TensorBoards.launchTensorboard({ body: params }),
 };
 
 /* Jobs */
@@ -1603,13 +1571,10 @@ export const getJobQueue: DetApi<
     return response as Service.GetJobsResponse;
   },
   request: (params: Service.GetJobQParams) =>
-    detApi.Internal.getJobs(
-      params.offset,
-      params.limit,
-      params.resourcePool,
-      params.orderBy,
-      decoder.decodeJobStates(params.states),
-    ),
+    detApi.Internal.getJobs({
+      ...params,
+      states: decoder.decodeJobStates(params.states),
+    }),
 };
 
 export const getJobQueueStats: DetApi<
@@ -1619,7 +1584,7 @@ export const getJobQueueStats: DetApi<
 > = {
   name: 'getJobQStats',
   postProcess: identity,
-  request: ({ resourcePools }) => detApi.Internal.getJobQueueStats(resourcePools),
+  request: ({ resourcePools }) => detApi.Internal.getJobQueueStats({ resourcePools }),
 };
 
 export const updateJobQueue: DetApi<
@@ -1629,5 +1594,6 @@ export const updateJobQueue: DetApi<
 > = {
   name: 'updateJobQueue',
   postProcess: identity,
-  request: (params: Api.V1UpdateJobQueueRequest) => detApi.Internal.updateJobQueue(params),
+  request: (params: Api.V1UpdateJobQueueRequest) =>
+    detApi.Internal.updateJobQueue({ body: params }),
 };

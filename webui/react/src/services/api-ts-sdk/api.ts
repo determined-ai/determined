@@ -9043,7 +9043,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        currentUser(options: any = {}): FetchArgs {
+        currentUser({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/auth/user`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -9075,7 +9075,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        login(body: V1LoginRequest, options: any = {}): FetchArgs {
+        login({ body,  }: { body: V1LoginRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling login.');
@@ -9106,7 +9106,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        logout(options: any = {}): FetchArgs {
+        logout({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/auth/logout`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
@@ -9146,8 +9146,8 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        currentUser(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CurrentUserResponse> {
-            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).currentUser(options);
+        currentUser({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CurrentUserResponse> {
+            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).currentUser({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9165,8 +9165,8 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        login(body: V1LoginRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LoginResponse> {
-            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).login(body, options);
+        login({ body,  }: { body: V1LoginRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LoginResponse> {
+            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).login({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9183,8 +9183,8 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        logout(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LogoutResponse> {
-            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).logout(options);
+        logout({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LogoutResponse> {
+            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).logout({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9210,8 +9210,8 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        currentUser(options?: any) {
-            return AuthenticationApiFp(configuration).currentUser(options)(fetch, basePath);
+        currentUser({  }: {  }, options?: any) {
+            return AuthenticationApiFp(configuration).currentUser({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -9220,8 +9220,8 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        login(body: V1LoginRequest, options?: any) {
-            return AuthenticationApiFp(configuration).login(body, options)(fetch, basePath);
+        login({ body,  }: { body: V1LoginRequest,  }, options?: any) {
+            return AuthenticationApiFp(configuration).login({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -9229,8 +9229,8 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        logout(options?: any) {
-            return AuthenticationApiFp(configuration).logout(options)(fetch, basePath);
+        logout({  }: {  }, options?: any) {
+            return AuthenticationApiFp(configuration).logout({  }, options)(fetch, basePath);
         },
     };
 };
@@ -9249,8 +9249,8 @@ export class AuthenticationApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public currentUser(options?: any) {
-        return AuthenticationApiFp(this.configuration).currentUser(options)(this.fetch, this.basePath);
+    public currentUser({  }: {  }, options?: any) {
+        return AuthenticationApiFp(this.configuration).currentUser({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9261,8 +9261,8 @@ export class AuthenticationApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public login(body: V1LoginRequest, options?: any) {
-        return AuthenticationApiFp(this.configuration).login(body, options)(this.fetch, this.basePath);
+    public login({ body,  }: { body: V1LoginRequest,  }, options?: any) {
+        return AuthenticationApiFp(this.configuration).login({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9272,8 +9272,8 @@ export class AuthenticationApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public logout(options?: any) {
-        return AuthenticationApiFp(this.configuration).logout(options)(this.fetch, this.basePath);
+    public logout({  }: {  }, options?: any) {
+        return AuthenticationApiFp(this.configuration).logout({  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -9290,7 +9290,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options: any = {}): FetchArgs {
+        deleteCheckpoints({ body,  }: { body: V1DeleteCheckpointsRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling deleteCheckpoints.');
@@ -9330,7 +9330,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpoint(checkpointUuid: string, options: any = {}): FetchArgs {
+        getCheckpoint({ checkpointUuid,  }: { checkpointUuid: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'checkpointUuid' is not null or undefined
             if (checkpointUuid === null || checkpointUuid === undefined) {
                 throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpoint.');
@@ -9367,7 +9367,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpoint_1(checkpointUuid: string, options: any = {}): FetchArgs {
+        getCheckpoint_1({ checkpointUuid,  }: { checkpointUuid: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'checkpointUuid' is not null or undefined
             if (checkpointUuid === null || checkpointUuid === undefined) {
                 throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpoint_1.');
@@ -9405,7 +9405,7 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postCheckpointMetadata(body: V1PostCheckpointMetadataRequest, checkpointUuid: string, options: any = {}): FetchArgs {
+        postCheckpointMetadata({ body, checkpointUuid,  }: { body: V1PostCheckpointMetadataRequest, checkpointUuid: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postCheckpointMetadata.');
@@ -9459,8 +9459,8 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteCheckpointsResponse> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).deleteCheckpoints(body, options);
+        deleteCheckpoints({ body,  }: { body: V1DeleteCheckpointsRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteCheckpointsResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).deleteCheckpoints({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9478,8 +9478,8 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpoint(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCheckpointResponse> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint(checkpointUuid, options);
+        getCheckpoint({ checkpointUuid,  }: { checkpointUuid: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCheckpointResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint({ checkpointUuid,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9497,8 +9497,8 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpoint_1(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint_1(checkpointUuid, options);
+        getCheckpoint_1({ checkpointUuid,  }: { checkpointUuid: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint_1({ checkpointUuid,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9517,8 +9517,8 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postCheckpointMetadata(body: V1PostCheckpointMetadataRequest, checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostCheckpointMetadataResponse> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).postCheckpointMetadata(body, checkpointUuid, options);
+        postCheckpointMetadata({ body, checkpointUuid,  }: { body: V1PostCheckpointMetadataRequest, checkpointUuid: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostCheckpointMetadataResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).postCheckpointMetadata({ body, checkpointUuid,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9545,8 +9545,8 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
-            return CheckpointsApiFp(configuration).deleteCheckpoints(body, options)(fetch, basePath);
+        deleteCheckpoints({ body,  }: { body: V1DeleteCheckpointsRequest,  }, options?: any) {
+            return CheckpointsApiFp(configuration).deleteCheckpoints({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -9555,8 +9555,8 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpoint(checkpointUuid: string, options?: any) {
-            return CheckpointsApiFp(configuration).getCheckpoint(checkpointUuid, options)(fetch, basePath);
+        getCheckpoint({ checkpointUuid,  }: { checkpointUuid: string,  }, options?: any) {
+            return CheckpointsApiFp(configuration).getCheckpoint({ checkpointUuid,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -9565,8 +9565,8 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCheckpoint_1(checkpointUuid: string, options?: any) {
-            return CheckpointsApiFp(configuration).getCheckpoint_1(checkpointUuid, options)(fetch, basePath);
+        getCheckpoint_1({ checkpointUuid,  }: { checkpointUuid: string,  }, options?: any) {
+            return CheckpointsApiFp(configuration).getCheckpoint_1({ checkpointUuid,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -9576,8 +9576,8 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postCheckpointMetadata(body: V1PostCheckpointMetadataRequest, checkpointUuid: string, options?: any) {
-            return CheckpointsApiFp(configuration).postCheckpointMetadata(body, checkpointUuid, options)(fetch, basePath);
+        postCheckpointMetadata({ body, checkpointUuid,  }: { body: V1PostCheckpointMetadataRequest, checkpointUuid: string,  }, options?: any) {
+            return CheckpointsApiFp(configuration).postCheckpointMetadata({ body, checkpointUuid,  }, options)(fetch, basePath);
         },
     };
 };
@@ -9597,8 +9597,8 @@ export class CheckpointsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
-        return CheckpointsApiFp(this.configuration).deleteCheckpoints(body, options)(this.fetch, this.basePath);
+    public deleteCheckpoints({ body,  }: { body: V1DeleteCheckpointsRequest,  }, options?: any) {
+        return CheckpointsApiFp(this.configuration).deleteCheckpoints({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9609,8 +9609,8 @@ export class CheckpointsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public getCheckpoint(checkpointUuid: string, options?: any) {
-        return CheckpointsApiFp(this.configuration).getCheckpoint(checkpointUuid, options)(this.fetch, this.basePath);
+    public getCheckpoint({ checkpointUuid,  }: { checkpointUuid: string,  }, options?: any) {
+        return CheckpointsApiFp(this.configuration).getCheckpoint({ checkpointUuid,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9621,8 +9621,8 @@ export class CheckpointsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public getCheckpoint_1(checkpointUuid: string, options?: any) {
-        return CheckpointsApiFp(this.configuration).getCheckpoint_1(checkpointUuid, options)(this.fetch, this.basePath);
+    public getCheckpoint_1({ checkpointUuid,  }: { checkpointUuid: string,  }, options?: any) {
+        return CheckpointsApiFp(this.configuration).getCheckpoint_1({ checkpointUuid,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9634,8 +9634,8 @@ export class CheckpointsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public postCheckpointMetadata(body: V1PostCheckpointMetadataRequest, checkpointUuid: string, options?: any) {
-        return CheckpointsApiFp(this.configuration).postCheckpointMetadata(body, checkpointUuid, options)(this.fetch, this.basePath);
+    public postCheckpointMetadata({ body, checkpointUuid,  }: { body: V1PostCheckpointMetadataRequest, checkpointUuid: string,  }, options?: any) {
+        return CheckpointsApiFp(this.configuration).postCheckpointMetadata({ body, checkpointUuid,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -9653,7 +9653,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableAgent(body: V1DisableAgentRequest, agentId: string, options: any = {}): FetchArgs {
+        disableAgent({ body, agentId,  }: { body: V1DisableAgentRequest, agentId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling disableAgent.');
@@ -9699,7 +9699,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        disableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling disableSlot.');
@@ -9741,7 +9741,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        enableAgent(agentId: string, options: any = {}): FetchArgs {
+        enableAgent({ agentId,  }: { agentId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling enableAgent.');
@@ -9779,7 +9779,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        enableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        enableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling enableSlot.');
@@ -9821,7 +9821,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgent(agentId: string, options: any = {}): FetchArgs {
+        getAgent({ agentId,  }: { agentId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getAgent.');
@@ -9862,7 +9862,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string, options: any = {}): FetchArgs {
+        getAgents({ sortBy, orderBy, offset, limit, label,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -9916,7 +9916,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options: any = {}): FetchArgs {
+        getAggregatedResourceAllocationCsv({ startDate, endDate, period,  }: { startDate: string, endDate: string, period: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'startDate' is not null or undefined
             if (startDate === null || startDate === undefined) {
                 throw new RequiredError('startDate','Required parameter startDate was null or undefined when calling getAggregatedResourceAllocationCsv.');
@@ -9971,7 +9971,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMaster(options: any = {}): FetchArgs {
+        getMaster({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -9994,7 +9994,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMasterConfig(options: any = {}): FetchArgs {
+        getMasterConfig({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/config`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10027,7 +10027,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options: any = {}): FetchArgs {
+        getRawResourceAllocationCsv({ timestampAfter, timestampBefore,  }: { timestampAfter: string, timestampBefore: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'timestampAfter' is not null or undefined
             if (timestampAfter === null || timestampAfter === undefined) {
                 throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling getRawResourceAllocationCsv.');
@@ -10076,7 +10076,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        getSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getSlot.');
@@ -10118,7 +10118,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlots(agentId: string, options: any = {}): FetchArgs {
+        getSlots({ agentId,  }: { agentId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
                 throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getSlots.');
@@ -10157,7 +10157,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        masterLogs(offset?: number, limit?: number, follow?: boolean, options: any = {}): FetchArgs {
+        masterLogs({ offset, limit, follow,  }: { offset?: number, limit?: number, follow?: boolean,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/logs`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10203,7 +10203,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: string, options: any = {}): FetchArgs {
+        resourceAllocationAggregated({ startDate, endDate, period,  }: { startDate?: string, endDate?: string, period?: string,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resources/allocation/aggregated`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10248,7 +10248,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options: any = {}): FetchArgs {
+        resourceAllocationRaw({ timestampAfter, timestampBefore,  }: { timestampAfter?: Date, timestampBefore?: Date,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resources/allocation/raw`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10298,8 +10298,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableAgent(body: V1DisableAgentRequest, agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableAgent(body, agentId, options);
+        disableAgent({ body, agentId,  }: { body: V1DisableAgentRequest, agentId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableAgent({ body, agentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10318,8 +10318,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot(agentId, slotId, options);
+        disableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot({ agentId, slotId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10337,8 +10337,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        enableAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableAgent(agentId, options);
+        enableAgent({ agentId,  }: { agentId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableAgent({ agentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10357,8 +10357,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        enableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableSlot(agentId, slotId, options);
+        enableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableSlot({ agentId, slotId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10376,8 +10376,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgent(agentId, options);
+        getAgent({ agentId,  }: { agentId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgent({ agentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10399,8 +10399,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, options);
+        getAgents({ sortBy, orderBy, offset, limit, label,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents({ sortBy, orderBy, offset, limit, label,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10420,8 +10420,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options);
+        getAggregatedResourceAllocationCsv({ startDate, endDate, period,  }: { startDate: string, endDate: string, period: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAggregatedResourceAllocationCsv({ startDate, endDate, period,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10438,8 +10438,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMaster(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMaster(options);
+        getMaster({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMaster({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10456,8 +10456,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMasterConfig(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterConfigResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMasterConfig(options);
+        getMasterConfig({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterConfigResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMasterConfig({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10476,8 +10476,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options);
+        getRawResourceAllocationCsv({ timestampAfter, timestampBefore,  }: { timestampAfter: string, timestampBefore: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getRawResourceAllocationCsv({ timestampAfter, timestampBefore,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10496,8 +10496,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlot(agentId, slotId, options);
+        getSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlot({ agentId, slotId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10515,8 +10515,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlots(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlots(agentId, options);
+        getSlots({ agentId,  }: { agentId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlots({ agentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10536,8 +10536,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MasterLogsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).masterLogs(offset, limit, follow, options);
+        masterLogs({ offset, limit, follow,  }: { offset?: number, limit?: number, follow?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MasterLogsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).masterLogs({ offset, limit, follow,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10557,8 +10557,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationAggregated(startDate, endDate, period, options);
+        resourceAllocationAggregated({ startDate, endDate, period,  }: { startDate?: string, endDate?: string, period?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationAggregated({ startDate, endDate, period,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10577,8 +10577,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options);
+        resourceAllocationRaw({ timestampAfter, timestampBefore,  }: { timestampAfter?: Date, timestampBefore?: Date,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationRaw({ timestampAfter, timestampBefore,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10606,8 +10606,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableAgent(body: V1DisableAgentRequest, agentId: string, options?: any) {
-            return ClusterApiFp(configuration).disableAgent(body, agentId, options)(fetch, basePath);
+        disableAgent({ body, agentId,  }: { body: V1DisableAgentRequest, agentId: string,  }, options?: any) {
+            return ClusterApiFp(configuration).disableAgent({ body, agentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10617,8 +10617,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        disableSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).disableSlot(agentId, slotId, options)(fetch, basePath);
+        disableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any) {
+            return ClusterApiFp(configuration).disableSlot({ agentId, slotId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10627,8 +10627,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        enableAgent(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).enableAgent(agentId, options)(fetch, basePath);
+        enableAgent({ agentId,  }: { agentId: string,  }, options?: any) {
+            return ClusterApiFp(configuration).enableAgent({ agentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10638,8 +10638,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        enableSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).enableSlot(agentId, slotId, options)(fetch, basePath);
+        enableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any) {
+            return ClusterApiFp(configuration).enableSlot({ agentId, slotId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10648,8 +10648,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgent(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).getAgent(agentId, options)(fetch, basePath);
+        getAgent({ agentId,  }: { agentId: string,  }, options?: any) {
+            return ClusterApiFp(configuration).getAgent({ agentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10662,8 +10662,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string, options?: any) {
-            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(fetch, basePath);
+        getAgents({ sortBy, orderBy, offset, limit, label,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string,  }, options?: any) {
+            return ClusterApiFp(configuration).getAgents({ sortBy, orderBy, offset, limit, label,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10674,8 +10674,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any) {
-            return ClusterApiFp(configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options)(fetch, basePath);
+        getAggregatedResourceAllocationCsv({ startDate, endDate, period,  }: { startDate: string, endDate: string, period: string,  }, options?: any) {
+            return ClusterApiFp(configuration).getAggregatedResourceAllocationCsv({ startDate, endDate, period,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10683,8 +10683,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMaster(options?: any) {
-            return ClusterApiFp(configuration).getMaster(options)(fetch, basePath);
+        getMaster({  }: {  }, options?: any) {
+            return ClusterApiFp(configuration).getMaster({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10692,8 +10692,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMasterConfig(options?: any) {
-            return ClusterApiFp(configuration).getMasterConfig(options)(fetch, basePath);
+        getMasterConfig({  }: {  }, options?: any) {
+            return ClusterApiFp(configuration).getMasterConfig({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10703,8 +10703,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
-            return ClusterApiFp(configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(fetch, basePath);
+        getRawResourceAllocationCsv({ timestampAfter, timestampBefore,  }: { timestampAfter: string, timestampBefore: string,  }, options?: any) {
+            return ClusterApiFp(configuration).getRawResourceAllocationCsv({ timestampAfter, timestampBefore,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10714,8 +10714,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).getSlot(agentId, slotId, options)(fetch, basePath);
+        getSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any) {
+            return ClusterApiFp(configuration).getSlot({ agentId, slotId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10724,8 +10724,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSlots(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).getSlots(agentId, options)(fetch, basePath);
+        getSlots({ agentId,  }: { agentId: string,  }, options?: any) {
+            return ClusterApiFp(configuration).getSlots({ agentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10736,8 +10736,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
-            return ClusterApiFp(configuration).masterLogs(offset, limit, follow, options)(fetch, basePath);
+        masterLogs({ offset, limit, follow,  }: { offset?: number, limit?: number, follow?: boolean,  }, options?: any) {
+            return ClusterApiFp(configuration).masterLogs({ offset, limit, follow,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10748,8 +10748,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: string, options?: any) {
-            return ClusterApiFp(configuration).resourceAllocationAggregated(startDate, endDate, period, options)(fetch, basePath);
+        resourceAllocationAggregated({ startDate, endDate, period,  }: { startDate?: string, endDate?: string, period?: string,  }, options?: any) {
+            return ClusterApiFp(configuration).resourceAllocationAggregated({ startDate, endDate, period,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -10759,8 +10759,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
-            return ClusterApiFp(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
+        resourceAllocationRaw({ timestampAfter, timestampBefore,  }: { timestampAfter?: Date, timestampBefore?: Date,  }, options?: any) {
+            return ClusterApiFp(configuration).resourceAllocationRaw({ timestampAfter, timestampBefore,  }, options)(fetch, basePath);
         },
     };
 };
@@ -10781,8 +10781,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public disableAgent(body: V1DisableAgentRequest, agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).disableAgent(body, agentId, options)(this.fetch, this.basePath);
+    public disableAgent({ body, agentId,  }: { body: V1DisableAgentRequest, agentId: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).disableAgent({ body, agentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10794,8 +10794,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public disableSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).disableSlot(agentId, slotId, options)(this.fetch, this.basePath);
+    public disableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).disableSlot({ agentId, slotId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10806,8 +10806,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public enableAgent(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).enableAgent(agentId, options)(this.fetch, this.basePath);
+    public enableAgent({ agentId,  }: { agentId: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).enableAgent({ agentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10819,8 +10819,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public enableSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).enableSlot(agentId, slotId, options)(this.fetch, this.basePath);
+    public enableSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).enableSlot({ agentId, slotId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10831,8 +10831,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgent(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).getAgent(agentId, options)(this.fetch, this.basePath);
+    public getAgent({ agentId,  }: { agentId: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).getAgent({ agentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10847,8 +10847,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgents(sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string, options?: any) {
-        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(this.fetch, this.basePath);
+    public getAgents({ sortBy, orderBy, offset, limit, label,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, label?: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).getAgents({ sortBy, orderBy, offset, limit, label,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10861,8 +10861,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any) {
-        return ClusterApiFp(this.configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options)(this.fetch, this.basePath);
+    public getAggregatedResourceAllocationCsv({ startDate, endDate, period,  }: { startDate: string, endDate: string, period: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).getAggregatedResourceAllocationCsv({ startDate, endDate, period,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10872,8 +10872,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getMaster(options?: any) {
-        return ClusterApiFp(this.configuration).getMaster(options)(this.fetch, this.basePath);
+    public getMaster({  }: {  }, options?: any) {
+        return ClusterApiFp(this.configuration).getMaster({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10883,8 +10883,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getMasterConfig(options?: any) {
-        return ClusterApiFp(this.configuration).getMasterConfig(options)(this.fetch, this.basePath);
+    public getMasterConfig({  }: {  }, options?: any) {
+        return ClusterApiFp(this.configuration).getMasterConfig({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10896,8 +10896,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
-        return ClusterApiFp(this.configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
+    public getRawResourceAllocationCsv({ timestampAfter, timestampBefore,  }: { timestampAfter: string, timestampBefore: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).getRawResourceAllocationCsv({ timestampAfter, timestampBefore,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10909,8 +10909,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).getSlot(agentId, slotId, options)(this.fetch, this.basePath);
+    public getSlot({ agentId, slotId,  }: { agentId: string, slotId: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).getSlot({ agentId, slotId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10921,8 +10921,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getSlots(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).getSlots(agentId, options)(this.fetch, this.basePath);
+    public getSlots({ agentId,  }: { agentId: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).getSlots({ agentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10935,8 +10935,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
-        return ClusterApiFp(this.configuration).masterLogs(offset, limit, follow, options)(this.fetch, this.basePath);
+    public masterLogs({ offset, limit, follow,  }: { offset?: number, limit?: number, follow?: boolean,  }, options?: any) {
+        return ClusterApiFp(this.configuration).masterLogs({ offset, limit, follow,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10949,8 +10949,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public resourceAllocationAggregated(startDate?: string, endDate?: string, period?: string, options?: any) {
-        return ClusterApiFp(this.configuration).resourceAllocationAggregated(startDate, endDate, period, options)(this.fetch, this.basePath);
+    public resourceAllocationAggregated({ startDate, endDate, period,  }: { startDate?: string, endDate?: string, period?: string,  }, options?: any) {
+        return ClusterApiFp(this.configuration).resourceAllocationAggregated({ startDate, endDate, period,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10962,8 +10962,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
-        return ClusterApiFp(this.configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
+    public resourceAllocationRaw({ timestampAfter, timestampBefore,  }: { timestampAfter?: Date, timestampBefore?: Date,  }, options?: any) {
+        return ClusterApiFp(this.configuration).resourceAllocationRaw({ timestampAfter, timestampBefore,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -10980,7 +10980,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommand(commandId: string, options: any = {}): FetchArgs {
+        getCommand({ commandId,  }: { commandId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'commandId' is not null or undefined
             if (commandId === null || commandId === undefined) {
                 throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling getCommand.');
@@ -11022,7 +11022,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getCommands({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/commands`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11078,7 +11078,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killCommand(commandId: string, options: any = {}): FetchArgs {
+        killCommand({ commandId,  }: { commandId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'commandId' is not null or undefined
             if (commandId === null || commandId === undefined) {
                 throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling killCommand.');
@@ -11115,7 +11115,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchCommand(body: V1LaunchCommandRequest, options: any = {}): FetchArgs {
+        launchCommand({ body,  }: { body: V1LaunchCommandRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchCommand.');
@@ -11156,7 +11156,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setCommandPriority(body: V1SetCommandPriorityRequest, commandId: string, options: any = {}): FetchArgs {
+        setCommandPriority({ body, commandId,  }: { body: V1SetCommandPriorityRequest, commandId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setCommandPriority.');
@@ -11210,8 +11210,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommand(commandId, options);
+        getCommand({ commandId,  }: { commandId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommand({ commandId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11234,8 +11234,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, options);
+        getCommands({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands({ sortBy, orderBy, offset, limit, users, userIds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11253,8 +11253,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillCommandResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).killCommand(commandId, options);
+        killCommand({ commandId,  }: { commandId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillCommandResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).killCommand({ commandId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11272,8 +11272,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchCommand(body: V1LaunchCommandRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchCommandResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).launchCommand(body, options);
+        launchCommand({ body,  }: { body: V1LaunchCommandRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchCommandResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).launchCommand({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11292,8 +11292,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setCommandPriority(body: V1SetCommandPriorityRequest, commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetCommandPriorityResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).setCommandPriority(body, commandId, options);
+        setCommandPriority({ body, commandId,  }: { body: V1SetCommandPriorityRequest, commandId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetCommandPriorityResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).setCommandPriority({ body, commandId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11320,8 +11320,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommand(commandId: string, options?: any) {
-            return CommandsApiFp(configuration).getCommand(commandId, options)(fetch, basePath);
+        getCommand({ commandId,  }: { commandId: string,  }, options?: any) {
+            return CommandsApiFp(configuration).getCommand({ commandId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -11335,8 +11335,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return CommandsApiFp(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getCommands({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+            return CommandsApiFp(configuration).getCommands({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -11345,8 +11345,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killCommand(commandId: string, options?: any) {
-            return CommandsApiFp(configuration).killCommand(commandId, options)(fetch, basePath);
+        killCommand({ commandId,  }: { commandId: string,  }, options?: any) {
+            return CommandsApiFp(configuration).killCommand({ commandId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -11355,8 +11355,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchCommand(body: V1LaunchCommandRequest, options?: any) {
-            return CommandsApiFp(configuration).launchCommand(body, options)(fetch, basePath);
+        launchCommand({ body,  }: { body: V1LaunchCommandRequest,  }, options?: any) {
+            return CommandsApiFp(configuration).launchCommand({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -11366,8 +11366,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setCommandPriority(body: V1SetCommandPriorityRequest, commandId: string, options?: any) {
-            return CommandsApiFp(configuration).setCommandPriority(body, commandId, options)(fetch, basePath);
+        setCommandPriority({ body, commandId,  }: { body: V1SetCommandPriorityRequest, commandId: string,  }, options?: any) {
+            return CommandsApiFp(configuration).setCommandPriority({ body, commandId,  }, options)(fetch, basePath);
         },
     };
 };
@@ -11387,8 +11387,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public getCommand(commandId: string, options?: any) {
-        return CommandsApiFp(this.configuration).getCommand(commandId, options)(this.fetch, this.basePath);
+    public getCommand({ commandId,  }: { commandId: string,  }, options?: any) {
+        return CommandsApiFp(this.configuration).getCommand({ commandId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11404,8 +11404,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public getCommands(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return CommandsApiFp(this.configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getCommands({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+        return CommandsApiFp(this.configuration).getCommands({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11416,8 +11416,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public killCommand(commandId: string, options?: any) {
-        return CommandsApiFp(this.configuration).killCommand(commandId, options)(this.fetch, this.basePath);
+    public killCommand({ commandId,  }: { commandId: string,  }, options?: any) {
+        return CommandsApiFp(this.configuration).killCommand({ commandId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11428,8 +11428,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public launchCommand(body: V1LaunchCommandRequest, options?: any) {
-        return CommandsApiFp(this.configuration).launchCommand(body, options)(this.fetch, this.basePath);
+    public launchCommand({ body,  }: { body: V1LaunchCommandRequest,  }, options?: any) {
+        return CommandsApiFp(this.configuration).launchCommand({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11441,8 +11441,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public setCommandPriority(body: V1SetCommandPriorityRequest, commandId: string, options?: any) {
-        return CommandsApiFp(this.configuration).setCommandPriority(body, commandId, options)(this.fetch, this.basePath);
+    public setCommandPriority({ body, commandId,  }: { body: V1SetCommandPriorityRequest, commandId: string,  }, options?: any) {
+        return CommandsApiFp(this.configuration).setCommandPriority({ body, commandId,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -11459,7 +11459,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        activateExperiment(id: number, options: any = {}): FetchArgs {
+        activateExperiment({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling activateExperiment.');
@@ -11496,7 +11496,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveExperiment(id: number, options: any = {}): FetchArgs {
+        archiveExperiment({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling archiveExperiment.');
@@ -11533,7 +11533,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cancelExperiment(id: number, options: any = {}): FetchArgs {
+        cancelExperiment({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling cancelExperiment.');
@@ -11576,7 +11576,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options: any = {}): FetchArgs {
+        compareTrials({ trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11636,7 +11636,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteExperiment(experimentId: number, options: any = {}): FetchArgs {
+        deleteExperiment({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling deleteExperiment.');
@@ -11673,7 +11673,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiment(experimentId: number, options: any = {}): FetchArgs {
+        getExperiment({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperiment.');
@@ -11715,7 +11715,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options: any = {}): FetchArgs {
+        getExperimentCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getExperimentCheckpoints.');
@@ -11772,7 +11772,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentLabels(projectId?: number, options: any = {}): FetchArgs {
+        getExperimentLabels({ projectId,  }: { projectId?: number,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiment/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11809,7 +11809,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: number, path: string, options: any = {}): FetchArgs {
+        getExperimentModelFile({ experimentId, path,  }: { experimentId: number, path: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentModelFile.');
@@ -11859,7 +11859,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options: any = {}): FetchArgs {
+        getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentTrials.');
@@ -11916,7 +11916,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentValidationHistory(experimentId: number, options: any = {}): FetchArgs {
+        getExperimentValidationHistory({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentValidationHistory.');
@@ -11970,7 +11970,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options: any = {}): FetchArgs {
+        getExperiments({ sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -12074,7 +12074,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDef(experimentId: number, options: any = {}): FetchArgs {
+        getModelDef({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDef.');
@@ -12112,7 +12112,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDefFile(body: V1GetModelDefFileRequest, experimentId: number, options: any = {}): FetchArgs {
+        getModelDefFile({ body, experimentId,  }: { body: V1GetModelDefFileRequest, experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling getModelDefFile.');
@@ -12157,7 +12157,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDefTree(experimentId: number, options: any = {}): FetchArgs {
+        getModelDefTree({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefTree.');
@@ -12194,7 +12194,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
+        getSearcherEvents({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
@@ -12231,7 +12231,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrial(trialId: number, options: any = {}): FetchArgs {
+        getTrial({ trialId,  }: { trialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrial.');
@@ -12273,7 +12273,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options: any = {}): FetchArgs {
+        getTrialCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getTrialCheckpoints.');
@@ -12330,7 +12330,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killExperiment(id: number, options: any = {}): FetchArgs {
+        killExperiment({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling killExperiment.');
@@ -12367,7 +12367,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTrial(id: number, options: any = {}): FetchArgs {
+        killTrial({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling killTrial.');
@@ -12405,7 +12405,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveExperiment(body: V1MoveExperimentRequest, experimentId: number, options: any = {}): FetchArgs {
+        moveExperiment({ body, experimentId,  }: { body: V1MoveExperimentRequest, experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling moveExperiment.');
@@ -12451,7 +12451,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(body: V1PatchExperiment, experimentId: number, options: any = {}): FetchArgs {
+        patchExperiment({ body, experimentId,  }: { body: V1PatchExperiment, experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchExperiment.');
@@ -12496,7 +12496,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pauseExperiment(id: number, options: any = {}): FetchArgs {
+        pauseExperiment({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling pauseExperiment.');
@@ -12534,7 +12534,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postSearcherOperations(body: V1PostSearcherOperationsRequest, experimentId: number, options: any = {}): FetchArgs {
+        postSearcherOperations({ body, experimentId,  }: { body: V1PostSearcherOperationsRequest, experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postSearcherOperations.');
@@ -12579,7 +12579,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        previewHPSearch(body: V1PreviewHPSearchRequest, options: any = {}): FetchArgs {
+        previewHPSearch({ body,  }: { body: V1PreviewHPSearchRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling previewHPSearch.');
@@ -12625,7 +12625,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options: any = {}): FetchArgs {
+        summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
@@ -12698,7 +12698,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options: any = {}): FetchArgs {
+        trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -12784,7 +12784,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
+        trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogsFields.');
@@ -12825,7 +12825,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveExperiment(id: number, options: any = {}): FetchArgs {
+        unarchiveExperiment({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveExperiment.');
@@ -12871,8 +12871,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        activateExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiment(id, options);
+        activateExperiment({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiment({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12890,8 +12890,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).archiveExperiment(id, options);
+        archiveExperiment({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).archiveExperiment({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12909,8 +12909,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cancelExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiment(id, options);
+        cancelExperiment({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiment({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12934,8 +12934,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
+        compareTrials({ trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials({ trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12953,8 +12953,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiment(experimentId, options);
+        deleteExperiment({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiment({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12972,8 +12972,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiment(experimentId, options);
+        getExperiment({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiment({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -12996,8 +12996,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
+        getExperimentCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13015,8 +13015,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentLabels(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentLabelsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentLabels(projectId, options);
+        getExperimentLabels({ projectId,  }: { projectId?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentLabelsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentLabels({ projectId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13035,8 +13035,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: number, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentModelFile(experimentId, path, options);
+        getExperimentModelFile({ experimentId, path,  }: { experimentId: number, path: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentModelFile({ experimentId, path,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13059,8 +13059,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
+        getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13078,8 +13078,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentValidationHistory(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentValidationHistoryResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentValidationHistory(experimentId, options);
+        getExperimentValidationHistory({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentValidationHistoryResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentValidationHistory({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13114,8 +13114,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, options);
+        getExperiments({ sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments({ sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13133,8 +13133,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDef(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDef(experimentId, options);
+        getModelDef({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDef({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13153,8 +13153,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDefFile(body: V1GetModelDefFileRequest, experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefFile(body, experimentId, options);
+        getModelDefFile({ body, experimentId,  }: { body: V1GetModelDefFileRequest, experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefFile({ body, experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13172,8 +13172,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefTree(experimentId, options);
+        getModelDefTree({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefTree({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13191,8 +13191,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
+        getSearcherEvents({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13210,8 +13210,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrial(trialId, options);
+        getTrial({ trialId,  }: { trialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrial({ trialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13234,8 +13234,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
+        getTrialCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13253,8 +13253,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiment(id, options);
+        killExperiment({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiment({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13272,8 +13272,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killTrial(id, options);
+        killTrial({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killTrial({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13292,8 +13292,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveExperiment(body: V1MoveExperimentRequest, experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiment(body, experimentId, options);
+        moveExperiment({ body, experimentId,  }: { body: V1MoveExperimentRequest, experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiment({ body, experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13312,8 +13312,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(body: V1PatchExperiment, experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).patchExperiment(body, experimentId, options);
+        patchExperiment({ body, experimentId,  }: { body: V1PatchExperiment, experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).patchExperiment({ body, experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13331,8 +13331,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pauseExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiment(id, options);
+        pauseExperiment({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiment({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13351,8 +13351,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postSearcherOperations(body: V1PostSearcherOperationsRequest, experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations(body, experimentId, options);
+        postSearcherOperations({ body, experimentId,  }: { body: V1PostSearcherOperationsRequest, experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations({ body, experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13370,8 +13370,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PreviewHPSearchResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).previewHPSearch(body, options);
+        previewHPSearch({ body,  }: { body: V1PreviewHPSearchRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PreviewHPSearchResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).previewHPSearch({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13395,8 +13395,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
+        summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13426,8 +13426,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13446,8 +13446,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
+        trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogsFields({ trialId, follow,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13465,8 +13465,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).unarchiveExperiment(id, options);
+        unarchiveExperiment({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).unarchiveExperiment({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13493,8 +13493,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        activateExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).activateExperiment(id, options)(fetch, basePath);
+        activateExperiment({ id,  }: { id: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).activateExperiment({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13503,8 +13503,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).archiveExperiment(id, options)(fetch, basePath);
+        archiveExperiment({ id,  }: { id: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).archiveExperiment({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13513,8 +13513,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        cancelExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).cancelExperiment(id, options)(fetch, basePath);
+        cancelExperiment({ id,  }: { id: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).cancelExperiment({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13529,8 +13529,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
+        compareTrials({ trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any) {
+            return ExperimentsApiFp(configuration).compareTrials({ trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13539,8 +13539,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteExperiment(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).deleteExperiment(experimentId, options)(fetch, basePath);
+        deleteExperiment({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).deleteExperiment({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13549,8 +13549,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiment(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getExperiment(experimentId, options)(fetch, basePath);
+        getExperiment({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getExperiment({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13564,8 +13564,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getExperimentCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13574,8 +13574,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentLabels(projectId?: number, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentLabels(projectId, options)(fetch, basePath);
+        getExperimentLabels({ projectId,  }: { projectId?: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentLabels({ projectId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13585,8 +13585,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentModelFile(experimentId: number, path: string, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentModelFile(experimentId, path, options)(fetch, basePath);
+        getExperimentModelFile({ experimentId, path,  }: { experimentId: number, path: string,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentModelFile({ experimentId, path,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13600,8 +13600,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13610,8 +13610,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentValidationHistory(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentValidationHistory(experimentId, options)(fetch, basePath);
+        getExperimentValidationHistory({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentValidationHistory({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13637,8 +13637,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperiments(sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options?: any) {
-            return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, options)(fetch, basePath);
+        getExperiments({ sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getExperiments({ sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13647,8 +13647,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDef(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getModelDef(experimentId, options)(fetch, basePath);
+        getModelDef({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDef({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13658,8 +13658,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDefFile(body: V1GetModelDefFileRequest, experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getModelDefFile(body, experimentId, options)(fetch, basePath);
+        getModelDefFile({ body, experimentId,  }: { body: V1GetModelDefFileRequest, experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDefFile({ body, experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13668,8 +13668,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelDefTree(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getModelDefTree(experimentId, options)(fetch, basePath);
+        getModelDefTree({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDefTree({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13678,8 +13678,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSearcherEvents(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getSearcherEvents(experimentId, options)(fetch, basePath);
+        getSearcherEvents({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getSearcherEvents({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13688,8 +13688,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrial(trialId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getTrial(trialId, options)(fetch, basePath);
+        getTrial({ trialId,  }: { trialId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getTrial({ trialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13703,8 +13703,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-            return ExperimentsApiFp(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getTrialCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+            return ExperimentsApiFp(configuration).getTrialCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13713,8 +13713,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).killExperiment(id, options)(fetch, basePath);
+        killExperiment({ id,  }: { id: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).killExperiment({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13723,8 +13723,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTrial(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).killTrial(id, options)(fetch, basePath);
+        killTrial({ id,  }: { id: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).killTrial({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13734,8 +13734,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveExperiment(body: V1MoveExperimentRequest, experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).moveExperiment(body, experimentId, options)(fetch, basePath);
+        moveExperiment({ body, experimentId,  }: { body: V1MoveExperimentRequest, experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).moveExperiment({ body, experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13745,8 +13745,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchExperiment(body: V1PatchExperiment, experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).patchExperiment(body, experimentId, options)(fetch, basePath);
+        patchExperiment({ body, experimentId,  }: { body: V1PatchExperiment, experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).patchExperiment({ body, experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13755,8 +13755,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pauseExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).pauseExperiment(id, options)(fetch, basePath);
+        pauseExperiment({ id,  }: { id: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).pauseExperiment({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13766,8 +13766,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postSearcherOperations(body: V1PostSearcherOperationsRequest, experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).postSearcherOperations(body, experimentId, options)(fetch, basePath);
+        postSearcherOperations({ body, experimentId,  }: { body: V1PostSearcherOperationsRequest, experimentId: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).postSearcherOperations({ body, experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13776,8 +13776,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
-            return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
+        previewHPSearch({ body,  }: { body: V1PreviewHPSearchRequest,  }, options?: any) {
+            return ExperimentsApiFp(configuration).previewHPSearch({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13792,8 +13792,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any) {
-            return ExperimentsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
+        summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any) {
+            return ExperimentsApiFp(configuration).summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13814,8 +13814,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-            return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+            return ExperimentsApiFp(configuration).trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13825,8 +13825,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-            return ExperimentsApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
+        trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any) {
+            return ExperimentsApiFp(configuration).trialLogsFields({ trialId, follow,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -13835,8 +13835,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).unarchiveExperiment(id, options)(fetch, basePath);
+        unarchiveExperiment({ id,  }: { id: number,  }, options?: any) {
+            return ExperimentsApiFp(configuration).unarchiveExperiment({ id,  }, options)(fetch, basePath);
         },
     };
 };
@@ -13856,8 +13856,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public activateExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).activateExperiment(id, options)(this.fetch, this.basePath);
+    public activateExperiment({ id,  }: { id: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).activateExperiment({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13868,8 +13868,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public archiveExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).archiveExperiment(id, options)(this.fetch, this.basePath);
+    public archiveExperiment({ id,  }: { id: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).archiveExperiment({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13880,8 +13880,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public cancelExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).cancelExperiment(id, options)(this.fetch, this.basePath);
+    public cancelExperiment({ id,  }: { id: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).cancelExperiment({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13898,8 +13898,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
+    public compareTrials({ trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).compareTrials({ trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13910,8 +13910,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public deleteExperiment(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).deleteExperiment(experimentId, options)(this.fetch, this.basePath);
+    public deleteExperiment({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).deleteExperiment({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13922,8 +13922,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperiment(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperiment(experimentId, options)(this.fetch, this.basePath);
+    public getExperiment({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperiment({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13939,8 +13939,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getExperimentCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13951,8 +13951,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentLabels(projectId?: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentLabels(projectId, options)(this.fetch, this.basePath);
+    public getExperimentLabels({ projectId,  }: { projectId?: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentLabels({ projectId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13964,8 +13964,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentModelFile(experimentId: number, path: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentModelFile(experimentId, path, options)(this.fetch, this.basePath);
+    public getExperimentModelFile({ experimentId, path,  }: { experimentId: number, path: string,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentModelFile({ experimentId, path,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13981,8 +13981,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -13993,8 +13993,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperimentValidationHistory(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentValidationHistory(experimentId, options)(this.fetch, this.basePath);
+    public getExperimentValidationHistory({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentValidationHistory({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14022,8 +14022,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getExperiments(sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, options)(this.fetch, this.basePath);
+    public getExperiments({ sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<string>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperiments({ sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14034,8 +14034,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getModelDef(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getModelDef(experimentId, options)(this.fetch, this.basePath);
+    public getModelDef({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDef({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14047,8 +14047,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getModelDefFile(body: V1GetModelDefFileRequest, experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getModelDefFile(body, experimentId, options)(this.fetch, this.basePath);
+    public getModelDefFile({ body, experimentId,  }: { body: V1GetModelDefFileRequest, experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDefFile({ body, experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14059,8 +14059,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getModelDefTree(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getModelDefTree(experimentId, options)(this.fetch, this.basePath);
+    public getModelDefTree({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDefTree({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14071,8 +14071,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getSearcherEvents(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getSearcherEvents(experimentId, options)(this.fetch, this.basePath);
+    public getSearcherEvents({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getSearcherEvents({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14083,8 +14083,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getTrial(trialId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getTrial(trialId, options)(this.fetch, this.basePath);
+    public getTrial({ trialId,  }: { trialId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getTrial({ trialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14100,8 +14100,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public getTrialCheckpoints(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-        return ExperimentsApiFp(this.configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getTrialCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).getTrialCheckpoints({ id, sortBy, orderBy, offset, limit, states,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14112,8 +14112,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public killExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).killExperiment(id, options)(this.fetch, this.basePath);
+    public killExperiment({ id,  }: { id: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).killExperiment({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14124,8 +14124,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public killTrial(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
+    public killTrial({ id,  }: { id: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).killTrial({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14137,8 +14137,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public moveExperiment(body: V1MoveExperimentRequest, experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).moveExperiment(body, experimentId, options)(this.fetch, this.basePath);
+    public moveExperiment({ body, experimentId,  }: { body: V1MoveExperimentRequest, experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).moveExperiment({ body, experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14150,8 +14150,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public patchExperiment(body: V1PatchExperiment, experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).patchExperiment(body, experimentId, options)(this.fetch, this.basePath);
+    public patchExperiment({ body, experimentId,  }: { body: V1PatchExperiment, experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).patchExperiment({ body, experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14162,8 +14162,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public pauseExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).pauseExperiment(id, options)(this.fetch, this.basePath);
+    public pauseExperiment({ id,  }: { id: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).pauseExperiment({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14175,8 +14175,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public postSearcherOperations(body: V1PostSearcherOperationsRequest, experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).postSearcherOperations(body, experimentId, options)(this.fetch, this.basePath);
+    public postSearcherOperations({ body, experimentId,  }: { body: V1PostSearcherOperationsRequest, experimentId: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).postSearcherOperations({ body, experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14187,8 +14187,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath);
+    public previewHPSearch({ body,  }: { body: V1PreviewHPSearchRequest,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).previewHPSearch({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14205,8 +14205,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
+    public summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14229,8 +14229,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14242,8 +14242,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-        return ExperimentsApiFp(this.configuration).trialLogsFields(trialId, follow, options)(this.fetch, this.basePath);
+    public trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).trialLogsFields({ trialId, follow,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14254,8 +14254,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public unarchiveExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).unarchiveExperiment(id, options)(this.fetch, this.basePath);
+    public unarchiveExperiment({ id,  }: { id: number,  }, options?: any) {
+        return ExperimentsApiFp(this.configuration).unarchiveExperiment({ id,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -14273,7 +14273,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        ackAllocationPreemptionSignal(body: V1AckAllocationPreemptionSignalRequest, allocationId: string, options: any = {}): FetchArgs {
+        ackAllocationPreemptionSignal({ body, allocationId,  }: { body: V1AckAllocationPreemptionSignalRequest, allocationId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling ackAllocationPreemptionSignal.');
@@ -14319,7 +14319,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationAllGather(body: V1AllocationAllGatherRequest, allocationId: string, options: any = {}): FetchArgs {
+        allocationAllGather({ body, allocationId,  }: { body: V1AllocationAllGatherRequest, allocationId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling allocationAllGather.');
@@ -14365,7 +14365,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationPendingPreemptionSignal(body: V1AllocationPendingPreemptionSignalRequest, allocationId: string, options: any = {}): FetchArgs {
+        allocationPendingPreemptionSignal({ body, allocationId,  }: { body: V1AllocationPendingPreemptionSignalRequest, allocationId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling allocationPendingPreemptionSignal.');
@@ -14411,7 +14411,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options: any = {}): FetchArgs {
+        allocationPreemptionSignal({ allocationId, timeoutSeconds,  }: { allocationId: string, timeoutSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
                 throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationPreemptionSignal.');
@@ -14453,7 +14453,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationReady(body: V1AllocationReadyRequest, allocationId: string, options: any = {}): FetchArgs {
+        allocationReady({ body, allocationId,  }: { body: V1AllocationReadyRequest, allocationId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling allocationReady.');
@@ -14499,7 +14499,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationRendezvousInfo(allocationId: string, resourcesId: string, options: any = {}): FetchArgs {
+        allocationRendezvousInfo({ allocationId, resourcesId,  }: { allocationId: string, resourcesId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
                 throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationRendezvousInfo.');
@@ -14542,7 +14542,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationWaiting(body: V1AllocationWaitingRequest, allocationId: string, options: any = {}): FetchArgs {
+        allocationWaiting({ body, allocationId,  }: { body: V1AllocationWaitingRequest, allocationId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling allocationWaiting.');
@@ -14588,7 +14588,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        completeTrialSearcherValidation(body: V1CompleteValidateAfterOperation, trialId: number, options: any = {}): FetchArgs {
+        completeTrialSearcherValidation({ body, trialId,  }: { body: V1CompleteValidateAfterOperation, trialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling completeTrialSearcherValidation.');
@@ -14633,7 +14633,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        computeHPImportance(experimentId: number, options: any = {}): FetchArgs {
+        computeHPImportance({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling computeHPImportance.');
@@ -14670,7 +14670,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createExperiment(body: V1CreateExperimentRequest, options: any = {}): FetchArgs {
+        createExperiment({ body,  }: { body: V1CreateExperimentRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createExperiment.');
@@ -14710,7 +14710,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createGroup(body: V1CreateGroupRequest, options: any = {}): FetchArgs {
+        createGroup({ body,  }: { body: V1CreateGroupRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createGroup.');
@@ -14750,7 +14750,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteGroup(groupId: number, options: any = {}): FetchArgs {
+        deleteGroup({ groupId,  }: { groupId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'groupId' is not null or undefined
             if (groupId === null || groupId === undefined) {
                 throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling deleteGroup.');
@@ -14788,7 +14788,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+        expCompareMetricNames({ trialId, periodSeconds,  }: { trialId: Array<number>, periodSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling expCompareMetricNames.');
@@ -14839,7 +14839,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        expCompareTrialsSample({ experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentIds' is not null or undefined
             if (experimentIds === null || experimentIds === undefined) {
                 throw new RequiredError('experimentIds','Required parameter experimentIds was null or undefined when calling expCompareTrialsSample.');
@@ -14915,7 +14915,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getBestSearcherValidationMetric(experimentId: number, options: any = {}): FetchArgs {
+        getBestSearcherValidationMetric({ experimentId,  }: { experimentId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getBestSearcherValidationMetric.');
@@ -14952,7 +14952,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCurrentTrialSearcherOperation(trialId: number, options: any = {}): FetchArgs {
+        getCurrentTrialSearcherOperation({ trialId,  }: { trialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getCurrentTrialSearcherOperation.');
@@ -14989,7 +14989,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroup(groupId: number, options: any = {}): FetchArgs {
+        getGroup({ groupId,  }: { groupId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'groupId' is not null or undefined
             if (groupId === null || groupId === undefined) {
                 throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getGroup.');
@@ -15026,7 +15026,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroups(body: V1GetGroupsRequest, options: any = {}): FetchArgs {
+        getGroups({ body,  }: { body: V1GetGroupsRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling getGroups.');
@@ -15067,7 +15067,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getHPImportance(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        getHPImportance({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getHPImportance.');
@@ -15108,7 +15108,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
+        getJobQueueStats({ resourcePools,  }: { resourcePools?: Array<string>,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues/stats`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15148,7 +15148,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>, options: any = {}): FetchArgs {
+        getJobs({ offset, limit, resourcePool, orderBy, states,  }: { offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15201,7 +15201,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getResourcePools({ offset, limit,  }: { offset?: number, limit?: number,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15240,7 +15240,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTelemetry(options: any = {}): FetchArgs {
+        getTelemetry({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/telemetry`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15271,7 +15271,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options: any = {}): FetchArgs {
+        getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
@@ -15337,7 +15337,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        idleNotebook(body: V1IdleNotebookRequest, notebookId: string, options: any = {}): FetchArgs {
+        idleNotebook({ body, notebookId,  }: { body: V1IdleNotebookRequest, notebookId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling idleNotebook.');
@@ -15384,7 +15384,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        markAllocationResourcesDaemon(body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string, options: any = {}): FetchArgs {
+        markAllocationResourcesDaemon({ body, allocationId, resourcesId,  }: { body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling markAllocationResourcesDaemon.');
@@ -15437,7 +15437,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricBatches(experimentId: number, metricName: string, metricType: string, periodSeconds?: number, options: any = {}): FetchArgs {
+        metricBatches({ experimentId, metricName, metricType, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, periodSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricBatches.');
@@ -15495,7 +15495,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricNames(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        metricNames({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricNames.');
@@ -15537,7 +15537,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        notifyContainerRunning(body: V1NotifyContainerRunningRequest, allocationId: string, options: any = {}): FetchArgs {
+        notifyContainerRunning({ body, allocationId,  }: { body: V1NotifyContainerRunningRequest, allocationId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling notifyContainerRunning.');
@@ -15583,7 +15583,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postAllocationProxyAddress(body: V1PostAllocationProxyAddressRequest, allocationId: string, options: any = {}): FetchArgs {
+        postAllocationProxyAddress({ body, allocationId,  }: { body: V1PostAllocationProxyAddressRequest, allocationId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postAllocationProxyAddress.');
@@ -15628,7 +15628,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options: any = {}): FetchArgs {
+        postTrialProfilerMetricsBatch({ body,  }: { body: V1PostTrialProfilerMetricsBatchRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postTrialProfilerMetricsBatch.');
@@ -15669,7 +15669,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postTrialRunnerMetadata(body: V1TrialRunnerMetadata, trialId: number, options: any = {}): FetchArgs {
+        postTrialRunnerMetadata({ body, trialId,  }: { body: V1TrialRunnerMetadata, trialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postTrialRunnerMetadata.');
@@ -15714,7 +15714,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportCheckpoint(body: V1Checkpoint, options: any = {}): FetchArgs {
+        reportCheckpoint({ body,  }: { body: V1Checkpoint,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling reportCheckpoint.');
@@ -15756,7 +15756,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialProgress(body: number, trialId: number, options: any = {}): FetchArgs {
+        reportTrialProgress({ body, trialId,  }: { body: number, trialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialProgress.');
@@ -15802,7 +15802,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialSearcherEarlyExit(body: V1TrialEarlyExit, trialId: number, options: any = {}): FetchArgs {
+        reportTrialSearcherEarlyExit({ body, trialId,  }: { body: V1TrialEarlyExit, trialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialSearcherEarlyExit.');
@@ -15848,7 +15848,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialTrainingMetrics(body: V1TrialMetrics, trainingMetricsTrialId: number, options: any = {}): FetchArgs {
+        reportTrialTrainingMetrics({ body, trainingMetricsTrialId,  }: { body: V1TrialMetrics, trainingMetricsTrialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialTrainingMetrics.');
@@ -15894,7 +15894,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialValidationMetrics(body: V1TrialMetrics, validationMetricsTrialId: number, options: any = {}): FetchArgs {
+        reportTrialValidationMetrics({ body, validationMetricsTrialId,  }: { body: V1TrialMetrics, validationMetricsTrialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialValidationMetrics.');
@@ -15946,7 +15946,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSample(experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        trialsSample({ experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling trialsSample.');
@@ -16024,7 +16024,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSnapshot(experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        trialsSnapshot({ experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling trialsSnapshot.');
@@ -16094,7 +16094,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateGroup(body: V1UpdateGroupRequest, groupId: number, options: any = {}): FetchArgs {
+        updateGroup({ body, groupId,  }: { body: V1UpdateGroupRequest, groupId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling updateGroup.');
@@ -16139,7 +16139,7 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateJobQueue(body: V1UpdateJobQueueRequest, options: any = {}): FetchArgs {
+        updateJobQueue({ body,  }: { body: V1UpdateJobQueueRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling updateJobQueue.');
@@ -16189,8 +16189,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        ackAllocationPreemptionSignal(body: V1AckAllocationPreemptionSignalRequest, allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AckAllocationPreemptionSignalResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).ackAllocationPreemptionSignal(body, allocationId, options);
+        ackAllocationPreemptionSignal({ body, allocationId,  }: { body: V1AckAllocationPreemptionSignalRequest, allocationId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AckAllocationPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).ackAllocationPreemptionSignal({ body, allocationId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16209,8 +16209,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationAllGather(body: V1AllocationAllGatherRequest, allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationAllGatherResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationAllGather(body, allocationId, options);
+        allocationAllGather({ body, allocationId,  }: { body: V1AllocationAllGatherRequest, allocationId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationAllGatherResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationAllGather({ body, allocationId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16229,8 +16229,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationPendingPreemptionSignal(body: V1AllocationPendingPreemptionSignalRequest, allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPendingPreemptionSignalResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPendingPreemptionSignal(body, allocationId, options);
+        allocationPendingPreemptionSignal({ body, allocationId,  }: { body: V1AllocationPendingPreemptionSignalRequest, allocationId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPendingPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPendingPreemptionSignal({ body, allocationId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16249,8 +16249,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPreemptionSignalResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options);
+        allocationPreemptionSignal({ allocationId, timeoutSeconds,  }: { allocationId: string, timeoutSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPreemptionSignal({ allocationId, timeoutSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16269,8 +16269,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationReady(body: V1AllocationReadyRequest, allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationReadyResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationReady(body, allocationId, options);
+        allocationReady({ body, allocationId,  }: { body: V1AllocationReadyRequest, allocationId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationReadyResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationReady({ body, allocationId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16289,8 +16289,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationRendezvousInfo(allocationId, resourcesId, options);
+        allocationRendezvousInfo({ allocationId, resourcesId,  }: { allocationId: string, resourcesId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationRendezvousInfo({ allocationId, resourcesId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16309,8 +16309,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationWaiting(body: V1AllocationWaitingRequest, allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationWaiting(body, allocationId, options);
+        allocationWaiting({ body, allocationId,  }: { body: V1AllocationWaitingRequest, allocationId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationWaiting({ body, allocationId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16329,8 +16329,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        completeTrialSearcherValidation(body: V1CompleteValidateAfterOperation, trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompleteTrialSearcherValidationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).completeTrialSearcherValidation(body, trialId, options);
+        completeTrialSearcherValidation({ body, trialId,  }: { body: V1CompleteValidateAfterOperation, trialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompleteTrialSearcherValidationResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).completeTrialSearcherValidation({ body, trialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16348,8 +16348,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        computeHPImportance(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ComputeHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).computeHPImportance(experimentId, options);
+        computeHPImportance({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ComputeHPImportanceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).computeHPImportance({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16367,8 +16367,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createExperiment(body: V1CreateExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateExperimentResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createExperiment(body, options);
+        createExperiment({ body,  }: { body: V1CreateExperimentRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateExperimentResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createExperiment({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16386,8 +16386,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createGroup(body: V1CreateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGroup(body, options);
+        createGroup({ body,  }: { body: V1CreateGroupRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGroup({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16405,8 +16405,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup(groupId, options);
+        deleteGroup({ groupId,  }: { groupId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup({ groupId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16425,8 +16425,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareMetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareMetricNames(trialId, periodSeconds, options);
+        expCompareMetricNames({ trialId, periodSeconds,  }: { trialId: Array<number>, periodSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareMetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareMetricNames({ trialId, periodSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16451,8 +16451,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareTrialsSampleResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
+        expCompareTrialsSample({ experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareTrialsSampleResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareTrialsSample({ experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16470,8 +16470,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getBestSearcherValidationMetric(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getBestSearcherValidationMetric(experimentId, options);
+        getBestSearcherValidationMetric({ experimentId,  }: { experimentId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getBestSearcherValidationMetric({ experimentId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16489,8 +16489,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
+        getCurrentTrialSearcherOperation({ trialId,  }: { trialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation({ trialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16508,8 +16508,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroup(groupId, options);
+        getGroup({ groupId,  }: { groupId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroup({ groupId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16527,8 +16527,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroups(body: V1GetGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroups(body, options);
+        getGroups({ body,  }: { body: V1GetGroupsRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroups({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16547,8 +16547,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getHPImportance(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getHPImportance(experimentId, periodSeconds, options);
+        getHPImportance({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getHPImportance({ experimentId, periodSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16566,8 +16566,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, options);
+        getJobQueueStats({ resourcePools,  }: { resourcePools?: Array<string>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats({ resourcePools,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16589,8 +16589,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(offset, limit, resourcePool, orderBy, states, options);
+        getJobs({ offset, limit, resourcePool, orderBy, states,  }: { offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs({ offset, limit, resourcePool, orderBy, states,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16609,8 +16609,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, options);
+        getResourcePools({ offset, limit,  }: { offset?: number, limit?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools({ offset, limit,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16627,8 +16627,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTelemetry(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTelemetryResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTelemetry(options);
+        getTelemetry({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTelemetryResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTelemetry({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16653,8 +16653,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
+        getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16673,8 +16673,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        idleNotebook(body: V1IdleNotebookRequest, notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1IdleNotebookResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).idleNotebook(body, notebookId, options);
+        idleNotebook({ body, notebookId,  }: { body: V1IdleNotebookRequest, notebookId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1IdleNotebookResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).idleNotebook({ body, notebookId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16694,8 +16694,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        markAllocationResourcesDaemon(body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationResourcesDaemonResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).markAllocationResourcesDaemon(body, allocationId, resourcesId, options);
+        markAllocationResourcesDaemon({ body, allocationId, resourcesId,  }: { body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationResourcesDaemonResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).markAllocationResourcesDaemon({ body, allocationId, resourcesId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16716,8 +16716,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricBatches(experimentId: number, metricName: string, metricType: string, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options);
+        metricBatches({ experimentId, metricName, metricType, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, periodSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches({ experimentId, metricName, metricType, periodSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16736,8 +16736,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames(experimentId, periodSeconds, options);
+        metricNames({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames({ experimentId, periodSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16756,8 +16756,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        notifyContainerRunning(body: V1NotifyContainerRunningRequest, allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning(body, allocationId, options);
+        notifyContainerRunning({ body, allocationId,  }: { body: V1NotifyContainerRunningRequest, allocationId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning({ body, allocationId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16776,8 +16776,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postAllocationProxyAddress(body: V1PostAllocationProxyAddressRequest, allocationId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress(body, allocationId, options);
+        postAllocationProxyAddress({ body, allocationId,  }: { body: V1PostAllocationProxyAddressRequest, allocationId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress({ body, allocationId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16795,8 +16795,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialProfilerMetricsBatchResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialProfilerMetricsBatch(body, options);
+        postTrialProfilerMetricsBatch({ body,  }: { body: V1PostTrialProfilerMetricsBatchRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialProfilerMetricsBatchResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialProfilerMetricsBatch({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16815,8 +16815,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postTrialRunnerMetadata(body: V1TrialRunnerMetadata, trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialRunnerMetadataResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialRunnerMetadata(body, trialId, options);
+        postTrialRunnerMetadata({ body, trialId,  }: { body: V1TrialRunnerMetadata, trialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialRunnerMetadataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialRunnerMetadata({ body, trialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16834,8 +16834,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportCheckpoint(body: V1Checkpoint, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportCheckpointResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportCheckpoint(body, options);
+        reportCheckpoint({ body,  }: { body: V1Checkpoint,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportCheckpointResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportCheckpoint({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16855,8 +16855,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialProgress(body: number, trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialProgressResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialProgress(body, trialId, options);
+        reportTrialProgress({ body, trialId,  }: { body: number, trialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialProgressResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialProgress({ body, trialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16875,8 +16875,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialSearcherEarlyExit(body: V1TrialEarlyExit, trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSearcherEarlyExitResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialSearcherEarlyExit(body, trialId, options);
+        reportTrialSearcherEarlyExit({ body, trialId,  }: { body: V1TrialEarlyExit, trialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSearcherEarlyExitResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialSearcherEarlyExit({ body, trialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16895,8 +16895,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialTrainingMetrics(body: V1TrialMetrics, trainingMetricsTrialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialTrainingMetrics(body, trainingMetricsTrialId, options);
+        reportTrialTrainingMetrics({ body, trainingMetricsTrialId,  }: { body: V1TrialMetrics, trainingMetricsTrialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialTrainingMetrics({ body, trainingMetricsTrialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16915,8 +16915,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialValidationMetrics(body: V1TrialMetrics, validationMetricsTrialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialValidationMetrics(body, validationMetricsTrialId, options);
+        reportTrialValidationMetrics({ body, validationMetricsTrialId,  }: { body: V1TrialMetrics, validationMetricsTrialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialValidationMetrics({ body, validationMetricsTrialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16941,8 +16941,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSample(experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSampleResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
+        trialsSample({ experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSampleResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSample({ experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16965,8 +16965,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSnapshot(experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSnapshotResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options);
+        trialsSnapshot({ experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSnapshotResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSnapshot({ experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16985,8 +16985,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateGroup(body: V1UpdateGroupRequest, groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateGroup(body, groupId, options);
+        updateGroup({ body, groupId,  }: { body: V1UpdateGroupRequest, groupId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateGroup({ body, groupId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17004,8 +17004,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateJobQueue(body, options);
+        updateJobQueue({ body,  }: { body: V1UpdateJobQueueRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateJobQueue({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17033,8 +17033,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        ackAllocationPreemptionSignal(body: V1AckAllocationPreemptionSignalRequest, allocationId: string, options?: any) {
-            return InternalApiFp(configuration).ackAllocationPreemptionSignal(body, allocationId, options)(fetch, basePath);
+        ackAllocationPreemptionSignal({ body, allocationId,  }: { body: V1AckAllocationPreemptionSignalRequest, allocationId: string,  }, options?: any) {
+            return InternalApiFp(configuration).ackAllocationPreemptionSignal({ body, allocationId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17044,8 +17044,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationAllGather(body: V1AllocationAllGatherRequest, allocationId: string, options?: any) {
-            return InternalApiFp(configuration).allocationAllGather(body, allocationId, options)(fetch, basePath);
+        allocationAllGather({ body, allocationId,  }: { body: V1AllocationAllGatherRequest, allocationId: string,  }, options?: any) {
+            return InternalApiFp(configuration).allocationAllGather({ body, allocationId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17055,8 +17055,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationPendingPreemptionSignal(body: V1AllocationPendingPreemptionSignalRequest, allocationId: string, options?: any) {
-            return InternalApiFp(configuration).allocationPendingPreemptionSignal(body, allocationId, options)(fetch, basePath);
+        allocationPendingPreemptionSignal({ body, allocationId,  }: { body: V1AllocationPendingPreemptionSignalRequest, allocationId: string,  }, options?: any) {
+            return InternalApiFp(configuration).allocationPendingPreemptionSignal({ body, allocationId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17066,8 +17066,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options)(fetch, basePath);
+        allocationPreemptionSignal({ allocationId, timeoutSeconds,  }: { allocationId: string, timeoutSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).allocationPreemptionSignal({ allocationId, timeoutSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17077,8 +17077,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationReady(body: V1AllocationReadyRequest, allocationId: string, options?: any) {
-            return InternalApiFp(configuration).allocationReady(body, allocationId, options)(fetch, basePath);
+        allocationReady({ body, allocationId,  }: { body: V1AllocationReadyRequest, allocationId: string,  }, options?: any) {
+            return InternalApiFp(configuration).allocationReady({ body, allocationId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17088,8 +17088,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
-            return InternalApiFp(configuration).allocationRendezvousInfo(allocationId, resourcesId, options)(fetch, basePath);
+        allocationRendezvousInfo({ allocationId, resourcesId,  }: { allocationId: string, resourcesId: string,  }, options?: any) {
+            return InternalApiFp(configuration).allocationRendezvousInfo({ allocationId, resourcesId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17099,8 +17099,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        allocationWaiting(body: V1AllocationWaitingRequest, allocationId: string, options?: any) {
-            return InternalApiFp(configuration).allocationWaiting(body, allocationId, options)(fetch, basePath);
+        allocationWaiting({ body, allocationId,  }: { body: V1AllocationWaitingRequest, allocationId: string,  }, options?: any) {
+            return InternalApiFp(configuration).allocationWaiting({ body, allocationId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17110,8 +17110,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        completeTrialSearcherValidation(body: V1CompleteValidateAfterOperation, trialId: number, options?: any) {
-            return InternalApiFp(configuration).completeTrialSearcherValidation(body, trialId, options)(fetch, basePath);
+        completeTrialSearcherValidation({ body, trialId,  }: { body: V1CompleteValidateAfterOperation, trialId: number,  }, options?: any) {
+            return InternalApiFp(configuration).completeTrialSearcherValidation({ body, trialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17120,8 +17120,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        computeHPImportance(experimentId: number, options?: any) {
-            return InternalApiFp(configuration).computeHPImportance(experimentId, options)(fetch, basePath);
+        computeHPImportance({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return InternalApiFp(configuration).computeHPImportance({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17130,8 +17130,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createExperiment(body: V1CreateExperimentRequest, options?: any) {
-            return InternalApiFp(configuration).createExperiment(body, options)(fetch, basePath);
+        createExperiment({ body,  }: { body: V1CreateExperimentRequest,  }, options?: any) {
+            return InternalApiFp(configuration).createExperiment({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17140,8 +17140,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createGroup(body: V1CreateGroupRequest, options?: any) {
-            return InternalApiFp(configuration).createGroup(body, options)(fetch, basePath);
+        createGroup({ body,  }: { body: V1CreateGroupRequest,  }, options?: any) {
+            return InternalApiFp(configuration).createGroup({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17150,8 +17150,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteGroup(groupId: number, options?: any) {
-            return InternalApiFp(configuration).deleteGroup(groupId, options)(fetch, basePath);
+        deleteGroup({ groupId,  }: { groupId: number,  }, options?: any) {
+            return InternalApiFp(configuration).deleteGroup({ groupId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17161,8 +17161,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).expCompareMetricNames(trialId, periodSeconds, options)(fetch, basePath);
+        expCompareMetricNames({ trialId, periodSeconds,  }: { trialId: Array<number>, periodSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).expCompareMetricNames({ trialId, periodSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17178,8 +17178,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
+        expCompareTrialsSample({ experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).expCompareTrialsSample({ experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17188,8 +17188,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getBestSearcherValidationMetric(experimentId: number, options?: any) {
-            return InternalApiFp(configuration).getBestSearcherValidationMetric(experimentId, options)(fetch, basePath);
+        getBestSearcherValidationMetric({ experimentId,  }: { experimentId: number,  }, options?: any) {
+            return InternalApiFp(configuration).getBestSearcherValidationMetric({ experimentId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17198,8 +17198,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCurrentTrialSearcherOperation(trialId: number, options?: any) {
-            return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
+        getCurrentTrialSearcherOperation({ trialId,  }: { trialId: number,  }, options?: any) {
+            return InternalApiFp(configuration).getCurrentTrialSearcherOperation({ trialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17208,8 +17208,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroup(groupId: number, options?: any) {
-            return InternalApiFp(configuration).getGroup(groupId, options)(fetch, basePath);
+        getGroup({ groupId,  }: { groupId: number,  }, options?: any) {
+            return InternalApiFp(configuration).getGroup({ groupId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17218,8 +17218,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroups(body: V1GetGroupsRequest, options?: any) {
-            return InternalApiFp(configuration).getGroups(body, options)(fetch, basePath);
+        getGroups({ body,  }: { body: V1GetGroupsRequest,  }, options?: any) {
+            return InternalApiFp(configuration).getGroups({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17229,8 +17229,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).getHPImportance(experimentId, periodSeconds, options)(fetch, basePath);
+        getHPImportance({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).getHPImportance({ experimentId, periodSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17239,8 +17239,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobQueueStats(resourcePools?: Array<string>, options?: any) {
-            return InternalApiFp(configuration).getJobQueueStats(resourcePools, options)(fetch, basePath);
+        getJobQueueStats({ resourcePools,  }: { resourcePools?: Array<string>,  }, options?: any) {
+            return InternalApiFp(configuration).getJobQueueStats({ resourcePools,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17253,8 +17253,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>, options?: any) {
-            return InternalApiFp(configuration).getJobs(offset, limit, resourcePool, orderBy, states, options)(fetch, basePath);
+        getJobs({ offset, limit, resourcePool, orderBy, states,  }: { offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>,  }, options?: any) {
+            return InternalApiFp(configuration).getJobs({ offset, limit, resourcePool, orderBy, states,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17264,8 +17264,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getResourcePools(offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).getResourcePools(offset, limit, options)(fetch, basePath);
+        getResourcePools({ offset, limit,  }: { offset?: number, limit?: number,  }, options?: any) {
+            return InternalApiFp(configuration).getResourcePools({ offset, limit,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17273,8 +17273,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTelemetry(options?: any) {
-            return InternalApiFp(configuration).getTelemetry(options)(fetch, basePath);
+        getTelemetry({  }: {  }, options?: any) {
+            return InternalApiFp(configuration).getTelemetry({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17290,8 +17290,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options?: any) {
-            return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
+        getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options?: any) {
+            return InternalApiFp(configuration).getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17301,8 +17301,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        idleNotebook(body: V1IdleNotebookRequest, notebookId: string, options?: any) {
-            return InternalApiFp(configuration).idleNotebook(body, notebookId, options)(fetch, basePath);
+        idleNotebook({ body, notebookId,  }: { body: V1IdleNotebookRequest, notebookId: string,  }, options?: any) {
+            return InternalApiFp(configuration).idleNotebook({ body, notebookId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17313,8 +17313,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        markAllocationResourcesDaemon(body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string, options?: any) {
-            return InternalApiFp(configuration).markAllocationResourcesDaemon(body, allocationId, resourcesId, options)(fetch, basePath);
+        markAllocationResourcesDaemon({ body, allocationId, resourcesId,  }: { body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string,  }, options?: any) {
+            return InternalApiFp(configuration).markAllocationResourcesDaemon({ body, allocationId, resourcesId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17326,8 +17326,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricBatches(experimentId: number, metricName: string, metricType: string, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(fetch, basePath);
+        metricBatches({ experimentId, metricName, metricType, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, periodSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).metricBatches({ experimentId, metricName, metricType, periodSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17337,8 +17337,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).metricNames(experimentId, periodSeconds, options)(fetch, basePath);
+        metricNames({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).metricNames({ experimentId, periodSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17348,8 +17348,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        notifyContainerRunning(body: V1NotifyContainerRunningRequest, allocationId: string, options?: any) {
-            return InternalApiFp(configuration).notifyContainerRunning(body, allocationId, options)(fetch, basePath);
+        notifyContainerRunning({ body, allocationId,  }: { body: V1NotifyContainerRunningRequest, allocationId: string,  }, options?: any) {
+            return InternalApiFp(configuration).notifyContainerRunning({ body, allocationId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17359,8 +17359,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postAllocationProxyAddress(body: V1PostAllocationProxyAddressRequest, allocationId: string, options?: any) {
-            return InternalApiFp(configuration).postAllocationProxyAddress(body, allocationId, options)(fetch, basePath);
+        postAllocationProxyAddress({ body, allocationId,  }: { body: V1PostAllocationProxyAddressRequest, allocationId: string,  }, options?: any) {
+            return InternalApiFp(configuration).postAllocationProxyAddress({ body, allocationId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17369,8 +17369,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
-            return InternalApiFp(configuration).postTrialProfilerMetricsBatch(body, options)(fetch, basePath);
+        postTrialProfilerMetricsBatch({ body,  }: { body: V1PostTrialProfilerMetricsBatchRequest,  }, options?: any) {
+            return InternalApiFp(configuration).postTrialProfilerMetricsBatch({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17380,8 +17380,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postTrialRunnerMetadata(body: V1TrialRunnerMetadata, trialId: number, options?: any) {
-            return InternalApiFp(configuration).postTrialRunnerMetadata(body, trialId, options)(fetch, basePath);
+        postTrialRunnerMetadata({ body, trialId,  }: { body: V1TrialRunnerMetadata, trialId: number,  }, options?: any) {
+            return InternalApiFp(configuration).postTrialRunnerMetadata({ body, trialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17390,8 +17390,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportCheckpoint(body: V1Checkpoint, options?: any) {
-            return InternalApiFp(configuration).reportCheckpoint(body, options)(fetch, basePath);
+        reportCheckpoint({ body,  }: { body: V1Checkpoint,  }, options?: any) {
+            return InternalApiFp(configuration).reportCheckpoint({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17402,8 +17402,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialProgress(body: number, trialId: number, options?: any) {
-            return InternalApiFp(configuration).reportTrialProgress(body, trialId, options)(fetch, basePath);
+        reportTrialProgress({ body, trialId,  }: { body: number, trialId: number,  }, options?: any) {
+            return InternalApiFp(configuration).reportTrialProgress({ body, trialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17413,8 +17413,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialSearcherEarlyExit(body: V1TrialEarlyExit, trialId: number, options?: any) {
-            return InternalApiFp(configuration).reportTrialSearcherEarlyExit(body, trialId, options)(fetch, basePath);
+        reportTrialSearcherEarlyExit({ body, trialId,  }: { body: V1TrialEarlyExit, trialId: number,  }, options?: any) {
+            return InternalApiFp(configuration).reportTrialSearcherEarlyExit({ body, trialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17424,8 +17424,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialTrainingMetrics(body: V1TrialMetrics, trainingMetricsTrialId: number, options?: any) {
-            return InternalApiFp(configuration).reportTrialTrainingMetrics(body, trainingMetricsTrialId, options)(fetch, basePath);
+        reportTrialTrainingMetrics({ body, trainingMetricsTrialId,  }: { body: V1TrialMetrics, trainingMetricsTrialId: number,  }, options?: any) {
+            return InternalApiFp(configuration).reportTrialTrainingMetrics({ body, trainingMetricsTrialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17435,8 +17435,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialValidationMetrics(body: V1TrialMetrics, validationMetricsTrialId: number, options?: any) {
-            return InternalApiFp(configuration).reportTrialValidationMetrics(body, validationMetricsTrialId, options)(fetch, basePath);
+        reportTrialValidationMetrics({ body, validationMetricsTrialId,  }: { body: V1TrialMetrics, validationMetricsTrialId: number,  }, options?: any) {
+            return InternalApiFp(configuration).reportTrialValidationMetrics({ body, validationMetricsTrialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17452,8 +17452,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSample(experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
+        trialsSample({ experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).trialsSample({ experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17467,8 +17467,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialsSnapshot(experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(fetch, basePath);
+        trialsSnapshot({ experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number,  }, options?: any) {
+            return InternalApiFp(configuration).trialsSnapshot({ experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17478,8 +17478,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateGroup(body: V1UpdateGroupRequest, groupId: number, options?: any) {
-            return InternalApiFp(configuration).updateGroup(body, groupId, options)(fetch, basePath);
+        updateGroup({ body, groupId,  }: { body: V1UpdateGroupRequest, groupId: number,  }, options?: any) {
+            return InternalApiFp(configuration).updateGroup({ body, groupId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -17488,8 +17488,8 @@ the searcher.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
-            return InternalApiFp(configuration).updateJobQueue(body, options)(fetch, basePath);
+        updateJobQueue({ body,  }: { body: V1UpdateJobQueueRequest,  }, options?: any) {
+            return InternalApiFp(configuration).updateJobQueue({ body,  }, options)(fetch, basePath);
         },
     };
 };
@@ -17510,8 +17510,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public ackAllocationPreemptionSignal(body: V1AckAllocationPreemptionSignalRequest, allocationId: string, options?: any) {
-        return InternalApiFp(this.configuration).ackAllocationPreemptionSignal(body, allocationId, options)(this.fetch, this.basePath);
+    public ackAllocationPreemptionSignal({ body, allocationId,  }: { body: V1AckAllocationPreemptionSignalRequest, allocationId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).ackAllocationPreemptionSignal({ body, allocationId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17523,8 +17523,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public allocationAllGather(body: V1AllocationAllGatherRequest, allocationId: string, options?: any) {
-        return InternalApiFp(this.configuration).allocationAllGather(body, allocationId, options)(this.fetch, this.basePath);
+    public allocationAllGather({ body, allocationId,  }: { body: V1AllocationAllGatherRequest, allocationId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).allocationAllGather({ body, allocationId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17536,8 +17536,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public allocationPendingPreemptionSignal(body: V1AllocationPendingPreemptionSignalRequest, allocationId: string, options?: any) {
-        return InternalApiFp(this.configuration).allocationPendingPreemptionSignal(body, allocationId, options)(this.fetch, this.basePath);
+    public allocationPendingPreemptionSignal({ body, allocationId,  }: { body: V1AllocationPendingPreemptionSignalRequest, allocationId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).allocationPendingPreemptionSignal({ body, allocationId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17549,8 +17549,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options)(this.fetch, this.basePath);
+    public allocationPreemptionSignal({ allocationId, timeoutSeconds,  }: { allocationId: string, timeoutSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).allocationPreemptionSignal({ allocationId, timeoutSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17562,8 +17562,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public allocationReady(body: V1AllocationReadyRequest, allocationId: string, options?: any) {
-        return InternalApiFp(this.configuration).allocationReady(body, allocationId, options)(this.fetch, this.basePath);
+    public allocationReady({ body, allocationId,  }: { body: V1AllocationReadyRequest, allocationId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).allocationReady({ body, allocationId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17575,8 +17575,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
-        return InternalApiFp(this.configuration).allocationRendezvousInfo(allocationId, resourcesId, options)(this.fetch, this.basePath);
+    public allocationRendezvousInfo({ allocationId, resourcesId,  }: { allocationId: string, resourcesId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).allocationRendezvousInfo({ allocationId, resourcesId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17588,8 +17588,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public allocationWaiting(body: V1AllocationWaitingRequest, allocationId: string, options?: any) {
-        return InternalApiFp(this.configuration).allocationWaiting(body, allocationId, options)(this.fetch, this.basePath);
+    public allocationWaiting({ body, allocationId,  }: { body: V1AllocationWaitingRequest, allocationId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).allocationWaiting({ body, allocationId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17601,8 +17601,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public completeTrialSearcherValidation(body: V1CompleteValidateAfterOperation, trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).completeTrialSearcherValidation(body, trialId, options)(this.fetch, this.basePath);
+    public completeTrialSearcherValidation({ body, trialId,  }: { body: V1CompleteValidateAfterOperation, trialId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).completeTrialSearcherValidation({ body, trialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17613,8 +17613,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public computeHPImportance(experimentId: number, options?: any) {
-        return InternalApiFp(this.configuration).computeHPImportance(experimentId, options)(this.fetch, this.basePath);
+    public computeHPImportance({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).computeHPImportance({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17625,8 +17625,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public createExperiment(body: V1CreateExperimentRequest, options?: any) {
-        return InternalApiFp(this.configuration).createExperiment(body, options)(this.fetch, this.basePath);
+    public createExperiment({ body,  }: { body: V1CreateExperimentRequest,  }, options?: any) {
+        return InternalApiFp(this.configuration).createExperiment({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17637,8 +17637,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public createGroup(body: V1CreateGroupRequest, options?: any) {
-        return InternalApiFp(this.configuration).createGroup(body, options)(this.fetch, this.basePath);
+    public createGroup({ body,  }: { body: V1CreateGroupRequest,  }, options?: any) {
+        return InternalApiFp(this.configuration).createGroup({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17649,8 +17649,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public deleteGroup(groupId: number, options?: any) {
-        return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath);
+    public deleteGroup({ groupId,  }: { groupId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).deleteGroup({ groupId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17662,8 +17662,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).expCompareMetricNames(trialId, periodSeconds, options)(this.fetch, this.basePath);
+    public expCompareMetricNames({ trialId, periodSeconds,  }: { trialId: Array<number>, periodSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).expCompareMetricNames({ trialId, periodSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17681,8 +17681,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
+    public expCompareTrialsSample({ experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentIds: Array<number>, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).expCompareTrialsSample({ experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17693,8 +17693,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getBestSearcherValidationMetric(experimentId: number, options?: any) {
-        return InternalApiFp(this.configuration).getBestSearcherValidationMetric(experimentId, options)(this.fetch, this.basePath);
+    public getBestSearcherValidationMetric({ experimentId,  }: { experimentId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).getBestSearcherValidationMetric({ experimentId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17705,8 +17705,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath);
+    public getCurrentTrialSearcherOperation({ trialId,  }: { trialId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation({ trialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17717,8 +17717,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getGroup(groupId: number, options?: any) {
-        return InternalApiFp(this.configuration).getGroup(groupId, options)(this.fetch, this.basePath);
+    public getGroup({ groupId,  }: { groupId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).getGroup({ groupId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17729,8 +17729,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getGroups(body: V1GetGroupsRequest, options?: any) {
-        return InternalApiFp(this.configuration).getGroups(body, options)(this.fetch, this.basePath);
+    public getGroups({ body,  }: { body: V1GetGroupsRequest,  }, options?: any) {
+        return InternalApiFp(this.configuration).getGroups({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17742,8 +17742,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).getHPImportance(experimentId, periodSeconds, options)(this.fetch, this.basePath);
+    public getHPImportance({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).getHPImportance({ experimentId, periodSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17754,8 +17754,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getJobQueueStats(resourcePools?: Array<string>, options?: any) {
-        return InternalApiFp(this.configuration).getJobQueueStats(resourcePools, options)(this.fetch, this.basePath);
+    public getJobQueueStats({ resourcePools,  }: { resourcePools?: Array<string>,  }, options?: any) {
+        return InternalApiFp(this.configuration).getJobQueueStats({ resourcePools,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17770,8 +17770,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>, options?: any) {
-        return InternalApiFp(this.configuration).getJobs(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath);
+    public getJobs({ offset, limit, resourcePool, orderBy, states,  }: { offset?: number, limit?: number, resourcePool?: string, orderBy?: string, states?: Array<string>,  }, options?: any) {
+        return InternalApiFp(this.configuration).getJobs({ offset, limit, resourcePool, orderBy, states,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17783,8 +17783,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getResourcePools(offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).getResourcePools(offset, limit, options)(this.fetch, this.basePath);
+    public getResourcePools({ offset, limit,  }: { offset?: number, limit?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).getResourcePools({ offset, limit,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17794,8 +17794,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTelemetry(options?: any) {
-        return InternalApiFp(this.configuration).getTelemetry(options)(this.fetch, this.basePath);
+    public getTelemetry({  }: {  }, options?: any) {
+        return InternalApiFp(this.configuration).getTelemetry({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17813,8 +17813,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options?: any) {
-        return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath);
+    public getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17826,8 +17826,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public idleNotebook(body: V1IdleNotebookRequest, notebookId: string, options?: any) {
-        return InternalApiFp(this.configuration).idleNotebook(body, notebookId, options)(this.fetch, this.basePath);
+    public idleNotebook({ body, notebookId,  }: { body: V1IdleNotebookRequest, notebookId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).idleNotebook({ body, notebookId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17840,8 +17840,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public markAllocationResourcesDaemon(body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string, options?: any) {
-        return InternalApiFp(this.configuration).markAllocationResourcesDaemon(body, allocationId, resourcesId, options)(this.fetch, this.basePath);
+    public markAllocationResourcesDaemon({ body, allocationId, resourcesId,  }: { body: V1MarkAllocationResourcesDaemonRequest, allocationId: string, resourcesId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).markAllocationResourcesDaemon({ body, allocationId, resourcesId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17855,8 +17855,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public metricBatches(experimentId: number, metricName: string, metricType: string, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(this.fetch, this.basePath);
+    public metricBatches({ experimentId, metricName, metricType, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, periodSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).metricBatches({ experimentId, metricName, metricType, periodSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17868,8 +17868,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath);
+    public metricNames({ experimentId, periodSeconds,  }: { experimentId: number, periodSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).metricNames({ experimentId, periodSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17881,8 +17881,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public notifyContainerRunning(body: V1NotifyContainerRunningRequest, allocationId: string, options?: any) {
-        return InternalApiFp(this.configuration).notifyContainerRunning(body, allocationId, options)(this.fetch, this.basePath);
+    public notifyContainerRunning({ body, allocationId,  }: { body: V1NotifyContainerRunningRequest, allocationId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).notifyContainerRunning({ body, allocationId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17894,8 +17894,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public postAllocationProxyAddress(body: V1PostAllocationProxyAddressRequest, allocationId: string, options?: any) {
-        return InternalApiFp(this.configuration).postAllocationProxyAddress(body, allocationId, options)(this.fetch, this.basePath);
+    public postAllocationProxyAddress({ body, allocationId,  }: { body: V1PostAllocationProxyAddressRequest, allocationId: string,  }, options?: any) {
+        return InternalApiFp(this.configuration).postAllocationProxyAddress({ body, allocationId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17906,8 +17906,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
-        return InternalApiFp(this.configuration).postTrialProfilerMetricsBatch(body, options)(this.fetch, this.basePath);
+    public postTrialProfilerMetricsBatch({ body,  }: { body: V1PostTrialProfilerMetricsBatchRequest,  }, options?: any) {
+        return InternalApiFp(this.configuration).postTrialProfilerMetricsBatch({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17919,8 +17919,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public postTrialRunnerMetadata(body: V1TrialRunnerMetadata, trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).postTrialRunnerMetadata(body, trialId, options)(this.fetch, this.basePath);
+    public postTrialRunnerMetadata({ body, trialId,  }: { body: V1TrialRunnerMetadata, trialId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).postTrialRunnerMetadata({ body, trialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17931,8 +17931,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public reportCheckpoint(body: V1Checkpoint, options?: any) {
-        return InternalApiFp(this.configuration).reportCheckpoint(body, options)(this.fetch, this.basePath);
+    public reportCheckpoint({ body,  }: { body: V1Checkpoint,  }, options?: any) {
+        return InternalApiFp(this.configuration).reportCheckpoint({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17945,8 +17945,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public reportTrialProgress(body: number, trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).reportTrialProgress(body, trialId, options)(this.fetch, this.basePath);
+    public reportTrialProgress({ body, trialId,  }: { body: number, trialId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialProgress({ body, trialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17958,8 +17958,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public reportTrialSearcherEarlyExit(body: V1TrialEarlyExit, trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).reportTrialSearcherEarlyExit(body, trialId, options)(this.fetch, this.basePath);
+    public reportTrialSearcherEarlyExit({ body, trialId,  }: { body: V1TrialEarlyExit, trialId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialSearcherEarlyExit({ body, trialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17971,8 +17971,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public reportTrialTrainingMetrics(body: V1TrialMetrics, trainingMetricsTrialId: number, options?: any) {
-        return InternalApiFp(this.configuration).reportTrialTrainingMetrics(body, trainingMetricsTrialId, options)(this.fetch, this.basePath);
+    public reportTrialTrainingMetrics({ body, trainingMetricsTrialId,  }: { body: V1TrialMetrics, trainingMetricsTrialId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialTrainingMetrics({ body, trainingMetricsTrialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17984,8 +17984,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public reportTrialValidationMetrics(body: V1TrialMetrics, validationMetricsTrialId: number, options?: any) {
-        return InternalApiFp(this.configuration).reportTrialValidationMetrics(body, validationMetricsTrialId, options)(this.fetch, this.basePath);
+    public reportTrialValidationMetrics({ body, validationMetricsTrialId,  }: { body: V1TrialMetrics, validationMetricsTrialId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialValidationMetrics({ body, validationMetricsTrialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18003,8 +18003,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public trialsSample(experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
+    public trialsSample({ experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).trialsSample({ experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18020,8 +18020,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public trialsSnapshot(experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath);
+    public trialsSnapshot({ experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds,  }: { experimentId: number, metricName: string, metricType: string, batchesProcessed: number, batchesMargin?: number, periodSeconds?: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).trialsSnapshot({ experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18033,8 +18033,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public updateGroup(body: V1UpdateGroupRequest, groupId: number, options?: any) {
-        return InternalApiFp(this.configuration).updateGroup(body, groupId, options)(this.fetch, this.basePath);
+    public updateGroup({ body, groupId,  }: { body: V1UpdateGroupRequest, groupId: number,  }, options?: any) {
+        return InternalApiFp(this.configuration).updateGroup({ body, groupId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18045,8 +18045,8 @@ the searcher.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
-        return InternalApiFp(this.configuration).updateJobQueue(body, options)(this.fetch, this.basePath);
+    public updateJobQueue({ body,  }: { body: V1UpdateJobQueueRequest,  }, options?: any) {
+        return InternalApiFp(this.configuration).updateJobQueue({ body,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -18076,7 +18076,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options: any = {}): FetchArgs {
+        taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -18166,7 +18166,7 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogsFields(taskId: string, follow?: boolean, options: any = {}): FetchArgs {
+        taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogsFields.');
@@ -18229,8 +18229,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18249,8 +18249,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogsFields(taskId, follow, options);
+        taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogsFields({ taskId, follow,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18290,8 +18290,8 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-            return JobsApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+            return JobsApiFp(configuration).taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -18301,8 +18301,8 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogsFields(taskId: string, follow?: boolean, options?: any) {
-            return JobsApiFp(configuration).taskLogsFields(taskId, follow, options)(fetch, basePath);
+        taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options?: any) {
+            return JobsApiFp(configuration).taskLogsFields({ taskId, follow,  }, options)(fetch, basePath);
         },
     };
 };
@@ -18335,8 +18335,8 @@ export class JobsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-        return JobsApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+        return JobsApiFp(this.configuration).taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18348,8 +18348,8 @@ export class JobsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public taskLogsFields(taskId: string, follow?: boolean, options?: any) {
-        return JobsApiFp(this.configuration).taskLogsFields(taskId, follow, options)(this.fetch, this.basePath);
+    public taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options?: any) {
+        return JobsApiFp(this.configuration).taskLogsFields({ taskId, follow,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -18366,7 +18366,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveModel(modelName: string, options: any = {}): FetchArgs {
+        archiveModel({ modelName,  }: { modelName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling archiveModel.');
@@ -18403,7 +18403,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModel(modelName: string, options: any = {}): FetchArgs {
+        deleteModel({ modelName,  }: { modelName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling deleteModel.');
@@ -18441,7 +18441,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
+        deleteModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling deleteModelVersion.');
@@ -18483,7 +18483,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModel(modelName: string, options: any = {}): FetchArgs {
+        getModel({ modelName,  }: { modelName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getModel.');
@@ -18519,7 +18519,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options: any = {}): FetchArgs {
+        getModelLabels({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/model/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -18552,7 +18552,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
+        getModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getModelVersion.');
@@ -18598,7 +18598,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersions(modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getModelVersions({ modelName, sortBy, orderBy, offset, limit,  }: { modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getModelVersions.');
@@ -18661,7 +18661,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options: any = {}): FetchArgs {
+        getModels({ sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -18738,7 +18738,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(body: V1PatchModel, modelName: string, options: any = {}): FetchArgs {
+        patchModel({ body, modelName,  }: { body: V1PatchModel, modelName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchModel.');
@@ -18785,7 +18785,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(body: V1PatchModelVersion, modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
+        patchModelVersion({ body, modelName, modelVersionNum,  }: { body: V1PatchModelVersion, modelName: string, modelVersionNum: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchModelVersion.');
@@ -18835,7 +18835,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postModel(body: V1PostModelRequest, options: any = {}): FetchArgs {
+        postModel({ body,  }: { body: V1PostModelRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postModel.');
@@ -18876,7 +18876,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postModelVersion(body: V1PostModelVersionRequest, modelName: string, options: any = {}): FetchArgs {
+        postModelVersion({ body, modelName,  }: { body: V1PostModelVersionRequest, modelName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postModelVersion.');
@@ -18921,7 +18921,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveModel(modelName: string, options: any = {}): FetchArgs {
+        unarchiveModel({ modelName,  }: { modelName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling unarchiveModel.');
@@ -18967,8 +18967,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).archiveModel(modelName, options);
+        archiveModel({ modelName,  }: { modelName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).archiveModel({ modelName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18986,8 +18986,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModel(modelName, options);
+        deleteModel({ modelName,  }: { modelName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModel({ modelName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19006,8 +19006,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModelVersion(modelName, modelVersionNum, options);
+        deleteModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModelVersion({ modelName, modelVersionNum,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19025,8 +19025,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModel(modelName, options);
+        getModel({ modelName,  }: { modelName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModel({ modelName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19043,8 +19043,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(options);
+        getModelLabels({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19063,8 +19063,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersion(modelName, modelVersionNum, options);
+        getModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersion({ modelName, modelVersionNum,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19086,8 +19086,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersions(modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersions(modelName, sortBy, orderBy, offset, limit, options);
+        getModelVersions({ modelName, sortBy, orderBy, offset, limit,  }: { modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersions({ modelName, sortBy, orderBy, offset, limit,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19115,8 +19115,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id, options);
+        getModels({ sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels({ sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19135,8 +19135,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(body: V1PatchModel, modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModel(body, modelName, options);
+        patchModel({ body, modelName,  }: { body: V1PatchModel, modelName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModel({ body, modelName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19156,8 +19156,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(body: V1PatchModelVersion, modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(body, modelName, modelVersionNum, options);
+        patchModelVersion({ body, modelName, modelVersionNum,  }: { body: V1PatchModelVersion, modelName: string, modelVersionNum: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion({ body, modelName, modelVersionNum,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19175,8 +19175,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postModel(body: V1PostModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModel(body, options);
+        postModel({ body,  }: { body: V1PostModelRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModel({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19195,8 +19195,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postModelVersion(body: V1PostModelVersionRequest, modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModelVersion(body, modelName, options);
+        postModelVersion({ body, modelName,  }: { body: V1PostModelVersionRequest, modelName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModelVersion({ body, modelName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19214,8 +19214,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).unarchiveModel(modelName, options);
+        unarchiveModel({ modelName,  }: { modelName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).unarchiveModel({ modelName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19242,8 +19242,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).archiveModel(modelName, options)(fetch, basePath);
+        archiveModel({ modelName,  }: { modelName: string,  }, options?: any) {
+            return ModelsApiFp(configuration).archiveModel({ modelName,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19252,8 +19252,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).deleteModel(modelName, options)(fetch, basePath);
+        deleteModel({ modelName,  }: { modelName: string,  }, options?: any) {
+            return ModelsApiFp(configuration).deleteModel({ modelName,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19263,8 +19263,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-            return ModelsApiFp(configuration).deleteModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
+        deleteModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options?: any) {
+            return ModelsApiFp(configuration).deleteModelVersion({ modelName, modelVersionNum,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19273,8 +19273,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).getModel(modelName, options)(fetch, basePath);
+        getModel({ modelName,  }: { modelName: string,  }, options?: any) {
+            return ModelsApiFp(configuration).getModel({ modelName,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19282,8 +19282,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelLabels(options?: any) {
-            return ModelsApiFp(configuration).getModelLabels(options)(fetch, basePath);
+        getModelLabels({  }: {  }, options?: any) {
+            return ModelsApiFp(configuration).getModelLabels({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19293,8 +19293,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-            return ModelsApiFp(configuration).getModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
+        getModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options?: any) {
+            return ModelsApiFp(configuration).getModelVersion({ modelName, modelVersionNum,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19307,8 +19307,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersions(modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number, options?: any) {
-            return ModelsApiFp(configuration).getModelVersions(modelName, sortBy, orderBy, offset, limit, options)(fetch, basePath);
+        getModelVersions({ modelName, sortBy, orderBy, offset, limit,  }: { modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options?: any) {
+            return ModelsApiFp(configuration).getModelVersions({ modelName, sortBy, orderBy, offset, limit,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19327,8 +19327,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options?: any) {
-            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id, options)(fetch, basePath);
+        getModels({ sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number,  }, options?: any) {
+            return ModelsApiFp(configuration).getModels({ sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19338,8 +19338,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModel(body: V1PatchModel, modelName: string, options?: any) {
-            return ModelsApiFp(configuration).patchModel(body, modelName, options)(fetch, basePath);
+        patchModel({ body, modelName,  }: { body: V1PatchModel, modelName: string,  }, options?: any) {
+            return ModelsApiFp(configuration).patchModel({ body, modelName,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19350,8 +19350,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(body: V1PatchModelVersion, modelName: string, modelVersionNum: number, options?: any) {
-            return ModelsApiFp(configuration).patchModelVersion(body, modelName, modelVersionNum, options)(fetch, basePath);
+        patchModelVersion({ body, modelName, modelVersionNum,  }: { body: V1PatchModelVersion, modelName: string, modelVersionNum: number,  }, options?: any) {
+            return ModelsApiFp(configuration).patchModelVersion({ body, modelName, modelVersionNum,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19360,8 +19360,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postModel(body: V1PostModelRequest, options?: any) {
-            return ModelsApiFp(configuration).postModel(body, options)(fetch, basePath);
+        postModel({ body,  }: { body: V1PostModelRequest,  }, options?: any) {
+            return ModelsApiFp(configuration).postModel({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19371,8 +19371,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postModelVersion(body: V1PostModelVersionRequest, modelName: string, options?: any) {
-            return ModelsApiFp(configuration).postModelVersion(body, modelName, options)(fetch, basePath);
+        postModelVersion({ body, modelName,  }: { body: V1PostModelVersionRequest, modelName: string,  }, options?: any) {
+            return ModelsApiFp(configuration).postModelVersion({ body, modelName,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19381,8 +19381,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).unarchiveModel(modelName, options)(fetch, basePath);
+        unarchiveModel({ modelName,  }: { modelName: string,  }, options?: any) {
+            return ModelsApiFp(configuration).unarchiveModel({ modelName,  }, options)(fetch, basePath);
         },
     };
 };
@@ -19402,8 +19402,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public archiveModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).archiveModel(modelName, options)(this.fetch, this.basePath);
+    public archiveModel({ modelName,  }: { modelName: string,  }, options?: any) {
+        return ModelsApiFp(this.configuration).archiveModel({ modelName,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19414,8 +19414,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public deleteModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).deleteModel(modelName, options)(this.fetch, this.basePath);
+    public deleteModel({ modelName,  }: { modelName: string,  }, options?: any) {
+        return ModelsApiFp(this.configuration).deleteModel({ modelName,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19427,8 +19427,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public deleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-        return ModelsApiFp(this.configuration).deleteModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
+    public deleteModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options?: any) {
+        return ModelsApiFp(this.configuration).deleteModelVersion({ modelName, modelVersionNum,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19439,8 +19439,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).getModel(modelName, options)(this.fetch, this.basePath);
+    public getModel({ modelName,  }: { modelName: string,  }, options?: any) {
+        return ModelsApiFp(this.configuration).getModel({ modelName,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19450,8 +19450,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModelLabels(options?: any) {
-        return ModelsApiFp(this.configuration).getModelLabels(options)(this.fetch, this.basePath);
+    public getModelLabels({  }: {  }, options?: any) {
+        return ModelsApiFp(this.configuration).getModelLabels({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19463,8 +19463,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-        return ModelsApiFp(this.configuration).getModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
+    public getModelVersion({ modelName, modelVersionNum,  }: { modelName: string, modelVersionNum: number,  }, options?: any) {
+        return ModelsApiFp(this.configuration).getModelVersion({ modelName, modelVersionNum,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19479,8 +19479,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModelVersions(modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number, options?: any) {
-        return ModelsApiFp(this.configuration).getModelVersions(modelName, sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public getModelVersions({ modelName, sortBy, orderBy, offset, limit,  }: { modelName: string, sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options?: any) {
+        return ModelsApiFp(this.configuration).getModelVersions({ modelName, sortBy, orderBy, offset, limit,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19501,8 +19501,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModels(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options?: any) {
-        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id, options)(this.fetch, this.basePath);
+    public getModels({ sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number,  }, options?: any) {
+        return ModelsApiFp(this.configuration).getModels({ sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19514,8 +19514,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModel(body: V1PatchModel, modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).patchModel(body, modelName, options)(this.fetch, this.basePath);
+    public patchModel({ body, modelName,  }: { body: V1PatchModel, modelName: string,  }, options?: any) {
+        return ModelsApiFp(this.configuration).patchModel({ body, modelName,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19528,8 +19528,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModelVersion(body: V1PatchModelVersion, modelName: string, modelVersionNum: number, options?: any) {
-        return ModelsApiFp(this.configuration).patchModelVersion(body, modelName, modelVersionNum, options)(this.fetch, this.basePath);
+    public patchModelVersion({ body, modelName, modelVersionNum,  }: { body: V1PatchModelVersion, modelName: string, modelVersionNum: number,  }, options?: any) {
+        return ModelsApiFp(this.configuration).patchModelVersion({ body, modelName, modelVersionNum,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19540,8 +19540,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public postModel(body: V1PostModelRequest, options?: any) {
-        return ModelsApiFp(this.configuration).postModel(body, options)(this.fetch, this.basePath);
+    public postModel({ body,  }: { body: V1PostModelRequest,  }, options?: any) {
+        return ModelsApiFp(this.configuration).postModel({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19553,8 +19553,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public postModelVersion(body: V1PostModelVersionRequest, modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).postModelVersion(body, modelName, options)(this.fetch, this.basePath);
+    public postModelVersion({ body, modelName,  }: { body: V1PostModelVersionRequest, modelName: string,  }, options?: any) {
+        return ModelsApiFp(this.configuration).postModelVersion({ body, modelName,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19565,8 +19565,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public unarchiveModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).unarchiveModel(modelName, options)(this.fetch, this.basePath);
+    public unarchiveModel({ modelName,  }: { modelName: string,  }, options?: any) {
+        return ModelsApiFp(this.configuration).unarchiveModel({ modelName,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -19583,7 +19583,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebook(notebookId: string, options: any = {}): FetchArgs {
+        getNotebook({ notebookId,  }: { notebookId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'notebookId' is not null or undefined
             if (notebookId === null || notebookId === undefined) {
                 throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling getNotebook.');
@@ -19625,7 +19625,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebooks(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getNotebooks({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/notebooks`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19681,7 +19681,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killNotebook(notebookId: string, options: any = {}): FetchArgs {
+        killNotebook({ notebookId,  }: { notebookId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'notebookId' is not null or undefined
             if (notebookId === null || notebookId === undefined) {
                 throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling killNotebook.');
@@ -19718,7 +19718,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchNotebook(body: V1LaunchNotebookRequest, options: any = {}): FetchArgs {
+        launchNotebook({ body,  }: { body: V1LaunchNotebookRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchNotebook.');
@@ -19759,7 +19759,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotebookPriority(body: V1SetNotebookPriorityRequest, notebookId: string, options: any = {}): FetchArgs {
+        setNotebookPriority({ body, notebookId,  }: { body: V1SetNotebookPriorityRequest, notebookId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setNotebookPriority.');
@@ -19813,8 +19813,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebookResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebook(notebookId, options);
+        getNotebook({ notebookId,  }: { notebookId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebookResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebook({ notebookId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19837,8 +19837,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebooks(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebooksResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, options);
+        getNotebooks({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebooksResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebooks({ sortBy, orderBy, offset, limit, users, userIds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19856,8 +19856,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillNotebookResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).killNotebook(notebookId, options);
+        killNotebook({ notebookId,  }: { notebookId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillNotebookResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).killNotebook({ notebookId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19875,8 +19875,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchNotebook(body: V1LaunchNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchNotebookResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).launchNotebook(body, options);
+        launchNotebook({ body,  }: { body: V1LaunchNotebookRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchNotebookResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).launchNotebook({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19895,8 +19895,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotebookPriority(body: V1SetNotebookPriorityRequest, notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetNotebookPriorityResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).setNotebookPriority(body, notebookId, options);
+        setNotebookPriority({ body, notebookId,  }: { body: V1SetNotebookPriorityRequest, notebookId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetNotebookPriorityResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).setNotebookPriority({ body, notebookId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19923,8 +19923,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebook(notebookId: string, options?: any) {
-            return NotebooksApiFp(configuration).getNotebook(notebookId, options)(fetch, basePath);
+        getNotebook({ notebookId,  }: { notebookId: string,  }, options?: any) {
+            return NotebooksApiFp(configuration).getNotebook({ notebookId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19938,8 +19938,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebooks(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return NotebooksApiFp(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getNotebooks({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+            return NotebooksApiFp(configuration).getNotebooks({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19948,8 +19948,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killNotebook(notebookId: string, options?: any) {
-            return NotebooksApiFp(configuration).killNotebook(notebookId, options)(fetch, basePath);
+        killNotebook({ notebookId,  }: { notebookId: string,  }, options?: any) {
+            return NotebooksApiFp(configuration).killNotebook({ notebookId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19958,8 +19958,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchNotebook(body: V1LaunchNotebookRequest, options?: any) {
-            return NotebooksApiFp(configuration).launchNotebook(body, options)(fetch, basePath);
+        launchNotebook({ body,  }: { body: V1LaunchNotebookRequest,  }, options?: any) {
+            return NotebooksApiFp(configuration).launchNotebook({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -19969,8 +19969,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setNotebookPriority(body: V1SetNotebookPriorityRequest, notebookId: string, options?: any) {
-            return NotebooksApiFp(configuration).setNotebookPriority(body, notebookId, options)(fetch, basePath);
+        setNotebookPriority({ body, notebookId,  }: { body: V1SetNotebookPriorityRequest, notebookId: string,  }, options?: any) {
+            return NotebooksApiFp(configuration).setNotebookPriority({ body, notebookId,  }, options)(fetch, basePath);
         },
     };
 };
@@ -19990,8 +19990,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public getNotebook(notebookId: string, options?: any) {
-        return NotebooksApiFp(this.configuration).getNotebook(notebookId, options)(this.fetch, this.basePath);
+    public getNotebook({ notebookId,  }: { notebookId: string,  }, options?: any) {
+        return NotebooksApiFp(this.configuration).getNotebook({ notebookId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20007,8 +20007,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public getNotebooks(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return NotebooksApiFp(this.configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getNotebooks({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+        return NotebooksApiFp(this.configuration).getNotebooks({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20019,8 +20019,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public killNotebook(notebookId: string, options?: any) {
-        return NotebooksApiFp(this.configuration).killNotebook(notebookId, options)(this.fetch, this.basePath);
+    public killNotebook({ notebookId,  }: { notebookId: string,  }, options?: any) {
+        return NotebooksApiFp(this.configuration).killNotebook({ notebookId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20031,8 +20031,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public launchNotebook(body: V1LaunchNotebookRequest, options?: any) {
-        return NotebooksApiFp(this.configuration).launchNotebook(body, options)(this.fetch, this.basePath);
+    public launchNotebook({ body,  }: { body: V1LaunchNotebookRequest,  }, options?: any) {
+        return NotebooksApiFp(this.configuration).launchNotebook({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20044,8 +20044,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public setNotebookPriority(body: V1SetNotebookPriorityRequest, notebookId: string, options?: any) {
-        return NotebooksApiFp(this.configuration).setNotebookPriority(body, notebookId, options)(this.fetch, this.basePath);
+    public setNotebookPriority({ body, notebookId,  }: { body: V1SetNotebookPriorityRequest, notebookId: string,  }, options?: any) {
+        return NotebooksApiFp(this.configuration).setNotebookPriority({ body, notebookId,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -20063,7 +20063,7 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
+        getTrialProfilerAvailableSeries({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialProfilerAvailableSeries.');
@@ -20109,7 +20109,7 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean, options: any = {}): FetchArgs {
+        getTrialProfilerMetrics({ labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow,  }: { labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean,  }, options: any = {}): FetchArgs {
             // verify required parameter 'labelsTrialId' is not null or undefined
             if (labelsTrialId === null || labelsTrialId === undefined) {
                 throw new RequiredError('labelsTrialId','Required parameter labelsTrialId was null or undefined when calling getTrialProfilerMetrics.');
@@ -20176,8 +20176,8 @@ export const ProfilerApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerAvailableSeriesResponse> {
-            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerAvailableSeries(trialId, follow, options);
+        getTrialProfilerAvailableSeries({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerAvailableSeriesResponse> {
+            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerAvailableSeries({ trialId, follow,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20200,8 +20200,8 @@ export const ProfilerApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerMetricsResponse> {
-            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options);
+        getTrialProfilerMetrics({ labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow,  }: { labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerMetricsResponse> {
+            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerMetrics({ labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20229,8 +20229,8 @@ export const ProfilerApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any) {
-            return ProfilerApiFp(configuration).getTrialProfilerAvailableSeries(trialId, follow, options)(fetch, basePath);
+        getTrialProfilerAvailableSeries({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any) {
+            return ProfilerApiFp(configuration).getTrialProfilerAvailableSeries({ trialId, follow,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20244,8 +20244,8 @@ export const ProfilerApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean, options?: any) {
-            return ProfilerApiFp(configuration).getTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options)(fetch, basePath);
+        getTrialProfilerMetrics({ labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow,  }: { labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean,  }, options?: any) {
+            return ProfilerApiFp(configuration).getTrialProfilerMetrics({ labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow,  }, options)(fetch, basePath);
         },
     };
 };
@@ -20266,8 +20266,8 @@ export class ProfilerApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProfilerApi
      */
-    public getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any) {
-        return ProfilerApiFp(this.configuration).getTrialProfilerAvailableSeries(trialId, follow, options)(this.fetch, this.basePath);
+    public getTrialProfilerAvailableSeries({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any) {
+        return ProfilerApiFp(this.configuration).getTrialProfilerAvailableSeries({ trialId, follow,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20283,8 +20283,8 @@ export class ProfilerApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProfilerApi
      */
-    public getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean, options?: any) {
-        return ProfilerApiFp(this.configuration).getTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options)(this.fetch, this.basePath);
+    public getTrialProfilerMetrics({ labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow,  }: { labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: string, follow?: boolean,  }, options?: any) {
+        return ProfilerApiFp(this.configuration).getTrialProfilerMetrics({ labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -20302,7 +20302,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addProjectNote(body: V1Note, projectId: number, options: any = {}): FetchArgs {
+        addProjectNote({ body, projectId,  }: { body: V1Note, projectId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling addProjectNote.');
@@ -20347,7 +20347,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveProject(id: number, options: any = {}): FetchArgs {
+        archiveProject({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling archiveProject.');
@@ -20384,7 +20384,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteProject(id: number, options: any = {}): FetchArgs {
+        deleteProject({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling deleteProject.');
@@ -20421,7 +20421,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProject(id: number, options: any = {}): FetchArgs {
+        getProject({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getProject.');
@@ -20459,7 +20459,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveProject(body: V1MoveProjectRequest, projectId: number, options: any = {}): FetchArgs {
+        moveProject({ body, projectId,  }: { body: V1MoveProjectRequest, projectId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling moveProject.');
@@ -20505,7 +20505,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchProject(body: V1PatchProject, id: number, options: any = {}): FetchArgs {
+        patchProject({ body, id,  }: { body: V1PatchProject, id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchProject.');
@@ -20551,7 +20551,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postProject(body: V1PostProjectRequest, workspaceId: number, options: any = {}): FetchArgs {
+        postProject({ body, workspaceId,  }: { body: V1PostProjectRequest, workspaceId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postProject.');
@@ -20597,7 +20597,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putProjectNotes(body: V1PutProjectNotesRequest, projectId: number, options: any = {}): FetchArgs {
+        putProjectNotes({ body, projectId,  }: { body: V1PutProjectNotesRequest, projectId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling putProjectNotes.');
@@ -20642,7 +20642,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveProject(id: number, options: any = {}): FetchArgs {
+        unarchiveProject({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveProject.');
@@ -20689,8 +20689,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addProjectNote(body: V1Note, projectId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddProjectNoteResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).addProjectNote(body, projectId, options);
+        addProjectNote({ body, projectId,  }: { body: V1Note, projectId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddProjectNoteResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).addProjectNote({ body, projectId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20708,8 +20708,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).archiveProject(id, options);
+        archiveProject({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).archiveProject({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20727,8 +20727,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).deleteProject(id, options);
+        deleteProject({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).deleteProject({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20746,8 +20746,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProject(id, options);
+        getProject({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProject({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20766,8 +20766,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveProject(body: V1MoveProjectRequest, projectId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).moveProject(body, projectId, options);
+        moveProject({ body, projectId,  }: { body: V1MoveProjectRequest, projectId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).moveProject({ body, projectId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20786,8 +20786,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchProject(body: V1PatchProject, id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchProject(body, id, options);
+        patchProject({ body, id,  }: { body: V1PatchProject, id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchProject({ body, id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20806,8 +20806,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postProject(body: V1PostProjectRequest, workspaceId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject(body, workspaceId, options);
+        postProject({ body, workspaceId,  }: { body: V1PostProjectRequest, workspaceId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject({ body, workspaceId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20826,8 +20826,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putProjectNotes(body: V1PutProjectNotesRequest, projectId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutProjectNotesResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).putProjectNotes(body, projectId, options);
+        putProjectNotes({ body, projectId,  }: { body: V1PutProjectNotesRequest, projectId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutProjectNotesResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).putProjectNotes({ body, projectId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20845,8 +20845,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).unarchiveProject(id, options);
+        unarchiveProject({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).unarchiveProject({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20874,8 +20874,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        addProjectNote(body: V1Note, projectId: number, options?: any) {
-            return ProjectsApiFp(configuration).addProjectNote(body, projectId, options)(fetch, basePath);
+        addProjectNote({ body, projectId,  }: { body: V1Note, projectId: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).addProjectNote({ body, projectId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20884,8 +20884,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).archiveProject(id, options)(fetch, basePath);
+        archiveProject({ id,  }: { id: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).archiveProject({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20894,8 +20894,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).deleteProject(id, options)(fetch, basePath);
+        deleteProject({ id,  }: { id: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).deleteProject({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20904,8 +20904,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).getProject(id, options)(fetch, basePath);
+        getProject({ id,  }: { id: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).getProject({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20915,8 +20915,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        moveProject(body: V1MoveProjectRequest, projectId: number, options?: any) {
-            return ProjectsApiFp(configuration).moveProject(body, projectId, options)(fetch, basePath);
+        moveProject({ body, projectId,  }: { body: V1MoveProjectRequest, projectId: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).moveProject({ body, projectId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20926,8 +20926,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchProject(body: V1PatchProject, id: number, options?: any) {
-            return ProjectsApiFp(configuration).patchProject(body, id, options)(fetch, basePath);
+        patchProject({ body, id,  }: { body: V1PatchProject, id: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).patchProject({ body, id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20937,8 +20937,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postProject(body: V1PostProjectRequest, workspaceId: number, options?: any) {
-            return ProjectsApiFp(configuration).postProject(body, workspaceId, options)(fetch, basePath);
+        postProject({ body, workspaceId,  }: { body: V1PostProjectRequest, workspaceId: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).postProject({ body, workspaceId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20948,8 +20948,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putProjectNotes(body: V1PutProjectNotesRequest, projectId: number, options?: any) {
-            return ProjectsApiFp(configuration).putProjectNotes(body, projectId, options)(fetch, basePath);
+        putProjectNotes({ body, projectId,  }: { body: V1PutProjectNotesRequest, projectId: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).putProjectNotes({ body, projectId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -20958,8 +20958,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).unarchiveProject(id, options)(fetch, basePath);
+        unarchiveProject({ id,  }: { id: number,  }, options?: any) {
+            return ProjectsApiFp(configuration).unarchiveProject({ id,  }, options)(fetch, basePath);
         },
     };
 };
@@ -20980,8 +20980,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public addProjectNote(body: V1Note, projectId: number, options?: any) {
-        return ProjectsApiFp(this.configuration).addProjectNote(body, projectId, options)(this.fetch, this.basePath);
+    public addProjectNote({ body, projectId,  }: { body: V1Note, projectId: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).addProjectNote({ body, projectId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20992,8 +20992,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public archiveProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).archiveProject(id, options)(this.fetch, this.basePath);
+    public archiveProject({ id,  }: { id: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).archiveProject({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21004,8 +21004,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public deleteProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).deleteProject(id, options)(this.fetch, this.basePath);
+    public deleteProject({ id,  }: { id: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).deleteProject({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21016,8 +21016,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public getProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath);
+    public getProject({ id,  }: { id: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).getProject({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21029,8 +21029,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public moveProject(body: V1MoveProjectRequest, projectId: number, options?: any) {
-        return ProjectsApiFp(this.configuration).moveProject(body, projectId, options)(this.fetch, this.basePath);
+    public moveProject({ body, projectId,  }: { body: V1MoveProjectRequest, projectId: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).moveProject({ body, projectId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21042,8 +21042,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public patchProject(body: V1PatchProject, id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).patchProject(body, id, options)(this.fetch, this.basePath);
+    public patchProject({ body, id,  }: { body: V1PatchProject, id: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).patchProject({ body, id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21055,8 +21055,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public postProject(body: V1PostProjectRequest, workspaceId: number, options?: any) {
-        return ProjectsApiFp(this.configuration).postProject(body, workspaceId, options)(this.fetch, this.basePath);
+    public postProject({ body, workspaceId,  }: { body: V1PostProjectRequest, workspaceId: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).postProject({ body, workspaceId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21068,8 +21068,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public putProjectNotes(body: V1PutProjectNotesRequest, projectId: number, options?: any) {
-        return ProjectsApiFp(this.configuration).putProjectNotes(body, projectId, options)(this.fetch, this.basePath);
+    public putProjectNotes({ body, projectId,  }: { body: V1PutProjectNotesRequest, projectId: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).putProjectNotes({ body, projectId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21080,8 +21080,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public unarchiveProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).unarchiveProject(id, options)(this.fetch, this.basePath);
+    public unarchiveProject({ id,  }: { id: number,  }, options?: any) {
+        return ProjectsApiFp(this.configuration).unarchiveProject({ id,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -21098,7 +21098,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        assignRoles(body: V1AssignRolesRequest, options: any = {}): FetchArgs {
+        assignRoles({ body,  }: { body: V1AssignRolesRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling assignRoles.');
@@ -21139,7 +21139,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options: any = {}): FetchArgs {
+        getGroupsAndUsersAssignedToWorkspace({ workspaceId, name,  }: { workspaceId: number, name?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'workspaceId' is not null or undefined
             if (workspaceId === null || workspaceId === undefined) {
                 throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling getGroupsAndUsersAssignedToWorkspace.');
@@ -21179,7 +21179,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getPermissionsSummary(options: any = {}): FetchArgs {
+        getPermissionsSummary({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/permissions/summary`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -21211,7 +21211,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesAssignedToGroup(groupId: number, options: any = {}): FetchArgs {
+        getRolesAssignedToGroup({ groupId,  }: { groupId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'groupId' is not null or undefined
             if (groupId === null || groupId === undefined) {
                 throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getRolesAssignedToGroup.');
@@ -21248,7 +21248,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesAssignedToUser(userId: number, options: any = {}): FetchArgs {
+        getRolesAssignedToUser({ userId,  }: { userId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
                 throw new RequiredError('userId','Required parameter userId was null or undefined when calling getRolesAssignedToUser.');
@@ -21285,7 +21285,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesByID(body: V1GetRolesByIDRequest, options: any = {}): FetchArgs {
+        getRolesByID({ body,  }: { body: V1GetRolesByIDRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling getRolesByID.');
@@ -21325,7 +21325,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listRoles(body: V1ListRolesRequest, options: any = {}): FetchArgs {
+        listRoles({ body,  }: { body: V1ListRolesRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling listRoles.');
@@ -21365,7 +21365,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        removeAssignments(body: V1RemoveAssignmentsRequest, options: any = {}): FetchArgs {
+        removeAssignments({ body,  }: { body: V1RemoveAssignmentsRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling removeAssignments.');
@@ -21405,7 +21405,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options: any = {}): FetchArgs {
+        searchRolesAssignableToScope({ body,  }: { body: V1SearchRolesAssignableToScopeRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling searchRolesAssignableToScope.');
@@ -21454,8 +21454,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        assignRoles(body: V1AssignRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignRolesResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).assignRoles(body, options);
+        assignRoles({ body,  }: { body: V1AssignRolesRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).assignRoles({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21474,8 +21474,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options);
+        getGroupsAndUsersAssignedToWorkspace({ workspaceId, name,  }: { workspaceId: number, name?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getGroupsAndUsersAssignedToWorkspace({ workspaceId, name,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21492,8 +21492,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getPermissionsSummary(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getPermissionsSummary(options);
+        getPermissionsSummary({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getPermissionsSummary({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21511,8 +21511,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesAssignedToGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToGroupResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToGroup(groupId, options);
+        getRolesAssignedToGroup({ groupId,  }: { groupId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToGroupResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToGroup({ groupId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21530,8 +21530,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesAssignedToUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToUserResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToUser(userId, options);
+        getRolesAssignedToUser({ userId,  }: { userId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToUserResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToUser({ userId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21549,8 +21549,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesByID(body: V1GetRolesByIDRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesByIDResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesByID(body, options);
+        getRolesByID({ body,  }: { body: V1GetRolesByIDRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesByIDResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesByID({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21568,8 +21568,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listRoles(body: V1ListRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRolesResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).listRoles(body, options);
+        listRoles({ body,  }: { body: V1ListRolesRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).listRoles({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21587,8 +21587,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveAssignmentsResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).removeAssignments(body, options);
+        removeAssignments({ body,  }: { body: V1RemoveAssignmentsRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveAssignmentsResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).removeAssignments({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21606,8 +21606,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRolesAssignableToScopeResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).searchRolesAssignableToScope(body, options);
+        searchRolesAssignableToScope({ body,  }: { body: V1SearchRolesAssignableToScopeRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRolesAssignableToScopeResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).searchRolesAssignableToScope({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21634,8 +21634,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        assignRoles(body: V1AssignRolesRequest, options?: any) {
-            return RBACApiFp(configuration).assignRoles(body, options)(fetch, basePath);
+        assignRoles({ body,  }: { body: V1AssignRolesRequest,  }, options?: any) {
+            return RBACApiFp(configuration).assignRoles({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21645,8 +21645,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
-            return RBACApiFp(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(fetch, basePath);
+        getGroupsAndUsersAssignedToWorkspace({ workspaceId, name,  }: { workspaceId: number, name?: string,  }, options?: any) {
+            return RBACApiFp(configuration).getGroupsAndUsersAssignedToWorkspace({ workspaceId, name,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21654,8 +21654,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getPermissionsSummary(options?: any) {
-            return RBACApiFp(configuration).getPermissionsSummary(options)(fetch, basePath);
+        getPermissionsSummary({  }: {  }, options?: any) {
+            return RBACApiFp(configuration).getPermissionsSummary({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21664,8 +21664,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesAssignedToGroup(groupId: number, options?: any) {
-            return RBACApiFp(configuration).getRolesAssignedToGroup(groupId, options)(fetch, basePath);
+        getRolesAssignedToGroup({ groupId,  }: { groupId: number,  }, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToGroup({ groupId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21674,8 +21674,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesAssignedToUser(userId: number, options?: any) {
-            return RBACApiFp(configuration).getRolesAssignedToUser(userId, options)(fetch, basePath);
+        getRolesAssignedToUser({ userId,  }: { userId: number,  }, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToUser({ userId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21684,8 +21684,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
-            return RBACApiFp(configuration).getRolesByID(body, options)(fetch, basePath);
+        getRolesByID({ body,  }: { body: V1GetRolesByIDRequest,  }, options?: any) {
+            return RBACApiFp(configuration).getRolesByID({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21694,8 +21694,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listRoles(body: V1ListRolesRequest, options?: any) {
-            return RBACApiFp(configuration).listRoles(body, options)(fetch, basePath);
+        listRoles({ body,  }: { body: V1ListRolesRequest,  }, options?: any) {
+            return RBACApiFp(configuration).listRoles({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21704,8 +21704,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
-            return RBACApiFp(configuration).removeAssignments(body, options)(fetch, basePath);
+        removeAssignments({ body,  }: { body: V1RemoveAssignmentsRequest,  }, options?: any) {
+            return RBACApiFp(configuration).removeAssignments({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -21714,8 +21714,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
-            return RBACApiFp(configuration).searchRolesAssignableToScope(body, options)(fetch, basePath);
+        searchRolesAssignableToScope({ body,  }: { body: V1SearchRolesAssignableToScopeRequest,  }, options?: any) {
+            return RBACApiFp(configuration).searchRolesAssignableToScope({ body,  }, options)(fetch, basePath);
         },
     };
 };
@@ -21735,8 +21735,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public assignRoles(body: V1AssignRolesRequest, options?: any) {
-        return RBACApiFp(this.configuration).assignRoles(body, options)(this.fetch, this.basePath);
+    public assignRoles({ body,  }: { body: V1AssignRolesRequest,  }, options?: any) {
+        return RBACApiFp(this.configuration).assignRoles({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21748,8 +21748,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
-        return RBACApiFp(this.configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(this.fetch, this.basePath);
+    public getGroupsAndUsersAssignedToWorkspace({ workspaceId, name,  }: { workspaceId: number, name?: string,  }, options?: any) {
+        return RBACApiFp(this.configuration).getGroupsAndUsersAssignedToWorkspace({ workspaceId, name,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21759,8 +21759,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public getPermissionsSummary(options?: any) {
-        return RBACApiFp(this.configuration).getPermissionsSummary(options)(this.fetch, this.basePath);
+    public getPermissionsSummary({  }: {  }, options?: any) {
+        return RBACApiFp(this.configuration).getPermissionsSummary({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21771,8 +21771,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public getRolesAssignedToGroup(groupId: number, options?: any) {
-        return RBACApiFp(this.configuration).getRolesAssignedToGroup(groupId, options)(this.fetch, this.basePath);
+    public getRolesAssignedToGroup({ groupId,  }: { groupId: number,  }, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToGroup({ groupId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21783,8 +21783,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public getRolesAssignedToUser(userId: number, options?: any) {
-        return RBACApiFp(this.configuration).getRolesAssignedToUser(userId, options)(this.fetch, this.basePath);
+    public getRolesAssignedToUser({ userId,  }: { userId: number,  }, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToUser({ userId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21795,8 +21795,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
-        return RBACApiFp(this.configuration).getRolesByID(body, options)(this.fetch, this.basePath);
+    public getRolesByID({ body,  }: { body: V1GetRolesByIDRequest,  }, options?: any) {
+        return RBACApiFp(this.configuration).getRolesByID({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21807,8 +21807,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public listRoles(body: V1ListRolesRequest, options?: any) {
-        return RBACApiFp(this.configuration).listRoles(body, options)(this.fetch, this.basePath);
+    public listRoles({ body,  }: { body: V1ListRolesRequest,  }, options?: any) {
+        return RBACApiFp(this.configuration).listRoles({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21819,8 +21819,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
-        return RBACApiFp(this.configuration).removeAssignments(body, options)(this.fetch, this.basePath);
+    public removeAssignments({ body,  }: { body: V1RemoveAssignmentsRequest,  }, options?: any) {
+        return RBACApiFp(this.configuration).removeAssignments({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21831,8 +21831,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
-        return RBACApiFp(this.configuration).searchRolesAssignableToScope(body, options)(this.fetch, this.basePath);
+    public searchRolesAssignableToScope({ body,  }: { body: V1SearchRolesAssignableToScopeRequest,  }, options?: any) {
+        return RBACApiFp(this.configuration).searchRolesAssignableToScope({ body,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -21849,7 +21849,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShell(shellId: string, options: any = {}): FetchArgs {
+        getShell({ shellId,  }: { shellId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'shellId' is not null or undefined
             if (shellId === null || shellId === undefined) {
                 throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling getShell.');
@@ -21891,7 +21891,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShells(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getShells({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/shells`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -21947,7 +21947,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killShell(shellId: string, options: any = {}): FetchArgs {
+        killShell({ shellId,  }: { shellId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'shellId' is not null or undefined
             if (shellId === null || shellId === undefined) {
                 throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling killShell.');
@@ -21984,7 +21984,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchShell(body: V1LaunchShellRequest, options: any = {}): FetchArgs {
+        launchShell({ body,  }: { body: V1LaunchShellRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchShell.');
@@ -22025,7 +22025,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setShellPriority(body: V1SetShellPriorityRequest, shellId: string, options: any = {}): FetchArgs {
+        setShellPriority({ body, shellId,  }: { body: V1SetShellPriorityRequest, shellId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setShellPriority.');
@@ -22079,8 +22079,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShell(shellId, options);
+        getShell({ shellId,  }: { shellId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShell({ shellId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22103,8 +22103,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShells(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options);
+        getShells({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShells({ sortBy, orderBy, offset, limit, users, userIds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22122,8 +22122,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillShellResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).killShell(shellId, options);
+        killShell({ shellId,  }: { shellId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillShellResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).killShell({ shellId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22141,8 +22141,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchShell(body: V1LaunchShellRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchShellResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).launchShell(body, options);
+        launchShell({ body,  }: { body: V1LaunchShellRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchShellResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).launchShell({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22161,8 +22161,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setShellPriority(body: V1SetShellPriorityRequest, shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetShellPriorityResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).setShellPriority(body, shellId, options);
+        setShellPriority({ body, shellId,  }: { body: V1SetShellPriorityRequest, shellId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetShellPriorityResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).setShellPriority({ body, shellId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22189,8 +22189,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShell(shellId: string, options?: any) {
-            return ShellsApiFp(configuration).getShell(shellId, options)(fetch, basePath);
+        getShell({ shellId,  }: { shellId: string,  }, options?: any) {
+            return ShellsApiFp(configuration).getShell({ shellId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -22204,8 +22204,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShells(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return ShellsApiFp(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getShells({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+            return ShellsApiFp(configuration).getShells({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -22214,8 +22214,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killShell(shellId: string, options?: any) {
-            return ShellsApiFp(configuration).killShell(shellId, options)(fetch, basePath);
+        killShell({ shellId,  }: { shellId: string,  }, options?: any) {
+            return ShellsApiFp(configuration).killShell({ shellId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -22224,8 +22224,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchShell(body: V1LaunchShellRequest, options?: any) {
-            return ShellsApiFp(configuration).launchShell(body, options)(fetch, basePath);
+        launchShell({ body,  }: { body: V1LaunchShellRequest,  }, options?: any) {
+            return ShellsApiFp(configuration).launchShell({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -22235,8 +22235,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setShellPriority(body: V1SetShellPriorityRequest, shellId: string, options?: any) {
-            return ShellsApiFp(configuration).setShellPriority(body, shellId, options)(fetch, basePath);
+        setShellPriority({ body, shellId,  }: { body: V1SetShellPriorityRequest, shellId: string,  }, options?: any) {
+            return ShellsApiFp(configuration).setShellPriority({ body, shellId,  }, options)(fetch, basePath);
         },
     };
 };
@@ -22256,8 +22256,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public getShell(shellId: string, options?: any) {
-        return ShellsApiFp(this.configuration).getShell(shellId, options)(this.fetch, this.basePath);
+    public getShell({ shellId,  }: { shellId: string,  }, options?: any) {
+        return ShellsApiFp(this.configuration).getShell({ shellId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22273,8 +22273,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public getShells(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return ShellsApiFp(this.configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getShells({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+        return ShellsApiFp(this.configuration).getShells({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22285,8 +22285,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public killShell(shellId: string, options?: any) {
-        return ShellsApiFp(this.configuration).killShell(shellId, options)(this.fetch, this.basePath);
+    public killShell({ shellId,  }: { shellId: string,  }, options?: any) {
+        return ShellsApiFp(this.configuration).killShell({ shellId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22297,8 +22297,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public launchShell(body: V1LaunchShellRequest, options?: any) {
-        return ShellsApiFp(this.configuration).launchShell(body, options)(this.fetch, this.basePath);
+    public launchShell({ body,  }: { body: V1LaunchShellRequest,  }, options?: any) {
+        return ShellsApiFp(this.configuration).launchShell({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22310,8 +22310,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public setShellPriority(body: V1SetShellPriorityRequest, shellId: string, options?: any) {
-        return ShellsApiFp(this.configuration).setShellPriority(body, shellId, options)(this.fetch, this.basePath);
+    public setShellPriority({ body, shellId,  }: { body: V1SetShellPriorityRequest, shellId: string,  }, options?: any) {
+        return ShellsApiFp(this.configuration).setShellPriority({ body, shellId,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -22327,7 +22327,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getActiveTasksCount(options: any = {}): FetchArgs {
+        getActiveTasksCount({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tasks/count`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -22359,7 +22359,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTask(taskId: string, options: any = {}): FetchArgs {
+        getTask({ taskId,  }: { taskId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTask.');
@@ -22409,7 +22409,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options: any = {}): FetchArgs {
+        taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
@@ -22499,7 +22499,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogsFields(taskId: string, follow?: boolean, options: any = {}): FetchArgs {
+        taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
                 throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogsFields.');
@@ -22548,8 +22548,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getActiveTasksCount(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetActiveTasksCountResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getActiveTasksCount(options);
+        getActiveTasksCount({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetActiveTasksCountResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getActiveTasksCount({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22567,8 +22567,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask(taskId, options);
+        getTask({ taskId,  }: { taskId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask({ taskId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22599,8 +22599,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22619,8 +22619,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogsFields(taskId, follow, options);
+        taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogsFields({ taskId, follow,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22646,8 +22646,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getActiveTasksCount(options?: any) {
-            return TasksApiFp(configuration).getActiveTasksCount(options)(fetch, basePath);
+        getActiveTasksCount({  }: {  }, options?: any) {
+            return TasksApiFp(configuration).getActiveTasksCount({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -22656,8 +22656,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTask(taskId: string, options?: any) {
-            return TasksApiFp(configuration).getTask(taskId, options)(fetch, basePath);
+        getTask({ taskId,  }: { taskId: string,  }, options?: any) {
+            return TasksApiFp(configuration).getTask({ taskId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -22679,8 +22679,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-            return TasksApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+            return TasksApiFp(configuration).taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -22690,8 +22690,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        taskLogsFields(taskId: string, follow?: boolean, options?: any) {
-            return TasksApiFp(configuration).taskLogsFields(taskId, follow, options)(fetch, basePath);
+        taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options?: any) {
+            return TasksApiFp(configuration).taskLogsFields({ taskId, follow,  }, options)(fetch, basePath);
         },
     };
 };
@@ -22710,8 +22710,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public getActiveTasksCount(options?: any) {
-        return TasksApiFp(this.configuration).getActiveTasksCount(options)(this.fetch, this.basePath);
+    public getActiveTasksCount({  }: {  }, options?: any) {
+        return TasksApiFp(this.configuration).getActiveTasksCount({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22722,8 +22722,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public getTask(taskId: string, options?: any) {
-        return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath);
+    public getTask({ taskId,  }: { taskId: string,  }, options?: any) {
+        return TasksApiFp(this.configuration).getTask({ taskId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22747,8 +22747,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-        return TasksApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+        return TasksApiFp(this.configuration).taskLogs({ taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22760,8 +22760,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public taskLogsFields(taskId: string, follow?: boolean, options?: any) {
-        return TasksApiFp(this.configuration).taskLogsFields(taskId, follow, options)(this.fetch, this.basePath);
+    public taskLogsFields({ taskId, follow,  }: { taskId: string, follow?: boolean,  }, options?: any) {
+        return TasksApiFp(this.configuration).taskLogsFields({ taskId, follow,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -22778,7 +22778,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTemplate(templateName: string, options: any = {}): FetchArgs {
+        deleteTemplate({ templateName,  }: { templateName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'templateName' is not null or undefined
             if (templateName === null || templateName === undefined) {
                 throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling deleteTemplate.');
@@ -22815,7 +22815,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplate(templateName: string, options: any = {}): FetchArgs {
+        getTemplate({ templateName,  }: { templateName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'templateName' is not null or undefined
             if (templateName === null || templateName === undefined) {
                 throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling getTemplate.');
@@ -22856,7 +22856,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
+        getTemplates({ sortBy, orderBy, offset, limit, name,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/templates`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -22909,7 +22909,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putTemplate(body: V1Template, templateName: string, options: any = {}): FetchArgs {
+        putTemplate({ body, templateName,  }: { body: V1Template, templateName: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling putTemplate.');
@@ -22963,8 +22963,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTemplateResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).deleteTemplate(templateName, options);
+        deleteTemplate({ templateName,  }: { templateName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).deleteTemplate({ templateName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22982,8 +22982,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplateResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplate(templateName, options);
+        getTemplate({ templateName,  }: { templateName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplate({ templateName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23005,8 +23005,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options);
+        getTemplates({ sortBy, orderBy, offset, limit, name,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates({ sortBy, orderBy, offset, limit, name,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23025,8 +23025,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putTemplate(body: V1Template, templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTemplateResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).putTemplate(body, templateName, options);
+        putTemplate({ body, templateName,  }: { body: V1Template, templateName: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).putTemplate({ body, templateName,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23053,8 +23053,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTemplate(templateName: string, options?: any) {
-            return TemplatesApiFp(configuration).deleteTemplate(templateName, options)(fetch, basePath);
+        deleteTemplate({ templateName,  }: { templateName: string,  }, options?: any) {
+            return TemplatesApiFp(configuration).deleteTemplate({ templateName,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -23063,8 +23063,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplate(templateName: string, options?: any) {
-            return TemplatesApiFp(configuration).getTemplate(templateName, options)(fetch, basePath);
+        getTemplate({ templateName,  }: { templateName: string,  }, options?: any) {
+            return TemplatesApiFp(configuration).getTemplate({ templateName,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -23077,8 +23077,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTemplates(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, options?: any) {
-            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
+        getTemplates({ sortBy, orderBy, offset, limit, name,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string,  }, options?: any) {
+            return TemplatesApiFp(configuration).getTemplates({ sortBy, orderBy, offset, limit, name,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -23088,8 +23088,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putTemplate(body: V1Template, templateName: string, options?: any) {
-            return TemplatesApiFp(configuration).putTemplate(body, templateName, options)(fetch, basePath);
+        putTemplate({ body, templateName,  }: { body: V1Template, templateName: string,  }, options?: any) {
+            return TemplatesApiFp(configuration).putTemplate({ body, templateName,  }, options)(fetch, basePath);
         },
     };
 };
@@ -23109,8 +23109,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public deleteTemplate(templateName: string, options?: any) {
-        return TemplatesApiFp(this.configuration).deleteTemplate(templateName, options)(this.fetch, this.basePath);
+    public deleteTemplate({ templateName,  }: { templateName: string,  }, options?: any) {
+        return TemplatesApiFp(this.configuration).deleteTemplate({ templateName,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23121,8 +23121,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public getTemplate(templateName: string, options?: any) {
-        return TemplatesApiFp(this.configuration).getTemplate(templateName, options)(this.fetch, this.basePath);
+    public getTemplate({ templateName,  }: { templateName: string,  }, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplate({ templateName,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23137,8 +23137,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public getTemplates(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, options?: any) {
-        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath);
+    public getTemplates({ sortBy, orderBy, offset, limit, name,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string,  }, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplates({ sortBy, orderBy, offset, limit, name,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23150,8 +23150,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public putTemplate(body: V1Template, templateName: string, options?: any) {
-        return TemplatesApiFp(this.configuration).putTemplate(body, templateName, options)(this.fetch, this.basePath);
+    public putTemplate({ body, templateName,  }: { body: V1Template, templateName: string,  }, options?: any) {
+        return TemplatesApiFp(this.configuration).putTemplate({ body, templateName,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -23168,7 +23168,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboard(tensorboardId: string, options: any = {}): FetchArgs {
+        getTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'tensorboardId' is not null or undefined
             if (tensorboardId === null || tensorboardId === undefined) {
                 throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling getTensorboard.');
@@ -23210,7 +23210,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboards(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getTensorboards({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tensorboards`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -23266,7 +23266,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTensorboard(tensorboardId: string, options: any = {}): FetchArgs {
+        killTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'tensorboardId' is not null or undefined
             if (tensorboardId === null || tensorboardId === undefined) {
                 throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling killTensorboard.');
@@ -23303,7 +23303,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchTensorboard(body: V1LaunchTensorboardRequest, options: any = {}): FetchArgs {
+        launchTensorboard({ body,  }: { body: V1LaunchTensorboardRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling launchTensorboard.');
@@ -23344,7 +23344,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setTensorboardPriority(body: V1SetTensorboardPriorityRequest, tensorboardId: string, options: any = {}): FetchArgs {
+        setTensorboardPriority({ body, tensorboardId,  }: { body: V1SetTensorboardPriorityRequest, tensorboardId: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setTensorboardPriority.');
@@ -23398,8 +23398,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboard(tensorboardId, options);
+        getTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboard({ tensorboardId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23422,8 +23422,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboards(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardsResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, options);
+        getTensorboards({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardsResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboards({ sortBy, orderBy, offset, limit, users, userIds,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23441,8 +23441,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTensorboardResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).killTensorboard(tensorboardId, options);
+        killTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTensorboardResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).killTensorboard({ tensorboardId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23460,8 +23460,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchTensorboard(body: V1LaunchTensorboardRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchTensorboardResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).launchTensorboard(body, options);
+        launchTensorboard({ body,  }: { body: V1LaunchTensorboardRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchTensorboardResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).launchTensorboard({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23480,8 +23480,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setTensorboardPriority(body: V1SetTensorboardPriorityRequest, tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetTensorboardPriorityResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).setTensorboardPriority(body, tensorboardId, options);
+        setTensorboardPriority({ body, tensorboardId,  }: { body: V1SetTensorboardPriorityRequest, tensorboardId: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetTensorboardPriorityResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).setTensorboardPriority({ body, tensorboardId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23508,8 +23508,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboard(tensorboardId: string, options?: any) {
-            return TensorboardsApiFp(configuration).getTensorboard(tensorboardId, options)(fetch, basePath);
+        getTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options?: any) {
+            return TensorboardsApiFp(configuration).getTensorboard({ tensorboardId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -23523,8 +23523,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboards(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return TensorboardsApiFp(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getTensorboards({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+            return TensorboardsApiFp(configuration).getTensorboards({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -23533,8 +23533,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTensorboard(tensorboardId: string, options?: any) {
-            return TensorboardsApiFp(configuration).killTensorboard(tensorboardId, options)(fetch, basePath);
+        killTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options?: any) {
+            return TensorboardsApiFp(configuration).killTensorboard({ tensorboardId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -23543,8 +23543,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        launchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
-            return TensorboardsApiFp(configuration).launchTensorboard(body, options)(fetch, basePath);
+        launchTensorboard({ body,  }: { body: V1LaunchTensorboardRequest,  }, options?: any) {
+            return TensorboardsApiFp(configuration).launchTensorboard({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -23554,8 +23554,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setTensorboardPriority(body: V1SetTensorboardPriorityRequest, tensorboardId: string, options?: any) {
-            return TensorboardsApiFp(configuration).setTensorboardPriority(body, tensorboardId, options)(fetch, basePath);
+        setTensorboardPriority({ body, tensorboardId,  }: { body: V1SetTensorboardPriorityRequest, tensorboardId: string,  }, options?: any) {
+            return TensorboardsApiFp(configuration).setTensorboardPriority({ body, tensorboardId,  }, options)(fetch, basePath);
         },
     };
 };
@@ -23575,8 +23575,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public getTensorboard(tensorboardId: string, options?: any) {
-        return TensorboardsApiFp(this.configuration).getTensorboard(tensorboardId, options)(this.fetch, this.basePath);
+    public getTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options?: any) {
+        return TensorboardsApiFp(this.configuration).getTensorboard({ tensorboardId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23592,8 +23592,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public getTensorboards(sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return TensorboardsApiFp(this.configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getTensorboards({ sortBy, orderBy, offset, limit, users, userIds,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>,  }, options?: any) {
+        return TensorboardsApiFp(this.configuration).getTensorboards({ sortBy, orderBy, offset, limit, users, userIds,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23604,8 +23604,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public killTensorboard(tensorboardId: string, options?: any) {
-        return TensorboardsApiFp(this.configuration).killTensorboard(tensorboardId, options)(this.fetch, this.basePath);
+    public killTensorboard({ tensorboardId,  }: { tensorboardId: string,  }, options?: any) {
+        return TensorboardsApiFp(this.configuration).killTensorboard({ tensorboardId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23616,8 +23616,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public launchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
-        return TensorboardsApiFp(this.configuration).launchTensorboard(body, options)(this.fetch, this.basePath);
+    public launchTensorboard({ body,  }: { body: V1LaunchTensorboardRequest,  }, options?: any) {
+        return TensorboardsApiFp(this.configuration).launchTensorboard({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23629,8 +23629,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public setTensorboardPriority(body: V1SetTensorboardPriorityRequest, tensorboardId: string, options?: any) {
-        return TensorboardsApiFp(this.configuration).setTensorboardPriority(body, tensorboardId, options)(this.fetch, this.basePath);
+    public setTensorboardPriority({ body, tensorboardId,  }: { body: V1SetTensorboardPriorityRequest, tensorboardId: string,  }, options?: any) {
+        return TensorboardsApiFp(this.configuration).setTensorboardPriority({ body, tensorboardId,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -23647,7 +23647,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options: any = {}): FetchArgs {
+        createTrialsCollection({ body,  }: { body: V1CreateTrialsCollectionRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialsCollection.');
@@ -23687,7 +23687,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTrialsCollection(id?: number, options: any = {}): FetchArgs {
+        deleteTrialsCollection({ id,  }: { id?: number,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
@@ -23723,7 +23723,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialsCollections(projectId?: number, options: any = {}): FetchArgs {
+        getTrialsCollections({ projectId,  }: { projectId?: number,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -23759,7 +23759,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options: any = {}): FetchArgs {
+        patchTrialsCollection({ body,  }: { body: V1PatchTrialsCollectionRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
@@ -23799,7 +23799,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+        queryTrials({ body,  }: { body: V1QueryTrialsRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
@@ -23839,7 +23839,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTrialTags(body: V1UpdateTrialTagsRequest, options: any = {}): FetchArgs {
+        updateTrialTags({ body,  }: { body: V1UpdateTrialTagsRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling updateTrialTags.');
@@ -23888,8 +23888,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).createTrialsCollection(body, options);
+        createTrialsCollection({ body,  }: { body: V1CreateTrialsCollectionRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).createTrialsCollection({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23907,8 +23907,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTrialsCollection(id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).deleteTrialsCollection(id, options);
+        deleteTrialsCollection({ id,  }: { id?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).deleteTrialsCollection({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23926,8 +23926,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialsCollections(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).getTrialsCollections(projectId, options);
+        getTrialsCollections({ projectId,  }: { projectId?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).getTrialsCollections({ projectId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23945,8 +23945,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrialsCollection(body, options);
+        patchTrialsCollection({ body,  }: { body: V1PatchTrialsCollectionRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrialsCollection({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23964,8 +23964,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).queryTrials(body, options);
+        queryTrials({ body,  }: { body: V1QueryTrialsRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).queryTrials({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23983,8 +23983,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTrialTags(body: V1UpdateTrialTagsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateTrialTagsResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).updateTrialTags(body, options);
+        updateTrialTags({ body,  }: { body: V1UpdateTrialTagsRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateTrialTagsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).updateTrialTags({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24011,8 +24011,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).createTrialsCollection(body, options)(fetch, basePath);
+        createTrialsCollection({ body,  }: { body: V1CreateTrialsCollectionRequest,  }, options?: any) {
+            return TrialComparisonApiFp(configuration).createTrialsCollection({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24021,8 +24021,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteTrialsCollection(id?: number, options?: any) {
-            return TrialComparisonApiFp(configuration).deleteTrialsCollection(id, options)(fetch, basePath);
+        deleteTrialsCollection({ id,  }: { id?: number,  }, options?: any) {
+            return TrialComparisonApiFp(configuration).deleteTrialsCollection({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24031,8 +24031,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialsCollections(projectId?: number, options?: any) {
-            return TrialComparisonApiFp(configuration).getTrialsCollections(projectId, options)(fetch, basePath);
+        getTrialsCollections({ projectId,  }: { projectId?: number,  }, options?: any) {
+            return TrialComparisonApiFp(configuration).getTrialsCollections({ projectId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24041,8 +24041,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).patchTrialsCollection(body, options)(fetch, basePath);
+        patchTrialsCollection({ body,  }: { body: V1PatchTrialsCollectionRequest,  }, options?: any) {
+            return TrialComparisonApiFp(configuration).patchTrialsCollection({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24051,8 +24051,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        queryTrials(body: V1QueryTrialsRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).queryTrials(body, options)(fetch, basePath);
+        queryTrials({ body,  }: { body: V1QueryTrialsRequest,  }, options?: any) {
+            return TrialComparisonApiFp(configuration).queryTrials({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24061,8 +24061,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        updateTrialTags(body: V1UpdateTrialTagsRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).updateTrialTags(body, options)(fetch, basePath);
+        updateTrialTags({ body,  }: { body: V1UpdateTrialTagsRequest,  }, options?: any) {
+            return TrialComparisonApiFp(configuration).updateTrialTags({ body,  }, options)(fetch, basePath);
         },
     };
 };
@@ -24082,8 +24082,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).createTrialsCollection(body, options)(this.fetch, this.basePath);
+    public createTrialsCollection({ body,  }: { body: V1CreateTrialsCollectionRequest,  }, options?: any) {
+        return TrialComparisonApiFp(this.configuration).createTrialsCollection({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24094,8 +24094,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public deleteTrialsCollection(id?: number, options?: any) {
-        return TrialComparisonApiFp(this.configuration).deleteTrialsCollection(id, options)(this.fetch, this.basePath);
+    public deleteTrialsCollection({ id,  }: { id?: number,  }, options?: any) {
+        return TrialComparisonApiFp(this.configuration).deleteTrialsCollection({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24106,8 +24106,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public getTrialsCollections(projectId?: number, options?: any) {
-        return TrialComparisonApiFp(this.configuration).getTrialsCollections(projectId, options)(this.fetch, this.basePath);
+    public getTrialsCollections({ projectId,  }: { projectId?: number,  }, options?: any) {
+        return TrialComparisonApiFp(this.configuration).getTrialsCollections({ projectId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24118,8 +24118,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).patchTrialsCollection(body, options)(this.fetch, this.basePath);
+    public patchTrialsCollection({ body,  }: { body: V1PatchTrialsCollectionRequest,  }, options?: any) {
+        return TrialComparisonApiFp(this.configuration).patchTrialsCollection({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24130,8 +24130,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public queryTrials(body: V1QueryTrialsRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
+    public queryTrials({ body,  }: { body: V1QueryTrialsRequest,  }, options?: any) {
+        return TrialComparisonApiFp(this.configuration).queryTrials({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24142,8 +24142,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public updateTrialTags(body: V1UpdateTrialTagsRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).updateTrialTags(body, options)(this.fetch, this.basePath);
+    public updateTrialTags({ body,  }: { body: V1UpdateTrialTagsRequest,  }, options?: any) {
+        return TrialComparisonApiFp(this.configuration).updateTrialTags({ body,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -24165,7 +24165,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options: any = {}): FetchArgs {
+        getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
                 throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentTrials.');
@@ -24222,7 +24222,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrial(trialId: number, options: any = {}): FetchArgs {
+        getTrial({ trialId,  }: { trialId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrial.');
@@ -24266,7 +24266,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options: any = {}): FetchArgs {
+        getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
@@ -24331,7 +24331,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTrial(id: number, options: any = {}): FetchArgs {
+        killTrial({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling killTrial.');
@@ -24374,7 +24374,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options: any = {}): FetchArgs {
+        summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
@@ -24447,7 +24447,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options: any = {}): FetchArgs {
+        trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
@@ -24533,7 +24533,7 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
+        trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogsFields.');
@@ -24588,8 +24588,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
+        getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24607,8 +24607,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrial(trialId, options);
+        getTrial({ trialId,  }: { trialId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrial({ trialId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24633,8 +24633,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
+        getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24652,8 +24652,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).killTrial(id, options);
+        killTrial({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).killTrial({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24677,8 +24677,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
+        summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24708,8 +24708,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24728,8 +24728,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
+        trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogsFields({ trialId, follow,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24761,8 +24761,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-            return TrialsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+            return TrialsApiFp(configuration).getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24771,8 +24771,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrial(trialId: number, options?: any) {
-            return TrialsApiFp(configuration).getTrial(trialId, options)(fetch, basePath);
+        getTrial({ trialId,  }: { trialId: number,  }, options?: any) {
+            return TrialsApiFp(configuration).getTrial({ trialId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24788,8 +24788,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options?: any) {
-            return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
+        getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options?: any) {
+            return TrialsApiFp(configuration).getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24798,8 +24798,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        killTrial(id: number, options?: any) {
-            return TrialsApiFp(configuration).killTrial(id, options)(fetch, basePath);
+        killTrial({ id,  }: { id: number,  }, options?: any) {
+            return TrialsApiFp(configuration).killTrial({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24814,8 +24814,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any) {
-            return TrialsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
+        summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any) {
+            return TrialsApiFp(configuration).summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24836,8 +24836,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-            return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+            return TrialsApiFp(configuration).trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -24847,8 +24847,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-            return TrialsApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
+        trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any) {
+            return TrialsApiFp(configuration).trialLogsFields({ trialId, follow,  }, options)(fetch, basePath);
         },
     };
 };
@@ -24873,8 +24873,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public getExperimentTrials(experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>, options?: any) {
-        return TrialsApiFp(this.configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }: { experimentId: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, states?: Array<string>,  }, options?: any) {
+        return TrialsApiFp(this.configuration).getExperimentTrials({ experimentId, sortBy, orderBy, offset, limit, states,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24885,8 +24885,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public getTrial(trialId: number, options?: any) {
-        return TrialsApiFp(this.configuration).getTrial(trialId, options)(this.fetch, this.basePath);
+    public getTrial({ trialId,  }: { trialId: number,  }, options?: any) {
+        return TrialsApiFp(this.configuration).getTrial({ trialId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24904,8 +24904,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public getTrialWorkloads(trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string, options?: any) {
-        return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath);
+    public getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }: { trialId: number, orderBy?: string, offset?: number, limit?: number, sortKey?: string, filter?: string, includeBatchMetrics?: boolean, metricType?: string,  }, options?: any) {
+        return TrialsApiFp(this.configuration).getTrialWorkloads({ trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24916,8 +24916,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public killTrial(id: number, options?: any) {
-        return TrialsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
+    public killTrial({ id,  }: { id: number,  }, options?: any) {
+        return TrialsApiFp(this.configuration).killTrial({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24934,8 +24934,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string, options?: any) {
-        return TrialsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
+    public summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }: { trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: string, scale?: string,  }, options?: any) {
+        return TrialsApiFp(this.configuration).summarizeTrial({ trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24958,8 +24958,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string, options?: any) {
-        return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }: { trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<string>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: string, searchText?: string,  }, options?: any) {
+        return TrialsApiFp(this.configuration).trialLogs({ trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24971,8 +24971,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-        return TrialsApiFp(this.configuration).trialLogsFields(trialId, follow, options)(this.fetch, this.basePath);
+    public trialLogsFields({ trialId, follow,  }: { trialId: number, follow?: boolean,  }, options?: any) {
+        return TrialsApiFp(this.configuration).trialLogsFields({ trialId, follow,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -24988,7 +24988,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMe(options: any = {}): FetchArgs {
+        getMe({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/me`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25020,7 +25020,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options: any = {}): FetchArgs {
+        getUser({ userId,  }: { userId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
                 throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
@@ -25057,7 +25057,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserByUsername(username: string, options: any = {}): FetchArgs {
+        getUserByUsername({ username,  }: { username: string,  }, options: any = {}): FetchArgs {
             // verify required parameter 'username' is not null or undefined
             if (username === null || username === undefined) {
                 throw new RequiredError('username','Required parameter username was null or undefined when calling getUserByUsername.');
@@ -25093,7 +25093,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserSetting(options: any = {}): FetchArgs {
+        getUserSetting({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/setting`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25128,7 +25128,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: string, orderBy?: string, offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getUsers({ sortBy, orderBy, offset, limit,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25177,7 +25177,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(body: V1PatchUser, userId: number, options: any = {}): FetchArgs {
+        patchUser({ body, userId,  }: { body: V1PatchUser, userId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchUser.');
@@ -25222,7 +25222,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUser(body: V1PostUserRequest, options: any = {}): FetchArgs {
+        postUser({ body,  }: { body: V1PostUserRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postUser.');
@@ -25262,7 +25262,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUserSetting(body: V1PostUserSettingRequest, options: any = {}): FetchArgs {
+        postUserSetting({ body,  }: { body: V1PostUserSettingRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postUserSetting.');
@@ -25301,7 +25301,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resetUserSetting(options: any = {}): FetchArgs {
+        resetUserSetting({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/setting/reset`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
@@ -25334,7 +25334,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(body: string, userId: number, options: any = {}): FetchArgs {
+        setUserPassword({ body, userId,  }: { body: string, userId: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setUserPassword.');
@@ -25387,8 +25387,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMe(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(options);
+        getMe({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25406,8 +25406,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
+        getUser({ userId,  }: { userId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser({ userId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25425,8 +25425,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
+        getUserByUsername({ username,  }: { username: string,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername({ username,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25443,8 +25443,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserSettingResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserSetting(options);
+        getUserSetting({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserSetting({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25465,8 +25465,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: string, orderBy?: string, offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, options);
+        getUsers({ sortBy, orderBy, offset, limit,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers({ sortBy, orderBy, offset, limit,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25485,8 +25485,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(body: V1PatchUser, userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(body, userId, options);
+        patchUser({ body, userId,  }: { body: V1PatchUser, userId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser({ body, userId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25504,8 +25504,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUser(body: V1PostUserRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUser(body, options);
+        postUser({ body,  }: { body: V1PostUserRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUser({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25523,8 +25523,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUserSetting(body: V1PostUserSettingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserSettingResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserSetting(body, options);
+        postUserSetting({ body,  }: { body: V1PostUserSettingRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserSetting({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25541,8 +25541,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resetUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResetUserSettingResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).resetUserSetting(options);
+        resetUserSetting({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).resetUserSetting({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25561,8 +25561,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(body: string, userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(body, userId, options);
+        setUserPassword({ body, userId,  }: { body: string, userId: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword({ body, userId,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25588,8 +25588,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getMe(options?: any) {
-            return UsersApiFp(configuration).getMe(options)(fetch, basePath);
+        getMe({  }: {  }, options?: any) {
+            return UsersApiFp(configuration).getMe({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25598,8 +25598,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUser(userId: number, options?: any) {
-            return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
+        getUser({ userId,  }: { userId: number,  }, options?: any) {
+            return UsersApiFp(configuration).getUser({ userId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25608,8 +25608,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserByUsername(username: string, options?: any) {
-            return UsersApiFp(configuration).getUserByUsername(username, options)(fetch, basePath);
+        getUserByUsername({ username,  }: { username: string,  }, options?: any) {
+            return UsersApiFp(configuration).getUserByUsername({ username,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25617,8 +25617,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUserSetting(options?: any) {
-            return UsersApiFp(configuration).getUserSetting(options)(fetch, basePath);
+        getUserSetting({  }: {  }, options?: any) {
+            return UsersApiFp(configuration).getUserSetting({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25630,8 +25630,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getUsers(sortBy?: string, orderBy?: string, offset?: number, limit?: number, options?: any) {
-            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, options)(fetch, basePath);
+        getUsers({ sortBy, orderBy, offset, limit,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options?: any) {
+            return UsersApiFp(configuration).getUsers({ sortBy, orderBy, offset, limit,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25641,8 +25641,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchUser(body: V1PatchUser, userId: number, options?: any) {
-            return UsersApiFp(configuration).patchUser(body, userId, options)(fetch, basePath);
+        patchUser({ body, userId,  }: { body: V1PatchUser, userId: number,  }, options?: any) {
+            return UsersApiFp(configuration).patchUser({ body, userId,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25651,8 +25651,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUser(body: V1PostUserRequest, options?: any) {
-            return UsersApiFp(configuration).postUser(body, options)(fetch, basePath);
+        postUser({ body,  }: { body: V1PostUserRequest,  }, options?: any) {
+            return UsersApiFp(configuration).postUser({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25661,8 +25661,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUserSetting(body: V1PostUserSettingRequest, options?: any) {
-            return UsersApiFp(configuration).postUserSetting(body, options)(fetch, basePath);
+        postUserSetting({ body,  }: { body: V1PostUserSettingRequest,  }, options?: any) {
+            return UsersApiFp(configuration).postUserSetting({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25670,8 +25670,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        resetUserSetting(options?: any) {
-            return UsersApiFp(configuration).resetUserSetting(options)(fetch, basePath);
+        resetUserSetting({  }: {  }, options?: any) {
+            return UsersApiFp(configuration).resetUserSetting({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -25681,8 +25681,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setUserPassword(body: string, userId: number, options?: any) {
-            return UsersApiFp(configuration).setUserPassword(body, userId, options)(fetch, basePath);
+        setUserPassword({ body, userId,  }: { body: string, userId: number,  }, options?: any) {
+            return UsersApiFp(configuration).setUserPassword({ body, userId,  }, options)(fetch, basePath);
         },
     };
 };
@@ -25701,8 +25701,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getMe(options?: any) {
-        return UsersApiFp(this.configuration).getMe(options)(this.fetch, this.basePath);
+    public getMe({  }: {  }, options?: any) {
+        return UsersApiFp(this.configuration).getMe({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25713,8 +25713,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUser(userId: number, options?: any) {
-        return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
+    public getUser({ userId,  }: { userId: number,  }, options?: any) {
+        return UsersApiFp(this.configuration).getUser({ userId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25725,8 +25725,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUserByUsername(username: string, options?: any) {
-        return UsersApiFp(this.configuration).getUserByUsername(username, options)(this.fetch, this.basePath);
+    public getUserByUsername({ username,  }: { username: string,  }, options?: any) {
+        return UsersApiFp(this.configuration).getUserByUsername({ username,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25736,8 +25736,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUserSetting(options?: any) {
-        return UsersApiFp(this.configuration).getUserSetting(options)(this.fetch, this.basePath);
+    public getUserSetting({  }: {  }, options?: any) {
+        return UsersApiFp(this.configuration).getUserSetting({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25751,8 +25751,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getUsers(sortBy?: string, orderBy?: string, offset?: number, limit?: number, options?: any) {
-        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public getUsers({ sortBy, orderBy, offset, limit,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number,  }, options?: any) {
+        return UsersApiFp(this.configuration).getUsers({ sortBy, orderBy, offset, limit,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25764,8 +25764,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public patchUser(body: V1PatchUser, userId: number, options?: any) {
-        return UsersApiFp(this.configuration).patchUser(body, userId, options)(this.fetch, this.basePath);
+    public patchUser({ body, userId,  }: { body: V1PatchUser, userId: number,  }, options?: any) {
+        return UsersApiFp(this.configuration).patchUser({ body, userId,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25776,8 +25776,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public postUser(body: V1PostUserRequest, options?: any) {
-        return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    public postUser({ body,  }: { body: V1PostUserRequest,  }, options?: any) {
+        return UsersApiFp(this.configuration).postUser({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25788,8 +25788,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public postUserSetting(body: V1PostUserSettingRequest, options?: any) {
-        return UsersApiFp(this.configuration).postUserSetting(body, options)(this.fetch, this.basePath);
+    public postUserSetting({ body,  }: { body: V1PostUserSettingRequest,  }, options?: any) {
+        return UsersApiFp(this.configuration).postUserSetting({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25799,8 +25799,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public resetUserSetting(options?: any) {
-        return UsersApiFp(this.configuration).resetUserSetting(options)(this.fetch, this.basePath);
+    public resetUserSetting({  }: {  }, options?: any) {
+        return UsersApiFp(this.configuration).resetUserSetting({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25812,8 +25812,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public setUserPassword(body: string, userId: number, options?: any) {
-        return UsersApiFp(this.configuration).setUserPassword(body, userId, options)(this.fetch, this.basePath);
+    public setUserPassword({ body, userId,  }: { body: string, userId: number,  }, options?: any) {
+        return UsersApiFp(this.configuration).setUserPassword({ body, userId,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -25830,7 +25830,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteWebhook(id: number, options: any = {}): FetchArgs {
+        deleteWebhook({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling deleteWebhook.');
@@ -25866,7 +25866,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWebhooks(options: any = {}): FetchArgs {
+        getWebhooks({  }: {  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/webhooks`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25898,7 +25898,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postWebhook(body: V1Webhook, options: any = {}): FetchArgs {
+        postWebhook({ body,  }: { body: V1Webhook,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postWebhook.');
@@ -25938,7 +25938,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        testWebhook(id: number, options: any = {}): FetchArgs {
+        testWebhook({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling testWebhook.');
@@ -25984,8 +25984,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWebhookResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).deleteWebhook(id, options);
+        deleteWebhook({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).deleteWebhook({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26002,8 +26002,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWebhooks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWebhooksResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).getWebhooks(options);
+        getWebhooks({  }: {  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWebhooksResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).getWebhooks({  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26021,8 +26021,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postWebhook(body: V1Webhook, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWebhookResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).postWebhook(body, options);
+        postWebhook({ body,  }: { body: V1Webhook,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).postWebhook({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26040,8 +26040,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        testWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TestWebhookResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).testWebhook(id, options);
+        testWebhook({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TestWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).testWebhook({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26068,8 +26068,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteWebhook(id: number, options?: any) {
-            return WebhooksApiFp(configuration).deleteWebhook(id, options)(fetch, basePath);
+        deleteWebhook({ id,  }: { id: number,  }, options?: any) {
+            return WebhooksApiFp(configuration).deleteWebhook({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26077,8 +26077,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWebhooks(options?: any) {
-            return WebhooksApiFp(configuration).getWebhooks(options)(fetch, basePath);
+        getWebhooks({  }: {  }, options?: any) {
+            return WebhooksApiFp(configuration).getWebhooks({  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26087,8 +26087,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postWebhook(body: V1Webhook, options?: any) {
-            return WebhooksApiFp(configuration).postWebhook(body, options)(fetch, basePath);
+        postWebhook({ body,  }: { body: V1Webhook,  }, options?: any) {
+            return WebhooksApiFp(configuration).postWebhook({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26097,8 +26097,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        testWebhook(id: number, options?: any) {
-            return WebhooksApiFp(configuration).testWebhook(id, options)(fetch, basePath);
+        testWebhook({ id,  }: { id: number,  }, options?: any) {
+            return WebhooksApiFp(configuration).testWebhook({ id,  }, options)(fetch, basePath);
         },
     };
 };
@@ -26118,8 +26118,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public deleteWebhook(id: number, options?: any) {
-        return WebhooksApiFp(this.configuration).deleteWebhook(id, options)(this.fetch, this.basePath);
+    public deleteWebhook({ id,  }: { id: number,  }, options?: any) {
+        return WebhooksApiFp(this.configuration).deleteWebhook({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26129,8 +26129,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public getWebhooks(options?: any) {
-        return WebhooksApiFp(this.configuration).getWebhooks(options)(this.fetch, this.basePath);
+    public getWebhooks({  }: {  }, options?: any) {
+        return WebhooksApiFp(this.configuration).getWebhooks({  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26141,8 +26141,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public postWebhook(body: V1Webhook, options?: any) {
-        return WebhooksApiFp(this.configuration).postWebhook(body, options)(this.fetch, this.basePath);
+    public postWebhook({ body,  }: { body: V1Webhook,  }, options?: any) {
+        return WebhooksApiFp(this.configuration).postWebhook({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26153,8 +26153,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public testWebhook(id: number, options?: any) {
-        return WebhooksApiFp(this.configuration).testWebhook(id, options)(this.fetch, this.basePath);
+    public testWebhook({ id,  }: { id: number,  }, options?: any) {
+        return WebhooksApiFp(this.configuration).testWebhook({ id,  }, options)(this.fetch, this.basePath);
     }
 
 }
@@ -26171,7 +26171,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveWorkspace(id: number, options: any = {}): FetchArgs {
+        archiveWorkspace({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling archiveWorkspace.');
@@ -26208,7 +26208,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteWorkspace(id: number, options: any = {}): FetchArgs {
+        deleteWorkspace({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling deleteWorkspace.');
@@ -26245,7 +26245,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspace(id: number, options: any = {}): FetchArgs {
+        getWorkspace({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspace.');
@@ -26289,7 +26289,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
+        getWorkspaceProjects({ id, sortBy, orderBy, offset, limit, name, archived, users,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspaceProjects.');
@@ -26361,7 +26361,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options: any = {}): FetchArgs {
+        getWorkspaces({ sortBy, orderBy, offset, limit, name, archived, users, pinned,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean,  }, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -26426,7 +26426,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchWorkspace(body: V1PatchWorkspace, id: number, options: any = {}): FetchArgs {
+        patchWorkspace({ body, id,  }: { body: V1PatchWorkspace, id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchWorkspace.');
@@ -26471,7 +26471,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pinWorkspace(id: number, options: any = {}): FetchArgs {
+        pinWorkspace({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling pinWorkspace.');
@@ -26508,7 +26508,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postWorkspace(body: V1PostWorkspaceRequest, options: any = {}): FetchArgs {
+        postWorkspace({ body,  }: { body: V1PostWorkspaceRequest,  }, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postWorkspace.');
@@ -26548,7 +26548,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveWorkspace(id: number, options: any = {}): FetchArgs {
+        unarchiveWorkspace({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveWorkspace.');
@@ -26585,7 +26585,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unpinWorkspace(id: number, options: any = {}): FetchArgs {
+        unpinWorkspace({ id,  }: { id: number,  }, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling unpinWorkspace.');
@@ -26631,8 +26631,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).archiveWorkspace(id, options);
+        archiveWorkspace({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).archiveWorkspace({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26650,8 +26650,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspace(id, options);
+        deleteWorkspace({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspace({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26669,8 +26669,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspace(id, options);
+        getWorkspace({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspace({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26695,8 +26695,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options);
+        getWorkspaceProjects({ id, sortBy, orderBy, offset, limit, name, archived, users,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects({ id, sortBy, orderBy, offset, limit, name, archived, users,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26721,8 +26721,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options);
+        getWorkspaces({ sortBy, orderBy, offset, limit, name, archived, users, pinned,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces({ sortBy, orderBy, offset, limit, name, archived, users, pinned,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26741,8 +26741,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchWorkspace(body: V1PatchWorkspace, id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).patchWorkspace(body, id, options);
+        patchWorkspace({ body, id,  }: { body: V1PatchWorkspace, id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).patchWorkspace({ body, id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26760,8 +26760,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PinWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).pinWorkspace(id, options);
+        pinWorkspace({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PinWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).pinWorkspace({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26779,8 +26779,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postWorkspace(body: V1PostWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).postWorkspace(body, options);
+        postWorkspace({ body,  }: { body: V1PostWorkspaceRequest,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).postWorkspace({ body,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26798,8 +26798,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unarchiveWorkspace(id, options);
+        unarchiveWorkspace({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unarchiveWorkspace({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26817,8 +26817,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unpinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpinWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unpinWorkspace(id, options);
+        unpinWorkspace({ id,  }: { id: number,  }, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpinWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unpinWorkspace({ id,  }, options);
             return (fetch: FetchAPI = isomorphicFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26845,8 +26845,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        archiveWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).archiveWorkspace(id, options)(fetch, basePath);
+        archiveWorkspace({ id,  }: { id: number,  }, options?: any) {
+            return WorkspacesApiFp(configuration).archiveWorkspace({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26855,8 +26855,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).deleteWorkspace(id, options)(fetch, basePath);
+        deleteWorkspace({ id,  }: { id: number,  }, options?: any) {
+            return WorkspacesApiFp(configuration).deleteWorkspace({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26865,8 +26865,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspace(id, options)(fetch, basePath);
+        getWorkspace({ id,  }: { id: number,  }, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspace({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26882,8 +26882,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(fetch, basePath);
+        getWorkspaceProjects({ id, sortBy, orderBy, offset, limit, name, archived, users,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>,  }, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaceProjects({ id, sortBy, orderBy, offset, limit, name, archived, users,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26899,8 +26899,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(fetch, basePath);
+        getWorkspaces({ sortBy, orderBy, offset, limit, name, archived, users, pinned,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean,  }, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces({ sortBy, orderBy, offset, limit, name, archived, users, pinned,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26910,8 +26910,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchWorkspace(body: V1PatchWorkspace, id: number, options?: any) {
-            return WorkspacesApiFp(configuration).patchWorkspace(body, id, options)(fetch, basePath);
+        patchWorkspace({ body, id,  }: { body: V1PatchWorkspace, id: number,  }, options?: any) {
+            return WorkspacesApiFp(configuration).patchWorkspace({ body, id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26920,8 +26920,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pinWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).pinWorkspace(id, options)(fetch, basePath);
+        pinWorkspace({ id,  }: { id: number,  }, options?: any) {
+            return WorkspacesApiFp(configuration).pinWorkspace({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26930,8 +26930,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
-            return WorkspacesApiFp(configuration).postWorkspace(body, options)(fetch, basePath);
+        postWorkspace({ body,  }: { body: V1PostWorkspaceRequest,  }, options?: any) {
+            return WorkspacesApiFp(configuration).postWorkspace({ body,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26940,8 +26940,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unarchiveWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).unarchiveWorkspace(id, options)(fetch, basePath);
+        unarchiveWorkspace({ id,  }: { id: number,  }, options?: any) {
+            return WorkspacesApiFp(configuration).unarchiveWorkspace({ id,  }, options)(fetch, basePath);
         },
         /**
          * 
@@ -26950,8 +26950,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        unpinWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).unpinWorkspace(id, options)(fetch, basePath);
+        unpinWorkspace({ id,  }: { id: number,  }, options?: any) {
+            return WorkspacesApiFp(configuration).unpinWorkspace({ id,  }, options)(fetch, basePath);
         },
     };
 };
@@ -26971,8 +26971,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public archiveWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).archiveWorkspace(id, options)(this.fetch, this.basePath);
+    public archiveWorkspace({ id,  }: { id: number,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).archiveWorkspace({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26983,8 +26983,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public deleteWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).deleteWorkspace(id, options)(this.fetch, this.basePath);
+    public deleteWorkspace({ id,  }: { id: number,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).deleteWorkspace({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26995,8 +26995,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspace(id, options)(this.fetch, this.basePath);
+    public getWorkspace({ id,  }: { id: number,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspace({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27014,8 +27014,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaceProjects(id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(this.fetch, this.basePath);
+    public getWorkspaceProjects({ id, sortBy, orderBy, offset, limit, name, archived, users,  }: { id: number, sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaceProjects({ id, sortBy, orderBy, offset, limit, name, archived, users,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27033,8 +27033,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaces(sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(this.fetch, this.basePath);
+    public getWorkspaces({ sortBy, orderBy, offset, limit, name, archived, users, pinned,  }: { sortBy?: string, orderBy?: string, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces({ sortBy, orderBy, offset, limit, name, archived, users, pinned,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27046,8 +27046,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public patchWorkspace(body: V1PatchWorkspace, id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).patchWorkspace(body, id, options)(this.fetch, this.basePath);
+    public patchWorkspace({ body, id,  }: { body: V1PatchWorkspace, id: number,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).patchWorkspace({ body, id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27058,8 +27058,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public pinWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).pinWorkspace(id, options)(this.fetch, this.basePath);
+    public pinWorkspace({ id,  }: { id: number,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).pinWorkspace({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27070,8 +27070,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
-        return WorkspacesApiFp(this.configuration).postWorkspace(body, options)(this.fetch, this.basePath);
+    public postWorkspace({ body,  }: { body: V1PostWorkspaceRequest,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).postWorkspace({ body,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27082,8 +27082,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public unarchiveWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).unarchiveWorkspace(id, options)(this.fetch, this.basePath);
+    public unarchiveWorkspace({ id,  }: { id: number,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).unarchiveWorkspace({ id,  }, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27094,8 +27094,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public unpinWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).unpinWorkspace(id, options)(this.fetch, this.basePath);
+    public unpinWorkspace({ id,  }: { id: number,  }, options?: any) {
+        return WorkspacesApiFp(this.configuration).unpinWorkspace({ id,  }, options)(this.fetch, this.basePath);
     }
 
 }

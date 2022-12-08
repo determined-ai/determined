@@ -96,20 +96,14 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       }
 
       return detApi.StreamingJobs.taskLogs(
-        taskId,
-        options.limit,
-        options.follow,
-        settings.allocationId,
-        settings.agentId,
-        settings.containerId,
-        settings.rankId,
-        settings.level,
-        undefined,
-        undefined,
-        options.timestampBefore ? new Date(options.timestampBefore) : undefined,
-        options.timestampAfter ? new Date(options.timestampAfter) : undefined,
-        options.orderBy as OrderBy,
-        settings.searchText,
+        {
+          taskId,
+          ...options,
+          ...settings,
+          orderBy: options.orderBy as OrderBy,
+          timestampAfter: options.timestampAfter ? new Date(options.timestampAfter) : undefined,
+          timestampBefore: options.timestampBefore ? new Date(options.timestampBefore) : undefined,
+        },
         { signal: config.canceler.signal },
       );
     },
@@ -120,7 +114,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
     const canceler = new AbortController();
 
     readStream(
-      detApi.StreamingJobs.taskLogsFields(taskId, true, { signal: canceler.signal }),
+      detApi.StreamingJobs.taskLogsFields({ follow: true, taskId }, { signal: canceler.signal }),
       (event) => setFilterOptions(event as Filters),
     );
 

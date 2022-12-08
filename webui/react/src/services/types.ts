@@ -116,7 +116,7 @@ export interface getExperimentCheckpointsParams extends PaginationParams {
 }
 
 export interface ExperimentLabelsParams {
-  project_id?: number;
+  projectId?: number;
 }
 
 export interface GetTrialsParams extends PaginationParams, SingleEntityParams {

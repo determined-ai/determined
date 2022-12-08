@@ -228,12 +228,13 @@ const HpHeatMaps: React.FC<Props> = ({
 
     readStream<V1TrialsSnapshotResponse>(
       detApi.StreamingInternal.trialsSnapshot(
-        experiment.id,
-        selectedMetric.name,
-        metricTypeParamMap[selectedMetric.type],
-        selectedBatch,
-        selectedBatchMargin,
-        undefined,
+        {
+          batchesMargin: selectedBatchMargin,
+          batchesProcessed: selectedBatch,
+          experimentId: experiment.id,
+          metricName: selectedMetric.name,
+          metricType: metricTypeParamMap[selectedMetric.type],
+        },
         { signal: canceler.signal },
       ),
       (event) => {

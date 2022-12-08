@@ -34,14 +34,16 @@ const useModalCheckpointDelete = ({ onClose }: Props): ModalHooks => {
   const handleDelete = useCallback(() => {
     readStream(
       detApi.Checkpoint.deleteCheckpoints({
-        checkpointUuids: Array.isArray(checkpoints) ? checkpoints : [checkpoints],
+        body: {
+          checkpointUuids: Array.isArray(checkpoints) ? checkpoints : [checkpoints],
+        },
       }),
     );
     onClose?.(ModalCloseReason.Ok);
   }, [checkpoints, onClose]);
 
   const modalProps: ModalFuncProps = useMemo(() => {
-    const content = `Are you sure you want to request deletion for 
+    const content = `Are you sure you want to request deletion for
 ${numCheckpoints} ${pluralizer(numCheckpoints, 'checkpoint')}?
 This action may complete or fail without further notification.`;
 

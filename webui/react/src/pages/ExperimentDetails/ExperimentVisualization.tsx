@@ -299,9 +299,12 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
     const canceler = new AbortController();
 
     readStream<V1GetHPImportanceResponse>(
-      detApi.StreamingInternal.getHPImportance(experiment.id, undefined, {
-        signal: canceler.signal,
-      }),
+      detApi.StreamingInternal.getHPImportance(
+        { experimentId: experiment.id },
+        {
+          signal: canceler.signal,
+        },
+      ),
       (event) => {
         if (!event) return;
         setHpImportanceMap({
@@ -326,10 +329,11 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
 
     readStream<V1MetricBatchesResponse>(
       detApi.StreamingInternal.metricBatches(
-        experiment.id,
-        activeMetric.name,
-        metricTypeParam,
-        undefined,
+        {
+          experimentId: experiment.id,
+          metricName: activeMetric.name,
+          metricType: metricTypeParam,
+        },
         { signal: canceler.signal },
       ),
       (event) => {

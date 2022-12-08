@@ -49,12 +49,14 @@ export const useFetchProfilerMetrics = (
 
     readStream(
       detApi.StreamingProfiler.getTrialProfilerMetrics(
-        trialId,
-        labelsName,
-        labelsAgentId,
-        labelsGpuUuid,
-        labelsMetricType,
-        follow,
+        {
+          follow,
+          labelsAgentId,
+          labelsGpuUuid,
+          labelsMetricType,
+          labelsName,
+          labelsTrialId: trialId,
+        },
         { signal: canceler.signal },
       ),
       (event: ProfilerMetricsResponse) => {

@@ -17,9 +17,12 @@ export const useFetchProfilerSeries = (trialId: number): AvailableSeries => {
     const canceler = new AbortController();
 
     readStream(
-      detApi.StreamingProfiler.getTrialProfilerAvailableSeries(trialId, true, {
-        signal: canceler.signal,
-      }),
+      detApi.StreamingProfiler.getTrialProfilerAvailableSeries(
+        { follow: true, trialId },
+        {
+          signal: canceler.signal,
+        },
+      ),
       (event: V1GetTrialProfilerAvailableSeriesResponse) => {
         const newAvailableSeries: AvailableSeries = {};
 

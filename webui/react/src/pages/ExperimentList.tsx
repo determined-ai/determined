@@ -213,7 +213,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const fetchLabels = useCallback(async () => {
     try {
-      const labels = await getExperimentLabels({ project_id: id }, { signal: canceler.signal });
+      const labels = await getExperimentLabels({ projectId: id }, { signal: canceler.signal });
       labels.sort((a, b) => alphaNumericSorter(a, b));
       setLabels(labels);
     } catch (e) {

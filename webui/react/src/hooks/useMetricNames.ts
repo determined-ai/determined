@@ -20,9 +20,12 @@ const useMetricNames = (experimentId: number, errorHandler: (e: unknown) => void
     const validationMetricsMap: Record<string, boolean> = {};
 
     readStream<V1MetricNamesResponse>(
-      detApi.StreamingInternal.metricNames(experimentId, undefined, {
-        signal: canceler.signal,
-      }),
+      detApi.StreamingInternal.metricNames(
+        { experimentId },
+        {
+          signal: canceler.signal,
+        },
+      ),
       (event: V1MetricNamesResponse) => {
         if (!event) return;
         /*

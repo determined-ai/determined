@@ -35,7 +35,7 @@ export const checkServerAlive = async (address?: string): Promise<boolean> => {
   address = address || serverAddress();
   try {
     const clusterApi = new ClusterApi(new Configuration({ basePath: address }));
-    const data = await clusterApi.getMaster();
+    const data = await clusterApi.getMaster({});
     const attrs = ['version', 'masterId', 'clusterId'];
     for (const attr of attrs) {
       // The server doesn't look like a determined server.

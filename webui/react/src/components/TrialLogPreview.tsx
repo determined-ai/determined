@@ -42,19 +42,12 @@ const TrialLogPreview: React.FC<Props> = ({
   const fetchTrialLogs = useCallback((trialId: number, time: string, canceler: AbortController) => {
     readStream(
       detApi.StreamingExperiments.trialLogs(
-        trialId,
-        undefined,
-        true,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        dayjs(time).toDate(),
-        'ORDER_BY_ASC',
-        undefined,
+        {
+          follow: true,
+          orderBy: 'ORDER_BY_ASC',
+          timestampAfter: dayjs(time).toDate(),
+          trialId,
+        },
         { signal: canceler.signal },
       ),
       (event) => {
@@ -72,19 +65,12 @@ const TrialLogPreview: React.FC<Props> = ({
     (trialId: number, trialState: RunState, canceler: AbortController) => {
       readStream(
         detApi.StreamingExperiments.trialLogs(
-          trialId,
-          100,
-          false,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          'ORDER_BY_DESC',
-          undefined,
+          {
+            follow: false,
+            limit: 100,
+            orderBy: 'ORDER_BY_DESC',
+            trialId,
+          },
           { signal: canceler.signal },
         ),
         (event) => {

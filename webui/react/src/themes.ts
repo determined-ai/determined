@@ -78,6 +78,7 @@ const stateColorMapping = {
   [Determinedtrialv1State.CANCELED]: 'inactive',
   [Determinedtrialv1State.COMPLETED]: 'success',
   [Determinedtrialv1State.ERROR]: 'critical',
+  STATE_UNSPECIFIED: 'inactive',
 };
 
 export type StateOfUnion =
