@@ -145,10 +145,19 @@ func (a *apiServer) KillNotebook(
 func (a *apiServer) SetNotebookPriority(
 	ctx context.Context, req *apiv1.SetNotebookPriorityRequest,
 ) (resp *apiv1.SetNotebookPriorityResponse, err error) {
-	if _, err := a.GetNotebook(ctx,
-		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: req.NotebookId})
+	if err != nil {
 		return nil, err
 	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanTerminateCommand(
+		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
+	)
 
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
