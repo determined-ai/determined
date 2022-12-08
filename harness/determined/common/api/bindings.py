@@ -2340,6 +2340,7 @@ class v1ExpCompareTrialsSampleResponse:
         return out
 
 class v1Experiment:
+    checkpointCount: "typing.Optional[int]" = None
     checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
@@ -2372,6 +2373,7 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
@@ -2401,6 +2403,8 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
         if not isinstance(checkpointSize, Unset):
             self.checkpointSize = checkpointSize
         if not isinstance(description, Unset):
@@ -2449,6 +2453,8 @@ class v1Experiment:
             "state": determinedexperimentv1State(obj["state"]),
             "username": obj["username"],
         }
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
         if "checkpointSize" in obj:
             kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
@@ -2497,6 +2503,8 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "checkpointSize" in vars(self):
             out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
@@ -3147,6 +3155,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
     SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
     SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    SORT_BY_CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
 
 class v1GetExperimentsResponse:
 

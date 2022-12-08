@@ -476,6 +476,7 @@ export const mapV1Experiment = (
   }) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
+    checkpointCount: data.checkpointCount,
     checkpointSize: parseInt(data?.checkpointSize || '0'),
     config: ioToExperimentConfig(ioConfig),
     configRaw: data.config,

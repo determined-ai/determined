@@ -594,6 +594,14 @@ const ProjectDetails: React.FC = () => {
         title: 'Checkpoint Size',
       },
       {
+        align: 'right',
+        dataIndex: 'checkpointCount',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointCount'],
+        key: V1GetExperimentsRequestSortBy.CHECKPOINTCOUNT,
+        sorter: true,
+        title: 'Checkpoint Count',
+      },
+      {
         align: 'center',
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],

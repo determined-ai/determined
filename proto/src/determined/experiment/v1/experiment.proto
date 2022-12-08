@@ -129,6 +129,8 @@ message Experiment {
   int32 project_owner_id = 28;
   // The total size of checkpoints.
   int64 checkpoint_size = 29;
+  // The count of checkpoints.
+  int32 checkpoint_count = 30;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

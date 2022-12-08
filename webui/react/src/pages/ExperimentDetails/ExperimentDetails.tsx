@@ -7,7 +7,7 @@ import { terminalRunStates } from 'constants/states';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
 import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleTrialTabs';
-import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
+import { TrialInfoBoxMultiTrial } from 'pages/TrialDetails/TrialInfoBox';
 import { getExperimentDetails } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -108,7 +108,7 @@ const ExperimentDetails: React.FC = () => {
       ) : (
         <>
           <div style={{ padding: '16px 16px 0' }}>
-            <TrialInfoBox experiment={experiment} trial={trial} />
+            <TrialInfoBoxMultiTrial experiment={experiment} />
           </div>
           <ExperimentMultiTrialTabs
             experiment={experiment}

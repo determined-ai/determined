@@ -464,26 +464,28 @@ func (a *apiServer) GetExperiments(
 		ColumnExpr("p.user_id AS project_owner_id").
 		Column("e.config").
 		Column("e.checkpoint_size").
+		Column("e.checkpoint_count").
 		Join("JOIN users u ON e.owner_id = u.id").
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
-		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:     "id",
-		apiv1.GetExperimentsRequest_SORT_BY_ID:              "id",
-		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION:     "description",
-		apiv1.GetExperimentsRequest_SORT_BY_NAME:            "name",
-		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:      "e.start_time",
-		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:        "e.end_time",
-		apiv1.GetExperimentsRequest_SORT_BY_STATE:           "e.state",
-		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:      "num_trials",
-		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:        "COALESCE(progress, 0)",
-		apiv1.GetExperimentsRequest_SORT_BY_USER:            "display_name",
-		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:     "e.parent_id",
-		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL:   "resource_pool",
-		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:      "project_id",
-		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_SIZE: "checkpoint_size",
+		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:      "id",
+		apiv1.GetExperimentsRequest_SORT_BY_ID:               "id",
+		apiv1.GetExperimentsRequest_SORT_BY_DESCRIPTION:      "description",
+		apiv1.GetExperimentsRequest_SORT_BY_NAME:             "name",
+		apiv1.GetExperimentsRequest_SORT_BY_START_TIME:       "e.start_time",
+		apiv1.GetExperimentsRequest_SORT_BY_END_TIME:         "e.end_time",
+		apiv1.GetExperimentsRequest_SORT_BY_STATE:            "e.state",
+		apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS:       "num_trials",
+		apiv1.GetExperimentsRequest_SORT_BY_PROGRESS:         "COALESCE(progress, 0)",
+		apiv1.GetExperimentsRequest_SORT_BY_USER:             "display_name",
+		apiv1.GetExperimentsRequest_SORT_BY_FORKED_FROM:      "e.parent_id",
+		apiv1.GetExperimentsRequest_SORT_BY_RESOURCE_POOL:    "resource_pool",
+		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:       "project_id",
+		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_SIZE:  "checkpoint_size",
+		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_COUNT: "checkpoint_count",
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
