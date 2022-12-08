@@ -833,5 +833,5 @@ func (k ResourceManager) TaskContainerDefaults(
 	pool string,
 	defaultConfig model.TaskContainerDefaultsConfig,
 ) model.TaskContainerDefaultsConfig {
-	return model.TaskContainerDefaultsConfig{}
+	return defaultConfig
 }
