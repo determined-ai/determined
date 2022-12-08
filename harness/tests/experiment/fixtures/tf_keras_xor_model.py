@@ -8,7 +8,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
 
 from determined import keras
-from tests.experiment.utils import make_xor_data_sequences, xor_data  # noqa: I202, I100
+from tests.experiment.utils import make_xor_data_sequences  # noqa: I202, I100
 
 
 class StopVeryEarlyCallback(keras.callbacks.Callback):
@@ -154,27 +154,3 @@ class XORTrialWithOptimizerState(XORTrial):
             metrics=[categorical_error],
         )
         return cast(Sequential, model)
-
-
-class XORTrialWithDataLayer(XORTrial):
-    def build_training_data_loader(self) -> keras.InputData:
-        @self.context.experimental.cache_train_dataset("XORTrialWithDataLayer", "xor_data")
-        def make_dataset() -> tf.data.Dataset:
-            data, labels = xor_data()
-            ds = tf.data.Dataset.from_tensor_slices((data, labels))
-            return ds
-
-        dataset = make_dataset()
-        dataset = dataset.batch(batch_size=4)
-        return dataset
-
-    def build_validation_data_loader(self) -> keras.InputData:
-        @self.context.experimental.cache_validation_dataset("XORTrialWithDataLayer", "xor_data")
-        def make_dataset() -> tf.data.Dataset:
-            data, labels = xor_data()
-            ds = tf.data.Dataset.from_tensor_slices((data, labels))
-            return ds
-
-        dataset = make_dataset()
-        dataset = dataset.batch(batch_size=4)
-        return dataset

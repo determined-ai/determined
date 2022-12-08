@@ -227,11 +227,6 @@ interface CheckpointStorage {
   type?: CheckpointStorageType;
 }
 
-interface DataLayer {
-  containerStoragePath?: string;
-  type: string;
-}
-
 export type HpImportance = Record<string, number>;
 export type HpImportanceMetricMap = Record<string, HpImportance>;
 export type HpImportanceMap = { [key in MetricType]: HpImportanceMetricMap };
@@ -293,7 +288,6 @@ export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
-  dataLayer?: DataLayer;
   description?: string;
   hyperparameters: Hyperparameters;
   labels?: string[];

@@ -36,7 +36,6 @@ def test_executing_eagerly():
         tf_keras_xor_model.XORTrialOldOptimizerAPI,
         tf_keras_xor_model.XORTrialWithTrainingMetrics,
         tf_keras_xor_model.XORTrialWithCustomObjects,
-        tf_keras_xor_model.XORTrialWithDataLayer,
     ],
 )
 def xor_trial_controller(request):
