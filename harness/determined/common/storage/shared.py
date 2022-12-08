@@ -12,7 +12,7 @@ from determined.common import check, storage
 
 python_version = sys.version_info
 if python_version.major == 3 and python_version.minor <= 7:
-    # Copied from shautil (Python 3.8) to support copytree(dirs_exist_ok) function.
+    # Copied from shutil (Python 3.8) to support copytree(dirs_exist_ok) function.
     # Should be dropped when support for Python 3.7 is removed.
     # BEGIN VENDORED CODE FROM SHUTIL
     import stat
