@@ -4,7 +4,15 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import checkpoint, experiment, model, trial, user
+from determined.common.experimental import (
+    checkpoint,
+    experiment,
+    model,
+    oauth2_scim_client,
+    trial,
+    user,
+)
+from determined.errors import EnterpriseOnlyError
 
 
 class _CreateExperimentResponse:
@@ -48,17 +56,22 @@ class Determined:
         cert_name: Optional[str] = None,
         noverify: bool = False,
     ):
-        master = master or util.get_default_master_address()
+        self._master = master or util.get_default_master_address()
 
         cert = certs.default_load(
-            master_url=master,
+            master_url=self._master,
             explicit_path=cert_path,
             explicit_cert_name=cert_name,
             explicit_noverify=noverify,
         )
 
-        auth = authentication.Authentication(master, user, password, cert=cert)
-        self._session = api.Session(master, user, auth, cert)
+        auth = authentication.Authentication(self._master, user, password, cert=cert)
+        self._session = api.Session(self._master, user, auth, cert)
+        token_user = auth.token_store.get_active_user()
+        if token_user is not None:
+            self._token = auth.token_store.get_token(token_user)
+        else:
+            self._token = None
 
     def _from_bindings(self, raw: bindings.v1User) -> user.User:
         assert raw.id is not None
@@ -322,3 +335,44 @@ class Determined:
         Get a list of labels used on any models, sorted from most-popular to least-popular.
         """
         return list(bindings.get_GetModelLabels(self._session).labels)
+
+    def list_oauth_clients(self) -> Sequence[oauth2_scim_client.Oauth2ScimClient]:
+        try:
+            oauth2_scim_clients: List[oauth2_scim_client.Oauth2ScimClient] = []
+            assert self._token is not None
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            clients = api.get(self._master, "oauth2/clients", headers=headers).json()
+            for client in clients:
+                osc: oauth2_scim_client.Oauth2ScimClient = oauth2_scim_client.Oauth2ScimClient(
+                    name=client["name"], client_id=client["id"], domain=client["domain"]
+                )
+                oauth2_scim_clients.append(osc)
+            return oauth2_scim_clients
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")
+
+    def add_oauth_client(self, domain: str, name: str) -> oauth2_scim_client.Oauth2ScimClient:
+        try:
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            assert self._token is not None
+            client = api.post(
+                self._master,
+                "oauth2/clients",
+                headers=headers,
+                json={"domain": domain, "name": name},
+            ).json()
+
+            return oauth2_scim_client.Oauth2ScimClient(
+                client_id=str(client["id"]), secret=str(client["secret"]), domain=domain, name=name
+            )
+
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")
+
+    def remove_oauth_client(self, client_id: str) -> None:
+        try:
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            assert self._token is not None
+            api.delete(self._master, "oauth2/clients/{}".format(client_id), headers=headers)
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")

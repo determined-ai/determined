@@ -4,10 +4,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
-import { useStore } from 'contexts/Store';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { useResourcePools } from 'stores/resourcePools';
 import { Loadable } from 'utils/loadable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
@@ -35,7 +35,8 @@ const Clusters: React.FC = () => {
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const { resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const overview = useClusterOverview();
   const agents = useAgents();
 

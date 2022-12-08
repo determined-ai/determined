@@ -13,15 +13,21 @@ Deploying Determined with Slurm/PBS has the following requirements.
 -  The login node, admin node, and compute nodes must be configured with Ubuntu 20.04 or later,
    CentOS 7 or later, or SLES 15 or later.
 
+      -  User and group configuration must be consistent across all nodes of the HPC cluster
+      -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
+      -  A cluster-wide file system with consistent path names across the HPC cluster
+
 -  Slurm 19.05 or greater or PBS 2021.1.2 or greater.
 
--  Apptainer 1.0 or greater, Singularity 3.7 or greater or PodMan 3.3.1 or greater.
+-  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
+   greater.
 
 -  A cluster-wide shared filesystem.
 
--  To run jobs with GPUs, the Nvidia drivers must be installed on each compute node. Determined
-   requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia drivers can
-   be installed as part of a CUDA installation but the rest of the CUDA toolkit is not required.
+-  To run jobs with GPUs, the Nvidia or AMD drivers must be installed on each compute node.
+   Determined requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia
+   drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit is not
+   required.
 
 -  Determined supports the `active Python versions <https://endoflife.date/python>`__.
 
@@ -35,7 +41,7 @@ The launcher has the following additional requirements on the installation node:
 -  Java 1.8 or greater
 -  Sudo is configured to process configuration files present in the ``/etc/sudoers.d`` directory
 -  Access to the Slurm or PBS command line interface for the cluster
--  Access to a cluster-wide file system with a consistent path name across the cluster
+-  Access to a cluster-wide file system with a consistent path names across the cluster
 
 .. _slurm-config-requirements:
 
@@ -238,3 +244,57 @@ Any changes to your ``storage.conf`` should be applied using the command:
    .. code:: bash
 
       podman system migrate
+
+.. _enroot-config-requirements:
+
+*********************
+ Enroot Requirements
+*********************
+
+Install and configure Enroot on all compute nodes of your cluster as per the `Enroot Installation
+instructions <https://github.com/NVIDIA/enroot/blob/master/doc/installation.md>`__ for your
+platform. There may be additional per-user configuration that is required.
+
+   #. Enroot utilizes the directory ``${ENROOT_RUNTIME_PATH}`` (with default value
+      ``${XDG_RUNTIME_DIR}/enroot``) for temporary files. Normally ``XDG_RUNTIME_DIR`` is provided
+      by the login process, but Slurm and PBS do not provide this variable when launching jobs on
+      compute nodes. When neither ENROOT_RUNTIME_PATH/XDG_RUNTIME_DIR is defined, Enroot attempts to
+      create the directory /run/enroot for this purpose. This typically fails with a permission
+      error for any non-root user. Select one of the following alternatives to ensure that
+      ``XDG_RUNTIME_DIR`` or ``ENROOT_RUNTIME_PATH`` is defined and points to a user-writable
+      directory when Slurm/PBS jobs are launched on the cluster.
+
+         -  Have your HPC cluster administrator configure Slurm/PBS to provide ``XDG_RUNTIME_DIR``, or
+               change the default ``ENROOT_RUNTIME_PATH`` defined in ``/etc/enroot/enroot.conf`` on
+               each node in your HPC cluster.
+
+         -  Provide an ``ENROOT_RUNTIME_PATH`` definition in
+            ``task_container_defaults.environement_variables`` in master.yaml.
+
+               .. code:: yaml
+
+                  task_container_defaults:
+                     environment_variables:
+                        - ENROOT_RUNTIME_PATH=/tmp/$(whoami)
+
+         -  Provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment configuration
+
+   #. Unlike Singularity or PodMan, you must manually download the docker image file to the local
+      file system (``enroot import``) and then each user must create an Enroot container using that
+      image (``enroot create``). When the HPC launcher generates the enroot command for a job, it
+      automatically applies the same transformation to the name that Enroot does on import (``/``
+      and ``:`` characters are replaced with ``+``) to enable docker mage references to match the
+      associated Enroot container. The following shell commands will download and then create an
+      Enroot container for the current user. If other users have read access to
+      ``/shared/enroot/images``, they need only perform the ``enroot create`` step to make the
+      container available for their use.
+
+         .. code:: bash
+
+            image=determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730
+            cd /shared/enroot/images
+            enroot import docker://$image
+            enroot create /shared/enroot/images/${image//[\/:]/\+}
+
+   #. The Enroot container storage directory for the user ``${ENROOT_CACHE_PATH}`` (which defaults
+      to ``$HOME/.local/share/enroot``) must be accessible on all compute nodes.

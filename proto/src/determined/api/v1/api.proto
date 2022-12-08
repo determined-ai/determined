@@ -1963,4 +1963,16 @@ service Determined {
       tags: "RBAC"
     };
   }
+
+  // Patch a user's activity
+  rpc PostUserActivity(PostUserActivityRequest)
+      returns (PostUserActivityResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users/activity",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
 }

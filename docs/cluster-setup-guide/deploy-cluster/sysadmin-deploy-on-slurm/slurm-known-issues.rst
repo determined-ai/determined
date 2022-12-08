@@ -150,6 +150,26 @@ Some constraints are due to differences in behavior between Docker and Singulari
             environment_variables:
               - INHERITED_ENV_VAR=
 
+*********************
+ Enroot Known Issues
+*********************
+
+   -  Enroot uses ``XDG_RUNTIME_DIR`` which is not provided to the compute jobs by Slurm/PBS by
+      default. The error ``mkdir: cannot create directory ‘/run/enroot’: Permission denied``
+      indicates that the environment variable ``XDG_RUNTIME_DIR`` is not defined on the compute
+      nodes. See :ref:`podman-config-requirements` for recommendations.
+
+   -  Enroot requires manual download and creation of containers. The error ``[ERROR] No such file
+      or directory:
+      /home/users/test/.local/share/enroot/determinedai+environments+cuda-11.1-base-gpu-mpi-0.18.5``
+      indicates the user ``test`` has not created an Enroot container for docker image
+      ``determinedai/environments:cuda-11.1-base-gpu-mpi-0.18.5``. Check the available containers
+      using the ``enroot list`` command. See :ref:`enroot-config-requirements` for guidance on
+      creating Enroot containers.
+
+   -  Enroot does not provide a mechanism for sharing containers. Each user must create any
+      containers needed by their Determined experiments prior to creating the experiment.
+
 ***********************
  AMD/ROCm Known Issues
 ***********************
