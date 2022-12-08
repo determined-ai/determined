@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	// DefaultWorkspaceID is a special, always-existing, workspace titled "Uncategorized"
+	// DefaultWorkspaceID is a special, always-existing, workspace titled "Uncategorized".
 	DefaultWorkspaceID = 1
 )
 
