@@ -1,0 +1,8 @@
+tensorflow; sys_platform == 'linux'
+tensorflow-macos==2.9.2; sys_platform == 'darwin'
+tensorflow-metal==0.5.1; sys_platform == 'darwin'
+# tensorflow-macos==2.9.2
+# tensorflow-metal==0.5.1
+
+coloredlogs
+tqdm

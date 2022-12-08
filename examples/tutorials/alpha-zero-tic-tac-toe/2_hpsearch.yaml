@@ -1,0 +1,44 @@
+name: az-tic-tac-toe-adaptive-search
+entrypoint: python3 main.py
+
+searcher:
+  name: adaptive_asha
+  metric: max_draws_per_minute
+  smaller_is_better: false
+  max_length: 10 # sets numIters in main.py
+  max_trials: 100
+
+data:
+  # defined in main.py:
+  arenaCompare: 100
+  numEps: 50
+  stop_after: 50
+  # numMCTSSims: 100
+  # latest_checkpoint: e6cc98d9-e263-469b-b6ff-2e223074365f
+
+hyperparameters:
+  # learning rate defined in NNet.py
+  lr:
+    type: log
+    base: 10
+    minval: -6
+    maxval: -1
+  # dropout rate defined in NNet.py
+  dropout:
+    type: double
+    minval: 0.1
+    maxval: 0.5
+  # number of epochs defined in NNet.py
+  epochs:
+    type: categorical
+    vals: [ 20, 10 ]
+  # batch_size defined in NNet.py
+  batch_size:
+    type: categorical
+    vals: [ 100, 50, 25, 10 ]
+  # num_channels defined in NNet.py
+  num_channels:
+    type: categorical
+    vals: [ 128, 64, 32, 16 ]
+
+max_restarts: 0

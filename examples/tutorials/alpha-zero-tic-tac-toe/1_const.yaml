@@ -1,0 +1,19 @@
+name: az-tic-tac-toe-single
+entrypoint: python3 main.py
+
+searcher:
+  name: single
+  metric: draws
+  smaller_is_better: false
+  max_length: 10 # sets numIters in main.py
+
+data:
+  # defined in NNet.py:
+  num_channels: 16
+  batch_size: 50
+  # defined in main.py:
+  arenaCompare: 100
+  numEps: 50
+  # latest_checkpoint: e6cc98d9-e263-469b-b6ff-2e223074365f
+
+max_restarts: 0
