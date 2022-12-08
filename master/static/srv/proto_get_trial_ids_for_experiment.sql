@@ -22,9 +22,21 @@ WITH searcher_info AS (
         t.end_time,
         coalesce(t.end_time, now()) - t.start_time AS duration,
         (
-            SELECT coalesce(max(s.total_batches), 0)
-            FROM steps s
-            WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
+            -- TODO: Precompute this on metric submission.
+            SELECT max(q.total_batches)
+            FROM (
+                SELECT coalesce(max(s.total_batches), 0) AS total_batches
+                FROM steps s
+                WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
+                UNION ALL
+                SELECT coalesce(max(v.total_batches), 0) AS total_batches
+                FROM validations v
+                WHERE v.trial_id = t.id AND v.state = 'COMPLETED'
+                UNION ALL
+                SELECT coalesce(max(c.total_batches), 0) AS total_batches
+                FROM checkpoints c
+                WHERE c.trial_id = t.id AND c.state = 'COMPLETED'
+            ) q
         ) AS total_batches_processed,
         (
            CASE WHEN t.best_validation_id IS NOT NULL THEN
