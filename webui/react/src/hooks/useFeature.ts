@@ -1,7 +1,8 @@
 import queryString from 'query-string';
 
-import { useStore } from 'contexts/Store';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { DeterminedInfo } from 'types';
+import { Loadable } from 'utils/loadable';
 
 // Add new feature switches below using `|`
 export type ValidFeature =
@@ -18,7 +19,7 @@ interface FeatureHook {
 }
 
 const useFeature = (): FeatureHook => {
-  const { info } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   return { isOn: (ValidFeature) => IsOn(ValidFeature, info) };
 };
 

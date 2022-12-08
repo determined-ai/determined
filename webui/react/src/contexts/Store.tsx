@@ -5,7 +5,7 @@ import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import { Auth, DetailedUser, DeterminedInfo, UserAssignment, UserRole, Workspace } from 'types';
+import { Auth, DetailedUser, UserAssignment, UserRole, Workspace } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
 
 const logger = rootLogger.extend('store');
@@ -21,7 +21,6 @@ interface OmnibarState {
 interface State {
   auth: Auth & { checked: boolean };
 
-  info: DeterminedInfo;
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
 
@@ -42,19 +41,11 @@ export const StoreAction = {
 
   ResetAuthCheck: 'ResetAuthCheck',
 
-  // Agents
-  SetAgents: 'SetAgents',
-
   SetAuth: 'SetAuth',
 
   SetAuthCheck: 'SetAuthCheck',
 
   SetCurrentUser: 'SetCurrentUser',
-
-  // Info
-  SetInfo: 'SetInfo',
-
-  SetInfoCheck: 'SetInfoCheck',
 
   // User assignments, roles, and derived permissions
   SetKnownRoles: 'SetKnownRoles',
@@ -75,8 +66,6 @@ type Action =
   | { type: typeof StoreAction.ResetAuthCheck }
   | { type: typeof StoreAction.SetAuth; value: Auth }
   | { type: typeof StoreAction.SetAuthCheck }
-  | { type: typeof StoreAction.SetInfo; value: DeterminedInfo }
-  | { type: typeof StoreAction.SetInfoCheck }
   | { type: typeof StoreAction.SetUsers; value: DetailedUser[] }
   | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
@@ -90,21 +79,9 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-export const initInfo: DeterminedInfo = {
-  branding: undefined,
-  checked: false,
-  clusterId: '',
-  clusterName: '',
-  featureSwitches: [],
-  isTelemetryEnabled: false,
-  masterId: '',
-  rbacEnabled: false,
-  version: process.env.VERSION || '',
-};
 
 const initState: State = {
   auth: initAuth,
-  info: initInfo,
   knownRoles: [],
   pinnedWorkspaces: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
@@ -153,11 +130,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetAuthCheck:
       if (state.auth.checked) return state;
       return { ...state, auth: { ...state.auth, checked: true } };
-    case StoreAction.SetInfo:
-      if (isEqual(state.info, action.value)) return state;
-      return { ...state, info: action.value };
-    case StoreAction.SetInfoCheck:
-      return { ...state, info: { ...state.info, checked: true } };
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };

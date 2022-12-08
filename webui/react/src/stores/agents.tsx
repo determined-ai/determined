@@ -61,10 +61,11 @@ export const useEnsureAgentsFetched = (canceler: AbortController): (() => Promis
   }, [canceler, updateAgents, agents]);
 };
 export const useAgents = (): Loadable<Agent[]> => {
-  // TODO: check undefined
-  const { agents } = useContext(AgentsContext);
-
-  return agents;
+  const context = useContext(AgentsContext);
+  if (context === null) {
+    throw new Error('Attempted to use useAgents outside of Agent Context');
+  }
+  return context.agents;
 };
 
 export const useClusterOverview = (): Loadable<ClusterOverview> => {
