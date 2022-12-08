@@ -15,7 +15,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -158,27 +157,6 @@ func (a *apiServer) SetNotebookPriority(
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
-// TODO create experiment could use this?
-func (a *apiServer) getValidatedWorkspaceForNewJob(
-	ctx context.Context, workspaceID int32,
-) (*model.Workspace, error) {
-	defaultedWID := model.DefaultWorkspaceID
-	if workspaceID != 0 {
-		defaultedWID = int(workspaceID)
-	}
-	var w model.Workspace
-	if err := db.Bun().NewSelect().Model(&w).
-		Where("id = ?", defaultedWID).
-		Scan(ctx); err != nil {
-		// TODO figure out the proper error code
-		return nil, err
-	}
-	if w.Archived {
-		return nil, status.Error(codes.InvalidArgument, "cannot launch new jobs in archived workspace")
-	}
-	return &w, nil
-}
-
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
@@ -194,12 +172,12 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
-	workspace, err := a.getValidatedWorkspaceForNewJob(ctx, req.WorkspaceId)
-	if err != nil {
-		return nil, err
+	workspaceID := model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		workspaceID = int(req.WorkspaceId)
 	}
 	if err = command.AuthZProvider.Get().CanCreateCommand(
-		ctx, *user, model.AccessScopeID(workspace.ID),
+		ctx, *user, model.AccessScopeID(workspaceID),
 	); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
@@ -273,7 +251,7 @@ func (a *apiServer) LaunchNotebook(
 		),
 	}
 
-	spec.Metadata.WorkspaceID = model.AccessScopeID(workspace.ID)
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 
 	// Launch a Notebook actor.
 	var notebookID model.TaskID
