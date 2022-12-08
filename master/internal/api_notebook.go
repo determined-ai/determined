@@ -61,7 +61,9 @@ func (a *apiServer) GetNotebooks(
 			return false
 		}
 		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
-			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId), model.AccessScopeID(resp.Notebooks[i].WorkspaceId), model.JobTypeNotebook)
+			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId),
+			model.AccessScopeID(resp.Notebooks[i].WorkspaceId),
+		)
 		if serverError != nil {
 			err = serverError
 		}
@@ -89,7 +91,9 @@ func (a *apiServer) GetNotebook(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetCommand(
-		ctx, *curUser, model.UserID(resp.Notebook.UserId), model.AccessScopeID(resp.Notebook.WorkspaceId), model.JobTypeNotebook); err != nil {
+		ctx, *curUser, model.UserID(resp.Notebook.UserId),
+		model.AccessScopeID(resp.Notebook.WorkspaceId),
+	); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -124,7 +128,9 @@ func (a *apiServer) KillNotebook(
 		return nil, err
 	}
 
-	if err = command.AuthZProvider.Get().CanTerminateCommand(ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), model.JobTypeNotebook); err != nil {
+	if err = command.AuthZProvider.Get().CanTerminateCommand(
+		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
+	); err != nil {
 		return nil, err
 	}
 
@@ -143,7 +149,9 @@ func (a *apiServer) SetNotebookPriority(
 }
 
 // TODO create experiment could use this?
-func (a *apiServer) getValidatedWorkspaceForNewJob(ctx context.Context, workspaceID int32) (*model.Workspace, error) {
+func (a *apiServer) getValidatedWorkspaceForNewJob(
+	ctx context.Context, workspaceID int32,
+) (*model.Workspace, error) {
 	defaultedWID := model.DefaultWorkspaceID
 	if workspaceID != 0 {
 		defaultedWID = int(workspaceID)
@@ -180,7 +188,9 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, err
 	}
-	if err = command.AuthZProvider.Get().CanCreateCommand(ctx, *user, model.AccessScopeID(workspace.ID), model.JobTypeNotebook); err != nil {
+	if err = command.AuthZProvider.Get().CanCreateCommand(
+		ctx, *user, model.AccessScopeID(workspace.ID),
+	); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 

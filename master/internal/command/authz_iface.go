@@ -11,13 +11,12 @@ import (
 )
 
 // CommandAuthZ describes authz methods for commands.
-// DISCUSS should we start moving to using NTSC in code, anything other than "command" is more clear IMO.
+// DISCUSS should we start moving to using NTSC in code, anything other than "command".
 type CommandAuthZ interface {
-	// TODO do we really want jobType? should we directly go to experiment rbac instead? we might have to.
 	// GET /api/v1/commands/:cmd_id
 	// GET /tasks
 	CanGetCommand(
-		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID, jobType model.JobType,
+		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 	) (canGetCmd bool, serverError error)
 
 	// GET /api/v1/tasks/count
@@ -31,12 +30,12 @@ type CommandAuthZ interface {
 
 	// POST /api/v1/commands/:cmd_id/kill
 	CanTerminateCommand(
-		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, jobType model.JobType,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
 
 	// POST /api/v1/commands
 	CanCreateCommand(
-		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, jobType model.JobType,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
 
 	// PATCH /commands/:cmd_id
