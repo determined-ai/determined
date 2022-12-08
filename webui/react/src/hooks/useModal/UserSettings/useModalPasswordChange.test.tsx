@@ -77,7 +77,8 @@ const Container: React.FC = () => {
 
   useEffect(() => {
     loadUsers();
-  }, [loadUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div>
@@ -155,6 +156,8 @@ describe('useModalPasswordChange', () => {
     await user.type(screen.getByLabelText(NEW_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
     await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), SECOND_PASSWORD_VALUE);
     await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
+
+    jest.advanceTimersToNextTimer();
 
     // Check for successful toast message.
     await waitFor(() => {

@@ -6,8 +6,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
-import { AuthProvider } from 'stores/auth';
-import { useCurrentUsers, UsersProvider } from 'stores/users';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { DetailedUser } from 'types';
 
 import * as hook from './useSettings';
@@ -41,8 +40,8 @@ type HookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -51,8 +50,8 @@ type ExtraHookReturn = {
   rerender: (
     props?:
       | {
-          children: JSX.Element;
-        }
+        children: JSX.Element;
+      }
       | undefined,
   ) => void;
 };
@@ -106,6 +105,21 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
   storagePath: 'settings/extra',
 };
 
+const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
+  const { setAuth } = useAuth();
+
+  useEffect(() => {
+    setAuth({ isAuthenticated: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <SettingsProvider>
+      <HistoryRouter history={history}>{children}</HistoryRouter>
+    </SettingsProvider>
+  );
+};
+
 const setup = async (
   newSettings?: hook.SettingsConfig<Settings>,
   newExtraSettings?: hook.SettingsConfig<ExtraSettings>,
@@ -113,33 +127,11 @@ const setup = async (
   extraResult: ExtraHookReturn;
   result: HookReturn;
 }> => {
-  const ComponentWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => {
-    const { updateCurrentUser } = useCurrentUsers();
-
-    useEffect(() => {
-      updateCurrentUser({
-        displayName: 'Test User',
-        id: 0,
-        isActive: true,
-        isAdmin: false,
-        username: 'test_user',
-      });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    return (
-      <SettingsProvider>
-        <HistoryRouter history={history}>{children}</HistoryRouter>
-      </SettingsProvider>
-    );
-  };
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <StoreProvider>
-      <UsersProvider>
-        <AuthProvider>
-          <ComponentWrapper>{children}</ComponentWrapper>
-        </AuthProvider>
-      </UsersProvider>
+      <AuthProvider>
+        <Container>{children}</Container>
+      </AuthProvider>
     </StoreProvider>
   );
   const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {

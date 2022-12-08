@@ -5,7 +5,7 @@ import React, { useCallback } from 'react';
 import { login, setUserPassword } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/auth';
+import { useCurrentUsers } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -98,9 +98,9 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const loadableAuth = useAuth();
-  const authUser = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const loadableCUser = useCurrentUsers();
+  const authUser = Loadable.match(loadableCUser.currentUser, {
+    Loaded: (user) => user,
     NotLoaded: () => undefined,
   });
 

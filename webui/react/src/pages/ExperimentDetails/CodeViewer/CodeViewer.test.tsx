@@ -117,7 +117,11 @@ const Container: React.FC<Props> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />;
+  return (
+    <SettingsProvider>
+      <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+    </SettingsProvider>
+  );
 };
 
 const setup = (
@@ -127,9 +131,7 @@ const setup = (
     <HistoryRouter history={history}>
       <StoreProvider>
         <AuthProvider>
-          <SettingsProvider>
-            <Container {...props} />
-          </SettingsProvider>
+          <Container {...props} />
         </AuthProvider>
       </StoreProvider>
     </HistoryRouter>,

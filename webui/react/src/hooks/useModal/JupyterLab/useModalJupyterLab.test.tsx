@@ -58,10 +58,12 @@ const ModalTrigger: React.FC = () => {
   }, []);
 
   return (
-    <>
-      <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
-      {contextHolder}
-    </>
+    <SettingsProvider>
+      <>
+        <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
+        {contextHolder}
+      </>
+    </SettingsProvider>
   );
 };
 
@@ -73,9 +75,7 @@ const setup = async () => {
       <StoreProvider>
         <UsersProvider>
           <AuthProvider>
-            <SettingsProvider>
-              <ModalTrigger />
-            </SettingsProvider>
+            <ModalTrigger />
           </AuthProvider>
         </UsersProvider>
       </StoreProvider>

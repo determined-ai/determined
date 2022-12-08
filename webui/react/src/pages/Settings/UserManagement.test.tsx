@@ -9,7 +9,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
-import { AuthProvider } from 'stores/auth';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { useCurrentUsers, useFetchUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -68,18 +68,27 @@ const Container: React.FC = () => {
   const { updateCurrentUser } = useCurrentUsers();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
+  const { setAuth } = useAuth();
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
-
+    setAuth({ isAuthenticated: true });
     updateCurrentUser(currentUser);
-  }, [fetchUsers, updateCurrentUser]);
+  }, [fetchUsers, updateCurrentUser, setAuth]);
 
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
 
-  return <UserManagement />;
+  return (
+    <SettingsProvider>
+      <HelmetProvider>
+        <HistoryRouter history={history}>
+          <UserManagement />;
+        </HistoryRouter>
+      </HelmetProvider>
+    </SettingsProvider>
+  );
 };
 
 const setup = () =>
@@ -88,13 +97,7 @@ const setup = () =>
       <UsersProvider>
         <AuthProvider>
           <DndProvider backend={HTML5Backend}>
-            <SettingsProvider>
-              <HelmetProvider>
-                <HistoryRouter history={history}>
-                  <Container />
-                </HistoryRouter>
-              </HelmetProvider>
-            </SettingsProvider>
+            <Container />
           </DndProvider>
         </AuthProvider>
       </UsersProvider>
