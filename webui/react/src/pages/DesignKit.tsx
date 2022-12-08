@@ -11,6 +11,7 @@ import {
   Space,
   Table,
   Tabs,
+  Tooltip,
 } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -48,6 +49,7 @@ const Components = {
   Dropdowns: 'Comboboxes & Dropdowns',
   Facepile: 'Facepile',
   Labels: 'Labels',
+  LeftNavigation: 'LeftNavigation',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
@@ -55,6 +57,7 @@ const Components = {
   Searchboxes: 'Search boxes',
   Spinbuttons: 'Spin buttons',
   Textfields: 'Input - text fields',
+  Tooltips: 'Tooltips',
 } as const;
 
 type ComponentNames = ValueOf<typeof Components>;
@@ -76,6 +79,8 @@ const componentOrder: ComponentIds[] = [
   'Pagination',
   'DataCards',
   'LogViewer',
+  'LeftNavigation',
+  'Tooltips',
 ];
 
 interface Props {
@@ -1266,6 +1271,175 @@ const LogViewerSection: React.FC = () => {
   );
 };
 
+const LeftNavigationSection: React.FC = () => {
+  return (
+    <ComponentSection id="LeftNavigation" title="LeftNavigation">
+      <ReviewAlert />
+      <Card>A navigation pane (Nav) provides links to the main areas of the portal.</Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+      </Card>
+      <Card title="Best practices">
+        <strong>Layout</strong>
+        <ul>
+          <li>
+            In larger configurations, the navigation pane is always on-screen, usually on the left
+            of the view. On smaller screens, consider collapsing it into a skinnier version or
+            hiding it behind a menu button (note that Nav does not currently have either of these
+            behaviors built in).
+          </li>
+          <li>
+            Don&apos;t overload your navigation pane. Too many items in the Nav is indicative of an
+            app that is poorly organized or trying to do too much.
+          </li>
+        </ul>
+        <strong>Content</strong>
+        <ul>
+          <li>
+            Keep the names of the navigation items brief and clear, rather than trying to be overly
+            specific.
+          </li>
+          <li>
+            Use the word that feels right for the navigation. For example, some items may make more
+            sense as nouns (e.g. “Files”), others as adjectives (“Shared”). Use what makes sense for
+            customers, and keep it short!
+          </li>
+          <li>
+            If using a menu button to expand and collapse the Nav, use the tooltip “Expand
+            navigation” or “Collapse navigation”.
+          </li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>LeftNavigation Default</strong>
+        Can&apos;t embed LeftNavigation
+        <strong>Considerations</strong>
+        <ul>
+          <li>Use nested navigational items for sub-categories</li>
+          <li>
+            Interactions/Contextual/Profile changes (ie. dark mode) seem hard to discover and/or
+            require numerous clicks to activate.
+          </li>
+        </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const TooltipsSection: React.FC = () => {
+  const text = 'Tooltip text';
+  const buttonWidth = 70;
+
+  return (
+    <ComponentSection id="Tooltips" title="Tooltips">
+      <ReviewAlert />
+      <Card>
+        A good tooltip briefly describes unlabeled controls or provides a bit of additional
+        information about labeled controls, when this is useful. It can also help customers navigate
+        the UI by offering additional—not redundant—information about control labels, icons, and
+        links. A tooltip should always add valuable information; use sparingly.
+      </Card>
+      <Card title="Design audit">
+        <strong>
+          This component is currently under review and will receive updates to address:
+        </strong>
+        <ul>
+          <li>Validate for consistency. Three different implementations found.</li>
+        </ul>
+      </Card>
+      <Card title="Best practices">
+        <strong>Content</strong>
+        <ul>
+          <li>
+            Don&apos;t use a tooltip to restate a button name that&apos;s already shown in the UI.
+          </li>
+          <li>
+            When a control or UI element is unlabeled, use a simple, descriptive noun phrase. For
+            Only use periods for complete sentences.italize the first word (unless a subsequent word
+            is a proper noun), and don&apos;t use a period.
+          </li>
+          <li>
+            For a disabled control that could use an explanation, provide a brief description of the
+            state in which the control will be enabled. For example: “This feature is available for
+            line charts.”
+          </li>
+          <li>Only use periods for complete sentences.</li>
+        </ul>
+      </Card>
+      <Card title="Usage">
+        <strong>Tooltips default</strong>
+        <Space>
+          <Tooltip title={text}>
+            <span>Trigger on hover</span>
+          </Tooltip>
+          <Tooltip title={text} trigger="click">
+            <span>Trigger on click</span>
+          </Tooltip>
+          <Tooltip title={text} trigger="contextMenu">
+            <span>Trigger on right click</span>
+          </Tooltip>
+        </Space>
+        <strong>Considerations</strong>
+        <ul>
+          <li>
+            Nest the tooltip where the content in a cell/text is. Don’t let it levitate in the
+            nothingness.
+          </li>
+        </ul>
+        <strong>Variations</strong>
+        <div>
+          <div style={{ marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
+            <Tooltip placement="topLeft" title={text}>
+              <Button>TL</Button>
+            </Tooltip>
+            <Tooltip placement="top" title={text}>
+              <Button>Top</Button>
+            </Tooltip>
+            <Tooltip placement="topRight" title={text}>
+              <Button>TR</Button>
+            </Tooltip>
+          </div>
+          <div style={{ float: 'left', width: buttonWidth }}>
+            <Tooltip placement="leftTop" title={text}>
+              <Button>LT</Button>
+            </Tooltip>
+            <Tooltip placement="left" title={text}>
+              <Button>Left</Button>
+            </Tooltip>
+            <Tooltip placement="leftBottom" title={text}>
+              <Button>LB</Button>
+            </Tooltip>
+          </div>
+          <div style={{ marginLeft: buttonWidth * 4 + 24, width: buttonWidth }}>
+            <Tooltip placement="rightTop" title={text}>
+              <Button>RT</Button>
+            </Tooltip>
+            <Tooltip placement="right" title={text}>
+              <Button>Right</Button>
+            </Tooltip>
+            <Tooltip placement="rightBottom" title={text}>
+              <Button>RB</Button>
+            </Tooltip>
+          </div>
+          <div style={{ clear: 'both', marginLeft: buttonWidth, whiteSpace: 'nowrap' }}>
+            <Tooltip placement="bottomLeft" title={text}>
+              <Button>BL</Button>
+            </Tooltip>
+            <Tooltip placement="bottom" title={text}>
+              <Button>Bottom</Button>
+            </Tooltip>
+            <Tooltip placement="bottomRight" title={text}>
+              <Button>BR</Button>
+            </Tooltip>
+          </div>
+        </div>
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
 
@@ -1307,6 +1481,8 @@ const DesignKit: React.FC = () => {
           <PaginationSection />
           <DataCardsSection />
           <LogViewerSection />
+          <LeftNavigationSection />
+          <TooltipsSection />
         </main>
       </div>
     </Page>
