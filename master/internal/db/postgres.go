@@ -206,6 +206,9 @@ func (db *PgDB) namedGet(dest interface{}, query string, arg interface{}) error 
 	if err != nil {
 		return errors.Wrapf(err, "error preparing query %s", query)
 	}
+
+	defer nstmt.Close()
+
 	if sErr := nstmt.QueryRowx(arg).Scan(dest); sErr != nil {
 		err = errors.Wrapf(sErr, "error scanning query %s", query)
 	}
@@ -320,7 +323,11 @@ func (db *PgDB) queryRowsWithParser(
 	if err != nil {
 		return err
 	}
+
+	// Defer once now, ignoring errors, to ensure cleanup occurs.  Also close at the end, capturing
+	// the error, to ensure we don't drop any errors.
 	defer rows.Close()
+
 	vType := reflect.TypeOf(v).Elem()
 	switch kind := vType.Kind(); kind {
 	case reflect.Slice:
@@ -331,13 +338,13 @@ func (db *PgDB) queryRowsWithParser(
 			case reflect.Ptr:
 				sValue := reflect.New(vValue.Type().Elem().Elem())
 				if err = p(rows, sValue.Interface()); err != nil {
-					return err
+					return errors.Wrap(err, "queryRowsWithParser[ptr]")
 				}
 				vValue = reflect.Append(vValue, sValue)
 			case reflect.Struct:
 				sValue := reflect.New(vValue.Type().Elem())
 				if err = p(rows, sValue.Interface()); err != nil {
-					return err
+					return errors.Wrap(err, "queryRowsWithParser[struct]")
 				}
 				vValue = reflect.Append(vValue, sValue.Elem())
 			default:
@@ -345,15 +352,22 @@ func (db *PgDB) queryRowsWithParser(
 			}
 		}
 		reflect.ValueOf(v).Elem().Set(vValue)
-		return nil
 	case reflect.Struct:
-		if rows.Next() {
-			return p(rows, v)
+		if !rows.Next() {
+			return ErrNotFound
 		}
-		return ErrNotFound
+		if err = p(rows, v); err != nil {
+			return err
+		}
 	default:
 		panic(fmt.Sprintf("unsupported query type: %s", kind))
 	}
+
+	if err := rows.Close(); err != nil {
+		return errors.Wrapf(err, "rows.Close()")
+	}
+
+	return nil
 }
 
 // Query returns the result of the query. Any placeholder parameters are replaced

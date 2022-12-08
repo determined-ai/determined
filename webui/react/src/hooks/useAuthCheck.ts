@@ -10,11 +10,13 @@ import { updateDetApi } from 'services/apiConfig';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
 import { AUTH_COOKIE_KEY, useAuth } from 'stores/auth';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
-  const { info } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const location = useLocation();
   const { setAuth, resetAuth, setAuthCheck } = useAuth();
 

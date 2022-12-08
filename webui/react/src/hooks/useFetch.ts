@@ -1,22 +1,8 @@
 import { useCallback } from 'react';
 
 import { StoreAction, useStoreDispatch } from 'contexts/Store';
-import { getInfo, getPermissionsSummary, getWorkspaces, listRoles } from 'services/api';
+import { getPermissionsSummary, getWorkspaces, listRoles } from 'services/api';
 import handleError from 'utils/error';
-
-export const useFetchInfo = (canceler: AbortController): (() => Promise<void>) => {
-  const storeDispatch = useStoreDispatch();
-
-  return useCallback(async (): Promise<void> => {
-    try {
-      const response = await getInfo({ signal: canceler.signal });
-      storeDispatch({ type: StoreAction.SetInfo, value: response });
-    } catch (e) {
-      storeDispatch({ type: StoreAction.SetInfoCheck });
-      handleError(e);
-    }
-  }, [canceler, storeDispatch]);
-};
 
 export const useFetchPinnedWorkspaces = (canceler: AbortController): (() => Promise<void>) => {
   const storeDispatch = useStoreDispatch();

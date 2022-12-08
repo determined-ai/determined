@@ -14,6 +14,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -54,9 +55,10 @@ const NavigationTabbar: React.FC = () => {
     Loaded: (auth) => auth.user,
     NotLoaded: () => undefined,
   });
-  const { info, pinnedWorkspaces } = useStore();
+  const { pinnedWorkspaces } = useStore();
   const loadableResourcePools = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();
   const overview = useClusterOverview();
   const agents = useAgents();

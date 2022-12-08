@@ -4,7 +4,7 @@ import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import { DeterminedInfo, UserAssignment, UserRole, Workspace } from 'types';
+import { UserAssignment, UserRole, Workspace } from 'types';
 
 const logger = rootLogger.extend('store');
 
@@ -17,7 +17,6 @@ interface OmnibarState {
 }
 
 interface State {
-  info: DeterminedInfo;
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
 
@@ -33,14 +32,6 @@ export const StoreAction = {
   HideOmnibar: 'HideOmnibar',
 
   Reset: 'Reset',
-
-  // Agents
-  SetAgents: 'SetAgents',
-
-  // Info
-  SetInfo: 'SetInfo',
-
-  SetInfoCheck: 'SetInfoCheck',
 
   // User assignments, roles, and derived permissions
   SetKnownRoles: 'SetKnownRoles',
@@ -59,8 +50,6 @@ export const StoreAction = {
 
 type Action =
   | { type: typeof StoreAction.Reset }
-  | { type: typeof StoreAction.SetInfo; value: DeterminedInfo }
-  | { type: typeof StoreAction.SetInfoCheck }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
@@ -68,20 +57,6 @@ type Action =
   | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
 
-export const initInfo: DeterminedInfo = {
-  branding: undefined,
-  checked: false,
-  clusterId: '',
-  clusterName: '',
-  featureSwitches: [],
-  isTelemetryEnabled: false,
-  masterId: '',
-  rbacEnabled: false,
-  version: process.env.VERSION || '',
-};
-
-const initState: State = {
-  info: initInfo,
   knownRoles: [],
   pinnedWorkspaces: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
@@ -103,11 +78,6 @@ const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
-    case StoreAction.SetInfo:
-      if (isEqual(state.info, action.value)) return state;
-      return { ...state, info: action.value };
-    case StoreAction.SetInfoCheck:
-      return { ...state, info: { ...state.info, checked: true } };
     case StoreAction.SetPinnedWorkspaces:
       if (isEqual(state.pinnedWorkspaces, action.value)) return state;
       return { ...state, pinnedWorkspaces: action.value };

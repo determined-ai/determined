@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { useFetchMyRoles, useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterOverview, useFetchAgents } from 'stores/agents';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useFetchResourcePools } from 'stores/resourcePools';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
@@ -22,7 +22,7 @@ interface Props {
 
 const Navigation: React.FC<Props> = ({ children }) => {
   const { ui } = useUI();
-  const { info } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
   const overview = useClusterOverview();
 

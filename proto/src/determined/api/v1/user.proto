@@ -151,3 +151,21 @@ message PostUserSettingResponse {}
 message ResetUserSettingRequest {}
 // Response to ResetUserSettingRequest.
 message ResetUserSettingResponse {}
+
+// Update user activity.
+message PostUserActivityRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "activity_type", "entity_type", "entity_id" ] }
+  };
+  // The type of the activity.
+  determined.user.v1.ActivityType activity_type = 1;
+
+  // The type of the entity.
+  determined.user.v1.EntityType entity_type = 2;
+
+  // The unique id for the entity
+  int32 entity_id = 3;
+}
+
+// Response to PostUserActivityRequest.
+message PostUserActivityResponse {}

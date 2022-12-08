@@ -22,6 +22,7 @@ import { RecordKey } from 'shared/types';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
 import { useAuth } from 'stores/auth';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -50,7 +51,7 @@ const SignIn: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const { info } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');
 

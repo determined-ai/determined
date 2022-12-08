@@ -62,10 +62,10 @@ const GroupActionDropdown = ({
     } as const;
 
     const funcs = {
-      [MenuKey.Delete]: () => {
+      [MenuKey.Edit]: () => {
         openEditGroupModal();
       },
-      [MenuKey.Edit]: () => {
+      [MenuKey.Delete]: () => {
         openDeleteGroupModal();
       },
     };

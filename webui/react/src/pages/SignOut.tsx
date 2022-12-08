@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useStore } from 'contexts/Store';
 import { paths, routeAll } from 'routes/utils';
 import { logout } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { isAuthFailure } from 'shared/utils/service';
 import { useAuth } from 'stores/auth';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 const SignOut: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { info } = useStore();
   const { resetAuth } = useAuth();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
+  const storeDispatch = useStoreDispatch();
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {

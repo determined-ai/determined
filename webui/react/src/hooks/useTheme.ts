@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import { useSettings } from 'hooks/useSettings';
 import useUI from 'shared/contexts/stores/UI';
 import { DarkLight, globalCssVars, Mode } from 'shared/themes';
 import { RecordKey } from 'shared/types';
 import { camelCaseToKebab } from 'shared/utils/string';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import themes from 'themes';
+import { Loadable } from 'utils/loadable';
 
 import { config, Settings } from './useTheme.settings';
 
@@ -61,7 +62,7 @@ const updateAntDesignTheme = (path: string) => {
  * and storybook Theme decorators and not individual components.
  */
 export const useTheme = (): void => {
-  const { info } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui, actions: uiActions } = useUI();
   const [systemMode, setSystemMode] = useState<Mode>(getSystemMode());
   const [isSettingsReady, setIsSettingsReady] = useState(false);
