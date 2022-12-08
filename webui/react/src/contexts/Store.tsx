@@ -57,6 +57,7 @@ type Action =
   | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
   | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
 
+const initState: State = {
   knownRoles: [],
   pinnedWorkspaces: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
