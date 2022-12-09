@@ -479,7 +479,14 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
 		return nil, nil, false, nil, errors.Wrapf(err, "error validating resources")
 	}
-	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
+		m.system,
+		resources.ResourcePool(),
+		m.config.TaskContainerDefaults,
+	)
+	if err != nil {
+		return nil, nil, false, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
