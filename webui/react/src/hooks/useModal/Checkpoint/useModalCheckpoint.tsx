@@ -157,7 +157,7 @@ ${checkpoint.totalBatches}. This action may complete or fail without further not
           )}
         {'endTime' in checkpoint &&
           checkpoint?.endTime &&
-          renderRow('End Time', formatDatetime(checkpoint.endTime))}
+          renderRow('Ended', formatDatetime(checkpoint.endTime))}
         {renderRow(
           'Total Size',
           <div className={css.size}>

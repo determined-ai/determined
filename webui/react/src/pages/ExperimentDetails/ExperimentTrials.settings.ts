@@ -32,15 +32,15 @@ export const DEFAULT_COLUMNS: TrialColumnName[] = [
 
 export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
   action: 46,
-  autoRestarts: 117,
-  bestValidationMetric: 150,
-  checkpoint: 150,
+  autoRestarts: 124,
+  bestValidationMetric: 190,
+  checkpoint: 100,
   duration: 117,
   id: 85,
-  latestValidationMetric: 150,
+  latestValidationMetric: 200,
   startTime: 117,
-  state: 64,
-  totalBatchesProcessed: 74,
+  state: 100,
+  totalBatchesProcessed: 90,
 };
 
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetExperimentTrialsRequestSortBy => {

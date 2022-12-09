@@ -165,7 +165,7 @@ const NavigationTabbar: React.FC = () => {
           {
             external: true,
             icon: 'pencil',
-            label: 'Share Feedback',
+            label: 'Feedback',
             path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
             popout: true,
           },

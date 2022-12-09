@@ -342,7 +342,7 @@ const TrialTable: React.FC<Props> = ({
       render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
         relativeTimeRenderer(new Date(record.startTime)),
       sorter: true,
-      title: 'Start Time',
+      title: 'Started',
     }),
     [],
   );
@@ -354,7 +354,7 @@ const TrialTable: React.FC<Props> = ({
       render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
         relativeTimeRenderer(new Date(record.startTime)),
       sorter: true,
-      title: 'End Time',
+      title: 'Ended',
     }),
     [],
   );
@@ -378,7 +378,7 @@ const TrialTable: React.FC<Props> = ({
       defaultWidth: 120,
       key: 'searcherType',
       title: (
-        <BadgeTag label="Type" tooltip="Searcher Type">
+        <BadgeTag label="Type" tooltip="Searcher">
           S
         </BadgeTag>
       ),

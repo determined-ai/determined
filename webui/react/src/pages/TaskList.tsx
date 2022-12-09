@@ -372,7 +372,7 @@ const TaskList: React.FC = () => {
         sorter: (a: CommandTask, b: CommandTask): number => {
           return dateTimeStringSorter(a.startTime, b.startTime);
         },
-        title: 'Start Time',
+        title: 'Started',
       },
       {
         dataIndex: 'state',
