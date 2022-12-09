@@ -484,7 +484,6 @@ const canViewWorkspaces = ({
   return (
     !rbacEnabled ||
     rbacReadPermission ||
-    (!!userRoles && userRoles.length === 1 && userRoles[0].id === -10) ||
     (!!userRoles &&
       !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEWWORKSPACE)))
   );
