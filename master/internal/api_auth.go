@@ -138,7 +138,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		ctx = c.Request().Context()
 	}
 	// TODO(DET-8733): go from echo and actor context to workspace id and if tsb then which experiment and access
-	if ok, err := command.AuthZProvider.Get().CanGetCommand(
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *user, ownerID, command.PlaceHolderWorkspace, command.PlaceHolderJobType); err != nil {
 		return true, err
 	} else if !ok {

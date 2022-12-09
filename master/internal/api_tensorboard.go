@@ -84,7 +84,7 @@ func (a *apiServer) GetTensorboards(
 		if err != nil {
 			return false
 		}
-		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
+		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
 			ctx, *curUser, model.UserID(resp.Tensorboards[i].UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType)
 		if serverError != nil {
 			err = serverError
@@ -112,7 +112,7 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetCommand(
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.UserID(resp.Tensorboard.UserId), command.PlaceHolderWorkspace, command.PlaceHolderJobType); err != nil {
 		return nil, err
 	} else if !ok {

@@ -26,14 +26,14 @@ func errTaskNotFound(id string) error {
 }
 
 var (
-	authzCommand *mocks.CommandAuthZ
+	authzCommand *mocks.NSCAuthZ
 )
 
-func setupCommandAuthzTest(t *testing.T) (*apiServer, *mocks.CommandAuthZ, model.User, context.Context) {
+func setupCommandAuthzTest(t *testing.T) (*apiServer, *mocks.NSCAuthZ, model.User, context.Context) {
 	api, curUser, ctx := setupAPITest(t)
 
 	if authzCommand == nil {
-		authzCommand = &mocks.CommandAuthZ{}
+		authzCommand = &mocks.NSCAuthZ{}
 		command.AuthZProvider.Register("mock", authzCommand)
 		config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	}
