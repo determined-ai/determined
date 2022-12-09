@@ -82,8 +82,11 @@ export const useAuth = (): UseAuthReturn => {
   );
 
   const setAuthCheck = useCallback(() => {
-    updateAuth(() => {
-      return Loaded({ checked: true, isAuthenticated: false });
+    updateAuth((prevState) => {
+      return Loadable.match(prevState, {
+        Loaded: (auth) => Loaded({ ...auth, checked: true }),
+        NotLoaded: () => Loaded({ checked: true, isAuthenticated: false } as CurrentUser),
+      });
     });
   }, [updateAuth]);
 
