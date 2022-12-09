@@ -147,7 +147,7 @@ func TestCheckpointMetadata(t *testing.T) {
 			require.NoError(t, err)
 
 			err = db.QueryProto(
-				"update_checkpoint_size", &experimentv1.Experiment{}, tr.TaskID,
+				"update_checkpoint_size", &experimentv1.Experiment{}, ckptUUID,
 			)
 			require.NoError(t, err)
 

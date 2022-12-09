@@ -1196,7 +1196,7 @@ func (a *apiServer) ReportCheckpoint(
 		return nil, err
 	}
 	if err := a.m.db.QueryProto(
-		"update_checkpoint_size", &experimentv1.Experiment{}, req.Checkpoint.TaskId,
+		"update_checkpoint_size", &experimentv1.Experiment{}, c.UUID,
 	); err != nil {
 		return nil, err
 	}

@@ -134,12 +134,14 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			ctx.Log().WithError(err).Error("updating checkpoints to delete state in checkpoint GC Task")
 			return err
 		}
-		if err := t.db.QueryProto(
-			"update_checkpoint_size", &experimentv1.Experiment{}, t.taskID,
-		); err != nil {
-			ctx.Log().WithError(err).Errorf(
-				"updating checkpoints size to experiment %d", t.GCCkptSpec.ExperimentID)
-			return err
+		if len(deleteCheckpoints) > 0 {
+			if err := t.db.QueryProto(
+				"update_checkpoint_size", &experimentv1.Experiment{}, deleteCheckpoints[0],
+			); err != nil {
+				ctx.Log().WithError(err).Errorf(
+					"updating checkpoints size to experiment %d", t.GCCkptSpec.ExperimentID)
+				return err
+			}
 		}
 
 		t.completeTask(ctx)
