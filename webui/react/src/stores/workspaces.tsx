@@ -77,7 +77,7 @@ export const useEnsureWorkspacesFetched = (
 ): (() => Promise<void>) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
-    throw new Error('Attempted to use useEnsureFetchWorkspaces outside of Workspace Context');
+    throw new Error('Attempted to use useEnsureWorkspacesFetched outside of Workspace Context');
   }
   const { workspaces, updateWorkspaces, updateWorkspacesByParams, workspacesByParams } = context;
 
