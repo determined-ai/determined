@@ -43,7 +43,6 @@ export const useFetchWorkspaces = (
 };
 
 export const useEnsureWorkspacesFetched = (
-  params: GetWorkspacesParams,
   canceler: AbortController,
 ): (() => Promise<void>) => {
   const context = useContext(WorkspacesContext);
@@ -90,10 +89,11 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
   return Loaded(val);
 };
 
-export const updateWorkspace = (id: number, updater: (arg0: Workspace) => Workspace): void => {
+export const useUpdateWorkspace = (id: number, updater: (arg0: Workspace) => Workspace): void => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use updateWorkspace outside of Workspace Context');
   }
-  context.updateWorkspaces((prev) => Loadable.map(prev, (workspaces) => workspaces.map((old) => old.id === id ? updater(old) : old)));
+  const { updateWorkspaces } = context;
+  updateWorkspaces((prev) => Loadable.map(prev, (workspaces) => workspaces.map((old) => old.id === id ? updater(old) : old)));
 };

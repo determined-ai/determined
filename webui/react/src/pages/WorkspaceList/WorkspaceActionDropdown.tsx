@@ -1,6 +1,6 @@
 import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
@@ -9,7 +9,7 @@ import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } fr
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
-import { updateWorkspace, useFetchWorkspaces } from 'stores/workspaces';
+import { useUpdateWorkspace } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -34,8 +34,6 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   trigger,
   onVisibleChange,
 }: Props) => {
-  const [canceler] = useState(new AbortController());
-  const fetchPinnedWorkspaces = useFetchWorkspaces(canceler);
   const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
     useModalWorkspaceDelete({ onClose: onComplete, workspace });
   const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
@@ -65,7 +63,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     if (workspace.pinned) {
       try {
         await unpinWorkspace({ id: workspace.id });
-        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: false }));
+        useUpdateWorkspace(workspace.id, (w) => ({ ...w, pinned: false }));
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unpin workspace.' });
@@ -73,13 +71,13 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     } else {
       try {
         await pinWorkspace({ id: workspace.id });
-        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: true }));
+        useUpdateWorkspace(workspace.id, (w) => ({ ...w, pinned: true }));
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to pin workspace.' });
       }
     }
-  }, [fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned]);
+  }, [onComplete, workspace.id, workspace.pinned]);
 
   const handleEditClick = useCallback(() => {
     openWorkspaceEdit();
