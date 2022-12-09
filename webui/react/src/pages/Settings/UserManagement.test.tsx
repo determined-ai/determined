@@ -9,6 +9,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
+import { UserRolesProvider } from 'stores/userRoles';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
@@ -81,15 +82,17 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <StoreProvider>
-      <DndProvider backend={HTML5Backend}>
-        <SettingsProvider>
-          <HelmetProvider>
-            <HistoryRouter history={history}>
-              <Container />
-            </HistoryRouter>
-          </HelmetProvider>
-        </SettingsProvider>
-      </DndProvider>
+      <UserRolesProvider>
+        <DndProvider backend={HTML5Backend}>
+          <SettingsProvider>
+            <HelmetProvider>
+              <HistoryRouter history={history}>
+                <Container />
+              </HistoryRouter>
+            </HelmetProvider>
+          </SettingsProvider>
+        </DndProvider>
+      </UserRolesProvider>
     </StoreProvider>,
   );
 
