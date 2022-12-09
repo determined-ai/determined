@@ -29,7 +29,9 @@ var (
 	authzCommand *mocks.NSCAuthZ
 )
 
-func setupCommandAuthzTest(t *testing.T) (*apiServer, *mocks.NSCAuthZ, model.User, context.Context) {
+func setupCommandAuthzTest(t *testing.T) (
+	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
+) {
 	api, curUser, ctx := setupAPITest(t)
 
 	if authzCommand == nil {

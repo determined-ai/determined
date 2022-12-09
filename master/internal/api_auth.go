@@ -137,9 +137,10 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	} else {
 		ctx = c.Request().Context()
 	}
-	// TODO(DET-8733): go from echo and actor context to workspace id and if tsb then which experiment and access
+	// TODO(DET-8733): go from echo and actor context to workspace id and
+	// if tsb then which experiment and access
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *user, ownerID, command.PlaceHolderWorkspace, command.PlaceHolderJobType); err != nil {
+		ctx, *user, ownerID, command.PlaceHolderWorkspace); err != nil {
 		return true, err
 	} else if !ok {
 		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)

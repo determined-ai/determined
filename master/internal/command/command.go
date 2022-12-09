@@ -57,9 +57,8 @@ func enrichState(state model.AllocationState) taskv1.State {
 }
 
 const (
-	// FIXME
-	PlaceHolderJobType   = model.JobTypeCommand
-	PlaceHolderWorkspace = 0
+	// PlaceHolderWorkspace is REMOVEME.
+	PlaceHolderWorkspace = 1
 )
 
 func createGenericCommandActor(
