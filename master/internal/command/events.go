@@ -135,13 +135,10 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	curUser := c.(*context.DetContext).MustGetUser()
 	taskID := model.TaskID(ctx.Self().Parent().Address().Local())
 
-	// CHECK why did we go to the DB and not actor system? logs for terminated ntsc?
-	// we could write a new db query if we think it'd be faster
 	snapshot := CommandSnapshot{}
 
 	reqCtx := c.Request().Context()
 	if err := db.Bun().NewSelect().Model(&snapshot).
-		// Relation("Task").
 		Relation("Task.Job").
 		Where("task.task_id = ?", taskID).
 		Scan(reqCtx); err != nil {

@@ -29,7 +29,7 @@ var (
 	authzCommand *mocks.NSCAuthZ
 )
 
-func setupCommandAuthzTest(t *testing.T) (
+func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
 	api, curUser, ctx := setupAPITest(t)
@@ -45,7 +45,7 @@ func setupCommandAuthzTest(t *testing.T) (
 }
 
 func TestTasksCountAuthZ(t *testing.T) {
-	api, authZCommand, curUser, ctx := setupCommandAuthzTest(t)
+	api, authZCommand, curUser, ctx := setupNTSCAuthzTest(t)
 	authZCommand.On("CanGetActiveTasksCount", mock.Anything, curUser).Return(fmt.Errorf("deny"))
 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
