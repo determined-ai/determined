@@ -228,7 +228,7 @@ func (s *Service) ProcessProxyAuthentication(c echo.Context) (done bool, err err
 	} else {
 		ctx = c.Request().Context()
 	}
-	// TODO: use CommandAuthZ.
+	// TODO: use NSCAuthZ.
 	// TODO: separate NTSC types: tensorboards would need to consult ExperimentAuthZ.
 	if ok, err := AuthZProvider.Get().CanAccessNTSCTask(
 		ctx, *user, ownerID); err != nil {
