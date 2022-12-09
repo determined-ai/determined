@@ -69,13 +69,14 @@ const Container: React.FC = () => {
   const { updateCurrentUser } = useCurrentUsers();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
-  const { setAuth } = useAuth();
+  const { setAuth, setAuthCheck } = useAuth();
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
     setAuth({ isAuthenticated: true });
+    setAuthCheck();
     updateCurrentUser(currentUser);
-  }, [fetchUsers, updateCurrentUser, setAuth]);
+  }, [fetchUsers, setAuthCheck, updateCurrentUser, setAuth]);
 
   useEffect(() => {
     loadUsers();

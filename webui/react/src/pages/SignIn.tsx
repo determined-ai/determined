@@ -42,10 +42,7 @@ const SignIn: React.FC = () => {
   const { actions: uiActions } = useUI();
   const location = useLocation();
   const loadableAuth = useAuth();
-  const authChecked = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.checked,
-    NotLoaded: () => false,
-  });
+  const authChecked = loadableAuth.authChecked;
   const isAuthenticated = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,

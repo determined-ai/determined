@@ -110,10 +110,11 @@ const experimentIdMock = 123;
 const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
-  const { setAuth } = useAuth();
+  const { setAuth, setAuthCheck } = useAuth();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
+    setAuthCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
