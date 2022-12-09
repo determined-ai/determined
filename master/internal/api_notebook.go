@@ -59,7 +59,7 @@ func (a *apiServer) GetNotebooks(
 		if err != nil {
 			return false
 		}
-		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
+		ok, serverError := command.AuthZProvider.Get().CanGet(
 			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId),
 			model.AccessScopeID(resp.Notebooks[i].WorkspaceId),
 		)
@@ -89,7 +89,7 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetCommand(
+	if ok, err := command.AuthZProvider.Get().CanGet(
 		ctx, *curUser, model.UserID(resp.Notebook.UserId),
 		model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
@@ -110,7 +110,7 @@ func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID stri
 		return err
 	}
 
-	err = command.AuthZProvider.Get().CanTerminateCommand(
+	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)
 
@@ -150,7 +150,7 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanTerminateCommand(
+	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)
 
@@ -176,7 +176,7 @@ func (a *apiServer) LaunchNotebook(
 	if req.WorkspaceId != 0 {
 		workspaceID = int(req.WorkspaceId)
 	}
-	if err = command.AuthZProvider.Get().CanCreateCommand(
+	if err = command.AuthZProvider.Get().CanCreateNSC(
 		ctx, *user, model.AccessScopeID(workspaceID),
 	); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
