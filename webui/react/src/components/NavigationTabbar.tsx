@@ -9,6 +9,7 @@ import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAgents, useClusterOverview } from 'stores/agents';
@@ -72,15 +73,15 @@ const NavigationTabbar: React.FC = () => {
 
   const showNavigation = isAuthenticated && ui.showChrome;
 
-  const pinnedWorkspaces = Loadable.getOrElse([], useWorkspaces({ pinned: true }));
+  const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
-    if (pinnedWorkspaces.length === 0) {
+    if (Loadable.getOrElse([], pinnedWorkspaces).length === 0) {
       routeToReactUrl(paths.workspaceList());
       return;
     }
     setIsShowingPinnedWorkspaces(true);
-  }, [pinnedWorkspaces.length]);
+  }, [pinnedWorkspaces]);
   const handleActionSheetCancel = useCallback(() => {
     setIsShowingOverflow(false);
     setIsShowingPinnedWorkspaces(false);
@@ -116,12 +117,20 @@ const NavigationTabbar: React.FC = () => {
             onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.workspaceList()),
             path: paths.workspaceList(),
           },
-          ...pinnedWorkspaces.map((workspace) => ({
-            icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
-            label: workspace.name,
-            onClick: (e: AnyMouseEvent) =>
-              handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-          })),
+          ...Loadable.match(pinnedWorkspaces, {
+            Loaded: (workspaces) => workspaces.map((workspace) => ({
+              icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+              label: workspace.name,
+              onClick: (e: AnyMouseEvent) =>
+                handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+            })),
+            NotLoaded: () => [
+              {
+                icon: <Spinner />,
+                label: 'Loading...',
+              },
+            ],
+          }),
         ]}
         show={isShowingPinnedWorkspaces}
         onCancel={handleActionSheetCancel}

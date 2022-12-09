@@ -29,11 +29,11 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
-  const fetchPinnedWorkspaces = useFetchWorkspaces({ pinned: true }, canceler);
+  const fetchWorkspaces = useFetchWorkspaces(canceler);
   const fetchMyRoles = useFetchUserRolesAndAssignments(canceler);
 
   usePolling(fetchAgents);
-  usePolling(fetchPinnedWorkspaces);
+  usePolling(fetchWorkspaces);
 
   useEffect(() => {
     updateFaviconType(
