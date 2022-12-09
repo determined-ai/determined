@@ -5,9 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
-import { useFetchUsers } from 'hooks/useFetch';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -23,8 +21,10 @@ import usePolling from 'shared/hooks/usePolling';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { User, Workspace } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './WorkspaceDetails.module.scss';
 import WorkspaceDetailsHeader from './WorkspaceDetails/WorkspaceDetailsHeader';
@@ -47,7 +47,7 @@ const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
   const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
-  const { users } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -83,7 +83,7 @@ const WorkspaceDetails: React.FC = () => {
     }
   }, [canceler.signal, id, pageError]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {

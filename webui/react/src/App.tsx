@@ -10,7 +10,6 @@ import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
-import { useFetchUsers } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import useResize from 'hooks/useResize';
@@ -24,7 +23,9 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
+import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
+import { useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
 
@@ -33,7 +34,12 @@ import css from './App.module.scss';
 const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
-  const { auth, ui } = useStore();
+  const { ui } = useStore();
+  const auth = useAuth().auth;
+  const isAuthenticated = Loadable.match(auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
   const infoLoadable = useDeterminedInfo();
   const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
@@ -63,10 +69,10 @@ const AppView: React.FC = () => {
   usePolling(fetchInfo, { interval: 600000 });
 
   useEffect(() => {
-    if (auth.isAuthenticated) {
+    if (isAuthenticated) {
       fetchUsers();
     }
-  }, [auth.isAuthenticated, fetchUsers]);
+  }, [isAuthenticated, fetchUsers]);
 
   useEffect(() => {
     /*

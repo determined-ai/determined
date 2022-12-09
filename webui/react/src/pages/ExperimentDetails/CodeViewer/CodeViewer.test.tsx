@@ -4,7 +4,7 @@
 import { findAllByText, screen, waitFor } from '@testing-library/dom';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { act } from 'react-dom/test-utils';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
@@ -12,6 +12,8 @@ import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
 import history from 'shared/routes/history';
+import { AuthProvider, useAuth } from 'stores/auth';
+import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import CodeViewer, { Props } from './CodeViewer';
@@ -107,15 +109,30 @@ global.URL.createObjectURL = jest.fn();
 const experimentIdMock = 123;
 const user = userEvent.setup();
 
+const Container: React.FC<Props> = (props) => {
+  const { setAuth } = useAuth();
+
+  useEffect(() => {
+    setAuth({ isAuthenticated: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <SettingsProvider>
+      <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
+    </SettingsProvider>
+  );
+};
+
 const setup = (
   props: Props = { experimentId: experimentIdMock, submittedConfig: hashedFileMock },
 ) => {
   render(
     <HistoryRouter history={history}>
       <StoreProvider>
-        <SettingsProvider>
-          <CodeViewer experimentId={props.experimentId} submittedConfig={props.submittedConfig} />
-        </SettingsProvider>
+        <AuthProvider>
+          <Container {...props} />
+        </AuthProvider>
       </StoreProvider>
     </HistoryRouter>,
   );

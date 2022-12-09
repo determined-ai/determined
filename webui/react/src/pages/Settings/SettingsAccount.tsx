@@ -3,12 +3,13 @@ import React, { useCallback } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
 import Avatar from 'components/UserAvatar';
-import { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
+import { useCurrentUsers, useUsers } from 'stores/users';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './SettingsAccount.module.scss';
 
@@ -19,8 +20,12 @@ export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
-  const { auth } = useStore();
-  const storeDispatch = useStoreDispatch();
+  const { updateCurrentUser, currentUser: loadableCurrentUser } = useCurrentUsers();
+  const currentUser = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
+    NotLoaded: () => undefined,
+  });
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
 
   const { contextHolder: modalPasswordChangeContextHolder, modalOpen: openChangePasswordModal } =
     useModalPasswordChange();
@@ -33,10 +38,10 @@ const SettingsAccount: React.FC = () => {
     async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
-          userId: auth.user?.id || 0,
+          userId: currentUser?.id || 0,
           userParams: { displayName: newValue },
         });
-        storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+        updateCurrentUser(user, users);
         message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
       } catch (e) {
         message.error(API_DISPLAYNAME_ERROR_MESSAGE);
@@ -44,17 +49,17 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, storeDispatch],
+    [currentUser, updateCurrentUser, users],
   );
 
   const handleSaveUsername = useCallback(
     async (newValue: string): Promise<void | Error> => {
       try {
         const user = await patchUser({
-          userId: auth.user?.id || 0,
+          userId: currentUser?.id || 0,
           userParams: { username: newValue },
         });
-        storeDispatch({ type: StoreAction.SetCurrentUser, value: user });
+        updateCurrentUser(user, users);
         message.success(API_USERNAME_SUCCESS_MESSAGE);
       } catch (e) {
         message.error(API_USERNAME_ERROR_MESSAGE);
@@ -62,13 +67,13 @@ const SettingsAccount: React.FC = () => {
         return e as Error;
       }
     },
-    [auth.user, storeDispatch],
+    [currentUser, updateCurrentUser, users],
   );
 
   return (
     <div className={css.base}>
       <div className={css.avatar}>
-        <Avatar hideTooltip size={Size.ExtraLarge} userId={auth.user?.id} />
+        <Avatar hideTooltip size={Size.ExtraLarge} userId={currentUser?.id} />
       </div>
       <Divider />
       <div className={css.row}>
@@ -77,7 +82,7 @@ const SettingsAccount: React.FC = () => {
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9]*$', 'i')}
           placeholder="Add username"
-          value={auth.user?.username || ''}
+          value={currentUser?.username || ''}
           onSave={handleSaveUsername}
         />
       </div>
@@ -88,7 +93,7 @@ const SettingsAccount: React.FC = () => {
           maxLength={32}
           pattern={new RegExp('^[a-z][a-z0-9\\s]*$', 'i')}
           placeholder="Add display name"
-          value={auth.user?.displayName || ''}
+          value={currentUser?.displayName || ''}
           onSave={handleSaveDisplayName}
         />
       </div>

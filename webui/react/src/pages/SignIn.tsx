@@ -8,7 +8,6 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
-import { useStore } from 'contexts/Store';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useFeature from 'hooks/useFeature';
@@ -21,6 +20,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { RecordKey } from 'shared/types';
 import { locationToPath, routeToReactUrl } from 'shared/utils/routes';
 import { capitalize } from 'shared/utils/string';
+import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -41,7 +41,15 @@ const logoConfig: Record<RecordKey, string> = {
 const SignIn: React.FC = () => {
   const { actions: uiActions } = useUI();
   const location = useLocation();
-  const { auth } = useStore();
+  const loadableAuth = useAuth();
+  const authChecked = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.checked,
+    NotLoaded: () => false,
+  });
+  const isAuthenticated = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
   const rbacEnabled = useFeature().isOn('rbac');
@@ -51,8 +59,8 @@ const SignIn: React.FC = () => {
   const ssoQueryString = queryString.stringify(ssoQueries);
 
   const externalAuthError = useMemo(() => {
-    return auth.checked && !auth.isAuthenticated && !info.externalLoginUri && queries.jwt;
-  }, [auth.checked, auth.isAuthenticated, info.externalLoginUri, queries.jwt]);
+    return authChecked && !isAuthenticated && !info.externalLoginUri && queries.jwt;
+  }, [authChecked, isAuthenticated, info.externalLoginUri, queries.jwt]);
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -68,7 +76,7 @@ const SignIn: React.FC = () => {
    * the user to the most recent requested page.
    */
   useEffect(() => {
-    if (auth.isAuthenticated) {
+    if (isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
       uiActions.hideSpinner();
 
@@ -84,10 +92,10 @@ const SignIn: React.FC = () => {
       } else {
         routeAll(queries.redirect);
       }
-    } else if (auth.checked) {
+    } else if (authChecked) {
       uiActions.hideSpinner();
     }
-  }, [auth, info, location, queries, uiActions, rbacEnabled]);
+  }, [isAuthenticated, authChecked, info, location, queries, uiActions, rbacEnabled]);
 
   useEffect(() => {
     uiActions.hideChrome();
@@ -107,7 +115,7 @@ const SignIn: React.FC = () => {
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  if (queries.jwt || info.externalLoginUri || !auth.checked) return null;
+  if (queries.jwt || info.externalLoginUri || !authChecked) return null;
 
   /*
    * An external auth error occurs when there are external auth urls,

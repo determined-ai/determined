@@ -13,6 +13,7 @@ import Icon from 'shared/components/Icon/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAgents, useClusterOverview } from 'stores/agents';
+import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
 import { BrandingType } from 'types';
@@ -45,7 +46,16 @@ const ToolbarItem: React.FC<ToolbarItemProps> = ({ path, status, ...props }: Too
 };
 
 const NavigationTabbar: React.FC = () => {
-  const { auth, pinnedWorkspaces } = useStore();
+  const loadableAuth = useAuth();
+  const isAuthenticated = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.isAuthenticated,
+    NotLoaded: () => false,
+  });
+  const authUser = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
+  const { pinnedWorkspaces } = useStore();
   const loadableResourcePools = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
@@ -61,7 +71,7 @@ const NavigationTabbar: React.FC = () => {
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab();
 
-  const showNavigation = auth.isAuthenticated && ui.showChrome;
+  const showNavigation = isAuthenticated && ui.showChrome;
 
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
@@ -124,7 +134,7 @@ const NavigationTabbar: React.FC = () => {
                 className={css.user}
                 darkLight={ui.darkLight}
                 key="avatar"
-                user={auth.user}
+                user={authUser}
               />
             ),
           },

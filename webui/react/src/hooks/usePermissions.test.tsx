@@ -3,7 +3,9 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { GetWorkspaceParams } from 'services/types';
+import { AuthProvider } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 
 import useFeature from './useFeature';
 import usePermissions from './usePermissions';
@@ -49,9 +51,13 @@ const PermissionRenderer: React.FC<Props> = () => {
 const setup = async () => {
   return await render(
     <StoreProvider>
-      <UserRolesProvider>
-        <PermissionRenderer workspaceId={1} />
-      </UserRolesProvider>
+      <UsersProvider>
+        <AuthProvider>
+          <UserRolesProvider>
+            <PermissionRenderer workspaceId={1} />
+          </UserRolesProvider>
+        </AuthProvider>
+      </UsersProvider>
     </StoreProvider>,
   );
 };

@@ -1,12 +1,10 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
-import { globalStorage } from 'globalStorage';
 import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import { Auth, DetailedUser, UserAssignment, UserRole, Workspace } from 'types';
-import { getCookie, setCookie } from 'utils/browser';
+import { UserAssignment, UserRole, Workspace } from 'types';
 
 const logger = rootLogger.extend('store');
 
@@ -19,8 +17,6 @@ interface OmnibarState {
 }
 
 interface State {
-  auth: Auth & { checked: boolean };
-
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
 
@@ -28,7 +24,6 @@ interface State {
     omnibar: OmnibarState;
   };
   userAssignments: UserAssignment[];
-  users: DetailedUser[];
 }
 
 export const StoreAction = {
@@ -36,16 +31,6 @@ export const StoreAction = {
   HideOmnibar: 'HideOmnibar',
 
   Reset: 'Reset',
-  // Auth
-  ResetAuth: 'ResetAuth',
-
-  ResetAuthCheck: 'ResetAuthCheck',
-
-  SetAuth: 'SetAuth',
-
-  SetAuthCheck: 'SetAuthCheck',
-
-  SetCurrentUser: 'SetCurrentUser',
 
   // User assignments, roles, and derived permissions
   SetKnownRoles: 'SetKnownRoles',
@@ -53,8 +38,6 @@ export const StoreAction = {
   // PinnedWorkspaces
   SetPinnedWorkspaces: 'SetPinnedWorkspaces',
 
-  // Users
-  SetUsers: 'SetUsers',
   // User Settings
   SetUserSettings: 'SetUserSettings',
   ShowOmnibar: 'ShowOmnibar',
@@ -62,84 +45,26 @@ export const StoreAction = {
 
 type Action =
   | { type: typeof StoreAction.Reset }
-  | { type: typeof StoreAction.ResetAuth }
-  | { type: typeof StoreAction.ResetAuthCheck }
-  | { type: typeof StoreAction.SetAuth; value: Auth }
-  | { type: typeof StoreAction.SetAuthCheck }
-  | { type: typeof StoreAction.SetUsers; value: DetailedUser[] }
-  | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
 
-export const AUTH_COOKIE_KEY = 'auth';
-
-const initAuth = {
-  checked: false,
-  isAuthenticated: false,
-};
-
 const initState: State = {
-  auth: initAuth,
   knownRoles: [],
   pinnedWorkspaces: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
-  users: [],
 };
 
 const StateContext = React.createContext<State | undefined>(undefined);
 const DispatchContext = React.createContext<Dispatch<Action> | undefined>(undefined);
-
-const clearAuthCookie = (): void => {
-  document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-};
-
-/**
- * set the auth cookie if it's not already set.
- * @param token auth token
- */
-const ensureAuthCookieSet = (token: string): void => {
-  if (!getCookie(AUTH_COOKIE_KEY)) setCookie(AUTH_COOKIE_KEY, token);
-};
 
 // TODO turn this into a partial reducer simliar to reducerUI.
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
-    case StoreAction.ResetAuth:
-      clearAuthCookie();
-      globalStorage.removeAuthToken();
-      return { ...state, auth: { ...state.auth, isAuthenticated: initAuth.isAuthenticated } };
-    case StoreAction.ResetAuthCheck:
-      if (!state.auth.checked) return state;
-      return { ...state, auth: { ...state.auth, checked: false } };
-    case StoreAction.SetAuth:
-      if (action.value.token) {
-        /**
-         * project Samuel provisioned auth doesn't set a cookie
-         * like our other auth methods do.
-         *
-         */
-        ensureAuthCookieSet(action.value.token);
-        globalStorage.authToken = action.value.token;
-      }
-      return { ...state, auth: { ...action.value, checked: true } };
-    case StoreAction.SetAuthCheck:
-      if (state.auth.checked) return state;
-      return { ...state, auth: { ...state.auth, checked: true } };
-    case StoreAction.SetUsers:
-      if (isEqual(state.users, action.value)) return state;
-      return { ...state, users: action.value };
-    case StoreAction.SetCurrentUser: {
-      if (isEqual(action.value, state.auth.user)) return state;
-      const users = [...state.users];
-      const userIdx = users.findIndex((user) => user.id === action.value.id);
-      if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
-      return { ...state, auth: { ...state.auth, user: action.value }, users };
-    }
     case StoreAction.SetPinnedWorkspaces:
       if (isEqual(state.pinnedWorkspaces, action.value)) return state;
       return { ...state, pinnedWorkspaces: action.value };

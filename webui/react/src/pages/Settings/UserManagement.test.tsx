@@ -1,15 +1,17 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
+import { useCurrentUsers, useFetchUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
@@ -55,44 +57,53 @@ jest.mock('hooks/useTelemetry', () => ({
   },
 }));
 
+const currentUser: DetailedUser = {
+  displayName: DISPLAY_NAME,
+  id: 1,
+  isActive: true,
+  isAdmin: true,
+  username: USERNAME,
+};
+
 const Container: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
+  const { updateCurrentUser } = useCurrentUsers();
+  const [canceler] = useState(new AbortController());
+  const fetchUsers = useFetchUsers(canceler);
+  const { setAuth } = useAuth();
 
-  const currentUser: DetailedUser = useMemo(
-    () => ({
-      displayName: DISPLAY_NAME,
-      id: 1,
-      isActive: true,
-      isAdmin: true,
-      username: USERNAME,
-    }),
-    [],
+  const loadUsers = useCallback(async () => {
+    await fetchUsers();
+    setAuth({ isAuthenticated: true });
+    updateCurrentUser(currentUser);
+  }, [fetchUsers, updateCurrentUser, setAuth]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  return (
+    <SettingsProvider>
+      <HelmetProvider>
+        <HistoryRouter history={history}>
+          <UserManagement />;
+        </HistoryRouter>
+      </HelmetProvider>
+    </SettingsProvider>
   );
-
-  const loadUsers = useCallback(() => {
-    storeDispatch({ type: StoreAction.SetUsers, value: [currentUser] });
-    storeDispatch({ type: StoreAction.SetCurrentUser, value: currentUser });
-  }, [storeDispatch, currentUser]);
-
-  useEffect(() => loadUsers(), [loadUsers]);
-
-  return <UserManagement />;
 };
 
 const setup = () =>
   render(
     <StoreProvider>
-      <UserRolesProvider>
-        <DndProvider backend={HTML5Backend}>
-          <SettingsProvider>
-            <HelmetProvider>
-              <HistoryRouter history={history}>
-                <Container />
-              </HistoryRouter>
-            </HelmetProvider>
-          </SettingsProvider>
-        </DndProvider>
-      </UserRolesProvider>
+      <UsersProvider>
+        <AuthProvider>
+          <UserRolesProvider>
+            <DndProvider backend={HTML5Backend}>
+              <Container />
+            </DndProvider>
+          </UserRolesProvider>
+        </AuthProvider>
+      </UsersProvider>
     </StoreProvider>,
   );
 

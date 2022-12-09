@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import InlineEditor from './InlineEditor';
+jest.useRealTimers();
 
 const setup = (
   { disabled, onSaveReturnsError, value, pattern } = {
