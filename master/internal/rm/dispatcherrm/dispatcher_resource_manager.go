@@ -421,12 +421,34 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 	case *apiv1.GetAgentsRequest:
 		ctx.Respond(m.generateGetAgentsResponse(ctx))
 
+	case taskContainerDefaults:
+		ctx.Respond(m.getTaskContainerDefaults(msg))
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
 	return nil
+}
+
+func (m *dispatcherResourceManager) getTaskContainerDefaults(
+	msg taskContainerDefaults,
+) model.TaskContainerDefaultsConfig {
+	result := msg.fallbackDefault
+	if tcd := m.rmConfig.ResolveTaskContainerDefaults(msg.resourcePool); tcd != nil {
+		result = *tcd
+	}
+	// Iterate through configured pools looking for a TaskContainerDefaults setting.
+	for _, pool := range m.poolConfig {
+		if msg.resourcePool == pool.PoolName {
+			if pool.TaskContainerDefaults == nil {
+				break
+			}
+			result = *pool.TaskContainerDefaults
+		}
+	}
+	return result
 }
 
 // getPartitionValidationResponse computes a response to a resource pool
@@ -1825,4 +1847,19 @@ func (d DispatcherResourceManager) NotifyContainerRunning(
 	msg sproto.NotifyContainerRunning,
 ) error {
 	return d.Ask(ctx, msg, nil)
+}
+
+type taskContainerDefaults struct {
+	fallbackDefault model.TaskContainerDefaultsConfig
+	resourcePool    string
+}
+
+// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
+func (d DispatcherResourceManager) TaskContainerDefaults(
+	ctx actor.Messenger,
+	resourcePoolName string,
+	defaultConfig model.TaskContainerDefaultsConfig,
+) (result model.TaskContainerDefaultsConfig, err error) {
+	request := taskContainerDefaults{fallbackDefault: defaultConfig, resourcePool: resourcePoolName}
+	return result, d.Ask(ctx, request, &result)
 }
