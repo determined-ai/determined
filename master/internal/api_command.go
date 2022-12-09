@@ -24,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	pkCommand "github.com/determined-ai/determined/master/pkg/command"
 	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -55,7 +54,7 @@ type protoCommandParams struct {
 }
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
-	*tasks.GenericCommandSpec, []pkCommand.LaunchWarning, error,
+	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
 ) {
 	var err error
 
