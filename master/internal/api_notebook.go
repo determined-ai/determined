@@ -59,7 +59,7 @@ func (a *apiServer) GetNotebooks(
 		if err != nil {
 			return false
 		}
-		ok, serverError := command.AuthZProvider.Get().CanGet(
+		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
 			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId),
 			model.AccessScopeID(resp.Notebooks[i].WorkspaceId),
 		)
@@ -89,7 +89,7 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGet(
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.UserID(resp.Notebook.UserId),
 		model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {

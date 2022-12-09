@@ -12,7 +12,7 @@ import (
 type NSCAuthZ interface {
 	// GET /api/v1/commands/:nsc_id
 	// GET /tasks
-	CanGet(
+	CanGetNSC(
 		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 	) (canGetNsc bool, serverError error)
 

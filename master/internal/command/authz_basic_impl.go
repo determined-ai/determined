@@ -11,10 +11,10 @@ import (
 // NSCAuthZBasic is basic OSS controls.
 type NSCAuthZBasic struct{}
 
-// CanGet returns true and nil error unless the developer master config option
+// CanGetNSC returns true and nil error unless the developer master config option
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the task and a nil error.
-func (a *NSCAuthZBasic) CanGet(
+func (a *NSCAuthZBasic) CanGetNSC(
 	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 ) (canGetCmd bool, serverError error) {
 	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
