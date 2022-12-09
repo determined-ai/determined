@@ -390,7 +390,9 @@ message TrialLogsRequest {
 // Response to TrialLogsRequest.
 message TrialLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "level", "message", "timestamp", "trial_id" ] }
+    json_schema: {
+      required: [ "id", "level", "message", "timestamp", "trial_id" ]
+    }
   };
   // The ID of the trial log.
   string id = 1;
