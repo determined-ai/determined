@@ -92,7 +92,6 @@ data:
          gpu: {{ .Values.imageRegistry }}/{{ $gpuImage }}
       cpu_pod_spec: {{ include "determined.cpuPodSpec" . | fromYaml | toJson }}
       gpu_pod_spec: {{ include "determined.gpuPodSpec" . | fromYaml | toJson }}
-
     {{- if .Values.telemetry }}
     telemetry:
       enabled: {{ .Values.telemetry.enabled }}
