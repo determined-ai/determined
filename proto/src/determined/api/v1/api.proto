@@ -1975,4 +1975,15 @@ service Determined {
       tags: "Users"
     };
   }
+
+  // Get projects by user activity
+  rpc GetProjectsByUserActivity(GetProjectsByUserActivityRequest)
+      returns (GetProjectsByUserActivityResponse) {
+    option (google.api.http) = {
+       get: "/api/v1/user/projects/activity"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
 }

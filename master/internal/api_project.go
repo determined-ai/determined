@@ -345,3 +345,37 @@ func (a *apiServer) UnarchiveProject(
 	}
 	return &apiv1.UnarchiveProjectResponse{}, nil
 }
+
+func (a *apiServer) GetProjectsByUserActivity(
+	ctx context.Context, req *apiv1.GetProjectsByUserActivityRequest,
+) (*apiv1.GetProjectsByUserActivityResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	p := []*model.Project{}
+
+	err = db.Bun().NewSelect().Table("projects").
+		Column("projects.*").
+		Join("JOIN activity ON activity.entity_id = projects.id").
+		Distinct().
+		Where("activity.user_id = ?", curUser.ID).
+		Where("activity.entity_type = ?", model.EntityTypeProject).
+		Scan(ctx, &p)
+	if err != nil {
+		return nil, err
+	}
+
+	projects := model.ProjectsToProto(p)
+	viewableProjects := []*projectv1.Project{}
+
+	for _, pr := range projects {
+		canView, _ := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
+		if canView {
+			viewableProjects = append(viewableProjects, pr)
+		}
+	}
+
+	return &apiv1.GetProjectsByUserActivityResponse{Projects: viewableProjects}, nil
+}
