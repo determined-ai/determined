@@ -767,6 +767,7 @@ func (a ResourceManager) TaskContainerDefaults(
 	fallbackConfig model.TaskContainerDefaultsConfig,
 ) (model.TaskContainerDefaultsConfig, error) {
 	result := model.TaskContainerDefaultsConfig{}
-	err := a.Ask(ctx, taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}, &result)
+	err := a.Ask(ctx,
+		taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}, &result)
 	return result, err
 }
