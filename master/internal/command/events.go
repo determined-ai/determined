@@ -141,6 +141,8 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	}
 
 	reqCtx := c.Request().Context()
+	// TODO: use CommandAuthZ.
+	// TODO: separate NTSC types: tensorboards would need to consult ExperimentAuthZ.
 	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(reqCtx, curUser, ownerID); err != nil {
 		return err
 	} else if !ok {

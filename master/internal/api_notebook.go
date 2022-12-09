@@ -14,12 +14,12 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -59,8 +59,10 @@ func (a *apiServer) GetNotebooks(
 		if err != nil {
 			return false
 		}
-		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId))
+		ok, serverError := command.AuthZProvider.Get().CanGetCommand(
+			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId),
+			model.AccessScopeID(resp.Notebooks[i].WorkspaceId),
+		)
 		if serverError != nil {
 			err = serverError
 		}
@@ -87,8 +89,10 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		ctx, *curUser, model.UserID(resp.Notebook.UserId)); err != nil {
+	if ok, err := command.AuthZProvider.Get().CanGetCommand(
+		ctx, *curUser, model.UserID(resp.Notebook.UserId),
+		model.AccessScopeID(resp.Notebook.WorkspaceId),
+	); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -96,35 +100,59 @@ func (a *apiServer) GetNotebook(
 	return resp, nil
 }
 
+func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID string) error {
+	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: notebookID})
+	if err != nil {
+		return err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = command.AuthZProvider.Get().CanTerminateCommand(
+		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
+	)
+
+	return err
+}
+
 func (a *apiServer) IdleNotebook(
 	ctx context.Context, req *apiv1.IdleNotebookRequest,
 ) (resp *apiv1.IdleNotebookResponse, err error) {
-	if _, err := a.GetNotebook(ctx,
-		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	if err != nil {
 		return nil, err
 	}
-
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) KillNotebook(
 	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
-	if _, err := a.GetNotebook(ctx,
-		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	if err != nil {
 		return nil, err
 	}
-
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
 func (a *apiServer) SetNotebookPriority(
 	ctx context.Context, req *apiv1.SetNotebookPriorityRequest,
 ) (resp *apiv1.SetNotebookPriorityResponse, err error) {
-	if _, err := a.GetNotebook(ctx,
-		&apiv1.GetNotebookRequest{NotebookId: req.NotebookId}); err != nil {
+	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: req.NotebookId})
+	if err != nil {
 		return nil, err
 	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanTerminateCommand(
+		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
+	)
 
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
@@ -132,6 +160,10 @@ func (a *apiServer) SetNotebookPriority(
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -139,6 +171,15 @@ func (a *apiServer) LaunchNotebook(
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+	}
+	workspaceID := model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		workspaceID = int(req.WorkspaceId)
+	}
+	if err = command.AuthZProvider.Get().CanCreateCommand(
+		ctx, *user, model.AccessScopeID(workspaceID),
+	); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -210,7 +251,7 @@ func (a *apiServer) LaunchNotebook(
 		),
 	}
 
-	spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 
 	// Launch a Notebook actor.
 	var notebookID model.TaskID
@@ -226,6 +267,6 @@ func (a *apiServer) LaunchNotebook(
 	return &apiv1.LaunchNotebookResponse{
 		Notebook: notebook,
 		Config:   protoutils.ToStruct(spec.Config),
-		Warnings: command.LaunchWarningToProto(launchWarnings),
+		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
