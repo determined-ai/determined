@@ -68,7 +68,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         updateWorkspace(workspace.id, (w) => ({ ...w, pinned: false }));
         onComplete?.();
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
+        handleError(e, { publicSubject: 'Unable to unpin workspace.' });
       }
     } else {
       try {
@@ -76,7 +76,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         updateWorkspace(workspace.id, (w) => ({ ...w, pinned: true }));
         onComplete?.();
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to archive workspace.' });
+        handleError(e, { publicSubject: 'Unable to pin workspace.' });
       }
     }
   }, [fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned]);
