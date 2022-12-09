@@ -13,7 +13,6 @@ import (
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -135,15 +134,23 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	curUser := c.(*context.DetContext).MustGetUser()
 	taskID := model.TaskID(ctx.Self().Parent().Address().Local())
-	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), taskID)
-	if err != nil {
+
+	// CHECK why did we go to the DB and not actor system? logs for terminated ntsc?
+	// we could write a new db query if we think it'd be faster
+	snapshot := CommandSnapshot{}
+
+	reqCtx := c.Request().Context()
+	if err := db.Bun().NewSelect().Model(&snapshot).
+		// Relation("Task").
+		Relation("Task.Job").
+		Where("task.task_id = ?", taskID).
+		Scan(reqCtx); err != nil {
 		return err
 	}
 
-	reqCtx := c.Request().Context()
-	// TODO: use CommandAuthZ.
-	// TODO: separate NTSC types: tensorboards would need to consult ExperimentAuthZ.
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(reqCtx, curUser, ownerID); err != nil {
+	if ok, err := AuthZProvider.Get().CanGetCommand(reqCtx, curUser, *snapshot.Task.Job.OwnerID,
+		snapshot.GenericCommandSpec.Metadata.WorkspaceID,
+	); err != nil {
 		return err
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
