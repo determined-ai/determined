@@ -40,7 +40,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
         )}
         {trial?.startTime && (
-          <OverviewStats title="Start Time">
+          <OverviewStats title="Started">
             <TimeAgo datetime={trial.startTime} />
           </OverviewStats>
         )}

@@ -1,7 +1,7 @@
 import { Meta } from '@storybook/react';
 import React, { useEffect } from 'react';
 
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useAuth } from 'stores/auth';
 
 import NavigationSideBar from './NavigationSideBar';
 
@@ -11,11 +11,11 @@ export default {
 } as Meta<typeof NavigationSideBar>;
 
 const NavigationLoggedIn = () => {
-  const storeDispatch = useStoreDispatch();
+  const { setAuth } = useAuth();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+  }, [setAuth]);
 
   return <NavigationSideBar />;
 };

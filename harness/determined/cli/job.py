@@ -52,7 +52,7 @@ def ls(args: Namespace) -> None:
         "Priority" if is_priority else "Weight",
         "Submitted",
         "Slots (acquired/needed)",
-        "Status",
+        "State",
         "User",
     ]
 

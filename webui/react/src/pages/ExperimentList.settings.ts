@@ -53,7 +53,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   checkpointSize: 160,
   description: 148,
   duration: 96,
-  forkedFrom: 128,
+  forkedFrom: 100,
   id: 60,
   name: 150,
   numTrials: 74,

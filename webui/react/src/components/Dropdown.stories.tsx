@@ -2,9 +2,10 @@ import { ComponentStory, Meta } from '@storybook/react';
 import { Button, Menu } from 'antd';
 import React, { useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
 import AvatarCard from 'shared/components/AvatarCard';
 import useUI from 'shared/contexts/stores/UI';
+import { useAuth } from 'stores/auth';
+import { Loadable } from 'utils/loadable';
 
 import Dropdown, { Placement } from './Dropdown';
 
@@ -26,9 +27,10 @@ export const Default: ComponentStory<typeof Dropdown> = (args) => (
 );
 
 export const Settings: ComponentStory<typeof Dropdown> = (args) => {
-  const {
-    auth: { user },
-  } = useStore();
+  const user = Loadable.match(useAuth().auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { ui } = useUI();
   const menuItems = useMemo(() => {
     return (

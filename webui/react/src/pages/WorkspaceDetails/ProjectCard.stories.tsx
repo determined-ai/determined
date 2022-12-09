@@ -1,9 +1,10 @@
 import { Meta } from '@storybook/react';
 import React, { useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
+import { useAuth } from 'stores/auth';
 import { generateTestProjectData } from 'storybook/shared/generateTestData';
 import { Project } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import ProjectCard from './ProjectCard';
 
@@ -20,9 +21,11 @@ export default {
 const args: Partial<Project> = { name: 'Project Name', numExperiments: 1 };
 
 export const Default = (args: Partial<Project>): React.ReactElement => {
-  const {
-    auth: { user },
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const project = useMemo(() => generateTestProjectData(args), [args]);
 
   return <ProjectCard curUser={user} project={project} />;

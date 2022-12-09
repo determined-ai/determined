@@ -8,7 +8,6 @@ import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
-import { useStore } from 'contexts/Store';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace } from 'services/api';
@@ -18,8 +17,10 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
+import { useAuth } from 'stores/auth';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import ExperimentList from './ExperimentList';
 import NoPermissions from './NoPermissions';
@@ -33,9 +34,11 @@ type Params = {
 };
 
 const ProjectDetails: React.FC = () => {
-  const {
-    auth: { user },
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { projectId } = useParams<Params>();
 
   const [project, setProject] = useState<Project>();

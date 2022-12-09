@@ -4,9 +4,12 @@ import { Button } from 'antd';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
-import { DetailedUser } from 'types';
+import { AuthProvider, useAuth } from 'stores/auth';
+import { UsersProvider } from 'stores/users';
+import { DetailedUser, ResourcePool } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import useModalJupyterLab from './useModalJupyterLab';
 
@@ -19,6 +22,7 @@ const MonacoEditorMock: React.FC = () => <></>;
 jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
+  getUsers: () => Promise.resolve({ users: [] }),
   getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));
@@ -26,6 +30,12 @@ jest.mock('contexts/Store', () => ({
   __esModule: true,
   ...jest.requireActual('contexts/Store'),
   useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
+}));
+
+jest.mock('stores/resourcePools', () => ({
+  __esModule: true,
+  ...jest.requireActual('stores/resourcePools'),
+  useResourcePools: (): Loadable<ResourcePool[]> => ({ _tag: 'Loaded', data: [] }),
 }));
 
 jest.mock('utils/wait', () => ({
@@ -39,18 +49,21 @@ jest.mock('components/MonacoEditor', () => ({
 }));
 
 const ModalTrigger: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
+  const { setAuth } = useAuth();
   const { contextHolder, modalOpen } = useModalJupyterLab();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <>
-      <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
-      {contextHolder}
-    </>
+    <SettingsProvider>
+      <>
+        <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
+        {contextHolder}
+      </>
+    </SettingsProvider>
   );
 };
 
@@ -60,9 +73,11 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <StoreProvider>
-        <SettingsProvider>
-          <ModalTrigger />
-        </SettingsProvider>
+        <UsersProvider>
+          <AuthProvider>
+            <ModalTrigger />
+          </AuthProvider>
+        </UsersProvider>
       </StoreProvider>
     </BrowserRouter>,
   );

@@ -78,7 +78,23 @@ const Transfer: React.FC<Props> = ({
 
   const renderEntry = useCallback(
     (entryName: string) => {
-      const sentenceEntryName = entryName === 'id' ? 'ID' : camelCaseToSentence(entryName);
+      const renameEntry = (): string => {
+        switch (entryName) {
+          case 'id':
+            return 'ID';
+          case 'startTime':
+            return 'Started';
+          case 'searcherType':
+            return 'Searcher';
+          case 'forkedFrom':
+            return 'Forked';
+          case 'numTrials':
+            return 'Trials';
+          default:
+            return camelCaseToSentence(entryName);
+        }
+      };
+      const sentenceEntryName = renameEntry();
       const regex = new RegExp(searchTerm, 'i');
       if (searchTerm === '' || !regex.test(sentenceEntryName)) {
         return <span>{sentenceEntryName}</span>;

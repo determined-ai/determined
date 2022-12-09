@@ -19,7 +19,6 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -30,9 +29,12 @@ import Spinner from 'shared/components/Spinner';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { useAuth } from 'stores/auth';
+import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import ProjectActionDropdown from '../WorkspaceDetails/ProjectActionDropdown';
 import ProjectCard from '../WorkspaceDetails/ProjectCard';
@@ -54,10 +56,12 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);

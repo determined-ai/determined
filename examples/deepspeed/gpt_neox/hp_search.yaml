@@ -5,22 +5,22 @@ hyperparameters:
   deepspeed: true
   conf_dir: /gpt-neox/configs
   conf_file:
-      - medium.yml
+      - 2-7B.yml
       - determined_cluster.yml
   overwrite_values:
     log_interval: 10
     pipe_parallel_size:
       type:  categorical
       vals:
+        - 1
         - 2
         - 4
-        - 8
     model_parallel_size:
       type:  categorical
       vals:
+        - 1
         - 2
         - 4
-        - 8
     train_micro_batch_size_per_gpu:
       type:  categorical
       vals:
@@ -28,7 +28,6 @@ hyperparameters:
         - 4
         - 8
     train_batch_size: 32
-    partition_activations: false
   wandb_group: null
   wandb_team: null
   user_script: null
@@ -40,7 +39,7 @@ environment:
         - NCCL_SOCKET_IFNAME=ens,eth,ib
     force_pull_image: true
     image:
-      gpu: liamdetermined/gpt-neox
+      gpu: determinedai/gpt-neox:912cb32
 resources:
   slots_per_trial: 8
 searcher:
@@ -49,7 +48,7 @@ searcher:
   smaller_is_better: false
   max_length:
     batches: 100
-  max_concurrent_trials: 2
+  max_concurrent_trials: 4
 min_validation_period:
     batches: 10
 # Disabling checkpointing so that interval time is correct.

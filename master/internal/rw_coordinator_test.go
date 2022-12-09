@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"net"
 	"net/http"
 	"net/url"
 	"sync"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -107,7 +109,6 @@ func writeValue(
 }
 
 func TestRWCoordinatorLayer(t *testing.T) {
-	addr := "localhost:8080"
 	numThreads := 2
 	sharedValue := 0
 	var wg sync.WaitGroup
@@ -120,24 +121,50 @@ func TestRWCoordinatorLayer(t *testing.T) {
 	}
 	systemRef := &systemForRWCoordinator{system, t}
 
-	serverMutex := http.NewServeMux()
-	server := http.Server{Addr: addr, Handler: serverMutex}
-	serverMutex.HandleFunc("/ws/data-layer/", systemRef.requestHandler)
+	// Start listening on a random port.
+	l, err := net.Listen("tcp", "localhost:0")
+	assert.NilError(t, err)
+	defer func() {
+		_ = l.Close()
+	}()
 
-	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			t.Logf("RW Coordinator server stopped.")
+	serverMux := http.NewServeMux()
+	server := http.Server{Addr: l.Addr().String(), Handler: serverMux}
+	serverMux.HandleFunc("/ws/data-layer/", systemRef.requestHandler)
+
+	srverr := make(chan error)
+	var closed bool
+	defer func() {
+		if !closed {
+			_ = server.Close()
 		}
 	}()
 
-	// Wait for server to start up.
-	time.Sleep(2 * time.Second)
+	go func() {
+		defer close(srverr)
+		err := server.Serve(l)
+		switch err {
+		case http.ErrServerClosed:
+			// We expect this when we close it.
+		case nil:
+			srverr <- errors.New("expected http.ErrServerClosed error but got nil")
+		default:
+			srverr <- err
+		}
+	}()
 
 	wg.Add(numThreads * 2)
 	for i := 0; i < numThreads; i++ {
-		go readValue(t, addr, time.Duration(i)*time.Second, &wg)
-		go writeValue(t, addr, time.Duration(i)*time.Second, &wg, &sharedValue)
+		go readValue(t, l.Addr().String(), time.Duration(i)*time.Second, &wg)
+		go writeValue(t, l.Addr().String(), time.Duration(i)*time.Second, &wg, &sharedValue)
 	}
 	wg.Wait()
 	assert.Equal(t, sharedValue, numThreads)
+
+	err = server.Close()
+	closed = true
+	assert.NilError(t, err)
+
+	// Wait for the server to exit.
+	assert.NilError(t, <-srverr)
 }

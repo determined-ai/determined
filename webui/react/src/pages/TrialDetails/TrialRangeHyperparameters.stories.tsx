@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-import { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { useAuth } from 'stores/auth';
 import {
   CheckpointStorageType,
   ExperimentBase,
@@ -259,11 +259,11 @@ const TrialRangeHyperparametersContainer = () => {
     totalCheckpointSize: 13700356,
   };
 
-  const storeDispatch = useStoreDispatch();
+  const { setAuth } = useAuth();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+  }, [setAuth]);
 
   return <TrialRangeHyperparameters experiment={sampleExp} trial={sampleTrial} />;
 };

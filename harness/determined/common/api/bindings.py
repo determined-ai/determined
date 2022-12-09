@@ -599,6 +599,10 @@ class v1AckAllocationPreemptionSignalRequest:
         }
         return out
 
+class v1ActivityType(enum.Enum):
+    ACTIVITY_TYPE_UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
+    ACTIVITY_TYPE_GET = "ACTIVITY_TYPE_GET"
+
 class v1AddProjectNoteResponse:
 
     def __init__(
@@ -2274,6 +2278,10 @@ class v1EnableSlotResponse:
         if not omit_unset or "slot" in vars(self):
             out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
+
+class v1EntityType(enum.Enum):
+    ENTITY_TYPE_UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
+    ENTITY_TYPE_PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1ExpCompareMetricNamesResponse:
     trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
@@ -7433,6 +7441,36 @@ class v1PostTrialProfilerMetricsBatchRequest:
         }
         if not omit_unset or "batches" in vars(self):
             out["batches"] = None if self.batches is None else [x.to_json(omit_unset) for x in self.batches]
+        return out
+
+class v1PostUserActivityRequest:
+
+    def __init__(
+        self,
+        *,
+        activityType: "v1ActivityType",
+        entityId: int,
+        entityType: "v1EntityType",
+    ):
+        self.activityType = activityType
+        self.entityId = entityId
+        self.entityType = entityType
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserActivityRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "activityType": v1ActivityType(obj["activityType"]),
+            "entityId": obj["entityId"],
+            "entityType": v1EntityType(obj["entityType"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "activityType": self.activityType.value,
+            "entityId": self.entityId,
+            "entityType": self.entityType.value,
+        }
         return out
 
 class v1PostUserRequest:
@@ -14733,6 +14771,26 @@ def post_PostUser(
     if _resp.status_code == 200:
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
+
+def post_PostUserActivity(
+    session: "api.Session",
+    *,
+    body: "v1PostUserActivityRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/activity",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostUserActivity", _resp)
 
 def post_PostUserSetting(
     session: "api.Session",
