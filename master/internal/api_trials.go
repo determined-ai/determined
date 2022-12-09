@@ -213,10 +213,17 @@ func (a *apiServer) TrialLogs(
 					return err
 				}
 				return resp.Send(&apiv1.TrialLogsResponse{
-					Id:        l.Id,
-					Timestamp: l.Timestamp,
-					Message:   l.Message,
-					Level:     l.Level,
+					Id:          l.Id,
+					TrialId:     req.TrialId,
+					Timestamp:   l.Timestamp,
+					Message:     l.Message,
+					Level:       l.Level,
+					AgentId:     l.AgentId,
+					ContainerId: l.ContainerId,
+					RankId:      l.RankId,
+					Log:         &l.Log,
+					Source:      l.Source,
+					Stdtype:     l.Stdtype,
 				})
 			})
 		})
