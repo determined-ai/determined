@@ -5,15 +5,18 @@ import { Auth } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-export type CurrentUser = Auth & { checked: boolean };
+export type CurrentUser = Auth;
 
 type AuthContext = {
   auth: Loadable<CurrentUser>;
+  authChecked: boolean;
   updateAuth: (fn: (users: Loadable<CurrentUser>) => Loadable<CurrentUser>) => void;
+  updateAuthChecked: (fn: (aChecked: boolean) => boolean) => void;
 };
 
 type UseAuthReturn = {
   auth: Loadable<CurrentUser>;
+  authChecked: boolean;
   resetAuth: () => void;
   setAuth: (auth: Auth) => void;
   setAuthCheck: () => void;
@@ -25,12 +28,15 @@ const AuthContext = createContext<AuthContext | null>(null);
 
 export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [auth, setAuth] = useState<Loadable<CurrentUser>>(NotLoaded);
+  const [authChecked, setAuthChecked] = useState(false);
 
   return (
     <AuthContext.Provider
       value={{
         auth,
+        authChecked,
         updateAuth: setAuth,
+        updateAuthChecked: setAuthChecked,
       }}>
       {children}
     </AuthContext.Provider>
@@ -55,14 +61,15 @@ export const useAuth = (): UseAuthReturn => {
   if (context === null) {
     throw new Error('Attempted to use useAuth outside of Auth Context');
   }
-  const { auth, updateAuth } = context;
+  const { auth, authChecked, updateAuth, updateAuthChecked } = context;
 
   const resetAuth = useCallback(() => {
     clearAuthCookie();
     globalStorage.removeAuthToken();
 
     updateAuth(() => NotLoaded);
-  }, [updateAuth]);
+    updateAuthChecked(() => false);
+  }, [updateAuth, updateAuthChecked]);
 
   const setAuth = useCallback(
     (auth: Auth) => {
@@ -82,16 +89,14 @@ export const useAuth = (): UseAuthReturn => {
   );
 
   const setAuthCheck = useCallback(() => {
-    updateAuth((prevState) => {
-      return Loadable.match(prevState, {
-        Loaded: (auth) => Loaded({ ...auth, checked: true }),
-        NotLoaded: () => Loaded({ checked: true, isAuthenticated: false } as CurrentUser),
-      });
+    updateAuthChecked(() => {
+      return true;
     });
-  }, [updateAuth]);
+  }, [updateAuthChecked]);
 
   return {
     auth,
+    authChecked,
     resetAuth,
     setAuth,
     setAuthCheck,

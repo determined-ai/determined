@@ -18,10 +18,7 @@ const Router: React.FC<Props> = (props: Props) => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const authChecked = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.checked,
-    NotLoaded: () => false,
-  });
+  const authChecked = loadableAuth.authChecked;
   const [canceler] = useState(new AbortController());
   const { actions: uiActions } = useUI();
   const location = useLocation();

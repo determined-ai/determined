@@ -38,10 +38,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     Loaded: (auth) => auth.user,
     NotLoaded: () => undefined,
   });
-  const checked = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.checked,
-    NotLoaded: () => false,
-  });
+  const checked = loadableAuth.authChecked;
   const [canceler] = useState(new AbortController());
   const [isLoading, setIsLoading] = useState(true);
   const querySettings = useRef('');

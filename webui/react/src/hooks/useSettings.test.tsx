@@ -106,10 +106,11 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
 };
 
 const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
-  const { setAuth } = useAuth();
+  const { setAuth, setAuthCheck } = useAuth();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
+    setAuthCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
