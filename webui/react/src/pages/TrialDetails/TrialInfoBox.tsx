@@ -66,17 +66,22 @@ export default TrialInfoBox;
 
 export const TrialInfoBoxMultiTrial: React.FC<Props> = ({ experiment }: Props) => {
   const { searcher } = experiment?.configRaw;
+  const checkpointsSize = useMemo(() => {
+    const totalBytes = experiment?.checkpointSize;
+    if (!totalBytes) return;
+    return humanReadableBytes(totalBytes);
+  }, [experiment]);
   return (
     <Section>
       <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
         {searcher?.metric && <OverviewStats title="Metric">{searcher.metric}</OverviewStats>}
         {searcher?.name && <OverviewStats title="Searcher">{searcher.name}</OverviewStats>}
-        {experiment?.numTrials && (
+        {experiment.numTrials > 0 && (
           <OverviewStats title="Trials">{experiment.numTrials}</OverviewStats>
         )}
-        {experiment?.checkpointSize && experiment?.checkpointCount && (
+        {checkpointsSize && (
           <OverviewStats title="Checkpoints">
-            {`${experiment.checkpointCount} (${humanReadableBytes(experiment.checkpointSize)})`}
+            {`${experiment.checkpointCount} (${checkpointsSize})`}
           </OverviewStats>
         )}
       </Grid>
