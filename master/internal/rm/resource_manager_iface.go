@@ -70,8 +70,8 @@ type ResourceManager interface {
 	TaskContainerDefaults(
 		ctx actor.Messenger,
 		resourcePoolName string,
-		defaultConfig model.TaskContainerDefaultsConfig,
-	) model.TaskContainerDefaultsConfig
+		fallbackConfig model.TaskContainerDefaultsConfig,
+	) (model.TaskContainerDefaultsConfig, error)
 
 	// Agents
 	GetAgents(actor.Messenger, *apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)

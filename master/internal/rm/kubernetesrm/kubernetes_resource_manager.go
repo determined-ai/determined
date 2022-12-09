@@ -831,7 +831,7 @@ func (p k8sPodResources) Persist() error {
 func (k ResourceManager) TaskContainerDefaults(
 	ctx actor.Messenger,
 	pool string,
-	defaultConfig model.TaskContainerDefaultsConfig,
-) model.TaskContainerDefaultsConfig {
-	return defaultConfig
+	fallbackConfig model.TaskContainerDefaultsConfig,
+) (model.TaskContainerDefaultsConfig, error) {
+	return fallbackConfig, nil
 }

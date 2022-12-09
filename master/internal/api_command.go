@@ -100,14 +100,17 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		resources.Slots,
 	)
 	if err != nil {
-		return nil, launchWarnings, fmt.Errorf("checking respurce availability: %v", err.Error())
+		return nil, launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
 	}
 	// Get the base TaskSpec.
-	taskContainerDefaults := a.m.rm.TaskContainerDefaults(
+	taskContainerDefaults, err := a.m.rm.TaskContainerDefaults(
 		a.m.system,
 		resources.ResourcePool,
 		a.m.config.TaskContainerDefaults,
 	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("getting TaskContainerDefaults: %v", err)
+	}
 	taskSpec := *a.m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.AgentUserGroup = agentUserGroup

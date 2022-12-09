@@ -764,9 +764,9 @@ type taskContainerDefaults struct {
 func (a ResourceManager) TaskContainerDefaults(
 	ctx actor.Messenger,
 	pool string,
-	defaultConfig model.TaskContainerDefaultsConfig,
-) model.TaskContainerDefaultsConfig {
-	request := taskContainerDefaults{fallbackDefault: defaultConfig, resourcePool: pool}
-	response := a.Ref().System().Ask(a.Ref(), request).Get()
-	return response.(model.TaskContainerDefaultsConfig)
+	fallbackConfig model.TaskContainerDefaultsConfig,
+) (model.TaskContainerDefaultsConfig, error) {
+	result := model.TaskContainerDefaultsConfig{}
+	err := a.Ask(ctx, taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}, &result)
+	return result, err
 }

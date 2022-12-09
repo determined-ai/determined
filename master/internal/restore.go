@@ -89,11 +89,14 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		false); err != nil {
 		return fmt.Errorf("validating resources: %v", err)
 	}
-	taskContainerDefaults := m.rm.TaskContainerDefaults(
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		m.system,
 		expModel.Config.Resources().ResourcePool(),
 		m.config.TaskContainerDefaults,
 	)
+	if err != nil {
+		return fmt.Errorf("error getting TaskContainerDefaults: %w", err)
+	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	owner, err := user.UserByUsername(expModel.Username)

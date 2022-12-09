@@ -320,7 +320,7 @@ func AskAt(sys *actor.System, addr actor.Address, req interface{}, v interface{}
 func (r ResourceManager) TaskContainerDefaults(
 	ctx actor.Messenger,
 	pool string,
-	defaultConfig model.TaskContainerDefaultsConfig,
-) model.TaskContainerDefaultsConfig {
-	return defaultConfig
+	fallbackConfig model.TaskContainerDefaultsConfig,
+) (model.TaskContainerDefaultsConfig, error) {
+	return fallbackConfig, nil
 }
