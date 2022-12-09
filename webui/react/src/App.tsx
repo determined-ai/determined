@@ -10,7 +10,6 @@ import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
 import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
-import { useFetchInfo } from 'hooks/useFetch';
 import { useFetchUsers } from 'hooks/useFetch';
 import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
@@ -25,21 +24,30 @@ import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
+import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
+import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const resize = useResize();
   const storeDispatch = useStoreDispatch();
-  const { auth, info, ui } = useStore();
+  const { auth, ui } = useStore();
+  const infoLoadable = useDeterminedInfo();
+  const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
   const checkAuth = useAuthCheck(canceler);
 
-  const isServerReachable = useMemo(() => !!info.clusterId, [info.clusterId]);
+  const isServerReachable = useMemo(() => {
+    return Loadable.match(infoLoadable, {
+      Loaded: (info) => !!info.clusterId,
+      NotLoaded: () => undefined,
+    });
+  }, [infoLoadable]);
 
-  const fetchInfo = useFetchInfo(canceler);
+  const fetchInfo = useEnsureInfoFetched(canceler);
   const fetchUsers = useFetchUsers(canceler);
 
   useEffect(() => {
@@ -65,6 +73,7 @@ const AppView: React.FC = () => {
      * Check to make sure the WebUI version matches the platform version.
      * Skip this check for development version.
      */
+
     if (!process.env.IS_DEV && info.version !== process.env.VERSION) {
       const btn = (
         <Button type="primary" onClick={refreshPage}>
@@ -126,32 +135,31 @@ const AppView: React.FC = () => {
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);
 
-  if (!info.checked) {
-    return <Spinner center />;
-  }
-
-  return (
-    <div className={css.base}>
-      {isServerReachable ? (
-        <SettingsProvider>
-          <Navigation>
-            <main>
-              <Router routes={appRoutes} />
-            </main>
-          </Navigation>
-        </SettingsProvider>
-      ) : (
-        <PageMessage title="Server is Unreachable">
-          <p>
-            Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please check the
-            firewall and cluster settings.
-          </p>
-          <Button onClick={refreshPage}>Try Again</Button>
-        </PageMessage>
-      )}
-      <Omnibar />
-    </div>
-  );
+  return Loadable.match(infoLoadable, {
+    Loaded: () => (
+      <div className={css.base}>
+        {isServerReachable ? (
+          <SettingsProvider>
+            <Navigation>
+              <main>
+                <Router routes={appRoutes} />
+              </main>
+            </Navigation>
+          </SettingsProvider>
+        ) : (
+          <PageMessage title="Server is Unreachable">
+            <p>
+              Unable to communicate with the server at &quot;{serverAddress()}&quot;. Please check
+              the firewall and cluster settings.
+            </p>
+            <Button onClick={refreshPage}>Try Again</Button>
+          </PageMessage>
+        )}
+        <Omnibar />
+      </div>
+    ),
+    NotLoaded: () => <Spinner center />,
+  });
 };
 
 const App: React.FC = () => {

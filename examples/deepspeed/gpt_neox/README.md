@@ -10,9 +10,8 @@ the flexibility of our API as well as to enable training large-scale language mo
 * **det_utils.py**: Helper functions and callbacks called within `gpt2_trial.py`.
 
 ### Configuration Files
-* **zero1_3d_parallel.yaml**: The Determined config file to train with 3D parallelism and ZeRO stage 1.
-* **zero3_medium.yaml**: The Determined config file to train with data and tensor parallelism and ZeRO stage 3.
-* **hp_search.yaml**: The Determined config file to perform grid search over hyperparameters to optimize for TFLOPS.
+* **zero1.yaml**: The Determined config file to train with 3D parallelism and ZeRO stage 1.
+* **zero3.yaml**: The Determined config file to train with data and tensor parallelism and ZeRO stage 3.
 * **gpt_neox_config/determined_cluster.yml**: The GPT-NeoX config file with paths for data files.
 
 ## Configuration
@@ -40,7 +39,7 @@ mounted at `/run/determined/workdir/shared_fs`.  This is done by default for clu
 
 Once a cluster is available, run the following command: 
 ```
-det experiment create zero1_3d_parallel.yaml .
+det experiment create zero1.yaml .
 ```
 
 **Note:** You will need to run on GPUs that support fp16 training. 

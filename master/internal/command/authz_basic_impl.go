@@ -8,13 +8,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-// CommandAuthZBasic is basic OSS controls.
-type CommandAuthZBasic struct{}
+// NSCAuthZBasic is basic OSS controls.
+type NSCAuthZBasic struct{}
 
-// CanGetCommand returns true and nil error unless the developer master config option
+// CanGetNSC returns true and nil error unless the developer master config option
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the task and a nil error.
-func (a *CommandAuthZBasic) CanGetCommand(
+func (a *NSCAuthZBasic) CanGetNSC(
 	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 ) (canGetCmd bool, serverError error) {
 	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
@@ -24,31 +24,31 @@ func (a *CommandAuthZBasic) CanGetCommand(
 }
 
 // CanGetActiveTasksCount always returns a nil error.
-func (a *CommandAuthZBasic) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
+func (a *NSCAuthZBasic) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
 	return nil
 }
 
-// CanTerminateCommand always returns a nil error.
-func (a *CommandAuthZBasic) CanTerminateCommand(
+// CanTerminateNSC always returns a nil error.
+func (a *NSCAuthZBasic) CanTerminateNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) error {
 	return nil
 }
 
-// CanCreateCommand always returns a nil error.
-func (a *CommandAuthZBasic) CanCreateCommand(
+// CanCreateNSC always returns a nil error.
+func (a *NSCAuthZBasic) CanCreateNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) error {
 	return nil
 }
 
-// CanSetCommandsPriority always returns a nil error.
-func (a *CommandAuthZBasic) CanSetCommandsPriority(
+// CanSetNSCsPriority always returns a nil error.
+func (a *NSCAuthZBasic) CanSetNSCsPriority(
 	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
 ) error {
 	return nil
 }
 
 func init() {
-	AuthZProvider.Register("basic", &CommandAuthZBasic{})
+	AuthZProvider.Register("basic", &NSCAuthZBasic{})
 }

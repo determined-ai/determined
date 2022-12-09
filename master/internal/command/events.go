@@ -148,7 +148,8 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 		return err
 	}
 
-	if ok, err := AuthZProvider.Get().CanGetCommand(reqCtx, curUser, *snapshot.Task.Job.OwnerID,
+	// TODO: separate NTSC types: tensorboards would need to consult ExperimentAuthZ.
+	if ok, err := AuthZProvider.Get().CanGetNSC(reqCtx, curUser, *snapshot.Task.Job.OwnerID,
 		snapshot.GenericCommandSpec.Metadata.WorkspaceID,
 	); err != nil {
 		return err

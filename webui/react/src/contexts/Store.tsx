@@ -5,15 +5,7 @@ import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import {
-  Auth,
-  DetailedUser,
-  DeterminedInfo,
-  ResourcePool,
-  UserAssignment,
-  UserRole,
-  Workspace,
-} from 'types';
+import { Auth, DetailedUser, UserAssignment, UserRole, Workspace } from 'types';
 import { getCookie, setCookie } from 'utils/browser';
 
 const logger = rootLogger.extend('store');
@@ -27,26 +19,15 @@ interface OmnibarState {
 }
 
 interface State {
-  activeExperiments: number;
-  activeTasks: {
-    commands: number;
-    notebooks: number;
-    shells: number;
-    tensorboards: number;
-  };
-
   auth: Auth & { checked: boolean };
 
-  info: DeterminedInfo;
   knownRoles: UserRole[];
   pinnedWorkspaces: Workspace[];
 
-  resourcePools: ResourcePool[];
   ui: {
     omnibar: OmnibarState;
   };
   userAssignments: UserAssignment[];
-  userRoles: UserRole[];
   users: DetailedUser[];
 }
 
@@ -60,38 +41,17 @@ export const StoreAction = {
 
   ResetAuthCheck: 'ResetAuthCheck',
 
-  // Active Experiments
-  SetActiveExperiments: 'SetActiveExperiments',
-
-  // Tasks
-  SetActiveTasks: 'SetActiveTasks',
-
-  // Agents
-  SetAgents: 'SetAgents',
-
   SetAuth: 'SetAuth',
 
   SetAuthCheck: 'SetAuthCheck',
 
   SetCurrentUser: 'SetCurrentUser',
 
-  // Info
-  SetInfo: 'SetInfo',
-
-  SetInfoCheck: 'SetInfoCheck',
-
   // User assignments, roles, and derived permissions
   SetKnownRoles: 'SetKnownRoles',
 
   // PinnedWorkspaces
   SetPinnedWorkspaces: 'SetPinnedWorkspaces',
-
-  // ResourcePools
-  SetResourcePools: 'SetResourcePools',
-
-  SetUserAssignments: 'SetUserAssignments',
-
-  SetUserRoles: 'SetUserRoles',
 
   // Users
   SetUsers: 'SetUsers',
@@ -106,27 +66,12 @@ type Action =
   | { type: typeof StoreAction.ResetAuthCheck }
   | { type: typeof StoreAction.SetAuth; value: Auth }
   | { type: typeof StoreAction.SetAuthCheck }
-  | { type: typeof StoreAction.SetInfo; value: DeterminedInfo }
-  | { type: typeof StoreAction.SetInfoCheck }
   | { type: typeof StoreAction.SetUsers; value: DetailedUser[] }
   | { type: typeof StoreAction.SetCurrentUser; value: DetailedUser }
-  | { type: typeof StoreAction.SetResourcePools; value: ResourcePool[] }
   | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
-  | {
-      type: typeof StoreAction.SetActiveTasks;
-      value: {
-        commands: number;
-        notebooks: number;
-        shells: number;
-        tensorboards: number;
-      };
-    }
-  | { type: typeof StoreAction.SetActiveExperiments; value: number }
-  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserRoles; value: UserRole[] }
-  | { type: typeof StoreAction.SetUserAssignments; value: UserAssignment[] };
+  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
 
 export const AUTH_COOKIE_KEY = 'auth';
 
@@ -134,40 +79,13 @@ const initAuth = {
   checked: false,
   isAuthenticated: false,
 };
-export const initInfo: DeterminedInfo = {
-  branding: undefined,
-  checked: false,
-  clusterId: '',
-  clusterName: '',
-  featureSwitches: [],
-  isTelemetryEnabled: false,
-  masterId: '',
-  rbacEnabled: false,
-  version: process.env.VERSION || '',
-};
 
 const initState: State = {
-  activeExperiments: 0,
-  activeTasks: {
-    commands: 0,
-    notebooks: 0,
-    shells: 0,
-    tensorboards: 0,
-  },
   auth: initAuth,
-  info: initInfo,
   knownRoles: [],
   pinnedWorkspaces: [],
-  resourcePools: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
-  userRoles: [
-    {
-      id: -10,
-      name: 'INITIALIZATION',
-      permissions: [],
-    },
-  ],
   users: [],
 };
 
@@ -212,11 +130,6 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.SetAuthCheck:
       if (state.auth.checked) return state;
       return { ...state, auth: { ...state.auth, checked: true } };
-    case StoreAction.SetInfo:
-      if (isEqual(state.info, action.value)) return state;
-      return { ...state, info: action.value };
-    case StoreAction.SetInfoCheck:
-      return { ...state, info: { ...state.info, checked: true } };
     case StoreAction.SetUsers:
       if (isEqual(state.users, action.value)) return state;
       return { ...state, users: action.value };
@@ -227,9 +140,6 @@ const reducer = (state: State, action: Action): State => {
       if (userIdx > -1) users[userIdx] = { ...users[userIdx], ...action.value };
       return { ...state, auth: { ...state.auth, user: action.value }, users };
     }
-    case StoreAction.SetResourcePools:
-      if (isEqual(state.resourcePools, action.value)) return state;
-      return { ...state, resourcePools: action.value };
     case StoreAction.SetPinnedWorkspaces:
       if (isEqual(state.pinnedWorkspaces, action.value)) return state;
       return { ...state, pinnedWorkspaces: action.value };
@@ -239,21 +149,9 @@ const reducer = (state: State, action: Action): State => {
     case StoreAction.ShowOmnibar:
       if (state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
-    case StoreAction.SetActiveExperiments:
-      if (isEqual(state.activeExperiments, action.value)) return state;
-      return { ...state, activeExperiments: action.value };
-    case StoreAction.SetActiveTasks:
-      if (isEqual(state.activeTasks, action.value)) return state;
-      return { ...state, activeTasks: action.value };
     case StoreAction.SetKnownRoles:
       if (isEqual(state.knownRoles, action.value)) return state;
       return { ...state, knownRoles: action.value };
-    case StoreAction.SetUserRoles:
-      if (isEqual(state.userRoles, action.value)) return state;
-      return { ...state, userRoles: action.value };
-    case StoreAction.SetUserAssignments:
-      if (isEqual(state.userAssignments, action.value)) return state;
-      return { ...state, userAssignments: action.value };
     default:
       return state;
   }

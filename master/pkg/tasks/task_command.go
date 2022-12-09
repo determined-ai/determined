@@ -38,7 +38,7 @@ func (metadata *genericCommandSpecMetadata) MarshalToMap() (map[string]interface
 
 // GenericCommandSpec is a description of a task for running a command.
 type GenericCommandSpec struct {
-	Base TaskSpec // CHECK we can have workspace_id here.
+	Base TaskSpec
 
 	Config          model.CommandConfig
 	UserFiles       archive.Archive
