@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
-import { useFetchMyRoles, useFetchPinnedWorkspaces } from 'hooks/useFetch';
+import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterOverview, useFetchAgents } from 'stores/agents';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useFetchResourcePools } from 'stores/resourcePools';
+import { useFetchUserRolesAndAssignments } from 'stores/userRoles';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
@@ -29,7 +30,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchAgents = useFetchAgents(canceler);
   const fetchResourcePools = useFetchResourcePools(canceler);
   const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
-  const fetchMyRoles = useFetchMyRoles(canceler);
+  const fetchMyRoles = useFetchUserRolesAndAssignments(canceler);
 
   usePolling(fetchAgents);
   usePolling(fetchPinnedWorkspaces);
