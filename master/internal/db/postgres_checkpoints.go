@@ -119,9 +119,10 @@ func (db *PgDB) GroupCheckpointUUIDsByExperimentID(checkpoints []uuid.UUID) (
 }
 
 func UpdateCheckpointSize(checkpoints []uuid.UUID) error {
-	experimentID := Bun().NewSelect().Table("checkpoints_view").
-		Column("experiment_id").
-		Where("uuid IN (?)", bun.In(checkpoints)).Distinct()
+	trialID := Bun().NewSelect().Table("checkpoints_view").
+		Column("trial_id").
+		Where("uuid IN (?)", bun.In(checkpoints)).
+		Distinct()
 
 	size_tuple := Bun().NewSelect().TableExpr("checkpoints_view AS c").
 		ColumnExpr("jsonb_each(c.resources) AS size_tuple").
@@ -129,45 +130,44 @@ func UpdateCheckpointSize(checkpoints []uuid.UUID) error {
 		Column("uuid").
 		Column("trial_id").
 		Where("state != ?", "DELETED").
-		Where("experiment_id IN (?)", experimentID).
-		Where("c.resources != 'null'::jsonb")
+		Where("c.resources != 'null'::jsonb").
+		Where("trial_id IN (?)", trialID)
 
 	size_and_count := Bun().NewSelect().With("cp_size_tuple", size_tuple).
 		Table("cp_size_tuple").
 		ColumnExpr("coalesce(sum((size_tuple).value::text::bigint), 0) AS size").
 		ColumnExpr("count(distinct(uuid)) AS count").
-		Column("experiment_id").
-		Group("experiment_id")
+		Column("trial_id").
+		Group("trial_id")
 
 	_, err := Bun().NewUpdate().With("size_and_count", size_and_count).
-		Table("experiments", "size_and_count").
+		Table("trials", "size_and_count").
 		Set("checkpoint_size = size").
 		Set("checkpoint_count = count").
-		Where("id IN (?)", experimentID).
-		Where("experiments.id = experiment_id").
+		Where("id IN (?)", trialID).
+		Where("trials.id = trial_id").
 		Exec(context.Background())
 	if err != nil {
 		return err
 	}
 
-	trialID := Bun().NewSelect().Table("checkpoints_view").
-		Column("trial_id").
-		Where("uuid IN (?)", bun.In(checkpoints)).
-		Distinct()
+	experimentID := Bun().NewSelect().Table("checkpoints_view").
+		Column("experiment_id").
+		Where("uuid IN (?)", bun.In(checkpoints)).Distinct()
 
-	size_tuple = size_tuple.Where("trial_id IN (?)", trialID)
+	size_and_count = Bun().NewSelect().Table("trials").
+		ColumnExpr("coalesce(sum(checkpoint_size), 0) AS size").
+		ColumnExpr("coalesce(sum(checkpoint_count), 0) AS count").
+		Column("experiment_id").
+		Group("experiment_id").
+		Where("experiment_id IN (?)", experimentID)
 
-	cp_size := Bun().NewSelect().With("cp_size_tuple", size_tuple).
-		Table("cp_size_tuple").
-		ColumnExpr("coalesce(sum((size_tuple).value::text::bigint), 0) AS size").
-		Column("trial_id").
-		Group("trial_id")
-
-	_, err = Bun().NewUpdate().With("cp_size", cp_size).
-		Table("trials", "cp_size").
+	_, err = Bun().NewUpdate().With("size_and_count", size_and_count).
+		Table("experiments", "size_and_count").
 		Set("checkpoint_size = size").
-		Where("id IN (?)", trialID).
-		Where("trials.id = trial_id").
+		Set("checkpoint_count = count").
+		Where("id IN (?)", experimentID).
+		Where("experiments.id = experiment_id").
 		Exec(context.Background())
 
 	return err

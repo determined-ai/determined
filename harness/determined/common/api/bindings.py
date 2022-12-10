@@ -454,6 +454,7 @@ class runtimeStreamError:
 class trialv1Trial:
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     latestTraining: "typing.Optional[v1MetricsWorkload]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
@@ -475,6 +476,7 @@ class trialv1Trial:
         totalBatchesProcessed: int,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestTraining: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
@@ -495,6 +497,8 @@ class trialv1Trial:
             self.bestCheckpoint = bestCheckpoint
         if not isinstance(bestValidation, Unset):
             self.bestValidation = bestValidation
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
         if not isinstance(latestTraining, Unset):
@@ -527,6 +531,8 @@ class trialv1Trial:
             kwargs["bestCheckpoint"] = v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj["bestCheckpoint"] is not None else None
         if "bestValidation" in obj:
             kwargs["bestValidation"] = v1MetricsWorkload.from_json(obj["bestValidation"]) if obj["bestValidation"] is not None else None
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         if "latestTraining" in obj:
@@ -559,6 +565,8 @@ class trialv1Trial:
             out["bestCheckpoint"] = None if self.bestCheckpoint is None else self.bestCheckpoint.to_json(omit_unset)
         if not omit_unset or "bestValidation" in vars(self):
             out["bestValidation"] = None if self.bestValidation is None else self.bestValidation.to_json(omit_unset)
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         if not omit_unset or "latestTraining" in vars(self):

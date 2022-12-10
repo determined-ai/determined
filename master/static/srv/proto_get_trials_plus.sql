@@ -162,6 +162,7 @@ SELECT
   coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid,
   t.task_id,
   t.checkpoint_size AS total_checkpoint_size,
+  t.checkpoint_count,
   (
     SELECT s.total_batches
     FROM steps s

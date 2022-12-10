@@ -124,6 +124,8 @@ message Trial {
   string task_id = 14;
   // The sum of sizes of all resources in all checkpoints for the trial.
   uint64 total_checkpoint_size = 15;
+  // The count of checkpoints.
+  int32 checkpoint_count = 18;
 }
 
 // TrialProfilerMetricLabels are the labels for a single series, where a series

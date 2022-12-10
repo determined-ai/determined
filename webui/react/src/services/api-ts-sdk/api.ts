@@ -826,6 +826,12 @@ export interface Trialv1Trial {
      * @memberof Trialv1Trial
      */
     totalCheckpointSize?: string;
+    /**
+     * The count of checkpoints.
+     * @type {number}
+     * @memberof Trialv1Trial
+     */
+    checkpointCount?: number;
 }
 
 /**

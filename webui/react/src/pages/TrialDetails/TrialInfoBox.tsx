@@ -45,7 +45,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         )}
         {totalCheckpointsSize && (
-          <OverviewStats title="Checkpoints">{`${experiment.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
+          <OverviewStats title="Checkpoints">{`${trial?.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
         )}
         {bestCheckpoint && (
           <CheckpointModalTrigger

@@ -494,6 +494,7 @@ export interface TrialItem extends StartEndTimes {
   autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
+  checkpointCount?: number;
   experimentId: number;
   hyperparameters: TrialHyperparameters;
   id: number;

@@ -607,6 +607,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     autoRestarts: data.restarts,
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
+    checkpointCount: data.checkpointCount || 0,
     endTime: data.endTime && (data.endTime as unknown as string),
     experimentId: data.experimentId,
     hyperparameters: flattenObject(data.hparams),
