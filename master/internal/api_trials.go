@@ -1195,11 +1195,6 @@ func (a *apiServer) ReportCheckpoint(
 	if err := a.m.db.AddCheckpointMetadata(ctx, c); err != nil {
 		return nil, err
 	}
-	if err := a.m.db.QueryProto(
-		"update_checkpoint_size", &experimentv1.Experiment{}, c.UUID,
-	); err != nil {
-		return nil, err
-	}
 	return &apiv1.ReportCheckpointResponse{}, nil
 }
 
