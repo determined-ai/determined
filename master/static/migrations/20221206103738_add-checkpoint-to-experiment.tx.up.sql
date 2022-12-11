@@ -14,8 +14,8 @@ FROM (
     FROM checkpoints_view c
     WHERE state != 'DELETED'
     AND c.resources != 'null'::jsonb ) r GROUP BY trial_id
-) s WHERE 
-trial_id = trials.id; 
+) s RIGHT JOIN (SELECT id FROM trials) t ON id = trial_id  WHERE 
+t.id = trials.id; 
 
 UPDATE experiments set (checkpoint_size, checkpoint_count) = (size, count) FROM (
 SELECT coalesce(sum(checkpoint_size), 0) AS size, coalesce(sum(checkpoint_count), 0) AS count, experiment_id
