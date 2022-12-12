@@ -120,7 +120,7 @@ commands:
     steps:
       - run: git fetch upstream
       - run:
-          name: check for webui-only changes  # must be run after skip-if-docs-only
+          name: check for webui-only changes # must be run after skip-if-docs-only
           command: |
             MERGE_BASE="$(git merge-base upstream/master HEAD)"
             DIFF_DIRS="$(git diff-tree --no-commit-id --name-only "$MERGE_BASE" HEAD)"
@@ -545,12 +545,11 @@ commands:
           command: touch /tmp/det-deploy-extra-args
       - when:
           condition:
-            equal:
-               [ true, << parameters.enable-cors >> ]
+            equal: [true, << parameters.enable-cors >>]
           steps:
-          - run:
-              name: Enable CORS
-              command: 'echo --enable-cors >> /tmp/det-deploy-extra-args'
+            - run:
+                name: Enable CORS
+                command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
 
       - run:
           name: Configure TLS arguments
@@ -565,12 +564,11 @@ commands:
             if [ -n "<<parameters.log-group-prefix>>" ]; then echo "--log-group-prefix <<parameters.log-group-prefix>>" >> /tmp/det-deploy-extra-args; fi
       - when:
           condition:
-            equal:
-              [ true, <<parameters.reattach-enabled>> ]
+            equal: [true, <<parameters.reattach-enabled>>]
           steps:
-          - run:
-              name: set reattach-enabled
-              command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents >> /tmp/det-deploy-extra-args
+            - run:
+                name: set reattach-enabled
+                command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents >> /tmp/det-deploy-extra-args
       - run:
           name: Deploy AWS cluster
           command: |
@@ -724,23 +722,23 @@ commands:
       - when:
           condition: <<parameters.gpus-per-machine>>
           steps:
-          - run:
-              command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
-              name: Install NVIDIA drivers
+            - run:
+                command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+                name: Install NVIDIA drivers
       - unless:
           condition: <<parameters.gpus-per-machine>>
           steps:
-          - run:
-              command: |
-                echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>"' >> "$BASH_ENV"
-              name: CPU setup helm overrides
+            - run:
+                command: |
+                  echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>"' >> "$BASH_ENV"
+                name: CPU setup helm overrides
       - when:
           condition: <<parameters.environment-image>>
           steps:
-          - run:
-              command: |
-                echo 'export HELM_VALUES="${HELM_VALUES},taskContainerDefaults.cpuImage=<<parameters.environment-image>>,taskContainerDefaults.gpuImage=<<parameters.environment-image>>"' >> "$BASH_ENV"
-              name: env image helm overrides
+            - run:
+                command: |
+                  echo 'export HELM_VALUES="${HELM_VALUES},taskContainerDefaults.cpuImage=<<parameters.environment-image>>,taskContainerDefaults.gpuImage=<<parameters.environment-image>>"' >> "$BASH_ENV"
+                name: env image helm overrides
       - helm/install-helm-chart:
           chart: helm/charts/determined
           helm-version: v3.2.4
@@ -754,15 +752,15 @@ commands:
       - when:
           condition: <<parameters.gpus-per-machine>>
           steps:
-          - run:
-              command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
-              name: Create GPU node pool
+            - run:
+                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+                name: Create GPU node pool
       - unless:
           condition: <<parameters.gpus-per-machine>>
           steps:
-          - run:
-              command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
-              name: Create CPU node pool
+            - run:
+                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+                name: Create CPU node pool
 
   generate-tls-cert:
     steps:
@@ -850,7 +848,7 @@ commands:
     steps:
       - when:
           condition:
-            equal: [ <<parameters.only_on_branch>>, << pipeline.git.branch >> ]
+            equal: [<<parameters.only_on_branch>>, << pipeline.git.branch >>]
           steps:
             - run:
                 name: Test run success -> uploading results to Determined CI
@@ -1237,11 +1235,11 @@ jobs:
       - skip-if-docs-only
       - react-get-deps
       - run: |
-            if <<parameters.dev-mode>>; then
-              echo 'Setting development mode...'
-              export DET_NODE_ENV=development
-            fi
-            make -C webui/react build
+          if <<parameters.dev-mode>>; then
+            echo 'Setting development mode...'
+            export DET_NODE_ENV=development
+          fi
+          make -C webui/react build
       - persist_to_workspace:
           root: .
           paths:
@@ -1275,18 +1273,6 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - run: make -C webui/react test-shared
-
-  build-storybook:
-    docker:
-      - image: cimg/node:16.14.2
-    resource_class: large
-    steps:
-      - checkout-with-sm
-      - skip-if-docs-only
-      - react-get-deps
-      - run: make -C webui/react build-storybook
-      - store_artifacts:
-          path: webui/react/build-storybook
 
   lint-go:
     docker:
@@ -1658,10 +1644,10 @@ jobs:
         default: false
       postgres-version:
         type: string
-        default: '10'
+        default: "10"
       agent-version:
         type: string
-        default: ''
+        default: ""
       extra-pytest-flags:
         type: string
         default: ""
@@ -1752,7 +1738,7 @@ jobs:
           only-on-branch: master
           # Basically wait forever -- we would prefer not to fail deploys, and
           # we'll likely never be this backed up.
-          time: '10000'
+          time: "10000"
       - checkout
       - set-slack-user-id
       - setup-python-venv:
@@ -1850,7 +1836,6 @@ jobs:
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
 
-
   test-e2e-gke:
     parameters:
       cluster-id-prefix:
@@ -1932,11 +1917,11 @@ jobs:
       - when:
           condition: <<parameters.environment-image>>
           steps:
-          - run:
-              command: |
-                echo 'export TF1_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
-                echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
-              name: override test env images.
+            - run:
+                command: |
+                  echo 'export TF1_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
+                  echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
+                name: override test env images.
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -2040,12 +2025,7 @@ workflows:
           matrix:
             parameters:
               executor-name:
-                [
-                  "python-37",
-                  "python-38",
-                  "python-39",
-                  "win/default",
-                ]
+                ["python-37", "python-38", "python-39", "win/default"]
 
   test-unit:
     jobs:
@@ -2085,7 +2065,6 @@ workflows:
       - build-helm
       - build-react:
           dev-mode: true
-      - build-storybook
       - build-docs:
           requires:
             - build-helm
@@ -2182,7 +2161,7 @@ workflows:
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
-          postgres-version: '10'
+          postgres-version: "10"
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
@@ -2192,7 +2171,7 @@ workflows:
           mark: e2e_cpu_postgres
           devcluster-config: postgres-with-ssl.devcluster.yaml
           target-stage: agent
-          postgres-version: '14'
+          postgres-version: "14"
 
       - test-e2e:
           name: test-e2e-old-agent-versions
@@ -2204,7 +2183,7 @@ workflows:
           target-stage: agent
           matrix:
             parameters:
-              agent-version: ['0.17.10']
+              agent-version: ["0.17.10"]
 
       - test-e2e:
           name: test-e2e-agent-connection-loss
