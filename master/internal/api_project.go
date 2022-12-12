@@ -356,12 +356,23 @@ func (a *apiServer) GetProjectsByUserActivity(
 
 	p := []*model.Project{}
 
-	err = db.Bun().NewSelect().Table("projects").
-		Column("projects.*").
-		Join("JOIN activity ON activity.entity_id = projects.id").
-		Distinct().
-		Where("activity.user_id = ?", curUser.ID).
-		Where("activity.entity_type = ?", model.EntityTypeProject).
+	err = db.Bun().NewSelect().Model(p).NewRaw(`
+	WITH p as (
+		SELECT  pr.* FROM projects pr JOIN activity a ON pr.id = a.entity_id
+	),
+	pe AS (
+	  SELECT project_id, state, start_time
+	  FROM experiments
+	)
+	SELECT w.name as workspace_name, u.username, p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes, p.user_id,
+			'WORKSPACE_STATE_' || p.state AS state, p.error_message,
+	  SUM(case when pe.project_id = p.id then 1 else 0 end) AS num_experiments,
+	  SUM(case when pe.project_id = p.id AND pe.state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments,
+	  MAX(case when pe.project_id = p.id then pe.start_time else NULL end) AS last_experiment_started_at
+	FROM pe, p
+	  LEFT JOIN users as u ON u.id = p.user_id
+	  LEFT JOIN workspaces AS w on w.id = p.workspace_id
+	GROUP BY p.user_id, p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes, p.state, p.error_message,  u.username, w.name;`).
 		Scan(ctx, &p)
 	if err != nil {
 		return nil, err
