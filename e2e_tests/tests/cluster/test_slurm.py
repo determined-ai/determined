@@ -106,7 +106,7 @@ def test_bad_slurm_option() -> None:
     exp.run_failure_test(
         conf.fixtures_path("failures/bad-slurm-option.yaml"),
         conf.fixtures_path("failures/"),
-        "task failed without an associated exit code: sbatch: unrecognized option",
+        "resources failed with non-zero exit code: sbatch: unrecognized option",
     )
 
 
