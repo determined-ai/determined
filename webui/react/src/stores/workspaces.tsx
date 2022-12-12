@@ -82,9 +82,10 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
   );
 };
 
-export const useUpdateWorkspace = (
-  canceler: AbortController,
-): ((id: number, updater: (arg0: Workspace) => Workspace) => Promise<void>) => {
+export const useUpdateWorkspace = (): ((
+  id: number,
+  updater: (arg0: Workspace) => Workspace,
+) => Promise<void>) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use useUpdateWorkspace outside of Workspace Context');
