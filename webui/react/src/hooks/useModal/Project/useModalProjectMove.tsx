@@ -32,7 +32,7 @@ const useModalProjectMove = ({ onClose, project }: Props): ModalHooks => {
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const response = await getWorkspaces({ archived: false });
+      const response = await getWorkspaces({ archived: false, limit: 0 });
       setWorkspaces((prev) => {
         const withoutDefault = response.workspaces.filter((w) =>
           canMoveProjectsTo({ destination: { id: w.id } }),
