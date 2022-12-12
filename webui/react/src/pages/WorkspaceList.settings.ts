@@ -83,7 +83,7 @@ const config: SettingsConfig<WorkspaceListSettings> = {
       type: boolean,
     },
     sortKey: {
-      defaultValue: V1GetWorkspacesRequestSortBy.ID,
+      defaultValue: V1GetWorkspacesRequestSortBy.NAME,
       storageKey: 'sortKey',
       type: union([
         literal(V1GetWorkspacesRequestSortBy.ID),
