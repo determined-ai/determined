@@ -1,7 +1,7 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
-import { clone, isEqual } from 'shared/utils/data';
+import { clone } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
 import { UserAssignment } from 'types';
@@ -17,7 +17,6 @@ interface State {
 
 export const StoreAction = {
   Reset: 'Reset',
-
 
   // User Settings
   SetUserSettings: 'SetUserSettings',
