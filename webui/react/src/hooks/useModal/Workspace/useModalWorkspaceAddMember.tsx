@@ -1,6 +1,5 @@
 import { Form, message, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { DefaultOptionType } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
@@ -58,7 +57,8 @@ const useModalWorkspaceAddMember = ({
   );
 
   const handleFilter = useCallback(
-    (search: string, option: DefaultOptionType): boolean => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (search: string, option: any): boolean => {
       const label = option.label as string;
       const userOrGroup = addableUsersAndGroups.find((u) => {
         if (isUser(u)) {
