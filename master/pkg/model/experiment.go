@@ -602,7 +602,15 @@ type TrialLog struct {
 
 // Proto converts a trial log to its protobuf representation.
 func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
-	resp := &apiv1.TrialLogsResponse{Message: t.Message}
+	resp := &apiv1.TrialLogsResponse{
+		TrialId:     int32(t.TrialID),
+		Message:     t.Message,
+		AgentId:     t.AgentID,
+		ContainerId: t.ContainerID,
+		Log:         t.Log,
+		Source:      t.Source,
+		Stdtype:     t.StdType,
+	}
 
 	switch {
 	case t.ID != nil:
@@ -636,6 +644,11 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 		default:
 			resp.Level = logv1.LogLevel_LOG_LEVEL_UNSPECIFIED
 		}
+	}
+
+	if t.RankID != nil {
+		var id = int32(*t.RankID)
+		resp.RankId = &id
 	}
 
 	return resp, nil

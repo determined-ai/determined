@@ -97,16 +97,34 @@ message TaskLogsRequest {
 // Response to TaskLogsRequest.
 message TaskLogsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id", "level", "message", "timestamp" ] }
+    json_schema: {
+      required: [ "id", "level", "log", "message", "task_id", "timestamp" ]
+    }
   };
   // The ID of the log.
   string id = 1;
   // The timestamp of the log.
   google.protobuf.Timestamp timestamp = 2;
-  // The log message.
-  string message = 3;
+  // The flat version of the log that UIs have shown historically.
+  string message = 3 [deprecated = true];
   // The level of the log.
   determined.log.v1.LogLevel level = 4;
+  // The ID of the task.
+  string task_id = 5;
+  // The ID of the allocation.
+  optional string allocation_id = 6;
+  // The agent the logs came from.
+  optional string agent_id = 7;
+  // The ID of the container or, in the case of k8s, the pod name.
+  optional string container_id = 8;
+  // The rank ID.
+  optional int32 rank_id = 9;
+  // The text of the log entry.
+  string log = 10;
+  // The source of the log entry.
+  optional string source = 11;
+  // The output stream (e.g. stdout, stderr).
+  optional string stdtype = 12;
 }
 
 // Stream distinct task log fields.
