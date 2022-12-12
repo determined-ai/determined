@@ -4,14 +4,15 @@ import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { useStore } from 'contexts/Store';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
@@ -83,9 +84,11 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const {
-    auth: { user },
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const userId = useMemo(() => (user?.id ? String(user?.id) : ''), [user?.id]);
 

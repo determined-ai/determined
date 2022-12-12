@@ -315,3 +315,12 @@ func AskAt(sys *actor.System, addr actor.Address, req interface{}, v interface{}
 		return nil
 	}
 }
+
+// TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
+func (r ResourceManager) TaskContainerDefaults(
+	ctx actor.Messenger,
+	pool string,
+	fallbackConfig model.TaskContainerDefaultsConfig,
+) (model.TaskContainerDefaultsConfig, error) {
+	return fallbackConfig, nil
+}

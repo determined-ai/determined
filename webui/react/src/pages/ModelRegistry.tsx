@@ -29,8 +29,6 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
-import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -44,8 +42,11 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
@@ -59,10 +60,12 @@ import settingsConfig, {
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
 const ModelRegistry: React.FC = () => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,7 +89,7 @@ const ModelRegistry: React.FC = () => {
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchModels = useCallback(async () => {
     if (!settings) return;

@@ -7,7 +7,6 @@ The **React** webapp was bootstrapped using [Create React App](https://github.co
 The following are the notable main packages and libraries we are using:
 
 - [Ant Design](https://ant.design/) - UI component library
-- [Storybook](https://storybook.js.org/) - UI component testing and organization
 - [CSS Modules](https://create-react-app.dev/docs/adding-a-css-modules-stylesheet/) - CSS Modules for CSS organization
 - [io-ts](https://github.com/gcanti/io-ts) - Runtime type checking library
 
@@ -102,16 +101,6 @@ To skip the interactive mode and run all unit tests.
 ```sh
 npm run test -- --watchAll=false
 ```
-
-### Visual Testing with Storybook
-
-To run a local instance of storybook, run the following command:
-
-```sh
-npm run storybook
-```
-
-Point the browser to [localhost:9009](http://localhost:9009) to view storybook.
 
 ## Deployment
 

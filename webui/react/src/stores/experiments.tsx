@@ -7,6 +7,7 @@ import { GetExperimentsParams } from 'services/types';
 import { ExperimentItem } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { encodeParams } from 'utils/store';
 
 type ExperimentPagination = {
   experiments: ExperimentItem[];
@@ -19,9 +20,6 @@ type ExperimentsContext = {
 };
 
 const ExperimentsContext = createContext<ExperimentsContext | null>(null);
-
-const encodeParams = (params: { [key: string]: any }) =>
-  JSON.stringify([...Object.entries(params ?? {})].sort());
 
 export const ExperimentsProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [experimentsCache, updateExperimentsCache] = useState<Map<string, ExperimentPagination>>(

@@ -599,6 +599,10 @@ class v1AckAllocationPreemptionSignalRequest:
         }
         return out
 
+class v1ActivityType(enum.Enum):
+    ACTIVITY_TYPE_UNSPECIFIED = "ACTIVITY_TYPE_UNSPECIFIED"
+    ACTIVITY_TYPE_GET = "ACTIVITY_TYPE_GET"
+
 class v1AddProjectNoteResponse:
 
     def __init__(
@@ -2274,6 +2278,10 @@ class v1EnableSlotResponse:
         if not omit_unset or "slot" in vars(self):
             out["slot"] = None if self.slot is None else self.slot.to_json(omit_unset)
         return out
+
+class v1EntityType(enum.Enum):
+    ENTITY_TYPE_UNSPECIFIED = "ENTITY_TYPE_UNSPECIFIED"
+    ENTITY_TYPE_PROJECT = "ENTITY_TYPE_PROJECT"
 
 class v1ExpCompareMetricNamesResponse:
     trainingMetrics: "typing.Optional[typing.Sequence[str]]" = None
@@ -7416,6 +7424,36 @@ class v1PostTrialProfilerMetricsBatchRequest:
             out["batches"] = None if self.batches is None else [x.to_json(omit_unset) for x in self.batches]
         return out
 
+class v1PostUserActivityRequest:
+
+    def __init__(
+        self,
+        *,
+        activityType: "v1ActivityType",
+        entityId: int,
+        entityType: "v1EntityType",
+    ):
+        self.activityType = activityType
+        self.entityId = entityId
+        self.entityType = entityType
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserActivityRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "activityType": v1ActivityType(obj["activityType"]),
+            "entityId": obj["entityId"],
+            "entityType": v1EntityType(obj["entityType"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "activityType": self.activityType.value,
+            "entityId": self.entityId,
+            "entityType": self.entityType.value,
+        }
+        return out
+
 class v1PostUserRequest:
     isHashed: "typing.Optional[bool]" = None
     password: "typing.Optional[str]" = None
@@ -9848,37 +9886,93 @@ class v1TaskLogsFieldsResponse:
         return out
 
 class v1TaskLogsResponse:
+    agentId: "typing.Optional[str]" = None
+    allocationId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    rankId: "typing.Optional[int]" = None
+    source: "typing.Optional[str]" = None
+    stdtype: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         id: str,
         level: "v1LogLevel",
+        log: str,
         message: str,
+        taskId: str,
         timestamp: str,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        rankId: "typing.Union[int, None, Unset]" = _unset,
+        source: "typing.Union[str, None, Unset]" = _unset,
+        stdtype: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
         self.level = level
+        self.log = log
         self.message = message
+        self.taskId = taskId
         self.timestamp = timestamp
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(allocationId, Unset):
+            self.allocationId = allocationId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(rankId, Unset):
+            self.rankId = rankId
+        if not isinstance(source, Unset):
+            self.source = source
+        if not isinstance(stdtype, Unset):
+            self.stdtype = stdtype
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TaskLogsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
             "level": v1LogLevel(obj["level"]),
+            "log": obj["log"],
             "message": obj["message"],
+            "taskId": obj["taskId"],
             "timestamp": obj["timestamp"],
         }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "allocationId" in obj:
+            kwargs["allocationId"] = obj["allocationId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "rankId" in obj:
+            kwargs["rankId"] = obj["rankId"]
+        if "source" in obj:
+            kwargs["source"] = obj["source"]
+        if "stdtype" in obj:
+            kwargs["stdtype"] = obj["stdtype"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
             "level": self.level.value,
+            "log": self.log,
             "message": self.message,
+            "taskId": self.taskId,
             "timestamp": self.timestamp,
         }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "allocationId" in vars(self):
+            out["allocationId"] = self.allocationId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "rankId" in vars(self):
+            out["rankId"] = self.rankId
+        if not omit_unset or "source" in vars(self):
+            out["source"] = self.source
+        if not omit_unset or "stdtype" in vars(self):
+            out["stdtype"] = self.stdtype
         return out
 
 class v1Template:
@@ -10389,6 +10483,12 @@ class v1TrialLogsFieldsResponse:
         return out
 
 class v1TrialLogsResponse:
+    agentId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    log: "typing.Optional[str]" = None
+    rankId: "typing.Optional[int]" = None
+    source: "typing.Optional[str]" = None
+    stdtype: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -10397,11 +10497,31 @@ class v1TrialLogsResponse:
         level: "v1LogLevel",
         message: str,
         timestamp: str,
+        trialId: int,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        log: "typing.Union[str, None, Unset]" = _unset,
+        rankId: "typing.Union[int, None, Unset]" = _unset,
+        source: "typing.Union[str, None, Unset]" = _unset,
+        stdtype: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
         self.level = level
         self.message = message
         self.timestamp = timestamp
+        self.trialId = trialId
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(log, Unset):
+            self.log = log
+        if not isinstance(rankId, Unset):
+            self.rankId = rankId
+        if not isinstance(source, Unset):
+            self.source = source
+        if not isinstance(stdtype, Unset):
+            self.stdtype = stdtype
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialLogsResponse":
@@ -10410,7 +10530,20 @@ class v1TrialLogsResponse:
             "level": v1LogLevel(obj["level"]),
             "message": obj["message"],
             "timestamp": obj["timestamp"],
+            "trialId": obj["trialId"],
         }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "log" in obj:
+            kwargs["log"] = obj["log"]
+        if "rankId" in obj:
+            kwargs["rankId"] = obj["rankId"]
+        if "source" in obj:
+            kwargs["source"] = obj["source"]
+        if "stdtype" in obj:
+            kwargs["stdtype"] = obj["stdtype"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -10419,7 +10552,20 @@ class v1TrialLogsResponse:
             "level": self.level.value,
             "message": self.message,
             "timestamp": self.timestamp,
+            "trialId": self.trialId,
         }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "log" in vars(self):
+            out["log"] = self.log
+        if not omit_unset or "rankId" in vars(self):
+            out["rankId"] = self.rankId
+        if not omit_unset or "source" in vars(self):
+            out["source"] = self.source
+        if not omit_unset or "stdtype" in vars(self):
+            out["stdtype"] = self.stdtype
         return out
 
 class v1TrialMetrics:
@@ -13813,6 +13959,7 @@ def get_GetWorkspaceProjects(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetWorkspaceProjectsRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspaceProjectsResponse":
     _params = {
@@ -13822,6 +13969,7 @@ def get_GetWorkspaceProjects(
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -13848,6 +13996,7 @@ def get_GetWorkspaces(
     orderBy: "typing.Optional[v1OrderBy]" = None,
     pinned: "typing.Optional[bool]" = None,
     sortBy: "typing.Optional[v1GetWorkspacesRequestSortBy]" = None,
+    userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetWorkspacesResponse":
     _params = {
@@ -13858,6 +14007,7 @@ def get_GetWorkspaces(
         "orderBy": orderBy.value if orderBy is not None else None,
         "pinned": str(pinned).lower() if pinned is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
+        "userIds": userIds,
         "users": users,
     }
     _resp = session._do_request(
@@ -14710,6 +14860,26 @@ def post_PostUser(
     if _resp.status_code == 200:
         return v1PostUserResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUser", _resp)
+
+def post_PostUserActivity(
+    session: "api.Session",
+    *,
+    body: "v1PostUserActivityRequest",
+) -> None:
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/users/activity",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostUserActivity", _resp)
 
 def post_PostUserSetting(
     session: "api.Session",

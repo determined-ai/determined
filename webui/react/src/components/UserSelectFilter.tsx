@@ -2,8 +2,10 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
+import { useAuth } from 'stores/auth';
+import { useUsers } from 'stores/users';
 import { ALL_VALUE, User } from 'types';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import SelectFilter from './SelectFilter';
@@ -22,7 +24,12 @@ const userToSelectOption = (user: User): React.ReactNode => (
 );
 
 const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
-  const { auth, users } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const authUser = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const handleSelect = useCallback(
     (newValue: SelectValue) => {
@@ -34,7 +41,6 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   );
 
   const options = useMemo(() => {
-    const authUser = auth.user;
     const list: React.ReactNode[] = [
       <Option key={ALL_VALUE} value={ALL_VALUE}>
         All
@@ -58,7 +64,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     }
 
     return list;
-  }, [auth.user, users]);
+  }, [authUser, users]);
 
   return (
     <SelectFilter

@@ -1,11 +1,12 @@
 import { waitFor } from '@testing-library/react';
 import { act, renderHook, RenderResult } from '@testing-library/react-hooks';
 import { array, boolean, number, string, undefined as undefinedType, union } from 'io-ts';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import StoreProvider from 'contexts/Store';
 import history from 'shared/routes/history';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { DetailedUser } from 'types';
 
 import * as hook from './useSettings';
@@ -104,6 +105,22 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
   storagePath: 'settings/extra',
 };
 
+const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
+  const { setAuth, setAuthCheck } = useAuth();
+
+  useEffect(() => {
+    setAuth({ isAuthenticated: true });
+    setAuthCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <SettingsProvider>
+      <HistoryRouter history={history}>{children}</HistoryRouter>
+    </SettingsProvider>
+  );
+};
+
 const setup = async (
   newSettings?: hook.SettingsConfig<Settings>,
   newExtraSettings?: hook.SettingsConfig<ExtraSettings>,
@@ -113,9 +130,9 @@ const setup = async (
 }> => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
     <StoreProvider>
-      <SettingsProvider>
-        <HistoryRouter history={history}>{children}</HistoryRouter>
-      </SettingsProvider>
+      <AuthProvider>
+        <Container>{children}</Container>
+      </AuthProvider>
     </StoreProvider>
   );
   const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {

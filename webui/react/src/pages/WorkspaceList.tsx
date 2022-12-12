@@ -18,7 +18,6 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -32,8 +31,11 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { useAuth } from 'stores/auth';
+import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import css from './WorkspaceList.module.scss';
 import settingsConfig, {
@@ -48,10 +50,12 @@ import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [total, setTotal] = useState(0);
   const [pageError, setPageError] = useState<Error>();
@@ -104,6 +108,7 @@ const WorkspaceList: React.FC = () => {
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
+      setIsLoading(true);
       updateSettings({ whose: value as WhoseWorkspaces | undefined });
     },
     [updateSettings],
@@ -135,10 +140,10 @@ const WorkspaceList: React.FC = () => {
         updateSettings({ user: undefined });
         break;
       case WhoseWorkspaces.Mine:
-        updateSettings({ user: user ? [user.username] : undefined });
+        updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseWorkspaces.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
         break;
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);

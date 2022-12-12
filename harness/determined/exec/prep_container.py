@@ -4,6 +4,7 @@ import io
 import logging
 import os
 import socket
+import sys
 import tarfile
 import uuid
 from typing import List, Optional
@@ -45,7 +46,8 @@ def trial_prep(sess: api.Session, info: det.ClusterInfo) -> None:
             f"    tls_verify_name: {info.master_cert_name}\n"
             f"    tls_noverify: {noverify}\n"
             f"    tls_cert: {cert_content}\n"
-            f"    response content: {resp_content}\n"
+            f"    response content: {resp_content}\n",
+            file=sys.stderr,
         )
         raise
 

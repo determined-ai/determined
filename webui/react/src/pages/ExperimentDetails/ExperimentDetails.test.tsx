@@ -13,8 +13,11 @@ import {
   getWorkspace,
 } from 'services/api';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
 import { ProjectsProvider } from 'stores/projects';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
+import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -70,13 +73,19 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <WorkspacesProvider>
-          <ResourcePoolsProvider>
-            <ProjectsProvider>
-              <HistoryRouter history={history}>
-                <ExperimentDetails />
-              </HistoryRouter>
-            </ProjectsProvider>
-          </ResourcePoolsProvider>
+          <UsersProvider>
+            <AuthProvider>
+              <UserRolesProvider>
+                <ResourcePoolsProvider>
+                  <ProjectsProvider>
+                    <HistoryRouter history={history}>
+                      <ExperimentDetails />
+                    </HistoryRouter>
+                  </ProjectsProvider>
+                </ResourcePoolsProvider>
+              </UserRolesProvider>
+            </AuthProvider>
+          </UsersProvider>
         </WorkspacesProvider>
       </HelmetProvider>
     </StoreProvider>,
