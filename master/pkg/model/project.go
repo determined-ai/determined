@@ -3,9 +3,10 @@ package model
 import (
 	"time"
 
-	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/uptrace/bun"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
 // Project is the bun model of a project.
@@ -21,7 +22,7 @@ type Project struct {
 	Username                string            `bun:"username"`
 	Immutable               bool              `bun:"immutable"`
 	Description             string            `bun:"description"`
-	Notes                   []*projectv1.Note `bun: "notes,type:jsonb"`
+	Notes                   []*projectv1.Note `bun:"notes,type:jsonb"`
 	NumActiveExperiments    int32             `bun:"num_active_experiments"`
 	NumExperiments          int32             `bun:"num_experiments"`
 	State                   WorkspaceState    `bun:"state"`
@@ -29,12 +30,11 @@ type Project struct {
 	LastExperimentStartedAt time.Time         `bun:"last_experiment_started_at"`
 }
 
-// Projects is an array of project instances
+// Projects is an array of project instances.
 type Projects []*Project
 
 // Proto converts a bun model of a project to a proto object.
 func (p Project) Proto() *projectv1.Project {
-
 	return &projectv1.Project{
 		Id:                      int32(p.ID),
 		Name:                    p.Name,
@@ -54,7 +54,7 @@ func (p Project) Proto() *projectv1.Project {
 	}
 }
 
-// Proto converts a slice of projects to its protobuf representation.
+// ProjectsToProto converts a slice of projects to its protobuf representation.
 func ProjectsToProto(ps []*Project) []*projectv1.Project {
 	out := make([]*projectv1.Project, len(ps))
 	for i, ps := range ps {

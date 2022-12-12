@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 var pAuthZ *mocks.ProjectAuthZ
@@ -320,15 +321,15 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 }
 
 func TestGetProjectByActivity(t *testing.T) {
-	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t)
+	api, _, _, _, ctx := setupProjectAuthZTest(t) //nolint: dogsled
 
 	w, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 
 	require.NoError(t, err)
 
-	p, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+	p, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name:        uuid.New().String(),
-		WorkspaceId: w.id,
+		WorkspaceId: w.Workspace.Id,
 	})
 
 	require.NoError(t, err)
@@ -336,17 +337,13 @@ func TestGetProjectByActivity(t *testing.T) {
 	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
 		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
 		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
-		EntityId:     p.id,
+		EntityId:     p.Project.Id,
 	})
 
 	require.NoError(t, err)
 
-	resp, err = api.GetProjectsByUserActivity(ctx, &apiv1.GetProjectsByUserActivityRequest{
-		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
-		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
-		EntityId:     p.id,
-	})
+	resp, err := api.GetProjectsByUserActivity(ctx, &apiv1.GetProjectsByUserActivityRequest{})
 
 	require.NoError(t, err)
-	require.Equal(t, 1, len(resp.projects))
+	require.Equal(t, 1, len(resp.Projects))
 }
