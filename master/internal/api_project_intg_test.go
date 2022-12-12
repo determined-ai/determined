@@ -321,27 +321,19 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 }
 
 func TestGetProjectByActivity(t *testing.T) {
+	api, projAuthZ, _, _, ctx := setupProjectAuthZTest(t)
+
 	if isMockAuthZ() {
-		wAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+		projAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
+			Return(true, nil)
 	}
 
-	api, _, _, _, ctx := setupProjectAuthZTest(t) //nolint: dogsled
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
-	w, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
-
-	require.NoError(t, err)
-
-	p, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
-		Name:        uuid.New().String(),
-		WorkspaceId: w.Workspace.Id,
-	})
-
-	require.NoError(t, err)
-
-	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
 		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
 		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
-		EntityId:     p.Project.Id,
+		EntityId:     int32(projectID),
 	})
 
 	require.NoError(t, err)
