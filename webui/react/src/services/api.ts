@@ -41,7 +41,7 @@ export const getUser = generateDetApi<
 >(Config.getUser);
 
 export const postUser = generateDetApi<
-  Service.PostUserParams,
+  Api.V1PostUserRequest,
   Api.V1PostUserResponse,
   Api.V1PostUserResponse
 >(Config.postUser);

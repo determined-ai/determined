@@ -376,3 +376,36 @@ func TestAuthzResetUserSetting(t *testing.T) {
 	_, err := api.ResetUserSetting(ctx, &apiv1.ResetUserSettingRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
+
+func TestPostUserActivity(t *testing.T) {
+	api, _, curUser, ctx := setupUserAuthzTest(t)
+
+	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     1,
+	})
+
+	require.NoError(t, err)
+
+	activityCount, err := getActivityEntry(ctx, curUser.ID, 1)
+	require.NoError(t, err)
+	require.Equal(t, activityCount, 1, ctx)
+
+	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     1,
+	})
+
+	require.NoError(t, err)
+
+	activityCount, err = getActivityEntry(ctx, curUser.ID, 1)
+	require.NoError(t, err)
+	require.Equal(t, activityCount, 1, ctx)
+}
+
+func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) (int, error) {
+	return db.Bun().NewSelect().Model((*model.UserActivity)(nil)).Where("user_id = ?",
+		int32(userID)).Where("entity_id = ?", entityID).Count(ctx)
+}

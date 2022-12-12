@@ -1,8 +1,7 @@
-import { Dropdown, Menu } from 'antd';
-import type { MenuProps } from 'antd';
-import React, { useCallback, useMemo, useState } from 'react';
+import { Dropdown } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
+import React, { useCallback, useMemo } from 'react';
 
-import { useFetchPinnedWorkspaces } from 'hooks/useFetch';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import usePermissions from 'hooks/usePermissions';
@@ -10,6 +9,7 @@ import { archiveWorkspace, pinWorkspace, unarchiveWorkspace, unpinWorkspace } fr
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
+import { useUpdateWorkspace } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -34,14 +34,14 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   trigger,
   onVisibleChange,
 }: Props) => {
-  const [canceler] = useState(new AbortController());
-  const fetchPinnedWorkspaces = useFetchPinnedWorkspaces(canceler);
   const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
     useModalWorkspaceDelete({ onClose: onComplete, workspace });
   const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
     useModalWorkspaceCreate({ onClose: onComplete, workspaceID: workspace.id });
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
+
+  const updateWorkspace = useUpdateWorkspace();
 
   const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {
@@ -65,21 +65,21 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     if (workspace.pinned) {
       try {
         await unpinWorkspace({ id: workspace.id });
-        fetchPinnedWorkspaces();
+        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: false }));
         onComplete?.();
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to unarchive workspace.' });
+        handleError(e, { publicSubject: 'Unable to unpin workspace.' });
       }
     } else {
       try {
         await pinWorkspace({ id: workspace.id });
-        fetchPinnedWorkspaces();
+        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: true }));
         onComplete?.();
       } catch (e) {
-        handleError(e, { publicSubject: 'Unable to archive workspace.' });
+        handleError(e, { publicSubject: 'Unable to pin workspace.' });
       }
     }
-  }, [fetchPinnedWorkspaces, onComplete, workspace.id, workspace.pinned]);
+  }, [onComplete, workspace.id, workspace.pinned]);
 
   const handleEditClick = useCallback(() => {
     openWorkspaceEdit();
@@ -89,7 +89,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     openWorkspaceDelete();
   }, [openWorkspaceDelete]);
 
-  const WorkspaceActionMenu = useMemo(() => {
+  const WorkspaceActionMenu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       Delete: 'delete',
       Edit: 'edit',
@@ -136,7 +136,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       menuItems.push({ type: 'divider' });
       menuItems.push({ key: MenuKey.Delete, label: 'Delete...' });
     }
-    return <Menu items={menuItems} onClick={onItemClick} />;
+    return { items: menuItems, onClick: onItemClick };
   }, [
     canDeleteWorkspace,
     canModifyWorkspace,
@@ -150,10 +150,10 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   return children ? (
     <>
       <Dropdown
-        overlay={WorkspaceActionMenu}
+        menu={WorkspaceActionMenu}
         placement="bottomLeft"
         trigger={trigger ?? ['contextMenu', 'click']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
       {modalWorkspaceDeleteContextHolder}
@@ -164,10 +164,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       className={[css.base, className].join(' ')}
       title="Open actions menu"
       onClick={stopPropagation}>
-      <Dropdown
-        overlay={WorkspaceActionMenu}
-        placement="bottomRight"
-        trigger={trigger ?? ['click']}>
+      <Dropdown menu={WorkspaceActionMenu} placement="bottomRight" trigger={trigger ?? ['click']}>
         <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
         </button>

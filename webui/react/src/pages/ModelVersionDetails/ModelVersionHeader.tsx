@@ -1,6 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Menu, Modal, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Breadcrumb, Button, Dropdown, Modal, Space } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -9,7 +9,6 @@ import Link from 'components/Link';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
-import { useStore } from 'contexts/Store';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import { paths } from 'routes/utils';
@@ -17,7 +16,9 @@ import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
+import { useUsers } from 'stores/users';
 import { ModelVersion } from 'types';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelVersionHeader.module.scss';
@@ -43,7 +44,7 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const { users } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =
@@ -155,7 +156,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
     await copyToClipboard(referenceText);
   }, [referenceText]);
 
-  const menu = useMemo(() => {
+  const menu: DropDownProps['menu'] = useMemo(() => {
     const onItemClick: MenuProps['onClick'] = (e) => {
       const action = actions.find((ac) => ac.key === e.key) as Action;
       action.onClick();
@@ -169,7 +170,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
       label: action.text,
     }));
 
-    return <Menu className={css.overflow} items={menuItems} onClick={onItemClick} />;
+    return { className: css.overflow, items: menuItems, onClick: onItemClick };
   }, [actions]);
 
   return (
@@ -219,7 +220,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
                 {action.text}
               </Button>
             ))}
-            <Dropdown overlay={menu} trigger={['click']}>
+            <Dropdown menu={menu} trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>
@@ -233,8 +234,8 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
       <Modal
         className={css.useNotebookModal}
         footer={null}
+        open={showUseInNotebook}
         title="Use in Notebook"
-        visible={showUseInNotebook}
         onCancel={() => setShowUseInNotebook(false)}>
         <div className={css.topLine}>
           <p>Reference this model in a notebook</p>

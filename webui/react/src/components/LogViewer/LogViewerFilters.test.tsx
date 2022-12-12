@@ -13,8 +13,8 @@ const DEFAULT_FILTER_OPTIONS: Filters = {
   allocationIds: new Array(2).fill('').map((_, i) => `${generateUUID()}.${i}`),
   containerIds: ['', ...new Array(2).fill('').map(() => generateUUID())],
   rankIds: [0, 1, 2],
-  sources: ['agent', 'master'],
-  stdtypes: ['stdout', 'stderr'],
+  // sources: ['agent', 'master'],
+  // stdtypes: ['stdout', 'stderr'],
 };
 
 const setup = (filterOptions: Filters, filterValues: Filters) => {
@@ -66,13 +66,13 @@ describe('LogViewerFilter', () => {
     });
   });
 
-  it('should render filters with rank 0 and no rank', async () => {
+  it('should render filters with rank 0 and 1', async () => {
     const values: Filters = {
       agentIds: [],
       allocationIds: [],
       containerIds: [],
       levels: [],
-      rankIds: [0, undefined],
+      rankIds: [0, 1],
     };
     const { user } = setup(values, { ...values, rankIds: [] });
 
@@ -80,7 +80,6 @@ describe('LogViewerFilter', () => {
     await user.click(agentOption1);
     await waitFor(async () => {
       expect(await screen.findAllByText('0')).toHaveLength(2);
-      expect(screen.queryByText('No Rank')).toBeInTheDocument();
     });
   });
 

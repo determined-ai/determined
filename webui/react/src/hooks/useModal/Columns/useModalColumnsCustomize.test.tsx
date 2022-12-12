@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import { DEFAULT_COLUMNS } from 'pages/OldProjectDetails.settings';
+import { DEFAULT_COLUMNS } from 'pages/ExperimentList.settings';
 import {
   camelCaseToSentence,
   generateAlphaNumeric,
@@ -16,7 +16,20 @@ const BUTTON_TEXT = 'Columns';
 const NUM_GENERATED_COLUMNS = 500;
 
 const camelCaseToListItem = (columnName: string) => {
-  return columnName === 'id' ? 'ID' : camelCaseToSentence(columnName);
+  switch (columnName) {
+    case 'id':
+      return 'ID';
+    case 'startTime':
+      return 'Started';
+    case 'searcherType':
+      return 'Searcher';
+    case 'forkedFrom':
+      return 'Forked';
+    case 'numTrials':
+      return 'Trials';
+    default:
+      return camelCaseToSentence(columnName);
+  }
 };
 
 const ColumnsButton: React.FC = () => {
@@ -192,7 +205,7 @@ describe('useModalCustomizeColumns', () => {
       within(lists[1])
         .getAllByRole('listitem')
         .map((item) => sentenceToCamelCase(item.textContent ?? '')),
-    ).toEqual(DEFAULT_COLUMNS);
+    ).toEqual(DEFAULT_COLUMNS.map((col: string) => camelCaseToListItem(col).toLocaleLowerCase()));
 
     const transferredColumn = within(lists[1]).getAllByRole('listitem')[0];
     await user.click(transferredColumn);
@@ -214,7 +227,7 @@ describe('useModalCustomizeColumns', () => {
         within(lists[1])
           .getAllByRole('listitem')
           .map((item) => sentenceToCamelCase(item.textContent ?? '')),
-      ).toEqual(DEFAULT_COLUMNS);
+      ).toEqual(DEFAULT_COLUMNS.map((col: string) => camelCaseToListItem(col).toLocaleLowerCase()));
     });
 
     expect(resetButton).not.toBeInTheDocument();

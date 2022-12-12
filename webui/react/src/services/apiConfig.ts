@@ -123,21 +123,13 @@ export const getUser: DetApi<Service.GetUserParams, Api.V1GetUserResponse, Type.
 };
 
 export const postUser: DetApi<
-  Service.PostUserParams,
+  Api.V1PostUserRequest,
   Api.V1PostUserResponse,
   Api.V1PostUserResponse
 > = {
   name: 'postUser',
   postProcess: (response) => response,
-  request: (params) =>
-    detApi.Users.postUser({
-      user: {
-        active: true,
-        admin: params.admin,
-        displayName: params.displayName,
-        username: params.username,
-      },
-    }),
+  request: (params) => detApi.Users.postUser(params),
 };
 
 export const setUserPassword: DetApi<
@@ -1178,7 +1170,8 @@ export const getWorkspaces: DetApi<
       params.limit,
       params.name,
       params.archived,
-      params.users,
+      undefined,
+      getUserIds(params.users),
       params.pinned,
       options,
     );
@@ -1247,7 +1240,8 @@ export const getWorkspaceProjects: DetApi<
       params.limit,
       params.name,
       params.archived,
-      params.users,
+      undefined,
+      getUserIds(params.users),
       options,
     );
   },

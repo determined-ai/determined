@@ -68,19 +68,17 @@ class Authentication:
         master_address: Optional[str] = None,
         requested_user: Optional[str] = None,
         password: Optional[str] = None,
-        try_reauth: bool = False,
         cert: Optional[certs.Cert] = None,
     ) -> None:
         self.master_address = master_address or util.get_default_master_address()
         self.token_store = TokenStore(self.master_address)
 
-        self.session = self._init_session(requested_user, password, try_reauth, cert)
+        self.session = self._init_session(requested_user, password, cert)
 
     def _init_session(
         self,
         requested_user: Optional[str],
         password: Optional[str],
-        try_reauth: bool,
         cert: Optional[certs.Cert],
     ) -> UsernameTokenPair:
         session_user, password = default_load_user_password(
@@ -108,9 +106,6 @@ class Authentication:
 
         if token is not None:
             return UsernameTokenPair(session_user, token)
-
-        if token is None and not try_reauth:
-            raise api.errors.UnauthenticatedException(username=session_user)
 
         fallback_to_default = password is None and session_user == constants.DEFAULT_DETERMINED_USER
         if fallback_to_default:
@@ -463,7 +458,7 @@ def required(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
     @functools.wraps(func)
     def f(namespace: argparse.Namespace) -> Any:
         global cli_auth
-        cli_auth = Authentication(namespace.master, namespace.user, try_reauth=True)
+        cli_auth = Authentication(namespace.master, namespace.user)
         return func(namespace)
 
     return f

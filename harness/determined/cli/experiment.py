@@ -5,14 +5,12 @@ import json
 import numbers
 import pathlib
 import sys
-import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import tabulate
-import urllib3
 
 import determined as det
 import determined.experimental
@@ -20,10 +18,10 @@ import determined.load
 from determined import cli
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
-from determined.common import api, constants, context, set_logger, util, yaml
+from determined.common import api, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Determined
+from determined.experimental import client
 
 from .checkpoint import render_checkpoint
 from .project import project_by_name
@@ -238,8 +236,8 @@ def describe(args: Namespace) -> None:
         "Experiment ID",
         "State",
         "Progress",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
         "Name",
         "Description",
         "Archived",
@@ -283,7 +281,7 @@ def describe(args: Namespace) -> None:
 
     trials_for_experiment = {exp.id: get_all_trials(exp.id) for exp in exps}
 
-    headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
+    headers = ["Trial ID", "Experiment ID", "State", "Started", "Ended", "H-Params"]
     values = [
         [
             trial.id,
@@ -504,7 +502,7 @@ def download_model_def(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    exp = Determined(args.master, args.user).get_experiment(args.experiment_id)
+    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
     checkpoints = exp.top_n_checkpoints(
         args.top_n, sort_by=args.sort_by, smaller_is_better=args.smaller_is_better
     )
@@ -528,27 +526,10 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
-    retry = urllib3.util.retry.Retry(
-        raise_on_status=False,
-        total=5,
-        backoff_factor=0.5,  # {backoff factor} * (2 ** ({number of total retries} - 1))
-        status_forcelist=[502, 503, 504],  # Bad Gateway  # Service Unavailable  # Gateway Timeout
-    )
-
-    while True:
-        r = bindings.get_GetExperiment(
-            session=cli.setup_session(args, max_retries=retry), experimentId=args.experiment_id
-        ).experiment
-
-        state_val = r.state.value.replace("STATE_", "")
-        if state_val in constants.TERMINAL_STATES:
-            print("Experiment {} terminated with state {}".format(args.experiment_id, state_val))
-            if state_val == constants.COMPLETED:
-                sys.exit(0)
-            else:
-                sys.exit(1)
-
-        time.sleep(args.polling_interval)
+    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
+    state = exp.wait(interval=args.polling_interval)
+    if state != client.ExperimentState.COMPLETED:
+        sys.exit(1)
 
 
 @authentication.required
@@ -592,8 +573,8 @@ def list_experiments(args: Namespace) -> None:
         "Parent ID",
         "State",
         "Progress",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
         "Resource Pool",
     ]
     if args.show_project:
@@ -658,7 +639,7 @@ def list_trials(args: Namespace) -> None:
     resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
     all_trials = [t for r in resps for t in r.trials]
 
-    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
+    headers = ["Trial ID", "State", "H-Params", "Started", "Ended", "# of Batches"]
     values = [
         [
             t.id,

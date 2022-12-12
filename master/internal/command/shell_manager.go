@@ -44,7 +44,7 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		}
 		for _, shell := range ctx.AskAll(&shellv1.Shell{}, ctx.Children()...).GetAll() {
 			typed := shell.(*shellv1.Shell)
-			if len(users) == 0 || users[typed.Username] || userIds[typed.UserId] {
+			if (len(users) == 0 && len(userIds) == 0) || users[typed.Username] || userIds[typed.UserId] {
 				resp.Shells = append(resp.Shells, typed)
 			}
 		}

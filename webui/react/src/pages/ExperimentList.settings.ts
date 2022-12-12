@@ -49,7 +49,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   archived: 80,
   description: 148,
   duration: 96,
-  forkedFrom: 128,
+  forkedFrom: 100,
   id: 60,
   name: 150,
   numTrials: 74,
@@ -73,14 +73,13 @@ export interface ExperimentListSettings extends InteractiveTableSettings {
   state?: RunState[];
   user?: string[];
 }
-
-const config: SettingsConfig<ExperimentListSettings> = {
-  applicableRoutespace: '/experiments',
+export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentListSettings> => ({
+  applicableRoutespace: `projects/${id}/experiments`,
   settings: {
     archived: {
       defaultValue: false,
       storageKey: 'archived',
-      type: union([undefinedType, boolean]),
+      type: union([boolean, undefinedType]),
     },
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -195,8 +194,11 @@ const config: SettingsConfig<ExperimentListSettings> = {
       storageKey: 'tableOffset',
       type: number,
     },
+    user: {
+      defaultValue: undefined,
+      storageKey: 'user',
+      type: union([undefinedType, array(string)]),
+    },
   },
   storagePath: 'project-details',
-};
-
-export default config;
+});

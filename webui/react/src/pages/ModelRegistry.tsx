@@ -1,5 +1,5 @@
-import { Button, Dropdown, Menu, Space, Typography } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Space, Typography } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -29,8 +29,6 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
-import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -44,8 +42,11 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
@@ -59,10 +60,12 @@ import settingsConfig, {
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
 const ModelRegistry: React.FC = () => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,7 +89,7 @@ const ModelRegistry: React.FC = () => {
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchModels = useCallback(async () => {
     if (!settings) return;
@@ -311,7 +314,7 @@ const ModelRegistry: React.FC = () => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (record: ModelItem) => {
+    (record: ModelItem): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
         SwitchArchived: 'switch-archived',
@@ -338,7 +341,7 @@ const ModelRegistry: React.FC = () => {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
-      return <Menu items={menuItems} onClick={onItemClick} />;
+      return { items: menuItems, onClick: onItemClick };
     },
     [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
   );
@@ -363,7 +366,7 @@ const ModelRegistry: React.FC = () => {
     );
 
     const actionRenderer = (_: string, record: ModelItem) => (
-      <Dropdown overlay={() => ModelActionMenu(record)} trigger={['click']}>
+      <Dropdown menu={ModelActionMenu(record)} trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>
@@ -552,9 +555,9 @@ const ModelRegistry: React.FC = () => {
       record: ModelItem;
     }) => (
       <Dropdown
-        overlay={() => ModelActionMenu(record)}
+        menu={ModelActionMenu(record)}
         trigger={['contextMenu']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
     ),

@@ -15,17 +15,17 @@ import (
 // PodSpec is just a k8sV1.Pod with custom methods, since k8sV1.Pod is not reflect-friendly.
 type PodSpec k8sV1.Pod
 
-// Copy implements the schemas.Copyable interface.
-func (p PodSpec) Copy() interface{} {
+// Copy implements the schemas.Copyable psuedointerface.
+func (p PodSpec) Copy() PodSpec {
 	k8sP := k8sV1.Pod(p)
 	return PodSpec(*k8sP.DeepCopy())
 }
 
-// Merge implements the schemas.Mergable interface.
-func (p PodSpec) Merge(other interface{}) interface{} {
+// Merge implements the schemas.Mergable psuedointerface.
+func (p PodSpec) Merge(other PodSpec) PodSpec {
 	out := k8sV1.Pod{}
 	k8sP := k8sV1.Pod(p)
-	k8sOther := k8sV1.Pod(other.(PodSpec))
+	k8sOther := k8sV1.Pod(other)
 	// Copy the low-priority values first.
 	k8sOther.DeepCopyInto(&out)
 	// Overwrite the object with high-priority values.
@@ -34,8 +34,8 @@ func (p PodSpec) Merge(other interface{}) interface{} {
 	return PodSpec(out)
 }
 
-// WithDefaults implements the schemas.Defaultable interface.
-func (p PodSpec) WithDefaults() interface{} {
+// WithDefaults implements the schemas.Defaultable psuedointerface.
+func (p PodSpec) WithDefaults() PodSpec {
 	pod := k8sV1.Pod(p)
 	return PodSpec(*pod.DeepCopy())
 }
@@ -63,8 +63,8 @@ type EnvironmentImageMapV0 struct {
 	RawROCM *string `json:"rocm"`
 }
 
-// WithDefaults implements the Defaultable interface.
-func (e EnvironmentImageMapV0) WithDefaults() interface{} {
+// WithDefaults implements the Defaultable psuedointerface.
+func (e EnvironmentImageMapV0) WithDefaults() EnvironmentImageMapV0 {
 	cpu := CPUImage
 	cuda := CUDAImage
 	rocm := ROCMImage
@@ -138,16 +138,16 @@ type EnvironmentVariablesMapV0 struct {
 }
 
 // Merge implemenets the mergable interface.
-func (e EnvironmentVariablesMapV0) Merge(other interface{}) interface{} {
-	e1 := other.(EnvironmentVariablesMapV0)
-
+func (e EnvironmentVariablesMapV0) Merge(
+	other EnvironmentVariablesMapV0,
+) EnvironmentVariablesMapV0 {
 	// Order is relevant here. We want to append items to allow the following
 	// override order, expConf -> templates -> taskContainerDefaults.
 	// Items placed later in the array override items placed earlier.
 	var out EnvironmentVariablesMapV0
-	out.RawCPU = append(out.RawCPU, e1.RawCPU...)
-	out.RawCUDA = append(out.RawCUDA, e1.RawCUDA...)
-	out.RawROCM = append(out.RawROCM, e1.RawROCM...)
+	out.RawCPU = append(out.RawCPU, other.RawCPU...)
+	out.RawCUDA = append(out.RawCUDA, other.RawCUDA...)
+	out.RawROCM = append(out.RawROCM, other.RawROCM...)
 
 	out.RawCPU = append(out.RawCPU, e.RawCPU...)
 	out.RawCUDA = append(out.RawCUDA, e.RawCUDA...)

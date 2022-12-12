@@ -1,17 +1,18 @@
-import { Button, Dropdown, Menu, Select, Tooltip } from 'antd';
+import { Button, Dropdown, Select, Tooltip } from 'antd';
 import { string } from 'io-ts';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { useStore } from 'contexts/Store';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
@@ -83,9 +84,11 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const {
-    auth: { user },
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const userId = useMemo(() => (user?.id ? String(user?.id) : ''), [user?.id]);
 
@@ -341,39 +344,35 @@ export const useTrialCollections = (
             />
           </Tooltip>
           <Dropdown
-            overlay={
-              <Menu
-                items={
-                  collectionIsActive
-                    ? [
-                        {
-                          disabled: !userOwnsCollection,
-                          key: 'ren',
-                          label: 'Rename Collection',
-                          onClick: renameCollection,
-                        },
-                        {
-                          disabled: !userOwnsCollection,
-                          key: 'del',
-                          label: 'Delete Collection',
-                          onClick: deleteCollection,
-                        },
-                        {
-                          key: 'clr',
-                          label: 'Clear Filters',
-                          onClick: clearFilters,
-                        },
-                      ]
-                    : [
-                        {
-                          key: 'clr',
-                          label: 'Clear Filters',
-                          onClick: clearFilters,
-                        },
-                      ]
-                }
-              />
-            }
+            menu={{
+              items: collectionIsActive
+                ? [
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'ren',
+                      label: 'Rename Collection',
+                      onClick: renameCollection,
+                    },
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'del',
+                      label: 'Delete Collection',
+                      onClick: deleteCollection,
+                    },
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ]
+                : [
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ],
+            }}
             trigger={['click']}>
             <Button
               className={[css.optionsDropdown, css.optionsDropdownFourChild].join(' ')}

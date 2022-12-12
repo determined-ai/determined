@@ -2,15 +2,16 @@ import { Form, FormInstance, Input, List, Modal, Select, Typography } from 'antd
 import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import { useStore } from 'contexts/Store';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
+import { useResourcePools } from 'stores/resourcePools';
 import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
+import { Loadable } from 'utils/loadable';
 
 import css from './ManageJob.module.scss';
 const { Option } = Select;
@@ -80,7 +81,8 @@ const ManageJob: React.FC<Props> = ({
 }) => {
   const formRef = useRef<FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
-  const { resourcePools } = useStore();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 
   const details = useMemo(() => {
@@ -172,8 +174,8 @@ const ManageJob: React.FC<Props> = ({
   return (
     <Modal
       mask
+      open={true}
       title={'Manage Job ' + truncate(job.jobId, 6, '')}
-      visible={true}
       onCancel={onFinish}
       onOk={onOk}>
       {isOrderedQ && (

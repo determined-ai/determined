@@ -5,6 +5,9 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
+import { AuthProvider } from 'stores/auth';
+import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
   ADMIN_LABEL,
@@ -43,7 +46,13 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <StoreProvider>
-      <Container />
+      <UsersProvider>
+        <AuthProvider>
+          <UserRolesProvider>
+            <Container />
+          </UserRolesProvider>
+        </AuthProvider>
+      </UsersProvider>
     </StoreProvider>,
   );
 
@@ -124,6 +133,8 @@ describe('useModalCreateUser', () => {
     });
 
     // Check that the API method was called with the correct parameters.
-    expect(mockCreateUser).toHaveBeenCalledWith({ username: USERNAME });
+    expect(mockCreateUser).toHaveBeenCalledWith({
+      user: { active: true, username: USERNAME },
+    });
   });
 });

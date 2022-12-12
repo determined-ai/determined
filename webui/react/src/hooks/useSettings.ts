@@ -3,13 +3,14 @@ import queryString from 'query-string';
 import { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useStore } from 'contexts/Store';
 import { updateUserSetting } from 'services/api';
 import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import { Settings, SettingsProvider, UserSettings } from './useSettingsProvider';
 
@@ -134,9 +135,11 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const {
-    auth: { user },
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
   const pathname = window.location.pathname;

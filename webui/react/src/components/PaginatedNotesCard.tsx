@@ -1,6 +1,6 @@
 import { CheckOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Menu, Modal } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Modal } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -150,13 +150,13 @@ const PaginatedNotesCard: React.FC<Props> = ({
   }, [currentPage, notes]);
 
   const ActionMenu = useCallback(
-    (pageNumber: number) => {
+    (pageNumber: number): DropDownProps['menu'] => {
       const onItemClick: MenuProps['onClick'] = (e) => {
         e.domEvent.stopPropagation();
         handleDeletePage(pageNumber);
       };
       const menuItems: MenuProps['items'] = [{ danger: true, key: 'delete', label: 'Delete...' }];
-      return <Menu items={menuItems} onClick={onItemClick} />;
+      return { items: menuItems, onClick: onItemClick };
     },
     [handleDeletePage],
   );
@@ -182,7 +182,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
               <Dropdown
                 disabled={disabled}
                 key={idx}
-                overlay={() => ActionMenu(idx)}
+                menu={ActionMenu(idx)}
                 trigger={['contextMenu']}>
                 <li
                   className={css.listItem}
@@ -193,7 +193,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
                   onClick={() => handleSwitchPage(idx)}>
                   <span>{note.name}</span>
                   {!disabled && (
-                    <Dropdown overlay={() => ActionMenu(idx)} trigger={['click']}>
+                    <Dropdown menu={ActionMenu(idx)} trigger={['click']}>
                       <div className={css.action} onClick={(e) => e.stopPropagation()}>
                         <Icon name="overflow-horizontal" />
                       </div>
@@ -231,7 +231,7 @@ const PaginatedNotesCard: React.FC<Props> = ({
         <NotesCard
           disabled={disabled}
           extra={
-            <Dropdown overlay={() => ActionMenu(currentPage)} trigger={['click']}>
+            <Dropdown menu={ActionMenu(currentPage)} trigger={['click']}>
               <div style={{ cursor: 'pointer' }}>
                 <Icon name="overflow-horizontal" />
               </div>

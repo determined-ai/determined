@@ -33,8 +33,8 @@ type CheckpointStorageConfigV0 struct {
 }
 
 // Merge implements schemas.Mergeable.
-func (c CheckpointStorageConfigV0) Merge(other interface{}) interface{} {
-	return schemas.UnionMerge(c, other)
+func (c CheckpointStorageConfigV0) Merge(othr CheckpointStorageConfigV0) CheckpointStorageConfigV0 {
+	return schemas.UnionMerge(c, othr)
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -53,7 +53,7 @@ func (c *CheckpointStorageConfigV0) UnmarshalJSON(data []byte) error {
 
 // Printable returns a copy the object with secrets hidden.
 func (c CheckpointStorageConfigV0) Printable() CheckpointStorageConfigV0 {
-	out := schemas.Copy(c).(CheckpointStorageConfigV0)
+	out := schemas.Copy(c)
 	hiddenValue := "********"
 	if out.RawS3Config != nil {
 		if out.RawS3Config.RawAccessKey != nil {
@@ -77,7 +77,9 @@ type TensorboardStorageConfigV0 struct {
 }
 
 // Merge implements schemas.Mergeable.
-func (t TensorboardStorageConfigV0) Merge(other interface{}) interface{} {
+func (t TensorboardStorageConfigV0) Merge(
+	other TensorboardStorageConfigV0,
+) TensorboardStorageConfigV0 {
 	return schemas.UnionMerge(t, other)
 }
 
@@ -184,20 +186,19 @@ type AzureConfigV0 struct {
 }
 
 // Merge implements schemas.Mergeable.
-func (c AzureConfigV0) Merge(other interface{}) interface{} {
-	otherConfig := other.(AzureConfigV0)
+func (c AzureConfigV0) Merge(other AzureConfigV0) AzureConfigV0 {
 	var credSource AzureConfigV0
 	if c.RawConnectionString != nil || c.RawAccountURL != nil {
 		credSource = c
 	} else {
-		credSource = otherConfig
+		credSource = other
 	}
 
 	return AzureConfigV0{
-		RawContainer:        schemas.Merge(c.RawContainer, otherConfig.RawContainer).(*string),
-		RawConnectionString: schemas.Copy(credSource.RawConnectionString).(*string),
-		RawAccountURL:       schemas.Copy(credSource.RawAccountURL).(*string),
-		RawCredential:       schemas.Copy(credSource.RawCredential).(*string),
+		RawContainer:        schemas.Merge(c.RawContainer, other.RawContainer),
+		RawConnectionString: schemas.Copy(credSource.RawConnectionString),
+		RawAccountURL:       schemas.Copy(credSource.RawAccountURL),
+		RawCredential:       schemas.Copy(credSource.RawCredential),
 	}
 }
 

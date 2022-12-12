@@ -38,7 +38,6 @@ def mock_det_auth(user: str = "test", master_url: str = "http://localhost:8888")
             master_address=master_url,
             requested_user=user,
             password="password1",
-            try_reauth=True,
             cert=certs.Cert(noverify=True),
         )
         return auth
@@ -54,9 +53,7 @@ def test_wait_unstable_network(
         credentials=(user, "password1", "token1"), ssl_keys=None
     ) as master_url:
         args = CliArgs(master=master_url, experiment_id=1)
-        with pytest.raises(SystemExit) as e:
-            determined.cli.experiment.wait(args)
-        assert e.value.code == 0
+        determined.cli.experiment.wait(args)
 
 
 @unittest.mock.patch("determined.common.api.authentication.Authentication")
@@ -75,9 +72,7 @@ def test_wait_stable_network(
         status_code=200,
         json={"experiment": exp.to_json()},
     )
-    with pytest.raises(SystemExit) as e:
-        determined.cli.experiment.wait(args)
-    assert e.value.code == 0
+    determined.cli.experiment.wait(args)
 
     exp.state = bindings.determinedexperimentv1State.STATE_ERROR
     requests_mock.get(

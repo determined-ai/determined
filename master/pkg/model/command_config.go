@@ -30,6 +30,8 @@ func DefaultConfig(taskContainerDefaults *TaskContainerDefaultsConfig) CommandCo
 	if taskContainerDefaults != nil {
 		out.WorkDir = taskContainerDefaults.WorkDir
 		out.BindMounts = taskContainerDefaults.BindMounts
+		out.Pbs = taskContainerDefaults.Pbs
+		out.Slurm = taskContainerDefaults.Slurm
 	}
 
 	return out

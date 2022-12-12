@@ -455,16 +455,16 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
 	case msg.ContainerLog != nil:
-		ref, ok := a.agentState.containerAllocation[msg.ContainerLog.Container.ID]
+		ref, ok := a.agentState.containerAllocation[msg.ContainerLog.ContainerID]
 		if !ok {
-			containerID := msg.ContainerLog.Container.ID
+			containerID := msg.ContainerLog.ContainerID
 			log.WithField("container-id", containerID).Warnf(
 				"received ContainerLog from container not allocated to agent: "+
 					"container %s, message: %v", containerID, msg.ContainerLog)
 			return
 		}
 		ctx.Tell(ref, sproto.ContainerLog{
-			Container:   msg.ContainerLog.Container,
+			ContainerID: msg.ContainerLog.ContainerID,
 			Level:       msg.ContainerLog.Level,
 			Timestamp:   msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,

@@ -1,6 +1,6 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Breadcrumb, Button, Dropdown, Menu, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Alert, Breadcrumb, Button, Dropdown, Space } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
@@ -9,14 +9,15 @@ import Link from 'components/Link';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
-import { useStore } from 'contexts/Store';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
+import { useUsers } from 'stores/users';
 import { ModelItem } from 'types';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelHeader.module.scss';
@@ -36,7 +37,7 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const { users } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
   const { canDeleteModel } = usePermissions();
   const { contextHolder, modalOpen } = useModalModelDelete();
 
@@ -80,7 +81,7 @@ const ModelHeader: React.FC<Props> = ({
 
   const handleDelete = useCallback(() => modalOpen(model), [modalOpen, model]);
 
-  const menu = useMemo(() => {
+  const menu: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
       DeleteModel: 'delete-model',
       SwitchArchived: 'switch-archive',
@@ -107,7 +108,7 @@ const ModelHeader: React.FC<Props> = ({
       menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete' });
     }
 
-    return <Menu items={menuItems} onClick={onItemClick} />;
+    return { items: menuItems, onClick: onItemClick };
   }, [canDeleteModel, handleDelete, model, onSwitchArchive]);
 
   return (
@@ -151,7 +152,7 @@ const ModelHeader: React.FC<Props> = ({
             </h1>
           </Space>
           <Space size="small">
-            <Dropdown overlay={menu} trigger={['click']}>
+            <Dropdown menu={menu} trigger={['click']}>
               <Button type="text">
                 <Icon name="overflow-horizontal" size="tiny" />
               </Button>

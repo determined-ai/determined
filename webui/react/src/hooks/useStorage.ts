@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import { resetUserSetting } from 'services/api';
 import { StorageManager } from 'shared/utils/storage';
+import { useAuth } from 'stores/auth';
+import { Loadable } from 'utils/loadable';
 
 export const userPreferencesStorage = (): (() => void) => {
   const storage = new StorageManager({ basePath: 'u', delimiter: ':', store: window.localStorage });
@@ -17,8 +18,11 @@ export const useStorage = (
   basePath: string,
   store: Storage = window.localStorage,
 ): StorageManager => {
-  const { auth } = useStore();
-  const userNamespace = auth.user ? `u:${auth.user.id}` : '';
+  const loadableAuth = useAuth();
+  const userNamespace = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => (auth.user ? `u:${auth.user.id}` : ''),
+    NotLoaded: () => '',
+  });
   const [storage] = useState(
     new StorageManager({ basePath: `${userNamespace}/${basePath}`, store }),
   );

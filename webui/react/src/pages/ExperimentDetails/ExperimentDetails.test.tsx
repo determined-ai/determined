@@ -13,6 +13,11 @@ import {
   getWorkspace,
 } from 'services/api';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
+import { ProjectsProvider } from 'stores/projects';
+import { ResourcePoolsProvider } from 'stores/resourcePools';
+import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -40,6 +45,7 @@ jest.mock('services/api', () => ({
   getProject: jest.fn(),
   getTrialDetails: jest.fn(),
   getWorkspace: jest.fn(),
+  getWorkspaceProjects: jest.fn().mockReturnValue({ projects: [] }),
   getWorkspaces: jest.fn().mockReturnValue({ workspaces: [] }),
 }));
 
@@ -67,9 +73,19 @@ const setup = () => {
     <StoreProvider>
       <HelmetProvider>
         <WorkspacesProvider>
-          <HistoryRouter history={history}>
-            <ExperimentDetails />
-          </HistoryRouter>
+          <UsersProvider>
+            <AuthProvider>
+              <UserRolesProvider>
+                <ResourcePoolsProvider>
+                  <ProjectsProvider>
+                    <HistoryRouter history={history}>
+                      <ExperimentDetails />
+                    </HistoryRouter>
+                  </ProjectsProvider>
+                </ResourcePoolsProvider>
+              </UserRolesProvider>
+            </AuthProvider>
+          </UsersProvider>
         </WorkspacesProvider>
       </HelmetProvider>
     </StoreProvider>,

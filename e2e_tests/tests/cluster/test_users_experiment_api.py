@@ -35,7 +35,6 @@ def test_experimental_experiment_api_determined_disabled() -> None:
             determined_master,
             requested_user=user_creds.username,
             password=user_creds.password,
-            try_reauth=True,
             cert=certs.cli_cert,
         )
 

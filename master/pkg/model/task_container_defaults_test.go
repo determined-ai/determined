@@ -10,11 +10,19 @@ import (
 )
 
 func TestEnvironmentVarsDefaultMerging(t *testing.T) {
+	gpuType := "tesla"
+	pbsSlotsPerNode := 99
 	defaults := &TaskContainerDefaultsConfig{
 		EnvironmentVariables: &RuntimeItems{
 			CPU:  []string{"cpu=default"},
 			CUDA: []string{"cuda=default"},
 			ROCM: []string{"rocm=default"},
+		},
+		Slurm: expconf.SlurmConfigV0{
+			RawGpuType: &gpuType,
+		},
+		Pbs: expconf.PbsConfigV0{
+			RawSlotsPerNode: &pbsSlotsPerNode,
 		},
 	}
 	conf := expconf.ExperimentConfig{
@@ -33,4 +41,7 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 			RawCUDA: []string{"cuda=default", "extra=expconf"},
 			RawROCM: []string{"rocm=default"},
 		})
+
+	require.Equal(t, *conf.RawSlurmConfig.RawGpuType, gpuType)
+	require.Equal(t, *conf.RawPbsConfig.RawSlotsPerNode, pbsSlotsPerNode)
 }

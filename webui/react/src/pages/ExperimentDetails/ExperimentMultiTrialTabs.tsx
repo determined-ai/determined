@@ -1,5 +1,6 @@
 import { Tabs } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import type { TabsProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import NotesCard from 'components/NotesCard';
@@ -16,8 +17,6 @@ import handleError from 'utils/error';
 import { ExperimentVisualizationType } from './ExperimentVisualization';
 
 const CodeViewer = React.lazy(() => import('./CodeViewer/CodeViewer'));
-
-const { TabPane } = Tabs;
 
 const TabType = {
   Code: 'code',
@@ -102,42 +101,69 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     workspace: { id: experiment.workspaceId },
   });
 
-  return (
-    <Tabs activeKey={tabKey} className="no-padding" onChange={handleTabChange}>
-      <TabPane key={TabType.Visualization} tab="Visualization">
-        <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
-          <ExperimentVisualization
-            basePath={`${basePath}/${TabType.Visualization}`}
-            experiment={experiment}
-            type={viz}
-          />
-        </React.Suspense>
-      </TabPane>
-      <TabPane key={TabType.Trials} tab="Trials">
-        <ExperimentTrials experiment={experiment} pageRef={pageRef} />
-      </TabPane>
-      {showExperimentArtifacts ? (
-        <>
-          <TabPane key={TabType.Code} tab="Code">
-            <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
-              <CodeViewer
-                experimentId={experiment.id}
-                runtimeConfig={experiment.configRaw}
-                submittedConfig={experiment.originalConfig}
-              />
-            </React.Suspense>
-          </TabPane>
-        </>
-      ) : null}
-      <TabPane key={TabType.Notes} tab="Notes">
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    const items: TabsProps['items'] = [
+      {
+        children: (
+          <React.Suspense fallback={<Spinner tip="Loading experiment visualization..." />}>
+            <ExperimentVisualization
+              basePath={`${basePath}/${TabType.Visualization}`}
+              experiment={experiment}
+              type={viz}
+            />
+          </React.Suspense>
+        ),
+        key: TabType.Visualization,
+        label: 'Visualization',
+      },
+      {
+        children: <ExperimentTrials experiment={experiment} pageRef={pageRef} />,
+        key: TabType.Trials,
+        label: 'Trials',
+      },
+    ];
+
+    if (showExperimentArtifacts) {
+      items.push({
+        children: (
+          <React.Suspense fallback={<Spinner tip="Loading code viewer..." />}>
+            <CodeViewer
+              experimentId={experiment.id}
+              runtimeConfig={experiment.configRaw}
+              submittedConfig={experiment.originalConfig}
+            />
+          </React.Suspense>
+        ),
+        key: TabType.Code,
+        label: 'Code',
+      });
+    }
+
+    items.push({
+      children: (
         <NotesCard
           disabled={!editableNotes}
           notes={experiment.notes ?? ''}
           style={{ border: 0 }}
           onSave={handleNotesUpdate}
         />
-      </TabPane>
-    </Tabs>
+      ),
+      key: TabType.Notes,
+      label: 'Notes',
+    });
+    return items;
+  }, [
+    basePath,
+    editableNotes,
+    experiment,
+    handleNotesUpdate,
+    pageRef,
+    showExperimentArtifacts,
+    viz,
+  ]);
+
+  return (
+    <Tabs activeKey={tabKey} className="no-padding" items={tabItems} onChange={handleTabChange} />
   );
 };
 
