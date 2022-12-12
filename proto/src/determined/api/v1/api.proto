@@ -1980,7 +1980,7 @@ service Determined {
   rpc GetProjectsByUserActivity(GetProjectsByUserActivityRequest)
       returns (GetProjectsByUserActivityResponse) {
     option (google.api.http) = {
-       get: "/api/v1/user/projects/activity"
+      get: "/api/v1/user/projects/activity"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Projects"

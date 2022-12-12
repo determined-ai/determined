@@ -176,12 +176,10 @@ message UnarchiveProjectRequest {
 message UnarchiveProjectResponse {}
 
 // Get projects based on user activity.
-message GetProjectsByUserActivityRequest {
-}
+message GetProjectsByUserActivityRequest {}
 
 // Response to GetProjectsByUserActivityRequest.
 message GetProjectsByUserActivityResponse {
-
   // A list of projects
   repeated determined.project.v1.Project projects = 1;
 }
