@@ -39,7 +39,7 @@ echarts.use([
 ]);
 
 export interface Props {
-  onClick?: (param: any) => void;
+  onClick?: (param: echarts.ECElementEvent) => void;
   option: EChartsOption;
   rendererType?: 'canvas' | 'svg';
   settings?: SetOptionOpts;
