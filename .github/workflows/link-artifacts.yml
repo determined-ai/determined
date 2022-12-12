@@ -1,22 +1,10 @@
 ---
 name: "Link artifacts"
 
-on:  # yamllint disable-line rule:truthy
+on: # yamllint disable-line rule:truthy
   status
 
 jobs:
-  link-storybook:
-    runs-on: ubuntu-latest
-    if: >-
-      github.event.state == 'success' &&
-      contains(github.event.context, 'build-storybook')
-    steps:
-      - uses: larsoner/circleci-artifacts-redirector-action@master
-        with:
-          repo-token: ${{ secrets.DETERMINED_TOKEN }}
-          artifact-path: 0/webui/react/build-storybook/index.html
-          circleci-jobs: build-storybook
-          job-title: Check the rendered storybook here!
   link-docs:
     runs-on: ubuntu-latest
     if: >-
