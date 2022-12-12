@@ -358,7 +358,7 @@ func (a *apiServer) GetProjectsByUserActivity(
 
 	err = db.Bun().NewSelect().Model(p).NewRaw(`
 	WITH p as (
-		SELECT  pr.* FROM projects pr JOIN activity a ON pr.id = a.entity_id
+		SELECT  pr.*, activity_time FROM projects pr JOIN activity a ON pr.id = a.entity_id ORDER BY a.activity_time DESC
 	),
 	pe AS (
 	  SELECT project_id, state, start_time
@@ -372,7 +372,8 @@ func (a *apiServer) GetProjectsByUserActivity(
 	FROM pe, p
 	  LEFT JOIN users as u ON u.id = p.user_id
 	  LEFT JOIN workspaces AS w on w.id = p.workspace_id
-	GROUP BY p.user_id, p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes, p.state, p.error_message,  u.username, w.name;`).
+	GROUP BY p.user_id, p.id, p.name, p.workspace_id, p.description, p.immutable, p.notes, p.state, p.error_message,  u.username, w.name, p.activity_time
+	ORDER BY p.activity_time DESC;`).
 		Scan(ctx, &p)
 	if err != nil {
 		return nil, err
