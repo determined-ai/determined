@@ -382,7 +382,10 @@ func (a *apiServer) GetProjectsByUserActivity(
 	viewableProjects := []*projectv1.Project{}
 
 	for _, pr := range projects {
-		canView, _ := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
+		canView, err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, pr)
+		if err != nil {
+			return nil, err
+		}
 		if canView {
 			viewableProjects = append(viewableProjects, pr)
 		}
