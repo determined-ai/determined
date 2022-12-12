@@ -1,4 +1,6 @@
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { array, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
+import { SettingsConfig } from 'hooks/useSettings';
 import { LogLevelFromApi } from 'types';
 
 export interface Settings {
@@ -10,48 +12,53 @@ export interface Settings {
   searchText?: string;
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
-      key: 'allocationId',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'log-viewer-filters',
+  settings: {
+    agentId: {
+      defaultValue: undefined,
+      storageKey: 'agentId',
+      type: union([undefinedType, array(string)]),
     },
-    {
-      key: 'agentId',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+    allocationId: {
+      defaultValue: undefined,
+      storageKey: 'allocationId',
+      type: union([undefinedType, array(string)]),
     },
-    {
-      key: 'containerId',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+    containerId: {
+      defaultValue: undefined,
+      storageKey: 'containerId',
+      type: union([undefinedType, array(string)]),
     },
-    {
-      key: 'rankId',
-      type: {
-        baseType: BaseType.Integer,
-        isArray: true,
-      },
+    level: {
+      defaultValue: undefined,
+      storageKey: 'level',
+      type: union([
+        undefinedType,
+        array(
+          union([
+            literal(LogLevelFromApi.Critical),
+            literal(LogLevelFromApi.Debug),
+            literal(LogLevelFromApi.Error),
+            literal(LogLevelFromApi.Info),
+            literal(LogLevelFromApi.Trace),
+            literal(LogLevelFromApi.Unspecified),
+            literal(LogLevelFromApi.Warning),
+          ]),
+        ),
+      ]),
     },
-    {
-      key: 'level',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+    rankId: {
+      defaultValue: undefined,
+      storageKey: 'rankId',
+      type: union([undefinedType, array(number)]),
     },
-    {
-      key: 'searchText',
-      type: { baseType: BaseType.String },
+    searchText: {
+      defaultValue: undefined,
+      storageKey: 'searchText',
+      type: union([undefinedType, string]),
     },
-  ],
+  },
   storagePath: 'log-viewer-filters',
 };
 

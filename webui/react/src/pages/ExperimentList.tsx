@@ -1,6 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Input, MenuProps, Typography } from 'antd';
-import { Button, Dropdown, Menu, Modal, Space } from 'antd';
+import { Button, Dropdown, Input, MenuProps, Modal, Space, Typography } from 'antd';
+import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -32,16 +32,11 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
-import { useFetchUsers } from 'hooks/useFetch';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
-import useModalExperimentMove, {
-  Settings as MoveExperimentSettings,
-  settingsConfig as moveExperimentSettingsConfig,
-} from 'hooks/useModal/Experiment/useModalExperimentMove';
+import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import {
   activateExperiment,
@@ -60,13 +55,17 @@ import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'serv
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { RecordKey, ValueOf } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import {
   ExperimentAction as Action,
+  CommandResponse,
   CommandTask,
   ExperimentItem,
   ExperimentPagination,
@@ -80,14 +79,16 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
-import settingsConfig, {
+import {
   DEFAULT_COLUMN_WIDTHS,
   DEFAULT_COLUMNS,
   ExperimentColumnName,
   ExperimentListSettings,
+  settingsConfigForProject,
 } from './ExperimentList.settings';
 import css from './ProjectDetails.module.scss';
 
@@ -110,10 +111,12 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -122,20 +125,23 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { updateSettings: updateDestinationSettings } = useSettings<MoveExperimentSettings>(
-    moveExperimentSettingsConfig,
-  );
 
   const permissions = usePermissions();
 
   const id = project?.id;
 
-  useEffect(() => {
-    updateDestinationSettings({ projectId: undefined, workspaceId: project?.workspaceId });
-  }, [updateDestinationSettings, project?.workspaceId]);
+  const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
   const { settings, updateSettings, resetSettings, activeSettings } =
     useSettings<ExperimentListSettings>(settingsConfig);
+
+  const tableOffset = (() => {
+    if (settings.tableOffset > total) {
+      const newTotal = settings.tableOffset > total ? total : total - 1;
+      return settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
+    }
+    return settings.tableOffset;
+  })();
 
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
@@ -157,6 +163,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
+    if (!settings) return;
     try {
       const states = statesString
         ?.split('.')
@@ -190,8 +197,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           ...baseParams,
           experimentIdFilter: { notIn: pinnedIds },
           limit: settings.tableLimit - pinnedIds.length,
-          offset:
-            settings.tableOffset - (settings.tableOffset / settings.tableLimit) * pinnedIds.length,
+          offset: tableOffset - (tableOffset / settings.tableLimit) * pinnedIds.length,
         },
         { signal: canceler.signal },
       );
@@ -209,20 +215,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canceler.signal,
-    id,
-    settings.archived,
-    labelsString,
-    pinnedString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+  }, [canceler.signal, id, settings, labelsString, pinnedString, statesString, usersString]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -234,7 +227,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [canceler.signal, id]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchExperiments(), fetchUsers(), fetchLabels()]);
@@ -386,6 +379,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       onVisibleChange?: ((visible: boolean) => void) | undefined;
       record: ExperimentItem;
     }) => {
+      if (!settings) return <Spinner spinning />;
       return (
         <ExperimentActionDropdown
           experiment={getProjectExperimentForExperimentItem(record, project)}
@@ -489,7 +483,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         onCell: onRightClickableCell,
         render: forkedFromRenderer,
         sorter: true,
-        title: 'Forked From',
+        title: 'Forked',
       },
       {
         align: 'right',
@@ -500,7 +494,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
-        title: 'Start Time',
+        title: 'Started',
       },
       {
         align: 'right',
@@ -545,7 +539,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
         key: 'searcherType',
         onCell: onRightClickableCell,
-        title: 'Searcher Type',
+        title: 'Searcher',
       },
       {
         dataIndex: 'resourcePool',
@@ -645,7 +639,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     useModalExperimentMove({ onClose: handleActionComplete, user });
 
   const sendBatchActions = useCallback(
-    (action: Action): Promise<void[] | CommandTask> | void => {
+    (action: Action): Promise<void[] | CommandTask | CommandResponse> | void => {
       if (!settings.row) return;
       if (action === Action.OpenTensorBoard) {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
@@ -693,7 +687,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       try {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
-          openCommand(result as CommandTask);
+          openCommandResponse(result as CommandResponse);
         }
 
         /*
@@ -795,6 +789,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
+      if (!settings) return;
       let newColumns: ExperimentColumnName[];
       let newColumnWidths: number[];
 
@@ -830,49 +825,20 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   useEffect(() => {
-    if (settings.tableOffset > total) {
-      const newTotal = settings.tableOffset > total ? total : total - 1;
-      const offset = settings.tableLimit * Math.floor(newTotal / settings.tableLimit);
-      updateSettings({ tableOffset: offset });
-    }
-  }, [total, settings.tableOffset, settings.tableLimit, updateSettings]);
-
-  /*
-   * Get new experiments based on changes to the
-   * filters, pagination, search and sorter.
-   */
-  useEffect(() => {
     setIsLoading(true);
     fetchExperiments();
-  }, [
-    fetchExperiments,
-    settings.archived,
-    labelsString,
-    settings.search,
-    settings.sortDesc,
-    settings.sortKey,
-    statesString,
-    pinnedString,
-    settings.tableLimit,
-    settings.tableOffset,
-    usersString,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // cleanup
   useEffect(() => {
     return () => {
       canceler.abort();
       stopPolling();
-
-      setExperiments([]);
-      setLabels([]);
-      setIsLoading(true);
-      setTotal(0);
     };
   }, [canceler, stopPolling]);
 
   const tabBarContent = useMemo(() => {
-    const getMenuProps = (): { items: MenuProps['items']; onClick: MenuProps['onClick'] } => {
+    const getMenuProps = (): DropDownProps['menu'] => {
       const MenuKey = {
         Columns: 'columns',
         ResultFilter: 'resetFilters',
@@ -919,7 +885,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
         </Space>
         <div className={css.actionOverflow} title="Open actions menu">
-          <Dropdown overlay={<Menu {...getMenuProps()} />} trigger={['click']}>
+          <Dropdown menu={getMenuProps()} trigger={['click']}>
             <div>
               <Icon name="overflow-vertical" />
             </div>
@@ -964,8 +930,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           numOfPinned={(settings.pinned?.[id] ?? []).length}
           pagination={getFullPaginationConfig(
             {
-              limit: settings.tableLimit,
-              offset: settings.tableOffset,
+              limit: settings.tableLimit || 0,
+              offset: tableOffset || 0,
             },
             total,
           )}
@@ -980,7 +946,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
         />
       </div>
       {modalColumnsCustomizeContextHolder}

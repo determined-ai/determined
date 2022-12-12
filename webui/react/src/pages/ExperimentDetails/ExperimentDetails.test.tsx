@@ -13,10 +13,17 @@ import {
   getWorkspace,
 } from 'services/api';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
+import { ProjectsProvider } from 'stores/projects';
+import { ResourcePoolsProvider } from 'stores/resourcePools';
+import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
+import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
 import RESPONSES from './ExperimentDetails.test.mock';
 
+jest.useFakeTimers();
 /**
  * Setup mock functions in a way that the responses can
  * be overridden dynamically between test sections.
@@ -38,6 +45,17 @@ jest.mock('services/api', () => ({
   getProject: jest.fn(),
   getTrialDetails: jest.fn(),
   getWorkspace: jest.fn(),
+  getWorkspaceProjects: jest.fn().mockReturnValue({ projects: [] }),
+  getWorkspaces: jest.fn().mockReturnValue({ workspaces: [] }),
+}));
+
+jest.mock('hooks/useTelemetry', () => ({
+  ...jest.requireActual('hooks/useTelemetry'),
+  telemetryInstance: {
+    track: jest.fn(),
+    trackPage: jest.fn(),
+    updateTelemetry: jest.fn(),
+  },
 }));
 
 /**
@@ -54,16 +72,28 @@ const setup = () => {
   const view = render(
     <StoreProvider>
       <HelmetProvider>
-        <HistoryRouter history={history}>
-          <ExperimentDetails />
-        </HistoryRouter>
+        <WorkspacesProvider>
+          <UsersProvider>
+            <AuthProvider>
+              <UserRolesProvider>
+                <ResourcePoolsProvider>
+                  <ProjectsProvider>
+                    <HistoryRouter history={history}>
+                      <ExperimentDetails />
+                    </HistoryRouter>
+                  </ProjectsProvider>
+                </ResourcePoolsProvider>
+              </UserRolesProvider>
+            </AuthProvider>
+          </UsersProvider>
+        </WorkspacesProvider>
       </HelmetProvider>
     </StoreProvider>,
   );
   return { view };
 };
 
-describe('Experment Details Page', () => {
+describe('Experiment Details Page', () => {
   describe('Invalid Experiment ID', () => {
     const INVALID_ID = 'beadbead';
 

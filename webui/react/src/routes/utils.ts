@@ -98,9 +98,11 @@ export const paths = {
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
   },
-  interactive: (command: CommandTask): string => {
+  interactive: (command: CommandTask, maxSlotsExceeded = false): string => {
     return `/interactive/${command.id}/${command.type}/
-      ${command.name}/${command.resourcePool}/${encodeURIComponent(waitPageUrl(command))}`;
+      ${command.name}/${command.resourcePool}/${encodeURIComponent(
+      waitPageUrl(command),
+    )}?currentSlotsExceeded=${maxSlotsExceeded}`;
   },
   jobs: (): string => {
     return routeById.jobs.path;
@@ -117,8 +119,8 @@ export const paths = {
   modelList: (): string => {
     return '/models';
   },
-  modelVersionDetails: (modelName: string, versionId: number | string): string => {
-    return `/models/${encodeURIComponent(modelName)}/versions/${versionId}`;
+  modelVersionDetails: (modelName: string, versionNum: number | string): string => {
+    return `/models/${encodeURIComponent(modelName)}/versions/${versionNum}`;
   },
   projectDetails: (projectId: number | string): string => {
     return `/projects/${projectId}/experiments`;

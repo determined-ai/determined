@@ -5,11 +5,44 @@ import (
 	"reflect"
 )
 
-// Mergable means an object can have custom behvaiors for schemas.Merge.
-type Mergable interface {
-	// Merge should take a struct and return the same struct.  It must not be defined as a method
-	// against a pointer of the type or it will not work.
-	Merge(interface{}) interface{}
+// mergeIfMergable checks if obj implements our Mergable psuedointerface and calls obj.Merge(src)
+// if it does.
+//
+// The Mergable psuedointerface is defined as:
+//
+//     "x.Merge(src) operates on a non-pointer x, accepts src of the same type as x, and returns
+//     another object of the same type as x"
+//
+// Note that the requirement .Merge must not operate on a pointer type is unlike most go methods.
+//
+// Mergable is not a real go interface, it's more of a "psuedointerface".  See explanation on
+// copyIfCopyable.
+//
+// In practice, Mergable means an object can have custom merge behaviors.  Often this is used for
+// combining lists, like bind_mounts or devices.
+func mergeIfMergable(obj reflect.Value, src reflect.Value) (reflect.Value, bool) {
+	var out reflect.Value
+
+	// Look for the .WithDefaults method.
+	meth, ok := obj.Type().MethodByName("Merge")
+	if !ok {
+		return out, false
+	}
+
+	// Verify the signature matches our Mergable psuedointerface:
+	// - two inputs (the receiver), and one output
+	// - input types match output type exactly (disallow the usual pointer receiver semantics)
+	if meth.Type.NumIn() != 2 || meth.Type.NumOut() != 1 {
+		return out, false
+	}
+	if meth.Type.In(0) != meth.Type.In(1) || meth.Type.In(0) != meth.Type.Out(0) {
+		return out, false
+	}
+
+	// Psuedointerface matches, call the .Merge method.
+	out = meth.Func.Call([]reflect.Value{obj, src})[0]
+
+	return out, true
 }
 
 // Merge will recurse through two objects of the same type and return a merged version
@@ -29,9 +62,9 @@ type Mergable interface {
 //    // Use the cluster checkpoint storage if the user did not specify one.
 //    config.RawCheckpointStorage = schemas.Merge(
 //        config.RawCheckpointStorage, &cluster_default_storage
-//    ).(*CheckpointStorageConfig)
+//    )
 //
-func Merge(obj interface{}, src interface{}) interface{} {
+func Merge[T any](obj T, src T) T {
 	name := fmt.Sprintf("%T", obj)
 
 	vObj := reflect.ValueOf(obj)
@@ -40,7 +73,7 @@ func Merge(obj interface{}, src interface{}) interface{} {
 	// obj must have the same type as src.
 	assertTypeMatch(vObj, vSrc)
 
-	return merge(vObj, vSrc, name).Interface()
+	return merge(vObj, vSrc, name).Interface().(T)
 }
 
 func assertTypeMatch(obj reflect.Value, src reflect.Value) {
@@ -85,15 +118,9 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 		return merge(obj.Elem(), src.Elem(), name)
 	}
 
-	// Detect Mergables, but disallow pointers.  The reason is that if you have a method like:
-	//    func (t Thing) Merge(other interface{}) interface{}
-	// then Merge() will return a plain Thing object, but a pointer to a Thing will still be treated
-	// as mergable.  Then, schemas.Merge(&t, &t2).(*Thing) would panic because it returns the wrong
-	// type.
-	if obj.Kind() != reflect.Ptr {
-		if mergeable, ok := obj.Interface().(Mergable); ok {
-			return reflect.ValueOf(mergeable.Merge(src.Interface()))
-		}
+	// Handle the `T Mergable[T]` pseudointerface
+	if out, ok := mergeIfMergable(obj, src); ok {
+		return out
 	}
 
 	switch obj.Kind() {
@@ -169,7 +196,7 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 // UnionMerge implments the typical Merge logic for union types. The key is to merge all the common
 // fields unconditionally, but to only merge the src's union member into the obj's union member if
 // they are the same member, or if obj has no member.
-func UnionMerge(obj interface{}, src interface{}) interface{} {
+func UnionMerge[T any](obj T, src T) T {
 	name := fmt.Sprintf("%T", obj)
 
 	vObj := reflect.ValueOf(obj)
@@ -182,7 +209,7 @@ func UnionMerge(obj interface{}, src interface{}) interface{} {
 		panic("UnionMerge must only be called on struct types")
 	}
 
-	return unionMerge(vObj, vSrc, name).Interface()
+	return unionMerge(vObj, vSrc, name).Interface().(T)
 }
 
 // unionMerge is the reflect layer beneath UnionMerge.

@@ -1,5 +1,5 @@
-import { Button, Dropdown, Menu, Space } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Space } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -9,11 +9,12 @@ import InteractiveTable, {
   ColumnDef,
   InteractiveTableSettings,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useModalWebhookCreate from 'hooks/useModal/Webhook/useModalWebhookCreate';
 import useModalWebhookDelete from 'hooks/useModal/Webhook/useModalWebhookDelete';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -84,7 +85,7 @@ const WebhooksView: React.FC = () => {
   );
 
   const WebhookActionMenu = useCallback(
-    (record: Webhook) => {
+    (record: Webhook): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteWebhook: 'delete-webhook',
         TestWebhook: 'test-webhook',
@@ -115,14 +116,14 @@ const WebhooksView: React.FC = () => {
         { danger: true, key: MenuKey.DeleteWebhook, label: 'Delete Webhook' },
       ];
 
-      return <Menu items={menuItems} onClick={onItemClick} />;
+      return { items: menuItems, onClick: onItemClick };
     },
     [showConfirmDelete],
   );
 
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
-      <Dropdown overlay={() => WebhookActionMenu(record)} trigger={['click']}>
+      <Dropdown menu={WebhookActionMenu(record)} trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>
@@ -192,7 +193,7 @@ const WebhooksView: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: columnKey,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       updateSettings(newSettings, true);
     },
@@ -225,7 +226,7 @@ const WebhooksView: React.FC = () => {
             Call external services when experiments complete or throw errors.
           </p>
         </div>
-      ) : (
+      ) : settings ? (
         <InteractiveTable
           columns={columns}
           containerRef={pageRef}
@@ -243,9 +244,11 @@ const WebhooksView: React.FC = () => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
+      ) : (
+        <SkeletonTable columns={columns.length} />
       )}
       {modalWebhookCreateContextHolder}
       {modalWebhookDeleteContextHolder}

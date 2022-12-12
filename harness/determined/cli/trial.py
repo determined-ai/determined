@@ -134,8 +134,8 @@ def describe_trial(args: Namespace) -> None:
         "Experiment ID",
         "State",
         "H-Params",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
     ]
     trial = trial_response.trial
     values = [

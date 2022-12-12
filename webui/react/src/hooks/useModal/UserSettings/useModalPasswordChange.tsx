@@ -2,11 +2,12 @@ import { Form, Input, message } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback } from 'react';
 
-import { useStore } from 'contexts/Store';
 import { login, setUserPassword } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
+import { useCurrentUsers } from 'stores/users';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 interface Props {
   form: FormInstance;
@@ -97,7 +98,11 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const { auth } = useStore();
+  const loadableCUser = useCurrentUsers();
+  const authUser = Loadable.match(loadableCUser.currentUser, {
+    Loaded: (user) => user,
+    NotLoaded: () => undefined,
+  });
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
@@ -108,7 +113,7 @@ const useModalPasswordChange = (): ModalHooks => {
 
     try {
       const password = form.getFieldValue(NEW_PASSWORD_NAME);
-      await setUserPassword({ password, userId: auth.user?.id ?? 0 });
+      await setUserPassword({ password, userId: authUser?.id ?? 0 });
       message.success(API_SUCCESS_MESSAGE);
       form.resetFields();
     } catch (e) {
@@ -118,19 +123,19 @@ const useModalPasswordChange = (): ModalHooks => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [auth.user?.id, form]);
+  }, [authUser?.id, form]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({
       closable: true,
-      content: <ModalForm form={form} username={auth.user?.username} />,
+      content: <ModalForm form={form} username={authUser?.username} />,
       icon: null,
       okText: OK_BUTTON_LABEL,
       onCancel: handleCancel,
       onOk: handleOkay,
       title: <h5>{MODAL_HEADER_LABEL}</h5>,
     });
-  }, [auth.user?.username, form, handleCancel, handleOkay, openOrUpdate]);
+  }, [authUser?.username, form, handleCancel, handleOkay, openOrUpdate]);
 
   return { modalOpen, ...modalHook };
 };

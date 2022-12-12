@@ -12,7 +12,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    padding: calc(8px + var(--theme-density) * 1px);
+    padding: 8px 16px;
 
     .left {
       align-items: flex-start;

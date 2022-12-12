@@ -1,60 +1,67 @@
-import { Alert, Button, Form, Input, InputNumber, Select } from 'antd';
-import type { ModalFuncProps } from 'antd';
+import {
+  Alert,
+  Button,
+  Form,
+  FormInstance,
+  Input,
+  InputNumber,
+  ModalFuncProps,
+  Select,
+} from 'antd';
+import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
-import useSettings, { BaseType, SettingsConfig, UpdateSettings } from 'hooks/useSettings';
-import { getResourcePools, getTaskTemplates } from 'services/api';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
+import { getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
-import { ResourcePool, Template } from 'types';
+import { useResourcePools } from 'stores/resourcePools';
+import { Template } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
+import { Loadable } from 'utils/loadable';
 
 import css from './useModalJupyterLab.module.scss';
 
 const { Option } = Select;
-const { Item } = Form;
 
 const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
 
-const settingsConfig: SettingsConfig = {
-  settings: [
-    {
+const settingsConfig: SettingsConfig<JupyterLabOptions> = {
+  applicableRoutespace: STORAGE_PATH,
+  settings: {
+    name: {
       defaultValue: '',
-      key: 'name',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'name',
+      type: union([string, undefinedType]),
     },
-    {
+    pool: {
       defaultValue: '',
-      key: 'pool',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'pool',
+      type: union([string, undefinedType]),
     },
-    {
+    slots: {
       defaultValue: DEFAULT_SLOT_COUNT,
-      key: 'slots',
       skipUrlEncoding: true,
-      type: { baseType: BaseType.Integer },
+      storageKey: 'slots',
+      type: union([number, undefinedType]),
     },
-    {
-      key: 'template',
+    template: {
+      defaultValue: undefined,
       skipUrlEncoding: true,
-      type: { baseType: BaseType.String },
+      storageKey: 'template',
+      type: union([string, undefinedType]),
     },
-  ],
+  },
   storagePath: STORAGE_PATH,
 };
-
-interface FormProps {
-  fields: JupyterLabOptions;
-  updateFields?: UpdateSettings<JupyterLabOptions>;
-}
 
 interface FullConfigProps {
   config?: string;
@@ -73,8 +80,16 @@ const useModalJupyterLab = (): ModalHooks => {
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const previousConfig = usePrevious(config, config);
   const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
+  const [form] = Form.useForm<JupyterLabOptions>();
 
-  const handleModalClose = useCallback(() => setVisible(false), []);
+  const { settings: defaults, updateSettings: updateDefaults } =
+    useSettings<JupyterLabOptions>(settingsConfig);
+
+  const handleModalClose = useCallback(() => {
+    setVisible(false);
+    const fields: JupyterLabOptions = form.getFieldsValue(true);
+    updateDefaults(fields);
+  }, [form, updateDefaults]);
 
   const {
     modalClose,
@@ -82,80 +97,77 @@ const useModalJupyterLab = (): ModalHooks => {
     ...modalHook
   } = useModal({ onClose: handleModalClose });
 
-  const { settings: fields, updateSettings: updateFields } =
-    useSettings<JupyterLabOptions>(settingsConfig);
-  const previousFields = usePrevious(fields, undefined);
-
   const fetchConfig = useCallback(async () => {
+    const fields: JupyterLabOptions = form.getFieldsValue(true);
     try {
       const newConfig = await previewJupyterLab({
-        name: fields.name,
-        pool: fields.pool,
-        slots: fields.slots,
-        template: fields.template,
+        name: fields?.name,
+        pool: fields?.pool,
+        slots: fields?.slots,
+        template: fields?.template,
       });
       setConfig(yaml.dump(newConfig));
     } catch (e) {
       setConfig(undefined);
       setConfigError('Unable to fetch JupyterLab config.');
     }
-  }, [fields]);
+  }, [form]);
 
   const handleSecondary = useCallback(() => {
     if (showFullConfig) setButtonDisabled(false);
     setShowFullConfig((show) => !show);
   }, [showFullConfig]);
 
-  const handleCreateEnvironment = useCallback(() => {
+  const handleSubmit = useCallback(() => {
+    const fields: JupyterLabOptions = form.getFieldsValue(true);
+    updateDefaults(fields);
     if (showFullConfig) {
       launchJupyterLab({ config: yaml.load(config || '') as RawJson });
     } else {
       launchJupyterLab({
-        name: fields.name,
-        pool: fields.pool,
-        slots: fields.slots,
-        template: fields.template,
+        name: fields?.name,
+        pool: fields?.pool,
+        slots: fields?.slots,
+        template: fields?.template,
       });
     }
     modalClose();
     setVisible(false);
-  }, [config, fields, showFullConfig, modalClose]);
+  }, [config, form, showFullConfig, modalClose, updateDefaults]);
 
   const handleConfigChange = useCallback((config: string) => {
     setConfig(config);
     setConfigError(undefined);
   }, []);
 
-  const formContent = useMemo(
-    () =>
-      showFullConfig ? (
-        <JupyterLabFullConfig
-          config={config}
-          configError={configError}
-          setButtonDisabled={setButtonDisabled}
-          onChange={handleConfigChange}
-        />
-      ) : (
-        <JupyterLabForm fields={fields} updateFields={updateFields} />
-      ),
-    [config, configError, fields, handleConfigChange, showFullConfig, updateFields],
-  );
+  const bodyContent = useMemo(() => {
+    return showFullConfig ? (
+      <JupyterLabFullConfig
+        config={config}
+        configError={configError}
+        setButtonDisabled={setButtonDisabled}
+        onChange={handleConfigChange}
+      />
+    ) : (
+      <JupyterLabForm defaults={defaults} form={form} />
+    );
+  }, [config, configError, handleConfigChange, showFullConfig, defaults, form]);
 
   const content = useMemo(
     () => (
       <>
-        {formContent}
+        {bodyContent}
         <div className={css.buttons}>
           <Button onClick={handleSecondary}>
             {showFullConfig ? 'Show Simple Config' : 'Show Full Config'}
           </Button>
-          <Button disabled={buttonDisabled} type="primary" onClick={handleCreateEnvironment}>
+          <Button disabled={buttonDisabled} type="primary" onClick={handleSubmit}>
             Launch
           </Button>
         </div>
       </>
     ),
-    [formContent, buttonDisabled, handleCreateEnvironment, handleSecondary, showFullConfig],
+    [bodyContent, buttonDisabled, handleSubmit, handleSecondary, showFullConfig],
   );
 
   const modalProps: ModalFuncProps = useMemo(
@@ -184,13 +196,6 @@ const useModalJupyterLab = (): ModalHooks => {
       fetchConfig();
     }
   }, [fetchConfig, showFullConfig]);
-
-  // Update modal when any form fields change.
-  useEffect(() => {
-    if (visible && fields !== previousFields) {
-      openOrUpdate(modalProps);
-    }
-  }, [fields, previousFields, openOrUpdate, modalProps, visible]);
 
   // Update the modal when user toggles the `Show Full Config` button.
   useEffect(() => {
@@ -248,7 +253,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
             <Spinner tip="Loading text editor..." />
           </div>
         }>
-        <Item
+        <Form.Item
           name="config"
           rules={[
             { message: 'JupyterLab config required', required: true },
@@ -276,19 +281,26 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
               wrappingIndent: 'indent',
             }}
           />
-        </Item>
+        </Form.Item>
       </React.Suspense>
       {configError && <Alert message={configError} type="error" />}
     </Form>
   );
 };
 
-const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps) => {
+const JupyterLabForm: React.FC<{
+  defaults: JupyterLabOptions;
+  form: FormInstance<JupyterLabOptions>;
+}> = ({ form, defaults }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [resourcePools, setResourcePools] = useState<ResourcePool[]>([]);
+
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+
+  const selectedPoolName = Form.useWatch('pool', form);
 
   const resourceInfo = useMemo(() => {
-    const selectedPool = resourcePools.find((pool) => pool.name === fields.pool);
+    const selectedPool = resourcePools.find((pool) => pool.name === selectedPoolName);
     if (!selectedPool) return { hasAux: false, hasCompute: false, maxSlots: 0 };
 
     /**
@@ -300,23 +312,21 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
     const maxSlots = selectedPool.slotsPerAgent ?? 0;
     const hasSlotsPerAgent = maxSlots !== 0;
     const hasComputeCapacity = hasSlots || hasSlotsPerAgent;
-    if (hasAuxCapacity && !hasComputeCapacity) updateFields?.({ slots: 0 });
-    if (hasComputeCapacity && fields.slots == null) updateFields?.({ slots: DEFAULT_SLOT_COUNT });
 
     return {
       hasAux: hasAuxCapacity,
       hasCompute: hasComputeCapacity,
       maxSlots: maxSlots,
     };
-  }, [fields.pool, updateFields, resourcePools, fields.slots]);
+  }, [selectedPoolName, resourcePools]);
 
-  const fetchResourcePools = useCallback(async () => {
-    try {
-      setResourcePools(await getResourcePools({}));
-    } catch (e) {
-      handleError(e);
+  useEffect(() => {
+    if (!resourceInfo.hasCompute && resourceInfo.hasAux) form.setFieldValue('slots', 0);
+    else if (resourceInfo.hasCompute) {
+      const slots = form.getFieldValue('slots');
+      if (slots == null) form.setFieldValue('slots', DEFAULT_SLOT_COUNT);
     }
-  }, []);
+  }, [resourceInfo, form]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -327,88 +337,47 @@ const JupyterLabForm: React.FC<FormProps> = ({ updateFields, fields }: FormProps
   }, []);
 
   useEffect(() => {
-    fetchResourcePools();
-  }, [fetchResourcePools]);
-
-  useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
 
   useEffect(() => {
-    if (!fields.pool && resourcePools[0]?.name) {
-      const pool = resourcePools[0]?.name;
-      updateFields?.({ pool });
+    const fields = form.getFieldsValue(true);
+    if (!fields?.pool && resourcePools[0]?.name) {
+      const firstPoolInList = resourcePools[0]?.name;
+      form.setFieldValue('pool', firstPoolInList);
     }
-  }, [resourcePools, fields.pool, updateFields]);
+  }, [resourcePools, form]);
 
   return (
-    <div className={css.form}>
-      {[
-        {
-          content: (
-            <Select
-              allowClear
-              placeholder="No template (optional)"
-              value={fields.template}
-              onChange={(value) => updateFields?.({ template: value?.toString() })}>
-              {templates.map((temp) => (
-                <Option key={temp.name} value={temp.name}>
-                  {temp.name}
-                </Option>
-              ))}
-            </Select>
-          ),
-          label: 'Template',
-        },
-        {
-          content: (
-            <Input
-              placeholder="Name (optional)"
-              value={fields.name}
-              onChange={(e) => updateFields?.({ name: e.target.value })}
-            />
-          ),
-          label: 'Name',
-        },
-        {
-          content: (
-            <Select
-              allowClear
-              placeholder="Pick the best option"
-              value={fields.pool}
-              onChange={(value) => updateFields?.({ pool: value })}>
-              {resourcePools.map((pool) => (
-                <Option key={pool.name} value={pool.name}>
-                  {pool.name}
-                </Option>
-              ))}
-            </Select>
-          ),
-          label: 'Resource Pool',
-        },
-        {
-          condition: resourceInfo.hasCompute,
-          content: (
-            <InputNumber
-              defaultValue={fields.slots !== undefined ? fields.slots : DEFAULT_SLOT_COUNT}
-              max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
-              min={resourceInfo.hasAux ? 0 : 1}
-              value={fields.slots}
-              onChange={(value) => updateFields?.({ slots: value })}
-            />
-          ),
-          label: 'Slots',
-        },
-      ].map((row) => {
-        if (row.condition === false) return null;
-        return (
-          <div className={css.line} key={row.label}>
-            <p>{row.label}</p>
-            {row.content}
-          </div>
-        );
-      })}
-    </div>
+    <Form className={css.form} form={form} initialValues={defaults}>
+      <Form.Item className={css.line} label="Template" name="template">
+        <Select allowClear placeholder="No template (optional)">
+          {templates.map((temp) => (
+            <Option key={temp.name} value={temp.name}>
+              {temp.name}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item className={css.line} label="Name" name="name">
+        <Input placeholder="Name (optional)" />
+      </Form.Item>
+      <Form.Item className={css.line} label="Resource Pool" name="pool">
+        <Select allowClear placeholder="Pick the best option">
+          {resourcePools.map((pool) => (
+            <Option key={pool.name} value={pool.name}>
+              {pool.name}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+      <Form.Item className={css.line} hidden={!resourceInfo.hasCompute} label="Slots" name="slots">
+        <InputNumber
+          max={resourceInfo.maxSlots === -1 ? Number.MAX_SAFE_INTEGER : resourceInfo.maxSlots}
+          min={0}
+        />
+      </Form.Item>
+    </Form>
   );
 };
 

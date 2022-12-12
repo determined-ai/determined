@@ -63,7 +63,7 @@ func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, 
 	}
 
 	// Fill defaults (should be a no-op).
-	cs = schemas.WithDefaults(cs).(CheckpointStorageConfig)
+	cs = schemas.WithDefaults(cs)
 
 	// Validate fully before passing anything out.
 	if err = schemas.IsComplete(cs); err != nil {
@@ -92,7 +92,7 @@ func getBindMounts(raw map[string]interface{}) (BindMountsConfig, error) {
 	if err = json.Unmarshal(bmByts, &bm); err != nil {
 		return bm, errors.Wrap(err, "unable to unmarshal bind mounts bytes")
 	}
-	bm = schemas.WithDefaults(bm).(BindMountsConfig)
+	bm = schemas.WithDefaults(bm)
 	if err = schemas.IsComplete(bm); err != nil {
 		return bm, errors.Wrap(err, "legacy bind mounts is incomplete")
 	}
@@ -132,7 +132,7 @@ func getEnvironmentVariables(raw map[string]interface{}) (EnvironmentVariablesMa
 	if err = json.Unmarshal(evByts, &ev); err != nil {
 		return ev, errors.Wrap(err, "unable to unmarshal environment variables bytes")
 	}
-	ev = schemas.WithDefaults(ev).(EnvironmentVariablesMap)
+	ev = schemas.WithDefaults(ev)
 
 	// The unmarshaling will convert plain lists into a map of lists, so the normal json-schema
 	// API patterns (schemas.IsComplete) will now work.

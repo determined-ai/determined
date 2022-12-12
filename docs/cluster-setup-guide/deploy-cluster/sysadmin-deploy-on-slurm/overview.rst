@@ -5,16 +5,17 @@
 +----------------------+
 | Supported Versions   |
 +======================+
-| Slurm >= 19.05 or    |
+| Slurm >= 20.02 or    |
 | PBS >= 2021.1.2      |
 +----------------------+
 | Apptainer >= 1.0     |
 | Singularity >= 3.7   |
+| or Enroot >= 3.4.0   |
 | or PodMan >= 3.3.1   |
 +----------------------+
 | Launcher             |
 | (`hpe-hpc-launcher`) |
-| >= 3.1.7             |
+| >= 3.1.9             |
 +----------------------+
 | Java >= 1.8          |
 +----------------------+
@@ -44,6 +45,7 @@ follow the steps in the
 -  `PBS Professional® <https://www.altair.com/pbs-professional/>`__
 -  `Singularity <https://docs.sylabs.io/guides/3.7/user-guide/introduction.html>`__
 -  `Apptainer <https://apptainer.org/>`__
+-  `NVIDIA Enroot <https://github.com/NVIDIA/enroot>`__
 -  `PodMan <https://docs.podman.io>`__
 
 .. toctree::

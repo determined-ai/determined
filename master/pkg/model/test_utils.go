@@ -44,7 +44,7 @@ func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 			},
 		},
 	}
-	eConf = schemas.WithDefaults(eConf).(expconf.ExperimentConfig)
+	eConf = schemas.WithDefaults(eConf)
 	DefaultTaskContainerDefaults().MergeIntoExpConfig(&eConf)
 
 	e := &Experiment{

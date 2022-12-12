@@ -1,16 +1,18 @@
-import { Button, Dropdown, Menu, Select, Tooltip } from 'antd';
+import { Button, Dropdown, Select, Tooltip } from 'antd';
+import { string } from 'io-ts';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { useStore } from 'contexts/Store';
-import useSettings, { BaseType, SettingsConfig, SettingsHook } from 'hooks/useSettings';
+import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';
 import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } from 'services/api';
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { useAuth } from 'stores/auth';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import { decodeTrialsCollection, encodeTrialsCollection } from '../api';
 
@@ -31,16 +33,15 @@ export interface TrialsCollectionInterface {
 
 const collectionStoragePath = (projectId: string) => `collection/${projectId}`;
 
-const configForProject = (projectId: string): SettingsConfig => ({
+const configForProject = (projectId: string): SettingsConfig<{ collection: string }> => ({
   applicableRoutespace: '/trials',
-  settings: [
-    {
+  settings: {
+    collection: {
       defaultValue: '',
-      key: 'collection',
       storageKey: 'collection',
-      type: { baseType: BaseType.String },
+      type: string,
     },
-  ],
+  },
   storagePath: collectionStoragePath(projectId),
 });
 
@@ -74,7 +75,7 @@ const defaultSorter: TrialSorter = {
 
 export const useTrialCollections = (
   projectId: string,
-  tableSettingsHook: SettingsHook<InteractiveTableSettings>,
+  tableSettingsHook: UseSettingsReturn<InteractiveTableSettings>,
 ): TrialsCollectionInterface => {
   const { settings: tableSettings, updateSettings: updateTableSettings } = tableSettingsHook;
   const filterStorage = useStorage(`trial-filters}/${projectId ?? 1}`);
@@ -83,9 +84,11 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const {
-    auth: { user },
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const userId = useMemo(() => (user?.id ? String(user?.id) : ''), [user?.id]);
 
@@ -110,7 +113,7 @@ export const useTrialCollections = (
   const sorter: TrialSorter = useMemo(
     () => ({
       ...defaultSorter,
-      sortDesc: tableSettings.sortDesc,
+      sortDesc: !!tableSettings.sortDesc,
       sortKey: tableSettings.sortKey ? String(tableSettings.sortKey) : '',
     }),
     [tableSettings.sortDesc, tableSettings.sortKey],
@@ -151,8 +154,8 @@ export const useTrialCollections = (
   );
 
   const activeCollection = useMemo(
-    () => collections.find((c) => c.name === settings?.collection),
-    [collections, settings?.collection],
+    () => collections.find((c) => c.name === settings.collection),
+    [collections, settings.collection],
   );
 
   const fetchCollections = useCallback(async () => {
@@ -289,8 +292,8 @@ export const useTrialCollections = (
     useModalRenameCollection({ onComplete: handleRenameComplete });
 
   const renameCollection = useCallback(() => {
-    const id = collections.find((c) => c.name === settings?.collection)?.id;
-    if (id) openRenameModal({ id, name: settings.collection });
+    const id = collections.find((c) => c.name === settings.collection)?.id;
+    if (id) openRenameModal({ id, name: settings.collection ?? '' });
   }, [collections, settings.collection, openRenameModal]);
 
   const collectionIsActive = !!(collections.length && settings.collection);
@@ -341,39 +344,35 @@ export const useTrialCollections = (
             />
           </Tooltip>
           <Dropdown
-            overlay={
-              <Menu
-                items={
-                  collectionIsActive
-                    ? [
-                        {
-                          disabled: !userOwnsCollection,
-                          key: 'ren',
-                          label: 'Rename Collection',
-                          onClick: renameCollection,
-                        },
-                        {
-                          disabled: !userOwnsCollection,
-                          key: 'del',
-                          label: 'Delete Collection',
-                          onClick: deleteCollection,
-                        },
-                        {
-                          key: 'clr',
-                          label: 'Clear Filters',
-                          onClick: clearFilters,
-                        },
-                      ]
-                    : [
-                        {
-                          key: 'clr',
-                          label: 'Clear Filters',
-                          onClick: clearFilters,
-                        },
-                      ]
-                }
-              />
-            }
+            menu={{
+              items: collectionIsActive
+                ? [
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'ren',
+                      label: 'Rename Collection',
+                      onClick: renameCollection,
+                    },
+                    {
+                      disabled: !userOwnsCollection,
+                      key: 'del',
+                      label: 'Delete Collection',
+                      onClick: deleteCollection,
+                    },
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ]
+                : [
+                    {
+                      key: 'clr',
+                      label: 'Clear Filters',
+                      onClick: clearFilters,
+                    },
+                  ],
+            }}
             trigger={['click']}>
             <Button
               className={[css.optionsDropdown, css.optionsDropdownFourChild].join(' ')}

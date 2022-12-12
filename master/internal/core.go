@@ -125,26 +125,6 @@ func (m *Master) getConfig(ctx echo.Context) (interface{}, error) {
 	return m.config.Printable()
 }
 
-// TODO(Brad): Move this to an RM-level API.
-func (m *Master) getTaskContainerDefaults(poolName string) model.TaskContainerDefaultsConfig {
-	// Always fall back to the top-level TaskContainerDefaults
-	taskContainerDefaults := m.config.TaskContainerDefaults
-
-	// Only look for pool settings with Agent resource managers.
-	if m.config.ResourceManager.AgentRM != nil {
-		// Iterate through configured pools looking for a TaskContainerDefaults setting.
-		for _, pool := range m.config.ResourcePools {
-			if poolName == pool.PoolName {
-				if pool.TaskContainerDefaults == nil {
-					break
-				}
-				taskContainerDefaults = *pool.TaskContainerDefaults
-			}
-		}
-	}
-	return taskContainerDefaults
-}
-
 // Info returns this master's information.
 func (m *Master) Info() aproto.MasterInfo {
 	telemetryInfo := aproto.TelemetryInfo{}

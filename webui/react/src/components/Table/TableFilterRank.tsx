@@ -75,7 +75,12 @@ const TableFilterRange: React.FC<Props> = ({
             {column === 'searcherMetricValue' ? 'Worst' : 'Descending'}
           </Select.Option>
         </Select>
-        <InputNumber min={0} precision={0} value={rank} onChange={(newRank) => setRank(newRank)} />
+        <InputNumber
+          min={0}
+          precision={0}
+          value={rank}
+          onChange={(newRank) => setRank(newRank ?? undefined)}
+        />
       </div>
       <div className={css.footer}>
         <Button aria-label="Reset Search" size="small" type="link" onClick={handleReset}>

@@ -3,6 +3,7 @@ package rm
 import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -27,6 +28,9 @@ type ResourceManager interface {
 		actor.Messenger,
 		sproto.ValidateCommandResourcesRequest,
 	) (sproto.ValidateCommandResourcesResponse, error)
+	ValidateResources(
+		ctx actor.Messenger, name string, slots int, command bool,
+	) error
 	DeleteJob(actor.Messenger, sproto.DeleteJob) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(actor.Messenger, sproto.NotifyContainerRunning) error
 
@@ -54,7 +58,20 @@ type ResourceManager interface {
 		sproto.GetDefaultAuxResourcePoolRequest,
 	) (sproto.GetDefaultAuxResourcePoolResponse, error)
 	ValidateResourcePool(ctx actor.Messenger, name string) error
-	ResolveResourcePool(ctx actor.Messenger, name string, slots int, command bool) (string, error)
+	ResolveResourcePool(
+		ctx actor.Messenger,
+		name string,
+		slots int,
+	) (string, error)
+	ValidateResourcePoolAvailability(
+		ctx actor.Messenger,
+		name string,
+		slots int) ([]command.LaunchWarning, error)
+	TaskContainerDefaults(
+		ctx actor.Messenger,
+		resourcePoolName string,
+		fallbackConfig model.TaskContainerDefaultsConfig,
+	) (model.TaskContainerDefaultsConfig, error)
 
 	// Agents
 	GetAgents(actor.Messenger, *apiv1.GetAgentsRequest) (*apiv1.GetAgentsResponse, error)

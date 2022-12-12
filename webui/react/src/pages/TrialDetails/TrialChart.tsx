@@ -67,16 +67,6 @@ const TrialChart: React.FC<Props> = ({
     }
   }, [trialTerminated, stopPolling]);
 
-  // cleanup
-  useEffect(() => {
-    return () => {
-      stopPolling();
-
-      setScale(Scale.Linear);
-      setTrialSummary([]);
-    };
-  }, [stopPolling]);
-
   if (trialTerminated) {
     stopPolling();
   }

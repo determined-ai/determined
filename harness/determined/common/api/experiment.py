@@ -1,9 +1,10 @@
+import json
 import math
 import random
 import sys
 import time
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from termcolor import colored
 
@@ -127,7 +128,8 @@ def create_experiment(
     archived: bool = False,
     activate: bool = True,
     additional_body_fields: Optional[Dict[str, Any]] = None,
-) -> int:
+) -> Tuple[int, Optional[Sequence[bindings.v1LaunchWarning]]]:
+
     body = {
         "activate": False,
         "experiment_config": yaml.safe_dump(config),
@@ -147,7 +149,19 @@ def create_experiment(
         raise Exception(r)
 
     if validate_only:
-        return 0
+        return 0, None
+
+    try:
+        j = r.json()
+    except json.decoder.JSONDecodeError:
+        warnings: Optional[List[bindings.v1LaunchWarning]] = None
+    else:
+        response_warnings: Optional[List[int]] = j.get("warnings")
+        if response_warnings:
+            launch_warnings = list(bindings.v1LaunchWarning)
+            warnings = [launch_warnings[warning] for warning in response_warnings]
+        else:
+            warnings = None
 
     new_resource = r.headers["Location"]
     experiment_id = int(new_resource.split("/")[-1])
@@ -156,7 +170,7 @@ def create_experiment(
         sess = api.Session(master_url, None, None, None)
         bindings.post_ActivateExperiment(sess, id=experiment_id)
 
-    return experiment_id
+    return experiment_id, warnings
 
 
 def generate_random_hparam_values(hparam_def: Dict[str, Any]) -> Dict[str, Any]:
@@ -241,7 +255,7 @@ def create_experiment_and_follow_logs(
     activate: bool = True,
     follow_first_trial_logs: bool = True,
 ) -> int:
-    exp_id = api.experiment.create_experiment(
+    exp_id, warnings = api.experiment.create_experiment(
         master_url,
         config,
         model_context,
@@ -250,6 +264,9 @@ def create_experiment_and_follow_logs(
         activate=activate,
     )
     print("Created experiment {}".format(exp_id))
+
+    req.handle_warnings(warnings)
+
     if activate and follow_first_trial_logs:
         api.follow_experiment_logs(master_url, exp_id)
     return exp_id
@@ -274,7 +291,7 @@ def create_test_experiment_and_follow_logs(
     print(colored("Experiment configuration validation succeeded! 🎉", "green"))
 
     print(colored("Creating test experiment...", "yellow"), end="\r")
-    exp_id = api.experiment.create_experiment(
+    exp_id, _ = api.experiment.create_experiment(
         master_url,
         make_test_experiment_config(config),
         model_context,

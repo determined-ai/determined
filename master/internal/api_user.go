@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
@@ -48,23 +49,6 @@ func clearUsername(targetUser model.User, name string, minLength int) (*string, 
 		return nil, status.Error(codes.InvalidArgument, "User cannot be renamed 'determined'")
 	}
 	return &clearName, nil
-}
-
-func validateProtoAgentUserGroup(aug *userv1.AgentUserGroup) error {
-	if aug.AgentUid == nil || aug.AgentGid == nil || aug.AgentUser == nil || aug.AgentGroup == nil {
-		return status.Error(
-			codes.InvalidArgument,
-			"AgentUid, AgentGid, AgentUser and AgentGroup cannot be empty",
-		)
-	}
-	if *aug.AgentUser == "" || *aug.AgentGroup == "" {
-		return status.Error(
-			codes.InvalidArgument,
-			"AgentUser and AgentGroup names cannot be empty",
-		)
-	}
-
-	return nil
 }
 
 // TODO(ilia): We need null.Int32.
@@ -276,20 +260,10 @@ func (a *apiServer) PostUser(
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
 		aug := req.User.AgentUserGroup
-		if err := validateProtoAgentUserGroup(aug); err != nil {
-			return nil, err
-		}
-
-		agentUserGroup = &model.AgentUserGroup{
-			UID:   int(*req.User.AgentUserGroup.AgentUid),
-			GID:   int(*req.User.AgentUserGroup.AgentGid),
-			User:  *req.User.AgentUserGroup.AgentUser,
-			Group: *req.User.AgentUserGroup.AgentGroup,
-		}
-		if agentUserGroup.User == "" || agentUserGroup.Group == "" {
+		if agentUserGroup, err = model.AgentUserGroupFromProto(aug); err != nil {
 			return nil, status.Error(
 				codes.InvalidArgument,
-				"AgentUser and AgentGroup names cannot be empty",
+				err.Error(),
 			)
 		}
 	}
@@ -479,14 +453,11 @@ func (a *apiServer) PatchUser(
 
 	var ug *model.AgentUserGroup
 	if aug := req.User.AgentUserGroup; aug != nil {
-		if err = validateProtoAgentUserGroup(aug); err != nil {
-			return nil, err
-		}
-		ug = &model.AgentUserGroup{
-			UID:   int(*req.User.AgentUserGroup.AgentUid),
-			GID:   int(*req.User.AgentUserGroup.AgentGid),
-			User:  *req.User.AgentUserGroup.AgentUser,
-			Group: *req.User.AgentUserGroup.AgentGroup,
+		if ug, err = model.AgentUserGroupFromProto(aug); err != nil {
+			return nil, status.Error(
+				codes.InvalidArgument,
+				err.Error(),
+			)
 		}
 
 		if err = user.AuthZProvider.Get().
@@ -557,4 +528,23 @@ func (a *apiServer) ResetUserSetting(
 
 	err = db.ResetUserSetting(curUser.ID)
 	return &apiv1.ResetUserSettingResponse{}, err
+}
+
+func (a *apiServer) PostUserActivity(
+	ctx context.Context, req *apiv1.PostUserActivityRequest,
+) (*apiv1.PostUserActivityResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	timestamp := time.Now()
+	if _, err := db.Bun().NewInsert().Model(model.UserActivityFromProto(
+		req.ActivityType, req.EntityType, req.EntityId, int32(curUser.ID), timestamp,
+	)).On("CONFLICT (user_id, activity_type, entity_type, entity_id) DO UPDATE").
+		Set("activity_time = ?", timestamp).
+		Exec(ctx); err != nil {
+		return nil, err
+	}
+	return &apiv1.PostUserActivityResponse{}, err
 }

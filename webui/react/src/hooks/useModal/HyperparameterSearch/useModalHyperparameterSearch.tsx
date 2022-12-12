@@ -20,19 +20,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
-import { useStore } from 'contexts/Store';
-import { useFetchResourcePools } from 'hooks/useFetch';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
+import { V1LaunchWarning } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { Primitive } from 'shared/types';
 import { clone, flattenObject, isBoolean, unflattenObject } from 'shared/utils/data';
-import { DetError, isDetError } from 'shared/utils/error';
+import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error';
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
+import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
 import {
   ExperimentItem,
   ExperimentSearcherName,
@@ -43,6 +43,8 @@ import {
   TrialHyperparameters,
   TrialItem,
 } from 'types';
+import { handleWarning } from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './useModalHyperparameterSearch.module.scss';
 
@@ -107,8 +109,9 @@ const useModalHyperparameterSearch = ({
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
       SEARCH_METHODS.ASHA,
   );
-  const { resourcePools } = useStore();
-  const canceler = useRef<AbortController>();
+  const loadableResourcePools = useResourcePools();
+  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  const canceler = useRef<AbortController>(new AbortController());
   const fetchResourcePools = useFetchResourcePools(canceler.current);
   const [resourcePool, setResourcePool] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
@@ -125,10 +128,9 @@ const useModalHyperparameterSearch = ({
   }, [fetchResourcePools, resourcePools]);
 
   useEffect(() => {
-    canceler.current = new AbortController();
+    const cancelerTemp = canceler.current;
     return () => {
-      canceler.current?.abort();
-      canceler.current = undefined;
+      cancelerTemp.abort();
     };
   }, []);
 
@@ -230,7 +232,7 @@ const useModalHyperparameterSearch = ({
     const newConfig = yaml.dump(baseConfig);
 
     try {
-      const { id: newExperimentId } = await createExperiment(
+      const { experiment: newExperiment, warnings } = await createExperiment(
         {
           activate: true,
           experimentConfig: newConfig,
@@ -239,9 +241,22 @@ const useModalHyperparameterSearch = ({
         },
         { signal: canceler.current?.signal },
       );
+      const currentSlotsExceeded = warnings
+        ? warnings.includes(V1LaunchWarning.CURRENTSLOTSEXCEEDED)
+        : false;
+      if (currentSlotsExceeded) {
+        handleWarning({
+          level: ErrorLevel.Warn,
+          publicMessage:
+            'The requested job requires more slots than currently available. You may need to increase cluster resources in order for the job to run.',
+          publicSubject: 'Current Slots Exceeded',
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
 
       // Route to reload path to forcibly remount experiment page.
-      const newPath = paths.experimentDetails(newExperimentId);
+      const newPath = paths.experimentDetails(newExperiment.id);
       routeToReactUrl(paths.reload(newPath));
     } catch (e) {
       let errorMessage = 'Unable to create experiment.';
@@ -385,7 +400,7 @@ const useModalHyperparameterSearch = ({
         <div
           className={css.hyperparameterContainer}
           style={{
-            gridTemplateColumns: `180px minmax(100px, 1.4fr) 
+            gridTemplateColumns: `180px minmax(100px, 1.4fr)
               repeat(${searcher === SEARCH_METHODS.Grid ? 4 : 3}, minmax(60px, 1fr))`,
           }}>
           <label id="hyperparameter">

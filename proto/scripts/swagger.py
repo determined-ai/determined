@@ -11,6 +11,7 @@ from typing import Dict
 
 SERVICE_NAME = "Determined"
 
+
 def merge_dict(d1: Dict, d2: Dict) -> None:
     """
     Modifies d1 in-place to contain values from d2.  If any value
@@ -31,9 +32,10 @@ def capitalize(s: str) -> str:
         return s.title()
     return s[0].upper() + s[1:]
 
+
 def to_lower_camel_case(snake_str):
-    components = snake_str.split('_')
-    return components[0] + ''.join(x.title() for x in components[1:])
+    components = snake_str.split("_")
+    return components[0] + "".join(x.title() for x in components[1:])
 
 
 def clean(path: str, patch: str) -> None:
@@ -60,8 +62,7 @@ def clean(path: str, patch: str) -> None:
         for method, api in value.items():
             cur_id = str(api["operationId"])
             if cur_id.startswith(operationid_prefix):
-                spec["paths"][url][method]["operationId"] = cur_id[len(operationid_prefix):]
-
+                spec["paths"][url][method]["operationId"] = cur_id[len(operationid_prefix) :]
 
     with open(patch, "r") as f:
         merge_dict(spec, json.load(f))

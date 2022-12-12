@@ -62,16 +62,6 @@ const ExperimentDetails: React.FC = () => {
     }
   }, [experiment, stopPolling]);
 
-  // cleanup
-  useEffect(() => {
-    return () => {
-      stopPolling();
-
-      setExperiment(undefined);
-      setTrial(undefined);
-    };
-  }, [stopPolling]);
-
   useEffect(() => {
     fetchExperimentDetails();
   }, [fetchExperimentDetails]);

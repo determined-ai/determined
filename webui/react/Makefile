@@ -26,10 +26,6 @@ build/done.stamp: $(source_files) node_modules/done.stamp tsconfig.json craco.co
 	npm run build
 	touch $@
 
-.PHONY: build-storybook
-build-storybook:
-	npm run storybook:build
-
 .PHONY: clean
 clean:
 	rm -rf build build-storybook node_modules/

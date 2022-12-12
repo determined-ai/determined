@@ -87,9 +87,7 @@ def gen_go_schemas_package(schemas: List[Schema]) -> List[str]:
     # Global variables (lazily loaded but otherwise constants).
     lines.append("var (")
     # Schema texts.
-    lines.extend(
-        [f"\ttext{schema.golang_title} = []byte(`{schema.text}`)" for schema in schemas]
-    )
+    lines.extend([f"\ttext{schema.golang_title} = []byte(`{schema.text}`)" for schema in schemas])
     # Cached schema values, initially nil.
     for schema in schemas:
         lines.append(f"\tschema{schema.golang_title} interface{{}}")
@@ -226,9 +224,7 @@ def find_struct(file: str, gotype: str) -> Tuple[List[FieldSpec], List[UnionSpec
                     field_spec.append((field, type, tag))
                     continue
 
-                raise AssertionError(
-                    f"unsure how to handle line {lineno}: '{line.rstrip()}'"
-                )
+                raise AssertionError(f"unsure how to handle line {lineno}: '{line.rstrip()}'")
 
     # We should have exited when we saw the "}" line.
     raise AssertionError(f"failed to find struct definition for {gotype} in {file}")
@@ -327,9 +323,7 @@ def get_defaulted_type(schema: Schema, tag: str, type: str) -> Tuple[str, str, b
     return type, default, required
 
 
-def go_getters_and_setters(
-    gotype: str, schema: Schema, spec: List[FieldSpec]
-) -> List[str]:
+def go_getters_and_setters(gotype: str, schema: Schema, spec: List[FieldSpec]) -> List[str]:
     lines = []  # type: List[str]
 
     if len(spec) < 1:
@@ -369,9 +363,7 @@ def go_getters_and_setters(
             lines.append("")
             lines.append(f"func ({x} {gotype}) {getter}() {defaulted_type} {{")
             lines.append(f"\tif {x}.{field} == nil {{")
-            lines.append(
-                f'\t\tpanic("You must call WithDefaults on {gotype} before .{getter}")'
-            )
+            lines.append(f'\t\tpanic("You must call WithDefaults on {gotype} before .{getter}")')
             lines.append("\t}")
             lines.append(f"\treturn *{x}.{field}")
             lines.append("}")

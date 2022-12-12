@@ -64,7 +64,7 @@ const GalleryModal: React.FC<Props> = ({
   }, [onNext, onPrevious]);
 
   return (
-    <Modal centered footer={null} visible width={width} {...props}>
+    <Modal centered footer={null} open width={width} {...props}>
       <div className={css.base} style={{ minHeight }}>
         {children}
         <IconButton

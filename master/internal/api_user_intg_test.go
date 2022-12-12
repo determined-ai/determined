@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/guregu/null.v3"
@@ -21,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
-	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -37,7 +38,7 @@ var (
 	pgDB      *db.PgDB
 	authzUser *mocks.UserAuthZ
 	system    *actor.System
-	mockRM    *rm.ActorResourceManager
+	mockRM    *actorrm.ResourceManager
 )
 
 func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
@@ -51,7 +52,7 @@ func setupAPITest(t *testing.T) (*apiServer, model.User, context.Context) {
 			func(context *actor.Context) error {
 				return nil
 			}))
-		mockRM = rm.WrapRMActor(ref)
+		mockRM = actorrm.Wrap(ref)
 	}
 
 	api := &apiServer{
@@ -374,4 +375,37 @@ func TestAuthzResetUserSetting(t *testing.T) {
 
 	_, err := api.ResetUserSetting(ctx, &apiv1.ResetUserSettingRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
+}
+
+func TestPostUserActivity(t *testing.T) {
+	api, _, curUser, ctx := setupUserAuthzTest(t)
+
+	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     1,
+	})
+
+	require.NoError(t, err)
+
+	activityCount, err := getActivityEntry(ctx, curUser.ID, 1)
+	require.NoError(t, err)
+	require.Equal(t, activityCount, 1, ctx)
+
+	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     1,
+	})
+
+	require.NoError(t, err)
+
+	activityCount, err = getActivityEntry(ctx, curUser.ID, 1)
+	require.NoError(t, err)
+	require.Equal(t, activityCount, 1, ctx)
+}
+
+func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) (int, error) {
+	return db.Bun().NewSelect().Model((*model.UserActivity)(nil)).Where("user_id = ?",
+		int32(userID)).Where("entity_id = ?", entityID).Count(ctx)
 }

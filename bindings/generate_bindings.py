@@ -343,7 +343,7 @@ class Class(TypeDef):
             out += [f'            kwargs["{k}"] = {parsed}']
         out += ["        return cls(**kwargs)"]
         out += [""]
-        out += ['    def to_json(self, omit_unset: bool = False) -> typing.Any:']
+        out += ["    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:"]
         out += ['        out: "typing.Dict[str, typing.Any]" = {']
         for k in required:
             v = self.params[k]
@@ -501,8 +501,8 @@ class Function:
                     f'                    "{self.method}_{self.name}",',
                     f'                    runtimeStreamError.from_json(_j["error"])',
                     f"            )",
-                    f'            yield {yieldable}',
-                    f'        return',
+                    f"            yield {yieldable}",
+                    f"        return",
                 ]
         out += [f'    raise APIHttpError("{self.method}_{self.name}", _resp)']
 
@@ -565,7 +565,9 @@ def process_enums(swagger_definitions: dict) -> typing.Dict[int, str]:
             members = schema["enum"]
             if enums.get(json.dumps(members)) is not None:
                 print(
-                    "ambiguous enum parameter:", name, members,
+                    "ambiguous enum parameter:",
+                    name,
+                    members,
                     file=sys.stderr,
                 )
             enums[json.dumps(members)] = name
@@ -696,9 +698,7 @@ def process_paths(swagger_paths: dict, enums: dict) -> typing.Dict[str, Function
                     inlined = ("type", "format", "items", "properties", "enum")
                     pschema = {k: pspec[k] for k in inlined if k in pspec}
                 ptype = classify_type(enums, f"{name}.{pname}", pschema)
-                params[pname] = Parameter(
-                    pname, ptype, required, where, serialized_name
-                )
+                params[pname] = Parameter(pname, ptype, required, where, serialized_name)
 
             assert is_expected_path(path), (path, name)
             path = path.replace(".", "_")
@@ -721,9 +721,7 @@ def gen_paginated(defs: TypeDefs) -> typing.List[str]:
             continue
         # Note that our goal is to mimic duck typing, so we only care if the "pagination" attribute
         # exists with a v1Pagination type.
-        if any(
-            n == "pagination" and p.type.name == "v1Pagination" for n, p in defn.params.items()
-        ):
+        if any(n == "pagination" and p.type.name == "v1Pagination" for n, p in defn.params.items()):
             paginated.append(defn.name)
 
     if not paginated:
@@ -826,9 +824,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output", "-o", action="store", required=True, help="output file"
-    )
+    parser.add_argument("--output", "-o", action="store", required=True, help="output file")
     args = parser.parse_args()
 
     with open(SWAGGER) as f:

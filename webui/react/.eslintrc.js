@@ -1,6 +1,3 @@
 module.exports = {
-  extends: [
-    './src/shared/configs/eslintrc.js',
-    'plugin:storybook/recommended',
-  ],
+  extends: ['./src/shared/configs/eslintrc.js'],
 };

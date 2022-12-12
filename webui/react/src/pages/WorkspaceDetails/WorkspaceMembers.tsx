@@ -1,21 +1,21 @@
-import { Button, Dropdown, Menu } from 'antd';
+import { Button, Dropdown } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import InteractiveTable, {
-  ColumnDef,
-  InteractiveTableSettings,
-} from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import Avatar from 'components/UserAvatar';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { User, UserOrGroup, Workspace } from 'types';
 import { getAssignedRole, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
@@ -65,21 +65,34 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
     userOrGroupId: getIdFromUserOrGroup(userOrGroup),
   });
 
-  const menuItems = (
-    <Menu>
-      <Menu.Item danger key="remove" onClick={() => openWorkspaceRemoveMemberModal()}>
-        Remove
-      </Menu.Item>
-      {openWorkspaceRemoveMemberContextHolder}
-    </Menu>
-  );
+  const menuItems: DropDownProps['menu'] = useMemo(() => {
+    const MenuKey = {
+      Remove: 'remove',
+    } as const;
+
+    const funcs = {
+      [MenuKey.Remove]: () => {
+        openWorkspaceRemoveMemberModal();
+      },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as ValueOf<typeof MenuKey>]();
+    };
+
+    return {
+      items: [{ danger: true, key: 'remove', label: MenuKey.Remove }],
+      onClick: onItemClick,
+    };
+  }, [openWorkspaceRemoveMemberModal]);
 
   return (
     <div>
-      <Dropdown overlay={menuItems} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
         <Button type="text">
           <Icon name="overflow-vertical" />
         </Button>
+        {openWorkspaceRemoveMemberContextHolder}
       </Dropdown>
     </div>
   );
@@ -296,23 +309,27 @@ const WorkspaceMembers: React.FC<Props> = ({
 
   return (
     <div className={css.membersContainer}>
-      <InteractiveTable
-        columns={columns}
-        containerRef={pageRef}
-        dataSource={usersAndGroups}
-        pagination={getFullPaginationConfig(
-          {
-            limit: settings.tableLimit,
-            offset: settings.tableOffset,
-          },
-          usersAndGroups.length,
-        )}
-        rowKey={generateTableKey}
-        settings={settings}
-        showSorterTooltip={false}
-        size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
-      />
+      {settings ? (
+        <InteractiveTable
+          columns={columns}
+          containerRef={pageRef}
+          dataSource={usersAndGroups}
+          pagination={getFullPaginationConfig(
+            {
+              limit: settings.tableLimit,
+              offset: settings.tableOffset,
+            },
+            usersAndGroups.length,
+          )}
+          rowKey={generateTableKey}
+          settings={settings}
+          showSorterTooltip={false}
+          size="small"
+          updateSettings={updateSettings as UpdateSettings}
+        />
+      ) : (
+        <SkeletonTable columns={columns.length} />
+      )}
     </div>
   );
 };

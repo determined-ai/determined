@@ -23,7 +23,7 @@ import {
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import {
   archiveModel,
   getModelDetails,
@@ -62,9 +62,15 @@ const ModelDetails: React.FC = () => {
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
 
-  const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const {
+    settings,
+    isLoading: isLoadingSettings,
+    updateSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const fetchModel = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const modelData = await getModelDetails({
         limit: settings.tableLimit,
@@ -93,7 +99,8 @@ const ModelDetails: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModel();
-  }, [fetchModel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const downloadModel = useCallback(
     (version: ModelVersion) => {
@@ -110,13 +117,17 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveModelVersionTags = useCallback(
-    async (modelName: string, versionId: number, tags: string[]) => {
+    async (modelName: string, versionNum: number, tags: string[]) => {
       try {
-        await patchModelVersion({ body: { labels: tags, modelName }, modelName, versionId });
+        await patchModelVersion({
+          body: { labels: tags, modelName },
+          modelName,
+          versionNum: versionNum,
+        });
         await fetchModel();
       } catch (e) {
         handleError(e, {
-          publicSubject: `Unable to update model version ${versionId} tags.`,
+          publicSubject: `Unable to update model version ${versionNum} tags.`,
           silent: true,
           type: ErrorType.Api,
         });
@@ -126,14 +137,14 @@ const ModelDetails: React.FC = () => {
   );
 
   const saveVersionDescription = useCallback(
-    async (editedDescription: string, versionId: number) => {
+    async (editedDescription: string, versionNum: number) => {
       try {
         const modelName = model?.model.name;
         if (modelName) {
           await patchModelVersion({
             body: { comment: editedDescription, modelName },
             modelName,
-            versionId,
+            versionNum: versionNum,
           });
         }
       } catch (e) {
@@ -159,7 +170,7 @@ const ModelDetails: React.FC = () => {
               compact
               disabled={record.model.archived}
               tags={record.labels ?? []}
-              onChange={(tags) => saveModelVersionTags(record.model.name, record.id, tags)}
+              onChange={(tags) => saveModelVersionTags(record.model.name, record.version, tags)}
             />
           </div>
         </Typography.Text>
@@ -178,7 +189,7 @@ const ModelDetails: React.FC = () => {
         disabled={record.model.archived}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
         value={record.comment ?? ''}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.id)}
+        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.version)}
       />
     );
 
@@ -238,7 +249,7 @@ const ModelDetails: React.FC = () => {
       tableFilters: Record<string, FilterValue | null>,
       tableSorter: SorterResult<ModelVersion> | SorterResult<ModelVersion>[],
     ) => {
-      if (Array.isArray(tableSorter)) return;
+      if (Array.isArray(tableSorter) || !settings.tableOffset) return;
 
       const { columnKey, order } = tableSorter as SorterResult<ModelVersion>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
@@ -247,7 +258,7 @@ const ModelDetails: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelVersionsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -433,7 +444,7 @@ const ModelDetails: React.FC = () => {
             containerRef={pageRef}
             ContextMenu={actionDropdown}
             dataSource={model.modelVersions}
-            loading={isLoading}
+            loading={isLoading || isLoadingSettings}
             pagination={getFullPaginationConfig(
               {
                 limit: settings.tableLimit,
@@ -446,7 +457,7 @@ const ModelDetails: React.FC = () => {
             settings={settings as InteractiveTableSettings}
             showSorterTooltip={false}
             size="small"
-            updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+            updateSettings={updateSettings as UpdateSettings}
             onChange={handleTableChange}
           />
         )}

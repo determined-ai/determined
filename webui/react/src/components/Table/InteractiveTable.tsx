@@ -93,7 +93,7 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   interactiveColumns?: boolean;
   numOfPinned?: number;
   settings: InteractiveTableSettings;
-  updateSettings: UpdateSettings<InteractiveTableSettings>;
+  updateSettings: UpdateSettings;
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
@@ -399,6 +399,7 @@ const InteractiveTable: InteractiveTable = ({
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
+  const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {
@@ -417,7 +418,7 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const [widthData, setWidthData] = useState(() => {
-    const widths = settings?.columnWidths || [];
+    const widths = settings.columnWidths || [];
     return {
       dropLeftStyles:
         widths.map((width, idx) => ({
@@ -459,11 +460,11 @@ const InteractiveTable: InteractiveTable = ({
 
       const newSettings: Partial<InteractiveTableSettings> = {
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
 
       const { columnKey, order } = tableSorter as SorterResult<unknown>;
-      if (columnKey && settings.columns.find((col) => columnDefs[col]?.key === columnKey)) {
+      if (columnKey && settingsColumns.find((col) => columnDefs[col]?.key === columnKey)) {
         newSettings.sortDesc = order === 'descend';
         newSettings.sortKey = columnKey;
       }
@@ -474,12 +475,14 @@ const InteractiveTable: InteractiveTable = ({
 
       updateSettings(newSettings, shouldPush);
     },
-    [settings, updateSettings, columnDefs],
+    [settings, updateSettings, columnDefs, settingsColumns],
   );
 
   const moveColumn = useCallback(
     (fromIndex: number, toIndex: number) => {
-      const reorderedColumns = [...settings.columns];
+      if (!settings.columnWidths || !settingsColumns) return;
+
+      const reorderedColumns = [...settingsColumns];
       const reorderedWidths = [...settings.columnWidths];
       const col = reorderedColumns.splice(fromIndex, 1)[0];
       const width = reorderedWidths.splice(fromIndex, 1)[0];
@@ -488,14 +491,16 @@ const InteractiveTable: InteractiveTable = ({
       updateSettings({ columns: reorderedColumns, columnWidths: reorderedWidths });
       setWidthData({ ...widthData, widths: reorderedWidths });
     },
-    [settings.columns, settings.columnWidths, widthData, updateSettings],
+    [settingsColumns, settings.columnWidths, widthData, updateSettings],
   );
 
   const handleResize = useCallback(
     (resizeIndex: number) => {
       return (e: Event, { x }: DraggableData) => {
+        if (!settingsColumns) return;
+
         if (timeout.current) clearTimeout(timeout.current);
-        const column = settings.columns[resizeIndex];
+        const column = settingsColumns[resizeIndex];
         const minWidth = columnDefs[column]?.defaultWidth ?? 40;
         const currentWidths = widthData.widths;
 
@@ -534,16 +539,18 @@ const InteractiveTable: InteractiveTable = ({
         }, DEFAULT_RESIZE_THROTTLE_TIME);
       };
     },
-    [settings.columns, widthData.widths, pageWidth, columnDefs],
+    [settingsColumns, widthData.widths, pageWidth, columnDefs],
   );
 
   const handleResizeStart = useCallback(
     (index: number) =>
       (e: Event, { x }: DraggableData) => {
+        if (!settingsColumns) return;
+
         setIsResizing(true);
 
         setWidthData(({ widths, ...rest }) => {
-          const column = settings.columns[index];
+          const column = settingsColumns[index];
           const startWidth = widths[index];
           const minWidth = columnDefs[column]?.defaultWidth ?? 40;
           const deltaX = startWidth - minWidth;
@@ -551,7 +558,7 @@ const InteractiveTable: InteractiveTable = ({
           return { minX, widths, ...rest };
         });
       },
-    [settings.columns, columnDefs],
+    [settingsColumns, columnDefs],
   );
 
   const handleResizeStop = useCallback(() => {
@@ -596,34 +603,34 @@ const InteractiveTable: InteractiveTable = ({
   );
 
   const renderColumns = useMemo(() => {
-    const columns = settings.columns.reduce<ColumnsType<UnknownRecord>>(
-      (acc, columnName, index) => {
-        if (!columnDefs[columnName]) return acc;
+    if (!settings) return;
 
-        const column = columnDefs[columnName];
-        const currentWidth = widthData.widths[index];
-        const columnWidth = currentWidth < column.defaultWidth ? column.defaultWidth : currentWidth; // avoid rendering a column with less width than the default
-        const sortOrder =
-          column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
+    const columns = settingsColumns ?? [];
+    const newColumns = columns.reduce<ColumnsType<UnknownRecord>>((acc, columnName, index) => {
+      if (!columnDefs[columnName]) return acc;
 
-        acc.push({
-          onHeaderCell: onHeaderCell(index, column),
-          sortOrder,
-          width: columnWidth,
-          ...column,
-        });
+      const column = columnDefs[columnName];
+      const currentWidth = widthData.widths[index];
+      const columnWidth = currentWidth < column.defaultWidth ? column.defaultWidth : currentWidth; // avoid rendering a column with less width than the default
+      const sortOrder =
+        column.key === settings.sortKey ? (settings.sortDesc ? 'descend' : 'ascend') : null;
 
-        return acc;
-      },
-      [],
-    );
+      acc.push({
+        onHeaderCell: onHeaderCell(index, column),
+        sortOrder,
+        width: columnWidth,
+        ...column,
+      });
+
+      return acc;
+    }, []);
 
     if (columnDefs.action) {
-      columns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
+      newColumns.push({ ...columnDefs.action, width: WIDGET_COLUMN_WIDTH });
     }
 
-    return columns;
-  }, [settings.columns, widthData, settings.sortKey, settings.sortDesc, columnDefs, onHeaderCell]);
+    return newColumns;
+  }, [settings, widthData, columnDefs, onHeaderCell]);
 
   const components = {
     body: {
@@ -641,7 +648,7 @@ const InteractiveTable: InteractiveTable = ({
 
   useEffect(() => {
     // this should run only when getting new number of cols
-    if (settings.columnWidths.length === widthData.widths.length) return;
+    if (!settings.columnWidths || settings.columnWidths.length === widthData.widths.length) return;
 
     const widths = getUpscaledWidths(settings.columnWidths);
     const dropRightStyles = widths.map((width, idx) => ({
@@ -659,8 +666,8 @@ const InteractiveTable: InteractiveTable = ({
   return (
     <div className={css.tableContainer} ref={tableRef}>
       <Spinner spinning={spinning}>
-        {spinning ? (
-          <SkeletonTable columns={renderColumns.length} />
+        {spinning || !settings ? (
+          <SkeletonTable columns={renderColumns?.length} />
         ) : (
           <Table
             bordered

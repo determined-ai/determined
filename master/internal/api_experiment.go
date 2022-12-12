@@ -36,6 +36,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/hpimportance"
 	"github.com/determined-ai/determined/master/internal/lttb"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	command "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
@@ -733,8 +734,8 @@ func (a *apiServer) PreviewHPSearch(
 	hc := config.RawHyperparameters
 
 	// Apply any json-schema-defined defaults.
-	sc = schemas.WithDefaults(sc).(expconf.SearcherConfig)
-	hc = schemas.WithDefaults(hc).(expconf.Hyperparameters)
+	sc = schemas.WithDefaults(sc)
+	hc = schemas.WithDefaults(hc)
 
 	// Make sure the searcher config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(sc); err != nil {
@@ -1153,7 +1154,7 @@ func (a *apiServer) CreateExperiment(
 		}
 	}
 
-	e, err := newExperiment(a.m, dbExp, taskSpec)
+	e, launchWarnings, err := newExperiment(a.m, dbExp, taskSpec)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create experiment: %s", err)
 	}
@@ -1171,7 +1172,9 @@ func (a *apiServer) CreateExperiment(
 		return nil, err
 	}
 	return &apiv1.CreateExperimentResponse{
-		Experiment: protoExp, Config: protoutils.ToStruct(e.Config),
+		Experiment: protoExp,
+		Config:     protoutils.ToStruct(e.Config),
+		Warnings:   command.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
 

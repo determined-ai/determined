@@ -873,6 +873,16 @@ export interface V1ActivateExperimentResponse {
 }
 
 /**
+ * - ACTIVITY_TYPE_UNSPECIFIED: Default activity type.  - ACTIVITY_TYPE_GET: Represents a get request.
+ * @export
+ * @enum {string}
+ */
+export enum V1ActivityType {
+    UNSPECIFIED = <any> 'ACTIVITY_TYPE_UNSPECIFIED',
+    GET = <any> 'ACTIVITY_TYPE_GET'
+}
+
+/**
  * Response to AddProjectNoteRequest.
  * @export
  * @interface V1AddProjectNoteResponse
@@ -1834,6 +1844,12 @@ export interface V1CreateExperimentResponse {
      * @memberof V1CreateExperimentResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1CreateExperimentResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -2214,6 +2230,16 @@ export interface V1EnableSlotResponse {
      * @memberof V1EnableSlotResponse
      */
     slot?: V1Slot;
+}
+
+/**
+ * - ENTITY_TYPE_UNSPECIFIED: Default entity type.  - ENTITY_TYPE_PROJECT: Represents a project.
+ * @export
+ * @enum {string}
+ */
+export enum V1EntityType {
+    UNSPECIFIED = <any> 'ENTITY_TYPE_UNSPECIFIED',
+    PROJECT = <any> 'ENTITY_TYPE_PROJECT'
 }
 
 /**
@@ -4456,6 +4482,12 @@ export interface V1LaunchCommandResponse {
      * @memberof V1LaunchCommandResponse
      */
     config: any;
+    /**
+     * If the requested slots exceeded the current max available.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchCommandResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -4508,6 +4540,12 @@ export interface V1LaunchNotebookResponse {
      * @memberof V1LaunchNotebookResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchNotebookResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -4560,6 +4598,12 @@ export interface V1LaunchShellResponse {
      * @memberof V1LaunchShellResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchShellResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
 }
 
 /**
@@ -4618,6 +4662,22 @@ export interface V1LaunchTensorboardResponse {
      * @memberof V1LaunchTensorboardResponse
      */
     config: any;
+    /**
+     * List of any related warnings.
+     * @type {Array<V1LaunchWarning>}
+     * @memberof V1LaunchTensorboardResponse
+     */
+    warnings?: Array<V1LaunchWarning>;
+}
+
+/**
+ * Enum values for warnings when launching commands.   - LAUNCH_WARNING_UNSPECIFIED: Default value  - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: For a default webhook
+ * @export
+ * @enum {string}
+ */
+export enum V1LaunchWarning {
+    UNSPECIFIED = <any> 'LAUNCH_WARNING_UNSPECIFIED',
+    CURRENTSLOTSEXCEEDED = <any> 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED'
 }
 
 /**
@@ -6033,6 +6093,40 @@ export interface V1PostTrialProfilerMetricsBatchResponse {
  * @interface V1PostTrialRunnerMetadataResponse
  */
 export interface V1PostTrialRunnerMetadataResponse {
+}
+
+/**
+ * Update user activity.
+ * @export
+ * @interface V1PostUserActivityRequest
+ */
+export interface V1PostUserActivityRequest {
+    /**
+     * The type of the activity.
+     * @type {V1ActivityType}
+     * @memberof V1PostUserActivityRequest
+     */
+    activityType: V1ActivityType;
+    /**
+     * The type of the entity.
+     * @type {V1EntityType}
+     * @memberof V1PostUserActivityRequest
+     */
+    entityType: V1EntityType;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PostUserActivityRequest
+     */
+    entityId: number;
+}
+
+/**
+ * Response to PostUserActivityRequest.
+ * @export
+ * @interface V1PostUserActivityResponse
+ */
+export interface V1PostUserActivityResponse {
 }
 
 /**
@@ -8019,7 +8113,7 @@ export interface V1TaskLogsResponse {
      */
     timestamp: Date;
     /**
-     * The log message.
+     * The flat version of the log that UIs have shown historically.
      * @type {string}
      * @memberof V1TaskLogsResponse
      */
@@ -8030,6 +8124,54 @@ export interface V1TaskLogsResponse {
      * @memberof V1TaskLogsResponse
      */
     level: V1LogLevel;
+    /**
+     * The ID of the task.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    taskId: string;
+    /**
+     * The ID of the allocation.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    allocationId?: string;
+    /**
+     * The agent the logs came from.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    agentId?: string;
+    /**
+     * The ID of the container or, in the case of k8s, the pod name.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    containerId?: string;
+    /**
+     * The rank ID.
+     * @type {number}
+     * @memberof V1TaskLogsResponse
+     */
+    rankId?: number;
+    /**
+     * The text of the log entry.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    log: string;
+    /**
+     * The source of the log entry.
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    source?: string;
+    /**
+     * The output stream (e.g. stdout, stderr).
+     * @type {string}
+     * @memberof V1TaskLogsResponse
+     */
+    stdtype?: string;
 }
 
 /**
@@ -8264,14 +8406,15 @@ export interface V1TrialExitedEarly {
 }
 
 /**
- * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop.
+ * The reason for an early exit.   - EXITED_REASON_UNSPECIFIED: Zero-value (not allowed).  - EXITED_REASON_INVALID_HP: Indicates the trial exited due to an invalid hyperparameter.  - EXITED_REASON_USER_REQUESTED_STOP: Indicates the trial exited due to a user requested stop, from code.  - EXITED_REASON_USER_CANCELED: Indicates the trial exited due to a user requested stop, from the CLI or UI.
  * @export
  * @enum {string}
  */
 export enum V1TrialExitedEarlyExitedReason {
     UNSPECIFIED = <any> 'EXITED_REASON_UNSPECIFIED',
     INVALIDHP = <any> 'EXITED_REASON_INVALID_HP',
-    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP'
+    USERREQUESTEDSTOP = <any> 'EXITED_REASON_USER_REQUESTED_STOP',
+    USERCANCELED = <any> 'EXITED_REASON_USER_CANCELED'
 }
 
 /**
@@ -8435,7 +8578,7 @@ export interface V1TrialLogsResponse {
      */
     timestamp: Date;
     /**
-     * The log message.
+     * The flat version of the log that UIs have shown historically.
      * @type {string}
      * @memberof V1TrialLogsResponse
      */
@@ -8446,6 +8589,48 @@ export interface V1TrialLogsResponse {
      * @memberof V1TrialLogsResponse
      */
     level: V1LogLevel;
+    /**
+     * The ID of the trial associated with this log entry.
+     * @type {number}
+     * @memberof V1TrialLogsResponse
+     */
+    trialId: number;
+    /**
+     * The ID of the agent that logged this.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    agentId?: string;
+    /**
+     * The ID of the container or, in the case of k8s, the pod name.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    containerId?: string;
+    /**
+     * The rank ID.
+     * @type {number}
+     * @memberof V1TrialLogsResponse
+     */
+    rankId?: number;
+    /**
+     * The text of the log entry.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    log?: string;
+    /**
+     * The source of the log entry.
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    source?: string;
+    /**
+     * The output stream (e.g. stdout, stderr).
+     * @type {string}
+     * @memberof V1TrialLogsResponse
+     */
+    stdtype?: string;
 }
 
 /**
@@ -18756,22 +18941,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId The id of the model version to delete.
+         * @param {number} modelVersionNum Sequential model version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModelVersion(modelName: string, modelVersionId: number, options: any = {}): FetchArgs {
+        deleteModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling deleteModelVersion.');
             }
-            // verify required parameter 'modelVersionId' is not null or undefined
-            if (modelVersionId === null || modelVersionId === undefined) {
-                throw new RequiredError('modelVersionId','Required parameter modelVersionId was null or undefined when calling deleteModelVersion.');
+            // verify required parameter 'modelVersionNum' is not null or undefined
+            if (modelVersionNum === null || modelVersionNum === undefined) {
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling deleteModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionId}`
+            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
-                .replace(`{${"modelVersionId"}}`, encodeURIComponent(String(modelVersionId)));
+                .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
             const localVarHeaderParameter = {} as any;
@@ -18867,22 +19052,22 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Get the requested model version.
          * @param {string} modelName The name of the model.
-         * @param {number} modelVersion The version number.
+         * @param {number} modelVersionNum Sequential model version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersion(modelName: string, modelVersion: number, options: any = {}): FetchArgs {
+        getModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getModelVersion.');
             }
-            // verify required parameter 'modelVersion' is not null or undefined
-            if (modelVersion === null || modelVersion === undefined) {
-                throw new RequiredError('modelVersion','Required parameter modelVersion was null or undefined when calling getModelVersion.');
+            // verify required parameter 'modelVersionNum' is not null or undefined
+            if (modelVersionNum === null || modelVersionNum === undefined) {
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling getModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersion}`
+            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
-                .replace(`{${"modelVersion"}}`, encodeURIComponent(String(modelVersion)));
+                .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -19099,27 +19284,27 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * 
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersion} body The model version being updated.
+         * @param {number} modelVersionNum The model version number being updated.
+         * @param {V1PatchModelVersion} body Patch payload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options: any = {}): FetchArgs {
+        patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
                 throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModelVersion.');
             }
-            // verify required parameter 'modelVersionId' is not null or undefined
-            if (modelVersionId === null || modelVersionId === undefined) {
-                throw new RequiredError('modelVersionId','Required parameter modelVersionId was null or undefined when calling patchModelVersion.');
+            // verify required parameter 'modelVersionNum' is not null or undefined
+            if (modelVersionNum === null || modelVersionNum === undefined) {
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling patchModelVersion.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling patchModelVersion.');
             }
-            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionId}`
+            const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
-                .replace(`{${"modelVersionId"}}`, encodeURIComponent(String(modelVersionId)));
+                .replace(`{${"modelVersionNum"}}`, encodeURIComponent(String(modelVersionNum)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'PATCH' }, options);
             const localVarHeaderParameter = {} as any;
@@ -19321,12 +19506,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId The id of the model version to delete.
+         * @param {number} modelVersionNum Sequential model version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModelVersion(modelName: string, modelVersionId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModelVersion(modelName, modelVersionId, options);
+        deleteModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModelVersion(modelName, modelVersionNum, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19378,12 +19563,12 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Get the requested model version.
          * @param {string} modelName The name of the model.
-         * @param {number} modelVersion The version number.
+         * @param {number} modelVersionNum Sequential model version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersion(modelName: string, modelVersion: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersion(modelName, modelVersion, options);
+        getModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersion(modelName, modelVersionNum, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19470,13 +19655,13 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * 
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersion} body The model version being updated.
+         * @param {number} modelVersionNum The model version number being updated.
+         * @param {V1PatchModelVersion} body Patch payload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(modelName, modelVersionId, body, options);
+        patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(modelName, modelVersionNum, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19578,12 +19763,12 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Delete a model version
          * @param {string} modelName The name of the model associated with the model version.
-         * @param {number} modelVersionId The id of the model version to delete.
+         * @param {number} modelVersionNum Sequential model version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteModelVersion(modelName: string, modelVersionId: number, options?: any) {
-            return ModelsApiFp(configuration).deleteModelVersion(modelName, modelVersionId, options)(fetch, basePath);
+        deleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+            return ModelsApiFp(configuration).deleteModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
         },
         /**
          * 
@@ -19608,12 +19793,12 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Get the requested model version.
          * @param {string} modelName The name of the model.
-         * @param {number} modelVersion The version number.
+         * @param {number} modelVersionNum Sequential model version number.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModelVersion(modelName: string, modelVersion: number, options?: any) {
-            return ModelsApiFp(configuration).getModelVersion(modelName, modelVersion, options)(fetch, basePath);
+        getModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+            return ModelsApiFp(configuration).getModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
         },
         /**
          * 
@@ -19664,13 +19849,13 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * 
          * @summary Patch a model version's fields.
          * @param {string} modelName The name of the model being updated.
-         * @param {number} modelVersionId The id of the model version being updated.
-         * @param {V1PatchModelVersion} body The model version being updated.
+         * @param {number} modelVersionNum The model version number being updated.
+         * @param {V1PatchModelVersion} body Patch payload.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
-            return ModelsApiFp(configuration).patchModelVersion(modelName, modelVersionId, body, options)(fetch, basePath);
+        patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any) {
+            return ModelsApiFp(configuration).patchModelVersion(modelName, modelVersionNum, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19741,13 +19926,13 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Delete a model version
      * @param {string} modelName The name of the model associated with the model version.
-     * @param {number} modelVersionId The id of the model version to delete.
+     * @param {number} modelVersionNum Sequential model version number.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public deleteModelVersion(modelName: string, modelVersionId: number, options?: any) {
-        return ModelsApiFp(this.configuration).deleteModelVersion(modelName, modelVersionId, options)(this.fetch, this.basePath);
+    public deleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+        return ModelsApiFp(this.configuration).deleteModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19777,13 +19962,13 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Get the requested model version.
      * @param {string} modelName The name of the model.
-     * @param {number} modelVersion The version number.
+     * @param {number} modelVersionNum Sequential model version number.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModelVersion(modelName: string, modelVersion: number, options?: any) {
-        return ModelsApiFp(this.configuration).getModelVersion(modelName, modelVersion, options)(this.fetch, this.basePath);
+    public getModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+        return ModelsApiFp(this.configuration).getModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19841,14 +20026,14 @@ export class ModelsApi extends BaseAPI {
      * 
      * @summary Patch a model version's fields.
      * @param {string} modelName The name of the model being updated.
-     * @param {number} modelVersionId The id of the model version being updated.
-     * @param {V1PatchModelVersion} body The model version being updated.
+     * @param {number} modelVersionNum The model version number being updated.
+     * @param {V1PatchModelVersion} body Patch payload.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public patchModelVersion(modelName: string, modelVersionId: number, body: V1PatchModelVersion, options?: any) {
-        return ModelsApiFp(this.configuration).patchModelVersion(modelName, modelVersionId, body, options)(this.fetch, this.basePath);
+    public patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any) {
+        return ModelsApiFp(this.configuration).patchModelVersion(modelName, modelVersionNum, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25587,6 +25772,46 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Patch a user's activity
+         * @param {V1PostUserActivityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserActivity(body: V1PostUserActivityRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserActivity.');
+            }
+            const localVarPath = `/api/v1/users/activity`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+            const needsSerialization = (<any>"V1PostUserActivityRequest" !== "string") || localVarRequestOptions.headers['Content-Type'] === 'application/json';
+            localVarRequestOptions.body =  needsSerialization ? JSON.stringify(body || {}) : (body || "");
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Patch a user's settings for website
          * @param {V1PostUserSettingRequest} body 
          * @param {*} [options] Override http request option.
@@ -25848,6 +26073,25 @@ export const UsersApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Patch a user's activity
+         * @param {V1PostUserActivityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserActivity(body: V1PostUserActivityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserActivityResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserActivity(body, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Patch a user's settings for website
          * @param {V1PostUserSettingRequest} body 
          * @param {*} [options] Override http request option.
@@ -25986,6 +26230,16 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Patch a user's activity
+         * @param {V1PostUserActivityRequest} body 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postUserActivity(body: V1PostUserActivityRequest, options?: any) {
+            return UsersApiFp(configuration).postUserActivity(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Patch a user's settings for website
          * @param {V1PostUserSettingRequest} body 
          * @param {*} [options] Override http request option.
@@ -26108,6 +26362,18 @@ export class UsersApi extends BaseAPI {
      */
     public postUser(body: V1PostUserRequest, options?: any) {
         return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Patch a user's activity
+     * @param {V1PostUserActivityRequest} body 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public postUserActivity(body: V1PostUserActivityRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUserActivity(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26617,11 +26883,12 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Limit the projects to those matching the name.
          * @param {boolean} [archived] Limit the projects to those with an archived status.
-         * @param {Array<string>} [users] Limit the projects to those from particular users.
+         * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options: any = {}): FetchArgs {
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspaceProjects.');
@@ -26669,6 +26936,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
                 localVarQueryParameter['users'] = users;
             }
 
+            if (userIds) {
+                localVarQueryParameter['userIds'] = userIds;
+            }
+
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
             // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
             delete localVarUrlObj.search;
@@ -26688,12 +26959,13 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options: any = {}): FetchArgs {
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -26734,6 +27006,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
 
             if (users) {
                 localVarQueryParameter['users'] = users;
+            }
+
+            if (userIds) {
+                localVarQueryParameter['userIds'] = userIds;
             }
 
             if (pinned !== undefined) {
@@ -27023,12 +27299,13 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Limit the projects to those matching the name.
          * @param {boolean} [archived] Limit the projects to those with an archived status.
-         * @param {Array<string>} [users] Limit the projects to those from particular users.
+         * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27048,13 +27325,14 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27210,12 +27488,13 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Limit the projects to those matching the name.
          * @param {boolean} [archived] Limit the projects to those with an archived status.
-         * @param {Array<string>} [users] Limit the projects to those from particular users.
+         * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(fetch, basePath);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -27226,13 +27505,14 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
          * @param {string} [name] Limit the workspaces to those matching the name.
          * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-         * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+         * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+         * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
          * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
-            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(fetch, basePath);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(fetch, basePath);
         },
         /**
          * 
@@ -27341,13 +27621,14 @@ export class WorkspacesApi extends BaseAPI {
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
      * @param {string} [name] Limit the projects to those matching the name.
      * @param {boolean} [archived] Limit the projects to those with an archived status.
-     * @param {Array<string>} [users] Limit the projects to those from particular users.
+     * @param {Array<string>} [users] Limit the projects to those from particular users, by usernames.
+     * @param {Array<number>} [userIds] Limit the projects to those from particular users, by userIds.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, options)(this.fetch, this.basePath);
+    public getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27359,14 +27640,15 @@ export class WorkspacesApi extends BaseAPI {
      * @param {number} [limit] Limit the number of workspaces. A value of 0 denotes no limit.
      * @param {string} [name] Limit the workspaces to those matching the name.
      * @param {boolean} [archived] Limit the workspaces to those with an archived status.
-     * @param {Array<string>} [users] Limit the workspaces to those from particular users.
+     * @param {Array<string>} [users] Limit the workspaces to those from particular users, by usernames.
+     * @param {Array<number>} [userIds] Limit the workspaces to those from particular users, by userIds.
      * @param {boolean} [pinned] Limit the workspaces to those with pinned status by the current user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, pinned?: boolean, options?: any) {
-        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, pinned, options)(this.fetch, this.basePath);
+    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(this.fetch, this.basePath);
     }
 
     /**

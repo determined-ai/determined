@@ -19,6 +19,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -521,7 +522,7 @@ func (c *command) setPriority(ctx *actor.Context, priority int, forward bool) er
 			Handler:  ctx.Self(),
 		}).(type) {
 		case nil:
-		case rm.ErrUnsupported:
+		case rmerrors.ErrUnsupported:
 			ctx.Log().WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return fmt.Errorf("setting group priority for command: %w", err)
@@ -539,7 +540,7 @@ func (c *command) setWeight(ctx *actor.Context, weight float64) error {
 		Handler: ctx.Self(),
 	}).(type) {
 	case nil:
-	case rm.ErrUnsupported:
+	case rmerrors.ErrUnsupported:
 		ctx.Log().WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		return fmt.Errorf("setting group weight for command: %w", err)

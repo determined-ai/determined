@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/rm/actorrm"
+
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -275,7 +277,7 @@ func setup(t *testing.T) (
 
 	// mock resource manager.
 	rmActor := actors.MockActor{Responses: map[string]*actors.MockResponse{}}
-	rm := rm.WrapRMActor(system.MustActorOf(actor.Addr("rm"), &rmActor))
+	rm := actorrm.Wrap(system.MustActorOf(actor.Addr("rm"), &rmActor))
 
 	// mock trial
 	loggerImpl := actors.MockActor{Responses: map[string]*actors.MockResponse{}}

@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 
 export type WebhookColumnName = 'action' | 'triggers' | 'url' | 'webhookType';
 
@@ -17,52 +19,44 @@ export interface Settings extends InteractiveTableSettings {
   columns: WebhookColumnName[];
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'webhook-list',
+  settings: {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([literal('action'), literal('triggers'), literal('url'), literal('webhookType')]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: WebhookColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
+    sortDesc: {
       defaultValue: true,
-      key: 'sortDesc',
       storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
+      type: boolean,
     },
-    {
+    sortKey: {
       defaultValue: 'id',
-      key: 'sortKey',
       storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
+      type: union([undefinedType, number, string, boolean]),
     },
-    {
+    tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
       storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
+      type: number,
     },
-    {
+    tableOffset: {
       defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
+      storageKey: 'tableOffset',
+      type: number,
     },
-  ],
+  },
   storagePath: 'webhook-list',
 };
 

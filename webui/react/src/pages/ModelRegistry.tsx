@@ -1,5 +1,5 @@
-import { Button, Dropdown, Menu, Space, Typography } from 'antd';
-import type { MenuProps } from 'antd';
+import { Button, Dropdown, Space, Typography } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -29,11 +29,9 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
-import { useFetchUsers } from 'hooks/useFetch';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -44,8 +42,11 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import css from './ModelRegistry.module.scss';
@@ -59,10 +60,12 @@ import settingsConfig, {
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
 const ModelRegistry: React.FC = () => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [models, setModels] = useState<ModelItem[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,14 +79,21 @@ const ModelRegistry: React.FC = () => {
   const { contextHolder: modalModelDeleteContextHolder, modalOpen: openModelDelete } =
     useModalModelDelete();
 
-  const { activeSettings, settings, updateSettings, resetSettings } =
-    useSettings<Settings>(settingsConfig);
+  const {
+    activeSettings,
+    isLoading: isLoadingSettings,
+    settings,
+    updateSettings,
+    resetSettings,
+  } = useSettings<Settings>(settingsConfig);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchModels = useCallback(async () => {
+    if (!settings) return;
+
     try {
       const response = await getModels(
         {
@@ -137,7 +147,8 @@ const ModelRegistry: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     fetchModels();
-  }, [fetchModels, settings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const switchArchived = useCallback(
     async (model: ModelItem) => {
@@ -303,7 +314,7 @@ const ModelRegistry: React.FC = () => {
   }, [resetSettings]);
 
   const ModelActionMenu = useCallback(
-    (record: ModelItem) => {
+    (record: ModelItem): DropDownProps['menu'] => {
       const MenuKey = {
         DeleteModel: 'delete-model',
         SwitchArchived: 'switch-archived',
@@ -330,7 +341,7 @@ const ModelRegistry: React.FC = () => {
         menuItems.push({ danger: true, key: MenuKey.DeleteModel, label: 'Delete Model' });
       }
 
-      return <Menu items={menuItems} onClick={onItemClick} />;
+      return { items: menuItems, onClick: onItemClick };
     },
     [showConfirmDelete, switchArchived, user?.id, user?.isAdmin],
   );
@@ -355,7 +366,7 @@ const ModelRegistry: React.FC = () => {
     );
 
     const actionRenderer = (_: string, record: ModelItem) => (
-      <Dropdown overlay={() => ModelActionMenu(record)} trigger={['click']}>
+      <Dropdown menu={ModelActionMenu(record)} trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>
@@ -481,7 +492,7 @@ const ModelRegistry: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : V1GetModelsRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -499,6 +510,8 @@ const ModelRegistry: React.FC = () => {
     (showArchived: boolean) => {
       let newColumns: ModelColumnName[];
       let newColumnWidths: number[];
+      const settingsColumns = settings.columns ?? [];
+      const settingsColumnsWidths = settings.columnWidths ?? [];
 
       if (showArchived) {
         if (settings.columns?.includes('archived')) {
@@ -506,19 +519,19 @@ const ModelRegistry: React.FC = () => {
           newColumns = settings.columns;
           newColumnWidths = settings.columnWidths;
         } else {
-          newColumns = [...settings.columns, 'archived'];
-          newColumnWidths = [...settings.columnWidths, DEFAULT_COLUMN_WIDTHS['archived']];
+          newColumns = [...settingsColumns, 'archived'];
+          newColumnWidths = [...settingsColumnsWidths, DEFAULT_COLUMN_WIDTHS['archived']];
         }
       } else {
-        const archivedIndex = settings.columns.indexOf('archived');
+        const archivedIndex = settings.columns.indexOf('archived') ?? 0;
         if (archivedIndex !== -1) {
-          newColumns = [...settings.columns];
-          newColumnWidths = [...settings.columnWidths];
+          newColumns = [...settingsColumns];
+          newColumnWidths = [...settingsColumnsWidths];
           newColumns.splice(archivedIndex, 1);
           newColumnWidths.splice(archivedIndex, 1);
         } else {
-          newColumns = settings.columns;
-          newColumnWidths = settings.columnWidths;
+          newColumns = settingsColumns;
+          newColumnWidths = settingsColumnsWidths;
         }
       }
       updateSettings({
@@ -542,9 +555,9 @@ const ModelRegistry: React.FC = () => {
       record: ModelItem;
     }) => (
       <Dropdown
-        overlay={() => ModelActionMenu(record)}
+        menu={ModelActionMenu(record)}
         trigger={['contextMenu']}
-        onVisibleChange={onVisibleChange}>
+        onOpenChange={onVisibleChange}>
         {children}
       </Dropdown>
     ),
@@ -588,7 +601,7 @@ const ModelRegistry: React.FC = () => {
           containerRef={pageRef}
           ContextMenu={ModelActionDropdown}
           dataSource={models}
-          loading={isLoading}
+          loading={isLoading || isLoadingSettings}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,
@@ -601,7 +614,7 @@ const ModelRegistry: React.FC = () => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
       )}

@@ -99,7 +99,10 @@ The master supports the following configuration settings:
       details.
 
    -  ``slurm``: Additional Slurm options when launching trials with ``sbatch``. See
-      :ref:`environment.slurm <exp-environment-slurm>` for more details.
+      :ref:`environment.slurm <slurm-config>` for more details.
+
+   -  ``pbs``: Additional PBS options when launching trials with ``qsub``. See :ref:`environment.pbs
+      <pbs-config>` for more details.
 
 -  ``root``: Specifies the root directory of the state files. Defaults to
    ``/usr/share/determined/master``.
@@ -242,8 +245,8 @@ The master supports the following configuration settings:
                   ``skip_verify`` is enabled.
 
       -  ``container_run_type``: The type of the container runtime to be used when launching tasks.
-         The value may be ``singularity`` or ``podman``. The default value is ``singularity``. The
-         value ``singularity`` is also used when using Apptainer.
+         The value may be ``singularity``, ``enroot``, or ``podman``. The default value is
+         ``singularity``. The value ``singularity`` is also used when using Apptainer.
 
       -  ``auth_file``: The location of a file which contains an authorization token to communicate
          with the launcher. It is automatically updated by the launcher as needed when the launcher
@@ -323,6 +326,14 @@ The master supports the following configuration settings:
          -  ``slot_type``
          -  ``task_container_defaults`` (See :ref:`top-level setting
             <master-task-container-defaults>`)
+
+      -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
+         dedicated compute resources, auxiliary, or systems tasks. Defaults to the Slurm/PBS default
+         partition if no resource pool is specified.
+
+      -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
+         compute resources, e.g. GPUs or dedicated CPUs. Defaults to the Slurm/PBS default partition
+         if it has GPU resources and if no resource pool is specified.
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when

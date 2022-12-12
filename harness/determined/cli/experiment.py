@@ -5,7 +5,6 @@ import json
 import numbers
 import pathlib
 import sys
-import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
@@ -19,10 +18,10 @@ import determined.load
 from determined import cli
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
-from determined.common import api, constants, context, set_logger, util, yaml
+from determined.common import api, context, set_logger, util, yaml
 from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
-from determined.common.experimental import Determined
+from determined.experimental import client
 
 from .checkpoint import render_checkpoint
 from .project import project_by_name
@@ -222,32 +221,30 @@ def delete_experiment(args: Namespace) -> None:
 @authentication.required
 def describe(args: Namespace) -> None:
     session = cli.setup_session(args)
-    exps = []
+    responses: List[bindings.v1GetExperimentResponse] = []
     for experiment_id in args.experiment_ids.split(","):
         r = bindings.get_GetExperiment(session, experimentId=experiment_id)
-        if args.json:
-            exps.append(r.to_json())
-        else:
-            exps.append(r.experiment)
+        responses.append(r)
 
     if args.json:
-        print(json.dumps(exps, indent=4))
+        print(json.dumps([resp.to_json() for resp in responses], indent=4))
         return
+    exps = [resp.experiment for resp in responses]
 
     # Display overall experiment information.
     headers = [
         "Experiment ID",
         "State",
         "Progress",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
         "Name",
         "Description",
         "Archived",
         "Resource Pool",
         "Labels",
     ]
-    values = [
+    values: List[List] = [
         [
             exp.id,
             exp.state.value.replace("STATE_", ""),
@@ -284,7 +281,7 @@ def describe(args: Namespace) -> None:
 
     trials_for_experiment = {exp.id: get_all_trials(exp.id) for exp in exps}
 
-    headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
+    headers = ["Trial ID", "Experiment ID", "State", "Started", "Ended", "H-Params"]
     values = [
         [
             trial.id,
@@ -447,7 +444,7 @@ def describe(args: Namespace) -> None:
                         )
                         wl_output[wl_detail.totalBatches] = row
 
-            # Done procesing one trial's workloads, add to output values.
+            # Done processing one trial's workloads, add to output values.
             values += sorted(wl_output.values(), key=lambda a: int(a[1]))
 
     if not args.outdir:
@@ -505,7 +502,7 @@ def download_model_def(args: Namespace) -> None:
 
 
 def download(args: Namespace) -> None:
-    exp = Determined(args.master, args.user).get_experiment(args.experiment_id)
+    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
     checkpoints = exp.top_n_checkpoints(
         args.top_n, sort_by=args.sort_by, smaller_is_better=args.smaller_is_better
     )
@@ -529,23 +526,10 @@ def kill_experiment(args: Namespace) -> None:
 
 @authentication.required
 def wait(args: Namespace) -> None:
-    while True:
-        r = bindings.get_GetExperiment(
-            cli.setup_session(args), experimentId=args.experiment_id
-        ).experiment
-
-        if r.state.value.replace("STATE_", "") in constants.TERMINAL_STATES:
-            print(
-                "Experiment {} terminated with state {}".format(
-                    args.experiment_id, r.state.value.replace("STATE_", "")
-                )
-            )
-            if r.state.value.replace("STATE_", "") == constants.COMPLETED:
-                sys.exit(0)
-            else:
-                sys.exit(1)
-
-        time.sleep(args.polling_interval)
+    exp = client.ExperimentReference(args.experiment_id, cli.setup_session(args))
+    state = exp.wait(interval=args.polling_interval)
+    if state != client.ExperimentState.COMPLETED:
+        sys.exit(1)
 
 
 @authentication.required
@@ -589,8 +573,8 @@ def list_experiments(args: Namespace) -> None:
         "Parent ID",
         "State",
         "Progress",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
         "Resource Pool",
     ]
     if args.show_project:
@@ -655,7 +639,7 @@ def list_trials(args: Namespace) -> None:
     resps = api.read_paginated(get_with_offset, offset=args.offset, pages=args.pages)
     all_trials = [t for r in resps for t in r.trials]
 
-    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
+    headers = ["Trial ID", "State", "H-Params", "Started", "Ended", "# of Batches"]
     values = [
         [
             t.id,

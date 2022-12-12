@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
+import { useAuth } from 'stores/auth';
+import { useUserAssignments, useUserRoles } from 'stores/userRoles';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -16,6 +17,7 @@ import {
   UserRole,
   WorkspacePermissionsArgs,
 } from 'types';
+import { Loadable } from 'utils/loadable';
 
 interface ModelPermissionsArgs {
   model: ModelItem;
@@ -44,6 +46,7 @@ interface MovePermissionsArgs {
 }
 
 interface PermissionsHook {
+  canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -70,21 +73,21 @@ interface PermissionsHook {
   canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
-  canViewUsers: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
 }
 
 const usePermissions = (): PermissionsHook => {
-  const {
-    auth: { user },
-    userAssignments,
-    userRoles,
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-
+  const userAssignments = Loadable.getOrElse([], useUserAssignments());
+  const userRoles = Loadable.getOrElse([], useUserRoles());
   const rbacOpts = useMemo(
     () => ({
       rbacAllPermission,
@@ -99,6 +102,7 @@ const usePermissions = (): PermissionsHook => {
 
   const permissions = useMemo(
     () => ({
+      canAdministrateUsers: canAdministrateUsers(rbacOpts),
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
@@ -142,7 +146,6 @@ const usePermissions = (): PermissionsHook => {
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
       canViewGroups: canViewGroups(rbacOpts),
-      canViewUsers: canAdministrateUsers(rbacOpts),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
@@ -481,7 +484,6 @@ const canViewWorkspaces = ({
   return (
     !rbacEnabled ||
     rbacReadPermission ||
-    (!!userRoles && userRoles.length === 1 && userRoles[0].id === -10) ||
     (!!userRoles &&
       !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEWWORKSPACE)))
   );

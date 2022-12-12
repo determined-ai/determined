@@ -1,6 +1,8 @@
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
+
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
-import { BaseType, SettingsConfig } from 'hooks/useSettings';
+import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
 
 export type ModelColumnName =
@@ -47,83 +49,85 @@ export interface Settings extends InteractiveTableSettings {
   users?: string[];
 }
 
-const config: SettingsConfig = {
-  settings: [
-    {
-      key: 'archived',
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: '/models',
+  settings: {
+    archived: {
+      defaultValue: undefined,
       storageKey: 'archived',
-      type: { baseType: BaseType.Boolean },
+      type: union([undefinedType, boolean]),
     },
-    {
+    columns: {
       defaultValue: DEFAULT_COLUMNS,
-      key: 'columns',
       skipUrlEncoding: true,
       storageKey: 'columns',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
+      type: array(
+        union([
+          literal('action'),
+          literal('archived'),
+          literal('description'),
+          literal('lastUpdatedTime'),
+          literal('name'),
+          literal('tags'),
+          literal('numVersions'),
+          literal('user'),
+        ]),
+      ),
     },
-    {
+    columnWidths: {
       defaultValue: DEFAULT_COLUMNS.map((col: ModelColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      key: 'columnWidths',
       skipUrlEncoding: true,
       storageKey: 'columnWidths',
-      type: {
-        baseType: BaseType.Float,
-        isArray: true,
-      },
+      type: array(number),
     },
-    {
-      defaultValue: true,
-      key: 'sortDesc',
-      storageKey: 'sortDesc',
-      type: { baseType: BaseType.Boolean },
-    },
-    {
-      defaultValue: V1GetModelsRequestSortBy.CREATIONTIME,
-      key: 'sortKey',
-      storageKey: 'sortKey',
-      type: { baseType: BaseType.String },
-    },
-    {
-      defaultValue: MINIMUM_PAGE_SIZE,
-      key: 'tableLimit',
-      storageKey: 'tableLimit',
-      type: { baseType: BaseType.Integer },
-    },
-    {
-      defaultValue: 0,
-      key: 'tableOffset',
-      type: { baseType: BaseType.Integer },
-    },
-    {
-      key: 'users',
-      storageKey: 'users',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
-    },
-    {
-      key: 'tags',
-      storageKey: 'tags',
-      type: {
-        baseType: BaseType.String,
-        isArray: true,
-      },
-    },
-    {
-      key: 'name',
-      storageKey: 'name',
-      type: { baseType: BaseType.String },
-    },
-    {
-      key: 'description',
+    description: {
+      defaultValue: undefined,
       storageKey: 'description',
-      type: { baseType: BaseType.String },
+      type: union([undefinedType, string]),
     },
-  ],
+    name: {
+      defaultValue: undefined,
+      storageKey: 'name',
+      type: union([undefinedType, string]),
+    },
+    sortDesc: {
+      defaultValue: true,
+      storageKey: 'sortDesc',
+      type: boolean,
+    },
+    sortKey: {
+      defaultValue: V1GetModelsRequestSortBy.CREATIONTIME,
+      storageKey: 'sortKey',
+      type: union([
+        literal(V1GetModelsRequestSortBy.CREATIONTIME),
+        literal(V1GetModelsRequestSortBy.UNSPECIFIED),
+        literal(V1GetModelsRequestSortBy.LASTUPDATEDTIME),
+        literal(V1GetModelsRequestSortBy.NAME),
+        literal(V1GetModelsRequestSortBy.NUMVERSIONS),
+        literal(V1GetModelsRequestSortBy.UNSPECIFIED),
+      ]),
+    },
+    tableLimit: {
+      defaultValue: MINIMUM_PAGE_SIZE,
+      storageKey: 'tableLimit',
+      type: number,
+    },
+    tableOffset: {
+      defaultValue: 0,
+      storageKey: 'tableOffset',
+      type: number,
+    },
+    tags: {
+      defaultValue: undefined,
+      storageKey: 'tags',
+      type: union([undefinedType, array(string)]),
+    },
+    users: {
+      defaultValue: undefined,
+      storageKey: 'users',
+      type: union([undefinedType, array(string)]),
+    },
+  },
   storagePath: 'model-registry',
 };
 

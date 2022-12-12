@@ -1,4 +1,5 @@
 import { Breadcrumb, Card, Tabs } from 'antd';
+import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
@@ -25,8 +26,6 @@ import { checkpointSize } from 'utils/workload';
 import css from './ModelVersionDetails.module.scss';
 import ModelVersionHeader from './ModelVersionDetails/ModelVersionHeader';
 
-const { TabPane } = Tabs;
-
 const TabType = {
   Model: 'model',
   Notes: 'notes',
@@ -35,7 +34,7 @@ const TabType = {
 type Params = {
   modelId: string;
   tab?: ValueOf<typeof TabType>;
-  versionId: string;
+  versionNum: string;
 };
 
 const TAB_KEYS = Object.values(TabType);
@@ -43,22 +42,22 @@ const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
-  const { modelId: modelID, versionId: versionID, tab } = useParams<Params>();
+  const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
   const [pageError, setPageError] = useState<Error>();
   const navigate = useNavigate();
   const location = useLocation();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
   const modelId = modelID ?? '';
-  const versionId = versionID ?? '';
+  const versionNum = versionNUM ?? '';
 
-  const basePath = paths.modelVersionDetails(modelId, versionId);
+  const basePath = paths.modelVersionDetails(modelId, versionNum);
 
   const fetchModelVersion = useCallback(async () => {
     try {
       const versionData = await getModelVersion({
         modelName: modelId,
-        versionId: parseInt(versionId),
+        versionNum: parseInt(versionNum),
       });
       /**
        * TODO: can this compare againt prev instead of modelVersion, so that
@@ -69,7 +68,7 @@ const ModelVersionDetails: React.FC = () => {
     } catch (e) {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
-  }, [modelId, modelVersion, pageError, versionId]);
+  }, [modelId, modelVersion, pageError, versionNum]);
 
   usePolling(fetchModelVersion);
 
@@ -98,7 +97,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { metadata: editedMetadata, modelName: modelId },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
         await fetchModelVersion();
       } catch (e) {
@@ -109,7 +108,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [fetchModelVersion, modelId, versionId],
+    [fetchModelVersion, modelId, versionNum],
   );
 
   const saveNotes = useCallback(
@@ -118,7 +117,7 @@ const ModelVersionDetails: React.FC = () => {
         const versionResponse = await patchModelVersion({
           body: { modelName: modelId, notes: editedNotes },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
         setModelVersion(versionResponse);
       } catch (e) {
@@ -129,7 +128,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId],
+    [modelId, versionNum],
   );
 
   const saveDescription = useCallback(
@@ -138,7 +137,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { comment: editedDescription, modelName: modelId },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
       } catch (e) {
         handleError(e, {
@@ -148,7 +147,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId],
+    [modelId, versionNum],
   );
 
   const saveName = useCallback(
@@ -157,7 +156,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { modelName: modelId, name: editedName },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
       } catch (e) {
         handleError(e, {
@@ -167,7 +166,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [modelId, versionId],
+    [modelId, versionNum],
   );
 
   const saveVersionTags = useCallback(
@@ -176,7 +175,7 @@ const ModelVersionDetails: React.FC = () => {
         await patchModelVersion({
           body: { labels: newTags, modelName: modelId },
           modelName: modelId,
-          versionId: parseInt(versionId),
+          versionNum: parseInt(versionNum),
         });
         fetchModelVersion();
       } catch (e) {
@@ -187,7 +186,7 @@ const ModelVersionDetails: React.FC = () => {
         });
       }
     },
-    [fetchModelVersion, modelId, versionId],
+    [fetchModelVersion, modelId, versionNum],
   );
 
   const renderResource = (resource: string, size: string): React.ReactNode => {
@@ -259,16 +258,57 @@ const ModelVersionDetails: React.FC = () => {
     }));
   }, [modelVersion?.checkpoint]);
 
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    if (!modelVersion) {
+      return [];
+    }
+
+    return [
+      {
+        children: (
+          <div className={css.base}>
+            <Card title="Model Checkpoint">
+              <InfoBox rows={checkpointInfo} separator />
+            </Card>
+            <Card title="Validation Metrics">
+              <InfoBox rows={validationMetrics} separator />
+            </Card>
+            <MetadataCard
+              disabled={modelVersion.model.archived}
+              metadata={modelVersion.metadata}
+              onSave={saveMetadata}
+            />
+          </div>
+        ),
+        key: TabType.Model,
+        label: 'Model',
+      },
+      {
+        children: (
+          <div className={css.base}>
+            <NotesCard
+              disabled={modelVersion.model.archived}
+              notes={modelVersion.notes ?? ''}
+              onSave={saveNotes}
+            />
+          </div>
+        ),
+        key: TabType.Notes,
+        label: 'Notes',
+      },
+    ];
+  }, [checkpointInfo, modelVersion, saveMetadata, saveNotes, validationMetrics]);
+
   if (!modelId) {
     return <Message title="Model name is empty" />;
-  } else if (isNaN(parseInt(versionId))) {
-    return <Message title={`Invalid Version ID ${versionId}`} />;
+  } else if (isNaN(parseInt(versionNum))) {
+    return <Message title={`Invalid Version ID ${versionNum}`} />;
   } else if (pageError) {
     if (isNotFound(pageError)) return <PageNotFound />;
-    const message = `Unable to fetch model ${modelId} version ${versionId}`;
+    const message = `Unable to fetch model ${modelId} version ${versionNum}`;
     return <Message title={message} type={MessageType.Warning} />;
   } else if (!modelVersion) {
-    return <Spinner tip={`Loading model ${modelId} version ${versionId} details...`} />;
+    return <Spinner tip={`Loading model ${modelId} version ${versionNum} details...`} />;
   }
 
   return (
@@ -286,34 +326,10 @@ const ModelVersionDetails: React.FC = () => {
       id="modelDetails">
       <Tabs
         activeKey={tabKey}
-        style={{ height: 'auto' }}
+        items={tabItems}
         tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
-        onChange={handleTabChange}>
-        <TabPane key={TabType.Model} tab="Model">
-          <div className={css.base}>
-            <Card title="Model Checkpoint">
-              <InfoBox rows={checkpointInfo} separator />
-            </Card>
-            <Card title="Validation Metrics">
-              <InfoBox rows={validationMetrics} separator />
-            </Card>
-            <MetadataCard
-              disabled={modelVersion.model.archived}
-              metadata={modelVersion.metadata}
-              onSave={saveMetadata}
-            />
-          </div>
-        </TabPane>
-        <TabPane key={TabType.Notes} tab="Notes">
-          <div className={css.base}>
-            <NotesCard
-              disabled={modelVersion.model.archived}
-              notes={modelVersion.notes ?? ''}
-              onSave={saveNotes}
-            />
-          </div>
-        </TabPane>
-      </Tabs>
+        onChange={handleTabChange}
+      />
     </Page>
   );
 };

@@ -13,7 +13,7 @@ func TestRandomSearcherRecords(t *testing.T) {
 	actual := expconf.RandomConfig{
 		RawMaxTrials: ptrs.Ptr(4), RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(19200)),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.RandomConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("19200R"),
 		toOps("19200R"),
@@ -28,7 +28,7 @@ func TestRandomSearcherBatches(t *testing.T) {
 	actual := expconf.RandomConfig{
 		RawMaxTrials: ptrs.Ptr(4), RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300)),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.RandomConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("300B"),
 		toOps("300B"),
@@ -43,7 +43,7 @@ func TestRandomSearcherReproducibility(t *testing.T) {
 	conf := expconf.RandomConfig{
 		RawMaxTrials: ptrs.Ptr(4), RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300)),
 	}
-	conf = schemas.WithDefaults(conf).(expconf.RandomConfig)
+	conf = schemas.WithDefaults(conf)
 	gen := func() SearchMethod { return newRandomSearch(conf) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
@@ -110,7 +110,7 @@ func TestRandomSearcherSingleConcurrent(t *testing.T) {
 		RawMaxLength:           ptrs.Ptr(expconf.NewLengthInRecords(100)),
 		RawMaxConcurrentTrials: ptrs.Ptr(1),
 	}
-	actual = schemas.WithDefaults(actual).(expconf.RandomConfig)
+	actual = schemas.WithDefaults(actual)
 	expected := [][]ValidateAfter{
 		toOps("100R"),
 		toOps("100R"),

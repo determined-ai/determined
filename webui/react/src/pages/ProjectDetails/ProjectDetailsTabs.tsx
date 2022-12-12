@@ -1,6 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Space, Tabs, Tooltip } from 'antd';
-import React, { useCallback, useEffect, useState } from 'react';
+import type { TabsProps } from 'antd';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeader from 'components/PageHeader';
@@ -12,8 +13,6 @@ import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './ProjectDetailsTabs.module.scss';
-
-const { TabPane } = Tabs;
 
 export interface TabInfo {
   body: React.ReactNode;
@@ -47,6 +46,18 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
     },
     [tabs],
   );
+
+  const tabItems: TabsProps['items'] = useMemo(() => {
+    return tabs.map((tabInfo) => ({
+      children: (
+        <div className={css.tabPane}>
+          <div className={css.base}>{tabInfo.body}</div>
+        </div>
+      ),
+      key: sentenceToCamelCase(tabInfo.title),
+      label: tabInfo.title,
+    }));
+  }, [tabs]);
 
   /**
    * prevents stable tab content, e.g. archived state
@@ -103,20 +114,11 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
       <Tabs
         activeKey={sentenceToCamelCase(activeTab.title)}
         defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
+        items={tabItems}
         tabBarExtraContent={activeTab.options}
         tabBarStyle={{ height: 50, paddingLeft: 16 }}
-        onChange={handleTabSwitch}>
-        {tabs.map((tabInfo) => {
-          return (
-            <TabPane
-              className={css.tabPane}
-              key={sentenceToCamelCase(tabInfo.title)}
-              tab={tabInfo.title}>
-              <div className={css.base}>{tabInfo.body}</div>
-            </TabPane>
-          );
-        })}
-      </Tabs>
+        onChange={handleTabSwitch}
+      />
     </>
   );
 };

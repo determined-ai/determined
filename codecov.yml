@@ -17,5 +17,4 @@ github_checks:
 comment: false
 
 ignore:
-  - "webui/react/.storybook"
   - "webui/react/src/shared/configs"

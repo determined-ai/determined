@@ -1,4 +1,5 @@
-import { Button, Dropdown, Menu, message, Space, Table } from 'antd';
+import { Button, Dropdown, message, Space, Table } from 'antd';
+import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Page from 'components/Page';
@@ -6,17 +7,19 @@ import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
 } from 'components/Table/InteractiveTable';
+import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
 import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import usePermissions from 'hooks/usePermissions';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroup, getGroups, getUsers, updateGroup } from 'services/api';
 import { V1GroupDetails, V1GroupSearchResult, V1User } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
+import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { DetailedUser } from 'types';
@@ -52,20 +55,35 @@ const GroupActionDropdown = ({
   const { modalOpen: openDeleteGroupModal, contextHolder: modalDeleteGroupContextHolder } =
     useModalDeleteGroup({ group, onClose: fetchGroups });
 
-  const menuItems = (
-    <Menu>
-      <Menu.Item key="edit" onClick={() => openEditGroupModal()}>
-        Edit
-      </Menu.Item>
-      <Menu.Item danger key="delete" onClick={() => openDeleteGroupModal()}>
-        Delete
-      </Menu.Item>
-    </Menu>
-  );
+  const menuItems: DropDownProps['menu'] = useMemo(() => {
+    const MenuKey = {
+      Delete: 'delete',
+      Edit: 'edit',
+    } as const;
+
+    const funcs = {
+      [MenuKey.Edit]: () => {
+        openEditGroupModal();
+      },
+      [MenuKey.Delete]: () => {
+        openDeleteGroupModal();
+      },
+    };
+
+    const onItemClick: MenuProps['onClick'] = (e) => {
+      funcs[e.key as ValueOf<typeof MenuKey>]();
+    };
+
+    const items: MenuProps['items'] = [
+      { key: MenuKey.Edit, label: 'Edit' },
+      { key: MenuKey.Delete, label: 'Delete' },
+    ];
+    return { items: items, onClick: onItemClick };
+  }, [openDeleteGroupModal, openEditGroupModal]);
 
   return (
     <div className={dropdownCss.base}>
-      <Dropdown overlay={menuItems} placement="bottomRight" trigger={['click']}>
+      <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
         <Button className={css.overflow} type="text">
           <Icon name="overflow-vertical" />
         </Button>
@@ -91,6 +109,8 @@ const GroupManagement: React.FC = () => {
   const { canModifyGroups, canViewGroups } = usePermissions();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
+    if (!settings.tableLimit || !settings.tableOffset) return;
+
     try {
       const response = await getGroups(
         {
@@ -139,7 +159,8 @@ const GroupManagement: React.FC = () => {
   useEffect(() => {
     fetchGroups();
     fetchUsers();
-  }, [settings.tableLimit, settings.tableOffset, fetchGroups, fetchUsers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const rbacEnabled = useFeature().isOn('rbac');
   useEffect(() => {
@@ -273,7 +294,7 @@ const GroupManagement: React.FC = () => {
   }, [users, fetchGroups, expandedKeys, fetchGroup, canModifyGroups]);
 
   const table = useMemo(() => {
-    return (
+    return settings ? (
       <InteractiveTable
         columns={columns}
         containerRef={pageRef}
@@ -292,8 +313,10 @@ const GroupManagement: React.FC = () => {
         settings={settings as InteractiveTableSettings}
         showSorterTooltip={false}
         size="small"
-        updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+        updateSettings={updateSettings as UpdateSettings}
       />
+    ) : (
+      <SkeletonTable columns={columns.length} />
     );
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 

@@ -39,7 +39,7 @@ export const useFetchAgents = (canceler: AbortController): (() => Promise<void>)
 
   return useCallback(async (): Promise<void> => {
     try {
-      const agents = await getAgents({ signal: canceler.signal });
+      const agents = await getAgents({}, { signal: canceler.signal });
       updateAgents(Loaded(agents));
     } catch (e) {
       handleError(e);
@@ -61,10 +61,11 @@ export const useEnsureAgentsFetched = (canceler: AbortController): (() => Promis
   }, [canceler, updateAgents, agents]);
 };
 export const useAgents = (): Loadable<Agent[]> => {
-  // TODO: check undefined
-  const { agents } = useContext(AgentsContext);
-
-  return agents;
+  const context = useContext(AgentsContext);
+  if (context === null) {
+    throw new Error('Attempted to use useAgents outside of Agent Context');
+  }
+  return context.agents;
 };
 
 export const useClusterOverview = (): Loadable<ClusterOverview> => {

@@ -33,9 +33,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
-import { useStore } from 'contexts/Store';
-import { useFetchUsers } from 'hooks/useFetch';
-import useSettings, { UpdateSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -44,9 +42,12 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, AnyTask, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
@@ -80,10 +81,12 @@ interface SourceInfo {
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
 const TaskList: React.FC = () => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const [canceler] = useState(new AbortController());
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
@@ -92,7 +95,7 @@ const TaskList: React.FC = () => {
   const { activeSettings, resetSettings, settings, updateSettings } =
     useSettings<Settings>(settingsConfig);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -372,7 +375,7 @@ const TaskList: React.FC = () => {
         sorter: (a: CommandTask, b: CommandTask): number => {
           return dateTimeStringSorter(a.startTime, b.startTime);
         },
-        title: 'Start Time',
+        title: 'Started',
       },
       {
         dataIndex: 'state',
@@ -494,7 +497,7 @@ const TaskList: React.FC = () => {
         sortDesc: order === 'descend',
         sortKey: isOfSortKey(columnKey) ? columnKey : ALL_SORTKEY[0],
         tableLimit: tablePagination.pageSize,
-        tableOffset: (tablePagination.current ?? 1 - 1) * (tablePagination.pageSize ?? 0),
+        tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
       const shouldPush = settings.tableOffset !== newSettings.tableOffset;
       updateSettings(newSettings, shouldPush);
@@ -560,7 +563,7 @@ const TaskList: React.FC = () => {
           containerRef={pageRef}
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
-          loading={tasks === undefined}
+          loading={tasks === undefined || !settings}
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,
@@ -578,18 +581,18 @@ const TaskList: React.FC = () => {
           settings={settings as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
-          updateSettings={updateSettings as UpdateSettings<InteractiveTableSettings>}
+          updateSettings={updateSettings as UpdateSettings}
           onChange={handleTableChange}
         />
       </div>
       <Modal
         footer={null}
+        open={!!sourcesModal}
         style={{ minWidth: '600px' }}
         title={`
           ${sourcesModal?.sources.length}
           TensorBoard Source${sourcesModal?.plural}
         `}
-        visible={!!sourcesModal}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
           <Grid gap={ShirtSize.Medium} minItemWidth={120}>

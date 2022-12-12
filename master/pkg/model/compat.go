@@ -12,7 +12,7 @@ func (d DeviceConfig) ToExpconf() expconf.Device {
 		RawHostPath:      d.HostPath,
 		RawContainerPath: d.ContainerPath,
 		RawMode:          ptrs.Ptr(d.Mode),
-	}).(expconf.Device)
+	})
 }
 
 // ToExpconf translates old model objects into an expconf object.
@@ -21,7 +21,7 @@ func (d DevicesConfig) ToExpconf() expconf.DevicesConfig {
 	for _, d := range d {
 		out = append(out, d.ToExpconf())
 	}
-	return schemas.WithDefaults(out).(expconf.DevicesConfig)
+	return schemas.WithDefaults(out)
 }
 
 // ToExpconf translates old model objects into an expconf object.
@@ -42,7 +42,7 @@ func (r ResourcesConfig) ToExpconf() expconf.ResourcesConfig {
 		RawResourcePool:   ptrs.Ptr(r.ResourcePool),
 		RawPriority:       r.Priority,
 		RawDevices:        r.Devices.ToExpconf(),
-	}).(expconf.ResourcesConfig)
+	})
 }
 
 // ToExpconf translates old model objects into an expconf object.
@@ -52,7 +52,7 @@ func (b BindMount) ToExpconf() expconf.BindMount {
 		RawContainerPath: b.ContainerPath,
 		RawReadOnly:      ptrs.Ptr(b.ReadOnly),
 		RawPropagation:   ptrs.Ptr(b.Propagation),
-	}).(expconf.BindMount)
+	})
 }
 
 // ToExpconf translates old model objects into an expconf object.
@@ -61,7 +61,7 @@ func (b BindMountsConfig) ToExpconf() expconf.BindMountsConfig {
 	for _, m := range b {
 		out = append(out, m.ToExpconf())
 	}
-	return schemas.WithDefaults(out).(expconf.BindMountsConfig)
+	return schemas.WithDefaults(out)
 }
 
 // ToModelBindMount converts new expconf bind mounts into old modl bind mounts.
@@ -80,7 +80,7 @@ func (r RuntimeItems) ToExpconf() expconf.EnvironmentVariablesMap {
 		RawCPU:  r.CPU,
 		RawCUDA: r.CUDA,
 		RawROCM: r.ROCM,
-	}).(expconf.EnvironmentVariablesMap)
+	})
 }
 
 // ToExpconf translates old model objects into an expconf object.
@@ -89,7 +89,7 @@ func (r RuntimeItem) ToExpconf() expconf.EnvironmentImageMap {
 		RawCPU:  ptrs.Ptr(r.CPU),
 		RawCUDA: ptrs.Ptr(r.CUDA),
 		RawROCM: ptrs.Ptr(r.ROCM),
-	}).(expconf.EnvironmentImageMap)
+	})
 }
 
 // ToExpconf translates old model objects into an expconf object.
@@ -106,5 +106,5 @@ func (e Environment) ToExpconf() expconf.EnvironmentConfig {
 		RawPodSpec:              (*expconf.PodSpec)(e.PodSpec),
 		RawAddCapabilities:      e.AddCapabilities,
 		RawDropCapabilities:     e.DropCapabilities,
-	}).(expconf.EnvironmentConfig)
+	})
 }

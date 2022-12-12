@@ -42,19 +42,19 @@ $size: 18px;
 }
 .spinner__bowtie {
   animation: rotateHalf 1s infinite;
-  border-bottom-color: var(--theme-stage-on);
-  border-top-color: var(--theme-stage-on);
+  border-bottom-color: var(--theme-surface-on);
+  border-top-color: var(--theme-surface-on);
 }
 .spinner__half {
-  border-left-color: var(--theme-stage-on);
-  border-top-color: var(--theme-stage-on);
+  border-left-color: var(--theme-surface-on);
+  border-top-color: var(--theme-surface-on);
 }
 
 $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
 
 .spinner__shadow {
   animation: rotateZ 0.75s infinite linear;
-  border-color: var(--theme-stage-on);
+  border-color: var(--theme-surface-on);
   -webkit-mask: $mask;
   mask: $mask;
   -webkit-mask-composite: source-out;
@@ -64,7 +64,7 @@ $mask: conic-gradient(#0000 30%, #000), linear-gradient(#000 0 0) content-box;
   animation: none;
   border: none;
   box-shadow: inset 0 0 0 2px;
-  color: var(--theme-stage-on);
+  color: var(--theme-surface-on);
   position: relative;
   transform: scale(3);
 

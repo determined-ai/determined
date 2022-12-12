@@ -119,9 +119,12 @@ html {
   .ant-input-affix-wrapper.ant-input-affix-wrapper-sm > .ant-input-suffix > i {
     font-size: 16px;
   }
-  .ant-input-number-status-error,
-  .ant-input-number-status-error:not(.ant-input-number-disabled):not(.ant-input-number-borderless).ant-input-number,
-  .ant-input-number-status-error:not(.ant-input-number-disabled):not(.ant-input-number-borderless).ant-input-number:hover {
+  .ant-input-number-status-error:not(.ant-input-number-disabled):not(
+      .ant-input-number-borderless
+    ).ant-input-number,
+  .ant-input-number-status-error:not(.ant-input-number-disabled):not(
+      .ant-input-number-borderless
+    ).ant-input-number:hover {
     background-color: inherit;
   }
 
@@ -459,4 +462,10 @@ html {
     color: var(--theme-float-on);
     opacity: 1;
   }
+}
+
+/* Tab */
+
+.ant-tabs-tabpane {
+  height: 100%;
 }

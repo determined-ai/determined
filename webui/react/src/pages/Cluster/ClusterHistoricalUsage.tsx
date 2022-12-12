@@ -4,9 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
-import { useStore } from 'contexts/Store';
-import useSettings from 'hooks/useSettings';
+import { useSettings } from 'hooks/useSettings';
 import { getResourceAllocationAggregated } from 'services/api';
+import { useUsers } from 'stores/users';
+import { Loadable } from 'utils/loadable';
 
 import css from './ClusterHistoricalUsage.module.scss';
 import settingsConfig, { GroupBy, Settings } from './ClusterHistoricalUsage.settings';
@@ -26,7 +27,7 @@ const ClusterHistoricalUsage: React.FC = () => {
   const [chartSeries, setChartSeries] = useState<ResourceAllocationChartSeries>();
   const [isCsvModalVisible, setIsCsvModalVisible] = useState<boolean>(false);
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
-  const { users } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {

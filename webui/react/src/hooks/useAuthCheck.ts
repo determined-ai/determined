@@ -2,20 +2,22 @@ import queryString from 'query-string';
 import { useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { AUTH_COOKIE_KEY, StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
+import { AUTH_COOKIE_KEY, useAuth } from 'stores/auth';
+import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 const useAuthCheck = (canceler: AbortController): (() => void) => {
-  const { info } = useStore();
+  const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const location = useLocation();
-  const storeDispatch = useStoreDispatch();
+  const { setAuth, resetAuth, setAuthCheck } = useAuth();
 
   const updateBearerToken = useCallback((token: string) => {
     globalStorage.authToken = token;
@@ -50,10 +52,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
 
       try {
         const user = await getCurrentUser({ signal: canceler.signal });
-        storeDispatch({
-          type: StoreAction.SetAuth,
-          value: { isAuthenticated: true, token: authToken, user },
-        });
+        setAuth({ isAuthenticated: true, token: authToken, user });
       } catch (e) {
         if (isAborted(e)) return;
 
@@ -68,24 +67,26 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
 
         if (isAuthError) {
           updateDetApi({ apiKey: undefined });
-          storeDispatch({ type: StoreAction.ResetAuth });
+          resetAuth();
 
           if (info.externalLoginUri) redirectToExternalSignin();
         }
       } finally {
-        storeDispatch({ type: StoreAction.SetAuthCheck });
+        setAuthCheck();
       }
     } else if (info.externalLoginUri) {
       redirectToExternalSignin();
     } else {
-      storeDispatch({ type: StoreAction.SetAuthCheck });
+      setAuthCheck();
     }
   }, [
     canceler,
     info.externalLoginUri,
     location.search,
+    setAuth,
+    resetAuth,
+    setAuthCheck,
     redirectToExternalSignin,
-    storeDispatch,
     updateBearerToken,
   ]);
 

@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/user"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -119,18 +121,28 @@ type (
 // and log. If the input object has no ID set, also create a new experiment in the database and set
 // the returned object's ID appropriately.
 func newExperiment(m *Master, expModel *model.Experiment, taskSpec *tasks.TaskSpec) (
-	*experiment, error,
+	*experiment, []command.LaunchWarning, error,
 ) {
 	conf := &expModel.Config
 
 	resources := conf.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
-		m.system, resources.ResourcePool(), resources.SlotsPerTrial(), false,
+		m.system, resources.ResourcePool(), resources.SlotsPerTrial(),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create an experiment: %w", err)
+		return nil, nil, fmt.Errorf("cannot create an experiment: %w", err)
 	}
-
+	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
+		return nil, nil, fmt.Errorf("validating resources: %v", err)
+	}
+	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
+		m.system,
+		poolName,
+		resources.SlotsPerTrial(),
+	)
+	if err != nil {
+		return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
+	}
 	resources.SetResourcePool(poolName)
 	conf.SetResources(resources)
 
@@ -143,19 +155,19 @@ func newExperiment(m *Master, expModel *model.Experiment, taskSpec *tasks.TaskSp
 	checkpoint, err := checkpointFromTrialIDOrUUID(
 		m.db, conf.Searcher().SourceTrialID(), conf.Searcher().SourceCheckpointUUID())
 	if err != nil {
-		return nil, err
+		return nil, launchWarnings, err
 	}
 
 	if expModel.ID == 0 {
 		if err = m.db.AddExperiment(expModel); err != nil {
-			return nil, err
+			return nil, launchWarnings, err
 		}
 		telemetry.ReportExperimentCreated(m.system, expModel)
 	}
 
 	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, expModel)
 	if err != nil {
-		return nil, err
+		return nil, launchWarnings, err
 	}
 
 	taskSpec.AgentUserGroup = agentUserGroup
@@ -181,7 +193,7 @@ func newExperiment(m *Master, expModel *model.Experiment, taskSpec *tasks.TaskSp
 			"job-id":        expModel.JobID,
 			"experiment-id": expModel.ID,
 		},
-	}, nil
+	}, launchWarnings, nil
 }
 
 func (e *experiment) Receive(ctx *actor.Context) error {
@@ -617,7 +629,7 @@ func (e *experiment) processOperations(
 				ctx.Log().Error(err)
 				return
 			}
-			config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+			config := schemas.Copy(e.Config)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
@@ -773,7 +785,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	if priority == nil {
 		return nil
 	}
-	oldPriority := rm.DefaultSchedulingPriority
+	oldPriority := config.DefaultSchedulingPriority
 	var oldPriorityPtr *int
 	resources := e.Config.Resources()
 	if resources.Priority() != nil {
@@ -804,7 +816,7 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 			Handler:  ctx.Self(),
 		}).(type) {
 		case nil:
-		case rm.ErrUnsupported:
+		case rmerrors.ErrUnsupported:
 			ctx.Log().WithError(err).Debug("ignoring unsupported call to set group priority")
 		default:
 			return errors.Wrapf(err, "setting experiment %d priority", e.ID)
@@ -830,7 +842,7 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		Handler: ctx.Self(),
 	}).(type) {
 	case nil:
-	case rm.ErrUnsupported:
+	case rmerrors.ErrUnsupported:
 		ctx.Log().WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		resources.SetWeight(oldWeight)
@@ -844,7 +856,7 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	resources := e.Config.Resources()
 	oldRP := resources.ResourcePool()
 	rp, err := e.rm.ResolveResourcePool(
-		ctx, msg.ResourcePool, e.Config.Resources().SlotsPerTrial(), false,
+		ctx, msg.ResourcePool, e.Config.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:

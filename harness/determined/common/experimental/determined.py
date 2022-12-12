@@ -4,7 +4,15 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication, bindings, certs
-from determined.common.experimental import checkpoint, experiment, model, trial, user
+from determined.common.experimental import (
+    checkpoint,
+    experiment,
+    model,
+    oauth2_scim_client,
+    trial,
+    user,
+)
+from determined.errors import EnterpriseOnlyError
 
 
 class _CreateExperimentResponse:
@@ -48,20 +56,22 @@ class Determined:
         cert_name: Optional[str] = None,
         noverify: bool = False,
     ):
-        master = master or util.get_default_master_address()
+        self._master = master or util.get_default_master_address()
 
         cert = certs.default_load(
-            master_url=master,
+            master_url=self._master,
             explicit_path=cert_path,
             explicit_cert_name=cert_name,
             explicit_noverify=noverify,
         )
 
-        # TODO: This should probably be try_reauth=False, but it appears that would break the case
-        # where the default credentials are available from the master and could be discovered by
-        # a REST API call against the master.
-        auth = authentication.Authentication(master, user, password, try_reauth=True, cert=cert)
-        self._session = api.Session(master, user, auth, cert)
+        auth = authentication.Authentication(self._master, user, password, cert=cert)
+        self._session = api.Session(self._master, user, auth, cert)
+        token_user = auth.token_store.get_active_user()
+        if token_user is not None:
+            self._token = auth.token_store.get_token(token_user)
+        else:
+            self._token = None
 
     def _from_bindings(self, raw: bindings.v1User) -> user.User:
         assert raw.id is not None
@@ -112,7 +122,17 @@ class Determined:
         return self._from_bindings(resp.user)
 
     def logout(self) -> None:
-        bindings.post_Logout(self._session)
+        auth = self._session._auth
+        # auth should only be None in the special login Session, which must not be used in a
+        # Determined object.
+        assert auth, "Determined.logout() found an unauthorized Session"
+
+        user = auth.get_session_user()
+        # get_session_user() is allowed to return an empty string, which seems dumb, but in that
+        # case we do not want to trigger the authentication.logout default username lookup logic.
+        assert user, "Determined.logout() couldn't find a valid username"
+
+        authentication.logout(self._session._master, user, self._session._cert)
 
     def list_users(self) -> Sequence[user.User]:
         users_bindings = bindings.get_GetUsers(session=self._session).users
@@ -315,3 +335,44 @@ class Determined:
         Get a list of labels used on any models, sorted from most-popular to least-popular.
         """
         return list(bindings.get_GetModelLabels(self._session).labels)
+
+    def list_oauth_clients(self) -> Sequence[oauth2_scim_client.Oauth2ScimClient]:
+        try:
+            oauth2_scim_clients: List[oauth2_scim_client.Oauth2ScimClient] = []
+            assert self._token is not None
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            clients = api.get(self._master, "oauth2/clients", headers=headers).json()
+            for client in clients:
+                osc: oauth2_scim_client.Oauth2ScimClient = oauth2_scim_client.Oauth2ScimClient(
+                    name=client["name"], client_id=client["id"], domain=client["domain"]
+                )
+                oauth2_scim_clients.append(osc)
+            return oauth2_scim_clients
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")
+
+    def add_oauth_client(self, domain: str, name: str) -> oauth2_scim_client.Oauth2ScimClient:
+        try:
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            assert self._token is not None
+            client = api.post(
+                self._master,
+                "oauth2/clients",
+                headers=headers,
+                json={"domain": domain, "name": name},
+            ).json()
+
+            return oauth2_scim_client.Oauth2ScimClient(
+                client_id=str(client["id"]), secret=str(client["secret"]), domain=domain, name=name
+            )
+
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")
+
+    def remove_oauth_client(self, client_id: str) -> None:
+        try:
+            headers = {"Authorization": "Bearer {}".format(self._token)}
+            assert self._token is not None
+            api.delete(self._master, "oauth2/clients/{}".format(client_id), headers=headers)
+        except api.errors.NotFoundException:
+            raise EnterpriseOnlyError("API not found: oauth2/clients")

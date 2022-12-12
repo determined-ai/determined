@@ -26,7 +26,7 @@ def test_trial_logs() -> None:
     # TODO: refactor tests to not use cli singleton auth.
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     session = api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
 
     experiment_id = exp.run_basic_test(
@@ -71,7 +71,7 @@ def test_trial_logs() -> None:
 def test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: Any) -> None:
     master_url = conf.make_master_url()
     certs.cli_cert = certs.default_load(conf.make_master_url())
-    authentication.cli_auth = authentication.Authentication(conf.make_master_url(), try_reauth=True)
+    authentication.cli_auth = authentication.Authentication(conf.make_master_url())
     session = api.Session(master_url, "determined", authentication.cli_auth, certs.cli_cert)
 
     rps = bindings.get_GetResourcePools(session)

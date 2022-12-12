@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
@@ -79,13 +78,25 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		m.system,
 		expModel.Config.Resources().ResourcePool(),
 		expModel.Config.Resources().SlotsPerTrial(),
-		false,
 	)
 	if err != nil {
 		return fmt.Errorf("invalid resource configuration: %w", err)
 	}
-
-	taskContainerDefaults := m.getTaskContainerDefaults(poolName)
+	if err = m.rm.ValidateResources(
+		m.system,
+		poolName,
+		expModel.Config.Resources().SlotsPerTrial(),
+		false); err != nil {
+		return fmt.Errorf("validating resources: %v", err)
+	}
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
+		m.system,
+		expModel.Config.Resources().ResourcePool(),
+		m.config.TaskContainerDefaults,
+	)
+	if err != nil {
+		return fmt.Errorf("error getting TaskContainerDefaults: %w", err)
+	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	owner, err := user.UserByUsername(expModel.Username)
@@ -99,7 +110,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
 	}
-	e, err := newExperiment(m, expModel, &taskSpec)
+	e, _, err := newExperiment(m, expModel, &taskSpec)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
@@ -156,7 +167,7 @@ func (e *experiment) restoreTrial(
 		return
 	}
 
-	config := schemas.Copy(e.Config).(expconf.ExperimentConfig)
+	config := schemas.Copy(e.Config)
 	t := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.taskLogger, e.rm, e.db, config, ckpt, e.taskSpec, true,

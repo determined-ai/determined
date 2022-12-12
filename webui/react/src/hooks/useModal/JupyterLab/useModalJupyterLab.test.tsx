@@ -4,7 +4,12 @@ import { Button } from 'antd';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
+import { AuthProvider, useAuth } from 'stores/auth';
+import { UsersProvider } from 'stores/users';
+import { DetailedUser, ResourcePool } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import useModalJupyterLab from './useModalJupyterLab';
 
@@ -17,7 +22,20 @@ const MonacoEditorMock: React.FC = () => <></>;
 jest.mock('services/api', () => ({
   getResourcePools: () => Promise.resolve([]),
   getTaskTemplates: () => Promise.resolve([]),
+  getUsers: () => Promise.resolve({ users: [] }),
+  getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
+}));
+jest.mock('contexts/Store', () => ({
+  __esModule: true,
+  ...jest.requireActual('contexts/Store'),
+  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
+}));
+
+jest.mock('stores/resourcePools', () => ({
+  __esModule: true,
+  ...jest.requireActual('stores/resourcePools'),
+  useResourcePools: (): Loadable<ResourcePool[]> => ({ _tag: 'Loaded', data: [] }),
 }));
 
 jest.mock('utils/wait', () => ({
@@ -31,18 +49,22 @@ jest.mock('components/MonacoEditor', () => ({
 }));
 
 const ModalTrigger: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
+  const { setAuth, setAuthCheck } = useAuth();
   const { contextHolder, modalOpen } = useModalJupyterLab();
 
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+    setAuthCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <>
-      <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
-      {contextHolder}
-    </>
+    <SettingsProvider>
+      <>
+        <Button onClick={() => modalOpen()}>Show Jupyter Lab</Button>
+        {contextHolder}
+      </>
+    </SettingsProvider>
   );
 };
 
@@ -52,12 +74,17 @@ const setup = async () => {
   render(
     <BrowserRouter>
       <StoreProvider>
-        <ModalTrigger />
+        <UsersProvider>
+          <AuthProvider>
+            <ModalTrigger />
+          </AuthProvider>
+        </UsersProvider>
       </StoreProvider>
     </BrowserRouter>,
   );
 
-  await user.click(screen.getByRole('button'));
+  const button = await waitFor(() => screen.findByRole('button'));
+  user.click(button);
 
   return user;
 };
@@ -67,6 +94,18 @@ describe('useModalJupyterLab', () => {
     await setup();
 
     expect(await screen.findByText(MODAL_TITLE)).toBeInTheDocument();
+  });
+
+  it('should close modal', async () => {
+    const user = await setup();
+
+    await screen.findByText(MODAL_TITLE);
+    const button = await screen.findByRole('button', { name: /Launch/i });
+    user.click(button);
+
+    await waitFor(() => {
+      expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
+    });
   });
 
   it('should show modal in simple form mode', async () => {
@@ -79,23 +118,11 @@ describe('useModalJupyterLab', () => {
     const user = await setup();
 
     await screen.findByText(MODAL_TITLE);
-
-    await user.click(screen.getByRole('button', { name: /Show Full Config/i }));
+    const button = await screen.findByRole('button', { name: /Show Full Config/i });
+    user.click(button);
 
     await waitFor(() => {
       expect(screen.queryByText(SHOW_SIMPLE_CONFIG_TEXT)).toBeInTheDocument();
-    });
-  });
-
-  it('should close modal', async () => {
-    const user = await setup();
-
-    await screen.findByText(MODAL_TITLE);
-
-    await user.click(screen.getByRole('button', { name: /Launch/i }));
-
-    await waitFor(() => {
-      expect(screen.queryByText(MODAL_TITLE)).not.toBeInTheDocument();
     });
   });
 });

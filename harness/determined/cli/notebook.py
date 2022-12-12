@@ -33,6 +33,11 @@ def start_notebook(args: Namespace) -> None:
         print(nb.id)
         return
 
+    request.handle_warnings(resp.warnings)
+    currentSlotsExceeded = (resp.warnings is not None) and (
+        bindings.v1LaunchWarning.LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED in resp.warnings
+    )
+
     with api.ws(args.master, "notebooks/{}/events".format(nb.id)) as ws:
         for msg in ws:
             if msg["service_ready_event"] and nb.serviceAddress and not args.no_browser:
@@ -44,6 +49,7 @@ def start_notebook(args: Namespace) -> None:
                         description=nb.description,
                         resource_pool=nb.resourcePool,
                         task_type="notebook",
+                        currentSlotsExceeded=currentSlotsExceeded,
                     ),
                 )
                 print(colored("Jupyter Notebook is running at: {}".format(url), "green"))
@@ -64,6 +70,7 @@ def open_notebook(args: Namespace) -> None:
             description=resp["description"],
             resource_pool=resp["resourcePool"],
             task_type="notebook",
+            currentSlotsExceeded=False,
         ),
     )
 

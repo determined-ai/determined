@@ -36,8 +36,8 @@ def render_experiments(args: Namespace, experiments: Sequence[bindings.v1Experim
         "Parent ID",
         "State",
         "Progress",
-        "Start Time",
-        "End Time",
+        "Started",
+        "Ended",
         "Resource Pool",
     ]
     if args.all:

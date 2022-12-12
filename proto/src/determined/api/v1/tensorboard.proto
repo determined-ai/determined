@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 
+import "determined/api/v1/command.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/tensorboard/v1/tensorboard.proto";
 import "determined/util/v1/util.proto";
@@ -107,4 +108,6 @@ message LaunchTensorboardResponse {
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
   // The config;
   google.protobuf.Struct config = 2;
+  // List of any related warnings.
+  repeated LaunchWarning warnings = 3;
 }

@@ -34,10 +34,10 @@ type TaskContainerDefaultsConfig struct {
 	DropCapabilities []string      `json:"drop_capabilities"`
 	Devices          DevicesConfig `json:"devices"`
 
-	BindMounts BindMountsConfig `json:"bind_mounts"`
-	WorkDir    *string          `json:"work_dir"`
-	Slurm      []string         `json:"slurm"`
-	Pbs        []string         `json:"pbs"`
+	BindMounts BindMountsConfig      `json:"bind_mounts"`
+	WorkDir    *string               `json:"work_dir"`
+	Slurm      expconf.SlurmConfigV0 `json:"slurm"`
+	Pbs        expconf.PbsConfigV0   `json:"pbs"`
 }
 
 // DefaultTaskContainerDefaults returns the default for TaskContainerDefaultsConfig.
@@ -92,7 +92,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 	resources := expconf.ResourcesConfig{
 		RawDevices: c.Devices.ToExpconf(),
 	}
-	config.RawResources = schemas.Merge(config.RawResources, &resources).(*expconf.ResourcesConfig)
+	config.RawResources = schemas.Merge(config.RawResources, &resources)
 
 	// Merge Environment-related settings into the config.
 	var image *expconf.EnvironmentImageMapV0
@@ -107,7 +107,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 	}
 
 	// We just update config.RawResources so we know it can't be nil.
-	defaultedResources := schemas.WithDefaults(*config.RawResources).(expconf.ResourcesConfig)
+	defaultedResources := schemas.WithDefaults(*config.RawResources)
 	podSpec := c.CPUPodSpec
 	if defaultedResources.SlotsPerTrial() > 0 {
 		podSpec = c.GPUPodSpec
@@ -123,8 +123,11 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 		RawRegistryAuth:         c.RegistryAuth,
 		RawEnvironmentVariables: envVars,
 	}
-	config.RawEnvironment = schemas.Merge(config.RawEnvironment, &env).(*expconf.EnvironmentConfig)
+	config.RawEnvironment = schemas.Merge(config.RawEnvironment, &env)
 
 	bindMounts := c.BindMounts.ToExpconf()
-	config.RawBindMounts = schemas.Merge(config.RawBindMounts, bindMounts).(expconf.BindMountsConfig)
+	config.RawBindMounts = schemas.Merge(config.RawBindMounts, bindMounts)
+
+	config.RawSlurmConfig = schemas.Merge(config.RawSlurmConfig, &c.Slurm)
+	config.RawPbsConfig = schemas.Merge(config.RawPbsConfig, &c.Pbs)
 }
