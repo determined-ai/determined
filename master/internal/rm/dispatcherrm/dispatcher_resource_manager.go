@@ -786,9 +786,18 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		stopped := sproto.ResourcesStopped{}
 		if msg.ExitCode > 0 {
 			stopped.Failure = sproto.NewResourcesFailure(
-				sproto.TaskError,
+				sproto.ResourcesFailed,
 				msg.Message,
 				ptrs.Ptr(sproto.ExitCode(msg.ExitCode)),
+			)
+		}
+
+		// Turn off printing the last line (exit code 1) from resources.go
+		if msg.ExitCode == -1 {
+			stopped.Failure = sproto.NewResourcesFailure(
+				sproto.ResourcesFailed,
+				msg.Message,
+				nil,
 			)
 		}
 
