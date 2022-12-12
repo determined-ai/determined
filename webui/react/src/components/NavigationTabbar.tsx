@@ -118,12 +118,13 @@ const NavigationTabbar: React.FC = () => {
             path: paths.workspaceList(),
           },
           ...Loadable.match(pinnedWorkspaces, {
-            Loaded: (workspaces) => workspaces.map((workspace) => ({
-              icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
-              label: workspace.name,
-              onClick: (e: AnyMouseEvent) =>
-                handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-            })),
+            Loaded: (workspaces) =>
+              workspaces.map((workspace) => ({
+                icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
+                label: workspace.name,
+                onClick: (e: AnyMouseEvent) =>
+                  handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
+              })),
             NotLoaded: () => [
               {
                 icon: <Spinner />,

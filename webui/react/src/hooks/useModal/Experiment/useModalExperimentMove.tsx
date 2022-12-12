@@ -70,7 +70,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   );
   const projects = useWorkspaceProjects(workspaceId);
   const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched({ archived: false }, canceler.current);
+  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 

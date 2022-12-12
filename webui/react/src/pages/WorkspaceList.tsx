@@ -31,6 +31,8 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { alphaNumericSorter, numericSorter } from 'shared/utils/sort';
+import { useAuth } from 'stores/auth';
+import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';

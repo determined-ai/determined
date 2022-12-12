@@ -16,16 +16,13 @@ const WorkspacesContext = createContext<WorkspacesContext | null>(null);
 export const WorkspacesProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [workspaces, updateWorkspaces] = useState<Loadable<Workspace[]>>(NotLoaded);
   return (
-    <WorkspacesContext.Provider
-      value={{ updateWorkspaces, workspaces }}>
+    <WorkspacesContext.Provider value={{ updateWorkspaces, workspaces }}>
       {children}
     </WorkspacesContext.Provider>
   );
 };
 
-export const useFetchWorkspaces = (
-  canceler: AbortController,
-): (() => Promise<void>) => {
+export const useFetchWorkspaces = (canceler: AbortController): (() => Promise<void>) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use useFetchWorkspaces outside of Workspace Context');
@@ -42,9 +39,7 @@ export const useFetchWorkspaces = (
   }, [canceler, updateWorkspaces]);
 };
 
-export const useEnsureWorkspacesFetched = (
-  canceler: AbortController,
-): (() => Promise<void>) => {
+export const useEnsureWorkspacesFetched = (canceler: AbortController): (() => Promise<void>) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use useEnsureWorkspacesFetched outside of Workspace Context');
@@ -89,11 +84,27 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
   return Loaded(val);
 };
 
-export const useUpdateWorkspace = (id: number, updater: (arg0: Workspace) => Workspace): void => {
+export const useUpdateWorkspace = (
+  canceler: AbortController,
+): ((id: number, updater: (arg0: Workspace) => Workspace) => Promise<void>) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
-    throw new Error('Attempted to use updateWorkspace outside of Workspace Context');
+    throw new Error('Attempted to use useUpdateWorkspace outside of Workspace Context');
   }
   const { updateWorkspaces } = context;
-  updateWorkspaces((prev) => Loadable.map(prev, (workspaces) => workspaces.map((old) => old.id === id ? updater(old) : old)));
+
+  return useCallback(
+    (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
+      try {
+        updateWorkspaces((prev) =>
+          Loadable.map(prev, (workspaces) =>
+            workspaces.map((old) => (old.id === id ? updater(old) : old)),
+          ),
+        );
+      } catch (e) {
+        handleError(e);
+      }
+    },
+    [canceler, updateWorkspaces],
+  );
 };

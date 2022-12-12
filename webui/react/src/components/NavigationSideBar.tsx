@@ -284,9 +284,9 @@ const NavigationSideBar: React.FC = () => {
             />
             {Loadable.match(pinnedWorkspaces, {
               Loaded: (workspaces) =>
-                (workspaces.length === 0)
-                ? <p className={css.noWorkspaces}>No pinned workspaces</p>
-                : (
+                workspaces.length === 0 ? (
+                  <p className={css.noWorkspaces}>No pinned workspaces</p>
+                ) : (
                   <ul className={css.pinnedWorkspaces} role="list">
                     {workspaces.map((workspace) => (
                       <WorkspaceActionDropdown

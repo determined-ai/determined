@@ -1,6 +1,6 @@
 import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
@@ -41,6 +41,9 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
+  const [canceler] = useState(new AbortController());
+  const updateWorkspace = useUpdateWorkspace(canceler);
+
   const handleArchiveClick = useCallback(async () => {
     if (workspace.archived) {
       try {
@@ -63,7 +66,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     if (workspace.pinned) {
       try {
         await unpinWorkspace({ id: workspace.id });
-        useUpdateWorkspace(workspace.id, (w) => ({ ...w, pinned: false }));
+        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: false }));
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to unpin workspace.' });
@@ -71,7 +74,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     } else {
       try {
         await pinWorkspace({ id: workspace.id });
-        useUpdateWorkspace(workspace.id, (w) => ({ ...w, pinned: true }));
+        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: true }));
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to pin workspace.' });
