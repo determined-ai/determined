@@ -104,6 +104,6 @@ export const useUpdateWorkspace = (): ((
         handleError(e);
       }
     },
-    [canceler, updateWorkspaces],
+    [updateWorkspaces],
   );
 };
