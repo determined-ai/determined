@@ -18,12 +18,13 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -53,7 +54,7 @@ type protoCommandParams struct {
 }
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
-	*tasks.GenericCommandSpec, []command.LaunchWarning, error,
+	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
 ) {
 	var err error
 
@@ -193,8 +194,8 @@ func (a *apiServer) GetCommands(
 		if err != nil {
 			return false
 		}
-		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			ctx, *curUser, model.UserID(resp.Commands[i].UserId))
+		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
+			ctx, *curUser, model.UserID(resp.Commands[i].UserId), command.PlaceHolderWorkspace)
 		if serverError != nil {
 			err = serverError
 		}
@@ -221,8 +222,8 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		ctx, *curUser, model.UserID(resp.Command.UserId)); err != nil {
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+		ctx, *curUser, model.UserID(resp.Command.UserId), command.PlaceHolderWorkspace); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -305,6 +306,6 @@ func (a *apiServer) LaunchCommand(
 	return &apiv1.LaunchCommandResponse{
 		Command:  cmd,
 		Config:   protoutils.ToStruct(spec.Config),
-		Warnings: command.LaunchWarningToProto(launchWarnings),
+		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }

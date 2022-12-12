@@ -22,14 +22,14 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -84,8 +84,8 @@ func (a *apiServer) GetTensorboards(
 		if err != nil {
 			return false
 		}
-		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			ctx, *curUser, model.UserID(resp.Tensorboards[i].UserId))
+		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
+			ctx, *curUser, model.UserID(resp.Tensorboards[i].UserId), command.PlaceHolderWorkspace)
 		if serverError != nil {
 			err = serverError
 		}
@@ -112,8 +112,8 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		ctx, *curUser, model.UserID(resp.Tensorboard.UserId)); err != nil {
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+		ctx, *curUser, model.UserID(resp.Tensorboard.UserId), command.PlaceHolderWorkspace); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -391,7 +391,7 @@ func (a *apiServer) LaunchTensorboard(
 	return &apiv1.LaunchTensorboardResponse{
 		Tensorboard: tb,
 		Config:      protoutils.ToStruct(spec.Config),
-		Warnings:    command.LaunchWarningToProto(launchWarnings),
+		Warnings:    pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, err
 }
 

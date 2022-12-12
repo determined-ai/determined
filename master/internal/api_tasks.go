@@ -15,12 +15,12 @@ import (
 	"github.com/hashicorp/go-multierror"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/task"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
@@ -76,7 +76,9 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 	} else if err != nil {
 		return false, err
 	}
-	return user.AuthZProvider.Get().CanAccessNTSCTask(ctx, curUser, taskOwnerID)
+	return command.AuthZProvider.Get().CanGetNSC(
+		ctx, curUser, taskOwnerID, command.PlaceHolderWorkspace,
+	)
 }
 
 func (a *apiServer) canDoActionsOnTask(
@@ -306,7 +308,7 @@ func (a *apiServer) GetActiveTasksCount(
 	if err != nil {
 		return nil, err
 	}
-	if err = user.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
+	if err = command.AuthZProvider.Get().CanGetActiveTasksCount(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

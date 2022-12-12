@@ -14,12 +14,12 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -56,8 +56,8 @@ func (a *apiServer) GetShells(
 		if err != nil {
 			return false
 		}
-		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			ctx, *curUser, model.UserID(resp.Shells[i].UserId))
+		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
+			ctx, *curUser, model.UserID(resp.Shells[i].UserId), command.PlaceHolderWorkspace)
 		if serverError != nil {
 			err = serverError
 		}
@@ -84,8 +84,8 @@ func (a *apiServer) GetShell(
 		return nil, err
 	}
 
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		ctx, *curUser, model.UserID(resp.Shell.UserId)); err != nil {
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+		ctx, *curUser, model.UserID(resp.Shell.UserId), command.PlaceHolderWorkspace); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -203,6 +203,6 @@ func (a *apiServer) LaunchShell(
 	return &apiv1.LaunchShellResponse{
 		Shell:    shell,
 		Config:   protoutils.ToStruct(spec.Config),
-		Warnings: command.LaunchWarningToProto(launchWarnings),
+		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
