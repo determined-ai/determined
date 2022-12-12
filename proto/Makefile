@@ -43,6 +43,11 @@ build/proto.stamp: $(source_files)
 	# GRPC generation.
 	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto --grpc-gateway_opt allow_delete_body=true
 	mv $(build_path) pkg
+ifeq "$(shell uname)" "Darwin"
+	sed -E -i '' '/\/\/[[:space:]]*protoc/d' pkg/*/*.pb.go
+else
+	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/*/*.pb.go
+endif
 	touch $@
 
 $(echo_swagger_patch_dir):
