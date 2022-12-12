@@ -64,4 +64,3 @@ fmt:
 check:
 	make -C tests check
 	black . --check
-	mypy `find . -name '*.py'`
