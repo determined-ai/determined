@@ -31,7 +31,6 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { alphaNumericSorter, numericSorter } from 'shared/utils/sort';
 import { useAuth } from 'stores/auth';
 import { useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
@@ -117,13 +116,10 @@ const WorkspaceList: React.FC = () => {
 
   const handleSortSelect = useCallback(
     (value: unknown) => {
-      updateSettings(
-        {
-          sortDesc: value === V1GetWorkspacesRequestSortBy.NAME ? false : true,
-          sortKey: value as V1GetWorkspacesRequestSortBy | undefined,
-        },
-        true,
-      );
+      updateSettings({
+        sortDesc: value === V1GetWorkspacesRequestSortBy.NAME ? false : true,
+        sortKey: value as V1GetWorkspacesRequestSortBy | undefined,
+      });
     },
     [updateSettings],
   );
@@ -152,10 +148,6 @@ const WorkspaceList: React.FC = () => {
     }
   }, [prevWhose, settings.whose, updateSettings, user, users]);
 
-  const workspaceByIdSort = (a: Workspace, b: Workspace): number => numericSorter(a.id, b.id);
-  const workspaceByNameSort = (a: Workspace, b: Workspace): number =>
-    alphaNumericSorter(a.name, b.name);
-
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
       <Link path={paths.workspaceDetails(record.id)}>{value}</Link>
@@ -167,17 +159,11 @@ const WorkspaceList: React.FC = () => {
 
     return [
       {
-        dataIndex: 'id',
-        key: V1GetWorkspacesRequestSortBy.ID,
-        sorter: workspaceByIdSort,
-      },
-      {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: V1GetWorkspacesRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: workspaceNameRenderer,
-        sorter: workspaceByNameSort,
         title: 'Name',
       },
       {
@@ -288,19 +274,13 @@ const WorkspaceList: React.FC = () => {
       case GridListView.Grid:
         return (
           <Grid gap={ShirtSize.Medium} minItemWidth={300} mode={GridMode.AutoFill}>
-            {workspaces
-              .sort(
-                settings.sortKey === V1GetWorkspacesRequestSortBy.ID
-                  ? workspaceByIdSort
-                  : workspaceByNameSort,
-              )
-              .map((workspace) => (
-                <WorkspaceCard
-                  fetchWorkspaces={fetchWorkspaces}
-                  key={workspace.id}
-                  workspace={workspace}
-                />
-              ))}
+            {workspaces.map((workspace) => (
+              <WorkspaceCard
+                fetchWorkspaces={fetchWorkspaces}
+                key={workspace.id}
+                workspace={workspace}
+              />
+            ))}
           </Grid>
         );
       case GridListView.List:
