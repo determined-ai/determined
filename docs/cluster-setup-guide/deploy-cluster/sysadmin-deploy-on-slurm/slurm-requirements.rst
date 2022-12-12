@@ -268,8 +268,8 @@ platform. There may be additional per-user configuration that is required.
                change the default ``ENROOT_RUNTIME_PATH`` defined in ``/etc/enroot/enroot.conf`` on
                each node in your HPC cluster.
 
-         -  Provide an ``ENROOT_RUNTIME_PATH`` definition in
-            ``task_container_defaults.environement_variables`` in master.yaml.
+         -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in
+            ``task_container_defaults.environment_variables`` in master.yaml.
 
                .. code:: yaml
 
@@ -277,7 +277,8 @@ platform. There may be additional per-user configuration that is required.
                      environment_variables:
                         - ENROOT_RUNTIME_PATH=/tmp/$(whoami)
 
-         -  Provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment configuration
+         -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment
+            configuration.
 
    #. Unlike Singularity or PodMan, you must manually download the docker image file to the local
       file system (``enroot import``) and then each user must create an Enroot container using that
