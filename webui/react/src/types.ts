@@ -807,6 +807,7 @@ export type JobAction = ValueOf<typeof JobAction>;
 export interface Workspace {
   agentUserGroup?: V1AgentUserGroup;
   archived: boolean;
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   checkpointStorageConfig?: any;
   id: number;
   immutable: boolean;

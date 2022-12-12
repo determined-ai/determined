@@ -121,6 +121,7 @@ const Dropdown: React.FC<Props> = ({
   if (showArrow) classes.push(css.arrow);
 
   const handleClick = useCallback(
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     (event: any) => {
       if (!event || !event.target) return;
 

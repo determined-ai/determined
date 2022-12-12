@@ -217,7 +217,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         handleError(e, { publicSubject: "Unable to fetch this user's roles." });
       }
     }
-  }, [user, canAssignRoles]);
+  }, [user, canAssignRoles, rbacEnabled]);
 
   useEffect(() => {
     fetchUserRoles();

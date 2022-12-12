@@ -1,5 +1,6 @@
 import { Select } from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/es/select';
+import { DefaultOptionType } from 'antd/es/select';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Metric, MetricType } from 'types';
@@ -116,11 +117,11 @@ const MetricSelectFilter: React.FC<Props> = ({
     [multiple, onChange, value],
   );
 
-  const handleFiltering = useCallback((search: string, option: any) => {
+  const handleFiltering = useCallback((search: string, option: DefaultOptionType) => {
     if (option.key === allOptionId || option.key === resetOptionId) return true;
     if (!option.value) return false;
 
-    const metric = metricKeyToMetric(option.value);
+    const metric = metricKeyToMetric(option.value as string);
     if (metric === undefined) return false;
 
     return filterFn(search, metric.name);

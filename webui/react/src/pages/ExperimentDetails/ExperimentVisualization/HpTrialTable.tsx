@@ -1,4 +1,5 @@
 import { Typography } from 'antd';
+import { TablePaginationConfig } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
@@ -138,8 +139,8 @@ const HpTrialTable: React.FC<Props> = ({
     return [idColumn, metricColumn, ...hpColumns];
   }, [colorScale, hyperparameters, metric, trialIds, experimentId]);
 
-  const handleTableChange = useCallback((tablePagination: any) => {
-    setPageSize(tablePagination.pageSize);
+  const handleTableChange = useCallback((tablePagination: TablePaginationConfig) => {
+    setPageSize(tablePagination.pageSize || 10);
   }, []);
 
   const handleTableRow = useCallback(
