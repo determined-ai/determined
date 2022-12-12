@@ -523,7 +523,8 @@ func calculateJobExitStatus(
 		case "TERMINATED": // User-initiated termination complete
 			return 1, getJobExitMessages(resp), true
 		case "FAILED":
-			return 1, getJobExitMessages(resp), true // exit status TBD -- use 1 for now
+			// exit status TBD -- use -1 to skip printing incorrect (exit code 1)
+			return -1, getJobExitMessages(resp), true
 		case "COMPLETED": // Normal completion
 			return 0, getJobExitMessages(resp), true
 		default:
