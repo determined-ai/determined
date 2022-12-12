@@ -17,7 +17,7 @@ Deploying Determined with Slurm/PBS has the following requirements.
       -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
       -  A cluster-wide file system with consistent path names across the HPC cluster
 
--  Slurm 19.05 or greater or PBS 2021.1.2 or greater.
+-  Slurm 20.02 or greater or PBS 2021.1.2 or greater.
 
 -  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
    greater.
