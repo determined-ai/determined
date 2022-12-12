@@ -4,7 +4,7 @@ import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
 import { clone, isEqual } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import { UserAssignment, UserRole, Workspace } from 'types';
+import { UserAssignment, UserRole } from 'types';
 
 const logger = rootLogger.extend('store');
 
@@ -18,7 +18,6 @@ interface OmnibarState {
 
 interface State {
   knownRoles: UserRole[];
-  pinnedWorkspaces: Workspace[];
 
   ui: {
     omnibar: OmnibarState;
@@ -35,9 +34,6 @@ export const StoreAction = {
   // User assignments, roles, and derived permissions
   SetKnownRoles: 'SetKnownRoles',
 
-  // PinnedWorkspaces
-  SetPinnedWorkspaces: 'SetPinnedWorkspaces',
-
   // User Settings
   SetUserSettings: 'SetUserSettings',
   ShowOmnibar: 'ShowOmnibar',
@@ -45,14 +41,12 @@ export const StoreAction = {
 
 type Action =
   | { type: typeof StoreAction.Reset }
-  | { type: typeof StoreAction.SetPinnedWorkspaces; value: Workspace[] }
   | { type: typeof StoreAction.HideOmnibar }
   | { type: typeof StoreAction.ShowOmnibar }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
 
 const initState: State = {
   knownRoles: [],
-  pinnedWorkspaces: [],
   ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
 };
@@ -65,9 +59,6 @@ const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
-    case StoreAction.SetPinnedWorkspaces:
-      if (isEqual(state.pinnedWorkspaces, action.value)) return state;
-      return { ...state, pinnedWorkspaces: action.value };
     case StoreAction.HideOmnibar:
       if (!state.ui.omnibar.isShowing) return state;
       return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: false } } };

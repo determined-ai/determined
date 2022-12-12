@@ -8,7 +8,6 @@ import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
-import { useStore } from 'contexts/Store';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
@@ -18,11 +17,13 @@ import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
+import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -113,7 +114,6 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const { pinnedWorkspaces } = useStore();
   const loadableAuth = useAuth();
   const isAuthenticated = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.isAuthenticated,
@@ -194,6 +194,8 @@ const NavigationSideBar: React.FC = () => {
   const handleCreateWorkspace = useCallback(() => {
     openWorkspaceCreateModal();
   }, [openWorkspaceCreateModal]);
+
+  const pinnedWorkspaces = useWorkspaces({ pinned: true });
 
   if (!showNavigation) return null;
 
@@ -280,31 +282,35 @@ const NavigationSideBar: React.FC = () => {
               path={paths.workspaceList()}
               tooltip={settings.navbarCollapsed}
             />
-            {pinnedWorkspaces.length === 0 ? (
-              <p className={css.noWorkspaces}>No pinned workspaces</p>
-            ) : (
-              <ul className={css.pinnedWorkspaces} role="list">
-                {pinnedWorkspaces.map((workspace) => (
-                  <WorkspaceActionDropdown
-                    key={workspace.id}
-                    trigger={['contextMenu']}
-                    workspace={workspace}>
-                    <li>
-                      <NavigationItem
-                        icon={<DynamicIcon name={workspace.name} size={24} />}
-                        label={workspace.name}
-                        labelRender={
-                          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                            {workspace.name}
-                          </Typography.Paragraph>
-                        }
-                        path={paths.workspaceDetails(workspace.id)}
-                      />
-                    </li>
-                  </WorkspaceActionDropdown>
-                ))}
-              </ul>
-            )}
+            {Loadable.match(pinnedWorkspaces, {
+              Loaded: (workspaces) =>
+                workspaces.length === 0 ? (
+                  <p className={css.noWorkspaces}>No pinned workspaces</p>
+                ) : (
+                  <ul className={css.pinnedWorkspaces} role="list">
+                    {workspaces.map((workspace) => (
+                      <WorkspaceActionDropdown
+                        key={workspace.id}
+                        trigger={['contextMenu']}
+                        workspace={workspace}>
+                        <li>
+                          <NavigationItem
+                            icon={<DynamicIcon name={workspace.name} size={24} />}
+                            label={workspace.name}
+                            labelRender={
+                              <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                                {workspace.name}
+                              </Typography.Paragraph>
+                            }
+                            path={paths.workspaceDetails(workspace.id)}
+                          />
+                        </li>
+                      </WorkspaceActionDropdown>
+                    ))}
+                  </ul>
+                ),
+              NotLoaded: () => <Spinner />,
+            })}
           </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map((config) => (
