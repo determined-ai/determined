@@ -28,9 +28,7 @@
     "test": "craco test --config jest.config.js",
     "test:coverage": "npm test -- --env=jsdom --coverage --reporters default --watchAll=false",
     "eject": "react-scripts eject",
-    "analyze": "source-map-explorer 'build/static/js/*.js'",
-    "storybook": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_PATH=src start-storybook -p 9009",
-    "storybook:build": "TS_NODE_PROJECT=.storybook/tsconfig.json NODE_OPTIONS='--max-old-space-size=2048' NODE_PATH=src build-storybook -o build-storybook"
+    "analyze": "source-map-explorer 'build/static/js/*.js'"
   },
   "dependencies": {
     "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
@@ -85,12 +83,6 @@
   },
   "devDependencies": {
     "@craco/craco": "^6.4.5",
-    "@storybook/addon-docs": "^6.5.11",
-    "@storybook/addon-essentials": "^6.5.11",
-    "@storybook/addon-links": "^6.5.11",
-    "@storybook/addon-postcss": "^2.0.0",
-    "@storybook/addons": "^6.5.11",
-    "@storybook/react": "^6.5.11",
     "@testing-library/dom": "^8.19.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -131,7 +123,6 @@
     "eslint-plugin-react": "^7.23.2",
     "eslint-plugin-react-hooks": "^4.1.2",
     "eslint-plugin-sort-keys-fix": "^1.1.1",
-    "eslint-plugin-storybook": "^0.6.4",
     "express": "^4.17.1",
     "jest-junit": "^13.0.0",
     "less": "^4.1.1",
@@ -147,7 +138,6 @@
     "sass": "^1.35.2",
     "sass-loader": "^10.1.1",
     "source-map-explorer": "^2.5.0",
-    "storybook-preset-craco": "0.0.6",
     "stylelint": "^13.13.1",
     "stylelint-config-prettier": "^9.0.3",
     "stylelint-config-standard": "^22.0.0",
