@@ -62,26 +62,24 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
   if (context === null) {
     throw new Error('Attempted to use useWorkspaces outside of Workspace Context');
   }
-  if (context.workspaces === NotLoaded) {
-    return NotLoaded;
-  }
-  const val = Loadable.getOrElse([], context.workspaces).filter((ws) =>
-    Object.keys(params || {}).reduce<boolean>((accumulator: boolean, key) => {
-      switch (key) {
-        case 'archived':
-          return accumulator && ws.archived === params?.archived;
-        case 'pinned':
-          return accumulator && ws.pinned === params?.pinned;
-        case 'name':
-          return accumulator && ws.name === params?.name;
-        case 'users':
-          return accumulator && (params?.users || []).indexOf(String(ws.userId)) > -1;
-        default:
-          return false;
-      }
-    }, true),
+  return Loadable.map(context.workspaces, (workspaces: Workspace[]) =>
+    workspaces.filter((ws) =>
+      Object.keys(params || {}).reduce<boolean>((accumulator: boolean, key) => {
+        switch (key) {
+          case 'archived':
+            return accumulator && ws.archived === params?.archived;
+          case 'pinned':
+            return accumulator && ws.pinned === params?.pinned;
+          case 'name':
+            return accumulator && ws.name === params?.name;
+          case 'users':
+            return accumulator && (params?.users || []).indexOf(String(ws.userId)) > -1;
+          default:
+            return false;
+        }
+      }, true),
+    ),
   );
-  return Loaded(val);
 };
 
 export const useUpdateWorkspace = (
@@ -94,9 +92,9 @@ export const useUpdateWorkspace = (
   const { updateWorkspaces } = context;
 
   return useCallback(
-    (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
+    async (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
       try {
-        updateWorkspaces((prev) =>
+        await updateWorkspaces((prev) =>
           Loadable.map(prev, (workspaces) =>
             workspaces.map((old) => (old.id === id ? updater(old) : old)),
           ),
