@@ -3,7 +3,6 @@ import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -17,8 +16,10 @@ import {
 import { V1GroupDetails, V1GroupSearchResult } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
+import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
 import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 export const MODAL_HEADER_LABEL_CREATE = 'Create Group';
@@ -47,7 +48,8 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
   const { canModifyPermissions } = usePermissions();
   const [isLoading, setIsLoading] = useState(true);
 
-  const { knownRoles } = useStore();
+  const knowRolesLoadable = useKnownRoles();
+  const knownRoles = Loadable.getOrElse(initKnowRoles, knowRolesLoadable);
 
   const [groupDetail, setGroupDetail] = useState<V1GroupDetails>();
 
@@ -125,14 +127,19 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
               optionFilterProp="children"
               placeholder={'Add Roles'}
               showSearch>
-              {knownRoles.map((r) => (
-                <Select.Option
-                  disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
-                  key={r.id}
-                  value={r.id}>
-                  {r.name}
-                </Select.Option>
-              ))}
+              {Loadable.match(knowRolesLoadable, {
+                Loaded: () =>
+                  knownRoles.map((r) => (
+                    <Select.Option
+                      disabled={groupRoles?.find((gr) => gr.id === r.id)?.fromWorkspace?.length}
+                      key={r.id}
+                      value={r.id}>
+                      {r.name}
+                    </Select.Option>
+                  )),
+                NotLoaded: () => undefined,
+              })}
+              {}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">

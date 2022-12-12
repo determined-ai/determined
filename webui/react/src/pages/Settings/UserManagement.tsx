@@ -15,7 +15,6 @@ import {
   relativeTimeRenderer,
 } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
-import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -26,6 +25,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
+import { useFetchKnownRoles } from 'stores/knowRoles';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 
