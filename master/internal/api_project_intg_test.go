@@ -321,6 +321,10 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 }
 
 func TestGetProjectByActivity(t *testing.T) {
+	if isMockAuthZ() {
+		wAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	}
+
 	api, _, _, _, ctx := setupProjectAuthZTest(t) //nolint: dogsled
 
 	w, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
