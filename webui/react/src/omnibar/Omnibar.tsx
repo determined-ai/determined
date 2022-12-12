@@ -24,7 +24,7 @@ const Omnibar: React.FC = () => {
   useEffect(() => {
     const keyDownListener = (e: KeyboardEvent) => {
       if (e.code === KeyCode.Space && e.ctrlKey) {
-        setShowing(!showing);
+        setShowing((showing) => !showing);
       } else if (showing && e.code === KeyCode.Escape) {
         setShowing(false);
       }
@@ -35,11 +35,11 @@ const Omnibar: React.FC = () => {
     return () => {
       keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
     };
-  }, [showing, setShowing]);
+  }, [showing]);
 
   const hideBar = useCallback(() => {
     setShowing(false);
-  }, [setShowing]);
+  }, []);
 
   const onAction = useCallback(
     async (item: unknown, query: (inputEl: string) => void) => {
