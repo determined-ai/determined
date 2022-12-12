@@ -318,3 +318,35 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 		require.Equal(t, expectedErr.Error(), err.Error())
 	}
 }
+
+func TestGetProjectByActivity(t *testing.T) {
+	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t)
+
+	w, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+
+	require.NoError(t, err)
+
+	p, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name:        uuid.New().String(),
+		WorkspaceId: w.id,
+	})
+
+	require.NoError(t, err)
+
+	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     p.id,
+	})
+
+	require.NoError(t, err)
+
+	resp, err = api.GetProjectsByUserActivity(ctx, &apiv1.GetProjectsByUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     p.id,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 1, len(resp.projects))
+}
