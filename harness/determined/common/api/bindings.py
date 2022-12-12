@@ -13234,7 +13234,7 @@ def get_GetProjectsByUserActivity(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/projects/activity",
+        path="/api/v1/user/projects/activity",
         params=_params,
         json=None,
         data=None,

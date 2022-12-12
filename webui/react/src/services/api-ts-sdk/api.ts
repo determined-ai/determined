@@ -20889,7 +20889,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @throws {RequiredError}
          */
         getProjectsByUserActivity(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/projects/activity`;
+            const localVarPath = `/api/v1/user/projects/activity`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
