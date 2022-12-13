@@ -183,7 +183,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
                       {r.name}
                     </Select.Option>
                   )),
-                NotLoaded: () => undefined,
+                NotLoaded: () => undefined, // TODO show spinner when this is loading
               })}
             </Select>
           </Form.Item>
