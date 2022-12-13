@@ -476,6 +476,8 @@ export const mapV1Experiment = (
   }) as types.HyperparametersFlattened;
   return {
     archived: data.archived,
+    checkpointCount: data.checkpointCount,
+    checkpointSize: parseInt(data?.checkpointSize || '0'),
     config: ioToExperimentConfig(ioConfig),
     configRaw: data.config,
     description: data.description,
@@ -605,6 +607,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     autoRestarts: data.restarts,
     bestAvailableCheckpoint: data.bestCheckpoint && decodeCheckpointWorkload(data.bestCheckpoint),
     bestValidationMetric: data.bestValidation && decodeMetricsWorkload(data.bestValidation),
+    checkpointCount: data.checkpointCount || 0,
     endTime: data.endTime && (data.endTime as unknown as string),
     experimentId: data.experimentId,
     hyperparameters: flattenObject(data.hparams),
@@ -613,6 +616,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     totalBatchesProcessed: data.totalBatchesProcessed,
+    totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };
 };
 

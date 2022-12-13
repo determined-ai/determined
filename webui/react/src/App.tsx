@@ -8,9 +8,9 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import StoreProvider, { StoreAction, useStore, useStoreDispatch } from 'contexts/Store';
+import StoreProvider from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
-import useKeyTracker, { KeyCode, keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
+import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
 import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -33,8 +33,6 @@ import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const resize = useResize();
-  const storeDispatch = useStoreDispatch();
-  const { ui } = useStore();
   const auth = useAuth().auth;
   const isAuthenticated = Loadable.match(auth, {
     Loaded: (auth) => auth.isAuthenticated,
@@ -116,27 +114,6 @@ const AppView: React.FC = () => {
   useEffect(() => {
     return () => canceler.abort();
   }, [canceler]);
-
-  // Detect and handle key events.
-  useEffect(() => {
-    const keyDownListener = (e: KeyboardEvent) => {
-      if (e.code === KeyCode.Space && e.ctrlKey) {
-        if (ui.omnibar.isShowing) {
-          storeDispatch({ type: StoreAction.HideOmnibar });
-        } else {
-          storeDispatch({ type: StoreAction.ShowOmnibar });
-        }
-      } else if (ui.omnibar.isShowing && e.code === KeyCode.Escape) {
-        storeDispatch({ type: StoreAction.HideOmnibar });
-      }
-    };
-
-    keyEmitter.on(KeyEvent.KeyDown, keyDownListener);
-
-    return () => {
-      keyEmitter.off(KeyEvent.KeyDown, keyDownListener);
-    };
-  }, [ui.omnibar.isShowing, storeDispatch]);
 
   // Correct the viewport height size when window resize occurs.
   useLayoutEffect(() => correctViewportHeight(), [resize]);

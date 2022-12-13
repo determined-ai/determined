@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
@@ -308,6 +309,10 @@ VALUES
 
 	if _, err := db.sql.NamedExecContext(ctx, query, m); err != nil {
 		return errors.Wrap(err, "inserting checkpoint")
+	}
+
+	if err := UpdateCheckpointSize([]uuid.UUID{m.UUID}); err != nil {
+		return errors.Wrap(err, "updating checkpoint size")
 	}
 
 	return nil

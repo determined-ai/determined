@@ -494,17 +494,18 @@ export interface TrialItem extends StartEndTimes {
   autoRestarts: number;
   bestAvailableCheckpoint?: CheckpointWorkload;
   bestValidationMetric?: MetricsWorkload;
+  checkpointCount?: number;
   experimentId: number;
   hyperparameters: TrialHyperparameters;
   id: number;
   latestValidationMetric?: MetricsWorkload;
   state: RunState;
   totalBatchesProcessed: number;
+  totalCheckpointSize: number;
 }
 
 export interface TrialDetails extends TrialItem {
   runnerState?: string;
-  totalCheckpointSize: number;
 }
 
 export interface TrialWorkloads extends WithPagination {
@@ -535,6 +536,8 @@ export interface TrialSummary extends TrialItem {
 
 export interface ExperimentItem {
   archived: boolean;
+  checkpointCount?: number;
+  checkpointSize?: number;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
   description?: string;
