@@ -60,7 +60,9 @@ test:
 fmt:
 	make -C tests fmt
 	black .
+	isort .
 
 check:
 	make -C tests check
 	black . --check
+	isort . --check-only
