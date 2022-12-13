@@ -215,6 +215,14 @@ class CheckpointContext:
         of the contents from each ckpt_dir.
 
         Returns:  The ``storage_id`` for this checkpoint.
+
+        Example:
+
+        .. code::
+
+           if core_context.distributed.rank == 0:
+               storage_id = core_context.checkpoint.upload(ckpt_dir, shard=False)
+               print(f"done uploading checkpoint {storage_id}")
         """
         if ckpt_dir is not None:
             ckpt_dir = os.fspath(ckpt_dir)
@@ -425,7 +433,7 @@ class CheckpointContext:
         .. code::
 
            if core_context.distributed.rank == 0:
-               with core_context.checkpoint.store_path() as (path, storage_id):
+               with core_context.checkpoint.store_path(shard=False) as (path, storage_id):
                    my_save_model(my_model, path)
                    print(f"done saving checkpoint {storage_id}")
                print(f"done uploading checkpoint {storage_id}")
