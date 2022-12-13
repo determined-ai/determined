@@ -121,6 +121,7 @@ type (
 	hasSlurmPartitionResponse struct {
 		HasResourcePool    bool
 		ProvidingPartition string // Set for launcher-provided resource pools
+		ValidationErrors   []error
 	}
 )
 
@@ -189,6 +190,10 @@ func (d *DispatcherResourceManager) validateResourcePool(ctx actor.Messenger,
 				"-- verify the cluster configuration", name, resp.ProvidingPartition)
 	case !resp.HasResourcePool:
 		return "", fmt.Errorf("resource pool not found: %s", name)
+	case len(resp.ValidationErrors) > 0:
+		// Return the first of any validation errors -- this will inform the user
+		// at experiment creation/command run time that a configuration issue exists.
+		return resp.ProvidingPartition, resp.ValidationErrors[0]
 	default:
 		return resp.ProvidingPartition, nil
 	}
@@ -460,6 +465,7 @@ func (m *dispatcherResourceManager) getPartitionValidationResponse(
 ) hasSlurmPartitionResponse {
 	result := false
 	providingPartition := ""
+	var validationErrors []error
 	result = partitionExists(targetPartitionName, hpcDetails.Partitions)
 	if !result {
 		for _, pool := range m.poolConfig {
@@ -468,6 +474,7 @@ func (m *dispatcherResourceManager) getPartitionValidationResponse(
 				providingPartition = basePartition
 				if partitionExists(basePartition, hpcDetails.Partitions) {
 					result = true
+					validationErrors = performValidation(pool)
 				}
 				break // on the first name match
 			}
@@ -476,7 +483,19 @@ func (m *dispatcherResourceManager) getPartitionValidationResponse(
 	return hasSlurmPartitionResponse{
 		HasResourcePool:    result,
 		ProvidingPartition: providingPartition,
+		ValidationErrors:   validationErrors,
 	}
+}
+
+func performValidation(pool config.ResourcePoolConfig) []error {
+	var validationErrors []error
+	if pool.TaskContainerDefaults != nil {
+		e := tasks.ValidatePbs(pool.TaskContainerDefaults.Pbs.SbatchArgs())
+		validationErrors = append(validationErrors, e...)
+		e = tasks.ValidateSlurm(pool.TaskContainerDefaults.Slurm.SbatchArgs())
+		validationErrors = append(validationErrors, e...)
+	}
+	return validationErrors
 }
 
 // partitionExists return true if the specified partition exists on the HPC cluster.
