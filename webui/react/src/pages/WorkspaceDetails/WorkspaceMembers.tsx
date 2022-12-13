@@ -92,8 +92,8 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
         <Button type="text">
           <Icon name="overflow-vertical" />
         </Button>
-        {openWorkspaceRemoveMemberContextHolder}
       </Dropdown>
+      {openWorkspaceRemoveMemberContextHolder}
     </div>
   );
 };
