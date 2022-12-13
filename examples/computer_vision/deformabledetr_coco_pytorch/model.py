@@ -8,14 +8,9 @@ sys.path.append("./ddetr")
 
 import torch
 import torch.nn.functional as F
-from torch import nn
-
-
-from ddetr.models.deformable_detr import DeformableDETR, PostProcess
-from ddetr.util import box_ops
-from ddetr.util.misc import nested_tensor_from_tensor_list, accuracy, interpolate
-
 from ddetr.models.backbone import build_backbone
+from ddetr.models.deformable_detr import DeformableDETR, PostProcess
+from ddetr.models.deformable_transformer import build_deforamble_transformer
 from ddetr.models.matcher import build_matcher
 from ddetr.models.segmentation import (
     DETRsegm,
@@ -24,7 +19,9 @@ from ddetr.models.segmentation import (
     dice_loss,
     sigmoid_focal_loss,
 )
-from ddetr.models.deformable_transformer import build_deforamble_transformer
+from ddetr.util import box_ops
+from ddetr.util.misc import accuracy, interpolate, nested_tensor_from_tensor_list
+from torch import nn
 
 from determined.horovod import hvd
 
@@ -36,9 +33,7 @@ class SetCriterion(nn.Module):
         2) we supervise each pair of matched ground-truth / prediction (supervise class and box)
     """
 
-    def __init__(
-        self, num_classes, matcher, weight_dict, losses, focal_alpha=0.25, world_size=1
-    ):
+    def __init__(self, num_classes, matcher, weight_dict, losses, focal_alpha=0.25, world_size=1):
         """Create the criterion.
         Parameters:
             num_classes: number of object categories, omitting the special no-object category
@@ -63,9 +58,7 @@ class SetCriterion(nn.Module):
         src_logits = outputs["pred_logits"]
 
         idx = self._get_src_permutation_idx(indices)
-        target_classes_o = torch.cat(
-            [t["labels"][J] for t, (_, J) in zip(targets, indices)]
-        )
+        target_classes_o = torch.cat([t["labels"][J] for t, (_, J) in zip(targets, indices)])
         target_classes = torch.full(
             src_logits.shape[:2],
             self.num_classes,
@@ -107,9 +100,7 @@ class SetCriterion(nn.Module):
         """
         pred_logits = outputs["pred_logits"]
         device = pred_logits.device
-        tgt_lengths = torch.as_tensor(
-            [len(v["labels"]) for v in targets], device=device
-        )
+        tgt_lengths = torch.as_tensor([len(v["labels"]) for v in targets], device=device)
         # Count the number of predictions that are NOT "no-object" (which is the last class)
         card_pred = (pred_logits.argmax(-1) != pred_logits.shape[-1] - 1).sum(1)
         card_err = F.l1_loss(card_pred.float(), tgt_lengths.float())
@@ -124,9 +115,7 @@ class SetCriterion(nn.Module):
         assert "pred_boxes" in outputs
         idx = self._get_src_permutation_idx(indices)
         src_boxes = outputs["pred_boxes"][idx]
-        target_boxes = torch.cat(
-            [t["boxes"][i] for t, (_, i) in zip(targets, indices)], dim=0
-        )
+        target_boxes = torch.cat([t["boxes"][i] for t, (_, i) in zip(targets, indices)], dim=0)
 
         loss_bbox = F.l1_loss(src_boxes, target_boxes, reduction="none")
 
@@ -179,17 +168,13 @@ class SetCriterion(nn.Module):
 
     def _get_src_permutation_idx(self, indices):
         # permute predictions following indices
-        batch_idx = torch.cat(
-            [torch.full_like(src, i) for i, (src, _) in enumerate(indices)]
-        )
+        batch_idx = torch.cat([torch.full_like(src, i) for i, (src, _) in enumerate(indices)])
         src_idx = torch.cat([src for (src, _) in indices])
         return batch_idx, src_idx
 
     def _get_tgt_permutation_idx(self, indices):
         # permute targets following indices
-        batch_idx = torch.cat(
-            [torch.full_like(tgt, i) for i, (_, tgt) in enumerate(indices)]
-        )
+        batch_idx = torch.cat([torch.full_like(tgt, i) for i, (_, tgt) in enumerate(indices)])
         tgt_idx = torch.cat([tgt for (_, tgt) in indices])
         return batch_idx, tgt_idx
 
@@ -211,9 +196,7 @@ class SetCriterion(nn.Module):
                       The expected keys in each dict depends on the losses applied, see each loss' doc
         """
         outputs_without_aux = {
-            k: v
-            for k, v in outputs.items()
-            if k != "aux_outputs" and k != "enc_outputs"
+            k: v for k, v in outputs.items() if k != "aux_outputs" and k != "enc_outputs"
         }
 
         # Retrieve the matching between the outputs of the last layer and the targets
@@ -233,9 +216,7 @@ class SetCriterion(nn.Module):
         losses = {}
         for loss in self.losses:
             kwargs = {}
-            losses.update(
-                self.get_loss(loss, outputs, targets, indices, num_boxes, **kwargs)
-            )
+            losses.update(self.get_loss(loss, outputs, targets, indices, num_boxes, **kwargs))
 
         # In case of auxiliary losses, we repeat this process with the output of each intermediate layer.
         if "aux_outputs" in outputs:
@@ -249,9 +230,7 @@ class SetCriterion(nn.Module):
                     if loss == "labels":
                         # Logging is enabled only for the last layer
                         kwargs["log"] = False
-                    l_dict = self.get_loss(
-                        loss, aux_outputs, targets, indices, num_boxes, **kwargs
-                    )
+                    l_dict = self.get_loss(loss, aux_outputs, targets, indices, num_boxes, **kwargs)
                     l_dict = {k + f"_{i}": v for k, v in l_dict.items()}
                     losses.update(l_dict)
 
@@ -269,9 +248,7 @@ class SetCriterion(nn.Module):
                 if loss == "labels":
                     # Logging is enabled only for the last layer
                     kwargs["log"] = False
-                l_dict = self.get_loss(
-                    loss, enc_outputs, bin_targets, indices, num_boxes, **kwargs
-                )
+                l_dict = self.get_loss(loss, enc_outputs, bin_targets, indices, num_boxes, **kwargs)
                 l_dict = {k + f"_enc": v for k, v in l_dict.items()}
                 losses.update(l_dict)
 

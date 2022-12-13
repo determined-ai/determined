@@ -13,26 +13,24 @@ import io
 import itertools
 import json
 import logging
-import numpy as np
 import os
 import pickle
 from collections import OrderedDict
+
+import detectron2.utils.comm as comm
+import numpy as np
 import pycocotools.mask as mask_util
 import torch
+from detectron2.data import DatasetCatalog, MetadataCatalog
+from detectron2.data.datasets.coco import convert_to_coco_json
+from detectron2.evaluation import DatasetEvaluator
+from detectron2.structures import Boxes, BoxMode, pairwise_iou
+from detectron2.utils.logger import create_small_table
+from detectron2_files.utils import *
 from fvcore.common.file_io import PathManager
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from tabulate import tabulate
-
-from detectron2_files.utils import *
-
-import detectron2.utils.comm as comm
-from detectron2.data import DatasetCatalog, MetadataCatalog
-from detectron2.data.datasets.coco import convert_to_coco_json
-from detectron2.structures import Boxes, BoxMode, pairwise_iou
-from detectron2.utils.logger import create_small_table
-
-from detectron2.evaluation import DatasetEvaluator
 
 
 class COCOEvaluator(DatasetEvaluator):
@@ -142,18 +140,18 @@ class COCOEvaluator(DatasetEvaluator):
                 prediction["instances"] = instances_to_coco_json(instances, input["image_id"])
             if "proposals" in output:
                 prediction["proposals"] = output["proposals"].to(self._cpu_device)
-            
+
             if len(prediction) > 1:
                 values.append(prediction)
-        
+
         if len(values) > 0:
             return {self.evaluator_name: values}
 
-        return None        
+        return None
 
     def evaluate(self):
         if self.fake:
-            return {'bbox': {'AP': 1}}
+            return {"bbox": {"AP": 1}}
         predictions = self._predictions
         if len(predictions) == 0:
             self._logger.warning("[COCOEvaluator] Did not receive valid predictions.")

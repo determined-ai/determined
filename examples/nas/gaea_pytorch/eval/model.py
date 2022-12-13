@@ -2,9 +2,8 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-
 from operations import *
+from torch.autograd import Variable
 from utils import SqueezeAndExcitation, drop_path
 
 
@@ -29,9 +28,7 @@ class Cell(nn.Module):
         if reduction_prev:
             self.preprocess0 = FactorizedReduce(C_prev_prev, C)
         else:
-            self.preprocess0 = ActivationConvBN(
-                activation_function, C_prev_prev, C, 1, 1, 0
-            )
+            self.preprocess0 = ActivationConvBN(activation_function, C_prev_prev, C, 1, 1, 0)
         self.preprocess1 = ActivationConvBN(activation_function, C_prev, C, 1, 1, 0)
 
         if reduction:
@@ -80,9 +77,7 @@ class Cell(nn.Module):
 
 
 class AuxiliaryHeadImageNet(nn.Module):
-    def __init__(
-        self, C, num_classes, activation_function=partial(nn.ReLU, inplace=True)
-    ):
+    def __init__(self, C, num_classes, activation_function=partial(nn.ReLU, inplace=True)):
         """assuming input size 14x14"""
         super(AuxiliaryHeadImageNet, self).__init__()
         self.features = nn.Sequential(

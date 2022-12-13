@@ -6,11 +6,10 @@ defines a custom `train_step()` and `test_step()`.
 """
 
 import tensorflow as tf
+from data import get_train_dataset, get_validation_dataset
+from dc_gan import DCGan
 
 from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
-
-from dc_gan import DCGan
-from data import get_train_dataset, get_validation_dataset
 
 
 class DCGanTrial(TFKerasTrial):

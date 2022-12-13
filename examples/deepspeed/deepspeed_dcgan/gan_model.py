@@ -1,6 +1,7 @@
+from typing import cast
+
 import torch
 import torch.nn as nn
-from typing import cast
 
 
 def weights_init(m: nn.Module) -> None:

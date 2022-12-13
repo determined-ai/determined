@@ -2,9 +2,9 @@ from collections import defaultdict
 from functools import reduce
 from typing import Any, Dict, List
 
-from determined.pytorch import MetricReducer
-
 from utils import merge_dicts
+
+from determined.pytorch import MetricReducer
 
 
 class ValidatedAccuracyReducer(MetricReducer):

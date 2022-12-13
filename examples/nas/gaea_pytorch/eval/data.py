@@ -35,9 +35,7 @@ def create_file_dirs(target_path):
 
 
 class ImageNetDataset(Dataset):
-    def __init__(
-        self, split, bucket_name, streaming=True, data_download_dir=None, transform=None
-    ):
+    def __init__(self, split, bucket_name, streaming=True, data_download_dir=None, transform=None):
         """
         Args:
             split: train or validation split to return the right dataset
@@ -74,9 +72,7 @@ class ImageNetDataset(Dataset):
             class_count = 0
 
             # Get blobs from GCP
-            blobs = list_blobs(
-                self._storage_client, self._bucket_name, prefix=self._source_dir
-            )
+            blobs = list_blobs(self._storage_client, self._bucket_name, prefix=self._source_dir)
 
             for b in blobs:
                 path = b.name

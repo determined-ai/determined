@@ -16,20 +16,12 @@ Based on: https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
 from typing import List
 
 import tensorflow as tf
+from cifar_model import build_model, build_optimizer, compile_model
+from data import download_data, get_training_data, get_validation_data
 from tensorflow.keras.models import Sequential
 
-from cifar_model import (
-    build_model,
-    build_optimizer,
-    compile_model,
-)
-from data import (
-    download_data,
-    get_training_data,
-    get_validation_data,
-)
-
 from determined import keras
+
 
 class CIFARTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext) -> None:
@@ -75,11 +67,7 @@ class CIFARTrial(keras.TFKerasTrial):
         return model
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        return [
-            keras.callbacks.TensorBoard(
-                update_freq="batch", profile_batch=0, histogram_freq=1
-            )
-        ]
+        return [keras.callbacks.TensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
     def build_training_data_loader(self) -> keras.InputData:
         hparams = self.context.get_hparams()

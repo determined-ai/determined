@@ -1,12 +1,11 @@
 # Each training example will be a classification task with n classes.
 
 import os
+
 import numpy as np
-
 import torch
-from torch.utils.data import Dataset
-
 from PIL import Image
+from torch.utils.data import Dataset
 
 
 class OmniglotTasks(Dataset):
@@ -24,8 +23,8 @@ class OmniglotTasks(Dataset):
         """
         Each subfolder of the parent data directory is a separate
         alphabet with multiple characters.  Each class is a certain
-        character within an alphabet.  Tasks will correspond to 
-        n-way classification problems where the learner will 
+        character within an alphabet.  Tasks will correspond to
+        n-way classification problems where the learner will
         have to predict which of n classes a test image belongs to.
 
         Args:
@@ -52,17 +51,16 @@ class OmniglotTasks(Dataset):
 
         self.num_classes = num_classes
         self.num_support = num_support
-        self.num_query = (
-            min_class_examples - num_support if (num_query is None) else num_query
-        )
+        self.num_query = min_class_examples - num_support if (num_query is None) else num_query
 
     def get_collate_fn(self):
         """
         This collate function returns a list of dictionaries in a batch.
 
-        Whereas by default, the collate function zips the dictionary field 
-        values into a list and returns a single dictionary.  
+        Whereas by default, the collate function zips the dictionary field
+        values into a list and returns a single dictionary.
         """
+
         def collate(examples):
             return examples
 
@@ -72,12 +70,8 @@ class OmniglotTasks(Dataset):
         return self.tasks_per_epoch
 
     def __getitem__(self, idx):
-        task_classes = np.random.choice(
-            self.class_idxs, size=self.num_classes, replace=False
-        )
-        rotations = np.random.choice(
-            self.rotations, size=self.num_classes, replace=True
-        )
+        task_classes = np.random.choice(self.class_idxs, size=self.num_classes, replace=False)
+        rotations = np.random.choice(self.rotations, size=self.num_classes, replace=True)
 
         imgs = []
         labels = []
@@ -89,9 +83,7 @@ class OmniglotTasks(Dataset):
             )
             for pth in imgs_paths:
                 with open(pth, "rb") as f:
-                    img = Image.open(f).resize(
-                        (self.img_resize_dim, self.img_resize_dim)
-                    )
+                    img = Image.open(f).resize((self.img_resize_dim, self.img_resize_dim))
                     if len(self.rotations):
                         rot = rotations[i]
                         img = img.rotate(rot)

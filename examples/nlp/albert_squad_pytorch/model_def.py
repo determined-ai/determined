@@ -1,23 +1,17 @@
-from typing import Dict, Sequence, Union
-import torch
-import torch.nn as nn
 import time
 from pathlib import Path
+from typing import Dict, Sequence, Union
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
-import data
 import constants
-
-from transformers import (
-    AdamW,
-    get_linear_schedule_with_warmup,
-)
-from transformers.data.processors.squad import SquadResult
-from transformers.data.metrics.squad_metrics import (
-    compute_predictions_logits,
-    squad_evaluate,
-)
+import data
+import torch
+import torch.nn as nn
 from radam import PlainRAdam
+from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers.data.metrics.squad_metrics import compute_predictions_logits, squad_evaluate
+from transformers.data.processors.squad import SquadResult
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -27,40 +21,48 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         self.context = context
         data_config = self.context.get_data_config()
         self.using_bind_mount = data_config.get("use_bind_mount", False)
-        self.bind_mount_path = Path(data_config.get("bind_mount_path")) if self.using_bind_mount else None
+        self.bind_mount_path = (
+            Path(data_config.get("bind_mount_path")) if self.using_bind_mount else None
+        )
 
-        self.download_directory = data.data_directory(self.using_bind_mount,
-                                                      self.context.distributed.get_rank(),
-                                                      self.bind_mount_path)
+        self.download_directory = data.data_directory(
+            self.using_bind_mount, self.context.distributed.get_rank(), self.bind_mount_path
+        )
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
         self.tokenizer = self.tokenizer_class.from_pretrained(
             self.context.get_data_config().get("pretrained_model_name"),
             do_lower_case=self.context.get_hparam("do_lower_case"),
-            cache_dir=None
+            cache_dir=None,
         )
 
-        cache_dir_per_rank = data.cache_dir(self.using_bind_mount,
-                                            self.context.distributed.get_rank(),
-                                            self.bind_mount_path)
+        cache_dir_per_rank = data.cache_dir(
+            self.using_bind_mount, self.context.distributed.get_rank(), self.bind_mount_path
+        )
 
         config = self.config_class.from_pretrained(
             self.context.get_data_config().get("pretrained_model_name"),
             cache_dir=cache_dir_per_rank,
         )
-        self.model = self.context.wrap_model(self.model_class.from_pretrained(
-            self.context.get_data_config().get("pretrained_model_name"),
-            from_tf=bool(".ckpt" in self.context.get_data_config().get("pretrained_model_name")),
-            config=config,
-            cache_dir=cache_dir_per_rank,
-        ))
+        self.model = self.context.wrap_model(
+            self.model_class.from_pretrained(
+                self.context.get_data_config().get("pretrained_model_name"),
+                from_tf=bool(
+                    ".ckpt" in self.context.get_data_config().get("pretrained_model_name")
+                ),
+                config=config,
+                cache_dir=cache_dir_per_rank,
+            )
+        )
 
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
             {
                 "params": [
-                    p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)
+                    p
+                    for n, p in self.model.named_parameters()
+                    if not any(nd in n for nd in no_decay)
                 ],
                 "weight_decay": self.context.get_hparam("weight_decay"),
             },
@@ -76,11 +78,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             lr = self.context.get_hparam("learning_rate")
             eps = self.context.get_hparam("adam_epsilon")
             print(f"Using PlainRAdam with params: lr={lr}, ε={eps}")
-            optimizer = PlainRAdam(
-                optimizer_grouped_parameters,
-                lr=lr,
-                eps=eps
-            )
+            optimizer = PlainRAdam(optimizer_grouped_parameters, lr=lr, eps=eps)
         else:
             lr = self.context.get_hparam("learning_rate")
             eps = self.context.get_hparam("adam_epsilon")
@@ -99,9 +97,8 @@ class AlbertSQuADPyTorch(PyTorchTrial):
                 num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
                 num_training_steps=self.context.get_hparam("num_training_steps"),
             ),
-            LRScheduler.StepMode.STEP_EVERY_BATCH
+            LRScheduler.StepMode.STEP_EVERY_BATCH,
         )
-
 
     def build_training_data_loader(self):
         train_dataset, _, _ = data.load_and_cache_examples(
@@ -116,7 +113,11 @@ class AlbertSQuADPyTorch(PyTorchTrial):
         return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self):
-        self.validation_dataset, self.validation_examples, self.validation_features = data.load_and_cache_examples(
+        (
+            self.validation_dataset,
+            self.validation_examples,
+            self.validation_features,
+        ) = data.load_and_cache_examples(
             data_dir=self.download_directory,
             tokenizer=self.tokenizer,
             task=self.context.get_data_config().get("task"),
@@ -124,7 +125,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             doc_stride=self.context.get_hparam("doc_stride"),
             max_query_length=self.context.get_hparam("max_query_length"),
             evaluate=True,
-            model_name=self.context.get_data_config().get("pretrained_model_name")
+            model_name=self.context.get_data_config().get("pretrained_model_name"),
         )
 
         return DataLoader(
@@ -148,7 +149,7 @@ class AlbertSQuADPyTorch(PyTorchTrial):
             self.optimizer,
             clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
                 params, self.context.get_hparam("max_grad_norm")
-            )
+            ),
         )
         return {"loss": loss, "lr": float(self.lr_scheduler.get_last_lr()[0])}
 

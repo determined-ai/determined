@@ -9,17 +9,12 @@ https://github.com/pytorch/examples/tree/master/word_language_model
 from pathlib import Path
 from typing import Dict, Sequence, Union
 
+import data
 import torch
 import torch.nn as nn
-from determined.pytorch import (
-    DataLoader,
-    LRScheduler,
-    PyTorchTrial,
-    PyTorchTrialContext,
-)
-
-import data
 from model import RNNModel, TransformerModel
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -135,9 +130,7 @@ class WordLanguageModelTrial(PyTorchTrial):
             else:
                 output, self.hidden = self.model(batch[:-1], self.hidden)
                 self.hidden = self.model.repackage_hidden(self.hidden)
-            validation_loss += (
-                len(batch[:-1]) * self.criterion(output, batch[1:].view(-1)).item()
-            )
+            validation_loss += len(batch[:-1]) * self.criterion(output, batch[1:].view(-1)).item()
 
         validation_loss /= len(data_loader.dataset) - 1
         self.lr_scheduler.step(validation_loss)

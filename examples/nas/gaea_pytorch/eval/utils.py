@@ -2,11 +2,10 @@ from collections import namedtuple
 from typing import Any
 
 import numpy as np
-import torch
-from torch import nn
-
 import randaugment.augmentation_transforms as augmentation_transforms
 import randaugment.policies as found_policies
+import torch
+from torch import nn
 
 # From: https://github.com/quark0/DARTS
 Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
@@ -65,9 +64,7 @@ class EMAWrapper(nn.Module):
         self.ema(self.ema_vars())
 
     def restore_ema(self):
-        for curr, shad, p in zip(
-            self.curr_vars(), self.ema.shadow_vars(), self.ema_vars()
-        ):
+        for curr, shad, p in zip(self.curr_vars(), self.ema.shadow_vars(), self.ema_vars()):
             curr.data = p.data
             p.data = shad.data
 

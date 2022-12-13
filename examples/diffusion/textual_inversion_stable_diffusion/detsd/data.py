@@ -1,15 +1,14 @@
 import logging
 import os
-import PIL
 from pathlib import Path
-from PIL import Image
-from typing import List, Tuple, Sequence
+from typing import List, Sequence, Tuple
 
+import PIL
 import torch
+from detsd import defaults
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-
-from detsd import defaults
 
 
 class TextualInversionDataset(Dataset):

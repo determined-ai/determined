@@ -1,28 +1,28 @@
-from attrdict import AttrMap
-from datetime import datetime
 import logging
-import traceback
-import torch
-import deepspeed
 import pathlib
+import traceback
+from datetime import datetime
 
-from megatron import mpu
-import megatron.utils as megatron_utils
 import megatron.training as megatron_train
-from megatron.data.data_utils import build_datasets_from_neox_args
-from megatron.checkpointing import save_checkpoint, load_checkpoint
-
-from determined.pytorch import DataLoader
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
-from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, ModelParallelUnit
-from determined import InvalidHP, LOG_FORMAT
+import megatron.utils as megatron_utils
+import torch
+from attrdict import AttrMap
 from det_utils import (
-    get_neox_args,
-    TensorboardWriter,
     EarlyStoppingCallback,
-    LMReducers,
     EvalHarness,
+    LMReducers,
+    TensorboardWriter,
+    get_neox_args,
 )
+from megatron import mpu
+from megatron.checkpointing import load_checkpoint, save_checkpoint
+from megatron.data.data_utils import build_datasets_from_neox_args
+
+import deepspeed
+from determined import LOG_FORMAT, InvalidHP
+from determined.pytorch import DataLoader
+from determined.pytorch.deepspeed import DeepSpeedTrial, DeepSpeedTrialContext, ModelParallelUnit
+from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 

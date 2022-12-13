@@ -1,15 +1,12 @@
-from attrdict import AttrMap
 import logging
 import os
+
 import numpy as np
-
-from megatron.neox_arguments import NeoXArgs
+from attrdict import AttrMap
 from eval_tasks.eval_adapter import run_eval_harness
+from megatron.neox_arguments import NeoXArgs
 
-from determined.pytorch import (
-    PyTorchCallback,
-    MetricReducer,
-)
+from determined.pytorch import MetricReducer, PyTorchCallback
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 

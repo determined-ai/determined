@@ -15,15 +15,13 @@ import logging
 import os
 import tempfile
 from collections import OrderedDict
+
+from detectron2.data import MetadataCatalog
+from detectron2.evaluation import DatasetEvaluator
+from detectron2.utils import comm
 from fvcore.common.file_io import PathManager
 from PIL import Image
 from tabulate import tabulate
-
-from detectron2.data import MetadataCatalog
-from detectron2.utils import comm
-
-from detectron2.evaluation import DatasetEvaluator
-
 
 logger = logging.getLogger(__name__)
 

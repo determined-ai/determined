@@ -11,14 +11,12 @@ for training and evaluation respectively.
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
+import data
 import torch
+from layers import Flatten
 from torch import nn
 
-from layers import Flatten
-
 from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
-
-import data
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -79,9 +77,7 @@ class MNistTrial(PyTorchTrial):
             self.data_downloaded = True
 
         validation_data = data.get_dataset(self.download_directory, train=False)
-        return DataLoader(
-            validation_data, batch_size=self.context.get_per_slot_batch_size()
-        )
+        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
 
     def train_batch(
         self, batch: TorchData, epoch_idx: int, batch_idx: int
