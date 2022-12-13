@@ -352,12 +352,14 @@ def main(det_callback, model_args, data_args, training_args):
     )
 
     # Define torchvision transforms to be applied to each image.
-    normalize = Normalize(
-        mean=feature_extractor.image_mean, std=feature_extractor.image_std
-    )
+    if "shortest_edge" in feature_extractor.size:
+        size = feature_extractor.size["shortest_edge"]
+    else:
+        size = (feature_extractor.size["height"], feature_extractor.size["width"])
+    normalize = Normalize(mean=feature_extractor.image_mean, std=feature_extractor.image_std)
     _train_transforms = Compose(
         [
-            RandomResizedCrop(feature_extractor.size),
+            RandomResizedCrop(size),
             RandomHorizontalFlip(),
             ToTensor(),
             normalize,
@@ -365,8 +367,8 @@ def main(det_callback, model_args, data_args, training_args):
     )
     _val_transforms = Compose(
         [
-            Resize(feature_extractor.size),
-            CenterCrop(feature_extractor.size),
+            Resize(size),
+            CenterCrop(size),
             ToTensor(),
             normalize,
         ]
