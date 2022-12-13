@@ -384,8 +384,7 @@ func (a *apiServer) GetProjectsByUserActivity(
 	  LEFT JOIN workspaces AS w on w.id = p.workspace_id
 	GROUP BY p.user_id, p.id, p.name, p.workspace_id, p.description, 
 	p.immutable, p.notes, p.state, p.error_message,  u.username, w.name, p.activity_time
-	LIMIT ?
-	ORDER BY p.activity_time DESC;`, limit).
+	ORDER BY p.activity_time DESC LIMIT ?;`, limit).
 		Scan(ctx, &p)
 	if err != nil {
 		return nil, err
