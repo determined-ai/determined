@@ -359,7 +359,7 @@ func (a *apiServer) GetProjectsByUserActivity(
 	err = db.Bun().NewSelect().Model(p).NewRaw(`
 	WITH p as (
 		SELECT  pr.*, activity_time FROM projects pr 
-		JOIN activity a ON pr.id = a.entity_id ORDER BY a.activity_time DESC
+		JOIN activity a ON pr.id = a.entity_id
 	),
 	pe AS (
 	  SELECT project_id, state, start_time
