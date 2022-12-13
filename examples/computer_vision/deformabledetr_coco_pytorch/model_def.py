@@ -14,7 +14,6 @@ sys.path.append("./ddetr")
 import ddetr.util.misc as utils
 import filelock
 import torch
-# Experiment dir imports
 from data import build_dataset, unwrap_collate_fn
 from data_utils import download_coco_from_source
 from ddetr.datasets.coco_eval import CocoEvaluator

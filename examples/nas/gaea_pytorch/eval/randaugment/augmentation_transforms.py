@@ -21,11 +21,7 @@ Copied from AutoAugment: https://github.com/tensorflow/models/blob/master/resear
 import random
 
 import numpy as np
-# pylint:disable=g-multiple-import
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
-
-# pylint:enable=g-multiple-import
-
 
 PARAMETER_MAX = 10  # What is the max 'level' a transform could be predicted
 

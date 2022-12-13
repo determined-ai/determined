@@ -16,7 +16,6 @@ sys.path.append("./detr")
 import detr.util.misc as utils
 import filelock
 import torch
-# Experiment dir imports
 from data import build_dataset, unwrap_collate_fn
 from data_utils import download_coco_from_source
 from detr.datasets import get_coco_api_from_dataset
