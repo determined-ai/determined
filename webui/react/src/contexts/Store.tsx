@@ -22,8 +22,7 @@ export const StoreAction = {
   SetUserSettings: 'SetUserSettings',
 } as const;
 
-type Action =
-  | { type: typeof StoreAction.Reset }
+type Action = { type: typeof StoreAction.Reset };
 
 const initState: State = {
   userAssignments: [],

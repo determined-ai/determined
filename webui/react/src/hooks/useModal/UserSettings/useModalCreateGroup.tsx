@@ -139,7 +139,6 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
                   )),
                 NotLoaded: () => undefined,
               })}
-              {}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">
