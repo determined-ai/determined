@@ -3,11 +3,7 @@ package internal
 import (
 	"context"
 
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/project"
@@ -15,6 +11,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func (a *apiServer) GetProjectByID(
@@ -356,6 +356,12 @@ func (a *apiServer) GetProjectsByUserActivity(
 
 	p := []*model.Project{}
 
+	limit := req.Limit
+
+	if limit > apiutils.MaxLimit {
+		return nil, apiutils.ErrInvalidLimit
+	}
+
 	err = db.Bun().NewSelect().Model(p).NewRaw(`
 	WITH p as (
 		SELECT  pr.*, activity_time FROM projects pr 
@@ -378,7 +384,8 @@ func (a *apiServer) GetProjectsByUserActivity(
 	  LEFT JOIN workspaces AS w on w.id = p.workspace_id
 	GROUP BY p.user_id, p.id, p.name, p.workspace_id, p.description, 
 	p.immutable, p.notes, p.state, p.error_message,  u.username, w.name, p.activity_time
-	ORDER BY p.activity_time DESC;`).
+	LIMIT ?
+	ORDER BY p.activity_time DESC;`, limit).
 		Scan(ctx, &p)
 	if err != nil {
 		return nil, err

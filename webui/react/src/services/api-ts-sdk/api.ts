@@ -20885,10 +20885,11 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get projects by user activity
+         * @param {number} [limit] Limit number of project entries.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectsByUserActivity(options: any = {}): FetchArgs {
+        getProjectsByUserActivity(limit?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/projects/activity`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -20901,6 +20902,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
 					? configuration.apiKey("Authorization")
 					: configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -21223,11 +21228,12 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get projects by user activity
+         * @param {number} [limit] Limit number of project entries.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectsByUserActivity(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectsByUserActivityResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectsByUserActivity(options);
+        getProjectsByUserActivity(limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectsByUserActivityResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectsByUserActivity(limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21390,11 +21396,12 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get projects by user activity
+         * @param {number} [limit] Limit number of project entries.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectsByUserActivity(options?: any) {
-            return ProjectsApiFp(configuration).getProjectsByUserActivity(options)(fetch, basePath);
+        getProjectsByUserActivity(limit?: number, options?: any) {
+            return ProjectsApiFp(configuration).getProjectsByUserActivity(limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -21512,12 +21519,13 @@ export class ProjectsApi extends BaseAPI {
     /**
      * 
      * @summary Get projects by user activity
+     * @param {number} [limit] Limit number of project entries.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public getProjectsByUserActivity(options?: any) {
-        return ProjectsApiFp(this.configuration).getProjectsByUserActivity(options)(this.fetch, this.basePath);
+    public getProjectsByUserActivity(limit?: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectsByUserActivity(limit, options)(this.fetch, this.basePath);
     }
 
     /**

@@ -13230,8 +13230,12 @@ def get_GetProject(
 
 def get_GetProjectsByUserActivity(
     session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
 ) -> "v1GetProjectsByUserActivityResponse":
-    _params = None
+    _params = {
+        "limit": limit,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/user/projects/activity",
