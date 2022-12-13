@@ -19,7 +19,7 @@ def test_noop_pause_hpc() -> None:
     # point is recorded.  If we choose an experiment that completes too
     # quickly, then by the time we try to pause it, the experiment may be over,
     # so we won't be able to activate (restart) it.
-    config_file = conf.fixtures_path("no_op/single.yaml")
+    config_file = conf.fixtures_path("no_op/single-hpc.yaml")
 
     # For HPC, we need to remove the "checkpoint_storage" item from the
     # configuration file, because it sets "host_path" to "/tmp", which is
