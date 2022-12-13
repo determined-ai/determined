@@ -454,6 +454,7 @@ class runtimeStreamError:
 class trialv1Trial:
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     latestTraining: "typing.Optional[v1MetricsWorkload]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
@@ -475,6 +476,7 @@ class trialv1Trial:
         totalBatchesProcessed: int,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestTraining: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
@@ -495,6 +497,8 @@ class trialv1Trial:
             self.bestCheckpoint = bestCheckpoint
         if not isinstance(bestValidation, Unset):
             self.bestValidation = bestValidation
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
         if not isinstance(latestTraining, Unset):
@@ -527,6 +531,8 @@ class trialv1Trial:
             kwargs["bestCheckpoint"] = v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj["bestCheckpoint"] is not None else None
         if "bestValidation" in obj:
             kwargs["bestValidation"] = v1MetricsWorkload.from_json(obj["bestValidation"]) if obj["bestValidation"] is not None else None
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         if "latestTraining" in obj:
@@ -559,6 +565,8 @@ class trialv1Trial:
             out["bestCheckpoint"] = None if self.bestCheckpoint is None else self.bestCheckpoint.to_json(omit_unset)
         if not omit_unset or "bestValidation" in vars(self):
             out["bestValidation"] = None if self.bestValidation is None else self.bestValidation.to_json(omit_unset)
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         if not omit_unset or "latestTraining" in vars(self):
@@ -2348,6 +2356,8 @@ class v1ExpCompareTrialsSampleResponse:
         return out
 
 class v1Experiment:
+    checkpointCount: "typing.Optional[int]" = None
+    checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
@@ -2379,6 +2389,8 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
+        checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
@@ -2407,6 +2419,10 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
+        if not isinstance(checkpointSize, Unset):
+            self.checkpointSize = checkpointSize
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(displayName, Unset):
@@ -2453,6 +2469,10 @@ class v1Experiment:
             "state": determinedexperimentv1State(obj["state"]),
             "username": obj["username"],
         }
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
+        if "checkpointSize" in obj:
+            kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
@@ -2499,6 +2519,10 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
+        if not omit_unset or "checkpointSize" in vars(self):
+            out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):
@@ -3078,6 +3102,7 @@ class v1GetExperimentTrialsRequestSortBy(enum.Enum):
     SORT_BY_BATCHES_PROCESSED = "SORT_BY_BATCHES_PROCESSED"
     SORT_BY_DURATION = "SORT_BY_DURATION"
     SORT_BY_RESTARTS = "SORT_BY_RESTARTS"
+    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
 
 class v1GetExperimentTrialsResponse:
 
@@ -3145,6 +3170,8 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
     SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
+    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    SORT_BY_CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
 
 class v1GetExperimentsResponse:
 

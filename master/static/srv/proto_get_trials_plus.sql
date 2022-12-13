@@ -161,6 +161,8 @@ SELECT
   t.hparams,
   coalesce(new_ckpt.uuid, old_ckpt.uuid) AS warm_start_checkpoint_uuid,
   t.task_id,
+  t.checkpoint_size AS total_checkpoint_size,
+  t.checkpoint_count,
   (
     SELECT s.total_batches
     FROM steps s
@@ -175,22 +177,6 @@ SELECT
     FROM allocations a
     WHERE a.task_id = t.task_id
   ) AS wall_clock_time,
-  (
-    SELECT coalesce(sum((size_tuple).value::text::bigint), 0)
-    FROM (
-        SELECT jsonb_each(c.resources) AS size_tuple
-        FROM checkpoints_old_view c
-        WHERE c.trial_id = t.id
-          AND state != 'DELETED'
-          AND c.resources != 'null'::jsonb
-        UNION ALL
-        SELECT jsonb_each(c.resources) as size_tuple
-        FROM checkpoints_new_view c
-        WHERE c.trial_id = t.id
-          AND state != 'DELETED'
-          AND c.resources != 'null'::jsonb
-    ) r
-  ) AS total_checkpoint_size,
   -- `restart` count is incremented before `restart <= max_restarts` stop restart check,
   -- so trials in terminal state have restarts = max + 1
   LEAST(t.restarts, max_restarts) as restarts

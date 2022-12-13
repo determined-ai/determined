@@ -20,6 +20,7 @@ WITH searcher_info AS (
         t.restarts,
         t.start_time,
         t.end_time,
+        t.checkpoint_size,
         coalesce(t.end_time, now()) - t.start_time AS duration,
         (
             SELECT coalesce(max(s.total_batches), 0)

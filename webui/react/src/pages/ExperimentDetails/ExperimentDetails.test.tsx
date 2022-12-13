@@ -179,7 +179,7 @@ describe('Experiment Details Page', () => {
       });
 
       expect(screen.getByText('Visualization')).toBeInTheDocument();
-      expect(screen.getByText('Trials')).toBeInTheDocument();
+      expect(screen.getAllByText('Trials').length).toBeGreaterThan(0);
     });
   });
 });

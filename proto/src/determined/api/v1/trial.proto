@@ -525,6 +525,8 @@ message GetExperimentTrialsRequest {
     SORT_BY_DURATION = 10;
     // Return the trials sorted by the number of restarts.
     SORT_BY_RESTARTS = 11;
+    // Return the trials sorted by checkpoint size.
+    SORT_BY_CHECKPOINT_SIZE = 12;
   }
   // Sort trials by the given field.
   SortBy sort_by = 1;
