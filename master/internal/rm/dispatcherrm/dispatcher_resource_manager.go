@@ -783,11 +783,16 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		r := maps.Values(alloc.Resources)[0]
 		rID := r.Summary().ResourcesID
 
+		ctx.Tell(task.AllocationRef, sproto.ContainerLog{
+			AuxMessage: &msg.Message,
+			Level:      ptrs.Ptr("ERROR"),
+		})
+
 		stopped := sproto.ResourcesStopped{}
 		if msg.ExitCode > 0 {
 			stopped.Failure = sproto.NewResourcesFailure(
 				sproto.ResourcesFailed,
-				msg.Message,
+				"",
 				ptrs.Ptr(sproto.ExitCode(msg.ExitCode)),
 			)
 		}
@@ -796,7 +801,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		if msg.ExitCode == -1 {
 			stopped.Failure = sproto.NewResourcesFailure(
 				sproto.ResourcesFailed,
-				msg.Message,
+				"",
 				nil,
 			)
 		}
