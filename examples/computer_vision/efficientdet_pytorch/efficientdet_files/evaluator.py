@@ -92,7 +92,7 @@ class CocoEvaluator(Evaluator):
 
 
 class TfmEvaluator(Evaluator):
-    """ TensorFlow Models Evaluator Wrapper """
+    """TensorFlow Models Evaluator Wrapper"""
 
     def __init__(
         self,
