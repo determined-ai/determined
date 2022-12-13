@@ -860,15 +860,17 @@ const PivotSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Pivot</strong>
-        <Tabs>
-          <Tabs.TabPane key="overview" tab="Overview" />
-          <Tabs.TabPane key="hyperparameters" tab="Hyperparameters" />
-          <Tabs.TabPane key="checkpoints" tab="Checkpoints" />
-          <Tabs.TabPane key="code" tab="Code" />
-          <Tabs.TabPane key="notes" tab="Notes" />
-          <Tabs.TabPane key="profiler" tab="Profiler" />
-          <Tabs.TabPane key="logs" tab="Logs" />
-        </Tabs>
+        <Tabs
+          items={[
+            { key: 'Overview', label: 'Overview' },
+            { key: 'hyperparameters', label: 'Hyperparameters' },
+            { key: 'checkpoints', label: 'Checkpoints' },
+            { key: 'code', label: 'Code' },
+            { key: 'notes', label: 'Notes' },
+            { key: 'profiler', label: 'Profiler' },
+            { key: 'logs', label: 'Logs' },
+          ]}
+        />
       </Card>
     </ComponentSection>
   );
