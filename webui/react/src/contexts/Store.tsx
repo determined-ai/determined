@@ -11,24 +11,12 @@ const logger = rootLogger.extend('store');
 interface Props {
   children?: React.ReactNode;
 }
-
-interface OmnibarState {
-  isShowing: boolean;
-}
-
 interface State {
   knownRoles: UserRole[];
-
-  ui: {
-    omnibar: OmnibarState;
-  };
   userAssignments: UserAssignment[];
 }
 
 export const StoreAction = {
-  // Omnibar
-  HideOmnibar: 'HideOmnibar',
-
   Reset: 'Reset',
 
   // User assignments, roles, and derived permissions
@@ -36,18 +24,14 @@ export const StoreAction = {
 
   // User Settings
   SetUserSettings: 'SetUserSettings',
-  ShowOmnibar: 'ShowOmnibar',
 } as const;
 
 type Action =
   | { type: typeof StoreAction.Reset }
-  | { type: typeof StoreAction.HideOmnibar }
-  | { type: typeof StoreAction.ShowOmnibar }
   | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
 
 const initState: State = {
   knownRoles: [],
-  ui: { omnibar: { isShowing: false } }, // TODO move down a level
   userAssignments: [],
 };
 
@@ -59,12 +43,6 @@ const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
-    case StoreAction.HideOmnibar:
-      if (!state.ui.omnibar.isShowing) return state;
-      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: false } } };
-    case StoreAction.ShowOmnibar:
-      if (state.ui.omnibar.isShowing) return state;
-      return { ...state, ui: { ...state.ui, omnibar: { ...state.ui.omnibar, isShowing: true } } };
     case StoreAction.SetKnownRoles:
       if (isEqual(state.knownRoles, action.value)) return state;
       return { ...state, knownRoles: action.value };
