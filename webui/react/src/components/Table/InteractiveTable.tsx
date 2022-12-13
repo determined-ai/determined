@@ -454,6 +454,7 @@ const InteractiveTable: InteractiveTable = ({
     (
       tablePagination: TablePaginationConfig,
       tableFilters: Record<string, FilterValue | null>,
+      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
       tableSorter: SorterResult<any> | SorterResult<any>[],
     ): void => {
       if (Array.isArray(tableSorter)) return;
@@ -568,6 +569,7 @@ const InteractiveTable: InteractiveTable = ({
   }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(
+    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
     (index: number, columnDef: any) => {
       return () => {
         const filterActive = !!columnDef?.isFiltered?.(settings);
@@ -630,7 +632,7 @@ const InteractiveTable: InteractiveTable = ({
     }
 
     return newColumns;
-  }, [settings, widthData, columnDefs, onHeaderCell]);
+  }, [settings, widthData, columnDefs, onHeaderCell, settingsColumns]);
 
   const components = {
     body: {

@@ -57,6 +57,7 @@ const useModalWorkspaceAddMember = ({
   );
 
   const handleFilter = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (search: string, option: any): boolean => {
       const label = option.label as string;
       const userOrGroup = addableUsersAndGroups.find((u) => {

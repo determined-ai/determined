@@ -121,17 +121,18 @@ const Dropdown: React.FC<Props> = ({
   if (showArrow) classes.push(css.arrow);
 
   const handleClick = useCallback(
-    (event: any) => {
+    (event: Event) => {
       if (!event || !event.target) return;
 
       event.stopPropagation();
 
+      const target = event.target as Element;
       const isAntPicker =
-        event.target.closest('div') &&
-        typeof event.target.closest('div').className === 'string' &&
-        event.target.closest('div').className.indexOf('ant-picker') >= 0;
-      const isTrigger = triggerRef.current?.contains(event.target);
-      const isDropdown = dropdownRef.current?.contains(event.target);
+        target.closest('div') &&
+        typeof target.closest('div')?.className === 'string' &&
+        (target.closest('div')?.className?.indexOf('ant-picker') ?? -1) >= 0;
+      const isTrigger = triggerRef.current?.contains(target);
+      const isDropdown = dropdownRef.current?.contains(target);
 
       if (isAntPicker) {
         return;

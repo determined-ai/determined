@@ -79,7 +79,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
         handleError(e, { publicSubject: 'Unable to pin workspace.' });
       }
     }
-  }, [onComplete, workspace.id, workspace.pinned]);
+  }, [onComplete, workspace.id, workspace.pinned, updateWorkspace]);
 
   const handleEditClick = useCallback(() => {
     openWorkspaceEdit();

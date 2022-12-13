@@ -54,7 +54,7 @@ export const useEnsureWorkspacesFetched = (canceler: AbortController): (() => Pr
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, workspaces]);
+  }, [canceler, workspaces, updateWorkspaces]);
 };
 
 export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[]> => {

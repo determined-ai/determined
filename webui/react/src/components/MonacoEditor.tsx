@@ -1,3 +1,4 @@
+import * as monacoEditor from 'monaco-editor/esm/vs/editor/editor.api';
 import React, { useCallback, useEffect, useRef } from 'react';
 import ReactMonacoEditor, { MonacoEditorProps } from 'react-monaco-editor';
 
@@ -20,7 +21,10 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   const resize = useResize(containerRef);
   const { ui } = useUI();
 
-  const handleEditorDidMount = useCallback((editor: any) => editor.focus(), []);
+  const handleEditorDidMount = useCallback(
+    (editor: monacoEditor.editor.IStandaloneCodeEditor) => editor.focus(),
+    [],
+  );
 
   useEffect(() => {
     editorRef.current?.editor?.layout();

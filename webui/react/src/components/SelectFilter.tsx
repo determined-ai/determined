@@ -77,6 +77,7 @@ const SelectFilter: React.FC<Props> = forwardRef(function SelectFilter(
     setIsOpen(open);
   }, []);
 
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const handleFilter = useCallback((search: string, option: any) => {
     /*
      * `option.children` is one of the following:

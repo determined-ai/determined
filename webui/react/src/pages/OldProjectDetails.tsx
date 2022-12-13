@@ -725,7 +725,7 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [expPermissions, settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
+    [expPermissions, settings, openMoveModal, project?.workspaceId, project?.id, experimentMap],
   );
 
   const submitBatchAction = useCallback(

@@ -149,6 +149,7 @@ const ManageJob: React.FC<Props> = ({
     );
   }, [currentPool, currentPoolStats]);
 
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const handleUpdateResourcePool = useCallback((changedValues: any) => {
     if (changedValues.resourcePool) setSelectedPoolName(changedValues.resourcePool);
   }, []);
