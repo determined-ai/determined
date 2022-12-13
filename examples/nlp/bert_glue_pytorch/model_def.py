@@ -9,17 +9,16 @@ https://github.com/huggingface/transformers/blob/v2.2.0/examples/run_glue.py
 """
 from typing import Dict, Sequence, Union
 
+import constants
+import data
 import numpy as np
 import torch
 from torch import nn
-
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 from transformers import AdamW, get_linear_schedule_with_warmup
 from transformers import glue_compute_metrics as compute_metrics
 from transformers import glue_processors as processors
 
-import constants
-import data
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

@@ -1,11 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.parameter import Parameter
-
+from genotypes import PRIMITIVES, Genotype
 from operations import *
-from genotypes import PRIMITIVES
-from genotypes import Genotype
+from torch.nn.parameter import Parameter
 
 
 def channel_shuffle(x, groups):

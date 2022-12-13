@@ -1,6 +1,7 @@
+import logging
+
 import torch
 from torch.optim.optimizer import Optimizer
-import logging
 
 
 class HybridSGD(Optimizer):

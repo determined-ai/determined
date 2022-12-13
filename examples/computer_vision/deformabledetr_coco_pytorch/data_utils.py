@@ -1,9 +1,10 @@
-import os
 import asyncio
+import os
 from io import BytesIO
-from tempfile import NamedTemporaryFile
-import requests
 from shutil import unpack_archive
+from tempfile import NamedTemporaryFile
+
+import requests
 
 
 def download_file(url, output_dir):

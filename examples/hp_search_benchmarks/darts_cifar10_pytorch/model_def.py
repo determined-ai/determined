@@ -8,23 +8,15 @@ good architecture in this search space for CIFAR-10.
 
 from collections import namedtuple
 from typing import Any, Dict
-from attrdict import AttrDict
 
 import torch
 import torchvision.datasets as dset
-
-from determined.pytorch import (
-    DataLoader,
-    LRScheduler,
-    PyTorchTrial,
-    PyTorchTrialContext,
-)
+import utils
+from attrdict import AttrDict
+from model import NetworkCIFAR as Network
 
 import determined as det
-
-from model import NetworkCIFAR as Network
-import utils
-
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
 

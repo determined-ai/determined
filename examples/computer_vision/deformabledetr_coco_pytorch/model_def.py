@@ -1,17 +1,26 @@
+import copy
+import os
+import sys
+import time
 from collections import defaultdict
 from typing import Any, Dict, Sequence, Union
-from attrdict import AttrDict
+
 import numpy as np
-import sys
-import os
-import copy
-import time
+from attrdict import AttrDict
 
 sys.path.append("./ddetr")
 
-import torch
+# Deformable DETR imports
+import ddetr.util.misc as utils
 import filelock
+import torch
+# Experiment dir imports
+from data import build_dataset, unwrap_collate_fn
+from data_utils import download_coco_from_source
+from ddetr.datasets.coco_eval import CocoEvaluator
+from model import build_model
 
+from determined.experimental import Determined
 from determined.pytorch import (
     DataLoader,
     LRScheduler,
@@ -19,17 +28,6 @@ from determined.pytorch import (
     PyTorchTrial,
     PyTorchTrialContext,
 )
-from determined.experimental import Determined
-
-# Deformable DETR imports
-import ddetr.util.misc as utils
-from ddetr.datasets.coco_eval import CocoEvaluator
-from model import build_model
-
-# Experiment dir imports
-from data import unwrap_collate_fn, build_dataset
-from data_utils import download_coco_from_source
-
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

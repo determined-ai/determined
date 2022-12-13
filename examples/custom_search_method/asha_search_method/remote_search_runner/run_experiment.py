@@ -17,10 +17,12 @@ import sys
 sys.path.append(".")
 
 import logging
-from typing import Dict
 import random
-import determined as det
+from typing import Dict
+
 from asha import ASHASearchMethod
+
+import determined as det
 from determined import searcher
 
 

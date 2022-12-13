@@ -24,8 +24,9 @@ schedulers. Those objects should be created and wrapped in the trial class's
 __init__ method. Then in train_batch(), you can run forward and backward passes
 and step the optimizer according to your requirements.
 """
-from typing import Any, Dict, Union, Sequence
+from typing import Any, Dict, Sequence, Union
 
+import data
 import numpy as np
 import torch
 import torch.nn as nn
@@ -33,10 +34,8 @@ import torch.nn.functional as F
 import torchvision
 from torch.optim.lr_scheduler import LambdaLR
 
-from determined.pytorch import PyTorchTrial, PyTorchTrialContext, DataLoader, LRScheduler
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 from determined.tensorboard.metric_writers.pytorch import TorchWriter
-
-import data
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

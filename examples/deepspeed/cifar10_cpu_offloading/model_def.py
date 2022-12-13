@@ -1,15 +1,15 @@
 import os
-import filelock
 from typing import Any, Dict
-from attrdict import AttrDict
+
+import filelock
 import torch
+import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
+from attrdict import AttrDict
+from torch.nn import Conv2d, CrossEntropyLoss, Linear, MaxPool2d, Module
+
 import deepspeed
-
-from torch.nn import MaxPool2d, Conv2d, Linear, Module, CrossEntropyLoss
-import torch.nn.functional as F
-
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,

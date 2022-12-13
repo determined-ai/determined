@@ -11,20 +11,20 @@ To create a new DatasetEvaluator class must include:
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import datetime
 import logging
+import os
 import time
 from collections import OrderedDict
 from contextlib import contextmanager
-import torch
-import os
 
+import torch
+from detectron2.data import MetadataCatalog
 from detectron2.utils.comm import get_world_size, is_main_process
 from detectron2.utils.logger import log_every_n_seconds
-from determined.pytorch import MetricReducer
 from detectron2_files.coco_evaluation import COCOEvaluator
 from detectron2_files.panoptic_evaluation import COCOPanopticEvaluator
 from detectron2_files.sem_seg_evaluation import SemSegEvaluator
 
-from detectron2.data import MetadataCatalog
+from determined.pytorch import MetricReducer
 
 
 class DatasetEvaluator:

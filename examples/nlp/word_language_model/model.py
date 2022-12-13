@@ -6,8 +6,9 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/pytorch/examples/tree/master/word_language_model
 """
-from typing import Union
 import math
+from typing import Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

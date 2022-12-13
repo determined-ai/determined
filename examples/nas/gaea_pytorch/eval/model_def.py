@@ -15,27 +15,22 @@ from collections import namedtuple
 from typing import Any, Dict
 
 import torchvision.transforms as transforms
-from torch import nn
-
 from data import ImageNetDataset
-from determined.pytorch import (
-    DataLoader,
-    LRScheduler,
-    PyTorchTrial,
-    PyTorchTrialContext,
-)
+from lr_schedulers import *
 from model import NetworkImageNet
+from torch import nn
 from utils import (
-    RandAugment,
+    AvgrageMeter,
     CrossEntropyLabelSmooth,
     Cutout,
+    EMAWrapper,
     HSwish,
+    RandAugment,
     Swish,
     accuracy,
-    AvgrageMeter,
-    EMAWrapper,
 )
-from lr_schedulers import *
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
 

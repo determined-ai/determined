@@ -1,11 +1,10 @@
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from randomNAS_files.genotypes import STEPS
-from randomNAS_files.utils import mask2d
-from randomNAS_files.utils import LockedDropout
-from randomNAS_files.utils import embedded_dropout
+from randomNAS_files.utils import LockedDropout, embedded_dropout, mask2d
 from torch.autograd import Variable
 
 INITRANGE = 0.04

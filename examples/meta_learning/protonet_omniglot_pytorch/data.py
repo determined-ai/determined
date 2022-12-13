@@ -1,12 +1,11 @@
 # Each training example will be a classification task with n classes.
 
 import os
+
 import numpy as np
-
 import torch
-from torch.utils.data import Dataset
-
 from PIL import Image
+from torch.utils.data import Dataset
 
 
 class OmniglotTasks(Dataset):

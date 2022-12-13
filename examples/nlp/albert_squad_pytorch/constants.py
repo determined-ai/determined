@@ -1,10 +1,10 @@
 from transformers import (
-    BertConfig,
-    BertTokenizer,
-    BertForQuestionAnswering,
     AlbertConfig,
-    AlbertTokenizer,
     AlbertForQuestionAnswering,
+    AlbertTokenizer,
+    BertConfig,
+    BertForQuestionAnswering,
+    BertTokenizer,
 )
 
 MODEL_CLASSES = {

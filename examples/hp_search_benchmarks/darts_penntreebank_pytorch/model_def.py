@@ -6,22 +6,20 @@ We will use the adaptive searcher in Determined to find a
 good architecture in this search space for CIFAR-10.  
 """
 
-from collections import namedtuple
-from typing import Any, Dict
 import logging
 import math
+from collections import namedtuple
+from typing import Any, Dict
 
+import data
+import randomNAS_files.data_util as data_util
 import torch
+from optimizer import HybridSGD
+from randomNAS_files.model import RNNModel
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
 from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
-
-import randomNAS_files.data_util as data_util
-from randomNAS_files.model import RNNModel
-import data
-from optimizer import HybridSGD
-
 
 Genotype = namedtuple("Genotype", "recurrent concat")
 

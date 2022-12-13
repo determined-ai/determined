@@ -8,10 +8,10 @@ Example based on this tutorial:
 
 """
 
+from typing import Callable, Dict, List, Tuple
+
 import pandas as pd
 import tensorflow as tf
-
-from typing import Callable, Dict, List, Tuple
 
 from determined.estimator import EstimatorTrial, EstimatorTrialContext
 

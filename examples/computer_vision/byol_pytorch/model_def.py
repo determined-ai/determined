@@ -1,38 +1,38 @@
-from attrdict import AttrDict
-from enum import auto, Enum
-from typing import Any, cast, Dict, Sequence, Union
+from enum import Enum, auto
+from typing import Any, Dict, Sequence, Union, cast
 
-from determined.pytorch import (
-    PyTorchCallback,
-    PyTorchTrial,
-    PyTorchTrialContext,
-    DataLoader,
-    _SimpleReducer,
-)
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset
-
+from attrdict import AttrDict
 from backbone import BACKBONE_METADATA_BY_NAME
 from byol_pytorch import BYOL
 from data import (
-    build_dataset,
-    build_evaluation_transform,
-    build_training_transform,
     DATASET_METADATA_BY_NAME,
     DatasetSplit,
     JointDataset,
+    build_dataset,
+    build_evaluation_transform,
+    build_training_transform,
 )
 from optim import (
     build_byol_optimizer,
     build_cls_optimizer,
     reset_model_parameters,
     reset_sgd_optimizer,
-    set_learning_rate_warmup_cosine_anneal,
     set_ema_beta_cosine_anneal,
+    set_learning_rate_warmup_cosine_anneal,
 )
 from reducers import ValidatedAccuracyReducer
+from torch.utils.data import Dataset
 from utils import LambdaModule
+
+from determined.pytorch import (
+    DataLoader,
+    PyTorchCallback,
+    PyTorchTrial,
+    PyTorchTrialContext,
+    _SimpleReducer,
+)
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

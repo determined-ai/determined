@@ -1,7 +1,8 @@
-from transformers.data.processors.squad import SquadV1Processor, SquadV2Processor
-from transformers import squad_convert_examples_to_features
-import urllib.request
 import os
+import urllib.request
+
+from transformers import squad_convert_examples_to_features
+from transformers.data.processors.squad import SquadV1Processor, SquadV2Processor
 
 
 def load_and_cache_examples(

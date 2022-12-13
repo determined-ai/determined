@@ -1,6 +1,7 @@
+import os
+
 import torch
 import torch.nn as nn
-import os
 
 __all__ = [
     "ResNet",

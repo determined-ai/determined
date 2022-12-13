@@ -11,17 +11,17 @@ for training and evaluation respectively.
 
 """
 
+import os
+import sys
 from typing import Any, Dict, Sequence, Tuple, Union, cast
-import os, sys
-
-from determined.pytorch import DataLoader, PyTorchTrial, LRScheduler, PyTorchTrialContext
 
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
+import torchvision.transforms as transforms
 
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

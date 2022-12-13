@@ -1,20 +1,21 @@
-from attrdict import AttrDict
-from dataclasses import dataclass
-from enum import auto, Enum
-from io import BytesIO, StringIO
 import os
 import random
+from dataclasses import dataclass
+from enum import Enum, auto
+from io import BytesIO, StringIO
 from typing import Callable, Dict, List, Tuple
 
-from determined.util import download_gcs_blob_with_backoff
+import torch
+import torch.nn as nn
+import torchvision.transforms as T
+from attrdict import AttrDict
 from filelock import FileLock
 from google.cloud import storage
 from PIL import Image as PILImage
-import torch
-import torch.nn as nn
-from torchvision.datasets import CIFAR10, STL10
-import torchvision.transforms as T
 from torch.utils.data import Dataset
+from torchvision.datasets import CIFAR10, STL10
+
+from determined.util import download_gcs_blob_with_backoff
 
 
 def load_image(path: str) -> PILImage.Image:

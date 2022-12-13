@@ -1,15 +1,16 @@
-import os
-import filelock
 import datetime
+import os
 from typing import Any, Dict
-from attrdict import AttrDict
+
+import filelock
 import torch
-import torchvision
-import torchvision.transforms as transforms
-import deepspeed
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision
+import torchvision.transforms as transforms
+from attrdict import AttrDict
 
+import deepspeed
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,

@@ -5,17 +5,17 @@ regarding the optional flags view the original script linked below.
 This implementation is based on:
 https://github.com/tensorflow/docs/blob/master/site/en/tutorials/images/segmentation.ipynb
 """
-import filelock
-import tensorflow as tf
-from tensorflow_examples.models.pix2pix import pix2pix
-import tensorflow_datasets as tfds
-import numpy as np
-
-import urllib.request
 import os
+import urllib.request
+
+import filelock
+import numpy as np
+import tensorflow as tf
+import tensorflow_datasets as tfds
+from tensorflow import keras
+from tensorflow_examples.models.pix2pix import pix2pix
 
 from determined.keras import TFKerasTrial
-from tensorflow import keras
 
 
 class UNetsTrial(TFKerasTrial):

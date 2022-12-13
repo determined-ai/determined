@@ -10,18 +10,17 @@ those process.
 import itertools
 import json
 import logging
-import numpy as np
 import os
 from collections import OrderedDict
+
+import numpy as np
 import PIL.Image as Image
 import pycocotools.mask as mask_util
 import torch
-from fvcore.common.file_io import PathManager
-
 from detectron2.data import DatasetCatalog, MetadataCatalog
-from detectron2.utils.comm import all_gather, is_main_process, synchronize
-
 from detectron2.evaluation import DatasetEvaluator
+from detectron2.utils.comm import all_gather, is_main_process, synchronize
+from fvcore.common.file_io import PathManager
 
 
 class SemSegEvaluator(DatasetEvaluator):

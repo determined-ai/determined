@@ -6,9 +6,10 @@ Instead of using comm, Determined can just pass in the information
 """
 
 import itertools
+from typing import Optional
+
 import torch
 from torch.utils.data.sampler import Sampler
-from typing import Optional
 
 
 class TrainingSampler(Sampler):

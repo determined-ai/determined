@@ -1,21 +1,19 @@
-from typing import Any, Dict, Sequence, Tuple, Union, cast
-
-import torch
-from torch import nn
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
-
 import logging
 import os
 from collections import OrderedDict
+from typing import Any, Dict, Sequence, Tuple, Union, cast
 
-from detectron2_files.evaluator import *
-from detectron2_files.data import *
-from detectron2_files.common import *
-
+import torch
+from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
 from detectron2.modeling import build_model
 from detectron2.solver import build_lr_scheduler, build_optimizer
-from detectron2.checkpoint import DetectionCheckpointer
+from detectron2_files.common import *
+from detectron2_files.data import *
+from detectron2_files.evaluator import *
+from torch import nn
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

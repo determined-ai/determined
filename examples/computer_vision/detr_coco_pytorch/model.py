@@ -8,14 +8,8 @@ sys.path.append("./detr")
 
 import torch
 import torch.nn.functional as F
-from torch import nn
-
-
-from detr.models.detr import DETR, PostProcess
-from detr.util import box_ops
-from detr.util.misc import nested_tensor_from_tensor_list, accuracy, interpolate
-
 from detr.models.backbone import build_backbone
+from detr.models.detr import DETR, PostProcess
 from detr.models.matcher import build_matcher
 from detr.models.segmentation import (
     DETRsegm,
@@ -25,6 +19,9 @@ from detr.models.segmentation import (
     sigmoid_focal_loss,
 )
 from detr.models.transformer import build_transformer
+from detr.util import box_ops
+from detr.util.misc import accuracy, interpolate, nested_tensor_from_tensor_list
+from torch import nn
 
 from determined.horovod import hvd
 

@@ -14,13 +14,12 @@ from typing import Any, Dict, Sequence, Union
 
 import torch
 import torchvision
+from data import PennFudanDataset, collate_fn, download_data, get_transform
 from torch import nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
-
-from data import download_data, get_transform, collate_fn, PennFudanDataset
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

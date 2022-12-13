@@ -1,14 +1,15 @@
-from typing import Any, Dict
 import os
+from typing import Any, Dict
+
 import filelock
-from attrdict import AttrDict
 import torch
 import torchvision
 import torchvision.transforms as transforms
-import deepspeed
-from deepspeed.pipe import PipelineModule
 from alexnet import AlexNet
+from attrdict import AttrDict
+from deepspeed.pipe import PipelineModule
 
+import deepspeed
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,

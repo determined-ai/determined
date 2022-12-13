@@ -2,24 +2,19 @@
 Perform inference on pretrained CIFAR10 from https://github.com/huyvnphan/PyTorch_CIFAR10
 """
 
+import os
 import tempfile
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
 import numpy as np
-import os
+import resnet
 import torch
 import torchvision
+import torchvision.models as models
 from torch import nn
 from torchvision import transforms
-import torchvision.models as models
 
-from determined.pytorch import (
-    DataLoader,
-    PyTorchTrial,
-    PyTorchTrialContext,
-    MetricReducer,
-)
-import resnet
+from determined.pytorch import DataLoader, MetricReducer, PyTorchTrial, PyTorchTrialContext
 
 # Constants about the data set.
 IMAGE_SIZE = 32

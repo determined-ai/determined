@@ -5,7 +5,6 @@ import tensorflow as tf
 
 from .sampling import downsample, upsample
 
-
 OUTPUT_CHANNELS = 3
 
 

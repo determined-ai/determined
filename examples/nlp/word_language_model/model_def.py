@@ -9,17 +9,12 @@ https://github.com/pytorch/examples/tree/master/word_language_model
 from pathlib import Path
 from typing import Dict, Sequence, Union
 
+import data
 import torch
 import torch.nn as nn
-from determined.pytorch import (
-    DataLoader,
-    LRScheduler,
-    PyTorchTrial,
-    PyTorchTrialContext,
-)
-
-import data
 from model import RNNModel, TransformerModel
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

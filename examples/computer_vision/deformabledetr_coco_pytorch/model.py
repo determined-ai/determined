@@ -8,14 +8,9 @@ sys.path.append("./ddetr")
 
 import torch
 import torch.nn.functional as F
-from torch import nn
-
-
-from ddetr.models.deformable_detr import DeformableDETR, PostProcess
-from ddetr.util import box_ops
-from ddetr.util.misc import nested_tensor_from_tensor_list, accuracy, interpolate
-
 from ddetr.models.backbone import build_backbone
+from ddetr.models.deformable_detr import DeformableDETR, PostProcess
+from ddetr.models.deformable_transformer import build_deforamble_transformer
 from ddetr.models.matcher import build_matcher
 from ddetr.models.segmentation import (
     DETRsegm,
@@ -24,7 +19,9 @@ from ddetr.models.segmentation import (
     dice_loss,
     sigmoid_focal_loss,
 )
-from ddetr.models.deformable_transformer import build_deforamble_transformer
+from ddetr.util import box_ops
+from ddetr.util.misc import accuracy, interpolate, nested_tensor_from_tensor_list
+from torch import nn
 
 from determined.horovod import hvd
 

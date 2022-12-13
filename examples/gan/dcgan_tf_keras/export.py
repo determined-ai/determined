@@ -3,8 +3,9 @@ Shows an example of how model trained in Determined can be easily exported and u
 """
 
 import argparse
-import tensorflow as tf
+
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
 from determined.experimental import client
 

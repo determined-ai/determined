@@ -16,18 +16,9 @@ Based on: https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
 from typing import List
 
 import tensorflow as tf
+from cifar_model import build_model, build_optimizer, compile_model
+from data import download_data, get_training_data, get_validation_data
 from tensorflow.keras.models import Sequential
-
-from cifar_model import (
-    build_model,
-    build_optimizer,
-    compile_model,
-)
-from data import (
-    download_data,
-    get_training_data,
-    get_validation_data,
-)
 
 from determined import keras
 

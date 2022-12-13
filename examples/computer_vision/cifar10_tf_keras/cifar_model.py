@@ -5,20 +5,12 @@ https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py.
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import (
-    Activation,
-    Conv2D,
-    Dense,
-    Dropout,
-    Flatten,
-    MaxPooling2D,
-)
+from data import NUM_CLASSES
+from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten, MaxPooling2D
 from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import RMSprop
-
-from data import NUM_CLASSES
 
 # Constants about the data set.
 IMAGE_SIZE = 32

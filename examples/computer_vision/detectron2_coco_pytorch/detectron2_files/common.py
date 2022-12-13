@@ -1,12 +1,13 @@
 import copy
 import logging
-import numpy as np
 import pickle
 import random
-import torch.utils.data as data
 
-from detectron2.utils.serialize import PicklableWrapper
+import numpy as np
+import torch.utils.data as data
 from detectron2.data import DatasetCatalog, MetadataCatalog
+from detectron2.utils.serialize import PicklableWrapper
+
 from .utils import *
 
 

@@ -2,9 +2,8 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-
 from operations import *
+from torch.autograd import Variable
 from utils import SqueezeAndExcitation, drop_path
 
 

@@ -1,12 +1,11 @@
-from attrdict import AttrDict
-from collections import defaultdict
 import math
+from collections import defaultdict
 
-from byol_pytorch import BYOL
 import torch.nn as nn
-from torch.optim import Optimizer, SGD
-
+from attrdict import AttrDict
+from byol_pytorch import BYOL
 from lars import LARS
+from torch.optim import SGD, Optimizer
 
 
 # LARS code adapted from https://github.com/untitled-ai/self_supervised/blob/master/moco.py

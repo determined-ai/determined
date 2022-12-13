@@ -1,35 +1,30 @@
-from typing import Any, Dict, Sequence, Tuple, Union, cast
-import yaml
 import logging
-from copy import deepcopy
+import math
 import sys
 import time
+from copy import deepcopy
+from typing import Any, Dict, Sequence, Tuple, Union, cast
 
-import torch
-from apex import amp
 import apex
-from determined import pytorch
-import math
 import numpy as np
-
-from horovod.torch.sync_batch_norm import SyncBatchNorm
-
-from efficientdet_files.utils import *
+import torch
+import yaml
+from apex import amp
+from effdet import create_dataset, create_loader, create_model
+from effdet.anchors import AnchorLabeler, Anchors
+from effdet.data import SkipSubset, resolve_input_config
+from effdet.data.loader import DetectionFastCollate
+from effdet.data.transforms import *
 from efficientdet_files.evaluator import *
 from efficientdet_files.modelema import ModelEma
-
-from effdet import create_model, create_loader, create_dataset
-from effdet.data.loader import DetectionFastCollate
-from effdet.data import resolve_input_config, SkipSubset
-from effdet.data.transforms import *
-from effdet.anchors import Anchors, AnchorLabeler
-
+from efficientdet_files.utils import *
+from horovod.torch.sync_batch_norm import SyncBatchNorm
 from timm.optim import create_optimizer
 from timm.scheduler import create_scheduler
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
+from determined import pytorch
 from determined.experimental import Determined
-
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

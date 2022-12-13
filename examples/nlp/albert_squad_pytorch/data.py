@@ -1,10 +1,10 @@
-from transformers.data.processors.squad import SquadV1Processor, SquadV2Processor, SquadFeatures
-from transformers import squad_convert_examples_to_features
-import urllib.request
 import os
-import torch
-
+import urllib.request
 from pathlib import Path
+
+import torch
+from transformers import squad_convert_examples_to_features
+from transformers.data.processors.squad import SquadFeatures, SquadV1Processor, SquadV2Processor
 
 
 def data_directory(using_bind_mount: bool, rank: int, bind_mount_path: Path = None):

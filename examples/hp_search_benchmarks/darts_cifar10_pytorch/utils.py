@@ -1,9 +1,10 @@
 # From DARTS repo: https://github.com/quark0/darts
 # commit: be3c748f562819d150df2fcfe5a191031564077e
 import os
+import shutil
+
 import numpy as np
 import torch
-import shutil
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 

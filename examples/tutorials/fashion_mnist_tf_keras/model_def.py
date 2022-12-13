@@ -8,12 +8,11 @@ After about 5 training epochs, accuracy should be around > 85%.
 This mimics theoriginal implementation. Continue training or increase
 the number of epochs to increase accuracy.
 """
+import data
 import tensorflow as tf
 from tensorflow import keras
 
-from determined.keras import TFKerasTrial, TFKerasTrialContext, InputData
-
-import data
+from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
 
 
 class FashionMNISTTrial(TFKerasTrial):

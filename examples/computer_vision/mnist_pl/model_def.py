@@ -4,11 +4,11 @@ interface to build a basic MNIST network. LightningAdapter utilizes the provided
 LightningModule with Determined's PyTorch control loop.
 """
 
-from determined.pytorch import PyTorchTrialContext, DataLoader
-from determined.pytorch.lightning import LightningAdapter
-
 import data
 import mnist
+
+from determined.pytorch import DataLoader, PyTorchTrialContext
+from determined.pytorch.lightning import LightningAdapter
 
 
 class MNISTTrial(LightningAdapter):

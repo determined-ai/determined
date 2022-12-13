@@ -38,7 +38,8 @@ import pickle
 import sys
 import uuid
 from pathlib import Path
-from typing import Dict, List, Set, Callable
+from typing import Callable, Dict, List, Set
+
 from determined import searcher
 
 

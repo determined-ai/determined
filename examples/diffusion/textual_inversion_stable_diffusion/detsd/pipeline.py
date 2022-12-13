@@ -4,9 +4,8 @@ import os
 import pathlib
 from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
-import determined as det
 import torch
-from determined.experimental import client
+from detsd import defaults, utils
 from diffusers.pipelines.stable_diffusion import (
     StableDiffusionPipeline,
     StableDiffusionPipelineOutput,
@@ -14,7 +13,8 @@ from diffusers.pipelines.stable_diffusion import (
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms.functional import pil_to_tensor
 
-from detsd import utils, defaults
+import determined as det
+from determined.experimental import client
 
 
 class DetSDTextualInversionPipeline:

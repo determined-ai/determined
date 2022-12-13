@@ -6,36 +6,35 @@ import bisect
 import copy
 import itertools
 import logging
-import numpy as np
+import math
 import operator
 import pickle
-import torch.utils.data
-from fvcore.common.file_io import PathManager
-from tabulate import tabulate
-from termcolor import colored
+import sys
+from collections import defaultdict
+from os import listdir
+from os.path import isfile, join
+from typing import Optional
 
-import determined as det
+import numpy as np
+import torch
+import torch.utils.data
+from detectron2.data.catalog import DatasetCatalog, MetadataCatalog
+from detectron2.data.dataset_mapper import DatasetMapper
+from detectron2.data.detection_utils import check_metadata_consistency
 from detectron2.structures import BoxMode
 from detectron2.utils.comm import get_world_size
 from detectron2.utils.env import seed_all_rng
 from detectron2.utils.logger import log_first_n
+from fvcore.common.file_io import PathManager
+from tabulate import tabulate
+from termcolor import colored
+from torch.utils.data.sampler import Sampler
+
+import determined as det
 from determined.pytorch import samplers
 
-from detectron2.data.catalog import DatasetCatalog, MetadataCatalog
-from .common import AspectRatioGroupedDataset, DatasetFromList, MapDataset, FakeMapperDataset
+from .common import AspectRatioGroupedDataset, DatasetFromList, FakeMapperDataset, MapDataset
 from .samps import *
-from detectron2.data.dataset_mapper import DatasetMapper
-from detectron2.data.detection_utils import check_metadata_consistency
-
-import itertools
-import math
-from collections import defaultdict
-from typing import Optional
-import torch
-from torch.utils.data.sampler import Sampler
-import sys
-from os import listdir
-from os.path import isfile, join
 
 """
 This file contains the default logic to build a dataloader for training or testing.

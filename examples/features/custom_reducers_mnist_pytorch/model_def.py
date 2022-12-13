@@ -9,14 +9,12 @@ and the calls to wrap_reducer() and self.f1_score.update.
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
+import data
 import torch
+from layers import Flatten
 from torch import nn
 
-from layers import Flatten
-
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, MetricReducer
-
-import data
+from determined.pytorch import DataLoader, MetricReducer, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

@@ -1,9 +1,8 @@
 import tensorflow as tf
+from data import download, load_dataset
+from pix2pix import Pix2Pix, make_discriminator_optimizer, make_generator_optimizer
 
 from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
-
-from pix2pix import Pix2Pix, make_discriminator_optimizer, make_generator_optimizer
-from data import download, load_dataset
 
 
 class Pix2PixTrial(TFKerasTrial):

@@ -5,24 +5,19 @@ from collections import defaultdict
 from typing import List, Literal, Optional, Sequence, Union
 
 import accelerate
-import determined as det
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from determined.pytorch import TorchData
-from diffusers import (
-    AutoencoderKL,
-    DDPMScheduler,
-    StableDiffusionPipeline,
-    UNet2DConditionModel,
-)
+from detsd import data, defaults, layers, utils
+from diffusers import AutoencoderKL, DDPMScheduler, StableDiffusionPipeline, UNet2DConditionModel
 from diffusers.pipelines.stable_diffusion import StableDiffusionSafetyChecker
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from transformers import CLIPFeatureExtractor, CLIPTextModel, CLIPTokenizer
 
-from detsd import data, defaults, layers, utils
+import determined as det
+from determined.pytorch import TorchData
 
 
 class DetSDTextualInversionTrainer:

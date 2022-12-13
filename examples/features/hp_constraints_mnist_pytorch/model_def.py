@@ -11,15 +11,13 @@ for training and evaluation respectively.
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
-import torch
-from torch import nn
-import determined as det
-
-from layers import Flatten
-
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
-
 import data
+import torch
+from layers import Flatten
+from torch import nn
+
+import determined as det
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

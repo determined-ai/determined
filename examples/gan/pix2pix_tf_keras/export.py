@@ -7,11 +7,10 @@ import os
 
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from data import download, load_dataset
 
 from determined import keras
 from determined.experimental import client
-
-from data import download, load_dataset
 
 
 def generate_and_plot_images(generator: tf.keras.Sequential) -> None:

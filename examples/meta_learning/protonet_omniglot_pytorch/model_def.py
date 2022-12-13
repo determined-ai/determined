@@ -2,13 +2,13 @@
 
 import os
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import numpy as np
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext, TorchData
 from data import OmniglotTasks
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext, TorchData
 
 
 class Flatten(nn.Module):

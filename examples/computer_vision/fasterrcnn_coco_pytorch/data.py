@@ -6,8 +6,8 @@ from urllib.request import urlretrieve
 
 import numpy as np
 import torch
-from torchvision.transforms import Compose, ToTensor
 from PIL import Image
+from torchvision.transforms import Compose, ToTensor
 
 
 def download_data(download_directory: str, data_config: Dict[str, Any]) -> str:

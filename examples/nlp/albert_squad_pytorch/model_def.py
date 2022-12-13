@@ -1,23 +1,17 @@
-from typing import Dict, Sequence, Union
-import torch
-import torch.nn as nn
 import time
 from pathlib import Path
+from typing import Dict, Sequence, Union
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
-import data
 import constants
-
-from transformers import (
-    AdamW,
-    get_linear_schedule_with_warmup,
-)
-from transformers.data.processors.squad import SquadResult
-from transformers.data.metrics.squad_metrics import (
-    compute_predictions_logits,
-    squad_evaluate,
-)
+import data
+import torch
+import torch.nn as nn
 from radam import PlainRAdam
+from transformers import AdamW, get_linear_schedule_with_warmup
+from transformers.data.metrics.squad_metrics import compute_predictions_logits, squad_evaluate
+from transformers.data.processors.squad import SquadResult
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 

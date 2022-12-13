@@ -4,19 +4,19 @@ This is based on efficientdet's evaluator.py https://github.com/rwightman/effici
 This altered version removes the required distributed code because Determined's custom reducer will handle all distributed training.
 """
 
-import torch
 import abc
 import json
 import logging
 import time
-import numpy as np
-
-from pycocotools.cocoeval import COCOeval
-from .utils import FakeParser
 
 # FIXME experimenting with speedups for OpenImages eval, it's slow
 # import pyximport; py_importer, pyx_importer = pyximport.install(pyimport=True)
 import effdet.evaluation.detection_evaluator as tfm_eval
+import numpy as np
+import torch
+from pycocotools.cocoeval import COCOeval
+
+from .utils import FakeParser
 
 # pyximport.uninstall(py_importer, pyx_importer)
 

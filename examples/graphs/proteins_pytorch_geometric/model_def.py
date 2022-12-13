@@ -2,16 +2,14 @@ import tempfile
 
 import torch
 import torch.nn.functional as F
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 from torch.utils.data import random_split
-from torch_geometric.loader.dataloader import Collater
 from torch_geometric.datasets import TUDataset
-from torch_geometric.nn import (
-    GraphConv,
-    TopKPooling,
-    global_mean_pool as gap,
-    global_max_pool as gmp,
-)
+from torch_geometric.loader.dataloader import Collater
+from torch_geometric.nn import GraphConv, TopKPooling
+from torch_geometric.nn import global_max_pool as gmp
+from torch_geometric.nn import global_mean_pool as gap
+
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
 
 # Ported from https://github.com/rusty1s/pytorch_geometric/blob/master/examples/proteins_topk_pool.py

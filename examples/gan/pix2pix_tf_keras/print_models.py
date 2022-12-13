@@ -1,9 +1,5 @@
 import tensorflow as tf
-
-from pix2pix import (
-    make_generator_model,
-    make_discriminator_model,
-)
+from pix2pix import make_discriminator_model, make_generator_model
 
 
 def main():
