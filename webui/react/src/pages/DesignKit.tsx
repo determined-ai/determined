@@ -1,6 +1,5 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import {
-  Alert,
   Breadcrumb,
   Button,
   Card,
@@ -17,7 +16,6 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import Grid, { GridMode } from 'components/Grid';
-import Label from 'components/Label';
 import Logo from 'components/Logo';
 import LogViewer from 'components/LogViewer/LogViewer';
 import OverviewStats from 'components/OverviewStats';
@@ -48,8 +46,6 @@ const Components = {
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Facepile: 'Facepile',
-  Labels: 'Labels',
-  LeftNavigation: 'LeftNavigation',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
@@ -67,7 +63,6 @@ const componentOrder: ComponentIds[] = [
   'Buttons',
   'Dropdowns',
   'Checkboxes',
-  'Labels',
   'Searchboxes',
   'Spinbuttons',
   'Textfields',
@@ -79,7 +74,6 @@ const componentOrder: ComponentIds[] = [
   'Pagination',
   'DataCards',
   'LogViewer',
-  'LeftNavigation',
   'Tooltips',
 ];
 
@@ -98,35 +92,13 @@ const ComponentSection: React.FC<Props> = ({ children, id, title }: Props): JSX.
   );
 };
 
-const ReviewAlert: React.FC = () => {
-  return (
-    <Alert
-      message="Caution: this component is currently under review. Expect this component to undergo
-    updates in near-term releases."
-      showIcon
-      type="warning"
-    />
-  );
-};
-
 const ButtonsSection: React.FC = () => {
   return (
     <ComponentSection id="Buttons" title="Buttons">
-      <ReviewAlert />
       <Card>
         Buttons give people a way to trigger an action. They&apos;re typically found in forms,
         dialog panels, and dialogs. Some buttons are specialized for particular tasks, such as
         navigation, repeated actions, or presenting menus.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Font inconsistency</li>
-          <li>Internal padding inconsistencies</li>
-          <li>Button states do not meet accessibility requirements.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -261,20 +233,9 @@ const ButtonsSection: React.FC = () => {
 const DropdownsSection: React.FC = () => {
   return (
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
-      <ReviewAlert />
       <Card>
         A dropdown/combo box combines a text field and a dropdown giving people a way to select an
         option from a list or enter their own choice.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Font inconsistency</li>
-          <li>Internal padding inconsistencies</li>
-          <li>Button states do not meet accessibility requirements.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -404,20 +365,9 @@ const DropdownsSection: React.FC = () => {
 const CheckboxesSection: React.FC = () => {
   return (
     <ComponentSection id="Checkboxes" title="Checkboxes">
-      <ReviewAlert />
       <Card>
         Check boxes (Checkbox) give people a way to select one or more items from a group, or switch
         between two mutually exclusive options (checked or unchecked, on or off).
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Font inconsistency</li>
-          <li>Internal padding inconsistencies</li>
-          <li>Button states do not meet accessibility requirements.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -474,77 +424,12 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
-const LabelsSection: React.FC = () => {
-  return (
-    <ComponentSection id="Labels" title="Labels">
-      <ReviewAlert />
-      <Card>
-        Labels give a name or title to a control or group of controls, including text fields, check
-        boxes, combo boxes, radio buttons, and drop-down menus.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Font inconsistency</li>
-          <li>Internal padding inconsistencies</li>
-          <li>Button states do not meet accessibility requirements.</li>
-        </ul>
-      </Card>
-      <Card title="Best practices">
-        <strong>Layout</strong>
-        <ul>
-          <li>Labels should be close to the control they&apos;re paired with.</li>
-        </ul>
-        <strong>Content</strong>
-        <ul>
-          <li>Labels should describe the purpose of the control.</li>
-          <li>Use sentence-style capitalization—only capitalize the first word.</li>
-          <li>Be short and concise.</li>
-          <li>Use nouns or short noun phrases.</li>
-          <li>
-            Don&apos;t use labels as instructional text. For example, &quot;Click to get
-            started&quot;.
-          </li>
-        </ul>
-      </Card>
-      <Card title="Usage">
-        <strong>Basic labels</strong>
-        <Label>I am a label.</Label>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>8px right margin from the checkbox.</li>
-          <li>5px vertical margins above and below the checkbox</li>
-          <li>5px padding for mandatory and info icons</li>
-          <li>One style of checkboxes throughout the experience.</li>
-        </ul>
-        <strong>Variations</strong>
-        <p>Bold mandatory label - not implemented</p>
-        <p>Disabled label - not implemented</p>
-        <p>Mandatory label with an explanation - not implemented</p>
-      </Card>
-    </ComponentSection>
-  );
-};
-
 const SearchboxesSection: React.FC = () => {
   return (
     <ComponentSection id="Searchboxes" title="Search boxes">
-      <ReviewAlert />
       <Card>
         A search box (SearchBox) provides an input field for searching content within a site or app
         to find specific items.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Font inconsistency</li>
-          <li>Internal padding inconsistencies</li>
-          <li>Button states do not meet accessibility requirements.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -618,21 +503,9 @@ const SearchboxesSection: React.FC = () => {
 const SpinbuttonsSection: React.FC = () => {
   return (
     <ComponentSection id="Spinbuttons" title="Spin buttons">
-      <ReviewAlert />
       <Card>
         A spin button (SpinButton) allows someone to incrementally adjust a value in small steps.
         It&apos;s mainly used for numeric values, but other values are supported too.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>
-            Overall value-add to the experience --&gt; removing this component requires less
-            maintenance.{' '}
-          </li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -672,18 +545,9 @@ const SpinbuttonsSection: React.FC = () => {
 const TextfieldsSection: React.FC = () => {
   return (
     <ComponentSection id="Textfields" title="Input - text fields">
-      <ReviewAlert />
       <Card>
         Text fields (TextField) give people a way to enter and edit text. They&apos;re used in
         forms, modal dialogs, tables, and other surfaces where text input is required.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Component seems to not be used consistently.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -758,20 +622,10 @@ const ListsSection: React.FC = () => {
 
   return (
     <ComponentSection id="Lists" title="Lists (tables)">
-      <ReviewAlert />
       <Card>
         A list (DetailsList) is a robust way to display an information-rich collection of items, and
         allow people to sort, group, and filter the content. Use a details list when information
         density is critical.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>This is a core experience component</li>
-          <li>Behaviors and densities need to be reviewed</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -826,7 +680,6 @@ const ListsSection: React.FC = () => {
 const BreadcrumbsSection: React.FC = () => {
   return (
     <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
-      <ReviewAlert />
       <Card>
         <p>
           Breadcrumbs should be used as a navigational aid in your app or site. They indicate the
@@ -838,14 +691,6 @@ const BreadcrumbsSection: React.FC = () => {
           Breadcrumbs are typically placed, in horizontal form, under the masthead or navigation of
           an experience, above the primary content area.
         </p>
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Different breadcrumbs are currently being used. This needs to be standardized. </li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Accessibility</strong>
@@ -872,19 +717,10 @@ const BreadcrumbsSection: React.FC = () => {
 const FacepileSection: React.FC = () => {
   return (
     <ComponentSection id="Facepile" title="Facepile">
-      <ReviewAlert />
       <Card>
         A face pile (Facepile) displays a list of personas. Each circle represents a person and
         contains their image or initials. Often this control is used when sharing who has access to
         a specific view or file, or when assigning someone a task within a workflow.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Need to revise current functionality with proposed interaction/user value.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -942,7 +778,6 @@ const ActionBarSection: React.FC = () => {
   const { experiment } = generateTestExperimentData();
   return (
     <ComponentSection id="ActionBar" title="ActionBar">
-      <ReviewAlert />
       <Card>
         <p>
           ActionBar is a surface that houses commands that operate on the content of the window,
@@ -969,17 +804,6 @@ const ActionBarSection: React.FC = () => {
           recognizable and frequently used commands. All other commands should go into an overflow
           where text labels can be shown.
         </p>
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Need to revise current functionality with proposed interaction/user value.</li>
-          <li>
-            Look deeper at top tier actions to be served to users + Breadcrumb standardization
-          </li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -1010,7 +834,6 @@ const ActionBarSection: React.FC = () => {
 const PivotSection: React.FC = () => {
   return (
     <ComponentSection id="Pivot" title="Pivot">
-      <ReviewAlert />
       <Card>
         <p>
           The Pivot control and related tabs pattern are used for navigating frequently accessed,
@@ -1022,18 +845,6 @@ const PivotSection: React.FC = () => {
           Tabs are a visual variant of Pivot that use a combination of icons and text or just icons
           to articulate section content.
         </p>
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>
-            Look deeper at options served to users and whether this reduces the number of
-            navigational steps.
-          </li>
-          <li>Contrast of in-focus tab is not accessible.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -1066,20 +877,10 @@ const PivotSection: React.FC = () => {
 const PaginationSection: React.FC = () => {
   return (
     <ComponentSection id="Pagination" title="Pagination">
-      <ReviewAlert />
       <Card>
         Pagination is the process of splitting the contents of a website, or section of contents
         from a website, into discrete pages. This user interface design pattern is used so users are
         not overwhelmed by a mass of data on one page. Page breaks are automatically set.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>What are the better recommended table lists (10-100-500?)</li>
-          <li>Discoverability of the control vs. user interaction.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -1119,19 +920,9 @@ const DataCardsSection: React.FC = () => {
 
   return (
     <ComponentSection id="DataCards" title="DataCards">
-      <ReviewAlert />
       <Card>
         A DataCard contains additional metadata or actions. This offers people a richer view into a
         file than the typical grid view.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Consistency misalignment between various sections of the web UI</li>
-          <li>Density issues</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -1225,19 +1016,9 @@ const LogViewerSection: React.FC = () => {
   ];
   return (
     <ComponentSection id="LogViewer" title="LogViewer">
-      <ReviewAlert />
       <Card>
         A Logview prints events that have been configured to be triggered and return them to the
         user in a running stream.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>We need to streamline the wrapping of specific errors as to enhance readability.</li>
-          <li>There is a set of UI bugs in the parsing of the log entry.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -1271,83 +1052,17 @@ const LogViewerSection: React.FC = () => {
   );
 };
 
-const LeftNavigationSection: React.FC = () => {
-  return (
-    <ComponentSection id="LeftNavigation" title="LeftNavigation">
-      <ReviewAlert />
-      <Card>A navigation pane (Nav) provides links to the main areas of the portal.</Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-      </Card>
-      <Card title="Best practices">
-        <strong>Layout</strong>
-        <ul>
-          <li>
-            In larger configurations, the navigation pane is always on-screen, usually on the left
-            of the view. On smaller screens, consider collapsing it into a skinnier version or
-            hiding it behind a menu button (note that Nav does not currently have either of these
-            behaviors built in).
-          </li>
-          <li>
-            Don&apos;t overload your navigation pane. Too many items in the Nav is indicative of an
-            app that is poorly organized or trying to do too much.
-          </li>
-        </ul>
-        <strong>Content</strong>
-        <ul>
-          <li>
-            Keep the names of the navigation items brief and clear, rather than trying to be overly
-            specific.
-          </li>
-          <li>
-            Use the word that feels right for the navigation. For example, some items may make more
-            sense as nouns (e.g. “Files”), others as adjectives (“Shared”). Use what makes sense for
-            customers, and keep it short!
-          </li>
-          <li>
-            If using a menu button to expand and collapse the Nav, use the tooltip “Expand
-            navigation” or “Collapse navigation”.
-          </li>
-        </ul>
-      </Card>
-      <Card title="Usage">
-        <strong>LeftNavigation Default</strong>
-        Can&apos;t embed LeftNavigation
-        <strong>Considerations</strong>
-        <ul>
-          <li>Use nested navigational items for sub-categories</li>
-          <li>
-            Interactions/Contextual/Profile changes (ie. dark mode) seem hard to discover and/or
-            require numerous clicks to activate.
-          </li>
-        </ul>
-      </Card>
-    </ComponentSection>
-  );
-};
-
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
 
   return (
     <ComponentSection id="Tooltips" title="Tooltips">
-      <ReviewAlert />
       <Card>
         A good tooltip briefly describes unlabeled controls or provides a bit of additional
         information about labeled controls, when this is useful. It can also help customers navigate
         the UI by offering additional—not redundant—information about control labels, icons, and
         links. A tooltip should always add valuable information; use sparingly.
-      </Card>
-      <Card title="Design audit">
-        <strong>
-          This component is currently under review and will receive updates to address:
-        </strong>
-        <ul>
-          <li>Validate for consistency. Three different implementations found.</li>
-        </ul>
       </Card>
       <Card title="Best practices">
         <strong>Content</strong>
@@ -1469,7 +1184,6 @@ const DesignKit: React.FC = () => {
           <ButtonsSection />
           <DropdownsSection />
           <CheckboxesSection />
-          <LabelsSection />
           <SearchboxesSection />
           <SpinbuttonsSection />
           <TextfieldsSection />
@@ -1481,7 +1195,6 @@ const DesignKit: React.FC = () => {
           <PaginationSection />
           <DataCardsSection />
           <LogViewerSection />
-          <LeftNavigationSection />
           <TooltipsSection />
         </main>
       </div>
