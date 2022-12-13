@@ -189,12 +189,16 @@ func (a *apiServer) PostModel(
 	if err != nil {
 		return nil, err
 	}
+	workspace_id := 1 // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
+	if req.WorkspaceID != nil {
+		workspace_id = req.WorkspaceID
+	}
 
 	m := &modelv1.Model{}
 	reqLabels := strings.Join(req.Labels, ",")
 	err = a.m.db.QueryProto(
 		"insert_model", m, req.Name, req.Description, b,
-		reqLabels, req.Notes, user.User.Id,
+		reqLabels, req.Notes, user.User.Id, workspace_id,
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
@@ -274,6 +278,13 @@ func (a *apiServer) PatchModel(
 		currLabels = reqLabels
 	}
 
+	currWorkspaceID := currModel.WorkspaceID
+	if req.WorkspaceID != nil { // does changing it here make sense? what persmissions do we need to do this?
+		if currWorkspaceID != req.WorkspaceID {
+			currWorkspaceID = req.WorkspaceID // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
+		}
+	}
+
 	if !madeChanges {
 		return &apiv1.PatchModelResponse{Model: currModel}, nil
 	}
@@ -281,7 +292,7 @@ func (a *apiServer) PatchModel(
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
 		"update_model", finalModel, currModel.Id, currModel.Name, currModel.Description,
-		currModel.Notes, currMeta, currLabels)
+		currModel.Notes, currMeta, currLabels, currWorkspaceID)
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %q in database", currModel.Name)
