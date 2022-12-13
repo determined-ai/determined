@@ -1582,6 +1582,7 @@ jobs:
   test-examples:
     docker:
       - image: <<pipeline.parameters.docker-image>>
+    resource_class: large
     steps:
       - checkout
       - skip-if-docs-only
