@@ -48,12 +48,12 @@ def restartable_managed_cluster(
         raise
 
 
-@pytest.mark.managed_devcluster
-def test_master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
-    # - Kill master
-    # - Restart master
-    # - Schedule something.
-    # Do it twice to ensure nothing gets stuck.
+# Test to ensure master restarts successfully.
+# - Kill master
+# - Restart master
+# - Schedule something.
+# Do it twice to ensure nothing gets stuck.
+def master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
     _sanity_check(managed_cluster_restarts)
 
     try:
@@ -62,7 +62,7 @@ def test_master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
             cmd_ids = [run_command(1, slots) for slots in [0, 1]]
 
             for cmd_id in cmd_ids:
-                wait_for_command_state(cmd_id, "TERMINATED", 10)
+                wait_for_command_state(cmd_id, "TERMINATED", 60)
                 assert command_succeeded(cmd_id)
 
             managed_cluster_restarts.kill_master()
@@ -78,8 +78,12 @@ def test_master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
 
 
 @pytest.mark.managed_devcluster
-@pytest.mark.parametrize("downtime", [0, 20, 60])
-def test_master_restart_reattach_recover_experiment(
+def test_master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
+    master_restart_ok(managed_cluster_restarts)
+
+
+# Test to ensure that master can reattach and recover an experiment even after a restart.
+def master_restart_reattach_recover_experiment(
     managed_cluster_restarts: ManagedCluster, downtime: int
 ) -> None:
     _sanity_check(managed_cluster_restarts)
@@ -114,6 +118,14 @@ def test_master_restart_reattach_recover_experiment(
 
 
 @pytest.mark.managed_devcluster
+@pytest.mark.parametrize("downtime", [0, 20, 60])
+def test_master_restart_reattach_recover_experiment(
+    managed_cluster_restarts: ManagedCluster, downtime: int
+) -> None:
+    master_restart_reattach_recover_experiment(managed_cluster_restarts, downtime)
+
+
+@pytest.mark.managed_devcluster
 def test_master_restart_kill_works(managed_cluster_restarts: ManagedCluster) -> None:
     _sanity_check(managed_cluster_restarts)
 
@@ -141,16 +153,15 @@ def test_master_restart_kill_works(managed_cluster_restarts: ManagedCluster) -> 
         managed_cluster_restarts.restart_agent()
 
 
-@pytest.mark.managed_devcluster
-@pytest.mark.parametrize("slots", [0, 1])
-@pytest.mark.parametrize("downtime", [0, 20, 60])
-def test_master_restart_cmd(
+# Test to ensure that master can recover and complete a command that was in running state
+# when the master has restarted.
+def master_restart_cmd(
     restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
 ) -> None:
     managed_cluster = restartable_managed_cluster
 
     command_id = run_command(30, slots=slots)
-    wait_for_command_state(command_id, "RUNNING", 10)
+    wait_for_command_state(command_id, "RUNNING", 30)
 
     if downtime >= 0:
         managed_cluster.kill_master()
@@ -160,6 +171,16 @@ def test_master_restart_cmd(
     wait_for_command_state(command_id, "TERMINATED", 30)
     succeeded = "success" in get_command_info(command_id)["exitStatus"]
     assert succeeded
+
+
+@pytest.mark.managed_devcluster
+@pytest.mark.parametrize("slots", [0, 1])
+@pytest.mark.parametrize("downtime", [0, 20, 60])
+def test_master_restart_cmd(
+    restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
+) -> None:
+    managed_cluster = restartable_managed_cluster
+    master_restart_cmd(managed_cluster, slots, downtime)
 
 
 @pytest.mark.managed_devcluster
