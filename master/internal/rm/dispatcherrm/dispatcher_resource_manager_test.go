@@ -1,7 +1,6 @@
 package dispatcherrm
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
@@ -676,17 +676,23 @@ func Test_dispatcherResourceManager_checkLauncherVersion(t *testing.T) {
 
 func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T) {
 	type fields struct {
-		poolConfig []config.ResourcePoolConfig
+		poolConfig        []config.ResourcePoolConfig
+		containerDefaults *model.TaskContainerDefaultsConfig
 	}
 	type args struct {
 		hpcDetails          hpcResources
 		targetPartitionName string
 	}
+	type want struct {
+		wantResp           hasSlurmPartitionResponse
+		expectedErrorCount int
+	}
 	tests := []struct {
 		name   string
 		fields fields
 		args   args
-		want   hasSlurmPartitionResponse
+		want   want
+		errors []string
 	}{
 		{
 			name:   "resource pool not found",
@@ -695,7 +701,7 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 				hpcDetails:          hpcResources{},
 				targetPartitionName: "partition-is-not-present",
 			},
-			want: hasSlurmPartitionResponse{},
+			want: want{wantResp: hasSlurmPartitionResponse{}},
 		},
 		{
 			name:   "resource pool is a discovered partition",
@@ -708,12 +714,12 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 				},
 				targetPartitionName: "target-pool",
 			},
-			want: hasSlurmPartitionResponse{
+			want: want{wantResp: hasSlurmPartitionResponse{
 				HasResourcePool: true,
-			},
+			}},
 		},
 		{
-			name: "resource pool is launcher-provided, but partition not present",
+			name: "launcher-provided pool, but partition not present",
 			fields: fields{
 				poolConfig: []config.ResourcePoolConfig{{
 					PoolName:    "partition-is-launcher-provided",
@@ -729,13 +735,13 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 				hpcDetails:          hpcResources{},
 				targetPartitionName: "partition-is-launcher-provided",
 			},
-			want: hasSlurmPartitionResponse{
+			want: want{wantResp: hasSlurmPartitionResponse{
 				HasResourcePool:    false,
 				ProvidingPartition: "target-pool",
-			},
+			}},
 		},
 		{
-			name: "resource pool is launcher-provided, and providing partition is present",
+			name: "launcher-provided pool, and providing partition is present",
 			fields: fields{
 				poolConfig: []config.ResourcePoolConfig{{
 					PoolName:    "partition-is-launcher-provided",
@@ -755,13 +761,52 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 				},
 				targetPartitionName: "partition-is-launcher-provided",
 			},
-			want: hasSlurmPartitionResponse{
+			want: want{wantResp: hasSlurmPartitionResponse{
 				HasResourcePool:    true,
 				ProvidingPartition: "target-pool",
+			}},
+		},
+		{
+			name: "launcher-provided pool, providing partition is present, BUT validation errors",
+			fields: fields{
+				poolConfig: []config.ResourcePoolConfig{{
+					PoolName:    "partition-is-launcher-provided",
+					Description: launcherPoolDescription,
+					Provider: &provconfig.Config{
+						HPC: &provconfig.HpcClusterConfig{Partition: "target-pool"},
+					},
+				}},
+				containerDefaults: &model.TaskContainerDefaultsConfig{
+					// Both these Slurm & PBS configs will contribute one error
+					Slurm: expconf.SlurmConfigV0{
+						RawSlotsPerNode: new(int),
+						RawGpuType:      new(string),
+						RawSbatchArgs:   []string{"--gpus=6"},
+					},
+					Pbs: expconf.PbsConfigV0{
+						RawSlotsPerNode: new(int),
+						RawSbatchArgs:   []string{"-c"},
+					},
+				},
+			},
+			args: args{
+				hpcDetails: hpcResources{
+					Partitions: []hpcPartitionDetails{{
+						PartitionName: "target-pool",
+					}},
+				},
+				targetPartitionName: "partition-is-launcher-provided",
+			},
+			want: want{
+				wantResp: hasSlurmPartitionResponse{
+					HasResourcePool:    true,
+					ProvidingPartition: "target-pool",
+				},
+				expectedErrorCount: 2,
 			},
 		},
 		{
-			name: "resource pool is launcher-provided, but providing partition definition absent",
+			name: "launcher-provided pool, but providing partition definition absent",
 			fields: fields{
 				poolConfig: []config.ResourcePoolConfig{{
 					PoolName:    "partition-is-launcher-provided",
@@ -779,20 +824,34 @@ func Test_dispatcherResourceManager_getPartitionValidationResponse(t *testing.T)
 				},
 				targetPartitionName: "partition-is-launcher-provided",
 			},
-			want: hasSlurmPartitionResponse{
+			want: want{wantResp: hasSlurmPartitionResponse{
 				HasResourcePool: false,
-			},
+			}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Load container defaults if the test specified them
+			if len(tt.fields.poolConfig) > 0 && tt.fields.containerDefaults != nil {
+				tt.fields.poolConfig[0].TaskContainerDefaults = tt.fields.containerDefaults
+			}
 			m := &dispatcherResourceManager{
 				poolConfig: tt.fields.poolConfig,
 			}
-			if got := m.getPartitionValidationResponse(
-				tt.args.hpcDetails, tt.args.targetPartitionName); !reflect.DeepEqual(got, tt.want) {
+			resp := m.getPartitionValidationResponse(
+				tt.args.hpcDetails, tt.args.targetPartitionName)
+
+			if resp.HasResourcePool != tt.want.wantResp.HasResourcePool {
 				t.Errorf("dispatcherResourceManager.getPartitionValidationResponse() = %v, want %v",
-					got, tt.want)
+					resp.HasResourcePool, tt.want.wantResp.HasResourcePool)
+			}
+			if resp.ProvidingPartition != tt.want.wantResp.ProvidingPartition {
+				t.Errorf("dispatcherResourceManager.getPartitionValidationResponse() = %v, want %v",
+					resp.ProvidingPartition, tt.want.wantResp.ProvidingPartition)
+			}
+			if len(resp.ValidationErrors) != tt.want.expectedErrorCount {
+				t.Errorf("dispatcherResourceManager.getPartitionValidationResponse() = %v, want %v",
+					resp.ValidationErrors, tt.want.expectedErrorCount)
 			}
 		})
 	}
