@@ -189,16 +189,16 @@ func (a *apiServer) PostModel(
 	if err != nil {
 		return nil, err
 	}
-	workspace_id := 1 // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
+	workspaceID := 1 // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
 	if req.WorkspaceId != 0 {
-		workspace_id = int(req.WorkspaceId)
+		workspaceID = int(req.WorkspaceId)
 	}
 
 	m := &modelv1.Model{}
 	reqLabels := strings.Join(req.Labels, ",")
 	err = a.m.db.QueryProto(
 		"insert_model", m, req.Name, req.Description, b,
-		reqLabels, req.Notes, user.User.Id, workspace_id,
+		reqLabels, req.Notes, user.User.Id, workspaceID,
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
