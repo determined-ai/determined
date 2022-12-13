@@ -116,10 +116,10 @@ message PostModelRequest {
   google.protobuf.Struct metadata = 3;
   // Labels associated with this model.
   repeated string labels = 4;
+  // The id of the workspace associated with this model. 
+  int32 workspace_id = 5; 
   // Notes associated with this model.
   string notes = 6;
-  // The id of the workspace associated with this model. 
-  int32 workspace_id = 7; 
 }
 
 // Response to PostModelRequest.

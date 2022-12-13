@@ -190,8 +190,8 @@ func (a *apiServer) PostModel(
 		return nil, err
 	}
 	workspace_id := 1 // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
-	if req.WorkspaceID != nil {
-		workspace_id = req.WorkspaceID
+	if req.WorkspaceId != 0 {
+		workspace_id = int(req.WorkspaceId)
 	}
 
 	m := &modelv1.Model{}
@@ -278,10 +278,10 @@ func (a *apiServer) PatchModel(
 		currLabels = reqLabels
 	}
 
-	currWorkspaceID := currModel.WorkspaceID
-	if req.WorkspaceID != nil { // does changing it here make sense? what persmissions do we need to do this?
-		if currWorkspaceID != req.WorkspaceID {
-			currWorkspaceID = req.WorkspaceID // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
+	currWorkspaceID := currModel.WorkspaceId
+	if req.Model.WorkspaceId != 0 { // does changing it here make sense? what persmissions do we need to do this?
+		if currWorkspaceID != req.Model.WorkspaceId {
+			currWorkspaceID = req.Model.WorkspaceId // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
 		}
 	}
 

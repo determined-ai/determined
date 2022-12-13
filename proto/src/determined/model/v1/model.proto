@@ -73,6 +73,8 @@ message PatchModel {
   google.protobuf.ListValue labels = 5;
   // Updated notes associated with this model.
   google.protobuf.StringValue notes = 6;
+  // The id of the workspace associated with this model. 
+  int32 workspace_id = 7; 
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
