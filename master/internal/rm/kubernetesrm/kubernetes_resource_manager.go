@@ -167,23 +167,10 @@ func (k ResourceManager) NotifyContainerRunning(
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
-	config *config.KubernetesResourceManagerConfig
-
-	reqList           *tasklist.TaskList
-	groups            map[*actor.Ref]*tasklist.Group
-	addrToContainerID map[*actor.Ref]cproto.ID
-	containerIDtoAddr map[string]*actor.Ref
-	jobIDtoAddr       map[model.JobID]*actor.Ref
-	addrToJobID       map[*actor.Ref]model.JobID
-	groupActorToID    map[*actor.Ref]model.JobID
-	IDToGroupActor    map[model.JobID]*actor.Ref
-	slotsUsedPerGroup map[*tasklist.Group]int
-
+	config    *config.KubernetesResourceManagerConfig
 	podsActor *actor.Ref
+	pools     map[string]*actor.Ref
 
-	reschedule bool
-
-	queuePositions  tasklist.JobSortState
 	echoRef         *echo.Echo
 	masterTLSConfig model.TLSClientConfig
 	loggingConfig   model.LoggingConfig
@@ -198,16 +185,7 @@ func newKubernetesResourceManager(
 	return &kubernetesResourceManager{
 		config: config,
 
-		reqList:           tasklist.New(),
-		groups:            make(map[*actor.Ref]*tasklist.Group),
-		addrToContainerID: make(map[*actor.Ref]cproto.ID),
-		containerIDtoAddr: make(map[string]*actor.Ref),
-		jobIDtoAddr:       make(map[model.JobID]*actor.Ref),
-		addrToJobID:       make(map[*actor.Ref]model.JobID),
-		groupActorToID:    make(map[*actor.Ref]model.JobID),
-		IDToGroupActor:    make(map[model.JobID]*actor.Ref),
-		slotsUsedPerGroup: make(map[*tasklist.Group]int),
-		queuePositions:    tasklist.InitializeJobSortState(true),
+		pools: make(map[string]*actor.Ref),
 
 		echoRef:         echoRef,
 		masterTLSConfig: masterTLSConfig,
@@ -216,17 +194,8 @@ func newKubernetesResourceManager(
 }
 
 func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
-	reschedule := true
-	defer func() {
-		// Default to scheduling every 500ms if a message was received, but allow messages
-		// that don't affect the cluster to be skipped.
-		k.reschedule = k.reschedule || reschedule
-	}()
-
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		actors.NotifyAfter(ctx, ActionCoolDown, SchedulerTick{})
-
 		k.podsActor = Initialize(
 			ctx.Self().System(),
 			k.echoRef,
@@ -245,6 +214,24 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.MasterPort,
 		)
 
+		k.pools[KubernetesDummyResourcePool] = ctx.Self().System().MustActorOf(
+			actor.Addr(KubernetesDummyResourcePool),
+			&kubernetesResourcePool{
+				config:            k.config,
+				reqList:           tasklist.New(),
+				groups:            map[*actor.Ref]*tasklist.Group{},
+				addrToContainerID: map[*actor.Ref]cproto.ID{},
+				containerIDtoAddr: map[string]*actor.Ref{},
+				jobIDtoAddr:       map[model.JobID]*actor.Ref{},
+				addrToJobID:       map[*actor.Ref]model.JobID{},
+				groupActorToID:    map[*actor.Ref]model.JobID{},
+				IDToGroupActor:    map[model.JobID]*actor.Ref{},
+				slotsUsedPerGroup: map[*tasklist.Group]int{},
+				podsActor:         k.podsActor,
+				queuePositions:    tasklist.InitializeJobSortState(true),
+			},
+		)
+
 	case
 		tasklist.GroupActorStopped,
 		sproto.SetGroupMaxSlots,
@@ -252,10 +239,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.AllocateRequest,
 		sproto.ResourcesReleased,
 		sproto.UpdatePodStatus,
-		sproto.PendingPreemption:
-		return k.receiveRequestMsg(ctx)
-
-	case
+		sproto.PendingPreemption,
 		sproto.GetJobQ,
 		sproto.GetJobQStats,
 		sproto.SetGroupWeight,
@@ -263,31 +247,16 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		sproto.MoveJob,
 		sproto.DeleteJob,
 		sproto.RecoverJobPosition,
-		*apiv1.GetJobQueueStatsRequest:
-		return k.receiveJobQueueMsg(ctx)
-
-	case sproto.GetAllocationHandler:
-		reschedule = false
-		ctx.Respond(k.reqList.TaskHandler(msg.ID))
-
-	case sproto.GetAllocationSummary:
-		if resp := k.reqList.TaskSummary(
-			msg.ID, k.groups, kubernetesScheduler); resp != nil {
-			ctx.Respond(*resp)
-		}
-		reschedule = false
-
-	case sproto.GetAllocationSummaries:
-		reschedule = false
-		ctx.Respond(k.reqList.TaskSummaries(k.groups, kubernetesScheduler))
+		*apiv1.GetJobQueueStatsRequest,
+		sproto.GetAllocationHandler,
+		sproto.GetAllocationSummary,
+		sproto.GetAllocationSummaries:
+		k.forwardToPool(ctx, KubernetesDummyResourcePool, msg)
 
 	case *apiv1.GetResourcePoolsRequest:
-		resourcePoolSummary, err := k.summarizeDummyResourcePool(ctx)
-		if err != nil {
-			ctx.Respond(err)
-		}
+		summary := ctx.Ask(k.pools[KubernetesDummyResourcePool], msg).Get().(*resourcepoolv1.ResourcePool)
 		resp := &apiv1.GetResourcePoolsResponse{
-			ResourcePools: []*resourcepoolv1.ResourcePool{resourcePoolSummary},
+			ResourcePools: []*resourcepoolv1.ResourcePool{summary},
 		}
 		ctx.Respond(resp)
 
@@ -295,18 +264,11 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
 		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
 
-	case SchedulerTick:
-		if k.reschedule {
-			k.schedulePendingTasks(ctx)
-		}
-		k.reschedule = false
-		reschedule = false
-		actors.NotifyAfter(ctx, ActionCoolDown, SchedulerTick{})
 	case *apiv1.GetAgentsRequest:
 		resp := ctx.Ask(k.podsActor, msg)
 		ctx.Respond(resp.Get())
+
 	default:
-		reschedule = false
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -314,7 +276,32 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (k *kubernetesResourceManager) summarizeDummyResourcePool(
+func (k *kubernetesResourceManager) forwardToPool(
+	ctx *actor.Context, resourcePool string, msg actor.Message,
+) {
+	if k.pools[resourcePool] == nil {
+		sender := "unknown"
+		if ctx.Sender() != nil {
+			sender = ctx.Sender().Address().String()
+		}
+		err := errors.Errorf("cannot find resource pool %s for message %T from actor %s",
+			resourcePool, ctx.Message(), sender)
+		ctx.Log().WithError(err).Error("")
+		if ctx.ExpectingResponse() {
+			ctx.Respond(err)
+		}
+		return
+	}
+
+	if ctx.ExpectingResponse() {
+		response := ctx.Ask(k.pools[resourcePool], msg)
+		ctx.Respond(response.Get())
+	} else {
+		ctx.Tell(k.pools[resourcePool], msg)
+	}
+}
+
+func (k *kubernetesResourcePool) summarizeResourcePool(
 	ctx *actor.Context,
 ) (*resourcepoolv1.ResourcePool, error) {
 	slotsUsed := 0
@@ -356,7 +343,7 @@ func (k *kubernetesResourceManager) summarizeDummyResourcePool(
 	}, nil
 }
 
-func (k *kubernetesResourceManager) summarizePods(
+func (k *kubernetesResourcePool) summarizePods(
 	ctx *actor.Context,
 ) (*PodsInfo, error) {
 	resp := ctx.Ask(k.podsActor, SummarizeResources{})
@@ -370,7 +357,7 @@ func (k *kubernetesResourceManager) summarizePods(
 	return pods, nil
 }
 
-func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error {
+func (k *kubernetesResourcePool) receiveRequestMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case tasklist.GroupActorStopped:
 		delete(k.slotsUsedPerGroup, k.groups[msg.Ref])
@@ -418,7 +405,7 @@ func (k *kubernetesResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 	return nil
 }
 
-func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
+func (k *kubernetesResourcePool) addTask(ctx *actor.Context, msg sproto.AllocateRequest) {
 	actors.NotifyOnStop(ctx, msg.AllocationRef, sproto.ResourcesReleased{
 		AllocationRef: msg.AllocationRef,
 	})
@@ -453,7 +440,7 @@ func (k *kubernetesResourceManager) addTask(ctx *actor.Context, msg sproto.Alloc
 	k.reqList.AddTask(&msg)
 }
 
-func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error {
+func (k *kubernetesResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.GetJobQ:
 		ctx.Respond(k.jobQInfo())
@@ -528,7 +515,7 @@ func (k *kubernetesResourceManager) receiveJobQueueMsg(ctx *actor.Context) error
 	return nil
 }
 
-func (k *kubernetesResourceManager) moveJob(
+func (k *kubernetesResourcePool) moveJob(
 	ctx *actor.Context,
 	jobID model.JobID,
 	anchorID model.JobID,
@@ -614,14 +601,14 @@ func (k *kubernetesResourceManager) moveJob(
 	return nil
 }
 
-func (k *kubernetesResourceManager) jobQInfo() map[model.JobID]*sproto.RMJobInfo {
+func (k *kubernetesResourcePool) jobQInfo() map[model.JobID]*sproto.RMJobInfo {
 	reqs := tasklist.SortTasksWithPosition(k.reqList, k.groups, k.queuePositions, true)
 	jobQinfo := tasklist.ReduceToJobQInfo(reqs)
 
 	return jobQinfo
 }
 
-func (k *kubernetesResourceManager) receiveSetAllocationName(
+func (k *kubernetesResourcePool) receiveSetAllocationName(
 	ctx *actor.Context,
 	msg sproto.SetAllocationName,
 ) {
@@ -630,7 +617,7 @@ func (k *kubernetesResourceManager) receiveSetAllocationName(
 	}
 }
 
-func (k *kubernetesResourceManager) assignResources(
+func (k *kubernetesResourcePool) assignResources(
 	ctx *actor.Context, req *sproto.AllocateRequest,
 ) {
 	numPods := 1
@@ -686,7 +673,7 @@ func (k *kubernetesResourceManager) assignResources(
 		Infof("resources assigned with %d pods", numPods)
 }
 
-func (k *kubernetesResourceManager) resourcesReleased(
+func (k *kubernetesResourcePool) resourcesReleased(
 	ctx *actor.Context,
 	msg sproto.ResourcesReleased,
 ) {
@@ -717,7 +704,7 @@ func (k *kubernetesResourceManager) resourcesReleased(
 	}
 }
 
-func (k *kubernetesResourceManager) getOrCreateGroup(
+func (k *kubernetesResourcePool) getOrCreateGroup(
 	ctx *actor.Context,
 	handler *actor.Ref,
 ) *tasklist.Group {
@@ -736,7 +723,7 @@ func (k *kubernetesResourceManager) getOrCreateGroup(
 	return g
 }
 
-func (k *kubernetesResourceManager) schedulePendingTasks(ctx *actor.Context) {
+func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		group := k.groups[req.Group]
