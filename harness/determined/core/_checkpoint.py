@@ -1,5 +1,6 @@
 import contextlib
 import enum
+import hashlib
 import json
 import logging
 import os
@@ -98,7 +99,7 @@ def merge_metadata(
     #  Metadata 1     | Metadata 2       | Conflict |  Result
     # ----------------|------------------|----------|-----------------
     #  a: 1           | b: 2             | no       | {a: 1, b: 2}
-    #  a: 1           | a: 1             | yes      | n/a
+    #  a: 1           | a: 1             | no       | {a: 1}
     #  a: []          | a: []            | yes      | n/a
     #  a: []          | a: 1             | yes      | n/a
     #  a: []          | a: {c: 1}        | yes      | n/a
@@ -284,7 +285,7 @@ class CheckpointContext:
         all_resources = self._dist.allgather(resources)
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            self._print_conflict_error(conflicts, "files")
+            self._try_resolving_conflicts(ckpt_dir, conflicts)
 
         # The lowest rank that is uploading ckpt_dir collects
         # and saves metadata.
@@ -304,12 +305,34 @@ class CheckpointContext:
 
         return storage_id
 
+    def _try_resolving_conflicts(
+        self, ckpt_dir: Optional[str], conflicts: Dict[str, List[int]]
+    ) -> None:
+        all_conflicts = conflicts.copy()
+
+        for fname in conflicts:
+            ranks = conflicts[fname]
+            if self._dist.rank in ranks:
+                assert ckpt_dir
+                md5 = hashlib.md5(open(os.path.join(ckpt_dir, fname), "rb").read()).hexdigest()
+                md5_ranks = self._dist.allgather(md5)
+            else:
+                md5_ranks = self._dist.allgather(None)
+
+            md5_ranks = [x for x in md5_ranks if x is not None]
+
+            if len(set(md5_ranks)) == 1:
+                # All files have the same md5 checksum, which means there is no conflict.
+                all_conflicts.pop(fname)
+            else:
+                self._print_conflict_error(all_conflicts, "files")
+
     def _print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
         # Try to keep the logs easier to read; print the whole failure only on the chief.
-        logging.info(f"{self._dist.rank}")
         if self._dist.rank > 0:
             raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts: {conflicts}")
         msgs = [f"    {f} uploaded by ranks {ranks}" for f, ranks in sorted(conflicts.items())]
+
         raise RuntimeError(
             f"refusing to upload with {conflict_dtype} conflicts:\n" + "\n".join(msgs)
         )
@@ -349,7 +372,7 @@ class CheckpointContext:
                     return True
                 # If anyone has a selector, coordinate every filename across workers' filters.
                 # Functions can't be reliably serialized, so instead we pass each filename between
-                # all workers.  But because this traffic is local (unix sockets by default) it
+                # all workers. But because this traffic is local (unix sockets by default) it
                 # should be far faster than any download.
                 _ = self._dist.broadcast_local(path)
                 # If selector is None return True => all files will be downloaded.
@@ -481,7 +504,7 @@ class CheckpointContext:
 
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            self._print_conflict_error(conflicts, "file")
+            self._try_resolving_conflicts(ckpt_dir, conflicts)
 
         # Chief gathers metadata across workers, checks for conflicts, saves metadata.
         all_metadata = self._merge_and_save_metadata(

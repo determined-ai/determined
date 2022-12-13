@@ -26,16 +26,21 @@ EXPECTED_FILES = {
 # File structure for sharded checkpoint testing
 EXPECTED_FILES_N0 = {
     "file0_0": "file 0 node 0",
+    "file_repeated": "file repeated",
     "file1_0": "file 1 node 0",
     "subdir/": None,
     "subdir/file3_0": "nested file node 0",
+    "subdir/file_repeated": "nested file repeated",
     "metadata.json": '{\n  "steps_completed": 1\n}',
 }
 EXPECTED_FILES_N1 = {
     "file0_1": "file 0 node 1",
     "file1_1": "file 1 node 1",
+    "file_repeated1": "file repeated 1",
     "subdir/": None,
     "subdir/file3_1": "nested file node 1",
+    "subdir/file_repeated": "nested file repeated",
+    "metadata.json": '{\n  "steps_completed": 1\n}',
 }
 
 
@@ -289,9 +294,7 @@ def run_storage_upload_download_sharded_test(
         f"{[os.path.join(dp, f) for dp, dn, fn in os.walk(ckpt_dir) for f in fn]}"
     )
 
-    metadata: Optional[Dict[str, Any]] = None
-    if pex.distributed.rank == 0:
-        metadata = {"steps_completed": 1}
+    metadata = {"steps_completed": 1}
 
     # Upload sharded data.
     storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True)
@@ -370,6 +373,21 @@ def run_storage_upload_download_sharded_test(
     if pex.distributed.rank == 0 and clean_up is not None:
         clean_up(storage_id, storage_manager)
 
+    # 5. Test uploading two files with the same name and different content
+    # raises an error.
+    with parallel.raises_when(
+        True,
+        RuntimeError,
+        match=r"refusing to upload with files conflicts:.*",
+    ):
+        if pex.distributed.rank == 0:
+            create_checkpoint(ckpt_dir, {"filename": "content 1"})
+        else:
+            create_checkpoint(ckpt_dir, {"filename": "content 2"})
+
+        pex.distributed.allgather(None)
+        checkpoint_context.upload(ckpt_dir, metadata, shard=True)
+
 
 def run_storage_store_restore_sharded_test(
     pex: parallel.Execution,
@@ -379,9 +397,7 @@ def run_storage_store_restore_sharded_test(
     checkpoint_context = create_checkpoint_context(pex, storage_manager)
     selector: Optional[Callable[[str], bool]]  # Making lint happy.
 
-    metadata: Optional[Dict[str, int]] = None
-    if pex.distributed.rank == 0:
-        metadata = {"steps_completed": 1}
+    metadata = {"steps_completed": 1}
 
     with checkpoint_context.store_path(metadata, shard=True) as (path, storage_id):
         if pex.distributed.rank == 0:
@@ -438,6 +454,19 @@ def run_storage_store_restore_sharded_test(
 
     if pex.distributed.rank == 0 and clean_up is not None:
         clean_up(storage_id, storage_manager)
+
+    # 4. Test uploading two files with the same name and different content
+    # raises an error.
+    with parallel.raises_when(
+        True,
+        RuntimeError,
+        match=r"refusing to upload with files conflicts:.*",
+    ):
+        with checkpoint_context.store_path(metadata, shard=True) as (path, storage_id):
+            if pex.distributed.rank == 0:
+                create_checkpoint(path, {"filename": "content 1"})
+            else:
+                create_checkpoint(path, {"filename": "content 2"})
 
 
 def create_checkpoint_context(
