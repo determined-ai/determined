@@ -139,9 +139,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const isPausable = pausableRunStates.has(experiment.state);
   const isPaused = experiment.state === RunState.Paused;
   const isTerminated = terminalRunStates.has(experiment.state);
-  const continuesTrial = experiment.originalConfig.match(
-    /description: (>-\s+)?Continuation of trial/,
-  );
 
   if (isTerminated) classes.push(css.terminated);
 
@@ -461,20 +458,18 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 onSave={handleDescriptionUpdate}
               />
             </div>
-            {experiment.forkedFrom &&
-              continuesTrial &&
-              experiment.config.searcher.sourceTrialId && (
-                <div className={css.foldableItem}>
-                  <span className={css.foldableItemLabel}>Continued from:</span>
-                  <Link
-                    className={css.link}
-                    path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
-                    Trial {experiment.config.searcher.sourceTrialId} - Experiment{' '}
-                    {experiment.forkedFrom}
-                  </Link>
-                </div>
-              )}
-            {experiment.forkedFrom && !continuesTrial && (
+            {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Continued from:</span>
+                <Link
+                  className={css.link}
+                  path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
+                  Trial {experiment.config.searcher.sourceTrialId} - Experiment{' '}
+                  {experiment.forkedFrom}
+                </Link>
+              </div>
+            )}
+            {experiment.forkedFrom && !experiment.config.searcher.sourceTrialId && (
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Forked from:</span>
                 <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
