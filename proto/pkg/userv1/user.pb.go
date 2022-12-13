@@ -21,6 +21,104 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ActivityType represents a user activity
+type ActivityType int32
+
+const (
+	// Default activity type.
+	ActivityType_ACTIVITY_TYPE_UNSPECIFIED ActivityType = 0
+	// Represents a get request.
+	ActivityType_ACTIVITY_TYPE_GET ActivityType = 1
+)
+
+// Enum value maps for ActivityType.
+var (
+	ActivityType_name = map[int32]string{
+		0: "ACTIVITY_TYPE_UNSPECIFIED",
+		1: "ACTIVITY_TYPE_GET",
+	}
+	ActivityType_value = map[string]int32{
+		"ACTIVITY_TYPE_UNSPECIFIED": 0,
+		"ACTIVITY_TYPE_GET":         1,
+	}
+)
+
+func (x ActivityType) Enum() *ActivityType {
+	p := new(ActivityType)
+	*p = x
+	return p
+}
+
+func (x ActivityType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ActivityType) Descriptor() protoreflect.EnumDescriptor {
+	return file_determined_user_v1_user_proto_enumTypes[0].Descriptor()
+}
+
+func (ActivityType) Type() protoreflect.EnumType {
+	return &file_determined_user_v1_user_proto_enumTypes[0]
+}
+
+func (x ActivityType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ActivityType.Descriptor instead.
+func (ActivityType) EnumDescriptor() ([]byte, []int) {
+	return file_determined_user_v1_user_proto_rawDescGZIP(), []int{0}
+}
+
+// EntityType represents an entity
+type EntityType int32
+
+const (
+	// Default entity type.
+	EntityType_ENTITY_TYPE_UNSPECIFIED EntityType = 0
+	// Represents a project.
+	EntityType_ENTITY_TYPE_PROJECT EntityType = 1
+)
+
+// Enum value maps for EntityType.
+var (
+	EntityType_name = map[int32]string{
+		0: "ENTITY_TYPE_UNSPECIFIED",
+		1: "ENTITY_TYPE_PROJECT",
+	}
+	EntityType_value = map[string]int32{
+		"ENTITY_TYPE_UNSPECIFIED": 0,
+		"ENTITY_TYPE_PROJECT":     1,
+	}
+)
+
+func (x EntityType) Enum() *EntityType {
+	p := new(EntityType)
+	*p = x
+	return p
+}
+
+func (x EntityType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EntityType) Descriptor() protoreflect.EnumDescriptor {
+	return file_determined_user_v1_user_proto_enumTypes[1].Descriptor()
+}
+
+func (EntityType) Type() protoreflect.EnumType {
+	return &file_determined_user_v1_user_proto_enumTypes[1]
+}
+
+func (x EntityType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EntityType.Descriptor instead.
+func (EntityType) EnumDescriptor() ([]byte, []int) {
+	return file_determined_user_v1_user_proto_rawDescGZIP(), []int{1}
+}
+
 // User is an account in the determined cluster.
 type User struct {
 	state         protoimpl.MessageState
@@ -447,10 +545,19 @@ var file_determined_user_v1_user_proto_rawDesc = []byte{
 	0x52, 0x0b, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x50, 0x61, 0x74, 0x68, 0x12, 0x14, 0x0a,
 	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61,
 	0x6c, 0x75, 0x65, 0x3a, 0x0b, 0x92, 0x41, 0x08, 0x0a, 0x06, 0xd2, 0x01, 0x03, 0x6b, 0x65, 0x79,
-	0x42, 0x36, 0x5a, 0x34, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64,
-	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b,
-	0x67, 0x2f, 0x75, 0x73, 0x65, 0x72, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x2a, 0x44, 0x0a, 0x0c, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65,
+	0x12, 0x1d, 0x0a, 0x19, 0x41, 0x43, 0x54, 0x49, 0x56, 0x49, 0x54, 0x59, 0x5f, 0x54, 0x59, 0x50,
+	0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
+	0x15, 0x0a, 0x11, 0x41, 0x43, 0x54, 0x49, 0x56, 0x49, 0x54, 0x59, 0x5f, 0x54, 0x59, 0x50, 0x45,
+	0x5f, 0x47, 0x45, 0x54, 0x10, 0x01, 0x2a, 0x42, 0x0a, 0x0a, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79,
+	0x54, 0x79, 0x70, 0x65, 0x12, 0x1b, 0x0a, 0x17, 0x45, 0x4e, 0x54, 0x49, 0x54, 0x59, 0x5f, 0x54,
+	0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10,
+	0x00, 0x12, 0x17, 0x0a, 0x13, 0x45, 0x4e, 0x54, 0x49, 0x54, 0x59, 0x5f, 0x54, 0x59, 0x50, 0x45,
+	0x5f, 0x50, 0x52, 0x4f, 0x4a, 0x45, 0x43, 0x54, 0x10, 0x01, 0x42, 0x36, 0x5a, 0x34, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
+	0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x75, 0x73, 0x65, 0x72,
+	0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -465,21 +572,24 @@ func file_determined_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_determined_user_v1_user_proto_rawDescData
 }
 
+var file_determined_user_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_determined_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_determined_user_v1_user_proto_goTypes = []interface{}{
-	(*User)(nil),                // 0: determined.user.v1.User
-	(*PatchUser)(nil),           // 1: determined.user.v1.PatchUser
-	(*AgentUserGroup)(nil),      // 2: determined.user.v1.AgentUserGroup
-	(*UserWebSetting)(nil),      // 3: determined.user.v1.UserWebSetting
-	(*timestamp.Timestamp)(nil), // 4: google.protobuf.Timestamp
-	(*wrappers.BoolValue)(nil),  // 5: google.protobuf.BoolValue
+	(ActivityType)(0),           // 0: determined.user.v1.ActivityType
+	(EntityType)(0),             // 1: determined.user.v1.EntityType
+	(*User)(nil),                // 2: determined.user.v1.User
+	(*PatchUser)(nil),           // 3: determined.user.v1.PatchUser
+	(*AgentUserGroup)(nil),      // 4: determined.user.v1.AgentUserGroup
+	(*UserWebSetting)(nil),      // 5: determined.user.v1.UserWebSetting
+	(*timestamp.Timestamp)(nil), // 6: google.protobuf.Timestamp
+	(*wrappers.BoolValue)(nil),  // 7: google.protobuf.BoolValue
 }
 var file_determined_user_v1_user_proto_depIdxs = []int32{
-	2, // 0: determined.user.v1.User.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
-	4, // 1: determined.user.v1.User.modified_at:type_name -> google.protobuf.Timestamp
-	5, // 2: determined.user.v1.PatchUser.admin:type_name -> google.protobuf.BoolValue
-	5, // 3: determined.user.v1.PatchUser.active:type_name -> google.protobuf.BoolValue
-	2, // 4: determined.user.v1.PatchUser.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
+	4, // 0: determined.user.v1.User.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
+	6, // 1: determined.user.v1.User.modified_at:type_name -> google.protobuf.Timestamp
+	7, // 2: determined.user.v1.PatchUser.admin:type_name -> google.protobuf.BoolValue
+	7, // 3: determined.user.v1.PatchUser.active:type_name -> google.protobuf.BoolValue
+	4, // 4: determined.user.v1.PatchUser.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -549,13 +659,14 @@ func file_determined_user_v1_user_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_user_v1_user_proto_rawDesc,
-			NumEnums:      0,
+			NumEnums:      2,
 			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_determined_user_v1_user_proto_goTypes,
 		DependencyIndexes: file_determined_user_v1_user_proto_depIdxs,
+		EnumInfos:         file_determined_user_v1_user_proto_enumTypes,
 		MessageInfos:      file_determined_user_v1_user_proto_msgTypes,
 	}.Build()
 	File_determined_user_v1_user_proto = out.File

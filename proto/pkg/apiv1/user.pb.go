@@ -1097,6 +1097,112 @@ func (*ResetUserSettingResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{19}
 }
 
+// Update user activity.
+type PostUserActivityRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The type of the activity.
+	ActivityType userv1.ActivityType `protobuf:"varint,1,opt,name=activity_type,json=activityType,proto3,enum=determined.user.v1.ActivityType" json:"activity_type,omitempty"`
+	// The type of the entity.
+	EntityType userv1.EntityType `protobuf:"varint,2,opt,name=entity_type,json=entityType,proto3,enum=determined.user.v1.EntityType" json:"entity_type,omitempty"`
+	// The unique id for the entity
+	EntityId int32 `protobuf:"varint,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
+}
+
+func (x *PostUserActivityRequest) Reset() {
+	*x = PostUserActivityRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_user_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PostUserActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostUserActivityRequest) ProtoMessage() {}
+
+func (x *PostUserActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_user_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostUserActivityRequest.ProtoReflect.Descriptor instead.
+func (*PostUserActivityRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *PostUserActivityRequest) GetActivityType() userv1.ActivityType {
+	if x != nil {
+		return x.ActivityType
+	}
+	return userv1.ActivityType_ACTIVITY_TYPE_UNSPECIFIED
+}
+
+func (x *PostUserActivityRequest) GetEntityType() userv1.EntityType {
+	if x != nil {
+		return x.EntityType
+	}
+	return userv1.EntityType_ENTITY_TYPE_UNSPECIFIED
+}
+
+func (x *PostUserActivityRequest) GetEntityId() int32 {
+	if x != nil {
+		return x.EntityId
+	}
+	return 0
+}
+
+// Response to PostUserActivityRequest.
+type PostUserActivityResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *PostUserActivityResponse) Reset() {
+	*x = PostUserActivityResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_user_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PostUserActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostUserActivityResponse) ProtoMessage() {}
+
+func (x *PostUserActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_user_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostUserActivityResponse.ProtoReflect.Descriptor instead.
+func (*PostUserActivityResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{21}
+}
+
 var File_determined_api_v1_user_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_user_proto_rawDesc = []byte{
@@ -1217,11 +1323,28 @@ var file_determined_api_v1_user_proto_rawDesc = []byte{
 	0x6e, 0x73, 0x65, 0x22, 0x19, 0x0a, 0x17, 0x52, 0x65, 0x73, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72,
 	0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1a,
 	0x0a, 0x18, 0x52, 0x65, 0x73, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69,
-	0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69,
-	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
-	0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
-	0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76,
-	0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6e, 0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xef, 0x01, 0x0a, 0x17, 0x50,
+	0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x45, 0x0a, 0x0d, 0x61, 0x63, 0x74, 0x69, 0x76, 0x69,
+	0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x20, 0x2e,
+	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e,
+	0x76, 0x31, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x52,
+	0x0c, 0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x3f, 0x0a,
+	0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0e, 0x32, 0x1e, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e,
+	0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x54, 0x79,
+	0x70, 0x65, 0x52, 0x0a, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x12, 0x1b,
+	0x0a, 0x09, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x08, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x49, 0x64, 0x3a, 0x2f, 0x92, 0x41, 0x2c,
+	0x0a, 0x2a, 0xd2, 0x01, 0x0d, 0x61, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79,
+	0x70, 0x65, 0xd2, 0x01, 0x0b, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x74, 0x79, 0x70, 0x65,
+	0xd2, 0x01, 0x09, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x5f, 0x69, 0x64, 0x22, 0x1a, 0x0a, 0x18,
+	0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68,
+	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1237,7 +1360,7 @@ func file_determined_api_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_determined_api_v1_user_proto_goTypes = []interface{}{
 	(GetUsersRequest_SortBy)(0),       // 0: determined.api.v1.GetUsersRequest.SortBy
 	(*GetUsersRequest)(nil),           // 1: determined.api.v1.GetUsersRequest
@@ -1260,32 +1383,38 @@ var file_determined_api_v1_user_proto_goTypes = []interface{}{
 	(*PostUserSettingResponse)(nil),   // 18: determined.api.v1.PostUserSettingResponse
 	(*ResetUserSettingRequest)(nil),   // 19: determined.api.v1.ResetUserSettingRequest
 	(*ResetUserSettingResponse)(nil),  // 20: determined.api.v1.ResetUserSettingResponse
-	(OrderBy)(0),                      // 21: determined.api.v1.OrderBy
-	(*userv1.User)(nil),               // 22: determined.user.v1.User
-	(*Pagination)(nil),                // 23: determined.api.v1.Pagination
-	(*userv1.PatchUser)(nil),          // 24: determined.user.v1.PatchUser
-	(*userv1.UserWebSetting)(nil),     // 25: determined.user.v1.UserWebSetting
+	(*PostUserActivityRequest)(nil),   // 21: determined.api.v1.PostUserActivityRequest
+	(*PostUserActivityResponse)(nil),  // 22: determined.api.v1.PostUserActivityResponse
+	(OrderBy)(0),                      // 23: determined.api.v1.OrderBy
+	(*userv1.User)(nil),               // 24: determined.user.v1.User
+	(*Pagination)(nil),                // 25: determined.api.v1.Pagination
+	(*userv1.PatchUser)(nil),          // 26: determined.user.v1.PatchUser
+	(*userv1.UserWebSetting)(nil),     // 27: determined.user.v1.UserWebSetting
+	(userv1.ActivityType)(0),          // 28: determined.user.v1.ActivityType
+	(userv1.EntityType)(0),            // 29: determined.user.v1.EntityType
 }
 var file_determined_api_v1_user_proto_depIdxs = []int32{
 	0,  // 0: determined.api.v1.GetUsersRequest.sort_by:type_name -> determined.api.v1.GetUsersRequest.SortBy
-	21, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
-	22, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
-	23, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
-	22, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
-	22, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
-	22, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
-	22, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
-	22, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
-	22, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
-	24, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
-	22, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
-	25, // 12: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
-	25, // 13: determined.api.v1.PostUserSettingRequest.setting:type_name -> determined.user.v1.UserWebSetting
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	23, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
+	24, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
+	25, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
+	24, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
+	24, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
+	24, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
+	24, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
+	24, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
+	24, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
+	26, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
+	24, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
+	27, // 12: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
+	27, // 13: determined.api.v1.PostUserSettingRequest.setting:type_name -> determined.user.v1.UserWebSetting
+	28, // 14: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
+	29, // 15: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_user_proto_init() }
@@ -1535,6 +1664,30 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_user_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PostUserActivityRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_user_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PostUserActivityResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1542,7 +1695,7 @@ func file_determined_api_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_user_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   20,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
