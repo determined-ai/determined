@@ -1,4 +1,3 @@
-import pathlib
 import typing
 
 from transformers import (
@@ -29,7 +28,7 @@ class DetCallback(TrainerCallback):
         self.user_checkpoint_metadata = checkpoint_metadata
         self.load_last_checkpoint(args)
 
-        self.last_metrics: typing.Dict[str, float] = {}
+        self.last_metrics: typing.Dict[str, float] = {'train_step': -1, 'eval_step': -1}
 
         searcher_config = det.get_cluster_info().trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
@@ -51,20 +50,16 @@ class DetCallback(TrainerCallback):
         if state.is_world_process_zero:
             metrics, metric_type = self._get_metrics(logs)
             if metric_type == TRAIN:
-                if (
-                    "train_step" not in self.last_metrics
-                    or self.last_metrics["eval_step"] != state.global_step
-                ):
+                # Prevent reporting metrics for the same step twice.
+                if self.last_metrics["train_step"] != state.global_step:
                     self.core_context.train.report_training_metrics(
                         steps_completed=state.global_step, metrics=metrics
                     )
                     metrics["train_step"] = state.global_step
 
             elif metric_type == EVAL:
-                if (
-                    "eval_step" not in self.last_metrics
-                    or self.last_metrics["eval_step"] != state.global_step
-                ):
+                # Prevent reporting metrics for the same step twice.
+                if self.last_metrics["eval_step"] != state.global_step:
                     self.core_context.train.report_validation_metrics(
                         steps_completed=state.global_step, metrics=metrics
                     )
@@ -99,20 +94,17 @@ class DetCallback(TrainerCallback):
         info = det.get_cluster_info()
         assert info
 
-        # local_path is where HF Trainer saves model and tokenizer
+        # local_path is where HF Trainer saves model and tokenizer.
         local_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
 
         if state.is_world_process_zero:
-            det_checkpoint_metadata = {
-                "steps_completed": state.global_step,
-                "trial_id": info.trial.trial_id,
-            }
-
             if self.user_checkpoint_metadata is not None:
                 self._on_save_user_data(local_path)
 
-        else:
-            det_checkpoint_metadata = None
+        det_checkpoint_metadata = {
+            "steps_completed": state.global_step,
+            "trial_id": info.trial.trial_id,
+        }
 
         self.core_context.checkpoint.upload(
             local_path, metadata=det_checkpoint_metadata, shard=True
@@ -146,8 +138,8 @@ class DetCallback(TrainerCallback):
                 resume_step = metadata["steps_completed"]
             checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
 
-            # to resume deepspeed, each node requires ALL sharded model/optimizer states,
-            # so we can skip using selector and just download all files
+            # To resume DeepSpeed, each node requires ALL sharded model/optimizer states,
+            # so we can skip using selector and just download all files.
             self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
             args.resume_from_checkpoint = checkpoint_path
 
@@ -158,7 +150,7 @@ class DetCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
-        # state.epoch is not None only during training
+        # state.epoch is not None only during training.
         if state.epoch and self.searcher_unit == "batches":
             if state.is_world_process_zero:
                 self.current_op.report_progress(state.global_step)
@@ -173,7 +165,7 @@ class DetCallback(TrainerCallback):
         control: TrainerControl,
         **kwargs,
     ):
-        # state.epoch is not None only during training
+        # state.epoch is not None only during training.
         if state.epoch and self.searcher_unit == "epochs":
             if state.is_world_process_zero:
                 self.current_op.report_progress(state.epoch)
