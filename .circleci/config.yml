@@ -479,9 +479,9 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
-      - upload-test-job:
-          only_on_branch: master
-          test_results_path: <<parameters.junit-path>>
+      #- upload-test-job:
+      #    only_on_branch: master
+      #    test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
     parameters:
@@ -1597,9 +1597,9 @@ jobs:
           extra-requirements-file: "examples/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
-      - upload-test-job:
-          only_on_branch: master
-          test_results_path: /tmp/test-results/examples.xml
+      #- upload-test-job:
+      #    only_on_branch: master
+      #    test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
     parameters:
