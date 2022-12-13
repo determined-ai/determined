@@ -702,12 +702,17 @@ commands:
       - set-cluster-labels:
           labels: <<parameters.labels>>
       - gcloud/install:
-          version: "319.0.0"
+          version: "412.0.0"
       - kubernetes/install-kubectl
       - gcloud/initialize:
           gcloud-service-key: <<parameters.gcloud-service-key>>
           google-compute-zone: <<parameters.google-compute-zone>>
           google-project-id: <<parameters.google-project-id>>
+      - run:
+          command: |
+            gcloud components install gke-gcloud-auth-plugin --quiet
+            echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $BASH_ENV
+          name: Install GKE auth plugin
       - run:
           command: gcloud container clusters create ${CLUSTER_ID} --machine-type=n1-standard-8 --cluster-version=<<parameters.gke-version>> --region=<<parameters.region>> --node-locations=<<parameters.node-locations>> --scopes storage-rw,cloud-platform --num-nodes 1 --labels environment=ci,${LABELS} --no-enable-ip-alias --subnetwork default
           name: Create GKE cluster
