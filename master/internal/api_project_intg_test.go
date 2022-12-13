@@ -321,13 +321,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 }
 
 func TestGetProjectByActivity(t *testing.T) {
-	api, projAuthZ, _, _, ctx := setupProjectAuthZTest(t)
-
-	if isMockAuthZ() {
-		projAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
-			Return(true, nil)
-	}
-
+	api, _, ctx := setupAPITest(t)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
 	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
@@ -339,6 +333,7 @@ func TestGetProjectByActivity(t *testing.T) {
 	require.NoError(t, err)
 
 	resp, err := api.GetProjectsByUserActivity(ctx, &apiv1.GetProjectsByUserActivityRequest{})
+	require.NoError(t, err)
 
 	require.NoError(t, err)
 	require.Equal(t, 1, len(resp.Projects))
