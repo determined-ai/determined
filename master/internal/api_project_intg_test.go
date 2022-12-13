@@ -332,7 +332,9 @@ func TestGetProjectByActivity(t *testing.T) {
 
 	require.NoError(t, err)
 
-	resp, err := api.GetProjectsByUserActivity(ctx, &apiv1.GetProjectsByUserActivityRequest{})
+	resp, err := api.GetProjectsByUserActivity(ctx, &apiv1.GetProjectsByUserActivityRequest{
+		Limit: 1,
+	})
 	require.NoError(t, err)
 
 	require.NoError(t, err)
