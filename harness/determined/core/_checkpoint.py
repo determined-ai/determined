@@ -71,7 +71,7 @@ def _merge_metadata(
                 full_key,
             )
         else:
-            if key in merged:
+            if key in merged and merged[key] != metadata:
                 if full_key not in key_conflicts:
                     key_conflicts[full_key] = key_ranks[key]["_ranks_"].copy()
                 else:
