@@ -464,8 +464,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 <Link
                   className={css.link}
                   path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
-                  Trial {experiment.config.searcher.sourceTrialId} - Experiment{' '}
-                  {experiment.forkedFrom}
+                  Trial {experiment.config.searcher.sourceTrialId}
                 </Link>
               </div>
             )}
@@ -473,7 +472,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               <div className={css.foldableItem}>
                 <span className={css.foldableItemLabel}>Forked from:</span>
                 <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
-                  {experiment.forkedFrom}
+                  Experiment {experiment.forkedFrom}
                 </Link>
               </div>
             )}
