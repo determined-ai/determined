@@ -601,6 +601,8 @@ commands:
           working_directory: ./e2e_tests
           no_output_timeout: 30m
           command: |
+            # Remove prior test results
+            rm -f "<<parameters.junit-path>>"
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             pytest --capture=tee-sys -vv -s \
             -m '<<parameters.mark>>' \

@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/mathx"
 
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 )
@@ -25,6 +26,8 @@ const (
 	pollLoopIntervalSecs       = 10
 	minItemPollingIntervalSecs = pollLoopIntervalSecs
 	ignoredReporter            = "com.cray.analytics.capsules.dispatcher.shasta.ShastaDispatcher"
+	errorLinesToRetrieve       = 200
+	errorLinesToDisplay        = 15
 )
 
 // A list of WARNING/ERROR level messages that we're interested in, because they contain
@@ -374,6 +377,32 @@ func getJobID(additionalProperties map[string]interface{}) string {
 }
 
 /*
+  Error logs may have large python stack traces, if we have a
+  misconfiguration error, prune messages before that to make the error
+  clearer for the user.  Limit the number of lines to errorLinesToDisplay.
+  In debug/trace show increased number of lines.
+*/
+func minimizeErrorLog(messages []string) []string {
+	// By default we show limited lines, on debug/trace levels show more
+	linesToShow := errorLinesToDisplay
+	if logrus.GetLevel() == logrus.DebugLevel {
+		linesToShow = 100
+	} else if logrus.GetLevel() == logrus.TraceLevel {
+		linesToShow = 1000
+	}
+
+	for i, line := range messages {
+		if strings.Contains(line, "Failed to download model definition from master.") {
+			// Return up to linesToShow after message
+			return messages[i:mathx.Min(len(messages), i+linesToShow)]
+		}
+	}
+
+	// Return the last linesToShow of the log
+	return messages[mathx.Clamp(0, len(messages)-linesToShow, len(messages)):]
+}
+
+/*
  Processes the job state and sends DispatchStateChange on each call.
  updateJobStatus returns true when the job has finished or no longer exists,
  and monitoring should stop.
@@ -408,10 +437,9 @@ func (m *launcherMonitor) updateJobStatus(ctx *actor.Context, job launcherJob) b
 		if exitStatus != 0 && len(exitMessages) == 0 {
 			// If we have no messages, it may be a connection failure from the container
 			// and we will have no logs to assist in diagnosis, so insert the last
-			// few lines of the error and output logs into the failure message.
-			exitMessages, _ = m.getTaskLogsFromDispatcher(ctx, &job, "error.log")
-			outputMessages, _ := m.getTaskLogsFromDispatcher(ctx, &job, "output.log")
-			exitMessages = append(outputMessages, exitMessages...)
+			// few lines of the error log into the failure message.
+			exitMessages, _ = m.getTaskLogsFromDispatcher(ctx, &job, "error.log", errorLinesToRetrieve)
+			exitMessages = minimizeErrorLog(exitMessages)
 		}
 
 		ctx.Log().Debugf("Send status to DAI: %d, messages %s", exitStatus, exitMessages)
@@ -556,21 +584,13 @@ func getJobExitMessages(resp launcher.DispatchInfo) []string {
 // as a last-chance to provide context for the failure.
 // The baseLogName string is error.log, output.log, submission.log (etc), the
 // prefix is taken from the job payload name.
-// The logRange expression can be used to limit the size of the logs returned.
-// For example "lines=-30" is the last 30 lines of the file.
 func (m *launcherMonitor) getTaskLogsFromDispatcher(
-	ctx *actor.Context, job *launcherJob, baseLogName string,
+	ctx *actor.Context, job *launcherJob, baseLogName string, linesToShow int,
 ) ([]string, error) {
 	dispatchID := job.dispatcherID
 
-	// By default show limited lines, on debug/trace levels show more
-	linesToShow := 15
-	if ctx.Log().Logger.Level == logrus.DebugLevel {
-		linesToShow = 100
-	} else if ctx.Log().Logger.Level == logrus.TraceLevel {
-		linesToShow = 1000
-	}
-	// The number of lines from error/output logs to display on failure.
+	// The logRange expression can be used to limit the size of the logs returned.
+	// For example "lines=-30" is the last 30 lines of the file.
 	logRange := fmt.Sprintf("lines=-%d", linesToShow)
 
 	// If we re-connect to a running job, we've lost the payload name
