@@ -48,8 +48,8 @@ message Model {
   repeated string labels = 8;
   // Username of the user who created this model.
   string username = 10;
-  // The id of the workspace associated with this model. 
-  int32 workspace_id = 14; 
+  // The id of the workspace associated with this model.
+  int32 workspace_id = 14;
   // Id of the user who created this model.
   int32 user_id = 13;
   // Whether this model is archived or not.
@@ -73,8 +73,8 @@ message PatchModel {
   google.protobuf.ListValue labels = 5;
   // Updated notes associated with this model.
   google.protobuf.StringValue notes = 6;
-  // The id of the workspace associated with this model. 
-  int32 workspace_id = 7; 
+  // The id of the workspace associated with this model.
+  int32 workspace_id = 7;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as
