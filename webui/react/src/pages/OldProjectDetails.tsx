@@ -34,9 +34,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
-import { useFetchUsers } from 'hooks/useFetch';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
@@ -73,6 +71,9 @@ import { ErrorLevel } from 'shared/utils/error';
 import { isNotFound } from 'shared/utils/service';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { humanReadableBytes } from 'shared/utils/string';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -90,6 +91,7 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 import { openCommand } from 'utils/wait';
 
@@ -122,10 +124,12 @@ const batchActions = [
 ];
 
 const ProjectDetails: React.FC = () => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const { projectId } = useParams<Params>();
   const [project, setProject] = useState<Project>();
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
@@ -249,7 +253,7 @@ const ProjectDetails: React.FC = () => {
     }
   }, [canceler.signal, id]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchProject(), fetchExperiments(), fetchUsers(), fetchLabels()]);
@@ -458,6 +462,8 @@ const ProjectDetails: React.FC = () => {
     const forkedFromRenderer = (value: string | number | undefined): React.ReactNode =>
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
+    const checkpointSizeRenderer = (value: number) => (value ? humanReadableBytes(value) : '');
+
     return [
       {
         align: 'right',
@@ -506,7 +512,7 @@ const ProjectDetails: React.FC = () => {
         onCell: onRightClickableCell,
         render: forkedFromRenderer,
         sorter: true,
-        title: 'Forked From',
+        title: 'Forked',
       },
       {
         align: 'right',
@@ -517,7 +523,7 @@ const ProjectDetails: React.FC = () => {
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
-        title: 'Start Time',
+        title: 'Started',
       },
       {
         align: 'right',
@@ -562,7 +568,7 @@ const ProjectDetails: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
         key: 'searcherType',
         onCell: onRightClickableCell,
-        title: 'Searcher Type',
+        title: 'Searcher',
       },
       {
         dataIndex: 'resourcePool',
@@ -580,6 +586,23 @@ const ProjectDetails: React.FC = () => {
         render: experimentProgressRenderer,
         sorter: true,
         title: 'Progress',
+      },
+      {
+        align: 'right',
+        dataIndex: 'checkpointSize',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointSize'],
+        key: V1GetExperimentsRequestSortBy.CHECKPOINTSIZE,
+        render: checkpointSizeRenderer,
+        sorter: true,
+        title: 'Checkpoint Size',
+      },
+      {
+        align: 'right',
+        dataIndex: 'checkpointCount',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointCount'],
+        key: V1GetExperimentsRequestSortBy.CHECKPOINTCOUNT,
+        sorter: true,
+        title: 'Checkpoint Count',
       },
       {
         align: 'center',
@@ -702,7 +725,7 @@ const ProjectDetails: React.FC = () => {
         }),
       );
     },
-    [expPermissions, settings.row, openMoveModal, project?.workspaceId, project?.id, experimentMap],
+    [expPermissions, settings, openMoveModal, project?.workspaceId, project?.id, experimentMap],
   );
 
   const submitBatchAction = useCallback(

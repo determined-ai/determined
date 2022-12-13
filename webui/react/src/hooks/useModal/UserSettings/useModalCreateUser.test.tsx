@@ -5,7 +5,9 @@ import React from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
+import { AuthProvider } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
   ADMIN_LABEL,
@@ -44,9 +46,13 @@ const Container: React.FC = () => {
 const setup = async () => {
   const view = render(
     <StoreProvider>
-      <UserRolesProvider>
-        <Container />
-      </UserRolesProvider>
+      <UsersProvider>
+        <AuthProvider>
+          <UserRolesProvider>
+            <Container />
+          </UserRolesProvider>
+        </AuthProvider>
+      </UsersProvider>
     </StoreProvider>,
   );
 

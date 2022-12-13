@@ -51,7 +51,7 @@ export const columns: ColumnDef<TrialItem>[] = [
     render: (_: string, record: TrialItem): ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
     sorter: true,
-    title: 'Start Time',
+    title: 'Started',
   },
   {
     dataIndex: 'duration',
@@ -72,7 +72,14 @@ export const columns: ColumnDef<TrialItem>[] = [
     dataIndex: 'checkpoint',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
     key: 'checkpoint',
-    title: 'Checkpoint',
+    title: 'Best Checkpoint',
+  },
+  {
+    dataIndex: 'totalCheckpointSize',
+    defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpoint'],
+    key: V1GetExperimentTrialsRequestSortBy.CHECKPOINTSIZE,
+    sorter: true,
+    title: 'Checkpoint Size',
   },
   {
     align: 'right',

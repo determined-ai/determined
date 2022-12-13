@@ -1,6 +1,7 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
 import { getWorkspaces } from 'services/api';
+import { GetWorkspacesParams } from 'services/types';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -13,9 +14,9 @@ type WorkspacesContext = {
 const WorkspacesContext = createContext<WorkspacesContext | null>(null);
 
 export const WorkspacesProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [state, setState] = useState<Loadable<Workspace[]>>(NotLoaded);
+  const [workspaces, updateWorkspaces] = useState<Loadable<Workspace[]>>(NotLoaded);
   return (
-    <WorkspacesContext.Provider value={{ updateWorkspaces: setState, workspaces: state }}>
+    <WorkspacesContext.Provider value={{ updateWorkspaces, workspaces }}>
       {children}
     </WorkspacesContext.Provider>
   );
@@ -41,7 +42,7 @@ export const useFetchWorkspaces = (canceler: AbortController): (() => Promise<vo
 export const useEnsureWorkspacesFetched = (canceler: AbortController): (() => Promise<void>) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
-    throw new Error('Attempted to use useEnsureFetchWorkspaces outside of Workspace Context');
+    throw new Error('Attempted to use useEnsureWorkspacesFetched outside of Workspace Context');
   }
   const { workspaces, updateWorkspaces } = context;
 
@@ -56,12 +57,53 @@ export const useEnsureWorkspacesFetched = (canceler: AbortController): (() => Pr
   }, [canceler, workspaces, updateWorkspaces]);
 };
 
-export const useWorkspaces = (): Loadable<Workspace[]> => {
+export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[]> => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use useWorkspaces outside of Workspace Context');
   }
-  const { workspaces } = context;
+  return Loadable.map(context.workspaces, (workspaces: Workspace[]) =>
+    workspaces.filter((ws) =>
+      Object.keys(params || {}).reduce<boolean>((accumulator: boolean, key) => {
+        switch (key) {
+          case 'archived':
+            return accumulator && ws.archived === params?.archived;
+          case 'pinned':
+            return accumulator && ws.pinned === params?.pinned;
+          case 'name':
+            return accumulator && ws.name === params?.name;
+          case 'users':
+            return accumulator && (params?.users || []).indexOf(String(ws.userId)) > -1;
+          default:
+            return false;
+        }
+      }, true),
+    ),
+  );
+};
 
-  return workspaces;
+export const useUpdateWorkspace = (): ((
+  id: number,
+  updater: (arg0: Workspace) => Workspace,
+) => Promise<void>) => {
+  const context = useContext(WorkspacesContext);
+  if (context === null) {
+    throw new Error('Attempted to use useUpdateWorkspace outside of Workspace Context');
+  }
+  const { updateWorkspaces } = context;
+
+  return useCallback(
+    async (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
+      try {
+        await updateWorkspaces((prev) =>
+          Loadable.map(prev, (workspaces) =>
+            workspaces.map((old) => (old.id === id ? updater(old) : old)),
+          ),
+        );
+      } catch (e) {
+        handleError(e);
+      }
+    },
+    [updateWorkspaces],
+  );
 };

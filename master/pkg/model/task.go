@@ -6,15 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
-
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
@@ -351,12 +348,26 @@ func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 		level = TaskLogLevelToProto(*t.Level)
 	}
 
-	return &apiv1.TaskLogsResponse{
-		Id:        id,
-		Timestamp: ts,
-		Level:     level,
-		Message:   t.Message(),
-	}, nil
+	resp := &apiv1.TaskLogsResponse{
+		Id:           id,
+		TaskId:       t.TaskID,
+		Timestamp:    ts,
+		Level:        level,
+		Message:      t.Message(),
+		Log:          t.Log,
+		AllocationId: t.AllocationID,
+		AgentId:      t.AgentID,
+		ContainerId:  t.ContainerID,
+		Source:       t.Source,
+		Stdtype:      t.StdType,
+	}
+
+	if t.RankID != nil {
+		var id = int32(*t.RankID)
+		resp.RankId = &id
+	}
+
+	return resp, nil
 }
 
 // TaskLogBatch represents a batch of model.TaskLog.

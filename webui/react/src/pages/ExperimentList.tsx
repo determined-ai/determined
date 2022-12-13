@@ -32,9 +32,7 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
-import { useStore } from 'contexts/Store';
 import useExperimentTags from 'hooks/useExperimentTags';
-import { useFetchUsers } from 'hooks/useFetch';
 import useModalColumnsCustomize from 'hooks/useModal/Columns/useModalColumnsCustomize';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import usePermissions from 'hooks/usePermissions';
@@ -63,6 +61,9 @@ import { RecordKey, ValueOf } from 'shared/types';
 import { ErrorLevel } from 'shared/utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
+import { humanReadableBytes } from 'shared/utils/string';
+import { useAuth } from 'stores/auth';
+import { useEnsureUsersFetched, useUsers } from 'stores/users';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -79,6 +80,7 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 import { openCommandResponse } from 'utils/wait';
 
@@ -110,10 +112,12 @@ interface Props {
 }
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
-  const {
-    users,
-    auth: { user },
-  } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
 
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -224,7 +228,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     }
   }, [canceler.signal, id]);
 
-  const fetchUsers = useFetchUsers(canceler);
+  const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchExperiments(), fetchUsers(), fetchLabels()]);
@@ -432,6 +436,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     const forkedFromRenderer = (value: string | number | undefined): React.ReactNode =>
       value ? <Link path={paths.experimentDetails(value)}>{value}</Link> : null;
 
+    const checkpointSizeRenderer = (value: number) => (value ? humanReadableBytes(value) : '');
+
     return [
       {
         align: 'right',
@@ -480,7 +486,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         onCell: onRightClickableCell,
         render: forkedFromRenderer,
         sorter: true,
-        title: 'Forked From',
+        title: 'Forked',
       },
       {
         align: 'right',
@@ -491,7 +497,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         render: (_: number, record: ExperimentItem): React.ReactNode =>
           relativeTimeRenderer(new Date(record.startTime)),
         sorter: true,
-        title: 'Start Time',
+        title: 'Started',
       },
       {
         align: 'right',
@@ -536,7 +542,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherType'],
         key: 'searcherType',
         onCell: onRightClickableCell,
-        title: 'Searcher Type',
+        title: 'Searcher',
       },
       {
         dataIndex: 'resourcePool',
@@ -554,6 +560,23 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         render: experimentProgressRenderer,
         sorter: true,
         title: 'Progress',
+      },
+      {
+        align: 'right',
+        dataIndex: 'checkpointSize',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointSize'],
+        key: V1GetExperimentsRequestSortBy.CHECKPOINTSIZE,
+        render: checkpointSizeRenderer,
+        sorter: true,
+        title: 'Checkpoint Size',
+      },
+      {
+        align: 'right',
+        dataIndex: 'checkpointCount',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['checkpointCount'],
+        key: V1GetExperimentsRequestSortBy.CHECKPOINTCOUNT,
+        sorter: true,
+        title: 'Checkpoint Count',
       },
       {
         align: 'right',

@@ -40,12 +40,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           <OverviewStats title="Last Runner State">{trial.runnerState}</OverviewStats>
         )}
         {trial?.startTime && (
-          <OverviewStats title="Start Time">
+          <OverviewStats title="Started">
             <TimeAgo datetime={trial.startTime} />
           </OverviewStats>
         )}
         {totalCheckpointsSize && (
-          <OverviewStats title="Total Checkpoint Size">{totalCheckpointsSize}</OverviewStats>
+          <OverviewStats title="Checkpoints">{`${trial?.checkpointCount} (${totalCheckpointsSize})`}</OverviewStats>
         )}
         {bestCheckpoint && (
           <CheckpointModalTrigger
@@ -63,3 +63,28 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 };
 
 export default TrialInfoBox;
+
+export const TrialInfoBoxMultiTrial: React.FC<Props> = ({ experiment }: Props) => {
+  const { searcher } = experiment?.configRaw;
+  const checkpointsSize = useMemo(() => {
+    const totalBytes = experiment?.checkpointSize;
+    if (!totalBytes) return;
+    return humanReadableBytes(totalBytes);
+  }, [experiment]);
+  return (
+    <Section>
+      <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
+        {searcher?.metric && <OverviewStats title="Metric">{searcher.metric}</OverviewStats>}
+        {searcher?.name && <OverviewStats title="Searcher">{searcher.name}</OverviewStats>}
+        {experiment.numTrials > 0 && (
+          <OverviewStats title="Trials">{experiment.numTrials}</OverviewStats>
+        )}
+        {checkpointsSize && (
+          <OverviewStats title="Checkpoints">
+            {`${experiment.checkpointCount} (${checkpointsSize})`}
+          </OverviewStats>
+        )}
+      </Grid>
+    </Section>
+  );
+};

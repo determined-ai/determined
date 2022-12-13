@@ -41,9 +41,7 @@ class ReLUConvBN(nn.Module):
         super(ReLUConvBN, self).__init__()
         self.op = nn.Sequential(
             nn.ReLU(inplace=False),
-            nn.Conv2d(
-                C_in, C_out, kernel_size, stride=stride, padding=padding, bias=False
-            ),
+            nn.Conv2d(C_in, C_out, kernel_size, stride=stride, padding=padding, bias=False),
             nn.BatchNorm2d(C_out, affine=affine, momentum=0.999, eps=0.001),
         )
 
@@ -65,9 +63,7 @@ class ActivationConvBN(nn.Module):
         super(ActivationConvBN, self).__init__()
         self.op = nn.Sequential(
             activation_function(),
-            nn.Conv2d(
-                C_in, C_out, kernel_size, stride=stride, padding=padding, bias=False
-            ),
+            nn.Conv2d(C_in, C_out, kernel_size, stride=stride, padding=padding, bias=False),
             nn.BatchNorm2d(C_out, affine=affine, momentum=0.999, eps=0.001),
         )
 

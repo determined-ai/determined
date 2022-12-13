@@ -30,6 +30,7 @@ import { ValueOf } from 'shared/types';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateDetApiEnum, validateDetApiEnumList } from 'shared/utils/service';
+import { humanReadableBytes } from 'shared/utils/string';
 import {
   ExperimentAction as Action,
   CheckpointWorkloadExtended,
@@ -231,6 +232,8 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
         column.render = autoRestartsRenderer;
       } else if (column.key === 'actions') {
         column.render = actionRenderer;
+      } else if (column.key === V1GetExperimentTrialsRequestSortBy.CHECKPOINTSIZE) {
+        column.render = (value: number) => (value ? humanReadableBytes(value) : '');
       }
       if (column.key === settings.sortKey) {
         column.sortOrder = settings.sortDesc ? 'descend' : 'ascend';

@@ -1,13 +1,17 @@
 from transformers import (
-    BertConfig,
-    BertTokenizer,
-    BertForQuestionAnswering,
     AlbertConfig,
+    AlbertForQuestionAnswering,
     AlbertTokenizer,
-    AlbertForQuestionAnswering
+    BertConfig,
+    BertForQuestionAnswering,
+    BertTokenizer,
 )
 
 MODEL_CLASSES = {
     "bert": (BertConfig, BertTokenizer, BertForQuestionAnswering),
-    "albert": (AlbertConfig, AlbertTokenizer, AlbertForQuestionAnswering,)
+    "albert": (
+        AlbertConfig,
+        AlbertTokenizer,
+        AlbertForQuestionAnswering,
+    ),
 }

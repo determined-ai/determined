@@ -127,4 +127,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 
 	bindMounts := c.BindMounts.ToExpconf()
 	config.RawBindMounts = schemas.Merge(config.RawBindMounts, bindMounts)
+
+	config.RawSlurmConfig = schemas.Merge(config.RawSlurmConfig, &c.Slurm)
+	config.RawPbsConfig = schemas.Merge(config.RawPbsConfig, &c.Pbs)
 }

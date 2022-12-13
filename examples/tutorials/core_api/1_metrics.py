@@ -11,12 +11,13 @@ import time
 # NEW: import determined
 import determined as det
 
+
 def main(core_context, increment_by):
     x = 0
     for batch in range(100):
         x += increment_by
         steps_completed = batch + 1
-        time.sleep(.1)
+        time.sleep(0.1)
         logging.info(f"x is now {x}")
         # NEW: report training metrics.
         if steps_completed % 10 == 0:
@@ -24,9 +25,7 @@ def main(core_context, increment_by):
                 steps_completed=steps_completed, metrics={"x": x}
             )
     # NEW: report a "validation" metric at the end.
-    core_context.train.report_validation_metrics(
-        steps_completed=steps_completed, metrics={"x": x}
-    )
+    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
 
 
 if __name__ == "__main__":

@@ -2,14 +2,14 @@
 Slightly altered test functions from test_coco.py
 """
 import json
-import numpy as np
 import os
 import tempfile
 import unittest
-import pycocotools
 
-from detectron2.structures import BoxMode
+import numpy as np
+import pycocotools
 from detectron2.data.datasets.coco import convert_to_coco_dict, load_coco_json
+from detectron2.structures import BoxMode
 
 
 def eval_make_mask():
@@ -54,6 +54,7 @@ def eval_make_dataset_dicts(mask):
     }
     record["annotations"] = [obj]
     return [record]
+
 
 def make_mask():
     """

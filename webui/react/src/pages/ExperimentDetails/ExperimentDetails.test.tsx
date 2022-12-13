@@ -13,9 +13,11 @@ import {
   getWorkspace,
 } from 'services/api';
 import history from 'shared/routes/history';
+import { AuthProvider } from 'stores/auth';
 import { ProjectsProvider } from 'stores/projects';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
 import ExperimentDetails, { ERROR_MESSAGE, INVALID_ID_MESSAGE } from './ExperimentDetails';
@@ -69,19 +71,23 @@ jest.mock('./ExperimentVisualization', () => ({
 const setup = () => {
   const view = render(
     <StoreProvider>
-      <UserRolesProvider>
-        <HelmetProvider>
-          <WorkspacesProvider>
-            <ResourcePoolsProvider>
-              <ProjectsProvider>
-                <HistoryRouter history={history}>
-                  <ExperimentDetails />
-                </HistoryRouter>
-              </ProjectsProvider>
-            </ResourcePoolsProvider>
-          </WorkspacesProvider>
-        </HelmetProvider>
-      </UserRolesProvider>
+      <HelmetProvider>
+        <WorkspacesProvider>
+          <UsersProvider>
+            <AuthProvider>
+              <UserRolesProvider>
+                <ResourcePoolsProvider>
+                  <ProjectsProvider>
+                    <HistoryRouter history={history}>
+                      <ExperimentDetails />
+                    </HistoryRouter>
+                  </ProjectsProvider>
+                </ResourcePoolsProvider>
+              </UserRolesProvider>
+            </AuthProvider>
+          </UsersProvider>
+        </WorkspacesProvider>
+      </HelmetProvider>
     </StoreProvider>,
   );
   return { view };
@@ -173,7 +179,7 @@ describe('Experiment Details Page', () => {
       });
 
       expect(screen.getByText('Visualization')).toBeInTheDocument();
-      expect(screen.getByText('Trials')).toBeInTheDocument();
+      expect(screen.getAllByText('Trials').length).toBeGreaterThan(0);
     });
   });
 });

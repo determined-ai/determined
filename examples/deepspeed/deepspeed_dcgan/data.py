@@ -1,13 +1,12 @@
-from attrdict import AttrDict
 import contextlib
-import filelock
 import os
 from typing import cast
 
+import filelock
 import torch
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
-
+from attrdict import AttrDict
 
 CHANNELS_BY_DATASET = {
     "imagenet": 3,

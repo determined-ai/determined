@@ -57,35 +57,35 @@ repos:
         # known issue fixed in a newer version:
         # https://github.com/psf/black/issues/2964#issuecomment-1080974737
         additional_dependencies: ['click==8.0.4']
-        exclude: ^(examples|harness/determined/common/api/bindings.py)
+        exclude: ^(harness/determined/common/api/bindings.py)
 
-  - repo: https://github.com/jumanjihouse/pre-commit-hooks
-    rev: 3.0.0
-    hooks:
-      - id: markdownlint  # Configure in .mdlrc
-        exclude: >
-          (?x)^(
-          examples/.*
-          | model_hub/examples/.*
-          | (webui/react/src/shared/)?\.github/.*template\.md
-          | docs/release-notes/README\.md
-          )$
-      - id: markdownlint
-        name: special markdown lint for templates (skip header & blank lines)
-        args:
-          - --rules
-          - ~MD002,~MD041,~MD012
-        files: >
-          (?x)^(
-          (webui/react/src/shared/)?.github/.*template\.md
-          )$
-      - id: markdownlint
-        # bug in markdownlint handling ul inside of ol :/
-        # https://github.com/markdownlint/markdownlint/issues/313
-        name: special markdown lint for release notes (bullet indentation)
-        args:
-          - --rules
-          - ~MD007
-        files: ^docs/release-notes/README\.md$
-      # - id: git-check
-      # - id: git-dirty
+  # - repo: https://github.com/jumanjihouse/pre-commit-hooks
+  #   rev: 3.0.0
+  #   hooks:
+  #     - id: markdownlint  # Configure in .mdlrc
+  #       exclude: >
+  #         (?x)^(
+  #         examples/.*
+  #         | model_hub/examples/.*
+  #         | (webui/react/src/shared/)?\.github/.*template\.md
+  #         | docs/release-notes/README\.md
+  #         )$
+  #     - id: markdownlint
+  #       name: special markdown lint for templates (skip header & blank lines)
+  #       args:
+  #         - --rules
+  #         - ~MD002,~MD041,~MD012
+  #       files: >
+  #         (?x)^(
+  #         (webui/react/src/shared/)?.github/.*template\.md
+  #         )$
+  #     - id: markdownlint
+  #       # bug in markdownlint handling ul inside of ol :/
+  #       # https://github.com/markdownlint/markdownlint/issues/313
+  #       name: special markdown lint for release notes (bullet indentation)
+  #       args:
+  #         - --rules
+  #         - ~MD007
+  #       files: ^docs/release-notes/README\.md$
+  #     # - id: git-check
+  #     # - id: git-dirty

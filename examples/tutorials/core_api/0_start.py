@@ -16,7 +16,7 @@ def main(increment_by):
     x = 0
     for batch in range(100):
         x += increment_by
-        time.sleep(.1)
+        time.sleep(0.1)
         print(f"x is now {x}")
 
 

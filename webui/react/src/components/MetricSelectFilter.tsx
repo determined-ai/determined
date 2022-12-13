@@ -115,7 +115,7 @@ const MetricSelectFilter: React.FC<Props> = ({
     },
     [multiple, onChange, value],
   );
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleFiltering = useCallback((search: string, option: any) => {
     if (option.key === allOptionId || option.key === resetOptionId) return true;
     if (!option.value) return false;

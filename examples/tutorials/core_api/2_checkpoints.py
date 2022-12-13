@@ -51,7 +51,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
     for batch in range(starting_batch, 100):
         x += increment_by
         steps_completed = batch + 1
-        time.sleep(.1)
+        time.sleep(0.1)
         logging.info(f"x is now {x}")
         if steps_completed % 10 == 0:
             core_context.train.report_training_metrics(
@@ -72,9 +72,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 # immediately and resume when the trial is reactivated.
                 return
 
-    core_context.train.report_validation_metrics(
-        steps_completed=steps_completed, metrics={"x": x}
-    )
+    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
 
 
 if __name__ == "__main__":
@@ -93,5 +91,5 @@ if __name__ == "__main__":
             core_context=core_context,
             latest_checkpoint=latest_checkpoint,
             trial_id=trial_id,
-            increment_by=1
+            increment_by=1,
         )

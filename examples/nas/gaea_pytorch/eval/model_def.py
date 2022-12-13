@@ -15,27 +15,22 @@ from collections import namedtuple
 from typing import Any, Dict
 
 import torchvision.transforms as transforms
-from torch import nn
-
 from data import ImageNetDataset
-from determined.pytorch import (
-    DataLoader,
-    LRScheduler,
-    PyTorchTrial,
-    PyTorchTrialContext,
-)
+from lr_schedulers import *
 from model import NetworkImageNet
+from torch import nn
 from utils import (
-    RandAugment,
+    AvgrageMeter,
     CrossEntropyLabelSmooth,
     Cutout,
+    EMAWrapper,
     HSwish,
+    RandAugment,
     Swish,
     accuracy,
-    AvgrageMeter,
-    EMAWrapper,
 )
-from lr_schedulers import *
+
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
 
@@ -140,24 +135,18 @@ class GAEAEvalTrial(PyTorchTrial):
 
     def build_training_data_loader(self) -> DataLoader:
         bucket_name = self.data_config["bucket_name"]
-        normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        )
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         train_transforms = transforms.Compose(
             [
                 transforms.RandomResizedCrop(224),
                 transforms.RandomHorizontalFlip(),
-                transforms.ColorJitter(
-                    brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2
-                ),
+                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
                 transforms.ToTensor(),
                 normalize,
             ]
         )
         if self.context.get_hparam("cutout"):
-            train_transforms.transforms.append(
-                Cutout(self.context.get_hparam("cutout_length"))
-            )
+            train_transforms.transforms.append(Cutout(self.context.get_hparam("cutout_length")))
         if self.context.get_hparam("randaugment"):
             train_transforms.transforms.insert(0, RandAugment())
 
@@ -180,9 +169,7 @@ class GAEAEvalTrial(PyTorchTrial):
 
     def build_validation_data_loader(self) -> DataLoader:
         bucket_name = self.data_config["bucket_name"]
-        normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-        )
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         valid_data = ImageNetDataset(
             "validation",
@@ -208,9 +195,7 @@ class GAEAEvalTrial(PyTorchTrial):
         )
         return valid_queue
 
-    def train_batch(
-        self, batch: Any, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
 
         # Update EMA vars
         self.model.update_ema()
@@ -233,7 +218,8 @@ class GAEAEvalTrial(PyTorchTrial):
         self.context.step_optimizer(
             self.optimizer,
             clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
-                params, self.context.get_hparam("clip_gradients_l2_norm"),
+                params,
+                self.context.get_hparam("clip_gradients_l2_norm"),
             ),
         )
 
@@ -261,4 +247,3 @@ class GAEAEvalTrial(PyTorchTrial):
             "top1_ema": ema_top1,
             "top5_ema": ema_top5,
         }
-

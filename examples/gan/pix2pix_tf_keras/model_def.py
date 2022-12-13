@@ -1,9 +1,8 @@
 import tensorflow as tf
+from data import download, load_dataset
+from pix2pix import Pix2Pix, make_discriminator_optimizer, make_generator_optimizer
 
 from determined.keras import InputData, TFKerasTrial, TFKerasTrialContext
-
-from pix2pix import Pix2Pix, make_discriminator_optimizer, make_generator_optimizer
-from data import download, load_dataset
 
 
 class Pix2PixTrial(TFKerasTrial):
@@ -65,8 +64,7 @@ class Pix2PixTrial(TFKerasTrial):
         return train_dataset
 
     def build_validation_data_loader(self) -> InputData:
-        test_dataset = (
-            self._get_wrapped_dataset("test")
-            .batch(self.context.get_per_slot_batch_size())
+        test_dataset = self._get_wrapped_dataset("test").batch(
+            self.context.get_per_slot_batch_size()
         )
         return test_dataset

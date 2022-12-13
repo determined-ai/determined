@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
+import { useAuth } from 'stores/auth';
 import { useUserAssignments, useUserRoles } from 'stores/userRoles';
 import {
   DetailedUser,
@@ -78,9 +78,11 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const {
-    auth: { user },
-  } = useStore();
+  const loadableAuth = useAuth();
+  const user = Loadable.match(loadableAuth.auth, {
+    Loaded: (auth) => auth.user,
+    NotLoaded: () => undefined,
+  });
   const rbacEnabled = useFeature().isOn('rbac');
   const rbacAllPermission = useFeature().isOn('mock_permissions_all');
   const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
@@ -482,7 +484,6 @@ const canViewWorkspaces = ({
   return (
     !rbacEnabled ||
     rbacReadPermission ||
-    (!!userRoles && userRoles.length === 1 && userRoles[0].id === -10) ||
     (!!userRoles &&
       !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.VIEWWORKSPACE)))
   );

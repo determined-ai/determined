@@ -1,15 +1,15 @@
 import os
-import filelock
 from typing import Any, Dict
-from attrdict import AttrDict
+
+import filelock
 import torch
+import torch.nn.functional as F
 import torchvision
 import torchvision.transforms as transforms
+from attrdict import AttrDict
+from torch.nn import Conv2d, CrossEntropyLoss, Linear, MaxPool2d, Module
+
 import deepspeed
-
-from torch.nn import MaxPool2d, Conv2d, Linear, Module, CrossEntropyLoss
-import torch.nn.functional as F
-
 from determined.pytorch import DataLoader
 from determined.pytorch.deepspeed import (
     DeepSpeedTrial,
@@ -74,9 +74,7 @@ class CIFARTrial(DeepSpeedTrial):
             for_training=False,
         )
 
-    def train_batch(
-        self, iter_dataloader, epoch_idx, batch_idx
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, iter_dataloader, epoch_idx, batch_idx) -> Dict[str, torch.Tensor]:
         batch = self.context.to_device(next(iter_dataloader))
         inputs, labels = batch[0], batch[1]
         if self.fp16:

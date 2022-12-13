@@ -16,7 +16,8 @@ export type TrialColumnName =
   | 'startTime'
   | 'duration'
   | 'autoRestarts'
-  | 'checkpoint';
+  | 'checkpoint'
+  | 'totalCheckpointSize';
 
 export const DEFAULT_COLUMNS: TrialColumnName[] = [
   'id',
@@ -28,19 +29,21 @@ export const DEFAULT_COLUMNS: TrialColumnName[] = [
   'duration',
   'autoRestarts',
   'checkpoint',
+  'totalCheckpointSize',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<TrialColumnName, number> = {
   action: 46,
-  autoRestarts: 117,
-  bestValidationMetric: 150,
-  checkpoint: 150,
+  autoRestarts: 124,
+  bestValidationMetric: 190,
+  checkpoint: 100,
   duration: 117,
   id: 85,
-  latestValidationMetric: 150,
+  latestValidationMetric: 200,
   startTime: 117,
-  state: 64,
-  totalBatchesProcessed: 74,
+  state: 100,
+  totalBatchesProcessed: 90,
+  totalCheckpointSize: 160,
 };
 
 export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetExperimentTrialsRequestSortBy => {
@@ -77,6 +80,7 @@ const config: SettingsConfig<Settings> = {
           literal('duration'),
           literal('autoRestarts'),
           literal('checkpoint'),
+          literal('totalCheckpointSize'),
         ]),
       ),
     },

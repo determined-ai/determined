@@ -12,10 +12,7 @@ def WarmupWrapper(scheduler_type):
 
         def get_lr(self):
             if self.last_epoch < self.warmup_epochs:
-                return [
-                    (self.last_epoch + 1) / self.warmup_epochs * b_lr
-                    for b_lr in self.base_lrs
-                ]
+                return [(self.last_epoch + 1) / self.warmup_epochs * b_lr for b_lr in self.base_lrs]
             return super(Wrapped, self).get_lr()
 
     return Wrapped

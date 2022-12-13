@@ -454,6 +454,7 @@ class runtimeStreamError:
 class trialv1Trial:
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
+    checkpointCount: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     latestTraining: "typing.Optional[v1MetricsWorkload]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
@@ -475,6 +476,7 @@ class trialv1Trial:
         totalBatchesProcessed: int,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestTraining: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
@@ -495,6 +497,8 @@ class trialv1Trial:
             self.bestCheckpoint = bestCheckpoint
         if not isinstance(bestValidation, Unset):
             self.bestValidation = bestValidation
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
         if not isinstance(endTime, Unset):
             self.endTime = endTime
         if not isinstance(latestTraining, Unset):
@@ -527,6 +531,8 @@ class trialv1Trial:
             kwargs["bestCheckpoint"] = v1CheckpointWorkload.from_json(obj["bestCheckpoint"]) if obj["bestCheckpoint"] is not None else None
         if "bestValidation" in obj:
             kwargs["bestValidation"] = v1MetricsWorkload.from_json(obj["bestValidation"]) if obj["bestValidation"] is not None else None
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
         if "endTime" in obj:
             kwargs["endTime"] = obj["endTime"]
         if "latestTraining" in obj:
@@ -559,6 +565,8 @@ class trialv1Trial:
             out["bestCheckpoint"] = None if self.bestCheckpoint is None else self.bestCheckpoint.to_json(omit_unset)
         if not omit_unset or "bestValidation" in vars(self):
             out["bestValidation"] = None if self.bestValidation is None else self.bestValidation.to_json(omit_unset)
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "endTime" in vars(self):
             out["endTime"] = self.endTime
         if not omit_unset or "latestTraining" in vars(self):
@@ -2348,6 +2356,8 @@ class v1ExpCompareTrialsSampleResponse:
         return out
 
 class v1Experiment:
+    checkpointCount: "typing.Optional[int]" = None
+    checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
     displayName: "typing.Optional[str]" = None
     endTime: "typing.Optional[str]" = None
@@ -2379,6 +2389,8 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
+        checkpointCount: "typing.Union[int, None, Unset]" = _unset,
+        checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
@@ -2407,6 +2419,10 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
+        if not isinstance(checkpointCount, Unset):
+            self.checkpointCount = checkpointCount
+        if not isinstance(checkpointSize, Unset):
+            self.checkpointSize = checkpointSize
         if not isinstance(description, Unset):
             self.description = description
         if not isinstance(displayName, Unset):
@@ -2453,6 +2469,10 @@ class v1Experiment:
             "state": determinedexperimentv1State(obj["state"]),
             "username": obj["username"],
         }
+        if "checkpointCount" in obj:
+            kwargs["checkpointCount"] = obj["checkpointCount"]
+        if "checkpointSize" in obj:
+            kwargs["checkpointSize"] = obj["checkpointSize"]
         if "description" in obj:
             kwargs["description"] = obj["description"]
         if "displayName" in obj:
@@ -2499,6 +2519,10 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
+        if not omit_unset or "checkpointCount" in vars(self):
+            out["checkpointCount"] = self.checkpointCount
+        if not omit_unset or "checkpointSize" in vars(self):
+            out["checkpointSize"] = self.checkpointSize
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
         if not omit_unset or "displayName" in vars(self):
@@ -3078,6 +3102,7 @@ class v1GetExperimentTrialsRequestSortBy(enum.Enum):
     SORT_BY_BATCHES_PROCESSED = "SORT_BY_BATCHES_PROCESSED"
     SORT_BY_DURATION = "SORT_BY_DURATION"
     SORT_BY_RESTARTS = "SORT_BY_RESTARTS"
+    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
 
 class v1GetExperimentTrialsResponse:
 
@@ -3145,6 +3170,8 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_FORKED_FROM = "SORT_BY_FORKED_FROM"
     SORT_BY_RESOURCE_POOL = "SORT_BY_RESOURCE_POOL"
     SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
+    SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
+    SORT_BY_CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
 
 class v1GetExperimentsResponse:
 
@@ -9901,37 +9928,93 @@ class v1TaskLogsFieldsResponse:
         return out
 
 class v1TaskLogsResponse:
+    agentId: "typing.Optional[str]" = None
+    allocationId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    rankId: "typing.Optional[int]" = None
+    source: "typing.Optional[str]" = None
+    stdtype: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         id: str,
         level: "v1LogLevel",
+        log: str,
         message: str,
+        taskId: str,
         timestamp: str,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        allocationId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        rankId: "typing.Union[int, None, Unset]" = _unset,
+        source: "typing.Union[str, None, Unset]" = _unset,
+        stdtype: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
         self.level = level
+        self.log = log
         self.message = message
+        self.taskId = taskId
         self.timestamp = timestamp
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(allocationId, Unset):
+            self.allocationId = allocationId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(rankId, Unset):
+            self.rankId = rankId
+        if not isinstance(source, Unset):
+            self.source = source
+        if not isinstance(stdtype, Unset):
+            self.stdtype = stdtype
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TaskLogsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
             "level": v1LogLevel(obj["level"]),
+            "log": obj["log"],
             "message": obj["message"],
+            "taskId": obj["taskId"],
             "timestamp": obj["timestamp"],
         }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "allocationId" in obj:
+            kwargs["allocationId"] = obj["allocationId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "rankId" in obj:
+            kwargs["rankId"] = obj["rankId"]
+        if "source" in obj:
+            kwargs["source"] = obj["source"]
+        if "stdtype" in obj:
+            kwargs["stdtype"] = obj["stdtype"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "id": self.id,
             "level": self.level.value,
+            "log": self.log,
             "message": self.message,
+            "taskId": self.taskId,
             "timestamp": self.timestamp,
         }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "allocationId" in vars(self):
+            out["allocationId"] = self.allocationId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "rankId" in vars(self):
+            out["rankId"] = self.rankId
+        if not omit_unset or "source" in vars(self):
+            out["source"] = self.source
+        if not omit_unset or "stdtype" in vars(self):
+            out["stdtype"] = self.stdtype
         return out
 
 class v1Template:
@@ -10442,6 +10525,12 @@ class v1TrialLogsFieldsResponse:
         return out
 
 class v1TrialLogsResponse:
+    agentId: "typing.Optional[str]" = None
+    containerId: "typing.Optional[str]" = None
+    log: "typing.Optional[str]" = None
+    rankId: "typing.Optional[int]" = None
+    source: "typing.Optional[str]" = None
+    stdtype: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -10450,11 +10539,31 @@ class v1TrialLogsResponse:
         level: "v1LogLevel",
         message: str,
         timestamp: str,
+        trialId: int,
+        agentId: "typing.Union[str, None, Unset]" = _unset,
+        containerId: "typing.Union[str, None, Unset]" = _unset,
+        log: "typing.Union[str, None, Unset]" = _unset,
+        rankId: "typing.Union[int, None, Unset]" = _unset,
+        source: "typing.Union[str, None, Unset]" = _unset,
+        stdtype: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.id = id
         self.level = level
         self.message = message
         self.timestamp = timestamp
+        self.trialId = trialId
+        if not isinstance(agentId, Unset):
+            self.agentId = agentId
+        if not isinstance(containerId, Unset):
+            self.containerId = containerId
+        if not isinstance(log, Unset):
+            self.log = log
+        if not isinstance(rankId, Unset):
+            self.rankId = rankId
+        if not isinstance(source, Unset):
+            self.source = source
+        if not isinstance(stdtype, Unset):
+            self.stdtype = stdtype
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1TrialLogsResponse":
@@ -10463,7 +10572,20 @@ class v1TrialLogsResponse:
             "level": v1LogLevel(obj["level"]),
             "message": obj["message"],
             "timestamp": obj["timestamp"],
+            "trialId": obj["trialId"],
         }
+        if "agentId" in obj:
+            kwargs["agentId"] = obj["agentId"]
+        if "containerId" in obj:
+            kwargs["containerId"] = obj["containerId"]
+        if "log" in obj:
+            kwargs["log"] = obj["log"]
+        if "rankId" in obj:
+            kwargs["rankId"] = obj["rankId"]
+        if "source" in obj:
+            kwargs["source"] = obj["source"]
+        if "stdtype" in obj:
+            kwargs["stdtype"] = obj["stdtype"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -10472,7 +10594,20 @@ class v1TrialLogsResponse:
             "level": self.level.value,
             "message": self.message,
             "timestamp": self.timestamp,
+            "trialId": self.trialId,
         }
+        if not omit_unset or "agentId" in vars(self):
+            out["agentId"] = self.agentId
+        if not omit_unset or "containerId" in vars(self):
+            out["containerId"] = self.containerId
+        if not omit_unset or "log" in vars(self):
+            out["log"] = self.log
+        if not omit_unset or "rankId" in vars(self):
+            out["rankId"] = self.rankId
+        if not omit_unset or "source" in vars(self):
+            out["source"] = self.source
+        if not omit_unset or "stdtype" in vars(self):
+            out["stdtype"] = self.stdtype
         return out
 
 class v1TrialMetrics:

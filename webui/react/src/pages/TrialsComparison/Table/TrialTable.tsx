@@ -15,7 +15,6 @@ import { getFullPaginationConfig, relativeTimeRenderer } from 'components/Table/
 import TableFilterMultiSearch from 'components/Table/TableFilterMultiSearch';
 import TableFilterRank from 'components/Table/TableFilterRank';
 import UserAvatar from 'components/UserAvatar';
-import { useStore } from 'contexts/Store';
 import { Highlights } from 'hooks/useHighlight';
 import { UpdateSettings, UseSettingsReturn } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
@@ -23,8 +22,10 @@ import { paths } from 'routes/utils';
 import { Determinedtrialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
+import { useUsers } from 'stores/users';
 import { StateOfUnion } from 'themes';
 import { MetricType } from 'types';
+import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
 import { TrialActionsInterface } from '../Actions/useTrialActions';
@@ -70,7 +71,7 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
   const { settings, updateSettings } = tableSettingsHook;
 
-  const { users } = useStore();
+  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
 
   const { filters, setFilters } = collectionsInterface;
 
@@ -342,7 +343,7 @@ const TrialTable: React.FC<Props> = ({
       render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
         relativeTimeRenderer(new Date(record.startTime)),
       sorter: true,
-      title: 'Start Time',
+      title: 'Started',
     }),
     [],
   );
@@ -354,7 +355,7 @@ const TrialTable: React.FC<Props> = ({
       render: (_: number, record: V1AugmentedTrial): React.ReactNode =>
         relativeTimeRenderer(new Date(record.startTime)),
       sorter: true,
-      title: 'End Time',
+      title: 'Ended',
     }),
     [],
   );
@@ -378,7 +379,7 @@ const TrialTable: React.FC<Props> = ({
       defaultWidth: 120,
       key: 'searcherType',
       title: (
-        <BadgeTag label="Type" tooltip="Searcher Type">
+        <BadgeTag label="Type" tooltip="Searcher">
           S
         </BadgeTag>
       ),

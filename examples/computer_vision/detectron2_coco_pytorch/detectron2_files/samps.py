@@ -6,9 +6,11 @@ Instead of using comm, Determined can just pass in the information
 """
 
 import itertools
+from typing import Optional
+
 import torch
 from torch.utils.data.sampler import Sampler
-from typing import Optional
+
 
 class TrainingSampler(Sampler):
     """
@@ -21,7 +23,9 @@ class TrainingSampler(Sampler):
     or `range(size) + range(size) + ...` (if shuffle is False)
     """
 
-    def __init__(self, size: int, shuffle: bool = True, seed: Optional[int] = None, rank = 1, world_size = 1):
+    def __init__(
+        self, size: int, shuffle: bool = True, seed: Optional[int] = None, rank=1, world_size=1
+    ):
         """
         Args:
             size (int): the total number of data of the underlying dataset to sample from
@@ -53,6 +57,7 @@ class TrainingSampler(Sampler):
                 yield from torch.randperm(self._size, generator=g)
             else:
                 yield from torch.arange(self._size)
+
 
 class InferenceSampler(Sampler):
     """

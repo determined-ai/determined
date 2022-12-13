@@ -38,7 +38,8 @@ import pickle
 import sys
 import uuid
 from pathlib import Path
-from typing import Dict, List, Set, Callable
+from typing import Callable, Dict, List, Set
+
 from determined import searcher
 
 
@@ -145,8 +146,7 @@ class ASHASearchMethod(searcher.SearchMethod):
 
         if (
             self.asha_search_state.pending_trials == 0
-            and self.asha_search_state.completed_trials
-            == self.asha_search_state.max_trials
+            and self.asha_search_state.completed_trials == self.asha_search_state.max_trials
         ):
             return [searcher.Shutdown()]
 
@@ -190,9 +190,7 @@ class ASHASearchMethod(searcher.SearchMethod):
 
             for rung_idx in range(0, highest_rung_index + 1):
                 rung = self.asha_search_state.rungs[rung_idx]
-                rung.metrics = list(
-                    filter(lambda x: x.request_id != request_id, rung.metrics)
-                )
+                rung.metrics = list(filter(lambda x: x.request_id != request_id, rung.metrics))
 
             create = searcher.Create(
                 request_id=uuid.uuid4(),
@@ -226,19 +224,14 @@ class ASHASearchMethod(searcher.SearchMethod):
     # In this example, progress computation is based on the number of completed trials
     # in rung 0 to the total number of trials.
     def progress(self, _: searcher.SearcherState) -> float:
-        if (
-            0
-            < self.asha_search_state.max_concurrent_trials
-            < self.asha_search_state.pending_trials
-        ):
+        if 0 < self.asha_search_state.max_concurrent_trials < self.asha_search_state.pending_trials:
             raise RuntimeError("Pending trial is greater than max concurrent trials")
         all_trials = len(self.asha_search_state.rungs[0].metrics)
 
         progress = all_trials / (1.2 * self.asha_search_state.max_trials)
         if all_trials == self.asha_search_state.max_trials:
             num_valid_trials = (
-                self.asha_search_state.completed_trials
-                - self.asha_search_state.invalid_trials
+                self.asha_search_state.completed_trials - self.asha_search_state.invalid_trials
             )
             progress_no_overhead = num_valid_trials / self.asha_search_state.max_trials
             progress = max(progress_no_overhead, progress)
@@ -299,9 +292,7 @@ class ASHASearchMethod(searcher.SearchMethod):
             )
         return max_concurrent_trials
 
-    def _promote_async(
-        self, request_id: uuid.UUID, metric: float
-    ) -> List[searcher.Operation]:
+    def _promote_async(self, request_id: uuid.UUID, metric: float) -> List[searcher.Operation]:
         rung_idx = self.asha_search_state.trial_rungs[request_id]
         rung = self.asha_search_state.rungs[rung_idx]
         rung.outstanding_trials -= 1
@@ -327,18 +318,13 @@ class ASHASearchMethod(searcher.SearchMethod):
                 if promoted_request_id not in self.asha_search_state.early_exit_trials:
                     logging.info(f"Promoted {promoted_request_id}")
                     units_needed = max(next_rung.units_needed - rung.units_needed, 1)
-                    ops.append(
-                        searcher.ValidateAfter(promoted_request_id, units_needed)
-                    )
+                    ops.append(searcher.ValidateAfter(promoted_request_id, units_needed))
                     added_train_workload = True
                     self.asha_search_state.pending_trials += 1
                 else:
                     return self._promote_async(promoted_request_id, sys.float_info.max)
 
-        all_trials = (
-            len(self.asha_search_state.trial_rungs)
-            - self.asha_search_state.invalid_trials
-        )
+        all_trials = len(self.asha_search_state.trial_rungs) - self.asha_search_state.invalid_trials
         if not added_train_workload and all_trials < self.asha_search_state.max_trials:
             logging.info("Creating new trial instead of promoting")
             self.asha_search_state.pending_trials += 1
@@ -357,10 +343,7 @@ class ASHASearchMethod(searcher.SearchMethod):
             )
             self.asha_search_state.trial_rungs[create.request_id] = 0
 
-        if (
-            len(self.asha_search_state.rungs[0].metrics)
-            == self.asha_search_state.max_trials
-        ):
+        if len(self.asha_search_state.rungs[0].metrics) == self.asha_search_state.max_trials:
             ops.extend(self._get_close_rungs_ops())
 
         return ops
@@ -374,18 +357,12 @@ class ASHASearchMethod(searcher.SearchMethod):
             for trial_metric in rung.metrics:
                 if (
                     not trial_metric.promoted
-                    and trial_metric.request_id
-                    not in self.asha_search_state.closed_trials
+                    and trial_metric.request_id not in self.asha_search_state.closed_trials
                 ):
-                    if (
-                        trial_metric.request_id
-                        not in self.asha_search_state.early_exit_trials
-                    ):
+                    if trial_metric.request_id not in self.asha_search_state.early_exit_trials:
                         logging.info(f"Closing trial {trial_metric.request_id}")
                         ops.append(searcher.Close(trial_metric.request_id))
-                        self.asha_search_state.closed_trials.add(
-                            trial_metric.request_id
-                        )
+                        self.asha_search_state.closed_trials.add(trial_metric.request_id)
         return ops
 
 
@@ -461,17 +438,12 @@ class Rung:
 
         index = self._search_metric_index(metric)
         promote_now = index < num_promote
-        trial_metric = TrialMetric(
-            request_id=request_id, metric=metric, promoted=promote_now
-        )
+        trial_metric = TrialMetric(request_id=request_id, metric=metric, promoted=promote_now)
         self.metrics.insert(index, trial_metric)
 
         if promote_now:
             return [request_id]
-        if (
-            num_promote != old_num_promote
-            and not self.metrics[old_num_promote].promoted
-        ):
+        if num_promote != old_num_promote and not self.metrics[old_num_promote].promoted:
             self.metrics[old_num_promote].promoted = True
             return [self.metrics[old_num_promote].request_id]
 

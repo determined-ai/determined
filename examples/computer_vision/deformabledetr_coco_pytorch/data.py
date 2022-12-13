@@ -5,16 +5,15 @@ Mostly copy-paste from https://github.com/pytorch/vision/blob/13b35ff/references
 """
 import os
 from io import BytesIO
+
 import boto3
-
-from google.cloud import storage
-from determined.util import download_gcs_blob_with_backoff
-
 import torch
 import torchvision
+from ddetr.datasets.coco import ConvertCocoPolysToMask, make_coco_transforms
+from google.cloud import storage
 from PIL import Image
 
-from ddetr.datasets.coco import ConvertCocoPolysToMask, make_coco_transforms
+from determined.util import download_gcs_blob_with_backoff
 
 
 def unwrap_collate_fn(batch):
@@ -118,9 +117,7 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         self.catIds = catIds
         if len(catIds):
             self.ids = self.coco.getImgIds(catIds=catIds)
-            self.catIdtoCls = {
-                catId: i for i, catId in zip(range(len(self.catIds)), self.catIds)
-            }
+            self.catIdtoCls = {catId: i for i, catId in zip(range(len(self.catIds)), self.catIds)}
 
     def __getitem__(self, idx):
         coco = self.coco

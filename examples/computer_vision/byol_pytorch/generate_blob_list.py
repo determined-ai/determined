@@ -25,9 +25,7 @@ if __name__ == "__main__":
         help="Name of the GCS bucket, without gs:// prefix.",
     )
     parser.add_argument("--bucket-path", type=str, required=True, help="Path prefix.")
-    parser.add_argument(
-        "--output-file", type=str, required=True, help="File to output listing to."
-    )
+    parser.add_argument("--output-file", type=str, required=True, help="File to output listing to.")
     args = parser.parse_args()
     storage_client = storage.Client()
     blobs = list_blobs(storage_client, args.bucket_name, prefix=args.bucket_path)

@@ -1,37 +1,34 @@
 """
 """
-from collections import defaultdict
-from typing import Any, Dict, Sequence, Union
-from attrdict import AttrDict
-import numpy as np
-import sys
 import copy
 import os
+import sys
 import time
+from collections import defaultdict
+from typing import Any, Dict, Sequence, Union
+
+import numpy as np
+from attrdict import AttrDict
 
 sys.path.append("./detr")
 
-import torch
-import filelock
-
-from determined.pytorch import (
-    DataLoader,
-    LRScheduler,
-    PyTorchTrial,
-    PyTorchTrialContext,
-    MetricReducer,
-)
-
 # DETR imports
 import detr.util.misc as utils
+import filelock
+import torch
+from data import build_dataset, unwrap_collate_fn
+from data_utils import download_coco_from_source
 from detr.datasets import get_coco_api_from_dataset
 from detr.datasets.coco_eval import CocoEvaluator
 from model import build_model
 
-# Experiment dir imports
-from data import unwrap_collate_fn, build_dataset
-from data_utils import download_coco_from_source
-
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    MetricReducer,
+    PyTorchTrial,
+    PyTorchTrialContext,
+)
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
@@ -182,9 +179,7 @@ class DETRTrial(PyTorchTrial):
             self.catIdtoCls = dataset_val.catIdtoCls
         # Set up evaluator
         self.base_ds = get_coco_api_from_dataset(dataset_val)
-        iou_types = tuple(
-            k for k in ("segm", "bbox") if k in self.postprocessors.keys()
-        )
+        iou_types = tuple(k for k in ("segm", "bbox") if k in self.postprocessors.keys())
         self.reducer = self.context.wrap_reducer(
             COCOReducer(self.base_ds, iou_types, self.cat_ids),
             for_training=False,
@@ -207,17 +202,13 @@ class DETRTrial(PyTorchTrial):
         outputs = self.model(samples)
         loss_dict = self.criterion(outputs, targets)
         weight_dict = self.criterion.weight_dict
-        losses = sum(
-            loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict
-        )
+        losses = sum(loss_dict[k] * weight_dict[k] for k in loss_dict.keys() if k in weight_dict)
         self.context.backward(losses)
         self.context.step_optimizer(self.optimizer, clip_grads=self.clip_grads_fn)
 
         # Compute losses for logging
         loss_dict_scaled = {
-            f"{k}_scaled": v * weight_dict[k]
-            for k, v in loss_dict.items()
-            if k in weight_dict
+            f"{k}_scaled": v * weight_dict[k] for k, v in loss_dict.items() if k in weight_dict
         }
         loss_dict["sum_unscaled"] = sum(loss_dict.values())
         loss_dict["sum_scaled"] = sum(loss_dict_scaled.values())
@@ -237,9 +228,7 @@ class DETRTrial(PyTorchTrial):
 
         # Compute losses for logging
         loss_dict_scaled = {
-            f"{k}_scaled": v * weight_dict[k]
-            for k, v in loss_dict.items()
-            if k in weight_dict
+            f"{k}_scaled": v * weight_dict[k] for k, v in loss_dict.items() if k in weight_dict
         }
         loss_dict["sum_unscaled"] = sum(loss_dict.values())
         loss_dict["sum_scaled"] = sum(loss_dict_scaled.values())
@@ -253,8 +242,6 @@ class DETRTrial(PyTorchTrial):
                 row["labels"] = torch.tensor(
                     [self.cat_ids[l.item()] for l in row["labels"]], dtype=torch.int64
                 )
-        result = [
-            (target["image_id"].item(), output) for target, output in zip(targets, res)
-        ]
+        result = [(target["image_id"].item(), output) for target, output in zip(targets, res)]
         self.reducer.update(result)
         return loss_dict

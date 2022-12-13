@@ -618,6 +618,33 @@ The master supports the following configuration settings:
             such as "30s", "1h", or "1m30s". Valid time units are "s", "m", "h". The default value
             is ``5m``.
 
+      -  ``type: hpc``: Specifies a custom resource pool that submits work to an underlying
+         Slurm/PBS partition on an HPC cluster. (*Required*)
+
+         One resource pool is automatically created for each Slurm partition or PBS queue on an HPC
+         cluster. This provider enables creation of additional resource pools with different
+         submission options to those partitions/queues.
+
+         -  ``partition``: The target HPC partition where jobs will be launched when using this
+            resource pool. Add ``task_container_defaults`` to to provide a resource pool with
+            additional default options. This can be used to create a resource pool with homogeneous
+            resources when the underlying partition or queue does not. Consider the following:
+
+         .. code::
+
+            resource_pools:
+              - pool_name: defq_GPU_tesla
+                description: Lands jobs on defq_GPU with tesla GPU selected
+                task_container_defaults:
+                  slurm:
+                    gpu_type: tesla
+                provider:
+                  type: hpc
+                  partition: defq_GPU
+
+         In this example, jobs submitted to the resource pool named ``defq_GPU_tesla`` will executed
+         in the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set.
+
 -  ``checkpoint_storage``: Specifies where model checkpoints will be stored. This can be overridden
    on a per-experiment basis in the :ref:`experiment-configuration`. A checkpoint contains the
    architecture and weights of the model being trained. Determined currently supports several kinds

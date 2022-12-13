@@ -17,7 +17,7 @@ Deploying Determined with Slurm/PBS has the following requirements.
       -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
       -  A cluster-wide file system with consistent path names across the HPC cluster
 
--  Slurm 19.05 or greater or PBS 2021.1.2 or greater.
+-  Slurm 20.02 or greater or PBS 2021.1.2 or greater.
 
 -  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
    greater.
@@ -268,8 +268,8 @@ platform. There may be additional per-user configuration that is required.
                change the default ``ENROOT_RUNTIME_PATH`` defined in ``/etc/enroot/enroot.conf`` on
                each node in your HPC cluster.
 
-         -  Provide an ``ENROOT_RUNTIME_PATH`` definition in
-            ``task_container_defaults.environement_variables`` in master.yaml.
+         -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in
+            ``task_container_defaults.environment_variables`` in master.yaml.
 
                .. code:: yaml
 
@@ -277,7 +277,8 @@ platform. There may be additional per-user configuration that is required.
                      environment_variables:
                         - ENROOT_RUNTIME_PATH=/tmp/$(whoami)
 
-         -  Provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment configuration
+         -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment
+            configuration.
 
    #. Unlike Singularity or PodMan, you must manually download the docker image file to the local
       file system (``enroot import``) and then each user must create an Enroot container using that
