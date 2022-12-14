@@ -89,6 +89,13 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
     initFields(workspace);
   }, [workspace, initFields]);
 
+  const [canModifyAUG, canModifyCPS] = useMemo(() => {
+    return [
+      canModifyWorkspaceAgentUserGroup({ workspace }),
+      canModifyWorkspaceCheckpointStorage({ workspace }),
+    ];
+  }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspace]);
+
   const modalContent = useMemo(() => {
     if (workspaceID && !workspace) return <Spinner />;
     return (
@@ -99,7 +106,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           rules={[{ message: 'Workspace name is required ', required: true }]}>
           <Input maxLength={80} />
         </Form.Item>
-        {canModifyWorkspaceAgentUserGroup({ workspace }) && (
+        {canModifyAUG && (
           <>
             <Divider />
             <Form.Item label="Configure Agent User" name="useAgentUser" valuePropName="checked">
@@ -111,16 +118,13 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
                   label="Agent User ID"
                   name="agentUid"
                   rules={[{ message: 'Agent User ID is required ', required: true }]}>
-                  <InputNumber disabled={!canModifyWorkspaceAgentUserGroup({ workspace })} />
+                  <InputNumber disabled={!canModifyAUG} />
                 </Form.Item>
                 <Form.Item
                   label="Agent User Name"
                   name="agentUser"
                   rules={[{ message: 'Agent User Name is required ', required: true }]}>
-                  <Input
-                    disabled={!canModifyWorkspaceAgentUserGroup({ workspace })}
-                    maxLength={100}
-                  />
+                  <Input disabled={!canModifyAUG} maxLength={100} />
                 </Form.Item>
               </>
             )}
@@ -133,22 +137,19 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
                   label="Agent User Group ID"
                   name="agentGid"
                   rules={[{ message: 'Agent User Group ID is required ', required: true }]}>
-                  <InputNumber disabled={!canModifyWorkspaceAgentUserGroup({ workspace })} />
+                  <InputNumber disabled={!canModifyAUG} />
                 </Form.Item>
                 <Form.Item
                   label="Agent Group Name"
                   name="agentGroup"
                   rules={[{ message: 'Agent Group Name is required ', required: true }]}>
-                  <Input
-                    disabled={!canModifyWorkspaceAgentUserGroup({ workspace })}
-                    maxLength={100}
-                  />
+                  <Input disabled={!canModifyAUG} maxLength={100} />
                 </Form.Item>
               </>
             )}
           </>
         )}
-        {canModifyWorkspaceCheckpointStorage({ workspace }) && (
+        {canModifyCPS && (
           <>
             <Divider />
             <Form.Item
@@ -184,7 +185,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
                   <MonacoEditor
                     height="16vh"
                     options={{
-                      readOnly: !canModifyWorkspaceCheckpointStorage({ workspace }),
+                      readOnly: !canModifyCPS,
                       wordWrap: 'on',
                       wrappingIndent: 'indent',
                     }}
@@ -203,8 +204,8 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
     useCheckpointStorage,
     workspace,
     workspaceID,
-    canModifyWorkspaceAgentUserGroup,
-    canModifyWorkspaceCheckpointStorage,
+    canModifyAUG,
+    canModifyCPS,
   ]);
 
   const handleOk = useCallback(async () => {
@@ -230,14 +231,14 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           name: workspaceName,
         };
 
-        if (canModifyWorkspaceAgentUserGroup({ workspace })) {
+        if (canModifyAUG) {
           let agentUserGroup = {};
           useAgentUser && (agentUserGroup = { agentUid, agentUser });
           useAgentGroup && (agentUserGroup = { agentGid, agentGroup, ...agentUserGroup });
           body['agentUserGroup'] = agentUserGroup;
         }
 
-        if (canModifyWorkspaceCheckpointStorage({ workspace })) {
+        if (canModifyCPS) {
           if (checkpointStorageConfig) {
             body['checkpointStorageConfig'] = yaml.load(checkpointStorageConfig);
           } else {
@@ -273,13 +274,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
         });
       }
     }
-  }, [
-    form,
-    workspaceID,
-    workspace,
-    canModifyWorkspaceCheckpointStorage,
-    canModifyWorkspaceAgentUserGroup,
-  ]);
+  }, [form, workspaceID, canModifyAUG, canModifyCPS]);
 
   const getModalProps = useMemo((): ModalFuncProps => {
     return {
