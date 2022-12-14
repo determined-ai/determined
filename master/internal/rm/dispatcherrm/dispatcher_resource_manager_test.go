@@ -89,8 +89,19 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 		},
 	}
 
+	// State that "Partition 2" is the providing partition for "launcher-provided-pool"
+	poolProviderMap := map[string][]string{
+		"Partition 2": {"launcher-provided-pool"},
+	}
 	config := &config.DispatcherResourceManagerConfig{
 		PartitionOverrides: overrides,
+	}
+
+	// Expect each agent to participate in resource pools as follows:
+	expectedResourcePools := [][]string{
+		{"Partition 1"},
+		{"Partition 1", "Partition 2", "launcher-provided-pool"},
+		{"Partition 1", "Partition 3"},
 	}
 
 	m := &dispatcherResourceManager{
@@ -99,6 +110,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 			lastSample: *hpcResource,
 			sampleTime: time.Now(),
 		},
+		poolProviderMap: poolProviderMap,
 	}
 
 	want0 := map[string]*agentv1.Slot{
@@ -188,7 +200,7 @@ func Test_generateGetAgentsResponse(t *testing.T) {
 
 	for i, agent := range resp.Agents {
 		assert.Equal(t, agent.Id, nodes[i].Name)
-		assert.DeepEqual(t, agent.ResourcePools, nodes[i].Partitions)
+		assert.DeepEqual(t, agent.ResourcePools, expectedResourcePools[i])
 		assert.DeepEqual(t, agent.Addresses, nodes[i].Addresses)
 		assert.Equal(t, agent.Draining, nodes[i].Draining)
 
