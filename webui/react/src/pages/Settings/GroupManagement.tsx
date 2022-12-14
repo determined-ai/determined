@@ -129,7 +129,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings.tableLimit, settings.tableOffset]);
+  }, [canceler.signal, settings]);
 
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
