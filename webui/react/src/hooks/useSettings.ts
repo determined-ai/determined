@@ -302,6 +302,14 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       await updateDB(newSettings);
 
+      if (
+        (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
+          (setting) => !!setting.skipUrlEncoding,
+        )
+      ) {
+        return;
+      }
+
       const mappedSettings = settingsToQuery(config, newSettings);
       const url = `?${mappedSettings}`;
 
