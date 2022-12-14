@@ -54,13 +54,21 @@ class AzureStorageManager(storage.CloudStorageManager):
             self.client.put(blob_dir, blob_base, abs_path)
 
     @util.preserve_random_state
-    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+    def download(
+        self,
+        src: str,
+        dst: Union[str, os.PathLike],
+        selector: Optional[storage.Selector] = None,
+    ) -> None:
         dst = os.fspath(dst)
         logging.info(f"Downloading {src} from Azure Blob Storage")
         found = False
         for blob in self.client.list_files(self.container, file_prefix=src):
             found = True
-            _dst = os.path.join(dst, os.path.relpath(blob, src))
+            relname = os.path.relpath(blob, src)
+            if selector is not None and not selector(relname):
+                continue
+            _dst = os.path.join(dst, relname)
             dst_dir = os.path.dirname(_dst)
             os.makedirs(dst_dir, exist_ok=True)
 
