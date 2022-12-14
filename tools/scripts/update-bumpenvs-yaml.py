@@ -99,7 +99,7 @@ class Build:
 def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Build]:
     # Get all the recent jobs.
     print("fetching recent jobs", file=sys.stderr)
-    req = requests.get(BASE_URL, params={"limit": "50", "filter": "completed"})
+    req = requests.get(BASE_URL, params={"limit": "100", "filter": "completed"})
     req.raise_for_status()
 
     # Get all the build numbers matching this commit.
@@ -114,7 +114,10 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
                 continue
 
             build = Build(build_meta)
-            builds[build.job_name] = build
+            if dev:
+                builds[build.job_name.replace('=', '-').replace('with-mpi-', '')] = build
+            else:
+                builds[build.job_name] = build
 
     if cloud_images:
         expected = PACKER_JOBS | DOCKER_JOBS
