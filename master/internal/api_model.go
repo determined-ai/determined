@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -189,9 +191,20 @@ func (a *apiServer) PostModel(
 	if err != nil {
 		return nil, err
 	}
-	workspaceID := 1 // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
-	if req.WorkspaceId != 0 {
-		workspaceID = int(req.WorkspaceId)
+	workspaceID := 1
+	if req.WorkspaceId != nil {
+		curUser, _, err := grpcutil.GetUser(ctx)
+		// Nikita TODO: User permissions in this workspace?
+		newWorkspaceID := *req.WorkspaceId
+		w, err := a.GetWorkspaceByID(ctx, newWorkspaceID, *curUser, false)
+		if err != nil {
+			return nil, err
+		}
+		if w == nil {
+			return nil, errors.Errorf("Workspace with ID %v does not exist.",
+				newWorkspaceID)
+		}
+		workspaceID = int(newWorkspaceID)
 	}
 
 	m := &modelv1.Model{}
@@ -278,10 +291,26 @@ func (a *apiServer) PatchModel(
 		currLabels = reqLabels
 	}
 
-	currWorkspaceID := currModel.WorkspaceId
-	if req.Model.WorkspaceId != 0 { // does changing it here make sense? what persmissions do we need to do this?
-		if currWorkspaceID != req.Model.WorkspaceId {
-			currWorkspaceID = req.Model.WorkspaceId // ID for Uncategorized workspace. Account for postgres changing default? Get ID of workspace Uncategorized?
+	currWorkspaceID := *currModel.WorkspaceId
+	if req.Model.WorkspaceId != nil {
+		newWorkspaceID := *req.Model.WorkspaceId
+		if currWorkspaceID != newWorkspaceID {
+			// Ensure that the new workspace ID exists
+			curUser, _, err := grpcutil.GetUser(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			w, err := a.GetWorkspaceByID(ctx, newWorkspaceID, *curUser, false)
+			if err != nil {
+				return nil, err
+			}
+			if w == nil {
+				return nil, errors.Errorf("Workspace with ID %v does not exist.",
+					newWorkspaceID)
+			}
+			// Nikita TODO: Ensure the user has Edit Model Registry permissions in the currWorkspaceID and newWorkSpaceID
+			currWorkspaceID = newWorkspaceID
 		}
 	}
 
