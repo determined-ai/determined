@@ -861,6 +861,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
+	m.echo.Use(authzAuditLogMiddleware())
 	m.echo.Use(userService.ProcessAuthentication)
 
 	m.echo.Logger = logger.New()
