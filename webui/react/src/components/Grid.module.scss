@@ -10,3 +10,8 @@
     z-index: 0;
   }
 }
+.row {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  grid-auto-flow: column;
+}

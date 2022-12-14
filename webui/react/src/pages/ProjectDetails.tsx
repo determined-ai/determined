@@ -8,6 +8,7 @@ import BreadcrumbBar from 'components/BreadcrumbBar';
 import DynamicTabs from 'components/DynamicTabs';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace } from 'services/api';
@@ -27,7 +28,6 @@ import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
-import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 
 type Params = {
   projectId: string;

@@ -8,6 +8,7 @@ import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
+import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
@@ -133,6 +134,7 @@ const NavigationSideBar: React.FC = () => {
     Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
     NotLoaded: () => undefined, // TODO show spinner when this is loading
   });
+  const dashboardEnabled = useFeature().isOn('dashboard');
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
@@ -152,8 +154,11 @@ const NavigationSideBar: React.FC = () => {
     const topNav = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
       : [];
+    const dashboardTopNav = [
+      { icon: 'dashboard', label: 'Home', path: paths.dashboard() },
+    ];
     const topItems = [
-      ...topNav,
+      ...(dashboardEnabled ? dashboardTopNav : topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },

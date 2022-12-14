@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import PageHeader from 'components/PageHeader';
-import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { sentenceToCamelCase } from 'shared/utils/string';

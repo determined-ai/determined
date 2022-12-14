@@ -466,7 +466,7 @@ export const mapV1GetExperimentDetailsResponse = ({
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
-): types.ExperimentItem => {
+): types.ExperimentWithNames => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
     data.config,
@@ -494,12 +494,14 @@ export const mapV1Experiment = (
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     projectId: data.projectId,
+    projectName: data.projectName,
     resourcePool: data.resourcePool || '',
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
+    workspaceName: data.workspaceName,
   };
 };
 

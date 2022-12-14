@@ -916,3 +916,8 @@ export interface Webhook {
 }
 
 export type UserOrGroup = User | V1Group;
+
+export interface ExperimentWithNames extends ExperimentItem {
+  projectName?: string;
+  workspaceName?: string;
+}

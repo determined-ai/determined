@@ -5,6 +5,7 @@ import ActionSheet from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
+import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
@@ -72,6 +73,7 @@ const NavigationTabbar: React.FC = () => {
     useModalJupyterLab();
 
   const showNavigation = isAuthenticated && ui.showChrome;
+  const dashboardEnabled = useFeature().isOn('dashboard');
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
@@ -102,7 +104,7 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
+        {dashboardEnabled ? <ToolbarItem icon="dashboard" label="Home" path={paths.dashboard()} /> : <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />}
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={clusterStatus} />

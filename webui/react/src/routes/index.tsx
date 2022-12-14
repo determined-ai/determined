@@ -2,6 +2,8 @@ import React from 'react';
 
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
+import Dashboard from 'pages/Dashboard';
+import Default from 'pages/Default';
 import Deprecated from 'pages/Deprecated';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
@@ -30,6 +32,8 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   clusterHistorical: <Deprecated />,
   clusterLogs: <ClusterLogs />,
   clusters: <Clusters />,
+  dashboard: <Dashboard />,
+  default: <Default />,
   experimentDetails: <ExperimentDetails />,
   interactive: <InteractiveTask />,
   jobs: <Deprecated />,
@@ -54,6 +58,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
 
 const defaultRouteId = 'uncategorized';
 const rbacDefaultRouteId = 'workspaceList';
+const dashboardDefaultRouteId = 'dashboard';
 
 const appRoutes: RouteConfig[] = Routes.map((route) => {
   if (!routeComponentMap[route.id]) {
@@ -65,6 +70,9 @@ const appRoutes: RouteConfig[] = Routes.map((route) => {
 export const defaultRoute = appRoutes.find((route) => route.id === defaultRouteId) as RouteConfig;
 export const rbacDefaultRoute = appRoutes.find(
   (route) => route.id === rbacDefaultRouteId,
+) as RouteConfig;
+export const dashboardDefaultRoute = appRoutes.find(
+  (route) => route.id === dashboardDefaultRouteId,
 ) as RouteConfig;
 
 appRoutes.push({
