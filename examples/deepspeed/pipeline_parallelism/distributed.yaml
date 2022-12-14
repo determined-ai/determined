@@ -20,7 +20,7 @@ environment:
     #    - CUDA_LAUNCH_BLOCKING=1
     #    - NCCL_BLOCKING_WAIT=1
     image:
-      gpu: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-096d730
+      gpu: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-15f6132
 resources:
   slots_per_trial: 2
 records_per_epoch: 50000

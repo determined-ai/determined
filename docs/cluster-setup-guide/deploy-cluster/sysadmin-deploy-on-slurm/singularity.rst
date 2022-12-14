@@ -24,11 +24,11 @@ by default in this version of Determined are described below.
 +-------------+-------------------------------------------------------------------------+
 | Environment | File Name                                                               |
 +=============+=========================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730``    |
+| CPUs        | ``determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132``    |
 +-------------+-------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730`` |
+| Nvidia GPUs | ``determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132`` |
 +-------------+-------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-096d730`` |
+| AMD GPUs    | ``determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-15f6132`` |
 +-------------+-------------------------------------------------------------------------+
 
 See :doc:`/training/setup-guide/set-environment-images` for the images Docker Hub location, and add
@@ -50,7 +50,7 @@ When using PodMan, you could save images in OCI archive format to files in a loc
 
    .. code:: bash
 
-      podman save determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730 \
+      podman save determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132 \
         --format=oci-archive \
         -o /shared/containers/cuda-11.3-pytorch-1.10-tf-2.8-gpu
 
@@ -66,7 +66,7 @@ When using Singularity, you could save SIF files in a local directory ``/shared/
    .. code:: bash
 
       singularity pull /shared/containers/cuda-11.3-pytorch-1.10-tf-2.8-gpu \
-         determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730
+         determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132
 
 and then reference in your experiment configuration using a full path using the syntax below.
 
@@ -105,7 +105,7 @@ your experiments to the image cache using the following steps:
 
 #. Create a directory path using the same prefix as the image name referenced in the
    ``singularity_image_root`` directory. For example, the image
-   ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730`` is added in the directory
+   ``determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132`` is added in the directory
    ``determinedai``.
 
    .. code:: bash
@@ -118,7 +118,7 @@ your experiments to the image cache using the following steps:
    .. code:: bash
 
       cd $singularity_image_root
-      image="determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730"
+      image="determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132"
       singularity pull $image docker://$image
 
 #. Otherwise, from an internet-connected system, download the desired image using the Singularity
@@ -159,12 +159,12 @@ image, use the following command:
       manage-singularity-cache --cuda
 
 If your system has internet access, you can download any desired docker container image (e.g.
-``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730``) into the cache using the
+``determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132``) into the cache using the
 command:
 
    .. code:: bash
 
-      manage-singularity-cache determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+      manage-singularity-cache determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132
 
 Otherwise, from an internet-connected system, download the desired image using the Singularity
 ``pull`` command, then copy it to a system with access to the ``singularity_image_root`` folder. You
@@ -173,12 +173,12 @@ image reference which determines the name to be added to the cache.
 
    .. code:: bash
 
-      manage-singularity-cache -i localfile.sif determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+      manage-singularity-cache -i localfile.sif determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132
 
 You can view the current set of docker image names in the cache with the ``-l`` option.
 
    .. code:: bash
 
       manage-singularity-cache -l
-      determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
-      determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730
+      determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132
+      determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132

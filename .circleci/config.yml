@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-096d730
+            - run: docker pull determinedai/environments-dev:py-3.7-pytorch-1.7-tf-1.15-cpu-15f6132
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+            - run: docker pull determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132
 
   login-docker:
     parameters:
@@ -1887,7 +1887,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
+        default: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10
         type: string
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
@@ -2309,7 +2309,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments-dev:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
@@ -2329,7 +2329,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments-dev:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2487,7 +2487,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments-dev:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
@@ -2506,7 +2506,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments-dev:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       # K8s CPU tests
       - request-k8-tests-cpu:
