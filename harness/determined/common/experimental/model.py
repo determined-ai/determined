@@ -186,6 +186,7 @@ class Model:
         labels: List[str],
         username: str,
         archived: bool,
+        workspace_id: Optional[int] = None,
     ):
         self._session = session
         self.model_id = model_id
@@ -196,6 +197,7 @@ class Model:
         self.metadata = metadata or {}
         self.labels = labels
         self.username = username
+        self.workspace_id = workspace_id
         self.archived = archived
 
     def get_version(self, version: int = -1) -> Optional[ModelVersion]:
@@ -305,6 +307,10 @@ class Model:
         req = bindings.v1PatchModel(metadata=self.metadata)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
+    def move_model_to_workspace(self, workspace_name: str) -> None:
+        req = bindings.v1PatchModel(workspaceName=workspace_name)
+        bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
+
     def set_labels(self, labels: List[str]) -> None:
         """
         Sets user-defined labels for the model. The ``labels`` argument must be an
@@ -399,4 +405,5 @@ class Model:
             labels=list(m.labels or []),
             username=m.username or "",
             archived=m.archived or False,
+            workspace_id=m.workspaceId,
         )

@@ -72,6 +72,8 @@ message GetModelsRequest {
   // Limit the models to those made by the users with the following usernames.
   repeated string users = 9;
 
+  // Limit models in the following worksapce. 
+  optional string workspace_name = 12; 
   // Limit the models to those made by the users with the following userIds.
   repeated int32 user_ids = 11;
 
@@ -116,8 +118,8 @@ message PostModelRequest {
   google.protobuf.Struct metadata = 3;
   // Labels associated with this model.
   repeated string labels = 4;
-  // The id of the workspace associated with this model.
-  optional int32 workspace_id = 5;
+  // The name of the workspace associated with this model.
+  optional string workspace_name = 5;
   // Notes associated with this model.
   string notes = 6;
 }

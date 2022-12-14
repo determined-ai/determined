@@ -14,12 +14,11 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/determined-ai/determined/master/internal/grpcutil"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )
@@ -75,13 +74,14 @@ func (a *apiServer) GetModel(
 }
 
 func (a *apiServer) GetModels(
-	_ context.Context, req *apiv1.GetModelsRequest,
+	ctx context.Context, req *apiv1.GetModelsRequest,
 ) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
 	idFilterExpr := req.Id
 	nameFilter := "%" + req.Name + "%"
 	descFilterExpr := "%" + req.Description + "%"
 	archFilterExpr := ""
+	workspaceIDFilterExpr := 0
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
@@ -118,6 +118,17 @@ func (a *apiServer) GetModels(
 	default:
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
+	// Nikita: TODO User filter expression.
+	if req.WorkspaceName != nil {
+		// Nikita TODO: User permissions to View models here
+		// Get workspace id using Sql to get id of workspace with filter workspace name.
+		w := workspacev1.Workspace{}
+		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.WorkspaceName)
+		}
+		workspaceIDFilterExpr = int(w.Id)
+	}
 	err := a.m.db.QueryProtof(
 		"get_models",
 		[]interface{}{orderExpr},
@@ -129,6 +140,7 @@ func (a *apiServer) GetModels(
 		labelFilterExpr,
 		nameFilter,
 		descFilterExpr,
+		workspaceIDFilterExpr,
 	)
 	if err != nil {
 		return nil, err
@@ -165,7 +177,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "")
+		&getResp.Models, 0, "", "", "", "", modelName, "", 0)
 	if err != nil {
 		return err
 	}
@@ -192,19 +204,13 @@ func (a *apiServer) PostModel(
 		return nil, err
 	}
 	workspaceID := 1
-	if req.WorkspaceId != nil {
-		curUser, _, err := grpcutil.GetUser(ctx)
-		// Nikita TODO: User permissions in this workspace?
-		newWorkspaceID := *req.WorkspaceId
-		w, err := a.GetWorkspaceByID(ctx, newWorkspaceID, *curUser, false)
+	if req.WorkspaceName != nil {
+		w := workspacev1.Workspace{}
+		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.WorkspaceName)
 		}
-		if w == nil {
-			return nil, errors.Errorf("Workspace with ID %v does not exist.",
-				newWorkspaceID)
-		}
-		workspaceID = int(newWorkspaceID)
+		workspaceID = int(w.Id)
 	}
 
 	m := &modelv1.Model{}
@@ -291,26 +297,19 @@ func (a *apiServer) PatchModel(
 		currLabels = reqLabels
 	}
 
-	currWorkspaceID := *currModel.WorkspaceId
-	if req.Model.WorkspaceId != nil {
-		newWorkspaceID := *req.Model.WorkspaceId
-		if currWorkspaceID != newWorkspaceID {
-			// Ensure that the new workspace ID exists
-			curUser, _, err := grpcutil.GetUser(ctx)
-			if err != nil {
-				return nil, err
-			}
+	currWorkspaceID := *(currModel.WorkspaceId)
+	if req.Model.WorkspaceName != nil {
+		w := workspacev1.Workspace{}
+		err := a.m.db.Query("get_workspace_from_name", &w, *req.Model.WorkspaceName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.Model.WorkspaceName)
+		}
 
-			w, err := a.GetWorkspaceByID(ctx, newWorkspaceID, *curUser, false)
-			if err != nil {
-				return nil, err
-			}
-			if w == nil {
-				return nil, errors.Errorf("Workspace with ID %v does not exist.",
-					newWorkspaceID)
-			}
+		newWorkspaceID := w.Id
+		if currWorkspaceID != newWorkspaceID {
 			// Nikita TODO: Ensure the user has Edit Model Registry permissions in the currWorkspaceID and newWorkSpaceID
 			currWorkspaceID = newWorkspaceID
+			madeChanges = true
 		}
 	}
 
