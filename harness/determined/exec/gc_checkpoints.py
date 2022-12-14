@@ -9,7 +9,7 @@ import sys
 from typing import Any, List
 
 import determined as det
-from determined import tensorboard
+from determined import errors, tensorboard
 from determined.common import constants, storage
 
 
@@ -24,7 +24,10 @@ def delete_checkpoints(
     for storage_id in to_delete:
         if not dry_run:
             logging.info(f"Deleting checkpoint {storage_id}")
-            manager.delete(storage_id)
+            try:
+                manager.delete(storage_id)
+            except errors.CheckpointNotFound as e:
+                logging.warn(e)
         else:
             logging.info(f"Dry run: deleting checkpoint {storage_id}")
 
@@ -37,7 +40,10 @@ def delete_tensorboards(manager: tensorboard.TensorboardManager, dry_run: bool =
         logging.info(f"Dry run: deleting Tensorboards for {manager.sync_path}")
         return
 
-    manager.delete()
+    try:
+        manager.delete()
+    except errors.CheckpointNotFound as e:
+        logging.warn(e)
     logging.info(f"Finished deleting Tensorboards for {manager.sync_path}")
 
 
