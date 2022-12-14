@@ -25,7 +25,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
-import { useFetchUsers } from 'stores/users';
+import { useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
 
@@ -53,6 +53,7 @@ const AppView: React.FC = () => {
 
   const fetchInfo = useEnsureInfoFetched(canceler);
   const fetchUsers = useFetchUsers(canceler);
+  const fetchCurrentUser = useEnsureCurrentUserFetched(canceler);
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -69,8 +70,9 @@ const AppView: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchUsers();
+      fetchCurrentUser();
     }
-  }, [isAuthenticated, fetchUsers]);
+  }, [isAuthenticated, fetchCurrentUser, fetchUsers]);
 
   useEffect(() => {
     /*
