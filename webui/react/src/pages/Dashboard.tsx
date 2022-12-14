@@ -14,10 +14,10 @@ import Icon from 'shared/components/Icon/Icon';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import { useAuth } from 'stores/auth';
 import { ShirtSize } from 'themes';
-import { CommandTask, DetailedUser, ExperimentItem, ExperimentWithNames, Project } from 'types';
+import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import { Loadable } from 'utils/loadable';
 const Dashboard: React.FC = () => {
-  const [experiments, setExperiments] = useState<ExperimentWithNames[]>([]);
+  const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -28,14 +28,7 @@ const Dashboard: React.FC = () => {
     NotLoaded: () => undefined,
   });
 
-  interface CommandTaskWithOptionalNames extends CommandTask {
-    // not expecting Tasks to actually contain these fields,
-    // but need them to list both Tasks and Experiments in the same table:
-    projectId?: number;
-    projectName?: string;
-    workspaceName?: string;
-  }
-  type Submission = ExperimentWithNames | CommandTaskWithOptionalNames;
+  type Submission = ExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(async (user: DetailedUser) => {
     const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
@@ -49,14 +42,14 @@ const Dashboard: React.FC = () => {
   }, [canceler]);
 
   const fetchExperiments = useCallback(async (user: DetailedUser) => {
-    const experiments = await getExperiments(
+    const response = await getExperiments(
       {
         orderBy: 'ORDER_BY_DESC',
         sortBy: 'SORT_BY_START_TIME',
         userIds: [user.id],
       },
     );
-    setExperiments(experiments.experiments as ExperimentWithNames[]);
+    setExperiments(response.experiments);
   }, []);
 
   const fetchProjects = useCallback(async () => {
@@ -73,7 +66,10 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     let submissions: Submission[] = [];
-    submissions = submissions.concat(experiments).concat(tasks).sort((a, b) => dateTimeStringSorter(b.startTime, a.startTime));
+    submissions = submissions
+      .concat(experiments as Submission[])
+      .concat(tasks as Submission[])
+      .sort((a, b) => dateTimeStringSorter(b.startTime, a.startTime));
     setSubmissions(submissions);
   }, [experiments, tasks]);
 
@@ -117,7 +113,7 @@ const Dashboard: React.FC = () => {
               render: (name, row) => {
                 if (row.projectId) {
                   // only for Experiments, not Tasks:
-                  return experimentNameRenderer(name, row as ExperimentItem);
+                  return experimentNameRenderer(name, row);
                 } else {
                   return name;
                 }
@@ -158,7 +154,7 @@ const Dashboard: React.FC = () => {
               render: relativeTimeRenderer,
             },
           ]}
-          dataSource={submissions as Submission[]}
+          dataSource={submissions}
           rowKey="id"
           showHeader={false}
         />

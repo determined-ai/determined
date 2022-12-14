@@ -466,7 +466,7 @@ export const mapV1GetExperimentDetailsResponse = ({
 export const mapV1Experiment = (
   data: Sdk.V1Experiment,
   jobSummary?: types.JobSummary,
-): types.ExperimentWithNames => {
+): types.ExperimentItem => {
   const ioConfig = ioTypes.decode<ioTypes.ioTypeExperimentConfig>(
     ioTypes.ioExperimentConfig,
     data.config,

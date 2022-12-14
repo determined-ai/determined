@@ -554,12 +554,14 @@ export interface ExperimentItem {
   numTrials: number;
   progress?: number;
   projectId: number;
+  projectName?: string;
   resourcePool: string;
   searcherType: string;
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
   userId: number;
+  workspaceName?: string;
 }
 
 export interface ProjectExperiment extends ExperimentItem {
@@ -916,8 +918,3 @@ export interface Webhook {
 }
 
 export type UserOrGroup = User | V1Group;
-
-export interface ExperimentWithNames extends ExperimentItem {
-  projectName?: string;
-  workspaceName?: string;
-}
