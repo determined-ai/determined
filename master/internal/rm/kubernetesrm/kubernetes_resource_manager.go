@@ -71,13 +71,16 @@ func New(
 	return ResourceManager{ResourceManager: actorrm.Wrap(ref)}
 }
 
-// GetResourcePoolRef just returns the k8s RM actor, since it is a superset of the RP API,
-// and k8s has no resource pools.
+// GetResourcePoolRef gets an actor ref to a resource pool by name.
 func (k ResourceManager) GetResourcePoolRef(
 	ctx actor.Messenger,
 	name string,
 ) (*actor.Ref, error) {
-	return k.Ref(), nil
+	rp := k.Ref().Child(name)
+	if rp == nil {
+		return nil, fmt.Errorf("cannot find resource pool: %s", name)
+	}
+	return rp, nil
 }
 
 // ResolveResourcePool resolves the resource pool completely.
@@ -86,7 +89,29 @@ func (k ResourceManager) ResolveResourcePool(
 	name string,
 	slots int,
 ) (string, error) {
-	return KubernetesDummyResourcePool, k.ValidateResourcePool(ctx, name)
+	// If the resource pool isn't set, fill in the default at creation time.
+	if name == "" && slots == 0 {
+		req := sproto.GetDefaultAuxResourcePoolRequest{}
+		resp, err := k.GetDefaultAuxResourcePool(ctx, req)
+		if err != nil {
+			return "", fmt.Errorf("defaulting to aux pool: %w", err)
+		}
+		return resp.PoolName, nil
+	}
+
+	if name == "" && slots >= 0 {
+		req := sproto.GetDefaultComputeResourcePoolRequest{}
+		resp, err := k.GetDefaultComputeResourcePool(ctx, req)
+		if err != nil {
+			return "", fmt.Errorf("defaulting to compute pool: %w", err)
+		}
+		return resp.PoolName, nil
+	}
+
+	if err := k.ValidateResourcePool(ctx, name); err != nil {
+		return "", fmt.Errorf("validating pool: %w", err)
+	}
+	return name, nil
 }
 
 // ValidateResources ensures enough resources are available in the resource pool.
@@ -96,15 +121,31 @@ func (k ResourceManager) ValidateResources(
 	slots int,
 	command bool,
 ) error {
+	// TODO
 	return nil
 }
 
 // ValidateResourcePool validates a resource pool is none or the k8s dummy pool.
 func (k ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
-	if name != "" && name != KubernetesDummyResourcePool {
-		return fmt.Errorf("k8s doesn't not support resource pools")
+	_, err := k.GetResourcePoolRef(ctx, name)
+	return err
+}
+
+// CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
+func (k ResourceManager) CheckMaxSlotsExceeded(
+	ctx actor.Messenger, name string, slots int,
+) (bool, error) {
+	ref, err := k.GetResourcePoolRef(ctx, name)
+	if err != nil {
+		return false, err
 	}
-	return nil
+	resp := ref.System().Ask(ref, sproto.CapacityCheck{ // TODO
+		Slots: slots,
+	})
+	if resp.Error() != nil {
+		return false, resp.Error()
+	}
+	return resp.Get().(sproto.CapacityCheckResponse).CapacityExceeded, nil
 }
 
 // ValidateResourcePoolAvailability checks the available resources for a given pool.
@@ -113,10 +154,18 @@ func (k ResourceManager) ValidateResourcePoolAvailability(
 	name string,
 	slots int,
 ) ([]command.LaunchWarning, error) {
-	if name != "" && name != KubernetesDummyResourcePool {
-		return nil, fmt.Errorf("k8s doesn't not support resource pools")
+	if slots == 0 {
+		return nil, nil
 	}
-	return nil, nil
+
+	switch exceeded, err := k.CheckMaxSlotsExceeded(ctx, name, slots); {
+	case err != nil:
+		return nil, fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
+	case exceeded:
+		return []command.LaunchWarning{command.CurrentSlotsExceeded}, nil
+	default:
+		return nil, nil
+	}
 }
 
 // GetDefaultComputeResourcePool requests the default compute resource pool.
@@ -250,11 +299,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		k.forwardToPool(ctx, KubernetesDummyResourcePool, msg)
 
 	case *apiv1.GetResourcePoolsRequest:
-		summary := ctx.Ask(k.pools[KubernetesDummyResourcePool], msg).Get().(*resourcepoolv1.ResourcePool)
-		resp := &apiv1.GetResourcePoolsResponse{
-			ResourcePools: []*resourcepoolv1.ResourcePool{summary},
+		summaryMap := ctx.AskAll(msg, ctx.Children()...).GetAll()
+		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(k.pools))
+		for _, v := range summaryMap {
+			summaries = append(summaries, v.(*resourcepoolv1.ResourcePool))
 		}
-		ctx.Respond(resp)
+		ctx.Respond(&apiv1.GetResourcePoolsResponse{ResourcePools: summaries})
 
 	case sproto.ValidateCommandResourcesRequest:
 		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
