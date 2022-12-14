@@ -474,3 +474,7 @@ export interface SearchRolesAssignableToScopeParams {
   offset?: number;
   workspaceId: number;
 }
+
+export interface GetProjectsByUserActivityParams {
+  limit?: number;
+}

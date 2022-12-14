@@ -9,19 +9,17 @@ import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
 import { experimentNameRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
-import { getExperiments } from 'services/api';
-import { getCommands, getJupyterLabs, getShells, getTensorBoards } from 'services/api';
+import { getCommands, getExperiments, getJupyterLabs, getProjectsByUserActivity, getShells, getTensorBoards } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import { useAuth } from 'stores/auth';
 import { ShirtSize } from 'themes';
-import { CommandTask, DetailedUser, ExperimentItem, ExperimentWithNames } from 'types';
-import { WorkspaceState } from 'types';
+import { CommandTask, DetailedUser, ExperimentItem, ExperimentWithNames, Project } from 'types';
 import { Loadable } from 'utils/loadable';
-
 const Dashboard: React.FC = () => {
   const [experiments, setExperiments] = useState<ExperimentWithNames[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [canceler] = useState(new AbortController());
   const loadableAuth = useAuth();
@@ -61,11 +59,17 @@ const Dashboard: React.FC = () => {
     setExperiments(experiments.experiments as ExperimentWithNames[]);
   }, []);
 
+  const fetchProjects = useCallback(async () => {
+    const projects = await getProjectsByUserActivity({});
+    setProjects(projects);
+  }, []);
+
   useEffect(() => {
+    fetchProjects();
     if (!authUser) return;
     fetchExperiments(authUser);
     fetchTasks(authUser);
-  }, [authUser, fetchExperiments, fetchTasks]);
+  }, [authUser, fetchExperiments, fetchTasks, fetchProjects]);
 
   useEffect(() => {
     let submissions: Submission[] = [];
@@ -73,82 +77,14 @@ const Dashboard: React.FC = () => {
     setSubmissions(submissions);
   }, [experiments, tasks]);
 
-  const mockProjects = [
-    {
-      archived: false,
-      description: '',
-      id: 168,
-      immutable: false,
-      lastExperimentStartedAt: new Date('2022-12-05T23:32:12.374578Z'),
-      name: 'not a project',
-      notes: [
-        {
-          contents: '',
-          name: 'Untitled',
-        },
-      ],
-      numActiveExperiments: 0,
-      numExperiments: 0,
-      state: WorkspaceState.Unspecified,
-      userId: 1,
-      workspaceId: 100,
-      workspaceName: '',
-    },
-    {
-      archived: false,
-      description: '',
-      id: 106,
-      immutable: false,
-      lastExperimentStartedAt: new Date('2022-12-05T23:32:12.374578Z'),
-      name: 'Sentiment detection',
-      notes: [],
-      numActiveExperiments: 0,
-      numExperiments: 0,
-      state: WorkspaceState.Unspecified,
-      userId: 2,
-      workspaceId: 100,
-      workspaceName: '',
-    },
-    {
-      archived: false,
-      description: '',
-      id: 115,
-      immutable: false,
-      lastExperimentStartedAt: new Date('2022-12-05T23:32:12.374578Z'),
-      name: 'Audio segmentation',
-      notes: [],
-      numActiveExperiments: 0,
-      numExperiments: 1,
-      state: WorkspaceState.Unspecified,
-      userId: 2,
-      workspaceId: 100,
-      workspaceName: '',
-    },
-    {
-      archived: false,
-      description: '',
-      id: 100,
-      immutable: false,
-      lastExperimentStartedAt: new Date('2022-12-05T18:54:20.475839Z'),
-      name: 'Text Transcription Model',
-      notes: [],
-      numActiveExperiments: 0,
-      numExperiments: 3,
-      state: WorkspaceState.Unspecified,
-      userId: 2,
-      workspaceId: 100,
-      workspaceName: '',
-    },
-  ];
-
   return (
     <Page title="Home">
       <Section title="Recent projects">
-        <Grid count={mockProjects.length} gap={ShirtSize.Medium} minItemWidth={250} mode={GridMode.ScrollableRow}>
-          {mockProjects.map((project) => (
+        <Grid count={projects.length} gap={ShirtSize.Medium} minItemWidth={250} mode={GridMode.ScrollableRow}>
+          {projects.map((project) => (
             <ProjectCard
               curUser={authUser}
-              // fetchProjects={fetchProjects}
+              fetchProjects={fetchProjects}
               key={project.id}
               project={project}
             />

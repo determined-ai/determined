@@ -701,3 +701,9 @@ export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Pro
       return await killTensorBoard({ commandId: task.id });
   }
 };
+
+export const getProjectsByUserActivity = generateDetApi<
+  Service.GetProjectsByUserActivityParams,
+  Api.V1GetProjectsByUserActivityResponse,
+  Type.Project[]
+>(Config.getProjectsByUserActivity);

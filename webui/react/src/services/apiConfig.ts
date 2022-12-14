@@ -1427,6 +1427,19 @@ export const unarchiveProject: DetApi<
   request: (params) => detApi.Projects.unarchiveProject(params.id),
 };
 
+export const getProjectsByUserActivity: DetApi<
+  Service.GetProjectsByUserActivityParams,
+  Api.V1GetProjectsByUserActivityResponse,
+  Type.Project[]
+> = {
+  name: 'getProjectsByUserActivity',
+  postProcess: (response) => {
+    return (response.projects || []).map((project) => decoder.mapV1Project(project));
+  },
+  request: (params: Service.GetProjectsByUserActivityParams) =>
+    detApi.Projects.getProjectsByUserActivity(params.limit),
+};
+
 /* Tasks */
 
 const TASK_LIMIT = 1000;
@@ -1584,7 +1597,7 @@ export const launchTensorBoard: DetApi<
   postProcess: (response) => {
     return {
       command: decoder.mapV1TensorBoard(response.tensorboard),
-      wanrings: response.warnings || [],
+      warnings: response.warnings || [],
     };
   },
   request: (params: Service.LaunchTensorBoardParams) =>
