@@ -78,7 +78,7 @@ export const useEnsureUserRolesAndAssignmentsFetched = (
 export const useUserRoles = (): Loadable<UserRole[]> => {
   const context = useContext(UserRolesAndAssignmentsContext);
   if (context === null) {
-    throw new Error('Attempted to use useUserRoles outside of UserRolesAndAssignmentss Context');
+    throw new Error('Attempted to use useUserRoles outside of UserRolesAndAssignments Context');
   }
 
   const { userRoles } = context;

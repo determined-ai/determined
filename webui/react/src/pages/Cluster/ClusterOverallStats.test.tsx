@@ -2,9 +2,11 @@ import { render } from '@testing-library/react';
 import React from 'react';
 
 import StoreProvider from 'contexts/Store';
+import { AuthProvider } from 'stores/auth';
 import { ExperimentsProvider } from 'stores/experiments';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { TasksProvider } from 'stores/tasks';
+import { UserRolesProvider } from 'stores/userRoles';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
@@ -16,13 +18,17 @@ jest.mock('services/api', () => ({
 const setup = () => {
   const view = render(
     <StoreProvider>
-      <ExperimentsProvider>
-        <TasksProvider>
-          <ResourcePoolsProvider>
-            <ClusterOverallStats />
-          </ResourcePoolsProvider>
-        </TasksProvider>
-      </ExperimentsProvider>
+      <AuthProvider>
+        <UserRolesProvider>
+          <ExperimentsProvider>
+            <TasksProvider>
+              <ResourcePoolsProvider>
+                <ClusterOverallStats />
+              </ResourcePoolsProvider>
+            </TasksProvider>
+          </ExperimentsProvider>
+        </UserRolesProvider>
+      </AuthProvider>
     </StoreProvider>,
   );
   return { view };

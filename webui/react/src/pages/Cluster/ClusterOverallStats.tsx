@@ -4,6 +4,8 @@ import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { useAgents, useClusterOverview } from 'stores/agents';
@@ -36,6 +38,7 @@ export const ClusterOverallStats: React.FC = () => {
   usePolling(fetchActiveRunning);
   const activeExperiments = useExperiments({ limit: -2, states: activeRunStates });
   const activeTasks = useActiveTasks();
+  const rbacEnabled = useFeature().isOn('rbac');
 
   const auxContainers = useMemo(() => {
     const tally = {
@@ -79,36 +82,40 @@ export const ClusterOverallStats: React.FC = () => {
             {auxContainers.running} <small>/ {auxContainers.total}</small>
           </OverviewStats>
         ) : null}
-        <OverviewStats title="Active Experiments">
-          {Loadable.match(activeExperiments, {
-            Loaded: (activeExperiments) => activeExperiments.pagination?.total ?? 0,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
-        <OverviewStats title="Active JupyterLabs">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.notebooks ?? 0,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
-        <OverviewStats title="Active TensorBoards">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.tensorboards ?? 0,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
-        <OverviewStats title="Active Shells">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.shells ?? 0,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
-        <OverviewStats title="Active Commands">
-          {Loadable.match(activeTasks, {
-            Loaded: (activeTasks) => activeTasks.commands ?? 0,
-            NotLoaded: (): ReactNode => <Spinner />,
-          })}
-        </OverviewStats>
+        {usePermissions().canAdministrateUsers || !rbacEnabled ? (
+          <>
+            <OverviewStats title="Active Experiments">
+              {Loadable.match(activeExperiments, {
+                Loaded: (activeExperiments) => activeExperiments.pagination?.total ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
+            </OverviewStats>
+            <OverviewStats title="Active JupyterLabs">
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.notebooks ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
+            </OverviewStats>
+            <OverviewStats title="Active TensorBoards">
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.tensorboards ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
+            </OverviewStats>
+            <OverviewStats title="Active Shells">
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.shells ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
+            </OverviewStats>
+            <OverviewStats title="Active Commands">
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.commands ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
+            </OverviewStats>
+          </>
+        ) : null}
       </Grid>
     </Section>
   );
