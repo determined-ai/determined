@@ -3,7 +3,6 @@ import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useStore } from 'contexts/Store';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -18,8 +17,10 @@ import { V1AgentUserGroup, V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
+import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
 import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 export const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
@@ -56,7 +57,8 @@ interface FormValues {
 const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => {
   const rbacEnabled = useFeature().isOn('rbac');
   const { canAssignRoles, canModifyPermissions } = usePermissions();
-  const { knownRoles } = useStore();
+  const knowRolesLoadable = useKnownRoles();
+  const knownRoles = Loadable.getOrElse(initKnowRoles, knowRolesLoadable);
 
   const useAgent = Form.useWatch<FormValues>('useAgent', form);
 
@@ -168,17 +170,21 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
               optionFilterProp="children"
               placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
-              {knownRoles.map((r) => (
-                <Select.Option
-                  disabled={
-                    roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
-                    roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
-                  }
-                  key={r.id}
-                  value={r.id}>
-                  {r.name}
-                </Select.Option>
-              ))}
+              {Loadable.match(knowRolesLoadable, {
+                Loaded: () =>
+                  knownRoles.map((r) => (
+                    <Select.Option
+                      disabled={
+                        roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
+                        roles?.find((ro) => ro.id === r.id)?.fromWorkspace?.length
+                      }
+                      key={r.id}
+                      value={r.id}>
+                      {r.name}
+                    </Select.Option>
+                  )),
+                NotLoaded: () => undefined, // TODO show spinner when this is loading
+              })}
             </Select>
           </Form.Item>
           <Typography.Text type="secondary">

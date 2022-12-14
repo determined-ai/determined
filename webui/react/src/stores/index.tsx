@@ -4,6 +4,7 @@ import { AgentsProvider } from './agents';
 import { AuthProvider } from './auth';
 import { DeterminedInfoProvider } from './determinedInfo';
 import { ExperimentsProvider } from './experiments';
+import { KnownRolesProvider } from './knowRoles';
 import { ProjectsProvider } from './projects';
 import { ResourcePoolsProvider } from './resourcePools';
 import { TasksProvider } from './tasks';
@@ -21,7 +22,9 @@ export const StoreContext = ({ children }: { children: ReactNode }): ReactElemen
               <ResourcePoolsProvider>
                 <DeterminedInfoProvider>
                   <UserRolesProvider>
-                    <ProjectsProvider>{children}</ProjectsProvider>
+                    <KnownRolesProvider>
+                      <ProjectsProvider>{children}</ProjectsProvider>
+                    </KnownRolesProvider>
                   </UserRolesProvider>
                 </DeterminedInfoProvider>
               </ResourcePoolsProvider>

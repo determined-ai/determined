@@ -1,10 +1,10 @@
 import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { StoreProvider as UIStoreProvider } from 'shared/contexts/stores/UI';
-import { clone, isEqual } from 'shared/utils/data';
+import { clone } from 'shared/utils/data';
 import rootLogger from 'shared/utils/Logger';
 import { checkDeepEquality } from 'shared/utils/store';
-import { UserAssignment, UserRole } from 'types';
+import { UserAssignment } from 'types';
 
 const logger = rootLogger.extend('store');
 
@@ -12,26 +12,19 @@ interface Props {
   children?: React.ReactNode;
 }
 interface State {
-  knownRoles: UserRole[];
   userAssignments: UserAssignment[];
 }
 
 export const StoreAction = {
   Reset: 'Reset',
 
-  // User assignments, roles, and derived permissions
-  SetKnownRoles: 'SetKnownRoles',
-
   // User Settings
   SetUserSettings: 'SetUserSettings',
 } as const;
 
-type Action =
-  | { type: typeof StoreAction.Reset }
-  | { type: typeof StoreAction.SetKnownRoles; value: UserRole[] };
+type Action = { type: typeof StoreAction.Reset };
 
 const initState: State = {
-  knownRoles: [],
   userAssignments: [],
 };
 
@@ -43,9 +36,6 @@ const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case StoreAction.Reset:
       return clone(initState) as State;
-    case StoreAction.SetKnownRoles:
-      if (isEqual(state.knownRoles, action.value)) return state;
-      return { ...state, knownRoles: action.value };
     default:
       return state;
   }
