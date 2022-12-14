@@ -268,6 +268,7 @@ type dispatcherResourceManager struct {
 	resourceDetails          hpcResourceDetailsCache
 	wlmType                  string
 	launcherVersionIsOK      bool
+	poolProviderMap          map[string][]string
 }
 
 func newDispatcherResourceManager(
@@ -319,7 +320,23 @@ func newDispatcherResourceManager(
 		authToken:           authToken,
 		launcherVersionIsOK: false,
 		poolConfig:          poolConfig,
+		poolProviderMap:     makeProvidedPoolsMap(poolConfig),
 	}
+}
+
+// makeProvidedPoolsMap returns a map where the key is the providing partition
+// and the values are the launcher-provided pools provided by the partition.
+// This is all static configuration data, so we can make this map just once
+// in the lifetime of this RM.
+func makeProvidedPoolsMap(poolConfig []config.ResourcePoolConfig) map[string][]string {
+	poolProviderMap := make(map[string][]string)
+	for _, pool := range poolConfig {
+		if isValidProvider(pool) {
+			partitionName := pool.Provider.HPC.Partition
+			poolProviderMap[partitionName] = append(poolProviderMap[partitionName], pool.PoolName)
+		}
+	}
+	return poolProviderMap
 }
 
 // Return a starting context for the API client call that includes the authToken
@@ -528,6 +545,7 @@ func (m *dispatcherResourceManager) generateGetAgentsResponse(
 			Enabled:        true,
 			Draining:       node.Draining,
 		}
+		m.updateAgentWithAnyProvidedResourcePools(&agent)
 		response.Agents = append(response.Agents, &agent)
 		if node.GpuCount == 0 {
 			// Adds a slot ID (e.g., 0, 1, 2, ..., N) to the agent for every
@@ -547,6 +565,14 @@ func (m *dispatcherResourceManager) generateGetAgentsResponse(
 		}
 	}
 	return &response
+}
+
+func (m *dispatcherResourceManager) updateAgentWithAnyProvidedResourcePools(
+	agent *agentv1.Agent,
+) {
+	for _, poolName := range agent.ResourcePools {
+		agent.ResourcePools = append(agent.ResourcePools, m.poolProviderMap[poolName]...)
+	}
 }
 
 // computeSlotType computes an agent GPU slot type from the configuration data available.
