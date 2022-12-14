@@ -11,7 +11,7 @@
   }
 }
 .row {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   grid-auto-flow: column;
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
 }

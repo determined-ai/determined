@@ -104,7 +104,11 @@ const NavigationTabbar: React.FC = () => {
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        {dashboardEnabled ? <ToolbarItem icon="dashboard" label="Home" path={paths.dashboard()} /> : <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />}
+        {dashboardEnabled ? (
+          <ToolbarItem icon="dashboard" label="Home" path={paths.dashboard()} />
+        ) : (
+          <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
+        )}
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={clusterStatus} />

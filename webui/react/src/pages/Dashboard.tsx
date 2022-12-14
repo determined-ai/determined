@@ -9,7 +9,14 @@ import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
 import { experimentNameRenderer, relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
-import { getCommands, getExperiments, getJupyterLabs, getProjectsByUserActivity, getShells, getTensorBoards } from 'services/api';
+import {
+  getCommands,
+  getExperiments,
+  getJupyterLabs,
+  getProjectsByUserActivity,
+  getShells,
+  getTensorBoards,
+} from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import { useAuth } from 'stores/auth';
@@ -30,25 +37,46 @@ const Dashboard: React.FC = () => {
 
   type Submission = ExperimentItem & CommandTask;
 
-  const fetchTasks = useCallback(async (user: DetailedUser) => {
-    const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
-      getCommands({ orderBy: 'ORDER_BY_DESC', signal: canceler.signal, sortBy: 'SORT_BY_START_TIME', users: [user.id.toString()] }),
-      getJupyterLabs({ orderBy: 'ORDER_BY_DESC', signal: canceler.signal, sortBy: 'SORT_BY_START_TIME', users: [user.id.toString()] }),
-      getShells({ orderBy: 'ORDER_BY_DESC', signal: canceler.signal, sortBy: 'SORT_BY_START_TIME', users: [user.id.toString()] }),
-      getTensorBoards({ orderBy: 'ORDER_BY_DESC', signal: canceler.signal, sortBy: 'SORT_BY_START_TIME', users: [user.id.toString()] }),
-    ]);
-    const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
-    setTasks(newTasks);
-  }, [canceler]);
+  const fetchTasks = useCallback(
+    async (user: DetailedUser) => {
+      const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
+        getCommands({
+          orderBy: 'ORDER_BY_DESC',
+          signal: canceler.signal,
+          sortBy: 'SORT_BY_START_TIME',
+          users: [user.id.toString()],
+        }),
+        getJupyterLabs({
+          orderBy: 'ORDER_BY_DESC',
+          signal: canceler.signal,
+          sortBy: 'SORT_BY_START_TIME',
+          users: [user.id.toString()],
+        }),
+        getShells({
+          orderBy: 'ORDER_BY_DESC',
+          signal: canceler.signal,
+          sortBy: 'SORT_BY_START_TIME',
+          users: [user.id.toString()],
+        }),
+        getTensorBoards({
+          orderBy: 'ORDER_BY_DESC',
+          signal: canceler.signal,
+          sortBy: 'SORT_BY_START_TIME',
+          users: [user.id.toString()],
+        }),
+      ]);
+      const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
+      setTasks(newTasks);
+    },
+    [canceler],
+  );
 
   const fetchExperiments = useCallback(async (user: DetailedUser) => {
-    const response = await getExperiments(
-      {
-        orderBy: 'ORDER_BY_DESC',
-        sortBy: 'SORT_BY_START_TIME',
-        userIds: [user.id],
-      },
-    );
+    const response = await getExperiments({
+      orderBy: 'ORDER_BY_DESC',
+      sortBy: 'SORT_BY_START_TIME',
+      userIds: [user.id],
+    });
     setExperiments(response.experiments);
   }, []);
 
@@ -76,7 +104,11 @@ const Dashboard: React.FC = () => {
   return (
     <Page title="Home">
       <Section title="Recent projects">
-        <Grid count={projects.length} gap={ShirtSize.Medium} minItemWidth={250} mode={GridMode.ScrollableRow}>
+        <Grid
+          count={projects.length}
+          gap={ShirtSize.Medium}
+          minItemWidth={250}
+          mode={GridMode.ScrollableRow}>
           {projects.map((project) => (
             <ProjectCard
               curUser={authUser}
@@ -125,13 +157,9 @@ const Dashboard: React.FC = () => {
                 if (row.workspaceName && row.projectId !== 1) {
                   return (
                     <Breadcrumb>
+                      <Breadcrumb.Item>{row.workspaceName}</Breadcrumb.Item>
                       <Breadcrumb.Item>
-                        {row.workspaceName}
-                      </Breadcrumb.Item>
-                      <Breadcrumb.Item>
-                        <Link path={paths.projectDetails(projectId)}>
-                          {row.projectName}
-                        </Link>
+                        <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
                       </Breadcrumb.Item>
                     </Breadcrumb>
                   );
@@ -140,9 +168,7 @@ const Dashboard: React.FC = () => {
                   return (
                     <Breadcrumb>
                       <Breadcrumb.Item>
-                        <Link path={paths.projectDetails(projectId)}>
-                          {row.projectName}
-                        </Link>
+                        <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
                       </Breadcrumb.Item>
                     </Breadcrumb>
                   );
