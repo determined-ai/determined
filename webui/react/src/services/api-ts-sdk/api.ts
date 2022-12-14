@@ -3488,6 +3488,20 @@ export interface V1GetProjectResponse {
 }
 
 /**
+ * Response to GetProjectsByUserActivityRequest.
+ * @export
+ * @interface V1GetProjectsByUserActivityResponse
+ */
+export interface V1GetProjectsByUserActivityResponse {
+    /**
+     * 
+     * @type {Array<V1Project>}
+     * @memberof V1GetProjectsByUserActivityResponse
+     */
+    projects?: Array<V1Project>;
+}
+
+/**
  * Response to GetResourcePoolsRequest.
  * @export
  * @interface V1GetResourcePoolsResponse
@@ -20981,6 +20995,42 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get projects by user activity
+         * @param {number} [limit] Limit number of project entries.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectsByUserActivity(limit?: number, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/user/projects/activity`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Move a project into a workspace.
          * @param {number} projectId The id of the project being moved.
          * @param {V1MoveProjectRequest} body 
@@ -21288,6 +21338,25 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get projects by user activity
+         * @param {number} [limit] Limit number of project entries.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectsByUserActivity(limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectsByUserActivityResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectsByUserActivity(limit, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Move a project into a workspace.
          * @param {number} projectId The id of the project being moved.
          * @param {V1MoveProjectRequest} body 
@@ -21437,6 +21506,16 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get projects by user activity
+         * @param {number} [limit] Limit number of project entries.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectsByUserActivity(limit?: number, options?: any) {
+            return ProjectsApiFp(configuration).getProjectsByUserActivity(limit, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Move a project into a workspace.
          * @param {number} projectId The id of the project being moved.
          * @param {V1MoveProjectRequest} body 
@@ -21546,6 +21625,18 @@ export class ProjectsApi extends BaseAPI {
      */
     public getProject(id: number, options?: any) {
         return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get projects by user activity
+     * @param {number} [limit] Limit number of project entries.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProjectsByUserActivity(limit?: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectsByUserActivity(limit, options)(this.fetch, this.basePath);
     }
 
     /**

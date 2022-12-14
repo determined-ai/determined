@@ -3912,6 +3912,32 @@ class v1GetProjectResponse:
         }
         return out
 
+class v1GetProjectsByUserActivityResponse:
+    projects: "typing.Optional[typing.Sequence[v1Project]]" = None
+
+    def __init__(
+        self,
+        *,
+        projects: "typing.Union[typing.Sequence[v1Project], None, Unset]" = _unset,
+    ):
+        if not isinstance(projects, Unset):
+            self.projects = projects
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectsByUserActivityResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "projects" in obj:
+            kwargs["projects"] = [v1Project.from_json(x) for x in obj["projects"]] if obj["projects"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "projects" in vars(self):
+            out["projects"] = None if self.projects is None else [x.to_json(omit_unset) for x in self.projects]
+        return out
+
 class v1GetResourcePoolsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
     resourcePools: "typing.Optional[typing.Sequence[v1ResourcePool]]" = None
@@ -13336,6 +13362,28 @@ def get_GetProject(
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
+
+def get_GetProjectsByUserActivity(
+    session: "api.Session",
+    *,
+    limit: "typing.Optional[int]" = None,
+) -> "v1GetProjectsByUserActivityResponse":
+    _params = {
+        "limit": limit,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/user/projects/activity",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectsByUserActivityResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectsByUserActivity", _resp)
 
 def get_GetResourcePools(
     session: "api.Session",
