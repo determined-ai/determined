@@ -752,7 +752,7 @@ Resources:
       IamInstanceProfile: !Ref MasterInstanceProfile
       LaunchTemplate:
         LaunchTemplateId: !Ref IMDSV2LaunchTemplate
-        Version: !GetAtt IMDSV2LaunchTemplate.LatestVersionNumber      
+        Version: !GetAtt IMDSV2LaunchTemplate.LatestVersionNumber
       SecurityGroupIds:
         - !Ref MasterSecurityGroup
       BlockDeviceMappings:
@@ -850,12 +850,6 @@ Resources:
                 agent_reconnect_backoff: ${AgentReconnectBackoff}
                 agent_config_file_contents: ${AgentConfigFileContents}
                 startup_script: |
-                  apt-get update
-                  apt-get -y install binutils
-                  git clone https://github.com/aws/efs-utils
-                  cd efs-utils
-                  ./build-deb.sh
-                  apt-get -y install ./build/amazon-efs-utils*deb
                   mkdir -p /mnt/efs
                   mount -t efs ${EFSVal}:/ /mnt/efs
                   if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then

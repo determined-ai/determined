@@ -758,7 +758,7 @@ Resources:
         MetadataOptions:
           HttpTokens: required
           HttpPutResponseHopLimit: 2
-        
+
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -870,9 +870,6 @@ Resources:
                 agent_reconnect_backoff: ${AgentReconnectBackoff}
                 agent_config_file_contents: ${AgentConfigFileContents}
                 startup_script: |
-                  wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
-                  bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
-                  apt install -y lustre-client-modules-4.4.0-1109-aws
                   mkdir /mnt/fsx
                   mount -t lustre -o noatime,flock ${FSxVal} /mnt/fsx
                   if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
