@@ -373,6 +373,7 @@ export const ioToExperimentConfig = (
       ...io.searcher,
       name: io.searcher.name as types.ExperimentSearcherName,
       smallerIsBetter: io.searcher.smaller_is_better,
+      sourceTrialId: io.searcher.source_trial_id ?? undefined,
     },
   };
   if (io.resources.max_slots != null) config.resources.maxSlots = io.resources.max_slots;

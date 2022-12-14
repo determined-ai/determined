@@ -167,6 +167,7 @@ export const ioExperimentConfig = io.type({
     metric: io.string,
     name: io.keyof(experimentSearcherName),
     smaller_is_better: io.boolean,
+    source_trial_id: io.union([io.null, io.number]),
   }),
 });
 export type ioTypeExperimentConfig = io.TypeOf<typeof ioExperimentConfig>;

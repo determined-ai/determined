@@ -312,6 +312,7 @@ export interface ExperimentConfig {
     metric: string;
     name: ExperimentSearcherName;
     smallerIsBetter: boolean;
+    sourceTrialId?: number;
   };
 }
 
