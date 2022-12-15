@@ -114,10 +114,7 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
                 continue
 
             build = Build(build_meta)
-            if dev:
-                builds[build.job_name.replace('=', '-').replace('with-mpi-', '')] = build
-            else:
-                builds[build.job_name] = build
+            builds[build.job_name] = build
 
     if cloud_images:
         expected = PACKER_JOBS | DOCKER_JOBS

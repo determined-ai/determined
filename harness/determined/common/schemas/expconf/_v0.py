@@ -293,12 +293,12 @@ class EnvironmentImageV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
-            self.cpu = "determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132"
+            self.cpu = "determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-1c769fb"
         if self.rocm is None:
-            self.rocm = "determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-15f6132"
+            self.rocm = "determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-1c769fb"
 
         if self.cuda is None:
-            self.cuda = "determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132"
+            self.cuda = "determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-1c769fb"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):

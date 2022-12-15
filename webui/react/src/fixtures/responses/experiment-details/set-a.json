@@ -694,8 +694,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132",
-          "gpu": "determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132"
+          "cpu": "determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-1c769fb",
+          "gpu": "determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-1c769fb"
         },
         "pod_spec": null,
         "ports": null
@@ -838,8 +838,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-15f6132",
-          "gpu": "determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-15f6132"
+          "cpu": "determinedai/environments-dev:py-3.8-pytorch-1.10-tf-2.8-cpu-1c769fb",
+          "gpu": "determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-1c769fb"
         },
         "pod_spec": {
           "metadata": {

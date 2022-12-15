@@ -1,4 +1,4 @@
-FROM determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-15f6132
+FROM determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpt-neox-deepspeed-gpu-1c769fb
 
 # Install deepspeed & dependencies
 RUN apt-get install -y mpich
