@@ -105,7 +105,7 @@ const NavigationTabbar: React.FC = () => {
     <nav className={css.base}>
       <div className={css.toolbar}>
         {dashboardEnabled ? (
-          <ToolbarItem icon="dashboard" label="Home" path={paths.dashboard()} />
+          <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
         ) : (
           <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
         )}
