@@ -43,6 +43,7 @@ const (
 // unauthenticatedPointsList contains URIs and paths that are exempted from authentication.
 var unauthenticatedPointsList = []string{
 	"/",
+	"/docs/.*",
 	"/info",
 	"/task-logs",
 	"/ws/data-layer/.*",

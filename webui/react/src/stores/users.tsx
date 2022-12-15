@@ -1,6 +1,6 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
-import { getUsers } from 'services/api';
+import { getCurrentUser, getUsers } from 'services/api';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 import { isEqual } from 'shared/utils/data';
 import { DetailedUser } from 'types';
@@ -69,6 +69,28 @@ export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) 
   );
 };
 
+export const useEnsureCurrentUserFetched = (canceler: AbortController): (() => Promise<void>) => {
+  const context = useContext(UsersContext);
+
+  if (context === null) {
+    throw new Error('Attempted to use useEnsureCurrentUserFetched outside of Users Context');
+  }
+
+  const { updateCurrentUser, currentUser } = context;
+
+  return useCallback(async (): Promise<void> => {
+    if (currentUser !== NotLoaded) return;
+
+    try {
+      const response = await getCurrentUser({ signal: canceler.signal });
+
+      updateCurrentUser(() => Loaded(response));
+    } catch (e) {
+      handleError(e);
+    }
+  }, [canceler, updateCurrentUser, currentUser]);
+};
+
 export const useEnsureUsersFetched = (canceler: AbortController): (() => Promise<void>) => {
   const context = useContext(UsersContext);
 
@@ -111,14 +133,14 @@ export const useCurrentUsers = (): UseCurentUserReturn => {
   if (context === null) {
     throw new Error('Attempted to use useCurrentUser outside of User Context');
   }
-  const { currentUser, updateCurrentUser: updateContextUser, updateUsers } = context;
+  const { currentUser, updateCurrentUser, updateUsers } = context;
 
-  const updateCurrentUser = useCallback(
+  const userUpdateCallback = useCallback(
     (user: DetailedUser, users: DetailedUser[] = []) => {
       const usersArray = [...users];
 
-      updateContextUser(() => {
-        const userIdx = usersArray.findIndex((user) => user.id === user.id);
+      updateCurrentUser(() => {
+        const userIdx = usersArray.findIndex((changeUser) => changeUser.id === user.id);
 
         if (userIdx > -1) usersArray[userIdx] = { ...usersArray[userIdx], ...user };
 
@@ -133,11 +155,11 @@ export const useCurrentUsers = (): UseCurentUserReturn => {
         return Loaded(usersArray);
       });
     },
-    [updateContextUser, updateUsers],
+    [updateCurrentUser, updateUsers],
   );
 
   return {
     currentUser,
-    updateCurrentUser,
+    updateCurrentUser: userUpdateCallback,
   };
 };
