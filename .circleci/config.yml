@@ -793,8 +793,6 @@ commands:
       - run: |
           MASTER_HOST=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> DeterminedAddress)
           echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
-
-      - run: |
           if [ -n "<<parameters.master-tls-cert>>" ] && [ -n "<<parameters.master-tls-key>>" ]; then
             echo "export MASTER_PORT=8443" >> $BASH_ENV
             echo "export MASTER_SCHEME=https" >> $BASH_ENV
@@ -2063,6 +2061,10 @@ jobs:
           master-tls-key: ${MASTER_TLS_KEY}
           master-cert-name: ${MASTER_CERT_NAME}
           deployment-type: <<parameters.deployment-type>>
+      - run:
+          name: Set DET_MASTER for further action.
+          command: |
+            echo "export DET_MASTER=${MASTER_SCHEME:-http}://${MASTER_HOST}:${MASTER_PORT:-8080}" >> "$BASH_ENV"
       - when:
           condition:
             equal: [<<parameters.deployment-type>>, "fsx"]
