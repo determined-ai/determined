@@ -2036,6 +2036,8 @@ jobs:
       slack-channel:
         type: string
         default: ""
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - skip-if-docs-only
