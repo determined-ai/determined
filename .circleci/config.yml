@@ -2053,6 +2053,9 @@ jobs:
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          master-tls-cert: ${MASTER_TLS_CERT}
+          master-tls-key: ${MASTER_TLS_KEY}
+          master-cert-name: ${MASTER_CERT_NAME}
           deployment-type: <<parameters.deployment-type>>
       - run:
           name: Set DET_MASTER for further action.
