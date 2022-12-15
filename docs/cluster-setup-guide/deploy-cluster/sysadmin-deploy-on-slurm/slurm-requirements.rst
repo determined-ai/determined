@@ -93,6 +93,15 @@ recommended to optimize how Determined interacts with Slurm:
       default using the :ref:`slurm section <cluster-configuration-slurm>`
       ``default_compute_resource_pool`` or ``default_aux_resource_pool`` option.
 
+-  Ensure the ``MaxNodes`` value for each partition is not less than the number of GPUs in the
+   partition.
+
+   Determined delegates node selection for a job to Slurm by specifying a node range
+   (1-``slots_per_trial``). If ``slots_per_trial`` exceeds the ``MaxNodes`` value for the partition,
+   the job will remain in state ``PENDING`` with reason code ``PartitionNodelimit``. Make sure that
+   all partitions that have ``MaxNodes`` specified use a value larger than the number of GPUs in the
+   partition.
+
 -  Tune the Slurm configuration for Determined job preemption.
 
    Slurm preempts jobs using signals. When a Determined job receives SIGTERM, it begins a checkpoint
