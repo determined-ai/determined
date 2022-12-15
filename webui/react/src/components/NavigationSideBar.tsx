@@ -196,8 +196,24 @@ const NavigationSideBar: React.FC = () => {
   }, [openWorkspaceCreateModal]);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
+  const { canAdministrateUsers } = usePermissions();
 
   if (!showNavigation) return null;
+
+  const menuItems = [
+    {
+      key: 'settings',
+      label: <Link path={paths.settings('account')}>Settings</Link>,
+    },
+    { key: 'theme-toggle', label: <ThemeToggle /> },
+    { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+  ];
+
+  if (canAdministrateUsers)
+    menuItems.unshift({
+      key: 'admin',
+      label: <Link path={paths.admin()}>Admin</Link>,
+    });
 
   return (
     <CSSTransition
@@ -219,19 +235,7 @@ const NavigationSideBar: React.FC = () => {
       <nav className={css.base} ref={nodeRef}>
         <header>
           <Dropdown
-            content={
-              <Menu
-                items={[
-                  { key: 'theme-toggle', label: <ThemeToggle /> },
-                  {
-                    key: 'settings',
-                    label: <Link path={paths.settings('account')}>Settings</Link>,
-                  },
-                  { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
-                ]}
-                selectable={false}
-              />
-            }
+            content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             <AvatarCard className={css.user} darkLight={ui.darkLight} user={authUser} />
