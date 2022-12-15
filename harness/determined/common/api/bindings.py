@@ -3829,6 +3829,7 @@ class v1GetNotebooksRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetNotebooksResponse:
     notebooks: "typing.Optional[typing.Sequence[v1Notebook]]" = None
@@ -13288,9 +13289,10 @@ def get_GetNotebooks(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetNotebooksRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetNotebooksResponse":
     _params = {
         "limit": limit,
@@ -13299,6 +13301,7 @@ def get_GetNotebooks(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
