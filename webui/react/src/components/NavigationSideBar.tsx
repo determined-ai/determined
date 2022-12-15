@@ -301,6 +301,7 @@ const NavigationSideBar: React.FC = () => {
                       .map((workspace) => (
                         <WorkspaceActionDropdown
                           key={workspace.id}
+                          returnIndexOnDelete={false}
                           trigger={['contextMenu']}
                           workspace={workspace}>
                           <li>

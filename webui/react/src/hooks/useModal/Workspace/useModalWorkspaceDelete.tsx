@@ -14,10 +14,15 @@ import css from './useModalWorkspaceDelete.module.scss';
 
 interface Props {
   onClose?: () => void;
+  returnIndexOnDelete: boolean;
   workspace: Workspace;
 }
 
-const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
+const useModalWorkspaceDelete = ({
+  onClose,
+  returnIndexOnDelete,
+  workspace,
+}: Props): ModalHooks => {
   const [name, setName] = useState('');
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
@@ -48,7 +53,9 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
   const handleOk = useCallback(async () => {
     try {
       await deleteWorkspace(workspace.id);
-      routeToReactUrl(paths.workspaceList());
+      if (returnIndexOnDelete) {
+        routeToReactUrl(paths.workspaceList());
+      }
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -58,7 +65,7 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [workspace.id, deleteWorkspace]);
+  }, [workspace.id, deleteWorkspace, returnIndexOnDelete]);
 
   const getModalProps = useCallback(
     (name = ''): ModalFuncProps => {

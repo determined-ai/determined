@@ -19,6 +19,7 @@ interface Props {
   direction?: 'vertical' | 'horizontal';
   onComplete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
+  returnIndexOnDelete?: boolean;
   trigger?: ('click' | 'hover' | 'contextMenu')[];
   workspace: Workspace;
 }
@@ -29,13 +30,14 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
   children,
   className,
   direction = 'vertical',
+  returnIndexOnDelete = true,
   workspace,
   onComplete,
   trigger,
   onVisibleChange,
 }: Props) => {
   const { contextHolder: modalWorkspaceDeleteContextHolder, modalOpen: openWorkspaceDelete } =
-    useModalWorkspaceDelete({ onClose: onComplete, workspace });
+    useModalWorkspaceDelete({ onClose: onComplete, returnIndexOnDelete, workspace });
   const { contextHolder: modalWorkspaceEditContextHolder, modalOpen: openWorkspaceEdit } =
     useModalWorkspaceCreate({ onClose: onComplete, workspaceID: workspace.id });
 
