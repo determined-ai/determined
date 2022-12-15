@@ -3,7 +3,7 @@ import React from 'react';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import Dashboard from 'pages/Dashboard';
-import Default from 'pages/Default';
+import DefaultRoute from 'pages/DefaultRoute';
 import Deprecated from 'pages/Deprecated';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
@@ -33,7 +33,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   clusterLogs: <ClusterLogs />,
   clusters: <Clusters />,
   dashboard: <Dashboard />,
-  default: <Default />,
+  default: <DefaultRoute />,
   experimentDetails: <ExperimentDetails />,
   interactive: <InteractiveTask />,
   jobs: <Deprecated />,

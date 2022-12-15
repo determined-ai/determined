@@ -1,4 +1,4 @@
-import { Breadcrumb, Table } from 'antd';
+import { Breadcrumb, Button } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
@@ -7,7 +7,9 @@ import Link from 'components/Link';
 import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
+import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { experimentNameRenderer, relativeTimeRenderer } from 'components/Table/Table';
+import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { paths } from 'routes/utils';
 import {
   getCommands,
@@ -24,6 +26,8 @@ import { ShirtSize } from 'themes';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import { Loadable } from 'utils/loadable';
 
+const FETCH_LIMIT = 12;
+
 const Dashboard: React.FC = () => {
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
@@ -35,31 +39,36 @@ const Dashboard: React.FC = () => {
     Loaded: (auth) => auth.user,
     NotLoaded: () => undefined,
   });
-
+  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
+    useModalJupyterLab();
   type Submission = ExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(
     async (user: DetailedUser) => {
       const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
         getCommands({
+          limit: FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
           users: [user.id.toString()],
         }),
         getJupyterLabs({
+          limit: FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
           users: [user.id.toString()],
         }),
         getShells({
+          limit: FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
           users: [user.id.toString()],
         }),
         getTensorBoards({
+          limit: FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
           signal: canceler.signal,
           sortBy: 'SORT_BY_START_TIME',
@@ -74,17 +83,23 @@ const Dashboard: React.FC = () => {
 
   const fetchExperiments = useCallback(async (user: DetailedUser) => {
     const response = await getExperiments({
+      limit: FETCH_LIMIT,
       orderBy: 'ORDER_BY_DESC',
       sortBy: 'SORT_BY_START_TIME',
       userIds: [user.id],
+    }, {
+      signal: canceler.signal,
     });
     setExperiments(response.experiments);
-  }, []);
+  }, [canceler]);
 
   const fetchProjects = useCallback(async () => {
-    const projects = await getProjectsByUserActivity({ limit: 12 });
+    const projects = await getProjectsByUserActivity({ limit: FETCH_LIMIT },
+      {
+        signal: canceler.signal,
+      });
     setProjects(projects);
-  }, []);
+  }, [canceler]);
 
   useEffect(() => {
     fetchProjects();
@@ -94,16 +109,24 @@ const Dashboard: React.FC = () => {
   }, [authUser, fetchExperiments, fetchTasks, fetchProjects]);
 
   useEffect(() => {
-    let submissions: Submission[] = [];
-    submissions = submissions
-      .concat(experiments as Submission[])
-      .concat(tasks as Submission[])
-      .sort((a, b) => dateTimeStringSorter(b.startTime, a.startTime));
-    setSubmissions(submissions);
+    setSubmissions(
+      (experiments as Submission[])
+        .concat(tasks as Submission[])
+        .sort((a, b) => dateTimeStringSorter(b.startTime, a.startTime)));
   }, [experiments, tasks]);
 
+  const JupyterLabButton = () => {
+    return (
+      <Button onClick={() => openJupyterLabModal()}>
+        Launch JupyterLab
+      </Button>
+    );
+  };
+
   return (
-    <Page title="Home">
+    <Page
+      options={<JupyterLabButton />}
+      title="Home">
       <Section title="Recent projects">
         <Grid
           count={projects.length}
@@ -121,7 +144,7 @@ const Dashboard: React.FC = () => {
         </Grid>
       </Section>
       <Section title="Recently submitted">
-        <Table<Submission>
+        <ResponsiveTable<Submission>
           columns={[
             {
               dataIndex: 'state',
@@ -134,9 +157,9 @@ const Dashboard: React.FC = () => {
               dataIndex: 'projectId',
               render: (projectId) => {
                 if (projectId) {
-                  return <Icon name="experiment" />;
+                  return <Icon name="experiment" title="Experiment" />;
                 } else {
-                  return <Icon name="tasks" />;
+                  return <Icon name="tasks" title="Task" />;
                 }
               },
               width: 1,
@@ -155,10 +178,12 @@ const Dashboard: React.FC = () => {
             {
               dataIndex: 'projectId',
               render: (projectId, row) => {
-                if (row.workspaceName && row.projectId !== 1) {
+                if (row.workspaceId && row.projectId !== 1) {
                   return (
                     <Breadcrumb>
-                      <Breadcrumb.Item>{row.workspaceName}</Breadcrumb.Item>
+                      <Breadcrumb.Item>
+                        <Link path={paths.workspaceDetails(row.workspaceId)}>{row.workspaceName}</Link>
+                      </Breadcrumb.Item>
                       <Breadcrumb.Item>
                         <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
                       </Breadcrumb.Item>
@@ -186,6 +211,7 @@ const Dashboard: React.FC = () => {
           showHeader={false}
         />
       </Section>
+      {modalJupyterLabContextHolder}
     </Page>
   );
 };

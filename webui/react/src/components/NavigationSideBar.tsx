@@ -156,7 +156,7 @@ const NavigationSideBar: React.FC = () => {
       : [];
     const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
     const topItems = [
-      ...(dashboardEnabled ? dashboardTopNav : topNav),
+      ...(dashboardEnabled ? dashboardTopNav.concat(topNav) : topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
@@ -241,18 +241,20 @@ const NavigationSideBar: React.FC = () => {
           </Dropdown>
         </header>
         <main>
-          <section className={css.launch}>
-            <div className={css.launchBlock}>
-              <Button className={css.launchButton} onClick={() => openJupyterLabModal()}>
-                Launch JupyterLab
-              </Button>
-              {settings.navbarCollapsed ? (
-                <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
-                  <Icon name="jupyter-lab" />
+          {dashboardEnabled ? null : (
+            <section className={css.launch}>
+              <div className={css.launchBlock}>
+                <Button className={css.launchButton} onClick={() => openJupyterLabModal()}>
+                  Launch JupyterLab
                 </Button>
-              ) : null}
-            </div>
-          </section>
+                {settings.navbarCollapsed ? (
+                  <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
+                    <Icon name="jupyter-lab" />
+                  </Button>
+                ) : null}
+              </div>
+            </section>
+          )}
           <section className={css.top}>
             {menuConfig.top.map((config) => (
               <NavigationItem

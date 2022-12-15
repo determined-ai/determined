@@ -501,6 +501,7 @@ export const mapV1Experiment = (
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
+    workspaceId: data.workspaceId,
     workspaceName: data.workspaceName,
   };
 };

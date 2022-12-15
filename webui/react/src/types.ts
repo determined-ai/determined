@@ -561,6 +561,7 @@ export interface ExperimentItem {
   state: CompoundRunState;
   trialIds?: number[];
   userId: number;
+  workspaceId?: number;
   workspaceName?: string;
 }
 
