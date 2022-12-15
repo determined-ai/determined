@@ -1,10 +1,12 @@
 from __future__ import print_function
+
 import sys
 
 sys.path.append("..")
-from Game import Game
-from .TicTacToeLogic import Board
 import numpy as np
+from Game import Game
+
+from .TicTacToeLogic import Board
 
 """
 Game class implementation for the game of TicTacToe.

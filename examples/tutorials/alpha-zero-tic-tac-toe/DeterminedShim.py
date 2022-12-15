@@ -1,11 +1,12 @@
-import determined as det
-import pathlib
-import logging
 import atexit
+import logging
+import pathlib
 import sys
-
 from typing import Any, Dict
+
 from utils import *
+
+import determined as det
 
 # Change this to DEBUG to see more info.
 log_level = logging.INFO

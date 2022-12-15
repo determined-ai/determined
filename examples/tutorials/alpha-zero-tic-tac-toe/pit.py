@@ -1,13 +1,12 @@
-import Arena
-from MCTS import MCTS
-from tictactoe.TicTacToeGame import TicTacToeGame as Game
-from tictactoe.keras.NNet import NNetWrapper as NNet
-from tictactoe.TicTacToePlayers import *
-
-import numpy as np
-from utils import *
-
 import sys
+
+import Arena
+import numpy as np
+from MCTS import MCTS
+from tictactoe.keras.NNet import NNetWrapper as NNet
+from tictactoe.TicTacToeGame import TicTacToeGame as Game
+from tictactoe.TicTacToePlayers import *
+from utils import *
 
 """
 use this script to play any two agents against each other, or play manually with

@@ -1,17 +1,15 @@
 import logging
 import os
 from collections import deque
-from pickle import Pickler, Unpickler
 from datetime import datetime
+from pickle import Pickler, Unpickler
 from random import shuffle
 
 import numpy as np
-from tqdm import tqdm
-
 from Arena import Arena
-from MCTS import MCTS
-
 from DeterminedShim import shim
+from MCTS import MCTS
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 

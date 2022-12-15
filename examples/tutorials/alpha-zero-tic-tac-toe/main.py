@@ -1,11 +1,10 @@
 import logging
 
 from Coach import Coach
-from tictactoe.TicTacToeGame import TicTacToeGame as Game
-from tictactoe.keras.NNet import NNetWrapper as nn
-from utils import *
-
 from DeterminedShim import shim
+from tictactoe.keras.NNet import NNetWrapper as nn
+from tictactoe.TicTacToeGame import TicTacToeGame as Game
+from utils import *
 
 log = logging.getLogger(__name__)
 

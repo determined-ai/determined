@@ -14,13 +14,11 @@
 import unittest
 
 import Arena
+import numpy as np
 from MCTS import MCTS
-
+from tictactoe.keras.NNet import NNetWrapper as TicTacToeKerasNNet
 from tictactoe.TicTacToeGame import TicTacToeGame
 from tictactoe.TicTacToePlayers import RandomPlayer
-from tictactoe.keras.NNet import NNetWrapper as TicTacToeKerasNNet
-
-import numpy as np
 from utils import *
 
 
