@@ -122,13 +122,13 @@ export const useCreateWorkspace = (): ((
     async (params: V1PostWorkspaceRequest): Promise<Workspace | undefined> => {
       try {
         const w = await createWorkspace(params);
-        updateWorkspaces((prev) => Loadable.map(prev, (ws: Workspace[]) => [w].concat(ws)));
+        updateWorkspaces((prev) => Loadable.map(prev, (ws: Workspace[]) => ws.concat([w])));
         return w;
       } catch (e) {
         handleError(e);
       }
     },
-    [updateWorkspaces, createWorkspace],
+    [updateWorkspaces],
   );
 };
 
@@ -150,6 +150,6 @@ export const useDeleteWorkspace = (): ((id: number) => Promise<void>) => {
         handleError(e);
       }
     },
-    [updateWorkspaces, deleteWorkspace],
+    [updateWorkspaces],
   );
 };

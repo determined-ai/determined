@@ -58,7 +58,7 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [workspace.id]);
+  }, [workspace.id, deleteWorkspace]);
 
   const getModalProps = useCallback(
     (name = ''): ModalFuncProps => {

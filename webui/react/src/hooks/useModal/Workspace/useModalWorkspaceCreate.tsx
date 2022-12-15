@@ -278,7 +278,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
         });
       }
     }
-  }, [form, workspaceID, canModifyAUG, canModifyCPS]);
+  }, [form, workspaceID, canModifyAUG, canModifyCPS, createWorkspace]);
 
   const getModalProps = useMemo((): ModalFuncProps => {
     return {
