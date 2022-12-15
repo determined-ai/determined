@@ -5,7 +5,7 @@ from tqdm import tqdm
 log = logging.getLogger(__name__)
 
 
-class Arena():
+class Arena:
     """
     An Arena class where any 2 agents can be pit against each other.
     """
@@ -52,8 +52,8 @@ class Arena():
             valids = self.game.getValidMoves(self.game.getCanonicalForm(board, curPlayer), 1)
 
             if valids[action] == 0:
-                log.error(f'Action {action} is not valid!')
-                log.debug(f'valids = {valids}')
+                log.error(f"Action {action} is not valid!")
+                log.debug(f"valids = {valids}")
                 assert valids[action] > 0
             board, curPlayer = self.game.getNextState(board, curPlayer, action)
         if verbose:

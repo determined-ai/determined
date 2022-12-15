@@ -16,13 +16,15 @@ any agent.
 
 g = Game()
 
+
 def nn_player():
     nn = NNet(g)
-    nn.load_checkpoint('checkpoints','best.pth.tar')
-    args = dotdict({'numMCTSSims': 50, 'cpuct':1.0})
+    nn.load_checkpoint("checkpoints", "best.pth.tar")
+    args = dotdict({"numMCTSSims": 50, "cpuct": 1.0})
     mcts = MCTS(g, nn, args)
     nnp = lambda x: np.argmax(mcts.getActionProb(x, temp=0))
     return nnp
+
 
 def get_player(type):
     if type == "minmax":
@@ -34,11 +36,13 @@ def get_player(type):
     elif type == "net":
         return nn_player()
     else:
-        raise(Exception("unknown player type", type))
+        raise (Exception("unknown player type", type))
+
 
 def get_arg(n, default):
-    arg = sys.argv[n+1:]
+    arg = sys.argv[n + 1 :]
     return arg[0] if arg else default
+
 
 rounds = int(get_arg(0, "200"))
 player1 = get_player(get_arg(1, "minmax"))

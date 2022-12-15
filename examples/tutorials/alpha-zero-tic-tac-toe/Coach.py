@@ -16,7 +16,7 @@ from DeterminedShim import shim
 log = logging.getLogger(__name__)
 
 
-class Coach():
+class Coach:
     """
     This class executes the self-play + learning. It uses the functions defined
     in Game and NeuralNet. args are specified in main.py.
@@ -28,7 +28,9 @@ class Coach():
         self.pnet = self.nnet.__class__(self.game)  # the competitor network
         self.args = args
         self.mcts = MCTS(self.game, self.nnet, self.args)
-        self.trainExamplesHistory = []  # history of examples from args.numItersForTrainExamplesHistory latest iterations
+        self.trainExamplesHistory = (
+            []
+        )  # history of examples from args.numItersForTrainExamplesHistory latest iterations
         self.skipFirstSelfPlay = False  # can be overriden in loadTrainExamples()
 
     def executeEpisode(self):
@@ -88,7 +90,7 @@ class Coach():
             iter_start = datetime.now()
 
             # bookkeeping
-            log.info(f'Starting Iter #{i} ...')
+            log.info(f"Starting Iter #{i} ...")
 
             # examples of the iteration
             if not self.skipFirstSelfPlay or i > 1:
@@ -98,15 +100,16 @@ class Coach():
                     self.mcts = MCTS(self.game, self.nnet, self.args)  # reset search tree
                     iterationTrainExamples += self.executeEpisode()
 
-                # save the iteration examples to the history 
+                # save the iteration examples to the history
                 self.trainExamplesHistory.append(iterationTrainExamples)
 
             if len(self.trainExamplesHistory) > self.args.numItersForTrainExamplesHistory:
                 log.warning(
-                    f"Removing the oldest entry in trainExamples. len(trainExamplesHistory) = {len(self.trainExamplesHistory)}")
+                    f"Removing the oldest entry in trainExamples. len(trainExamplesHistory) = {len(self.trainExamplesHistory)}"
+                )
                 self.trainExamplesHistory.pop(0)
             # backup history to a file
-            # NB! the examples were collected using the model from the previous iteration, so (i-1)  
+            # NB! the examples were collected using the model from the previous iteration, so (i-1)
             self.saveTrainExamples()
 
             # shuffle examples before training
@@ -116,8 +119,12 @@ class Coach():
             shuffle(trainExamples)
 
             # training new network, keeping a copy of the old one
-            self.nnet.internal_save_checkpoint(folder=self.args.checkpoint_path, filename='temp.pth.tar')
-            self.pnet.internal_load_checkpoint(folder=self.args.checkpoint_path, filename='temp.pth.tar')
+            self.nnet.internal_save_checkpoint(
+                folder=self.args.checkpoint_path, filename="temp.pth.tar"
+            )
+            self.pnet.internal_load_checkpoint(
+                folder=self.args.checkpoint_path, filename="temp.pth.tar"
+            )
 
             pmcts = MCTS(self.game, self.pnet, self.args)
 
@@ -125,20 +132,25 @@ class Coach():
 
             nmcts = MCTS(self.game, self.nnet, self.args)
 
-            log.info('PITTING AGAINST PREVIOUS VERSION')
-            arena = Arena(lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
-                          lambda x: np.argmax(nmcts.getActionProb(x, temp=0)), self.game)
+            log.info("PITTING AGAINST PREVIOUS VERSION")
+            arena = Arena(
+                lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
+                lambda x: np.argmax(nmcts.getActionProb(x, temp=0)),
+                self.game,
+            )
             pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
 
-            log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
+            log.info("NEW/PREV WINS : %d / %d ; DRAWS : %d" % (nwins, pwins, draws))
 
             if pwins + nwins == 0 or float(nwins) / (pwins + nwins) < self.args.updateThreshold:
-                log.info('REJECTING NEW MODEL')
-                self.nnet.internal_load_checkpoint(folder=self.args.checkpoint_path, filename='temp.pth.tar')
+                log.info("REJECTING NEW MODEL")
+                self.nnet.internal_load_checkpoint(
+                    folder=self.args.checkpoint_path, filename="temp.pth.tar"
+                )
             else:
-                log.info('ACCEPTING NEW MODEL')
+                log.info("ACCEPTING NEW MODEL")
 
-            self.nnet.save_checkpoint(folder=self.args.checkpoint_path, filename='best.pth.tar')
+            self.nnet.save_checkpoint(folder=self.args.checkpoint_path, filename="best.pth.tar")
 
             # add extra metrics to help with determined hyper parameter searching:
             # end training early when the matches results in no wins for some consecutive iterations
@@ -151,27 +163,27 @@ class Coach():
             learn_dt = (datetime.now() - learn_start).total_seconds() / 60.0
 
             validation_metrics = {
-                'nwins': nwins,
-                'pwins': pwins,
-                'draws': draws,
-                'iter_dt': iter_dt,
-                'iter_draws_per_minute': draws/iter_dt,
-                'learn_dt': learn_dt,
+                "nwins": nwins,
+                "pwins": pwins,
+                "draws": draws,
+                "iter_dt": iter_dt,
+                "iter_draws_per_minute": draws / iter_dt,
+                "learn_dt": learn_dt,
             }
 
             # define a metric for validation where we have a parameter that allows us to find
             # the fastest possible time to solution
-            if all_draws >= self.args['max_draws']:
-                validation_metrics['max_draws_per_minute'] = draws/learn_dt
+            if all_draws >= self.args["max_draws"]:
+                validation_metrics["max_draws_per_minute"] = draws / learn_dt
 
             shim.validation_metrics(validation_metrics)
 
-            if all_draws >= self.args['max_draws']:
-                log.info('NO WINNERS, ENDING PLAY')
+            if all_draws >= self.args["max_draws"]:
+                log.info("NO WINNERS, ENDING PLAY")
                 break
 
             if learn_dt > self.args.stop_after:
-                log.warn('OUT OF TIME, STOPPING EARLY')
+                log.warn("OUT OF TIME, STOPPING EARLY")
                 break
 
     # shim for modifying path on save if Determined cluster is available
@@ -188,7 +200,7 @@ class Coach():
 
     # shim for modifying path on load if Determined cluster is available
     def loadTrainExamples(self, required=True):
-        (folder, metadata) = shim.load_path(self.args.checkpoint_path)        
+        (folder, metadata) = shim.load_path(self.args.checkpoint_path)
         return (self.internal_loadTrainExamples(folder, required), metadata)
 
     def internal_loadTrainExamples(self, folder, required=True):
@@ -197,7 +209,7 @@ class Coach():
         if not os.path.isfile(filename):
             log.warning(f'File "{filename}" with training examples not found!')
             if required:
-                raise("No examples in path")
+                raise ("No examples in path")
             return False
 
         with open(filename, "rb") as f:

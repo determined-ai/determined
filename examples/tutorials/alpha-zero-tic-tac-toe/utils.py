@@ -1,5 +1,6 @@
 import json
 
+
 class AverageMeter(object):
     """From https://github.com/pytorch/examples/blob/master/imagenet/main.py"""
 
@@ -10,7 +11,7 @@ class AverageMeter(object):
         self.count = 0
 
     def __repr__(self):
-        return f'{self.avg:.2e}'
+        return f"{self.avg:.2e}"
 
     def update(self, val, n=1):
         self.val = val
@@ -24,15 +25,16 @@ class dotdict(dict):
         return self[name]
 
 
-def read_json(path, name, required = False):
+def read_json(path, name, required=False):
     try:
-        with open(path.joinpath(f'{name}.json'), 'r') as json_dict:
+        with open(path.joinpath(f"{name}.json"), "r") as json_dict:
             return json.load(json_dict)
     except Exception as err:
         if required:
             raise err
     return {}
 
+
 def write_json(path, name, dict):
-    with open(path.joinpath(f'{name}.json'), 'w') as file:
+    with open(path.joinpath(f"{name}.json"), "w") as file:
         file.write(json.dumps(dict))
