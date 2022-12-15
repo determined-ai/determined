@@ -43,6 +43,11 @@ build/proto.stamp: $(source_files)
 	# GRPC generation.
 	protoc -I src $(grpc_in) --grpc-gateway_out=logtostderr=true:build/proto --grpc-gateway_opt allow_delete_body=true
 	mv $(build_path) pkg
+ifeq "$(shell uname)" "Darwin"
+	sed -E -i '' '/\/\/[[:space:]]*protoc/d' pkg/*/*.pb.go
+else
+	sed -E -i '/\/\/[[:space:]]*protoc/d' pkg/*/*.pb.go
+endif
 	touch $@
 
 $(echo_swagger_patch_dir):
@@ -67,11 +72,11 @@ gen-buf-image:
 	buf build -o $(buf_image)
 
 .PHONY: check
-check: check-fmt
+check: check-fmt build/proto.stamp
 	buf lint
 	buf breaking --against $(buf_image)
 	go mod tidy
-	git diff --quiet go.mod go.sum
+	git diff --quiet go.mod go.sum pkg/
 
 .PHONY: check-fmt
 check-fmt:
