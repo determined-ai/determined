@@ -154,7 +154,7 @@ const NavigationSideBar: React.FC = () => {
     const topNav = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
       : [];
-    const dashboardTopNav = [{ icon: 'dashboard', label: 'Home', path: paths.dashboard() }];
+    const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
     const topItems = [
       ...(dashboardEnabled ? dashboardTopNav : topNav),
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
@@ -188,7 +188,7 @@ const NavigationSideBar: React.FC = () => {
       ],
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding, dashboardEnabled]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });

@@ -8,10 +8,10 @@ const Default: React.FC = () => {
   const dashboardEnabled = useFeature().isOn('dashboard');
   const rbacEnabled = useFeature().isOn('rbac');
 
-  if (rbacEnabled) {
-    return <Navigate to={rbacDefaultRoute.path} />;
-  } else if (dashboardEnabled) {
+  if (dashboardEnabled) {
     return <Navigate to={dashboardDefaultRoute.path} />;
+  } else if (rbacEnabled) {
+    return <Navigate to={rbacDefaultRoute.path} />;
   } else {
     return <Navigate to={defaultRoute.path} />;
   }

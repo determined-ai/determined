@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
   }, []);
 
   const fetchProjects = useCallback(async () => {
-    const projects = await getProjectsByUserActivity({});
+    const projects = await getProjectsByUserActivity({ limit: 12 });
     setProjects(projects);
   }, []);
 
