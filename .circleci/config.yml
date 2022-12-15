@@ -623,6 +623,9 @@ commands:
         type: string
       master-cert-name:
         type: string
+      deployment-type:
+        type: string
+        default: simple
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -637,6 +640,7 @@ commands:
           master-cert-name: <<parameters.master-cert-name>>
           log-group-prefix: determined-ci
           retain-log-group: true
+          deployment-type: <<parameters.deployment-type>>
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
           master-tls-cert: <<parameters.master-tls-cert>>
