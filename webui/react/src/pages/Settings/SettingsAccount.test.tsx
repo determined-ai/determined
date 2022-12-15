@@ -3,9 +3,9 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import StoreProvider from 'contexts/Store';
 import { NEW_PASSWORD_LABEL } from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { PatchUserParams } from 'services/types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { useCurrentUsers, useFetchUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
@@ -81,13 +81,13 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <StoreProvider>
+    <UIProvider>
       <UsersProvider>
         <AuthProvider>
           <Container />
         </AuthProvider>
       </UsersProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
 
 describe('SettingsAccount', () => {

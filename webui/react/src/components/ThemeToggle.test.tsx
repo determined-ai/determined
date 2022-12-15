@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { Mode } from 'shared/themes';
 
 import ThemeToggle, { ThemeOptions } from './ThemeToggle';
 
 const ThemeToggleContainer: React.FC = () => (
-  <StoreProvider>
+  <UIProvider>
     <HistoryRouter history={history}>
       <ThemeToggle />
     </HistoryRouter>
-  </StoreProvider>
+  </UIProvider>
 );
 
 const user = userEvent.setup();

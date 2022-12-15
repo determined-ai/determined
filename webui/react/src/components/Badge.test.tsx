@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
 import { stateToLabel } from 'constants/states';
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { generateAlphaNumeric } from 'shared/utils/string';
 import { ResourceState, SlotState } from 'types';
 
@@ -21,11 +21,11 @@ const setup = ({
   ...props
 }: BadgeProps = {}) => {
   return render(
-    <StoreProvider>
+    <UIProvider>
       <Badge tooltip={tooltip} type={type} {...props}>
         {children}
       </Badge>
-    </StoreProvider>,
+    </UIProvider>,
   );
 };
 
@@ -39,10 +39,10 @@ describe('Badge', () => {
     const TestComponent = () => {
       const [value, setValue] = useState<SlotState>(SlotState.Free);
       return (
-        <StoreProvider>
+        <UIProvider>
           <button role="button" onClick={() => setValue(SlotState.Running)} />
           <Badge state={value} type={BadgeType.State} />
-        </StoreProvider>
+        </UIProvider>
       );
     };
     const view = render(<TestComponent />);

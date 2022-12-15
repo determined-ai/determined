@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
 import { GetWorkspaceParams } from 'services/types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
@@ -50,7 +50,7 @@ const PermissionRenderer: React.FC<Props> = () => {
 
 const setup = async () => {
   return await render(
-    <StoreProvider>
+    <UIProvider>
       <UsersProvider>
         <AuthProvider>
           <UserRolesProvider>
@@ -58,7 +58,7 @@ const setup = async () => {
           </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
 };
 

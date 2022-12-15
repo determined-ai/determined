@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
@@ -45,7 +45,7 @@ const Container: React.FC = () => {
 
 const setup = async () => {
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <UsersProvider>
         <AuthProvider>
           <UserRolesProvider>
@@ -53,7 +53,7 @@ const setup = async () => {
           </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));

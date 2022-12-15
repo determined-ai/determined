@@ -1,17 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import React, { useEffect, useMemo } from 'react';
 
-import StoreProvider, { initInfo, StoreAction, useStoreDispatch } from 'contexts/Store';
+import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
 
 import useFeature, { ValidFeature } from './useFeature';
 
 const FeatureTest: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
   const feature = useFeature();
   const testInfo = useMemo(() => ({ ...initInfo, featureSwitches: ['webhooks'] }), []);
+  const updateInfo = useUpdateDeterminedInfo();
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetInfo, value: testInfo });
-  }, [storeDispatch, testInfo]);
+    updateInfo(testInfo);
+  }, [testInfo, updateInfo]);
 
   return (
     <ul>
@@ -23,9 +23,9 @@ const FeatureTest: React.FC = () => {
 
 const setup = () => {
   return render(
-    <StoreProvider>
+    <DeterminedInfoProvider>
       <FeatureTest />
-    </StoreProvider>,
+    </DeterminedInfoProvider>,
   );
 };
 

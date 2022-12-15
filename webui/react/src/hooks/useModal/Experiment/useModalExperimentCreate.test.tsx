@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
-import StoreProvider, { StoreAction, useStoreDispatch } from 'contexts/Store';
+import { AuthProvider, useAuth } from 'stores/auth';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
 import useModalExperimentCreate, { CreateExperimentType } from './useModalExperimentCreate';
@@ -25,13 +25,12 @@ jest.mock('components/MonacoEditor', () => ({
 }));
 
 const ModalTrigger: React.FC = () => {
-  const storeDispatch = useStoreDispatch();
   const { contextHolder, modalOpen } = useModalExperimentCreate();
   const { experiment, trial } = generateTestExperimentData();
-
+  const { setAuth } = useAuth();
   useEffect(() => {
-    storeDispatch({ type: StoreAction.SetAuth, value: { isAuthenticated: true } });
-  }, [storeDispatch]);
+    setAuth({ isAuthenticated: true });
+  }, [setAuth]);
 
   return (
     <>
@@ -48,9 +47,9 @@ const ModalTrigger: React.FC = () => {
 
 const Container: React.FC = () => {
   return (
-    <StoreProvider>
+    <AuthProvider>
       <ModalTrigger />
-    </StoreProvider>
+    </AuthProvider>
   );
 };
 

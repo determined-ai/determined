@@ -3,7 +3,6 @@ import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter, useParams } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
 import {
   getExperimentDetails,
   getExpTrials,
@@ -12,6 +11,7 @@ import {
   getTrialDetails,
   getWorkspace,
 } from 'services/api';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
 import { ProjectsProvider } from 'stores/projects';
@@ -70,7 +70,7 @@ jest.mock('./ExperimentVisualization', () => ({
 
 const setup = () => {
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <HelmetProvider>
         <WorkspacesProvider>
           <UsersProvider>
@@ -88,7 +88,7 @@ const setup = () => {
           </UsersProvider>
         </WorkspacesProvider>
       </HelmetProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
   return { view };
 };

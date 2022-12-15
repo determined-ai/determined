@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { TooltipProps } from 'antd/es/tooltip';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { useFetchUsers, UsersProvider } from 'stores/users';
 
 import UserAvatar, { Props } from './UserAvatar';
@@ -67,11 +67,11 @@ const setup = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {}) =
   const user = userEvent.setup();
 
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <UsersProvider>
         <Component hideTooltip={hideTooltip} userId={userId} {...props} />
       </UsersProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
 
   return { user, view };
