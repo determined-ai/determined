@@ -1,7 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
 import type { TabsProps } from 'antd';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
@@ -11,7 +11,8 @@ import PageNotFound from 'components/PageNotFound';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getProject, getWorkspace } from 'services/api';
+import { getProject, getWorkspace, postUserActivity } from 'services/api';
+import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
@@ -51,6 +52,14 @@ const ProjectDetails: React.FC = () => {
   const [workspace, setWorkspace] = useState<Workspace>();
 
   const id = parseInt(projectId ?? '1');
+
+  const postActivity = useCallback(() => {
+    postUserActivity({
+      activityType: V1ActivityType.GET,
+      entityId: id,
+      entityType: V1EntityType.PROJECT,
+    });
+  }, [id]);
 
   const fetchWorkspace = useCallback(async () => {
     const workspaceId = project?.workspaceId;
@@ -125,6 +134,10 @@ const ProjectDetails: React.FC = () => {
 
   usePolling(fetchProject, { rerunOnNewFn: true });
   usePolling(fetchWorkspace, { rerunOnNewFn: true });
+
+  useEffect(() => {
+    postActivity();
+  }, [postActivity]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;

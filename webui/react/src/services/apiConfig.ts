@@ -132,6 +132,16 @@ export const postUser: DetApi<
   request: (params) => detApi.Users.postUser(params),
 };
 
+export const postUserActivity: DetApi<
+  Api.V1PostUserActivityRequest,
+  Api.V1PostUserActivityResponse,
+  Api.V1PostUserActivityResponse
+> = {
+  name: 'postUserActivity',
+  postProcess: (response) => response,
+  request: (params) => detApi.Users.postUserActivity(params),
+};
+
 export const setUserPassword: DetApi<
   Service.SetUserPasswordParams,
   Api.V1SetUserPasswordResponse,
