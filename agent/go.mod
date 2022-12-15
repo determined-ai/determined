@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/determined-ai/determined/master v0.0.0
-	github.com/docker/distribution v2.7.1+incompatible
+	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.21+incompatible
 	github.com/docker/docker-credential-helpers v0.6.4
 	github.com/docker/go-connections v0.4.0
