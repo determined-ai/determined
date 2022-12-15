@@ -18,6 +18,7 @@ import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { useAuth } from 'stores/auth';
 import { Project, Workspace } from 'types';
@@ -139,6 +140,10 @@ const ProjectDetails: React.FC = () => {
     postActivity();
   }, [postActivity]);
 
+  const onProjectDelete = useCallback(() => {
+    if (project) routeToReactUrl(paths.workspaceDetails(project.workspaceId));
+  }, [project]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
   } else if (!permissions.canViewWorkspaces) {
@@ -172,7 +177,8 @@ const ProjectDetails: React.FC = () => {
                 showChildrenIfEmpty={false}
                 trigger={['click']}
                 workspaceArchived={workspace?.archived}
-                onComplete={fetchProject}>
+                onComplete={fetchProject}
+                onDelete={onProjectDelete}>
                 <div style={{ cursor: 'pointer' }}>
                   <Icon name="arrow-down" size="tiny" />
                 </div>

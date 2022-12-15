@@ -19,6 +19,7 @@ interface Props {
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
   onComplete?: () => void;
+  onDelete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
   showChildrenIfEmpty?: boolean;
@@ -36,13 +37,14 @@ const ProjectActionDropdown: React.FC<Props> = ({
   className,
   direction = 'vertical',
   onComplete,
+  onDelete,
   trigger,
   workspaceArchived = false,
 }: Props) => {
   const { contextHolder: modalProjectMoveContextHolder, modalOpen: openProjectMove } =
     useModalProjectMove({ onClose: onComplete, project });
   const { contextHolder: modalProjectDeleteContextHolder, modalOpen: openProjectDelete } =
-    useModalProjectDelete({ onClose: onComplete, project });
+    useModalProjectDelete({ onClose: onComplete, onDelete, project });
   const { contextHolder: modalProjectEditContextHolder, modalOpen: openProjectEdit } =
     useModalProjectEdit({ onClose: onComplete, project });
 
