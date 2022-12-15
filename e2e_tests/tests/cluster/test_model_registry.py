@@ -1,9 +1,14 @@
+import subprocess
+import uuid
+
 import pytest
 
+from determined.common import api
+from determined.common.api import authentication, bindings
 from determined.experimental import Determined, ModelSortBy
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.test_users import log_out_user
+from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user, log_out_user
 
 
 @pytest.mark.e2e_cpu
@@ -156,3 +161,50 @@ def test_model_registry() -> None:
         for model in [mnist, objectdetect, tform]:
             if model is not None:
                 model.delete()
+
+
+def get_random_string() -> str:
+    return str(uuid.uuid4())
+
+
+@pytest.mark.e2e_cpu
+def test_model_cli() -> None:
+    test_model_1_name = get_random_string()
+    master_url = conf.make_master_url()
+    command = ["det", "-m", master_url, "model", "create", test_model_1_name]
+    subprocess.run(command, check=True)
+    d = Determined(master_url)
+    model_1 = d.get_model(identifier=test_model_1_name)
+    assert model_1.workspace_id == 1
+    # add a test workspace.
+    log_in_user(ADMIN_CREDENTIALS)
+    admin_auth = authentication.Authentication(
+        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password
+    )
+    admin_sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
+    test_workspace_name = get_random_string()
+    test_workspace = bindings.post_PostWorkspace(
+        admin_sess, body=bindings.v1PostWorkspaceRequest(name=test_workspace_name)
+    ).workspace
+
+    # move test_model_1 to test_workspace
+    command = [
+        "det",
+        "-m",
+        master_url,
+        "model",
+        "move",
+        test_model_1_name,
+        "-w",
+        test_workspace_name,
+    ]
+    subprocess.run(command, check=True)
+    model_1 = d.get_model(test_model_1_name)
+    assert model_1.workspace_id == test_workspace.id
+
+    # create model in test_workspace
+    test_model_2 = get_random_string()
+    command = ["det", "-m", master_url, "model", "create", test_model_2, "-w", test_workspace_name]
+    subprocess.run(command, check=True)
+    model_2 = d.get_model(identifier=test_model_2)
+    assert model_2.workspace_id == test_workspace.id
