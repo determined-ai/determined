@@ -539,6 +539,9 @@ commands:
       reattach-enabled:
         type: boolean
         default: false
+      deployment-type:
+        type: string
+        default: simple
     steps:
       - run:
           name: Initialize extra arguments
@@ -583,6 +586,7 @@ commands:
               --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
+              --deployment-type <<parameters.deployment-type>> \
               --yes
 
   terminate-aws-cluster:
@@ -2008,6 +2012,78 @@ jobs:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
 
+  test-aws-fs:
+    parameters:
+      cluster-id-prefix:
+        type: string
+      deployment-type:
+        type: string
+      compute-agent-instance-type:
+        type: string
+        default: p2.xlarge
+      aux-agent-instance-type:
+        type: string
+        default: m5.large
+      max-dynamic-agents:
+        type: integer
+        default: 1
+      enable-tls:
+        type: boolean
+        default: true
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - set-slack-user-id
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - generate-tls-cert
+      - setup-aws-cluster:
+          cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          det-version: ${CIRCLE_SHA1}
+          aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
+          compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
+          max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          master-tls-cert: ${MASTER_TLS_CERT}
+          master-tls-key: ${MASTER_TLS_KEY}
+          master-cert-name: ${MASTER_CERT_NAME}
+          deployment-type: <<parameters.deployment-type>>
+      - when:
+          condition:
+            equal: [<<parameters.deployment-type>>, "fsx"]
+          steps:
+            - run:
+                name: Test FSx/Lustre
+                command: |
+                  det cmd run --config resources.slots=1 'mount | grep lustre && echo MARKER' | grep MARKER
+      - when:
+          condition:
+            equal: [<<parameters.deployment-type>>, "efs"]
+          steps:
+            - run:
+                name: Test EFS
+                command: |
+                  det cmd run --config resources.slots=1 'mount | grep efs && echo MARKER' | grep MARKER
+      - locate-cloudwatch-logs:
+          cluster-id: ${CLUSTER_ID}
+      - terminate-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+      - slack/status:
+          fail_only: True
+          only_for_branches: master
+          failure_message: ':thisisfine: AWS FS \`<<parameters.deployment-type>>\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<parameters.slack-channel>>
+
 workflows:
   lint:
     jobs:
@@ -2663,6 +2739,33 @@ workflows:
               mark: ["model_hub_transformers_amp"]
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
+
+      # Request AWS FS tests
+      - request-aws-fs-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-aws-fs:
+          name: test-aws-fs-fsx
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-aws-fs-tests
+            - package-and-push-system-dev
+          cluster-id-prefix: aws-fs-fsx
+          deployment-type: fsx
+          slack-mentions: "${SLACK_USER_ID}"
+
+      - test-aws-fs:
+          name: test-aws-fs-efs
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-aws-fs-tests
+            - package-and-push-system-dev
+          cluster-id-prefix: aws-fs-efs
+          deployment-type: efs
+          slack-mentions: "${SLACK_USER_ID}"
 
   nightly:
     triggers:
