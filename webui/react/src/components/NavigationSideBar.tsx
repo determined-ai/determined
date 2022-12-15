@@ -121,7 +121,7 @@ const NavigationSideBar: React.FC = () => {
     NotLoaded: () => false,
   });
   const { currentUser: loadableCurrentUser } = useCurrentUsers();
-  const authUser = Loadable.match(loadableCurrentUser, {
+  const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
@@ -243,7 +243,7 @@ const NavigationSideBar: React.FC = () => {
             content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            <AvatarCard className={css.user} darkLight={ui.darkLight} user={authUser} />
+            <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
           </Dropdown>
         </header>
         <main>
