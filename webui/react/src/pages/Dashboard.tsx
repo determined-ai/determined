@@ -26,6 +26,8 @@ import { ShirtSize } from 'themes';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import { Loadable } from 'utils/loadable';
 
+import css from './Dashboard.module.scss';
+
 const FETCH_LIMIT = 12;
 
 const Dashboard: React.FC = () => {
@@ -145,6 +147,7 @@ const Dashboard: React.FC = () => {
       </Section>
       <Section title="Recently submitted">
         <ResponsiveTable<Submission>
+          className={css.table}
           columns={[
             {
               dataIndex: 'state',
