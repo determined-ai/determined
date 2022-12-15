@@ -48,7 +48,7 @@ const Grid: React.FC<Props> = ({
   }
   if (mode === GridMode.ScrollableRow) {
     classes.push(css.row);
-    style.gridTemplateColumns = `repeat(${count}, minmax(${minItemWidth}px, 1fr))`;
+    style.gridTemplateColumns = `repeat(${count}, minmax(${minItemWidth}px, ${minItemWidth}px))`;
   }
   return (
     <div className={classes.join(' ')} style={style}>
