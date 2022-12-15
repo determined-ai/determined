@@ -5,12 +5,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { createWorkspace, getWorkspace, patchWorkspace } from 'services/api';
+import { getWorkspace, patchWorkspace } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { useCreateWorkspace } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -47,6 +48,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
 
   const [canceler] = useState(new AbortController());
   const [workspace, setWorkspace] = useState<Workspace>();
+  const createWorkspace = useCreateWorkspace();
 
   const fetchWorkspace = useCallback(async () => {
     if (workspaceID) {
@@ -251,7 +253,9 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           setWorkspace(response);
         } else {
           const response = await createWorkspace(body);
-          routeToReactUrl(paths.workspaceDetails(response.id));
+          if (response) {
+            routeToReactUrl(paths.workspaceDetails(response.id));
+          }
         }
         form.resetFields();
       }
