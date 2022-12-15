@@ -2454,6 +2454,30 @@ workflows:
               mark: ["det_deploy_local"]
               det-version: [$CIRCLE_SHA1]
 
+      - test-aws-fs:
+          name: test-aws-fs-fsx
+          context: aws
+          filters:
+            branches:
+              only: master
+          requires:
+            - package-and-push-system-dev
+          cluster-id-prefix: aws-fs-fsx
+          deployment-type: fsx
+          slack-mentions: "${SLACK_USER_ID}"
+
+      - test-aws-fs:
+          name: test-aws-fs-efs
+          context: aws
+          filters:
+            branches:
+              only: master
+          requires:
+            - package-and-push-system-dev
+          cluster-id-prefix: aws-fs-efs
+          deployment-type: efs
+          slack-mentions: "${SLACK_USER_ID}"
+
   test-e2e-longrunning:
     jobs:
       # Build and publish artifacts used in tests
