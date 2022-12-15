@@ -19,6 +19,7 @@ import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
+import { numericSorter } from 'shared/utils/sort';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
@@ -295,25 +296,27 @@ const NavigationSideBar: React.FC = () => {
                   <p className={css.noWorkspaces}>No pinned workspaces</p>
                 ) : (
                   <ul className={css.pinnedWorkspaces} role="list">
-                    {workspaces.map((workspace) => (
-                      <WorkspaceActionDropdown
-                        key={workspace.id}
-                        trigger={['contextMenu']}
-                        workspace={workspace}>
-                        <li>
-                          <NavigationItem
-                            icon={<DynamicIcon name={workspace.name} size={24} />}
-                            label={workspace.name}
-                            labelRender={
-                              <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                {workspace.name}
-                              </Typography.Paragraph>
-                            }
-                            path={paths.workspaceDetails(workspace.id)}
-                          />
-                        </li>
-                      </WorkspaceActionDropdown>
-                    ))}
+                    {workspaces
+                      .sort((a, b) => numericSorter(a.id, b.id))
+                      .map((workspace) => (
+                        <WorkspaceActionDropdown
+                          key={workspace.id}
+                          trigger={['contextMenu']}
+                          workspace={workspace}>
+                          <li>
+                            <NavigationItem
+                              icon={<DynamicIcon name={workspace.name} size={24} />}
+                              label={workspace.name}
+                              labelRender={
+                                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                                  {workspace.name}
+                                </Typography.Paragraph>
+                              }
+                              path={paths.workspaceDetails(workspace.id)}
+                            />
+                          </li>
+                        </WorkspaceActionDropdown>
+                      ))}
                   </ul>
                 ),
               NotLoaded: () => <Spinner />,
