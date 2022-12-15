@@ -926,6 +926,104 @@ func (*UnarchiveProjectResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_project_proto_rawDescGZIP(), []int{17}
 }
 
+// Get projects based on user activity.
+type GetProjectsByUserActivityRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Limit number of project entries
+	Limit int32 `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+}
+
+func (x *GetProjectsByUserActivityRequest) Reset() {
+	*x = GetProjectsByUserActivityRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_project_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetProjectsByUserActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetProjectsByUserActivityRequest) ProtoMessage() {}
+
+func (x *GetProjectsByUserActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_project_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetProjectsByUserActivityRequest.ProtoReflect.Descriptor instead.
+func (*GetProjectsByUserActivityRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_project_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GetProjectsByUserActivityRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+// Response to GetProjectsByUserActivityRequest.
+type GetProjectsByUserActivityResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// A list of projects
+	Projects []*projectv1.Project `protobuf:"bytes,1,rep,name=projects,proto3" json:"projects,omitempty"`
+}
+
+func (x *GetProjectsByUserActivityResponse) Reset() {
+	*x = GetProjectsByUserActivityResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_project_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetProjectsByUserActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetProjectsByUserActivityResponse) ProtoMessage() {}
+
+func (x *GetProjectsByUserActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_project_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetProjectsByUserActivityResponse.ProtoReflect.Descriptor instead.
+func (*GetProjectsByUserActivityResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_project_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GetProjectsByUserActivityResponse) GetProjects() []*projectv1.Project {
+	if x != nil {
+		return x.Projects
+	}
+	return nil
+}
+
 var File_determined_api_v1_project_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_project_proto_rawDesc = []byte{
@@ -1033,11 +1131,20 @@ var file_determined_api_v1_project_proto_rawDesc = []byte{
 	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x0a, 0x92, 0x41,
 	0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02, 0x69, 0x64, 0x22, 0x1a, 0x0a, 0x18, 0x55, 0x6e, 0x61, 0x72,
 	0x63, 0x68, 0x69, 0x76, 0x65, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69,
-	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x38, 0x0a, 0x20, 0x47, 0x65, 0x74, 0x50, 0x72, 0x6f, 0x6a, 0x65,
+	0x63, 0x74, 0x73, 0x42, 0x79, 0x55, 0x73, 0x65, 0x72, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74,
+	0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69,
+	0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x5f,
+	0x0a, 0x21, 0x47, 0x65, 0x74, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x73, 0x42, 0x79, 0x55,
+	0x73, 0x65, 0x72, 0x41, 0x63, 0x74, 0x69, 0x76, 0x69, 0x74, 0x79, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x3a, 0x0a, 0x08, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x73, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
+	0x65, 0x64, 0x2e, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x72,
+	0x6f, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x73, 0x42,
+	0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65,
+	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65,
+	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67,
+	0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1052,44 +1159,47 @@ func file_determined_api_v1_project_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_project_proto_rawDescData
 }
 
-var file_determined_api_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_determined_api_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_determined_api_v1_project_proto_goTypes = []interface{}{
-	(*GetProjectRequest)(nil),        // 0: determined.api.v1.GetProjectRequest
-	(*GetProjectResponse)(nil),       // 1: determined.api.v1.GetProjectResponse
-	(*PostProjectRequest)(nil),       // 2: determined.api.v1.PostProjectRequest
-	(*PostProjectResponse)(nil),      // 3: determined.api.v1.PostProjectResponse
-	(*AddProjectNoteRequest)(nil),    // 4: determined.api.v1.AddProjectNoteRequest
-	(*AddProjectNoteResponse)(nil),   // 5: determined.api.v1.AddProjectNoteResponse
-	(*PutProjectNotesRequest)(nil),   // 6: determined.api.v1.PutProjectNotesRequest
-	(*PutProjectNotesResponse)(nil),  // 7: determined.api.v1.PutProjectNotesResponse
-	(*PatchProjectRequest)(nil),      // 8: determined.api.v1.PatchProjectRequest
-	(*PatchProjectResponse)(nil),     // 9: determined.api.v1.PatchProjectResponse
-	(*DeleteProjectRequest)(nil),     // 10: determined.api.v1.DeleteProjectRequest
-	(*DeleteProjectResponse)(nil),    // 11: determined.api.v1.DeleteProjectResponse
-	(*MoveProjectRequest)(nil),       // 12: determined.api.v1.MoveProjectRequest
-	(*MoveProjectResponse)(nil),      // 13: determined.api.v1.MoveProjectResponse
-	(*ArchiveProjectRequest)(nil),    // 14: determined.api.v1.ArchiveProjectRequest
-	(*ArchiveProjectResponse)(nil),   // 15: determined.api.v1.ArchiveProjectResponse
-	(*UnarchiveProjectRequest)(nil),  // 16: determined.api.v1.UnarchiveProjectRequest
-	(*UnarchiveProjectResponse)(nil), // 17: determined.api.v1.UnarchiveProjectResponse
-	(*projectv1.Project)(nil),        // 18: determined.project.v1.Project
-	(*projectv1.Note)(nil),           // 19: determined.project.v1.Note
-	(*projectv1.PatchProject)(nil),   // 20: determined.project.v1.PatchProject
+	(*GetProjectRequest)(nil),                 // 0: determined.api.v1.GetProjectRequest
+	(*GetProjectResponse)(nil),                // 1: determined.api.v1.GetProjectResponse
+	(*PostProjectRequest)(nil),                // 2: determined.api.v1.PostProjectRequest
+	(*PostProjectResponse)(nil),               // 3: determined.api.v1.PostProjectResponse
+	(*AddProjectNoteRequest)(nil),             // 4: determined.api.v1.AddProjectNoteRequest
+	(*AddProjectNoteResponse)(nil),            // 5: determined.api.v1.AddProjectNoteResponse
+	(*PutProjectNotesRequest)(nil),            // 6: determined.api.v1.PutProjectNotesRequest
+	(*PutProjectNotesResponse)(nil),           // 7: determined.api.v1.PutProjectNotesResponse
+	(*PatchProjectRequest)(nil),               // 8: determined.api.v1.PatchProjectRequest
+	(*PatchProjectResponse)(nil),              // 9: determined.api.v1.PatchProjectResponse
+	(*DeleteProjectRequest)(nil),              // 10: determined.api.v1.DeleteProjectRequest
+	(*DeleteProjectResponse)(nil),             // 11: determined.api.v1.DeleteProjectResponse
+	(*MoveProjectRequest)(nil),                // 12: determined.api.v1.MoveProjectRequest
+	(*MoveProjectResponse)(nil),               // 13: determined.api.v1.MoveProjectResponse
+	(*ArchiveProjectRequest)(nil),             // 14: determined.api.v1.ArchiveProjectRequest
+	(*ArchiveProjectResponse)(nil),            // 15: determined.api.v1.ArchiveProjectResponse
+	(*UnarchiveProjectRequest)(nil),           // 16: determined.api.v1.UnarchiveProjectRequest
+	(*UnarchiveProjectResponse)(nil),          // 17: determined.api.v1.UnarchiveProjectResponse
+	(*GetProjectsByUserActivityRequest)(nil),  // 18: determined.api.v1.GetProjectsByUserActivityRequest
+	(*GetProjectsByUserActivityResponse)(nil), // 19: determined.api.v1.GetProjectsByUserActivityResponse
+	(*projectv1.Project)(nil),                 // 20: determined.project.v1.Project
+	(*projectv1.Note)(nil),                    // 21: determined.project.v1.Note
+	(*projectv1.PatchProject)(nil),            // 22: determined.project.v1.PatchProject
 }
 var file_determined_api_v1_project_proto_depIdxs = []int32{
-	18, // 0: determined.api.v1.GetProjectResponse.project:type_name -> determined.project.v1.Project
-	18, // 1: determined.api.v1.PostProjectResponse.project:type_name -> determined.project.v1.Project
-	19, // 2: determined.api.v1.AddProjectNoteRequest.note:type_name -> determined.project.v1.Note
-	19, // 3: determined.api.v1.AddProjectNoteResponse.notes:type_name -> determined.project.v1.Note
-	19, // 4: determined.api.v1.PutProjectNotesRequest.notes:type_name -> determined.project.v1.Note
-	19, // 5: determined.api.v1.PutProjectNotesResponse.notes:type_name -> determined.project.v1.Note
-	20, // 6: determined.api.v1.PatchProjectRequest.project:type_name -> determined.project.v1.PatchProject
-	18, // 7: determined.api.v1.PatchProjectResponse.project:type_name -> determined.project.v1.Project
-	8,  // [8:8] is the sub-list for method output_type
-	8,  // [8:8] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	20, // 0: determined.api.v1.GetProjectResponse.project:type_name -> determined.project.v1.Project
+	20, // 1: determined.api.v1.PostProjectResponse.project:type_name -> determined.project.v1.Project
+	21, // 2: determined.api.v1.AddProjectNoteRequest.note:type_name -> determined.project.v1.Note
+	21, // 3: determined.api.v1.AddProjectNoteResponse.notes:type_name -> determined.project.v1.Note
+	21, // 4: determined.api.v1.PutProjectNotesRequest.notes:type_name -> determined.project.v1.Note
+	21, // 5: determined.api.v1.PutProjectNotesResponse.notes:type_name -> determined.project.v1.Note
+	22, // 6: determined.api.v1.PatchProjectRequest.project:type_name -> determined.project.v1.PatchProject
+	20, // 7: determined.api.v1.PatchProjectResponse.project:type_name -> determined.project.v1.Project
+	20, // 8: determined.api.v1.GetProjectsByUserActivityResponse.projects:type_name -> determined.project.v1.Project
+	9,  // [9:9] is the sub-list for method output_type
+	9,  // [9:9] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_project_proto_init() }
@@ -1314,6 +1424,30 @@ func file_determined_api_v1_project_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_project_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetProjectsByUserActivityRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_project_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetProjectsByUserActivityResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1321,7 +1455,7 @@ func file_determined_api_v1_project_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_project_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
