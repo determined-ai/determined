@@ -18,6 +18,6 @@ searcher:
 entrypoint: model_def:GraphConvTrial
 environment:
   image:
-    cuda: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-gpu-1c769fb
+    cuda: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
 resources:
   slots_per_trial: 4

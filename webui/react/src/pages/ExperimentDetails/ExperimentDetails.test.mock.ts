@@ -69,7 +69,7 @@ const RESPONSES = {
           image: {
             cpu: 'determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1',
             cuda: 'determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-ecee7c1',
-            rocm: 'determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-1c769fb',
+            rocm: 'determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0',
           },
           pod_spec: null,
           ports: {},
@@ -751,7 +751,7 @@ const RESPONSES = {
           image: {
             cpu: 'determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-ecee7c1',
             cuda: 'determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-ecee7c1',
-            rocm: 'determinedai/environments-dev:rocm-5.0-pytorch-1.10-tf-2.7-rocm-1c769fb',
+            rocm: 'determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0',
           },
           pod_spec: null,
           ports: {},
