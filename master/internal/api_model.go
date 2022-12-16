@@ -307,7 +307,8 @@ func (a *apiServer) PatchModel(
 
 		newWorkspaceID := w.Id
 		if currWorkspaceID != newWorkspaceID {
-			// Nikita TODO: Ensure the user has Edit Model Registry permissions in the currWorkspaceID and newWorkSpaceID
+			// Nikita TODO: Ensure the user has Edit Model Registry
+			// permissions in the currWorkspaceID and newWorkSpaceID
 			currWorkspaceID = newWorkspaceID
 			madeChanges = true
 		}

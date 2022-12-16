@@ -72,8 +72,8 @@ message GetModelsRequest {
   // Limit the models to those made by the users with the following usernames.
   repeated string users = 9;
 
-  // Limit models in the following worksapce. 
-  optional string workspace_name = 12; 
+  // Limit models in the following worksapce.
+  optional string workspace_name = 12;
   // Limit the models to those made by the users with the following userIds.
   repeated int32 user_ids = 11;
 
