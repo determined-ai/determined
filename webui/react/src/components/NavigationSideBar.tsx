@@ -1,4 +1,4 @@
-import { Button, Menu, Tooltip, Typography } from 'antd';
+import { Button, Menu, MenuProps, Tooltip, Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -198,22 +198,25 @@ const NavigationSideBar: React.FC = () => {
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const { canAdministrateUsers } = usePermissions();
 
+  const menuItems: MenuProps['items'] = useMemo(() => {
+    const items = [
+      {
+        key: 'settings',
+        label: <Link path={paths.settings('account')}>Settings</Link>,
+      },
+      { key: 'theme-toggle', label: <ThemeToggle /> },
+      { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+    ];
+    if (canAdministrateUsers) {
+      items.unshift({
+        key: 'admin',
+        label: <Link path={paths.admin()}>Admin</Link>,
+      });
+    }
+    return items;
+  }, [canAdministrateUsers]);
+
   if (!showNavigation) return null;
-
-  const menuItems = [
-    {
-      key: 'settings',
-      label: <Link path={paths.settings('account')}>Settings</Link>,
-    },
-    { key: 'theme-toggle', label: <ThemeToggle /> },
-    { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
-  ];
-
-  if (canAdministrateUsers)
-    menuItems.unshift({
-      key: 'admin',
-      label: <Link path={paths.admin()}>Admin</Link>,
-    });
 
   return (
     <CSSTransition

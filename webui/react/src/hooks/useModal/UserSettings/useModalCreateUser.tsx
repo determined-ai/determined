@@ -3,6 +3,7 @@ import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import useAuthCheck from 'hooks/useAuthCheck';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import {
@@ -18,6 +19,7 @@ import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
+import { useCurrentUsers } from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -213,6 +215,9 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
+  const currentUser = Loadable.getOrElse(undefined, useCurrentUsers().currentUser);
+  const [canceler] = useState(new AbortController());
+  const checkAuth = useAuthCheck(canceler);
 
   const fetchUserRoles = useCallback(async () => {
     if (user !== undefined && rbacEnabled && canAssignRoles({})) {
@@ -266,6 +271,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
               (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
           }
           fetchUserRoles();
+          if (currentUser && currentUser.id === user.id) checkAuth();
           message.success(API_SUCCESS_MESSAGE_EDIT);
         } else {
           formData['active'] = true;
@@ -292,7 +298,17 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         throw e;
       }
     },
-    [form, onClose, user, handleCancel, userRoles, canModifyPermissions, fetchUserRoles],
+    [
+      form,
+      onClose,
+      user,
+      handleCancel,
+      userRoles,
+      canModifyPermissions,
+      fetchUserRoles,
+      checkAuth,
+      currentUser,
+    ],
   );
 
   const modalOpen = useCallback(
