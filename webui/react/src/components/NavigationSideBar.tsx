@@ -19,7 +19,6 @@ import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { numericSorter } from 'shared/utils/sort';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
@@ -297,7 +296,7 @@ const NavigationSideBar: React.FC = () => {
                 ) : (
                   <ul className={css.pinnedWorkspaces} role="list">
                     {workspaces
-                      .sort((a, b) => numericSorter(a.id, b.id))
+                      .sort((a, b) => (a.pinnedAt < b.pinnedAt ? -1 : 1))
                       .map((workspace) => (
                         <WorkspaceActionDropdown
                           key={workspace.id}

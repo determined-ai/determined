@@ -75,7 +75,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     } else {
       try {
         await pinWorkspace({ id: workspace.id });
-        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: true }));
+        updateWorkspace(workspace.id, (w) => ({ ...w, pinned: true, pinnedAt: new Date() }));
         onComplete?.();
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to pin workspace.' });

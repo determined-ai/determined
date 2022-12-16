@@ -751,6 +751,7 @@ export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.Resourc
 export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
   return {
     ...data,
+    pinnedAt: new Date(data.pinnedAt || 0),
     state: mapWorkspaceState(data.state),
   };
 };
@@ -776,7 +777,7 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
     description: data.description,
     id: data.id,
     immutable: data.immutable,
-    lastExperimentStartedAt: data.lastExperimentStartedAt,
+    lastExperimentStartedAt: new Date(data.lastExperimentStartedAt),
     name: data.name,
     notes: data.notes,
     numActiveExperiments: data.numActiveExperiments,
