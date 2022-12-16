@@ -253,9 +253,7 @@ const useModalWorkspaceCreate = ({ onClose, workspaceID }: Props = {}): ModalHoo
           setWorkspace(response);
         } else {
           const response = await createWorkspace(body);
-          if (response) {
-            routeToReactUrl(paths.workspaceDetails(response.id));
-          }
+          routeToReactUrl(paths.workspaceDetails(response.id));
         }
         form.resetFields();
       }

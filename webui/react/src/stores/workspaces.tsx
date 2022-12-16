@@ -109,9 +109,7 @@ export const useUpdateWorkspace = (): ((
   );
 };
 
-export const useCreateWorkspace = (): ((
-  arg0: V1PostWorkspaceRequest,
-) => Promise<Workspace | undefined>) => {
+export const useCreateWorkspace = (): ((arg0: V1PostWorkspaceRequest) => Promise<Workspace>) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use useCreateWorkspace outside of Workspace Context');
@@ -119,14 +117,10 @@ export const useCreateWorkspace = (): ((
   const { updateWorkspaces } = context;
 
   return useCallback(
-    async (params: V1PostWorkspaceRequest): Promise<Workspace | undefined> => {
-      try {
-        const w = await createWorkspace(params);
-        updateWorkspaces((prev) => Loadable.map(prev, (ws: Workspace[]) => ws.concat([w])));
-        return w;
-      } catch (e) {
-        handleError(e);
-      }
+    async (params: V1PostWorkspaceRequest): Promise<Workspace> => {
+      const w = await createWorkspace(params);
+      updateWorkspaces((prev) => Loadable.map(prev, (ws: Workspace[]) => ws.concat([w])));
+      return w;
     },
     [updateWorkspaces],
   );
