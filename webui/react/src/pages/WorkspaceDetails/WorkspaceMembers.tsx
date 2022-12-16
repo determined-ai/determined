@@ -7,13 +7,12 @@ import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import Avatar from 'components/UserAvatar';
+import UserAvatar from 'components/UserAvatar';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -215,23 +214,24 @@ const WorkspaceMembers: React.FC<Props> = ({
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
         const member = record as User;
-        return (
-          <>
-            <div className={css.userAvatarRowItem}>
-              <Avatar size={Size.Medium} userId={member.id} />
-            </div>
-            <div className={css.userRowItem}>
-              {member?.displayName ? (
-                <>
-                  <div>{member.displayName}</div>
-                  <div>{member.username}</div>
-                </>
-              ) : (
-                <div>{member.username}</div>
-              )}
-            </div>
-          </>
-        );
+        return <UserAvatar table userId={member.id} />;
+        // return (
+        //   <>
+        //     <div className={css.userAvatarRowItem}>
+        //       <Avatar size={Size.Medium} userId={member.id} />
+        //     </div>
+        //     <div className={css.userRowItem}>
+        //       {member?.displayName ? (
+        //         <>
+        //           <div>{member.displayName}</div>
+        //           <div>{member.username}</div>
+        //         </>
+        //       ) : (
+        //         <div>{member.username}</div>
+        //       )}
+        //     </div>
+        //   </>
+        // );
       }
       const group = record as V1GroupDetails;
       return (

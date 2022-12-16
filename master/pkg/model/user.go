@@ -46,6 +46,7 @@ type FullUser struct {
 	ID          UserID      `db:"id" json:"id"`
 	DisplayName null.String `db:"display_name" json:"display_name"`
 	Username    string      `db:"username" json:"username"`
+	Name        string      `db:"name" json:"name"`
 	Admin       bool        `db:"admin" json:"admin"`
 	Active      bool        `db:"active" json:"active"`
 	ModifiedAt  time.Time   `db:"modified_at" json:"modified_at"`

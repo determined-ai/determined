@@ -130,6 +130,7 @@ func (a *apiServer) GetUsers(
 		apiv1.GetUsersRequest_SORT_BY_ADMIN:         "admin",
 		apiv1.GetUsersRequest_SORT_BY_ACTIVE:        "active",
 		apiv1.GetUsersRequest_SORT_BY_MODIFIED_TIME: "modified_at",
+		apiv1.GetUsersRequest_SORT_BY_NAME:          "name",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",

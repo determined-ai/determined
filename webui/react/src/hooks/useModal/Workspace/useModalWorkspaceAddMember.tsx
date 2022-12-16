@@ -2,13 +2,14 @@ import { Form, message, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import GroupAvatar from 'components/GroupAvatar';
+import UserAvatar from 'components/UserAvatar';
 import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
-import { User, UserOrGroup } from 'types';
+import { DetailedUser, User, UserOrGroup } from 'types';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
@@ -150,17 +151,15 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  getName(option)
+                  <UserAvatar compact table userId={(option as DetailedUser).id} />
                 ) : (
-                  <span>
-                    {getName(option)}&nbsp;&nbsp;
-                    <Icon name="group" />
-                  </span>
+                  <GroupAvatar groupName={getName(option)} />
                 ),
                 value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}
               placeholder="Find user or group by display name or username"
               showSearch
+              size="large"
               onSelect={handleSelect}
             />
           </Form.Item>
