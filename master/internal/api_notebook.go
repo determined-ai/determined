@@ -95,7 +95,7 @@ func (a *apiServer) GetNotebook(
 	); err != nil {
 		return nil, err
 	} else if !ok {
-		return nil, errActorNotFound(addr)
+		return nil, status.Error(codes.PermissionDenied, "not authorized to get notebook")
 	}
 	return resp, nil
 }
