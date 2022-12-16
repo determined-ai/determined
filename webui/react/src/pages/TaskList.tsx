@@ -42,8 +42,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
-import { useAuth } from 'stores/auth';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useCurrentUsers, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, AnyTask, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
@@ -82,9 +81,8 @@ const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
 const TaskList: React.FC = () => {
   const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const user = Loadable.match(useCurrentUsers().currentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [canceler] = useState(new AbortController());

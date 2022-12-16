@@ -29,8 +29,7 @@ import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
-import { useUsers } from 'stores/users';
+import { useCurrentUsers, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -57,9 +56,8 @@ interface Props {
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const user = Loadable.match(useCurrentUsers().currentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [projects, setProjects] = useState<Project[]>([]);

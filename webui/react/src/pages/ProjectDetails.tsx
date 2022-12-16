@@ -17,7 +17,7 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
 import { isNotFound } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
+import { useCurrentUsers } from 'stores/users';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -34,9 +34,8 @@ type Params = {
 };
 
 const ProjectDetails: React.FC = () => {
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const user = Loadable.match(useCurrentUsers().currentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const { projectId } = useParams<Params>();

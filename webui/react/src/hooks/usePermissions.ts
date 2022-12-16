@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
-import { useAuth } from 'stores/auth';
 import { useUserAssignments, useUserRoles } from 'stores/userRoles';
+import { useCurrentUsers } from 'stores/users';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -78,9 +78,8 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const user = Loadable.match(useCurrentUsers().currentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const rbacEnabled = useFeature().isOn('rbac');

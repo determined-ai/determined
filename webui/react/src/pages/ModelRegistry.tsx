@@ -41,8 +41,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useAuth } from 'stores/auth';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useCurrentUsers, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -60,9 +59,8 @@ const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description
 
 const ModelRegistry: React.FC = () => {
   const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const user = Loadable.match(useCurrentUsers().currentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [models, setModels] = useState<ModelItem[]>([]);

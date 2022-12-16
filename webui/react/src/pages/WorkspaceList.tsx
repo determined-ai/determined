@@ -31,8 +31,7 @@ import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
-import { useUsers } from 'stores/users';
+import { useCurrentUsers, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -51,9 +50,8 @@ const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
   const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const user = Loadable.match(useCurrentUsers().currentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);

@@ -8,7 +8,7 @@ import { UpdateUserSettingParams } from 'services/types';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useAuth } from 'stores/auth';
+import { useCurrentUsers } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -135,9 +135,8 @@ const queryToSettings = <T>(config: SettingsConfig<T>, query: string) => {
 };
 
 const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const user = Loadable.match(useCurrentUsers().currentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
