@@ -68,6 +68,9 @@ const routeById: Record<string, RouteConfig> = routes.reduce((acc, cur) => {
 }, {} as Record<string, RouteConfig>);
 
 export const paths = {
+  admin: (tab = ''): string => {
+    return `/admin/${tab}`;
+  },
   cluster: (): string => {
     return '/clusters';
   },
