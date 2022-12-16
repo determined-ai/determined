@@ -173,6 +173,7 @@ def test_model_cli() -> None:
     master_url = conf.make_master_url()
     command = ["det", "-m", master_url, "model", "create", test_model_1_name]
     subprocess.run(command, check=True)
+    log_in_user(ADMIN_CREDENTIALS)
     d = Determined(master_url)
     model_1 = d.get_model(identifier=test_model_1_name)
     assert model_1.workspace_id == 1
@@ -186,7 +187,6 @@ def test_model_cli() -> None:
     assert "Workspace ID" in output and "1" in output
 
     # add a test workspace.
-    log_in_user(ADMIN_CREDENTIALS)
     admin_auth = authentication.Authentication(
         master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password
     )
