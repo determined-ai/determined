@@ -3,7 +3,7 @@ import React, { createContext, PropsWithChildren, useCallback, useContext, useSt
 import { getCurrentUser, getUsers } from 'services/api';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 import { isEqual } from 'shared/utils/data';
-import { DetailedUser } from 'types';
+import { DetailedUser, DetailedUserList } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -45,7 +45,9 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) => {
+export const useFetchUsers = (
+  canceler: AbortController,
+): ((cfg?: FetchUsersConfig) => Promise<DetailedUserList | void>) => {
   const context = useContext(UsersContext);
 
   if (context === null) {
@@ -55,12 +57,14 @@ export const useFetchUsers = (canceler: AbortController): (() => Promise<void>) 
   const { updateUsers } = context;
 
   return useCallback(
-    async (cfg?: FetchUsersConfig): Promise<void> => {
+    async (cfg?: FetchUsersConfig): Promise<DetailedUserList | void> => {
       try {
         const config = cfg ?? {};
         const response = await getUsers(config, { signal: canceler.signal });
 
         updateUsers(() => Loaded(response.users));
+
+        return response;
       } catch (e) {
         handleError(e);
       }

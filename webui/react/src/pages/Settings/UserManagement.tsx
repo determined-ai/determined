@@ -18,7 +18,7 @@ import useFeature from 'hooks/useFeature';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
-import { getGroups, getUsers, patchUser } from 'services/api';
+import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
@@ -26,6 +26,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useFetchKnownRoles } from 'stores/knowRoles';
+import { useFetchUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 
@@ -109,6 +110,7 @@ const UserManagement: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
+  const fetchUsersHook = useFetchUsers(canceler);
 
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
 
@@ -121,26 +123,25 @@ const UserManagement: React.FC = () => {
     if (!settings) return;
 
     try {
-      const response = await getUsers(
-        {
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
-        },
-        { signal: canceler.signal },
-      );
-      setTotal(response.pagination.total ?? 0);
-      setUsers((prev) => {
-        if (isEqual(prev, response.users)) return prev;
-        return response.users;
+      const response = await fetchUsersHook({
+        limit: settings.tableLimit,
+        offset: settings.tableOffset,
+        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+        sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
       });
+      if (response) {
+        setTotal(response.pagination.total ?? 0);
+        setUsers((prev) => {
+          if (isEqual(prev, response.users)) return prev;
+          return response.users;
+        });
+      }
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings]);
+  }, [settings, fetchUsersHook]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
