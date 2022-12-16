@@ -92,6 +92,17 @@ Some constraints are due to differences in behavior between Docker and Singulari
    | ``environment.registry_auth.email``  | No equivalent setting in Singularity.                |
    +--------------------------------------+------------------------------------------------------+
 
+**************************
+ Singularity Known Issues
+**************************
+
+   -  When deployed on Slurm or PBS cluster, the experiment configuration cannot have embedded
+      single quote ' character.
+
+   -  If Singularity version is less than 3.10 or if Apptainer version is less than 1.1, when
+      deployed on PBS cluster, the experiment configuration cannot have embedded double quote "
+      character.
+
 *********************
  PodMan Known Issues
 *********************
@@ -150,6 +161,9 @@ Some constraints are due to differences in behavior between Docker and Singulari
             environment_variables:
               - INHERITED_ENV_VAR=
 
+   -  When deployed on Slurm or PBS cluster, the experiment configuration cannot have embedded
+      single quote ' character.
+
 *********************
  Enroot Known Issues
 *********************
@@ -169,6 +183,9 @@ Some constraints are due to differences in behavior between Docker and Singulari
 
    -  Enroot does not provide a mechanism for sharing containers. Each user must create any
       containers needed by their Determined experiments prior to creating the experiment.
+
+   -  When deployed on Slurm or PBS cluster, the experiment configuration cannot have embedded
+      single quote ' character.
 
 ********************
  Slurm Known Issues
