@@ -24,38 +24,54 @@ import (
 A set of tests to ensure that the NTSC APIs call the expected AuthZ methods.
 */
 
-var authzCommand *mocks.NSCAuthZ
+var authZNSC *mocks.NSCAuthZ
 
 func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
 	api, curUser, ctx := setupAPITest(t)
 
-	if authzCommand == nil {
-		authzCommand = &mocks.NSCAuthZ{}
-		command.AuthZProvider.Register("mock", authzCommand)
+	if authZNSC == nil {
+		authZNSC = &mocks.NSCAuthZ{}
+		command.AuthZProvider.Register("mock", authZNSC)
 		config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 
-	return api, authzCommand, curUser, ctx
+	return api, authZNSC, curUser, ctx
 }
 
 func TestTasksCountAuthZ(t *testing.T) {
-	api, authZCommand, curUser, ctx := setupNTSCAuthzTest(t)
-	authZCommand.On("CanGetActiveTasksCount", mock.Anything, curUser).Return(fmt.Errorf("deny"))
+	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+	authz.On("CanGetActiveTasksCount", mock.Anything, curUser).Return(fmt.Errorf("deny"))
 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
 }
 
-func TestAuthZCanGetNSC(t *testing.T) {
+func TestCanGetNTSC(t *testing.T) {
+	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+	authz.On("CanGetNSC", mock.Anything, curUser).Return(fmt.Errorf("deny"))
+	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{})
+	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
 }
 
-func TestAuthZCanTerminateNSC(t *testing.T) {
-}
+// func TestAuthZCanTerminateNSC(t *testing.T) {
+// 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+// 	authz.On("CanTerminateNSC", mock.Anything, curUser).Return(fmt.Errorf("deny"))
+// 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
+// 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
+// }
 
-func TestAuthZCanCreateNSC(t *testing.T) {
-}
+// func TestAuthZCanCreateNSC(t *testing.T) {
+// 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+// 	authz.On("CanCreateNSC", mock.Anything, curUser).Return(fmt.Errorf("deny"))
+// 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
+// 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
+// }
 
-func TestAuthZCanSetNSCsPriority(t *testing.T) {
-}
+// func TestAuthZCanSetNSCsPriority(t *testing.T) {
+// 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+// 	authz.On("CanSetNSCsPriority", mock.Anything, curUser).Return(fmt.Errorf("deny"))
+// 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
+// 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
+// }
