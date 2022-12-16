@@ -243,7 +243,11 @@ const NavigationSideBar: React.FC = () => {
             content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
+            {currentUser ? (
+              <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
+            ) : (
+              ''
+            )}
           </Dropdown>
         </header>
         <main>
