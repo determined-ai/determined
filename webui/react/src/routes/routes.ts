@@ -250,7 +250,7 @@ const routes: RouteConfig[] = [
   {
     id: 'admin',
     needAuth: true,
-    path: '/admin/',
+    path: '/admin',
     redirect: '/admin/user-management',
     title: 'Admin',
   },
