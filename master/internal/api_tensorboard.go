@@ -80,20 +80,13 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
-	a.filter(&resp.Tensorboards, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, model.UserID(resp.Tensorboards[i].UserId), command.PlaceHolderWorkspace)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
-	})
+	filtered, err := command.TbAuthZProvider.Get().FilterTensorboards(
+		ctx, curUser, resp.Tensorboards)
 	if err != nil {
 		return nil, err
 	}
+
+	resp.Tensorboards = filtered
 
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
@@ -112,8 +105,8 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, model.UserID(resp.Tensorboard.UserId), command.PlaceHolderWorkspace); err != nil {
+	if ok, err := command.TbAuthZProvider.Get().CanGetTensorboard(
+		ctx, curUser, resp.Tensorboard); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -124,8 +117,20 @@ func (a *apiServer) GetTensorboard(
 func (a *apiServer) KillTensorboard(
 	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
-	if _, err := a.GetTensorboard(ctx,
-		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+	getResponse, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.TbAuthZProvider.Get().CanTerminateTensorboard(
+		ctx, curUser, getResponse.Tensorboard)
+	if err != nil {
 		return nil, err
 	}
 
@@ -135,8 +140,20 @@ func (a *apiServer) KillTensorboard(
 func (a *apiServer) SetTensorboardPriority(
 	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
-	if _, err := a.GetTensorboard(ctx,
-		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+	getResponse, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.TbAuthZProvider.Get().CanSetTensorboardPriority(
+		ctx, curUser, getResponse.Tensorboard)
+	if err != nil {
 		return nil, err
 	}
 
