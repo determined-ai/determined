@@ -9,7 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// NSCAuthZ describes authz methods for Notebooks, Shells, and Commands.
+// TensorboardAuthZ describes authz methods for Tensorboards.
 type TensorboardAuthZ interface {
 	// GET /api/v1/tensorboards/:tb_id
 	CanGetTensorboard(

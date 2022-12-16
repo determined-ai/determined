@@ -12,9 +12,9 @@ import (
 // TensorboardAuthZBasic is basic OSS controls.
 type TensorboardAuthZBasic struct{}
 
-// CanGetNSC returns true and nil error unless the developer master config option
+// CanGetTensorboard returns true and nil error unless the developer master config option
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
-// an admin or if the user owns the task and a nil error.
+// an admin or if the user owns the tensorboard and a nil error.
 func (t *TensorboardAuthZBasic) CanGetTensorboard(
 	ctx context.Context, curUser *model.User, tb *tensorboardv1.Tensorboard,
 ) (canGetTensorboards bool, serverError error) {
