@@ -6,8 +6,10 @@ package internal
 import (
 	"context"
 	"fmt"
+	"github.com/determined-ai/determined/master/internal/task"
 	"testing"
 
+	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -16,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -30,11 +33,22 @@ func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
 	api, curUser, ctx := setupAPITest(t)
-
+	var master *Master
+	master = api.m
+	command.RegisterAPIHandler(
+		master.system,
+		nil,
+		master.db,
+		master.rm,
+		&task.Logger{},
+	)
+	//master.system.ActorOf(
+	//	actor.Addr("notebooks"),
+	//	&notebookManager{db: master.db, rm: master.rm},
+	//)
 	if authZNSC == nil {
 		authZNSC = &mocks.NSCAuthZ{}
 		command.AuthZProvider.Register("mock", authZNSC)
-		config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 
@@ -50,9 +64,27 @@ func TestTasksCountAuthZ(t *testing.T) {
 
 func TestCanGetNTSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
-	authz.On("CanGetNSC", mock.Anything, curUser).Return(fmt.Errorf("deny"))
-	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{})
-	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
+
+	nbID := model.NewTaskID()
+	var master *Master = api.m
+	addr := notebooksAddr.Child(nbID)
+	ref, newCreated := master.system.ActorOf(addr, actor.ActorFunc(func(context *actor.Context) error {
+		nb := notebookv1.Notebook{Id: nbID.String()}
+		if context.ExpectingResponse() {
+			context.Respond(&apiv1.GetNotebookResponse{
+				Notebook: &nb,
+			})
+		}
+		return nil
+	}))
+	require.NotNil(t, ref)
+	require.Equal(t, newCreated, true)
+
+	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
+		false, nil,
+	)
+	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
 }
 
 // func TestAuthZCanTerminateNSC(t *testing.T) {
