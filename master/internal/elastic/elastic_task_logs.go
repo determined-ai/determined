@@ -394,6 +394,43 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 						"should": inTerms,
 					},
 				})
+		case api.FilterOperationInOrNull:
+			values, err := interfaceToSlice(f.Values)
+			if err != nil {
+				panic(fmt.Errorf("invalid IN OR NULL filter values: %w", err))
+			}
+			var inTerms []jsonObj
+			for _, v := range values {
+				switch v.(type) {
+				case string:
+					// See notes on FilterOperationIn
+					inTerms = append(inTerms,
+						jsonObj{
+							"term": jsonObj{
+								f.Field + ".keyword": v,
+							},
+						})
+				default:
+					inTerms = append(inTerms,
+						jsonObj{
+							"term": jsonObj{
+								f.Field: v,
+							},
+						})
+				}
+			}
+			inTerms = append(inTerms,
+				jsonObj{
+					"term": jsonObj{
+						f.Field: nil,
+					},
+				})
+			terms = append(terms,
+				jsonObj{
+					"bool": jsonObj{
+						"should": inTerms,
+					},
+				})
 		case api.FilterOperationLessThanEqual:
 			terms = append(terms,
 				jsonObj{
