@@ -13,7 +13,7 @@ import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { UsersProvider } from 'stores/users';
+import { useCurrentUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import CodeViewer, { Props } from './CodeViewer';
@@ -106,10 +106,18 @@ const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
   const { setAuth, setAuthCheck } = useAuth();
+  const { updateCurrentUser } = useCurrentUsers();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
     setAuthCheck();
+    updateCurrentUser({
+      displayName: 'Test Username',
+      id: 1,
+      isActive: true,
+      isAdmin: true,
+      username: 'test-username',
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -127,7 +135,9 @@ const setup = (
     <HistoryRouter history={history}>
       <UIProvider>
         <AuthProvider>
-          <Container {...props} />
+          <UsersProvider>
+            <Container {...props} />
+          </UsersProvider>
         </AuthProvider>
       </UIProvider>
     </HistoryRouter>,
