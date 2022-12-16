@@ -93,7 +93,7 @@ import {
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import {
   DEFAULT_COLUMN_WIDTHS,
@@ -733,7 +733,7 @@ const ProjectDetails: React.FC = () => {
       try {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
-          openCommand(result as CommandTask);
+          openCommandResponse(result as CommandResponse);
         }
 
         /*
