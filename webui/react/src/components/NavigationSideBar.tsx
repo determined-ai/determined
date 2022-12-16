@@ -296,7 +296,7 @@ const NavigationSideBar: React.FC = () => {
                 ) : (
                   <ul className={css.pinnedWorkspaces} role="list">
                     {workspaces
-                      .sort((a, b) => (a.pinnedAt < b.pinnedAt ? -1 : 1))
+                      .sort((a, b) => ((a.pinnedAt || 0) < (b.pinnedAt || 0) ? -1 : 1))
                       .map((workspace) => (
                         <WorkspaceActionDropdown
                           key={workspace.id}

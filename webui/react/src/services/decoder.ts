@@ -773,18 +773,8 @@ export const mapWorkspaceState = (state: Sdk.V1WorkspaceState): types.WorkspaceS
 
 export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   return {
-    archived: data.archived,
-    description: data.description,
-    id: data.id,
-    immutable: data.immutable,
-    lastExperimentStartedAt: new Date(data.lastExperimentStartedAt),
-    name: data.name,
-    notes: data.notes,
-    numActiveExperiments: data.numActiveExperiments,
-    numExperiments: data.numExperiments,
+    ...data,
     state: mapWorkspaceState(data.state),
-    userId: data.userId,
-    workspaceId: data.workspaceId,
     workspaceName: data.workspaceName ?? '',
   };
 };
