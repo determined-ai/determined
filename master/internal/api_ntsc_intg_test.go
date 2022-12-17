@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/pkg/errors"
 	"testing"
 
@@ -94,12 +95,38 @@ func TestCanGetNTSC(t *testing.T) {
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 
-// func TestAuthZCanTerminateNSC(t *testing.T) {
-// 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
-// 	authz.On("CanTerminateNSC", mock.Anything, curUser).Return(fmt.Errorf("deny"))
-// 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
-// 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
-// }
+func TestAuthZCanTerminateNSC(t *testing.T) {
+	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+	nbID := model.NewTaskID()
+	var master *Master = api.m
+	addr := notebooksAddr.Child(nbID)
+	ref, newCreated := master.system.ActorOf(addr, actor.ActorFunc(func(context *actor.Context) error {
+		nb := notebookv1.Notebook{Id: nbID.String()}
+		if context.ExpectingResponse() {
+			context.Respond(&apiv1.GetNotebookResponse{
+				Notebook: &nb,
+			})
+		}
+		return nil
+	}))
+	require.NotNil(t, ref)
+	require.Equal(t, newCreated, true)
+
+	// check permission errors are returned withe permission denied status.
+	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
+		&authz2.PermissionDeniedError{},
+	).Once()
+	_, err := api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: string(nbID)})
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+
+	// check other errors are not returned withe permission denied status.
+	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
+		false, errors.New("other error"),
+	)
+	_, err = api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: string(nbID)})
+	require.NotNil(t, err)
+	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
+}
 
 // func TestAuthZCanCreateNSC(t *testing.T) {
 // 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
