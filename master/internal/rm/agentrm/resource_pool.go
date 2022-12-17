@@ -516,7 +516,6 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(aproto.GetRPResponse{
 			AgentReconnectWait:    rp.config.AgentReconnectWait,
-			AgentReattachEnabled:  rp.config.AgentReattachEnabled,
 			MaxZeroSlotContainers: rp.config.MaxAuxContainersPerAgent,
 		})
 

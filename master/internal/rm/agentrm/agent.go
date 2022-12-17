@@ -42,7 +42,6 @@ type (
 		// and not be copied to agents.
 		maxZeroSlotContainers int
 		agentReconnectWait    time.Duration
-		agentReattachEnabled  bool
 		// awaitingReconnect et al contain reconnect related state. The pattern for
 		// reconnecting agents is
 		//  * They have a small window to reconnect.
@@ -138,13 +137,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		var masterSetAgentOptions aproto.AgentMessage
-		// Do container revalidation:
-		// - when reattach is on or off, on all valid reconnects.
-		// - when reattach is on, also do it on initial connect.
-		//   Note: restored agents have their `awaitingReconnect == true`.
-		// Flush them otherwise.
-		reconnect, _ := msg.IsReconnect()
-		if a.awaitingReconnect && (a.agentReattachEnabled || reconnect) {
+		if a.awaitingReconnect {
 			optsCopy := *a.opts
 			optsCopy.ContainersToReattach = a.gatherContainersToReattach(ctx)
 			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: &optsCopy}
@@ -193,6 +186,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			a.reconnectBacklog = nil
 			ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 		}
+
 	case sproto.KillTaskContainer:
 		if a.awaitingReconnect {
 			a.bufferForRecovery(ctx, msg)
@@ -314,6 +308,23 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 
 		a.socketDisconnected(ctx)
 		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+
+	case actor.ChildStopped:
+		// If the socket has closed gracefully, there are really two cases:
+		//  * the agent is being brought down temporarily (software or config update)
+		//  * the agent is being brought down permanently
+		// Since the former is more frequent and it doesn't really hurt the latter for the agent to
+		// hang around for a bit on our side, we always treat gracefully socket closures as
+		// temporary disconnects.
+		if !a.started {
+			ctx.Self().Stop()
+			return nil
+		}
+
+		ctx.Log().Info("websocket closed gracefully, awaiting reconnect: %s", msg.Child.Address())
+		a.socketDisconnected(ctx)
+		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
+
 	case reconnectTimeout:
 		// Re-enter from actor.ChildFailed.
 		if a.awaitingReconnect {
@@ -372,8 +383,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 		}
 
 		ctx.Respond(a.agentState.getSlotsSummary(ctx))
-	case actor.ChildStopped:
-		ctx.Self().Stop()
 	case actor.PostStop:
 		ctx.Log().Infof("agent disconnected")
 		if a.started {
@@ -704,11 +713,10 @@ func (a *agent) clearNonReattachedContainers(
 }
 
 func (a *agent) defaultReattachFailureMessage() aproto.ContainerStopped {
-	errorMsg := "container cleaned up on reconnect"
-	if a.agentReattachEnabled {
-		errorMsg = "failed to reattach container on reconnect"
-	}
-	return aproto.ContainerError(aproto.AgentFailed, errors.New(errorMsg))
+	return aproto.ContainerError(
+		aproto.AgentFailed,
+		errors.New("failed to reattach container on reconnect"),
+	)
 }
 
 func (a *agent) socketDisconnected(ctx *actor.Context) {

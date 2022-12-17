@@ -27,9 +27,6 @@ func newRootCmd() *cobra.Command {
 				return err
 			}
 			log.SetLevel(level)
-			if level == log.TraceLevel {
-				log.SetReportCaller(true)
-			}
 			log.SetFormatter(&log.TextFormatter{
 				FullTimestamp: true,
 				ForceColors:   true,

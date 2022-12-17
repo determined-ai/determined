@@ -95,6 +95,11 @@ func initializeConfig() error {
 	}
 
 	config.SetMasterConfig(conf)
+
+	for _, deprecation := range conf.Deprecations() {
+		log.Warn(deprecation.Error())
+	}
+
 	return nil
 }
 

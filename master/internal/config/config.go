@@ -258,6 +258,17 @@ func (c *Config) Resolve() error {
 	return nil
 }
 
+// Deprecations describe fields which were recently or will soon be removed.
+func (c *Config) Deprecations() (errs []error) {
+	for _, rp := range c.ResourcePools {
+		errs = append(errs, fmt.Errorf(
+			"agent_reattach_enabled is set for %s but will be ignored; "+
+				"as of 0.21.0 this feature is always on", rp.PoolName,
+		))
+	}
+	return errs
+}
+
 // SecurityConfig is the security configuration for the master.
 type SecurityConfig struct {
 	DefaultTask model.AgentUserGroup `json:"default_task"`
@@ -419,22 +430,4 @@ func ReadWeight(rpName string, jobConf interface{}) float64 {
 		weight = conf.Resources.Weight
 	}
 	return weight
-}
-
-// IsAgentRMReattachEnabled returns whether the container reattachment is enabled on AgentRM.
-// Most other checks on Reattachability have been moved to the ResourceManager interface and
-// deligated to RM implementations, however this one is referenced in PreStart without
-// the ability to access the targeted resource manager.
-func IsAgentRMReattachEnabled() bool {
-	config := GetMasterConfig()
-
-	if config.ResourceManager.AgentRM == nil {
-		return false
-	}
-	for _, rpConfig := range config.ResourcePools {
-		if rpConfig.AgentReattachEnabled {
-			return true
-		}
-	}
-	return false
 }

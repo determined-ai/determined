@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	dclient "github.com/docker/docker/client"
 	"github.com/gorilla/websocket"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -101,11 +103,15 @@ func (a *Agent) run(ctx context.Context) (err error) {
 	}
 
 	a.log.Trace("connecting to master")
-	a.socket, err = a.connect(ctx)
+	a.socket, err = a.connect(ctx, false)
 	if err != nil {
-		return MasterConnectionError{cause: err}
+		return fmt.Errorf("initial connection to master failed")
 	}
 	defer func() {
+		if a.socket == nil {
+			return
+		}
+
 		a.log.Trace("cleaning up socket")
 		if cErr := a.socket.Close(); err != nil {
 			a.log.WithError(cErr).Error("closing master websocket")
@@ -180,26 +186,23 @@ func (a *Agent) run(ctx context.Context) (err error) {
 		return ctx.Err()
 	}
 
-	return a.watch(ctx)
-}
-
-func (a *Agent) watch(ctx context.Context) error {
 	a.log.Trace("watching for ws requests and system events")
 	inbox := a.socket.Inbox
 	outbox := make(chan *aproto.MasterMessage, eventChanSize)
 	for {
 		select {
 		case msg, ok := <-inbox:
-			a.log.Tracef("received message: %v", msg)
 			if !ok {
-				return errors.New("crashing due to websocket inbox closure")
+				a.log.Trace("websocket inbox closed")
+				inbox = nil
+				continue
 			}
+
 			if err := a.receive(ctx, msg); err != nil {
 				return err
 			}
 
 		case msg := <-outbox:
-			a.log.Tracef("sent message: %v", msg)
 			select {
 			case a.socket.Outbox <- msg:
 			case <-ctx.Done():
@@ -207,11 +210,81 @@ func (a *Agent) watch(ctx context.Context) error {
 			}
 
 		case <-a.socket.Done:
-			a.log.Trace("socket exited")
 			if err := a.socket.Error(); err != nil {
-				return MasterConnectionError{cause: err}
+				a.log.WithError(err).Error("socket disconnected")
+			} else {
+				a.log.Trace("socket disconnected")
 			}
-			return nil
+
+			a.log.Trace("detaching container manager while socket is down")
+			a.manager.Detach()
+
+			a.log.Trace("collecting pending informational messages")
+			var msgs []*aproto.MasterMessage
+			for pending := true; pending; {
+				select {
+				case msg := <-outbox:
+					if msg.ContainerStateChanged != nil {
+						continue // Skip state change messages since we do a total resync.
+					}
+					msgs = append(msgs, msg)
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
+					pending = false
+				}
+			}
+
+			a.log.Trace("reconnecting master socket...")
+			ws, err := a.reconnect(ctx)
+			if err != nil {
+				a.log.WithError(err).Warn("exhausted reconnect attempts, exiting")
+				return err
+			}
+			a.socket = ws
+
+			a.log.Trace("reading master set agent options message after reconnect")
+			select {
+			case msg, ok := <-a.socket.Inbox:
+				switch {
+				case !ok:
+					return fmt.Errorf("socket closed while reading setup messages")
+				case msg.MasterSetAgentOptions == nil:
+					return fmt.Errorf("master did not send setup messages")
+				default:
+					a.mopts = *msg.MasterSetAgentOptions
+				}
+			case <-ctx.Done():
+				return fmt.Errorf("canceled while reading setup messages: %w", ctx.Err())
+			}
+
+			a.log.Trace("reattaching containers after reconnect")
+			reattached, err := a.manager.ReattachContainers(ctx, a.mopts.ContainersToReattach)
+			if err != nil {
+				return fmt.Errorf("failed to reattach containers: %w", err)
+			}
+
+			a.log.Trace("writing agent started message")
+			select {
+			case a.socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
+				Version:              a.version,
+				Devices:              a.devices,
+				Label:                a.opts.Label,
+				ContainersReattached: reattached,
+			}}:
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+
+			a.log.Trace("flushing pending informational messages from before reconnect")
+			for _, msg := range msgs {
+				select {
+				case a.socket.Outbox <- msg:
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+			a.log.Trace("reconnected successfully")
 
 		case <-a.fluent.Done:
 			a.log.Trace("fluent exited")
@@ -224,15 +297,6 @@ func (a *Agent) watch(ctx context.Context) error {
 			a.log.Trace("context canceled")
 			return nil
 		}
-	}
-}
-
-func (a *Agent) send(ctx context.Context, msg *aproto.MasterMessage) error {
-	select {
-	case a.socket.Outbox <- msg:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
 	}
 }
 
@@ -264,12 +328,18 @@ func (a *Agent) sender() events.Publisher[container.Event] {
 			default:
 				panic(fmt.Sprintf("unknown outgoing message: %+v", in))
 			}
-			return a.send(ctx, &out)
+
+			select {
+			case a.socket.Outbox <- &out:
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 		},
 	)
 }
 
-func (a *Agent) connect(ctx context.Context) (*MasterWebsocket, error) {
+func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, error) {
 	tlsConfig, err := a.tlsConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to construct TLS config")
@@ -288,7 +358,7 @@ func (a *Agent) connect(ctx context.Context) (*MasterWebsocket, error) {
 	masterAddr := fmt.Sprintf(
 		"%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%v",
 		masterProto, a.opts.MasterHost, a.opts.MasterPort, a.opts.AgentID, a.version,
-		a.opts.ResourcePool, false,
+		a.opts.ResourcePool, reconnect,
 	)
 	a.log.Infof("connecting to master at: %s", masterAddr)
 	conn, resp, err := dialer.DialContext(ctx, masterAddr, nil)
@@ -312,6 +382,29 @@ func (a *Agent) connect(ctx context.Context) (*MasterWebsocket, error) {
 		return nil, errors.Wrapf(err, "error dialing master: %s", b)
 	}
 	return ws.Wrap[*aproto.AgentMessage, *aproto.MasterMessage](a.opts.AgentID, conn), nil
+}
+
+func (a *Agent) reconnect(ctx context.Context) (*MasterWebsocket, error) {
+	var errs error
+	for i := 0; i < a.opts.AgentReconnectAttempts; i++ {
+		switch ws, err := a.connect(ctx, true); {
+		case err == nil:
+			return ws, nil
+		case errors.Is(err, aproto.ErrAgentMustReconnect):
+			a.log.Warn("received ErrAgentMustReconnect, exiting")
+			return nil, err
+		default:
+			a.log.WithError(err).Error("error reconnecting to master")
+			errs = multierror.Append(errs, err)
+		}
+
+		select {
+		case <-time.After(time.Duration(a.opts.AgentReconnectBackoff) * time.Second):
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	return nil, errs
 }
 
 func (a *Agent) tlsConfig() (*tls.Config, error) {

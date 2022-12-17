@@ -6,12 +6,10 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/agent/internal/detect"
 	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 )
@@ -27,39 +25,15 @@ func Run(parent context.Context, version string, opts options.AgentOptions) erro
 	}
 	log.Infof("agent configuration: %s", printableConfig)
 
-	log.Trace("detecting devices")
-	devices, err := detect.Detect(opts.SlotType, opts.AgentID, opts.VisibleGPUs, opts.ArtificialSlots)
-	if err != nil {
-		return fmt.Errorf("failed to detect devices: %w", devices)
-	}
-
 	wg := errgroupx.WithContext(ctx)
 
 	log.Trace("starting main agent process")
 	wg.Go(func(ctx context.Context) error {
-		connectionFailureWindowBegin := time.Now()
-		connectionFailureCount := 0
-		for {
-			a := New(ctx, version, opts)
-			switch err := a.Wait().(type) {
-			case MasterConnectionError:
-				now := time.Now()
-				if connectionFailureWindowBegin.Before(now.Add(-time.Minute)) {
-					connectionFailureWindowBegin = now
-					connectionFailureCount = 0
-				}
-				connectionFailureCount++
-				if connectionFailureCount >= opts.AgentReconnectAttempts {
-					onConnectionLost(ctx, opts)
-					return fmt.Errorf("failure to recover agent connection: %w", err)
-				}
-				log.WithError(err).Error("attempting reconnect after delay...")
-				time.Sleep(time.Duration(opts.AgentReconnectBackoff))
-				continue
-			default:
-				return err
-			}
+		err := New(ctx, version, opts).Wait()
+		if _, ok := err.(longDisconnected); ok {
+			onConnectionLost(ctx, opts)
 		}
+		return err
 	})
 
 	if opts.APIEnabled {

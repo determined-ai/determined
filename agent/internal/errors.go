@@ -4,11 +4,11 @@ import (
 	"fmt"
 )
 
-// MasterConnectionError is returned by the agent when the websocket connection to the master fails.
-type MasterConnectionError struct {
+// longDisconnected is returned by the agent when the websocket connection to the master fails.
+type longDisconnected struct {
 	cause error
 }
 
-func (e MasterConnectionError) Error() string {
-	return fmt.Sprintf("crashing due to master websocket connection failure: %s", e.cause)
+func (e longDisconnected) Error() string {
+	return fmt.Sprintf("long disconnected, and unable to reconnect, from master: %s", e.cause)
 }

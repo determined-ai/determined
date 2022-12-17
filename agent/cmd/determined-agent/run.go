@@ -87,6 +87,12 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().IntVar(&opts.MasterPort, "master-port", 0, "Port of the master")
 	cmd.Flags().StringVar(&opts.AgentID, "agent-id", "", "Unique ID of this Determined agent")
 
+	// Fault-tolerance flags.
+	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attemps",
+		aproto.AgentReconnectAttempts, "Max attempts to recover the connection to the master")
+	cmd.Flags().IntVar(&opts.AgentReconnectBackoff, "agent-reconnect-backoff",
+		aproto.AgentReconnectBackoffValue, "Time between attempts to recover the connection to the master")
+
 	// Labels flags.
 	cmd.Flags().StringVar(&opts.Label, "label", "",
 		"Label attached to the agent for scheduling constraints")
