@@ -6,8 +6,10 @@ package internal
 import (
 	"context"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/task"
+	"github.com/pkg/errors"
 	"testing"
+
+	"github.com/determined-ai/determined/master/internal/task"
 
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 	"github.com/stretchr/testify/mock"
@@ -42,10 +44,6 @@ func setupNTSCAuthzTest(t *testing.T) (
 		master.rm,
 		&task.Logger{},
 	)
-	//master.system.ActorOf(
-	//	actor.Addr("notebooks"),
-	//	&notebookManager{db: master.db, rm: master.rm},
-	//)
 	if authZNSC == nil {
 		authZNSC = &mocks.NSCAuthZ{}
 		command.AuthZProvider.Register("mock", authZNSC)
@@ -80,11 +78,20 @@ func TestCanGetNTSC(t *testing.T) {
 	require.NotNil(t, ref)
 	require.Equal(t, newCreated, true)
 
+	// check permission errors are returned withe permission denied status.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		false, nil,
-	)
+	).Once()
 	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
+
+	// check other errors are not returned withe permission denied status.
+	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
+		false, errors.New("other error"),
+	)
+	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
+	require.NotNil(t, err)
+	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 
 // func TestAuthZCanTerminateNSC(t *testing.T) {
