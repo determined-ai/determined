@@ -102,7 +102,6 @@ def get_command_info(command_id: str) -> Dict[str, Any]:
 
 def command_succeeded(command_id: str) -> bool:
     print(get_command_info(command_id))
-
     return "success" in get_command_info(command_id)["exitStatus"]
 
 

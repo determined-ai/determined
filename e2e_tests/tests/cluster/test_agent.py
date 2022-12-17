@@ -33,18 +33,17 @@ def test_agent_never_connect() -> None:
 
 
 @pytest.mark.managed_devcluster
-def test_agent_fail_reconnect(managed_cluster_session: ManagedCluster) -> None:
-    if managed_cluster_session.reattach:
-        pytest.skip()
+def test_agent_fail_reconnect(restartable_managed_cluster: ManagedCluster) -> None:
+    restartable_managed_cluster.kill_proxy()
 
-    managed_cluster_session.ensure_agent_ok()
-    managed_cluster_session.kill_proxy()
-
+    found = False
     for _ in range(30):
         if os.path.exists("/tmp/agent1-connection-lost"):
-            managed_cluster_session.restart_agent(wait_for_agent=False)
-            managed_cluster_session.restart_proxy()
+            found = True
             break
         time.sleep(1)
-    else:
+
+    restartable_managed_cluster.restart_agent(wait_for_agent=False, wait_for_amnesia=False)
+    restartable_managed_cluster.restart_proxy()
+    if not found:
         pytest.fail("Did not find expected file from agent connection loss hook")

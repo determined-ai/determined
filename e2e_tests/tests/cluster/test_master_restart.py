@@ -1,7 +1,6 @@
 import logging
 import subprocess
 import time
-from typing import Iterator
 
 import docker
 import pytest
@@ -30,34 +29,10 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 
-def _sanity_check(managed_cluster_restarts: ManagedCluster) -> None:
-    if not managed_cluster_restarts.reattach:
-        pytest.skip()
-
-    managed_cluster_restarts.ensure_agent_ok()
-
-
-@pytest.fixture
-def restartable_managed_cluster(
-    managed_cluster_restarts: ManagedCluster,
-) -> Iterator[ManagedCluster]:
-    _sanity_check(managed_cluster_restarts)
-
-    try:
-        yield managed_cluster_restarts
-        managed_cluster_restarts.wait_for_agent_ok(20)
-    except Exception:
-        managed_cluster_restarts.restart_master()
-        managed_cluster_restarts.restart_agent()
-        raise
-
-
 @pytest.mark.managed_devcluster
-def test_master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
-    _sanity_check(managed_cluster_restarts)
-    _test_master_restart_ok(managed_cluster_restarts)
-    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)
-    _sanity_check(managed_cluster_restarts)
+def test_master_restart_ok(restartable_managed_cluster: ManagedCluster) -> None:
+    _test_master_restart_ok(restartable_managed_cluster)
+    restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
 
 @pytest.mark.e2e_k8s
@@ -92,11 +67,10 @@ def _test_master_restart_ok(managed_cluster: Cluster) -> None:
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [0, 20, 60])
 def test_master_restart_reattach_recover_experiment(
-    managed_cluster_restarts: ManagedCluster,
+    restartable_managed_cluster: ManagedCluster,
     downtime: int,
 ) -> None:
-    _sanity_check(managed_cluster_restarts)
-    _test_master_restart_reattach_recover_experiment(managed_cluster_restarts, downtime)
+    _test_master_restart_reattach_recover_experiment(restartable_managed_cluster, downtime)
 
 
 @pytest.mark.e2e_k8s
@@ -110,35 +84,30 @@ def test_master_restart_reattach_recover_experiment_k8s(
 
 @pytest.mark.managed_devcluster
 def _test_master_restart_reattach_recover_experiment(
-    managed_cluster_restarts: Cluster, downtime: int
+    restartable_managed_cluster: Cluster, downtime: int
 ) -> None:
-    try:
-        exp_id = exp.create_experiment(
-            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
-        )
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        None,
+    )
 
-        # TODO(ilia): don't wait for progress.
-        exp.wait_for_experiment_workload_progress(exp_id)
+    # TODO(ilia): don't wait for progress.
+    exp.wait_for_experiment_workload_progress(exp_id)
 
-        if downtime >= 0:
-            managed_cluster_restarts.kill_master()
-            time.sleep(downtime)
-            managed_cluster_restarts.restart_master()
+    restartable_managed_cluster.kill_master()
+    time.sleep(downtime)
+    restartable_managed_cluster.restart_master()
+    if downtime >= 30:
+        # The agent will have given up reconnecting at this point, and need to be restarted.
+        restartable_managed_cluster.restart_agent()
 
-        exp.wait_for_experiment_state(
-            exp_id, EXP_STATE.STATE_COMPLETED, max_wait_secs=downtime + 60
-        )
-        trials = exp.experiment_trials(exp_id)
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_COMPLETED, max_wait_secs=downtime + 60)
+    trials = exp.experiment_trials(exp_id)
 
-        assert len(trials) == 1
-        train_wls = exp.workloads_with_training(trials[0].workloads)
-        assert len(train_wls) == 5
-    except Exception:
-        managed_cluster_restarts.restart_master()
-        managed_cluster_restarts.restart_agent()
-        raise
+    assert len(trials) == 1
+    train_wls = exp.workloads_with_training(trials[0].workloads)
+    assert len(train_wls) == 5
 
 
 @pytest.mark.managed_devcluster
@@ -147,9 +116,6 @@ def test_master_restart_error_missing_docker_container(
     managed_cluster_restarts: ManagedCluster,
     wait_for_amnesia: bool,
 ) -> None:
-    if not managed_cluster_restarts.reattach:
-        pytest.skip()
-
     exp_id = exp.create_experiment(
         conf.fixtures_path("core_api/sleep.yaml"),
         conf.fixtures_path("core_api"),
@@ -192,10 +158,9 @@ def test_master_restart_error_missing_docker_container(
 
 @pytest.mark.managed_devcluster
 def test_master_restart_kill_works_experiment(
-    managed_cluster_restarts: ManagedCluster,
+    restartable_managed_cluster: ManagedCluster,
 ) -> None:
-    _sanity_check(managed_cluster_restarts)
-    _test_master_restart_kill_works(managed_cluster_restarts)
+    _test_master_restart_kill_works(restartable_managed_cluster)
 
 
 @pytest.mark.e2e_k8s
@@ -205,29 +170,25 @@ def test_master_restart_kill_works_k8s(
     _test_master_restart_kill_works(k8s_managed_cluster)
 
 
-def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
-    try:
-        exp_id = exp.create_experiment(
-            conf.fixtures_path("no_op/single-many-long-steps.yaml"),
-            conf.fixtures_path("no_op"),
-            ["--config", "searcher.max_length.batches=10000", "--config", "max_restarts=0"],
-        )
+def _test_master_restart_kill_works(restartable_managed_cluster: Cluster) -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("no_op/single-many-long-steps.yaml"),
+        conf.fixtures_path("no_op"),
+        ["--config", "searcher.max_length.batches=10000", "--config", "max_restarts=0"],
+    )
 
-        exp.wait_for_experiment_workload_progress(exp_id)
+    exp.wait_for_experiment_workload_progress(exp_id)
 
-        managed_cluster_restarts.kill_master()
-        time.sleep(0)
-        managed_cluster_restarts.restart_master()
+    restartable_managed_cluster.kill_master()
+    time.sleep(0)
+    restartable_managed_cluster.restart_master()
 
-        command = ["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)]
-        subprocess.check_call(command)
+    command = ["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)]
+    subprocess.check_call(command)
 
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=30)
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=30)
 
-        managed_cluster_restarts.ensure_agent_ok()
-    except Exception:
-        managed_cluster_restarts.restart_master()
-        managed_cluster_restarts.restart_agent()
+    restartable_managed_cluster.ensure_agent_ok()
 
 
 @pytest.mark.managed_devcluster
@@ -248,18 +209,27 @@ def test_master_restart_cmd_k8s(
     _test_master_restart_cmd(k8s_managed_cluster, slots, downtime)
 
 
-def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
+def _test_master_restart_cmd(
+    restartable_managed_cluster: Cluster, slots: int, downtime: int
+) -> None:
+    managed_cluster = restartable_managed_cluster
+
     command_id = run_command(30, slots=slots)
     wait_for_command_state(command_id, "RUNNING", 30)
 
-    if downtime >= 0:
-        managed_cluster.kill_master()
-        time.sleep(downtime)
-        managed_cluster.restart_master()
+    managed_cluster.kill_master()
+    time.sleep(downtime)
+    managed_cluster.restart_master()
 
     wait_for_command_state(command_id, "TERMINATED", 60)
-    succeeded = "success" in get_command_info(command_id)["exitStatus"]
-    assert succeeded
+
+    exit_status = get_command_info(command_id)["exitStatus"]
+    reattach_wait = managed_cluster.fetch_config_reattach_wait()
+    if downtime > reattach_wait:
+        assert "failed" in exit_status
+        managed_cluster.restart_agent()
+    else:
+        assert "success" in exit_status
 
 
 @pytest.mark.managed_devcluster

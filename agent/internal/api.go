@@ -16,13 +16,13 @@ import (
 
 type agentAPIServer struct {
 	// Configuration details.
-	opts options.AgentOptions
+	opts options.Options
 
 	// Internal state.
 	server *echo.Echo
 }
 
-func newAgentAPIServer(opts options.AgentOptions) *agentAPIServer {
+func newAgentAPIServer(opts options.Options) *agentAPIServer {
 	server := echo.New()
 	server.Logger = logger.New()
 	server.HidePort = true

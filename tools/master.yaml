@@ -6,13 +6,25 @@ db:
   name: determined
 checkpoint_storage:
   type: shared_fs
-  host_path: /tmp/determined-cp
-cache:
-  cache_dir: /tmp/determined-cache
+  host_path: /tmp
+  storage_path: determined-cp
 log:
   level: debug
-enable_cors: true
-
-# This is important: we have to use the symbolic links in the
-# tools/build directory to run properly.
-root: tools/build
+root: ../tools/build
+cache: 
+  cache_dir: /tmp/determined-cache
+resource_manager:
+  default_aux_resource_pool: default
+  default_compute_resource_pool: default
+  scheduler:
+    fitting_policy: best
+    type: fair_share
+  type: agent
+resource_pools:
+  - agent_reattach_enabled: true
+    agent_reconnect_wait: 25s
+    max_aux_containers_per_agent: 100
+    pool_name: default
+security:
+  authz:
+    rbac_ui_enabled: true

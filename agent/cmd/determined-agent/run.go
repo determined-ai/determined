@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -40,7 +41,7 @@ func readConfigFile(configPath string) ([]byte, error) {
 }
 
 func newRunCmd() *cobra.Command {
-	opts := options.AgentOptions{}
+	opts := options.Options{}
 
 	cmd := &cobra.Command{
 		Use:   "run",
@@ -86,12 +87,6 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.MasterHost, "master-host", "", "Hostname of the master")
 	cmd.Flags().IntVar(&opts.MasterPort, "master-port", 0, "Port of the master")
 	cmd.Flags().StringVar(&opts.AgentID, "agent-id", "", "Unique ID of this Determined agent")
-
-	// Fault-tolerance flags.
-	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attemps",
-		aproto.AgentReconnectAttempts, "Max attempts to recover the connection to the master")
-	cmd.Flags().IntVar(&opts.AgentReconnectBackoff, "agent-reconnect-backoff",
-		aproto.AgentReconnectBackoffValue, "Time between attempts to recover the connection to the master")
 
 	// Labels flags.
 	cmd.Flags().StringVar(&opts.Label, "label", "",
@@ -160,6 +155,12 @@ func newRunCmd() *cobra.Command {
 		"TCP port for the Fluent Bit daemon to listen on")
 	cmd.Flags().StringVar(&opts.Fluent.ContainerName, "fluent-container-name", "determined-fluent",
 		"Name for the Fluent Bit container")
+
+	// Fault-tolerance flags.
+	cmd.Flags().IntVar(&opts.AgentReconnectAttempts, "agent-reconnect-attempts",
+		aproto.AgentReconnectAttempts, "Max attempts agent has to reconnect")
+	cmd.Flags().IntVar(&opts.AgentReconnectBackoff, "agent-reconnect-backoff",
+		int(aproto.AgentReconnectBackoff/time.Second), "Time between agent reconnect attempts")
 
 	return cmd
 }

@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os/exec"
 	"os/signal"
 	"syscall"
@@ -15,7 +16,7 @@ import (
 )
 
 // Run runs a new agent system and actor with the provided options.
-func Run(parent context.Context, version string, opts options.AgentOptions) error {
+func Run(parent context.Context, version string, opts options.Options) error {
 	ctx, stop := signal.NotifyContext(parent, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -29,8 +30,10 @@ func Run(parent context.Context, version string, opts options.AgentOptions) erro
 
 	log.Trace("starting main agent process")
 	wg.Go(func(ctx context.Context) error {
-		err := New(ctx, version, opts).Wait()
-		if _, ok := err.(longDisconnected); ok {
+		defer wg.Cancel()
+
+		err := NewAgent(ctx, version, opts).Wait()
+		if _, ok := err.(masterConnectionError); ok {
 			onConnectionLost(ctx, opts)
 		}
 		return err
@@ -39,17 +42,29 @@ func Run(parent context.Context, version string, opts options.AgentOptions) erro
 	if opts.APIEnabled {
 		log.Trace("starting agent apiserver")
 		wg.Go(func(ctx context.Context) error {
-			if err := newAgentAPIServer(opts).serve(); err != nil {
+			defer wg.Cancel()
+
+			api := newAgentAPIServer(opts)
+			wg.Go(func(ctx context.Context) error {
+				<-ctx.Done()
+				return api.close()
+			})
+
+			switch err := api.serve(); {
+			case errors.Is(err, http.ErrServerClosed):
+				return nil
+			case err != nil:
 				return fmt.Errorf("api server crashed: %w", err)
+			default:
+				return errors.New("api server exited unexpectedly")
 			}
-			return errors.New("api server exited unexpectedly")
 		})
 	}
 
 	return wg.Wait()
 }
 
-func onConnectionLost(ctx context.Context, opts options.AgentOptions) {
+func onConnectionLost(ctx context.Context, opts options.Options) {
 	cmd := opts.Hooks.OnConnectionLost
 	if len(cmd) == 0 {
 		return

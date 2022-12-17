@@ -56,8 +56,12 @@ type (
 		// Because of all this, for future developers: messages must be replay-able and writes must
 		// get buffered while down.
 		awaitingReconnect bool
-		reconnectBacklog  []interface{}
-		reconnectTimers   []*actor.Ref
+		// awaitingRestore tracks the restoration of agentState.containerAllocation, which must be
+		// restored after allocation refs start and register in allocationmap. It happens in during
+		// websocket connection if the websocket does reconnect and in poststop if it does not.
+		awaitingRestore  bool
+		reconnectBacklog []interface{}
+		reconnectTimers  []*actor.Ref
 		// On disconnect, we stash the state here and become "draining + disabled". Upon reconnect, we
 		// pop back to our previous state.
 		preDisconnectEnabled  bool
@@ -110,14 +114,15 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case actor.PreStart:
 		if a.agentState != nil { // not nil agentState on PreStart means it's restored.
 			a.started = true
+			a.awaitingRestore = true
 			a.agentState.Handler = ctx.Self()
 			// Update maxZeroSlotContainers config setting.
 			a.agentState.maxZeroSlotContainers = a.maxZeroSlotContainers
-			a.socketDisconnected(ctx)
 			// TODO(ilia): Adding restored agent here will overcount AgentStarts by maximum
 			// agentReconnectWait if it never reconnects.
 			// Ensure RP is aware of the agent.
 			ctx.Ask(a.resourcePool, sproto.AddAgent{Agent: ctx.Self(), Label: a.agentState.Label}).Get()
+			a.socketDisconnected(ctx)
 		}
 		a.slots, _ = ctx.ActorOf("slots", &slots{})
 	case model.AgentSummary:
@@ -143,6 +148,10 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: &optsCopy}
 		} else {
 			masterSetAgentOptions = aproto.AgentMessage{MasterSetAgentOptions: a.opts}
+		}
+
+		if a.awaitingRestore {
+			a.awaitingRestore = false
 		}
 
 		wsm := ws.WriteMessage{Message: masterSetAgentOptions}
@@ -321,7 +330,7 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			return nil
 		}
 
-		ctx.Log().Info("websocket closed gracefully, awaiting reconnect: %s", msg.Child.Address())
+		ctx.Log().Infof("websocket closed gracefully, awaiting reconnect: %s", msg.Child.Address())
 		a.socketDisconnected(ctx)
 		ctx.Tell(a.resourcePool, sproto.UpdateAgent{Agent: ctx.Self()})
 
@@ -384,7 +393,6 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 
 		ctx.Respond(a.agentState.getSlotsSummary(ctx))
 	case actor.PostStop:
-		ctx.Log().Infof("agent disconnected")
 		if a.started {
 			// This normally will run on agent WebSocketConnected to populate
 			// agentState.containerAllocation. There is technically still race here
@@ -414,6 +422,8 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 			if err := a.agentState.delete(); err != nil {
 				ctx.Log().WithError(err).Warnf("failed to delete agent state")
 			}
+		} else {
+			ctx.Log().Info("agent dsconnected but wasn't started")
 		}
 		ctx.Tell(a.resourcePool, sproto.RemoveAgent{Agent: ctx.Self()})
 	default:

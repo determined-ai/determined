@@ -51,6 +51,14 @@ build-race:
 		-race \
 		./cmd/determined-agent
 
+.PHONY: run
+run: build-race
+	./build/determined-agent --log-level TRACE --config-file ../tools/agent.yaml
+
+.PHONY: proxy
+proxy:
+	socat -d -d TCP-LISTEN:8081,reuseaddr,fork TCP:localhost:8080
+
 .PHONY: check
 check:
 	go mod tidy
@@ -71,7 +79,7 @@ test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@l
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg:
-	go test -race -tags=integration -coverprofile=coverage.out -covermode atomic ./...
+	go test -v -race -tags=integration -coverprofile=coverage.out -covermode atomic ./...
 
 .PHONE: buildx
 buildx:

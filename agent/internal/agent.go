@@ -11,7 +11,6 @@ import (
 
 	dclient "github.com/docker/docker/client"
 	"github.com/gorilla/websocket"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -23,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/agent/pkg/docker"
 	"github.com/determined-ai/determined/agent/pkg/events"
 	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/master/pkg/ws"
@@ -37,39 +37,24 @@ const (
 // MasterWebsocket is the type for a websocket which communicates with the master.
 type MasterWebsocket = ws.WebSocket[*aproto.AgentMessage, *aproto.MasterMessage]
 
-// Agent is the manager for all other processes in the agent. It launches Fluent Bit, the container
+// Agent is the manager for all other routines in the agent. It launches Fluent Bit, the container
 // manager, and all external connections, to Docker and the master. Once launched, it takes actions
-// directed by the master and monitors the subprocesses for failure. The agent fails and enters the
+// directed by the master and monitors the subroutines for failure. The agent fails and enters the
 // recovery flow on the failure of any component.
 type Agent struct {
-	// Configuration details
 	version string
-	opts    options.AgentOptions
-	mopts   aproto.MasterSetAgentOptions
-	devices []device.Device
-
-	// System dependencies
+	opts    options.Options
 	log     *logrus.Entry
-	manager *containers.Manager
-	socket  *MasterWebsocket
-	docker  *docker.Client
-	fluent  *fluent.Fluent
-
-	// Internal state
-	outbox chan container.Event
-
-	wg errgroupx.Group
+	wg      errgroupx.Group
 }
 
-// New constructs and runs a new agent according to the provided configuration.
-func New(parent context.Context, version string, options options.AgentOptions) *Agent {
+// NewAgent constructs and runs a new agent according to the provided configuration.
+func NewAgent(parent context.Context, version string, opts options.Options) *Agent {
 	a := &Agent{
 		version: version,
-		opts:    options,
-
-		log: logrus.WithField("component", "agent"),
-
-		wg: errgroupx.WithContext(parent),
+		opts:    opts,
+		log:     logrus.WithField("component", "agent"),
+		wg:      errgroupx.WithContext(parent),
 	}
 
 	a.wg.Go(func(ctx context.Context) error {
@@ -93,44 +78,45 @@ func (a *Agent) Wait() error {
 
 // Run sets up the agent and starts the watch loop. All configurations and system depenencies should
 // be setup _before_ the watch loop is started.
-func (a *Agent) run(ctx context.Context) (err error) {
-	a.log.Trace("detecting devices")
-	a.devices, err = detect.Detect(
-		a.opts.SlotType, a.opts.AgentID, a.opts.VisibleGPUs, a.opts.ArtificialSlots,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to detect devices: %v", a.devices)
-	}
-
+func (a *Agent) run(ctx context.Context) error {
 	a.log.Trace("connecting to master")
-	a.socket, err = a.connect(ctx, false)
+	socket, err := a.connect(ctx, false)
 	if err != nil {
-		return fmt.Errorf("initial connection to master failed")
+		return masterConnectionError{cause: fmt.Errorf("initial connection to master failed: %w", err)}
 	}
 	defer func() {
-		if a.socket == nil {
+		if socket == nil {
 			return
 		}
 
 		a.log.Trace("cleaning up socket")
-		if cErr := a.socket.Close(); err != nil {
+		if cErr := socket.Close(); err != nil {
 			a.log.WithError(cErr).Error("closing master websocket")
 		}
 	}()
 
 	a.log.Trace("reading master set agent options message")
+	var mopts aproto.MasterSetAgentOptions
 	select {
-	case msg, ok := <-a.socket.Inbox:
+	case msg, ok := <-socket.Inbox:
 		switch {
 		case !ok:
 			return fmt.Errorf("socket closed while reading setup messages")
 		case msg.MasterSetAgentOptions == nil:
 			return fmt.Errorf("master did not send setup messages")
 		default:
-			a.mopts = *msg.MasterSetAgentOptions
+			mopts = *msg.MasterSetAgentOptions
 		}
 	case <-ctx.Done():
 		return fmt.Errorf("canceled while reading setup messages: %w", ctx.Err())
+	}
+
+	a.log.Trace("detecting devices")
+	devices, err := detect.Detect(
+		a.opts.SlotType, a.opts.AgentID, a.opts.VisibleGPUs, a.opts.ArtificialSlots,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to detect devices: %v", devices)
 	}
 
 	a.log.Trace("setting up docker client")
@@ -144,41 +130,42 @@ func (a *Agent) run(ctx context.Context) (err error) {
 			a.log.WithError(cErr).Error("closing docker client")
 		}
 	}()
-	a.docker = docker.NewClient(dcl)
+	docker := docker.NewClient(dcl)
 
 	a.log.Trace("setting up fluentbit daemon")
-	a.fluent, err = fluent.Start(ctx, a.opts, a.mopts, a.docker)
+	fluent, err := fluent.Start(ctx, a.opts, mopts, docker)
 	if err != nil {
 		return fmt.Errorf("setting up fluentbit failed: %w", err)
 	}
 	defer func() {
 		a.log.Trace("cleaning up fluent client")
-		if cErr := a.fluent.Close(); err != nil {
+		if cErr := fluent.Close(); err != nil {
 			a.log.WithError(cErr).Error("closing fluentbit")
 		}
 	}()
 
 	a.log.Trace("setting up container manager")
-	a.manager, err = containers.New(a.opts, a.mopts, a.devices, a.docker, a.sender())
+	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes
+	manager, err := containers.New(a.opts, mopts, devices, docker, a.sender(outbox))
 	if err != nil {
 		return fmt.Errorf("error initializing container manager: %w", err)
 	}
 	defer func() {
 		a.log.Trace("detaching container manager")
-		a.manager.Detach()
+		manager.Detach()
 	}()
 
 	a.log.Trace("reattaching containers")
-	reattached, err := a.manager.ReattachContainers(ctx, a.mopts.ContainersToReattach)
+	reattached, err := manager.ReattachContainers(ctx, mopts.ContainersToReattach)
 	if err != nil {
 		return fmt.Errorf("failed to reattach containers: %w", err)
 	}
 
 	a.log.Trace("writing agent started message")
 	select {
-	case a.socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
+	case socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
 		Version:              a.version,
-		Devices:              a.devices,
+		Devices:              devices,
 		Label:                a.opts.Label,
 		ContainersReattached: reattached,
 	}}:
@@ -187,8 +174,7 @@ func (a *Agent) run(ctx context.Context) (err error) {
 	}
 
 	a.log.Trace("watching for ws requests and system events")
-	inbox := a.socket.Inbox
-	outbox := make(chan *aproto.MasterMessage, eventChanSize)
+	inbox := socket.Inbox
 	for {
 		select {
 		case msg, ok := <-inbox:
@@ -198,98 +184,43 @@ func (a *Agent) run(ctx context.Context) (err error) {
 				continue
 			}
 
-			if err := a.receive(ctx, msg); err != nil {
-				return err
+			switch {
+			case msg.StartContainer != nil:
+				if err := manager.StartContainer(ctx, *msg.StartContainer); err != nil {
+					a.log.WithError(err).Error("could not start container")
+				}
+			case msg.SignalContainer != nil:
+				manager.SignalContainer(ctx, *msg.SignalContainer)
+			default:
+				panic(fmt.Sprintf("unknown message received: %+v", msg))
 			}
 
 		case msg := <-outbox:
 			select {
-			case a.socket.Outbox <- msg:
+			case socket.Outbox <- msg:
 			case <-ctx.Done():
 				return nil
 			}
 
-		case <-a.socket.Done:
-			if err := a.socket.Error(); err != nil {
+		case <-socket.Done:
+			if err := socket.Error(); err != nil {
 				a.log.WithError(err).Error("socket disconnected")
 			} else {
 				a.log.Trace("socket disconnected")
 			}
 
-			a.log.Trace("detaching container manager while socket is down")
-			a.manager.Detach()
-
-			a.log.Trace("collecting pending informational messages")
-			var msgs []*aproto.MasterMessage
-			for pending := true; pending; {
-				select {
-				case msg := <-outbox:
-					if msg.ContainerStateChanged != nil {
-						continue // Skip state change messages since we do a total resync.
-					}
-					msgs = append(msgs, msg)
-				case <-ctx.Done():
-					return ctx.Err()
-				default:
-					pending = false
-				}
-			}
-
-			a.log.Trace("reconnecting master socket...")
-			ws, err := a.reconnect(ctx)
+			newSocket, newMopts, err := a.reconnectFlow(ctx, manager, devices, outbox)
 			if err != nil {
-				a.log.WithError(err).Warn("exhausted reconnect attempts, exiting")
 				return err
 			}
-			a.socket = ws
+			socket = newSocket
+			inbox = socket.Inbox
+			mopts = *newMopts // TODO: Reload fluent with new mopts.
 
-			a.log.Trace("reading master set agent options message after reconnect")
-			select {
-			case msg, ok := <-a.socket.Inbox:
-				switch {
-				case !ok:
-					return fmt.Errorf("socket closed while reading setup messages")
-				case msg.MasterSetAgentOptions == nil:
-					return fmt.Errorf("master did not send setup messages")
-				default:
-					a.mopts = *msg.MasterSetAgentOptions
-				}
-			case <-ctx.Done():
-				return fmt.Errorf("canceled while reading setup messages: %w", ctx.Err())
-			}
-
-			a.log.Trace("reattaching containers after reconnect")
-			reattached, err := a.manager.ReattachContainers(ctx, a.mopts.ContainersToReattach)
-			if err != nil {
-				return fmt.Errorf("failed to reattach containers: %w", err)
-			}
-
-			a.log.Trace("writing agent started message")
-			select {
-			case a.socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
-				Version:              a.version,
-				Devices:              a.devices,
-				Label:                a.opts.Label,
-				ContainersReattached: reattached,
-			}}:
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-
-			a.log.Trace("flushing pending informational messages from before reconnect")
-			for _, msg := range msgs {
-				select {
-				case a.socket.Outbox <- msg:
-				case <-ctx.Done():
-					return ctx.Err()
-				}
-			}
-			a.log.Trace("reconnected successfully")
-
-		case <-a.fluent.Done:
+		case <-fluent.Done:
 			a.log.Trace("fluent exited")
-			if err := a.fluent.Error(); err != nil {
-				return fmt.Errorf("restarting due fluent failure: %w", err)
+			if err := fluent.Error(); err != nil {
+				return fmt.Errorf("restarting due to fluent failure: %w", err)
 			}
 			return nil
 
@@ -298,45 +229,6 @@ func (a *Agent) run(ctx context.Context) (err error) {
 			return nil
 		}
 	}
-}
-
-func (a *Agent) receive(ctx context.Context, msg *aproto.AgentMessage) error {
-	switch {
-	case msg.StartContainer != nil:
-		if err := a.manager.StartContainer(ctx, *msg.StartContainer); err != nil {
-			a.log.WithError(err).Error("could not starting container")
-		}
-	case msg.SignalContainer != nil:
-		a.manager.SignalContainer(ctx, *msg.SignalContainer)
-	default:
-		panic(fmt.Sprintf("unknown message received: %+v", msg))
-	}
-	return nil
-}
-
-func (a *Agent) sender() events.Publisher[container.Event] {
-	return events.FuncPublisher[container.Event](
-		func(ctx context.Context, in container.Event) error {
-			var out aproto.MasterMessage
-			switch {
-			case in.StateChange != nil:
-				out.ContainerStateChanged = in.StateChange
-			case in.StatsRecord != nil:
-				out.ContainerStatsRecord = in.StatsRecord
-			case in.Log != nil:
-				out.ContainerLog = in.Log
-			default:
-				panic(fmt.Sprintf("unknown outgoing message: %+v", in))
-			}
-
-			select {
-			case a.socket.Outbox <- &out:
-				return nil
-			case <-ctx.Done():
-				return ctx.Err()
-			}
-		},
-	)
 }
 
 func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, error) {
@@ -381,21 +273,143 @@ func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, 
 
 		return nil, errors.Wrapf(err, "error dialing master: %s", b)
 	}
-	return ws.Wrap[*aproto.AgentMessage, *aproto.MasterMessage](a.opts.AgentID, conn), nil
+	return ws.Wrap[*aproto.AgentMessage, *aproto.MasterMessage](a.opts.AgentID, conn)
+}
+
+func (a *Agent) sender(out chan *aproto.MasterMessage) events.Publisher[container.Event] {
+	return events.FuncPublisher[container.Event](
+		func(ctx context.Context, in container.Event) error {
+			var msg aproto.MasterMessage
+			switch {
+			case in.StateChange != nil:
+				msg.ContainerStateChanged = in.StateChange
+			case in.StatsRecord != nil:
+				msg.ContainerStatsRecord = in.StatsRecord
+			case in.Log != nil:
+				msg.ContainerLog = in.Log
+			default:
+				panic(fmt.Sprintf("unknown outgoing message: %+v", in))
+			}
+
+			select {
+			case out <- &msg:
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		},
+	)
+}
+
+func (a *Agent) reconnectFlow(
+	ctx context.Context,
+	manager *containers.Manager,
+	devices []device.Device,
+	outbox chan *aproto.MasterMessage,
+) (
+	*MasterWebsocket,
+	*aproto.MasterSetAgentOptions,
+	error,
+) {
+	a.log.Trace("reconnecting master socket...")
+	socket, err := a.reconnect(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	a.log.Trace("reading master set agent options message after reconnect")
+	var mopts *aproto.MasterSetAgentOptions
+	select {
+	case msg, ok := <-socket.Inbox:
+		switch {
+		case !ok:
+			return nil, nil, fmt.Errorf("socket closed while reading setup messages")
+		case msg.MasterSetAgentOptions == nil:
+			return nil, nil, fmt.Errorf("master did not send setup messages")
+		default:
+			mopts = msg.MasterSetAgentOptions
+		}
+	case <-ctx.Done():
+		return nil, nil, fmt.Errorf("canceled while reading setup messages: %w", ctx.Err())
+	}
+
+	a.log.Tracef("reattaching containers after reconnect: %+v", mopts.ContainersToReattach)
+	reattached, err := manager.RevalidateContainers(ctx, mopts.ContainersToReattach)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to reattach containers: %w", err)
+	}
+	reattachedStates := make(map[cproto.ID]cproto.State)
+	for _, ack := range reattached {
+		reattachedStates[ack.Container.ID] = ack.Container.State
+	}
+	a.log.Tracef("reattached containers after reconnect: %+v", reattachedStates)
+
+	a.log.Trace("writing agent started message")
+	select {
+	case socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
+		Version:              a.version,
+		Devices:              devices,
+		Label:                a.opts.Label,
+		ContainersReattached: reattached,
+	}}:
+	case <-ctx.Done():
+		return nil, nil, ctx.Err()
+	}
+
+	a.log.Trace("sending sentinel message into output stream")
+	a.wg.Go(func(ctx context.Context) error {
+		select {
+		case outbox <- nil:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	})
+
+	a.log.Trace("flushing valid messages from before sentinel")
+	for {
+		select {
+		case msg := <-outbox:
+			if msg == nil {
+				a.log.Trace("reconnected successfully")
+				return socket, mopts, nil
+			}
+
+			if csc := msg.ContainerStateChanged; csc != nil {
+				reattachState, ok := reattachedStates[msg.ContainerStateChanged.Container.ID]
+				if ok && csc.Container.State.Before(reattachState) {
+					a.log.Tracef(
+						"dropping %s transition message for %s",
+						csc.Container.ID, csc.Container.State,
+					)
+					continue
+				}
+			}
+
+			select {
+			case socket.Outbox <- msg:
+			case <-ctx.Done():
+				return nil, nil, ctx.Err()
+			}
+		case <-ctx.Done():
+			return nil, nil, ctx.Err()
+		}
+	}
 }
 
 func (a *Agent) reconnect(ctx context.Context) (*MasterWebsocket, error) {
-	var errs error
-	for i := 0; i < a.opts.AgentReconnectAttempts; i++ {
+	for i := 1; ; i++ {
 		switch ws, err := a.connect(ctx, true); {
 		case err == nil:
 			return ws, nil
 		case errors.Is(err, aproto.ErrAgentMustReconnect):
 			a.log.Warn("received ErrAgentMustReconnect, exiting")
 			return nil, err
+		case i == a.opts.AgentReconnectAttempts:
+			a.log.WithError(err).Warn("exhausted reconnect attempts")
+			return nil, masterConnectionError{cause: err}
 		default:
 			a.log.WithError(err).Error("error reconnecting to master")
-			errs = multierror.Append(errs, err)
 		}
 
 		select {
@@ -404,7 +418,6 @@ func (a *Agent) reconnect(ctx context.Context) (*MasterWebsocket, error) {
 			return nil, ctx.Err()
 		}
 	}
-	return nil, errs
 }
 
 func (a *Agent) tlsConfig() (*tls.Config, error) {

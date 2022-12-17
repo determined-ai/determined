@@ -103,6 +103,10 @@ build-race: gen
 		-race \
 		./cmd/determined-master
 
+.PHONY: run
+run: build-race
+	./build/determined-master --config-file ../tools/master.yaml
+
 .PHONY: check
 check: check-gen
 	go mod tidy
@@ -124,7 +128,7 @@ test-intg: export DET_INTEGRATION_POSTGRES_URL ?= postgres://postgres:postgres@l
 test-intg: export DET_INTEGRATION_ES_HOST ?= localhost
 test-intg: export DET_INTEGRATION_ES_PORT ?= 9200
 test-intg:
-	go test -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
+	go test -v -tags=integration -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: pre-package
 pre-package:
