@@ -94,9 +94,9 @@ export const useUpdateWorkspace = (): ((
   const { updateWorkspaces } = context;
 
   return useCallback(
-    async (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
+    (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
       try {
-        await updateWorkspaces((prev) =>
+        updateWorkspaces((prev) =>
           Loadable.map(prev, (workspaces) =>
             workspaces.map((old) => (old.id === id ? updater(old) : old)),
           ),
