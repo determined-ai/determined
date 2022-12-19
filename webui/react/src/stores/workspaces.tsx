@@ -1,6 +1,7 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
-import { getWorkspaces } from 'services/api';
+import { createWorkspace, deleteWorkspace, getWorkspaces } from 'services/api';
+import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
@@ -85,7 +86,7 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
 export const useUpdateWorkspace = (): ((
   id: number,
   updater: (arg0: Workspace) => Workspace,
-) => Promise<void>) => {
+) => void) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use useUpdateWorkspace outside of Workspace Context');
@@ -93,12 +94,47 @@ export const useUpdateWorkspace = (): ((
   const { updateWorkspaces } = context;
 
   return useCallback(
-    async (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
+    (id: number, updater: (arg0: Workspace) => Workspace): void => {
+      updateWorkspaces((prev) =>
+        Loadable.map(prev, (workspaces) =>
+          workspaces.map((old) => (old.id === id ? updater(old) : old)),
+        ),
+      );
+    },
+    [updateWorkspaces],
+  );
+};
+
+export const useCreateWorkspace = (): ((arg0: V1PostWorkspaceRequest) => Promise<Workspace>) => {
+  const context = useContext(WorkspacesContext);
+  if (context === null) {
+    throw new Error('Attempted to use useCreateWorkspace outside of Workspace Context');
+  }
+  const { updateWorkspaces } = context;
+
+  return useCallback(
+    async (params: V1PostWorkspaceRequest): Promise<Workspace> => {
+      const w = await createWorkspace(params);
+      updateWorkspaces((prev) => Loadable.map(prev, (ws: Workspace[]) => ws.concat([w])));
+      return w;
+    },
+    [updateWorkspaces],
+  );
+};
+
+export const useDeleteWorkspace = (): ((id: number) => Promise<void>) => {
+  const context = useContext(WorkspacesContext);
+  if (context === null) {
+    throw new Error('Attempted to use useDeleteWorkspace outside of Workspace Context');
+  }
+  const { updateWorkspaces } = context;
+
+  return useCallback(
+    async (id: number): Promise<void> => {
       try {
-        await updateWorkspaces((prev) =>
-          Loadable.map(prev, (workspaces) =>
-            workspaces.map((old) => (old.id === id ? updater(old) : old)),
-          ),
+        await deleteWorkspace({ id });
+        updateWorkspaces((prev) =>
+          Loadable.map(prev, (ws: Workspace[]) => ws.filter((w) => w.id !== id)),
         );
       } catch (e) {
         handleError(e);

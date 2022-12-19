@@ -3,10 +3,10 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { paths } from 'routes/utils';
-import { deleteWorkspace } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { useDeleteWorkspace } from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 
@@ -14,13 +14,19 @@ import css from './useModalWorkspaceDelete.module.scss';
 
 interface Props {
   onClose?: () => void;
+  returnIndexOnDelete: boolean;
   workspace: Workspace;
 }
 
-const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
+const useModalWorkspaceDelete = ({
+  onClose,
+  returnIndexOnDelete,
+  workspace,
+}: Props): ModalHooks => {
   const [name, setName] = useState('');
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
+  const deleteWorkspace = useDeleteWorkspace();
 
   const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -46,8 +52,10 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
 
   const handleOk = useCallback(async () => {
     try {
-      await deleteWorkspace({ id: workspace.id });
-      routeToReactUrl(paths.workspaceList());
+      await deleteWorkspace(workspace.id);
+      if (returnIndexOnDelete) {
+        routeToReactUrl(paths.workspaceList());
+      }
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -57,7 +65,7 @@ const useModalWorkspaceDelete = ({ onClose, workspace }: Props): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [workspace.id]);
+  }, [workspace.id, deleteWorkspace, returnIndexOnDelete]);
 
   const getModalProps = useCallback(
     (name = ''): ModalFuncProps => {

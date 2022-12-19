@@ -3,9 +3,10 @@ syntax = "proto3";
 package determined.workspace.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/workspacev1";
 
-import "google/protobuf/struct.proto";
 import "determined/user/v1/user.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
 // WorkspaceState is used to track progress during a deletion.
@@ -68,6 +69,8 @@ message Workspace {
   // Optional checkpoint storage config.
   // Expects same format as experiment config's checkpoint storage.
   optional google.protobuf.Struct checkpoint_storage_config = 13;
+  // Optional date when workspace was pinned.
+  optional google.protobuf.Timestamp pinned_at = 14;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
