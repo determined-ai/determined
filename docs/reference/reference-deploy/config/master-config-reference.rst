@@ -120,10 +120,12 @@ The master supports the following configuration settings:
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
 
 .. _master-config-notebook-timeout:
--  ``notebook_timeout``: Specifies the duration in seconds before idle notebook instances are automatically terminated.
-   A notebook instance is considered to be idle if it is not receiving any HTTP
-   traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in the
-   :ref:`task configuration <command-notebook-configuration>`). Defaults to ``null``, i.e. disabled.
+
+-  ``notebook_timeout``: Specifies the duration in seconds before idle notebook instances are
+   automatically terminated. A notebook instance is considered to be idle if it is not receiving any
+   HTTP traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in
+   the :ref:`task configuration <command-notebook-configuration>`). Defaults to ``null``, i.e.
+   disabled.
 
 -  ``resource_manager``: The resource manager to use to acquire resources. Defaults to ``agent``.
 
