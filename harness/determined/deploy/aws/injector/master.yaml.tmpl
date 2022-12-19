@@ -62,6 +62,6 @@ task_container_defaults:
   {{- end }}
 {{ end }}
 
-{{ if ne .notebook_timeout "0" }}
+{{ if ne .notebook_timeout 0.0 }}
 notebook_timeout: {{ .notebook_timeout }}
 {{ end }}
