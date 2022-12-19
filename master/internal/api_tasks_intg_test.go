@@ -25,9 +25,7 @@ func errTaskNotFound(id string) error {
 	return status.Errorf(codes.NotFound, "task not found: %s", id)
 }
 
-var (
-	authzCommand *mocks.NSCAuthZ
-)
+var authzCommand *mocks.NSCAuthZ
 
 func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
