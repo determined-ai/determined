@@ -9,7 +9,7 @@ import (
 
 // NSCAuthZ describes authz methods for Notebooks, Shells, and Commands.
 type NSCAuthZ interface {
-	// GET /api/v1/commands/:nsc_id
+	// GET /api/v1/NSCs/:nsc_id
 	// GET /tasks
 	CanGetNSC(
 		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
@@ -18,17 +18,17 @@ type NSCAuthZ interface {
 	// GET /api/v1/tasks/count
 	CanGetActiveTasksCount(ctx context.Context, curUser model.User) error
 
-	// POST /api/v1/commands/:nsc_id/kill
+	// POST /api/v1/NSCs/:nsc_id/kill
 	CanTerminateNSC(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
 
-	// POST /api/v1/commands
+	// POST /api/v1/NSCs
 	CanCreateNSC(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
 
-	// PATCH /commands/:nsc_id
+	// PATCH /NSCs/:nsc_id
 	CanSetNSCsPriority(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 	) error
