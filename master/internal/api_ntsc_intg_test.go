@@ -46,7 +46,7 @@ func setupNTSCAuthzTest(t *testing.T) (
 		&task.Logger{},
 	)
 	authZNSC := &mocks.NSCAuthZ{}
-	command.AuthZProvider.Register("mock", authZNSC)
+	command.AuthZProvider.RegisterOverride("mock", authZNSC)
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 	return api, authZNSC, curUser, ctx
 }
