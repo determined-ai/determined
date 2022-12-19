@@ -135,15 +135,27 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	// check other errors are not returned with permission denied status.
 	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		errors.New("other error"),
-	)
+	).Once()
 	_, err = api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 
-// func TestAuthZCanCreateNSC(t *testing.T) {
-// 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
-// 	authz.On("CanCreateNSC", mock.Anything, curUser).Return(fmt.Errorf("deny"))
-// 	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
-// 	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
-// }
+func TestAuthZCanCreateNSC(t *testing.T) {
+	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+
+	// check permission errors are returned with permission denied status.
+	authz.On("CanCreateNSC", mock.Anything, curUser, mock.Anything).Return(
+		authz2.PermissionDeniedError{},
+	).Once()
+	_, err := api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+
+	// check other errors are not returned with permission denied status.
+	authz.On("CanCreateNSC", mock.Anything, curUser, mock.Anything).Return(
+		errors.New("other error"),
+	).Once()
+	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
+	require.NotNil(t, err)
+	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
+}

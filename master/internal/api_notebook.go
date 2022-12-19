@@ -185,7 +185,7 @@ func (a *apiServer) LaunchNotebook(
 	if err = command.AuthZProvider.Get().CanCreateNSC(
 		ctx, *user, model.AccessScopeID(workspaceID),
 	); err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
 
 	spec.WatchProxyIdleTimeout = true
