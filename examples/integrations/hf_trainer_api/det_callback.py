@@ -50,7 +50,9 @@ class DetCallback(TrainerCallback):
         if state.is_world_process_zero:
             metrics, metric_type = self._get_metrics(logs)
             if metric_type == TRAIN:
-                # Prevent reporting metrics for the same step twice.
+                # Prevents reporting metrics for the same step twice. This happens after
+                # training is completed and average training metrics are reported with
+                # the same step as the in-progress training metrics.
                 if self.last_metrics["train_step"] != state.global_step:
                     self.core_context.train.report_training_metrics(
                         steps_completed=state.global_step, metrics=metrics
@@ -58,7 +60,9 @@ class DetCallback(TrainerCallback):
                     metrics["train_step"] = state.global_step
 
             elif metric_type == EVAL:
-                # Prevent reporting metrics for the same step twice.
+                # Prevents reporting metrics for the same step twice. This happens when
+                # after-training evaluation is completed, and it is reported with the same
+                # step as the last during-training evaluation.
                 if self.last_metrics["eval_step"] != state.global_step:
                     self.core_context.train.report_validation_metrics(
                         steps_completed=state.global_step, metrics=metrics
