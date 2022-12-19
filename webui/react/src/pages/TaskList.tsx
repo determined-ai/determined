@@ -544,11 +544,7 @@ const TaskList: React.FC = () => {
   );
 
   const JupyterLabButton = () => {
-    return (
-      <Button onClick={() => openJupyterLabModal()}>
-        Launch JupyterLab
-      </Button>
-    );
+    return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
   };
 
   return (

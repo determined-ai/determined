@@ -101,63 +101,60 @@ const NavigationTabbar: React.FC = () => {
 
   if (!showNavigation) return null;
 
-  const overflowActionsTop = [{
-    render: () => (
-      <AvatarCard
-        className={css.user}
-        darkLight={ui.darkLight}
-        key="avatar"
-        user={authUser}
-      />
-    ),
-  },
-  {
-    icon: 'settings',
-    label: 'Settings',
-    onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.settings('account')),
-  },
-  {
-    icon: 'user',
-    label: 'Sign out',
-    onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
-  }];
+  const overflowActionsTop = [
+    {
+      render: () => (
+        <AvatarCard className={css.user} darkLight={ui.darkLight} key="avatar" user={authUser} />
+      ),
+    },
+    {
+      icon: 'settings',
+      label: 'Settings',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.settings('account')),
+    },
+    {
+      icon: 'user',
+      label: 'Sign out',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
+    },
+  ];
 
   if (!dashboardEnabled) {
-    overflowActionsTop.push(
-      {
-        icon: 'jupyter-lab',
-        label: 'Launch JupyterLab',
-        onClick: () => handleLaunchJupyterLab(),
-      },
-    );
+    overflowActionsTop.push({
+      icon: 'jupyter-lab',
+      label: 'Launch JupyterLab',
+      onClick: () => handleLaunchJupyterLab(),
+    });
   }
 
-  const overflowActionsBottom = [{
-    icon: 'logs',
-    label: 'Cluster Logs',
-    onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.clusterLogs()),
-  },
-  {
-    external: true,
-    icon: 'docs',
-    label: 'Docs',
-    path: paths.docs(),
-    popout: true,
-  },
-  {
-    external: true,
-    icon: 'cloud',
-    label: 'API (Beta)',
-    path: paths.docs('/rest-api/'),
-    popout: true,
-  },
-  {
-    external: true,
-    icon: 'pencil',
-    label: 'Feedback',
-    path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
-    popout: true,
-  }];
+  const overflowActionsBottom = [
+    {
+      icon: 'logs',
+      label: 'Cluster Logs',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.clusterLogs()),
+    },
+    {
+      external: true,
+      icon: 'docs',
+      label: 'Docs',
+      path: paths.docs(),
+      popout: true,
+    },
+    {
+      external: true,
+      icon: 'cloud',
+      label: 'API (Beta)',
+      path: paths.docs('/rest-api/'),
+      popout: true,
+    },
+    {
+      external: true,
+      icon: 'pencil',
+      label: 'Feedback',
+      path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
+      popout: true,
+    },
+  ];
 
   return (
     <nav className={css.base}>
@@ -204,10 +201,7 @@ const NavigationTabbar: React.FC = () => {
         onCancel={handleActionSheetCancel}
       />
       <ActionSheet
-        actions={[
-          ...overflowActionsTop,
-          ...overflowActionsBottom,
-        ]}
+        actions={[...overflowActionsTop, ...overflowActionsBottom]}
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />

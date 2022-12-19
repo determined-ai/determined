@@ -8,7 +8,12 @@ import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
-import { experimentNameRenderer, relativeTimeRenderer, taskNameRenderer, taskTypeRenderer } from 'components/Table/Table';
+import {
+  experimentNameRenderer,
+  relativeTimeRenderer,
+  taskNameRenderer,
+  taskTypeRenderer,
+} from 'components/Table/Table';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { paths } from 'routes/utils';
 import {
@@ -86,23 +91,31 @@ const Dashboard: React.FC = () => {
     [canceler],
   );
 
-  const fetchExperiments = useCallback(async (user: DetailedUser) => {
-    const response = await getExperiments({
-      limit: FETCH_LIMIT,
-      orderBy: 'ORDER_BY_DESC',
-      sortBy: 'SORT_BY_START_TIME',
-      userIds: [user.id],
-    }, {
-      signal: canceler.signal,
-    });
-    setExperiments(response.experiments);
-  }, [canceler]);
+  const fetchExperiments = useCallback(
+    async (user: DetailedUser) => {
+      const response = await getExperiments(
+        {
+          limit: FETCH_LIMIT,
+          orderBy: 'ORDER_BY_DESC',
+          sortBy: 'SORT_BY_START_TIME',
+          userIds: [user.id],
+        },
+        {
+          signal: canceler.signal,
+        },
+      );
+      setExperiments(response.experiments);
+    },
+    [canceler],
+  );
 
   const fetchProjects = useCallback(async () => {
-    const projects = await getProjectsByUserActivity({ limit: FETCH_LIMIT },
+    const projects = await getProjectsByUserActivity(
+      { limit: FETCH_LIMIT },
       {
         signal: canceler.signal,
-      });
+      },
+    );
     setProjects(projects);
   }, [canceler]);
 
@@ -121,7 +134,8 @@ const Dashboard: React.FC = () => {
       (experiments as Submission[])
         .concat(tasks as Submission[])
         .sort((a, b) => dateTimeStringSorter(b.startTime, a.startTime))
-        .slice(0, DISPLAY_LIMIT));
+        .slice(0, DISPLAY_LIMIT),
+    );
   }, [experiments, tasks]);
 
   useEffect(() => {
@@ -132,17 +146,11 @@ const Dashboard: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const JupyterLabButton = () => {
-    return (
-      <Button onClick={() => openJupyterLabModal()}>
-        Launch JupyterLab
-      </Button>
-    );
+    return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
   };
 
   return (
-    <Page
-      options={<JupyterLabButton />}
-      title="Home">
+    <Page options={<JupyterLabButton />} title="Home">
       <Section title="Recent projects">
         <Grid
           count={projects.length}
@@ -199,7 +207,9 @@ const Dashboard: React.FC = () => {
                   return (
                     <Breadcrumb>
                       <Breadcrumb.Item>
-                        <Link path={paths.workspaceDetails(row.workspaceId)}>{row.workspaceName}</Link>
+                        <Link path={paths.workspaceDetails(row.workspaceId)}>
+                          {row.workspaceName}
+                        </Link>
                       </Breadcrumb.Item>
                       <Breadcrumb.Item>
                         <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
