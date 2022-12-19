@@ -44,9 +44,9 @@ interface ModalState {
   error?: string;
   experiment?: ExperimentBase;
   isAdvancedMode: boolean;
+  open: boolean;
   trial?: TrialItem;
   type: CreateExperimentType;
-  open: boolean;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -96,8 +96,8 @@ const DEFAULT_MODAL_STATE = {
   config: {},
   configString: '',
   isAdvancedMode: false,
-  type: CreateExperimentType.Fork,
   open: false,
+  type: CreateExperimentType.Fork,
 };
 
 const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
@@ -369,12 +369,12 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         okText: type,
         onCancel: handleCancel,
         onOk: handleOk,
+        open,
         title: (
           <div className={css.title}>
             <Icon name="fork" /> {titleLabel}
           </div>
         ),
-        open,
         width: isAdvancedMode ? (isFork ? 760 : 1000) : undefined,
       };
 
@@ -422,9 +422,9 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         configString: yaml.dump(publicConfig),
         experiment,
         isAdvancedMode: false,
+        open: true,
         trial,
         type,
-        open: true,
       };
       return isEqual(prev, newModalState) ? prev : newModalState;
     });
