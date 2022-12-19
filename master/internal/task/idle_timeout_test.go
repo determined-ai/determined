@@ -6,6 +6,7 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
@@ -33,8 +34,10 @@ func TestIdleTimeoutWatcher(t *testing.T) {
 
 	m := MockIdleTimeoutWatchee{
 		idleTimeoutWatcher: IdleTimeoutWatcher{
-			Timeout:              tickInterval,
-			UseRunnerState:       true,
+			IdleTimeoutConfig: sproto.IdleTimeoutConfig{
+				TimeoutDuration: tickInterval,
+				UseRunnerState:  true,
+			},
 			lastExplicitActivity: &lastActivity,
 			Action: func(ctx *actor.Context) {
 				actionDone = true

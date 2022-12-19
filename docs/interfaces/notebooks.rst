@@ -14,10 +14,12 @@ Determined Notebooks have the following benefits:
    dependencies using images and virtual environments. The HTTP requests are passed through the
    master proxy from and to the container.
 
--  Jupyter Notebooks are automatically terminated if they are idle for a configurable duration to
+-  Jupyter Notebooks can be automatically terminated if they are idle for a configurable duration to
    release resources. A notebook instance is considered to be idle if it is not receiving any HTTP
    traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in the
-   :ref:`task configuration <command-notebook-configuration>`).
+   :ref:`task configuration <command-notebook-configuration>`). To enable this behavior by default,
+   set ``notebook_timeout`` :ref:`option in your master config<master-config-notebook-timeout>`. To enable it for a particular notebook,
+   set ``idle_timeout`` option in the notebook config.
 
 After a Notebook is terminated, it is not possible to restore the files that are not stored in the
 persistent directories. **You need to ensure that the cluster is configured to mount persistent

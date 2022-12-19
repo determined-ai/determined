@@ -211,6 +211,11 @@ Parameters:
     Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
     Default: determined
 
+  NotebookTimeout:
+    Type: Number
+    Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
+    Default: 0
+
   MountFSxId:
     Type: String
     Description: preexisting FSx ID to mount
@@ -284,6 +289,10 @@ Parameters:
           cpu: {{ .cpu_env_image }}
           gpu: {{ .gpu_env_image }}
         {{- end }}
+      {{ end }}
+
+      {{ if ne .notebook_timeout 0 }}
+      notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
   ### END INJECT CODE
 
@@ -879,6 +888,7 @@ Resources:
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
+            notebook_timeout: ${NotebookTimeout}
 
             bind_mounts:
               - host_path: /mnt/fsx

@@ -211,6 +211,11 @@ Parameters:
     Description: Prefix for output CloudWatch log group (the full log group will be "/<prefix>/<stack>")
     Default: determined
 
+  NotebookTimeout:
+    Type: Number
+    Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
+    Default: 0
+
   MasterConfigTemplate:
     Type: String
     Description: Master config template
@@ -279,6 +284,10 @@ Parameters:
           cpu: {{ .cpu_env_image }}
           gpu: {{ .gpu_env_image }}
         {{- end }}
+      {{ end }}
+
+      {{ if ne .notebook_timeout 0 }}
+      notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
   ### END INJECT CODE
 
@@ -752,7 +761,7 @@ Resources:
         MetadataOptions:
           HttpTokens: required
           HttpPutResponseHopLimit: 2
-        
+
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -867,6 +876,7 @@ Resources:
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
+            notebook_timeout: ${NotebookTimeout}
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc

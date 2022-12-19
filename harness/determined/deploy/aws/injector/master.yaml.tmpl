@@ -61,3 +61,7 @@ task_container_defaults:
     gpu: {{ .gpu_env_image }}
   {{- end }}
 {{ end }}
+
+{{ if ne .notebook_timeout 0 }}
+notebook_timeout: {{ .notebook_timeout }}
+{{ end }}

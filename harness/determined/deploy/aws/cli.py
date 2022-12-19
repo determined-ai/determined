@@ -200,6 +200,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.AGENT_IMAGE_NAME: agent_image_name,
         constants.cloudformation.DOCKER_USER: args.docker_user,
         constants.cloudformation.DOCKER_PASS: args.docker_pass,
+        constants.cloudformation.NOTEBOOK_TIMEOUT: args.notebook_timeout,
     }
 
     if args.master_config_template_path:
@@ -565,6 +566,12 @@ args_description = Cmd(
                     "--docker-pass",
                     type=str,
                     help="Docker password used to pull the Determined master and agent images",
+                ),
+                Arg(
+                    "--notebook-timeout",
+                    type=int,
+                    help="Specifies the duration in seconds before idle notebook instances "
+                    "are automatically terminated",
                 ),
             ],
         ),

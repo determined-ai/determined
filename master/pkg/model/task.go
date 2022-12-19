@@ -363,7 +363,7 @@ func (t TaskLog) Proto() (*apiv1.TaskLogsResponse, error) {
 	}
 
 	if t.RankID != nil {
-		var id = int32(*t.RankID)
+		id := int32(*t.RankID)
 		resp.RankId = &id
 	}
 
