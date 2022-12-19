@@ -36,8 +36,7 @@ func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
 	api, curUser, ctx := setupAPITest(t)
-	var master *Master
-	master = api.m
+	var master *Master = api.m
 	command.RegisterAPIHandler(
 		master.system,
 		nil,
@@ -54,18 +53,8 @@ func setupNTSCAuthzTest(t *testing.T) (
 	return api, authZNSC, curUser, ctx
 }
 
-func TestTasksCountAuthZ(t *testing.T) {
-	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
-	authz.On("CanGetActiveTasksCount", mock.Anything, curUser).Return(fmt.Errorf("deny"))
-	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
-	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
-}
-
-func TestCanGetNTSC(t *testing.T) {
-	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
-
+func setupMockNBActor(t *testing.T, master *Master) model.TaskID {
 	nbID := model.NewTaskID()
-	var master *Master = api.m
 	addr := notebooksAddr.Child(nbID)
 	ref, newCreated := master.system.ActorOf(addr, actor.ActorFunc(func(context *actor.Context) error {
 		nb := notebookv1.Notebook{Id: nbID.String()}
@@ -78,7 +67,20 @@ func TestCanGetNTSC(t *testing.T) {
 	}))
 	require.NotNil(t, ref)
 	require.Equal(t, newCreated, true)
+	return nbID
+}
 
+func TestTasksCountAuthZ(t *testing.T) {
+	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+	authz.On("CanGetActiveTasksCount", mock.Anything, curUser).Return(fmt.Errorf("deny"))
+	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
+	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
+}
+
+func TestCanGetNTSC(t *testing.T) {
+	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
+
+	nbID := setupMockNBActor(t, api.m)
 	// check permission errors are returned withe permission denied status.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		false, nil,
@@ -97,21 +99,7 @@ func TestCanGetNTSC(t *testing.T) {
 
 func TestAuthZCanTerminateNSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
-	nbID := model.NewTaskID()
-	var master *Master = api.m
-	addr := notebooksAddr.Child(nbID)
-	ref, newCreated := master.system.ActorOf(addr, actor.ActorFunc(func(context *actor.Context) error {
-		nb := notebookv1.Notebook{Id: nbID.String()}
-		if context.ExpectingResponse() {
-			context.Respond(&apiv1.GetNotebookResponse{
-				Notebook: &nb,
-			})
-		}
-		return nil
-	}))
-	require.NotNil(t, ref)
-	require.Equal(t, newCreated, true)
-
+	nbID := setupMockNBActor(t, api.m)
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		true, nil,
 	)
