@@ -112,16 +112,20 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.NotNil(t, ref)
 	require.Equal(t, newCreated, true)
 
+	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
+		true, nil,
+	)
+
 	// check permission errors are returned withe permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
-		&authz2.PermissionDeniedError{},
+		authz2.PermissionDeniedError{},
 	).Once()
 	_, err := api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: string(nbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// check other errors are not returned withe permission denied status.
-	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		false, errors.New("other error"),
+	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
+		errors.New("other error"),
 	)
 	_, err = api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
