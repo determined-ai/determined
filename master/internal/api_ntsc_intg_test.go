@@ -33,8 +33,6 @@ import (
 A set of tests to ensure that the NTSC APIs call the expected AuthZ methods.
 */
 
-var authZNSC *mocks.NSCAuthZ
-
 func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
@@ -47,12 +45,9 @@ func setupNTSCAuthzTest(t *testing.T) (
 		master.rm,
 		&task.Logger{},
 	)
-	if authZNSC == nil {
-		authZNSC = &mocks.NSCAuthZ{}
-		command.AuthZProvider.Register("mock", authZNSC)
-	}
+	authZNSC := &mocks.NSCAuthZ{}
+	command.AuthZProvider.Register("mock", authZNSC)
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
-
 	return api, authZNSC, curUser, ctx
 }
 
