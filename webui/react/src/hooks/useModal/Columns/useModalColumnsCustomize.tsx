@@ -33,10 +33,6 @@ const useModalColumnsCustomize = ({
     initialVisibleColumns ?? defaultVisibleColumns,
   );
 
-  const handleSave = useCallback(() => {
-    onSave?.(visibleColumns);
-  }, [onSave, visibleColumns]);
-
   const modalContent = useMemo((): React.ReactNode => {
     return (
       <Transfer
@@ -58,10 +54,12 @@ const useModalColumnsCustomize = ({
       icon: null,
       maskClosable: true,
       okText: 'Save',
-      onOk: handleSave,
+      onOk: () => {
+        onSave?.(visibleColumns);
+      },
       title: 'Customize Columns',
     };
-  }, [modalContent, handleSave]);
+  }, [modalContent, onSave, visibleColumns]);
 
   const modalOpen = useCallback(
     ({ initialModalProps }: ShowModalProps) => {
