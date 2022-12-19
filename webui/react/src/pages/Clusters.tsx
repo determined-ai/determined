@@ -59,29 +59,34 @@ const Clusters: React.FC = () => {
   );
 
   const tabItems: TabsProps['items'] = useMemo(() => {
-    const clustersOverview: Readonly<TabsProps['items']> = [
-      { children: <ClustersOverview />, key: TabType.Overview, label: 'Overview' },
-    ];
-    const historicalUsage: Readonly<TabsProps['items']> = [
-      {
-        children: <ClusterHistoricalUsage />,
-        key: TabType.HistoricalUsage,
-        label: 'Historical Usage',
-      },
-    ];
-    const masterLogs: Readonly<TabsProps['items']> = [
-      { children: <ClusterLogs />, key: TabType.Logs, label: 'Master Logs' },
-    ];
+    type Unboxed<T> = T extends (infer U)[] ? U : T;
+    type TabType = Unboxed<TabsProps['items']>;
+
+    const clustersOverview: Readonly<TabType> = {
+      children: <ClustersOverview />,
+      key: TabType.Overview,
+      label: 'Overview',
+    };
+    const historicalUsage: Readonly<TabType> = {
+      children: <ClusterHistoricalUsage />,
+      key: TabType.HistoricalUsage,
+      label: 'Historical Usage',
+    };
+    const masterLogs: Readonly<TabType> = {
+      children: <ClusterLogs />,
+      key: TabType.Logs,
+      label: 'Master Logs',
+    };
     const tabs: TabsProps['items'] = [];
 
     if (rbacEnabled) {
-      tabs.push(...clustersOverview);
+      tabs.push(clustersOverview);
       if (canAdministrateUsers) {
-        tabs.push(...historicalUsage, ...masterLogs);
+        tabs.push(historicalUsage, masterLogs);
       }
     } else {
       // if RBAC is not enabled, show all tabs
-      tabs.push(...clustersOverview, ...historicalUsage, ...masterLogs);
+      tabs.push(clustersOverview, historicalUsage, masterLogs);
     }
 
     return tabs;
