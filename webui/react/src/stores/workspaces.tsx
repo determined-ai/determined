@@ -86,7 +86,7 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
 export const useUpdateWorkspace = (): ((
   id: number,
   updater: (arg0: Workspace) => Workspace,
-) => Promise<void>) => {
+) => void) => {
   const context = useContext(WorkspacesContext);
   if (context === null) {
     throw new Error('Attempted to use useUpdateWorkspace outside of Workspace Context');
@@ -94,16 +94,12 @@ export const useUpdateWorkspace = (): ((
   const { updateWorkspaces } = context;
 
   return useCallback(
-    (id: number, updater: (arg0: Workspace) => Workspace): Promise<void> => {
-      try {
-        updateWorkspaces((prev) =>
-          Loadable.map(prev, (workspaces) =>
-            workspaces.map((old) => (old.id === id ? updater(old) : old)),
-          ),
-        );
-      } catch (e) {
-        handleError(e);
-      }
+    (id: number, updater: (arg0: Workspace) => Workspace): void => {
+      updateWorkspaces((prev) =>
+        Loadable.map(prev, (workspaces) =>
+          workspaces.map((old) => (old.id === id ? updater(old) : old)),
+        ),
+      );
     },
     [updateWorkspaces],
   );
