@@ -8,7 +8,7 @@ import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
-import { experimentNameRenderer, relativeTimeRenderer } from 'components/Table/Table';
+import { experimentNameRenderer, relativeTimeRenderer, taskNameRenderer, taskTypeRenderer } from 'components/Table/Table';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { paths } from 'routes/utils';
 import {
@@ -20,6 +20,7 @@ import {
   getTensorBoards,
 } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import usePolling from 'shared/hooks/usePolling';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import { useAuth } from 'stores/auth';
 import { ShirtSize } from 'themes';
@@ -28,7 +29,8 @@ import { Loadable } from 'utils/loadable';
 
 import css from './Dashboard.module.scss';
 
-const FETCH_LIMIT = 12;
+const FETCH_LIMIT = 25;
+const DISPLAY_LIMIT = 25;
 
 const Dashboard: React.FC = () => {
   const [experiments, setExperiments] = useState<ExperimentItem[]>([]);
@@ -36,6 +38,7 @@ const Dashboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [canceler] = useState(new AbortController());
+  const [tableLoading, setTableLoading] = useState<boolean>(true);
   const loadableAuth = useAuth();
   const authUser = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.user,
@@ -103,19 +106,30 @@ const Dashboard: React.FC = () => {
     setProjects(projects);
   }, [canceler]);
 
-  useEffect(() => {
-    fetchProjects();
+  const fetchAll = useCallback(async () => {
+    await fetchProjects();
     if (!authUser) return;
-    fetchExperiments(authUser);
-    fetchTasks(authUser);
+    await fetchExperiments(authUser);
+    await fetchTasks(authUser);
+    setTableLoading(false);
   }, [authUser, fetchExperiments, fetchTasks, fetchProjects]);
+
+  const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
   useEffect(() => {
     setSubmissions(
       (experiments as Submission[])
         .concat(tasks as Submission[])
-        .sort((a, b) => dateTimeStringSorter(b.startTime, a.startTime)));
+        .sort((a, b) => dateTimeStringSorter(b.startTime, a.startTime))
+        .slice(0, DISPLAY_LIMIT));
   }, [experiments, tasks]);
+
+  useEffect(() => {
+    return () => {
+      canceler.abort();
+      stopPolling();
+    };
+  }, [canceler, stopPolling]);
 
   const JupyterLabButton = () => {
     return (
@@ -158,23 +172,23 @@ const Dashboard: React.FC = () => {
             },
             {
               dataIndex: 'projectId',
-              render: (projectId) => {
+              render: (projectId, row, index) => {
                 if (projectId) {
                   return <Icon name="experiment" title="Experiment" />;
                 } else {
-                  return <Icon name="tasks" title="Task" />;
+                  return taskTypeRenderer(row.type, row, index);
                 }
               },
               width: 1,
             },
             {
               dataIndex: 'name',
-              render: (name, row) => {
+              render: (name, row, index) => {
                 if (row.projectId) {
                   // only for Experiments, not Tasks:
                   return experimentNameRenderer(name, row);
                 } else {
-                  return name;
+                  return taskNameRenderer(row.id, row, index);
                 }
               },
             },
@@ -210,6 +224,8 @@ const Dashboard: React.FC = () => {
             },
           ]}
           dataSource={submissions}
+          loading={tableLoading}
+          pagination={false}
           rowKey="id"
           showHeader={false}
         />
