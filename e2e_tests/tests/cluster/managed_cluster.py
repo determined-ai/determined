@@ -3,7 +3,6 @@ import json
 import os
 import subprocess
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Union, cast
 
@@ -12,7 +11,7 @@ import pytest
 from tests import config as conf
 
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
-from .utils import get_master_port
+from .utils import now_ts, set_master_port
 
 
 class Cluster(metaclass=abc.ABCMeta):
@@ -42,6 +41,28 @@ DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devc
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
+
+
+class Cluster(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def __init__(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def kill_master(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def restart_master(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def restart_agent(self, wait_for_amnesia: bool = True, wait_for_agent: bool = True) -> None:
+        pass
+
+    @abc.abstractmethod
+    def ensure_agent_ok(self) -> None:
+        pass
 
 
 def get_agent_data(master_url: str) -> List[Dict[str, Any]]:
@@ -197,24 +218,17 @@ def managed_cluster_session_priority_scheduler(request: Any) -> Iterator[Managed
         yield mc
 
 
-def _now_ts() -> str:
-    return datetime.now(timezone.utc).astimezone().isoformat()
-
-
 @pytest.fixture
 def managed_cluster_priority_scheduler(
     managed_cluster_session_priority_scheduler: ManagedCluster, request: Any
 ) -> Iterator[ManagedCluster]:
     config = str(DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH)
-    lc = conf.load_config(config_path=config)
-    port = get_master_port(lc)
-    set_master_port_conf(port)
-
+    set_master_port(config)
     nodeid = request.node.nodeid
-    managed_cluster_session_priority_scheduler.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
+    managed_cluster_session_priority_scheduler.log_marker(f"pytest [{now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session_priority_scheduler
     managed_cluster_session_priority_scheduler.log_marker(
-        f"pytest [{_now_ts()}] {nodeid} teardown\n"
+        f"pytest [{now_ts()}] {nodeid} teardown\n"
     )
 
 
@@ -224,15 +238,8 @@ def managed_cluster_restarts(
 ) -> Iterator[ManagedCluster]:  # check if priority scheduler or not using config.
     config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
     # port number is same for both reattach on and off config files so you can use either.
-    lc = conf.load_config(config_path=config)
-    port = get_master_port(lc)
-    set_master_port_conf(port)
-
+    set_master_port(config)
     nodeid = request.node.nodeid
-    managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} setup\n")
+    managed_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} setup\n")
     yield managed_cluster_session
-    managed_cluster_session.log_marker(f"pytest [{_now_ts()}] {nodeid} teardown\n")
-
-
-def set_master_port_conf(port: str) -> None:
-    conf.MASTER_PORT = port
+    managed_cluster_session.log_marker(f"pytest [{now_ts()}] {nodeid} teardown\n")
