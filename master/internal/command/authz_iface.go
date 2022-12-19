@@ -5,7 +5,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // NSCAuthZ describes authz methods for Notebooks, Shells, and Commands.
@@ -31,7 +30,7 @@ type NSCAuthZ interface {
 
 	// PATCH /commands/:nsc_id
 	CanSetNSCsPriority(
-		ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 	) error
 }
 
