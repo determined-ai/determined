@@ -153,12 +153,11 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
-	// FIXME: this should be CanSetNSCsPriority
-	err = command.AuthZProvider.Get().CanTerminateNSC(
-		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
+	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), int(req.Priority),
 	)
 	if err != nil {
-		return nil, err
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
 
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
