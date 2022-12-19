@@ -46,7 +46,7 @@ interface ModalState {
   isAdvancedMode: boolean;
   trial?: TrialItem;
   type: CreateExperimentType;
-  visible: boolean;
+  open: boolean;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -97,7 +97,7 @@ const DEFAULT_MODAL_STATE = {
   configString: '',
   isAdvancedMode: false,
   type: CreateExperimentType.Fork,
-  visible: false,
+  open: false,
 };
 
 const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
@@ -351,7 +351,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
 
   const getModalProps = useCallback(
     (state: ModalState): ModalFuncProps | undefined => {
-      const { experiment, isAdvancedMode, trial, type, visible } = state;
+      const { experiment, isAdvancedMode, trial, type, open } = state;
       const isFork = type === CreateExperimentType.Fork;
       if (!experiment || (!isFork && !trial)) return;
 
@@ -374,7 +374,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
             <Icon name="fork" /> {titleLabel}
           </div>
         ),
-        visible,
+        open,
         width: isAdvancedMode ? (isFork ? 760 : 1000) : undefined,
       };
 
@@ -424,7 +424,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
         isAdvancedMode: false,
         trial,
         type,
-        visible: true,
+        open: true,
       };
       return isEqual(prev, newModalState) ? prev : newModalState;
     });
@@ -442,7 +442,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (isEqual(modalState, prevModalState) || !modalState.visible) return;
+    if (isEqual(modalState, prevModalState) || !modalState.open) return;
     openOrUpdate(getModalProps(modalState));
   }, [getModalProps, modalRef, modalState, openOrUpdate, prevModalState]);
 
