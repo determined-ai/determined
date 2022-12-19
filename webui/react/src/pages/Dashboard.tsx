@@ -25,6 +25,7 @@ import {
   getTensorBoards,
 } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import { useAuth } from 'stores/auth';
@@ -44,6 +45,7 @@ const Dashboard: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [canceler] = useState(new AbortController());
   const [tableLoading, setTableLoading] = useState<boolean>(true);
+  const [projectsLoading, setProjectsLoading] = useState<boolean>(true);
   const loadableAuth = useAuth();
   const authUser = Loadable.match(loadableAuth.auth, {
     Loaded: (auth) => auth.user,
@@ -121,6 +123,7 @@ const Dashboard: React.FC = () => {
 
   const fetchAll = useCallback(async () => {
     await fetchProjects();
+    setProjectsLoading(false);
     if (!authUser) return;
     await fetchExperiments(authUser);
     await fetchTasks(authUser);
@@ -152,20 +155,22 @@ const Dashboard: React.FC = () => {
   return (
     <Page options={<JupyterLabButton />} title="Home">
       <Section title="Recent projects">
-        <Grid
-          count={projects.length}
-          gap={ShirtSize.Medium}
-          minItemWidth={250}
-          mode={GridMode.ScrollableRow}>
-          {projects.map((project) => (
-            <ProjectCard
-              curUser={authUser}
-              fetchProjects={fetchProjects}
-              key={project.id}
-              project={project}
-            />
-          ))}
-        </Grid>
+        <Spinner spinning={projectsLoading}>
+          <Grid
+            count={projects.length}
+            gap={ShirtSize.Medium}
+            minItemWidth={250}
+            mode={GridMode.ScrollableRow}>
+            {projects.map((project) => (
+              <ProjectCard
+                curUser={authUser}
+                fetchProjects={fetchProjects}
+                key={project.id}
+                project={project}
+              />
+            ))}
+          </Grid>
+        </Spinner>
       </Section>
       <Section title="Recently submitted">
         <ResponsiveTable<Submission>
