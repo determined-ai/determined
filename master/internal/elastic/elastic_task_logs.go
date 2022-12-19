@@ -395,6 +395,8 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 					},
 				})
 		case api.FilterOperationInOrNull:
+			// used to specify value matches int[] or is nil
+			// see https://stackoverflow.com/questions/48563275/
 			values, err := interfaceToSlice(f.Values)
 			if err != nil {
 				panic(fmt.Errorf("invalid IN OR NULL filter values: %w", err))
@@ -421,8 +423,12 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 			}
 			inTerms = append(inTerms,
 				jsonObj{
-					"term": jsonObj{
-						f.Field: nil,
+					"bool": jsonObj{
+						"must_not": jsonObj{
+							"exists": jsonObj{
+								f.Field: f.Field,
+							},
+						},
 					},
 				})
 			terms = append(terms,
