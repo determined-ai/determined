@@ -426,7 +426,7 @@ func filtersToElastic(fs []api.Filter) []jsonObj {
 					"bool": jsonObj{
 						"must_not": jsonObj{
 							"exists": jsonObj{
-								f.Field: f.Field,
+								"field": f.Field,
 							},
 						},
 					},
