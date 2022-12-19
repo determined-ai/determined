@@ -9,7 +9,6 @@ export interface Props {
   className?: string;
   darkLight: DarkLight;
   user?: DetailedUser | User;
-  userId?: number;
 }
 
 const UserAvatarCard: React.FC<Props> = ({ className, darkLight, user }) => (

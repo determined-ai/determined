@@ -3,6 +3,7 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
+import GroupAvatar from 'components/GroupAvatar';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
@@ -215,35 +216,9 @@ const WorkspaceMembers: React.FC<Props> = ({
       if (isUser(record)) {
         const member = record as User;
         return <UserAvatar table userId={member.id} />;
-        // return (
-        //   <>
-        //     <div className={css.userAvatarRowItem}>
-        //       <Avatar size={Size.Medium} userId={member.id} />
-        //     </div>
-        //     <div className={css.userRowItem}>
-        //       {member?.displayName ? (
-        //         <>
-        //           <div>{member.displayName}</div>
-        //           <div>{member.username}</div>
-        //         </>
-        //       ) : (
-        //         <div>{member.username}</div>
-        //       )}
-        //     </div>
-        //   </>
-        // );
       }
       const group = record as V1GroupDetails;
-      return (
-        <>
-          <div className={css.userAvatarRowItem}>
-            <Icon name="group" />
-          </div>
-          <div className={css.userRowItem}>
-            <div>{group.name}</div>
-          </div>
-        </>
-      );
+      return <GroupAvatar groupName={group.name} />;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => (
