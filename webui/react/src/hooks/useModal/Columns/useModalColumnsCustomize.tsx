@@ -28,7 +28,7 @@ const useModalColumnsCustomize = ({
   onSave,
 }: Props): ModalHooks => {
   const columnList = useRef(columns).current; // This is only to prevent rerendering
-  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
+  const { modalOpen: openOrUpdate, modalClose, modalRef, ...modalHook } = useModal();
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     initialVisibleColumns ?? defaultVisibleColumns,
   );
@@ -56,10 +56,11 @@ const useModalColumnsCustomize = ({
       okText: 'Save',
       onOk: () => {
         onSave?.(visibleColumns);
+        modalClose();
       },
       title: 'Customize Columns',
     };
-  }, [modalContent, onSave, visibleColumns]);
+  }, [modalContent, onSave, visibleColumns, modalClose]);
 
   const modalOpen = useCallback(
     ({ initialModalProps }: ShowModalProps) => {
@@ -75,13 +76,9 @@ const useModalColumnsCustomize = ({
   useEffect(() => {
     const modal = modalRef.current;
     if (modal) openOrUpdate(modalProps);
-
-    return () => {
-      if (modal) modalRef.current = undefined;
-    };
   }, [modalProps, modalRef, openOrUpdate]);
 
-  return { modalOpen, modalRef, ...modalHook };
+  return { modalClose, modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalColumnsCustomize;
