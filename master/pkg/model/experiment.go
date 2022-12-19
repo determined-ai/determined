@@ -647,7 +647,7 @@ func (t TrialLog) Proto() (*apiv1.TrialLogsResponse, error) {
 	}
 
 	if t.RankID != nil {
-		var id = int32(*t.RankID)
+		id := int32(*t.RankID)
 		resp.RankId = &id
 	}
 
