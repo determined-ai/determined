@@ -9,22 +9,21 @@ import { getDisplayName } from 'utils/user';
 
 import css from './UserAvatar.module.scss';
 export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
-  compact?: boolean;
-  table?: boolean;
+  type?: 'table' | 'compactTable' | 'avatarOnly';
   user?: DetailedUser;
   userId?: number;
 }
 
-const UserAvatar: React.FC<Props> = ({ userId, table, user, compact, ...rest }) => {
+const UserAvatar: React.FC<Props> = ({ userId, user, type = 'avatarOnly', ...rest }) => {
   const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
   const { ui } = useUI();
   const u = user ? user : users.find((user) => user.id === userId);
   const displayName = getDisplayName(u);
 
   const avatar = <Avatar {...rest} darkLight={ui.darkLight} displayName={displayName} />;
-  if (!table || !u) return avatar;
-  const classnames = [css.avartarCard];
-  if (compact) classnames.push(css.compact);
+  if (type === 'avatarOnly' || !u) return avatar;
+  const classnames = [css.avatarCard];
+  if (type === 'compactTable') classnames.push(css.compact);
   return (
     <div className={classnames.join(' ')}>
       {avatar}

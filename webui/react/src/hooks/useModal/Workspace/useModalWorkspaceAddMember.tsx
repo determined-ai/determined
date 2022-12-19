@@ -151,7 +151,7 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  <UserAvatar compact table userId={(option as DetailedUser).id} />
+                  <UserAvatar type="compactTable" userId={(option as DetailedUser).id} />
                 ) : (
                   <GroupAvatar groupName={getName(option)} />
                 ),

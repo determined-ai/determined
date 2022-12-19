@@ -188,7 +188,7 @@ const UserManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
-        render: (_: string, r: DetailedUser) => <UserAvatar table user={r} />,
+        render: (_: string, r: DetailedUser) => <UserAvatar type="table" user={r} />,
         sorter: true,
         title: 'Name',
       },

@@ -215,7 +215,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
         const member = record as User;
-        return <UserAvatar table userId={member.id} />;
+        return <UserAvatar type="table" userId={member.id} />;
       }
       const group = record as V1GroupDetails;
       return <GroupAvatar groupName={group.name} />;
