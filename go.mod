@@ -74,6 +74,8 @@ require (
 	gopkg.in/oauth2.v3 v3.12.0
 )
 
+require github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
+
 require (
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.20 // indirect
@@ -184,7 +186,6 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 )
 
