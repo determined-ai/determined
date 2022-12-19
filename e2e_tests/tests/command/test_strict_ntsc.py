@@ -79,7 +79,7 @@ def assert_notebook_access(
         return
 
     assert notebook_id not in notebook_ids
-    with pytest.raises(NotFoundException):
+    with pytest.raises(NotFoundException):  # FIXME: do we want to mask that the notebook exists?
         bindings.get_GetNotebook(sess, notebookId=notebook_id)
     with pytest.raises(NotFoundException):
         req = bindings.v1IdleNotebookRequest(idle=False, notebookId=notebook_id)
