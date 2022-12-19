@@ -16,6 +16,11 @@ type NSCAuthZ interface {
 		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 	) (canGetNsc bool, serverError error)
 
+	// GET /api/v1/NSCs
+	FilterNSCWorkspaces(
+		ctx context.Context, curUser model.User, workspaceSet model.AccessScopeSet,
+	) (model.AccessScopeSet, error)
+
 	// GET /api/v1/tasks/count
 	CanGetActiveTasksCount(ctx context.Context, curUser model.User) error
 

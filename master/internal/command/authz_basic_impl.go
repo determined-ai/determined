@@ -23,6 +23,13 @@ func (a *NSCAuthZBasic) CanGetNSC(
 	return curUser.Admin || curUser.ID == ownerID, nil
 }
 
+// FilterNSCWorkspaces determines which workspaces out of the given ones the user has view access to.
+func (a *NSCAuthZBasic) FilterNSCWorkspaces(
+	ctx context.Context, curUser model.User, workspaceSet model.AccessScopeSet,
+) (model.AccessScopeSet, error) {
+	return model.AccessScopeSet{}, nil
+}
+
 // CanGetActiveTasksCount always returns a nil error.
 func (a *NSCAuthZBasic) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
 	return nil

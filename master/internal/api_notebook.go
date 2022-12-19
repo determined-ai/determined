@@ -55,22 +55,18 @@ func (a *apiServer) GetNotebooks(
 		return nil, err
 	}
 
-	a.filter(&resp.Notebooks, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId),
-			model.AccessScopeID(resp.Notebooks[i].WorkspaceId),
-		)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
-	})
+	requestedScopes := model.AccessScopeSet{}
+	for _, nb := range resp.Notebooks {
+		requestedScopes[model.AccessScopeID(nb.WorkspaceId)] = true
+	}
+	premittedScopes, err := command.AuthZProvider.Get().FilterNSCWorkspaces(ctx, *curUser, requestedScopes)
 	if err != nil {
 		return nil, err
 	}
+
+	a.filter(&resp.Notebooks, func(i int) bool {
+		return premittedScopes[model.AccessScopeID(resp.Notebooks[i].WorkspaceId)]
+	})
 
 	a.sort(resp.Notebooks, req.OrderBy, req.SortBy, apiv1.GetNotebooksRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Notebooks, req.Offset, req.Limit)
