@@ -6,10 +6,10 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
+import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
 import { UserRolesProvider } from 'stores/userRoles';
 import { useCurrentUsers, useFetchUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
@@ -39,15 +39,6 @@ jest.mock('services/api', () => ({
   getUserSetting: () => Promise.resolve({ settings: [] }),
 }));
 
-jest.mock('contexts/Store', () => ({
-  __esModule: true,
-  ...jest.requireActual('contexts/Store'),
-  useStore: () => ({
-    auth: { checked: true, user: { id: 1 } as DetailedUser },
-    info: { featureSwitches: [], rbacEnabled: false },
-  }),
-}));
-
 jest.mock('hooks/useTelemetry', () => ({
   ...jest.requireActual('hooks/useTelemetry'),
   telemetryInstance: {
@@ -70,13 +61,15 @@ const Container: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
   const { setAuth, setAuthCheck } = useAuth();
+  const updateInfo = useUpdateDeterminedInfo();
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
-    setAuth({ isAuthenticated: true });
+    setAuth({ isAuthenticated: true, user: { id: 1 } as DetailedUser });
     setAuthCheck();
     updateCurrentUser(currentUser);
-  }, [fetchUsers, setAuthCheck, updateCurrentUser, setAuth]);
+    updateInfo({ ...initInfo, featureSwitches: [], rbacEnabled: false });
+  }, [fetchUsers, setAuthCheck, updateCurrentUser, setAuth, updateInfo]);
 
   useEffect(() => {
     loadUsers();
@@ -95,7 +88,7 @@ const Container: React.FC = () => {
 
 const setup = () =>
   render(
-    <StoreProvider>
+    <DeterminedInfoProvider>
       <UsersProvider>
         <AuthProvider>
           <UserRolesProvider>
@@ -105,7 +98,7 @@ const setup = () =>
           </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
-    </StoreProvider>,
+    </DeterminedInfoProvider>,
   );
 
 describe('UserManagement', () => {

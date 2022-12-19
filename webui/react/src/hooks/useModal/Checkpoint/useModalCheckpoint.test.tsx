@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React, { useCallback } from 'react';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 
@@ -32,10 +32,10 @@ const Container: React.FC<Partial<Props>> = (props: Partial<Props> = {}) => {
   const handleClick = useCallback(() => modalOpen(), [modalOpen]);
 
   return (
-    <StoreProvider>
+    <UIProvider>
       <Button onClick={handleClick}>{MODAL_TRIGGER_TEXT}</Button>
       {contextHolder}
-    </StoreProvider>
+    </UIProvider>
   );
 };
 

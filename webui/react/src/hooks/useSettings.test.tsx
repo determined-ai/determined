@@ -4,7 +4,7 @@ import { array, boolean, number, string, undefined as undefinedType, union } fro
 import React, { useEffect } from 'react';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { DetailedUser } from 'types';
@@ -15,11 +15,6 @@ import { SettingsProvider } from './useSettingsProvider';
 jest.mock('services/api', () => ({
   ...jest.requireActual('services/api'),
   getUserSetting: () => Promise.resolve({ settings: [] }),
-}));
-jest.mock('contexts/Store', () => ({
-  __esModule: true,
-  ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
 }));
 
 interface Settings {
@@ -109,7 +104,7 @@ const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
   const { setAuth, setAuthCheck } = useAuth();
 
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
+    setAuth({ isAuthenticated: true, user: { id: 1 } as DetailedUser });
     setAuthCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -129,11 +124,11 @@ const setup = async (
   result: HookReturn;
 }> => {
   const RouterWrapper: React.FC<{ children: JSX.Element }> = ({ children }) => (
-    <StoreProvider>
+    <UIProvider>
       <AuthProvider>
         <Container>{children}</Container>
       </AuthProvider>
-    </StoreProvider>
+    </UIProvider>
   );
   const hookResult = await renderHook(() => hook.useSettings<Settings>(newSettings ?? config), {
     wrapper: RouterWrapper,
