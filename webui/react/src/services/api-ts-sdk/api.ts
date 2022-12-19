@@ -9552,6 +9552,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     checkpointStorageConfig?: any;
+    /**
+     * Optional date when workspace was pinned.
+     * @type {Date}
+     * @memberof V1Workspace
+     */
+    pinnedAt?: Date;
 }
 
 /**

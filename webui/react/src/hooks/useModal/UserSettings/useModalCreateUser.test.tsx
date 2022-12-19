@@ -2,9 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React from 'react';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import { PostUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
@@ -49,7 +51,9 @@ const setup = async () => {
       <UsersProvider>
         <AuthProvider>
           <UserRolesProvider>
-            <Container />
+            <HistoryRouter history={history}>
+              <Container />
+            </HistoryRouter>
           </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>

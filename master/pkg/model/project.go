@@ -35,6 +35,10 @@ type Projects []*Project
 
 // Proto converts a bun model of a project to a proto object.
 func (p Project) Proto() *projectv1.Project {
+	lastExperimentStartedAt := timestamppb.New(p.LastExperimentStartedAt)
+	if p.LastExperimentStartedAt.IsZero() {
+		lastExperimentStartedAt = nil
+	}
 	return &projectv1.Project{
 		Id:                      int32(p.ID),
 		Name:                    p.Name,
@@ -50,7 +54,7 @@ func (p Project) Proto() *projectv1.Project {
 		NumExperiments:          p.NumExperiments,
 		NumActiveExperiments:    p.NumActiveExperiments,
 		Notes:                   p.Notes,
-		LastExperimentStartedAt: timestamppb.New(p.LastExperimentStartedAt),
+		LastExperimentStartedAt: lastExperimentStartedAt,
 	}
 }
 

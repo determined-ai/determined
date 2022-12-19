@@ -242,6 +242,19 @@ const routes: RouteConfig[] = [
     title: 'Settings',
   },
   {
+    id: 'admin',
+    needAuth: true,
+    path: '/admin/:tab',
+    title: 'Admin',
+  },
+  {
+    id: 'admin',
+    needAuth: true,
+    path: '/admin',
+    redirect: '/admin/user-management',
+    title: 'Admin',
+  },
+  {
     id: 'webhooks',
     needAuth: true,
     path: '/webhooks',

@@ -8,7 +8,7 @@ exp_count_by_project AS (
   GROUP BY project_id
 )
 SELECT w.id, w.name, w.archived, w.immutable, u.username, w.user_id,
-(pins.id IS NOT NULL) AS pinned,
+(pins.id IS NOT NULL) AS pinned, pins.created_at AS pinned_at,
 'WORKSPACE_STATE_' || w.state AS state, w.error_message,
 (CASE WHEN uid IS NOT NULL OR gid IS NOT NULL OR user_ IS NOT NULL OR group_ IS NOT NULL THEN
   jsonb_build_object('agent_uid', uid, 'agent_user', user_, 'agent_gid', gid, 'agent_group', group_)

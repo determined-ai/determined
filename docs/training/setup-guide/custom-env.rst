@@ -98,15 +98,15 @@ GPU-specific versions of each library are automatically selected when running on
 Default Images
 ==============
 
-+-------------+---------------------------------------------------------------------------------------+
-| Environment | File Name                                                                             |
-+=============+=======================================================================================+
-| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4``                   |
-+-------------+---------------------------------------------------------------------------------------+
-| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4``                |
-+-------------+---------------------------------------------------------------------------------------+
-| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4``                |
-+-------------+---------------------------------------------------------------------------------------+
++-------------+-----------------------------------------------------------------------------------+
+| Environment | File Name                                                                         |
++=============+===================================================================================+
+| CPUs        | ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.10``              |
++-------------+-----------------------------------------------------------------------------------+
+| Nvidia GPUs | ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10``           |
++-------------+-----------------------------------------------------------------------------------+
+| AMD GPUs    | ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.10``           |
++-------------+-----------------------------------------------------------------------------------+
 
 .. _custom-docker-images:
 
@@ -132,7 +132,7 @@ Example Dockerfile that installs custom ``conda``-, ``pip``-, and ``apt``-based 
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
+   FROM determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10
 
    # Custom Configuration
    RUN apt-get update && \
@@ -195,7 +195,7 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4
+   FROM determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.10
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.8

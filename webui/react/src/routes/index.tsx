@@ -1,5 +1,6 @@
 import React from 'react';
 
+import Admin from 'pages/Admin';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import Deprecated from 'pages/Deprecated';
@@ -26,6 +27,7 @@ import { RouteConfig } from 'shared/types';
 import Routes from './routes';
 
 const routeComponentMap: Record<string, React.ReactNode> = {
+  admin: <Admin />,
   cluster: <Deprecated />,
   clusterHistorical: <Deprecated />,
   clusterLogs: <ClusterLogs />,

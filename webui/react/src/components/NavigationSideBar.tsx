@@ -1,4 +1,4 @@
-import { Button, Menu, Tooltip, Typography } from 'antd';
+import { Button, Menu, MenuProps, Tooltip, Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -196,6 +196,25 @@ const NavigationSideBar: React.FC = () => {
   }, [openWorkspaceCreateModal]);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
+  const { canAdministrateUsers } = usePermissions();
+
+  const menuItems: MenuProps['items'] = useMemo(() => {
+    const items = [
+      {
+        key: 'settings',
+        label: <Link path={paths.settings('account')}>Settings</Link>,
+      },
+      { key: 'theme-toggle', label: <ThemeToggle /> },
+      { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+    ];
+    if (canAdministrateUsers) {
+      items.unshift({
+        key: 'admin',
+        label: <Link path={paths.admin()}>Admin</Link>,
+      });
+    }
+    return items;
+  }, [canAdministrateUsers]);
 
   if (!showNavigation) return null;
 
@@ -219,19 +238,7 @@ const NavigationSideBar: React.FC = () => {
       <nav className={css.base} ref={nodeRef}>
         <header>
           <Dropdown
-            content={
-              <Menu
-                items={[
-                  { key: 'theme-toggle', label: <ThemeToggle /> },
-                  {
-                    key: 'settings',
-                    label: <Link path={paths.settings('account')}>Settings</Link>,
-                  },
-                  { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
-                ]}
-                selectable={false}
-              />
-            }
+            content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             <AvatarCard className={css.user} darkLight={ui.darkLight} user={authUser} />
@@ -288,25 +295,28 @@ const NavigationSideBar: React.FC = () => {
                   <p className={css.noWorkspaces}>No pinned workspaces</p>
                 ) : (
                   <ul className={css.pinnedWorkspaces} role="list">
-                    {workspaces.map((workspace) => (
-                      <WorkspaceActionDropdown
-                        key={workspace.id}
-                        trigger={['contextMenu']}
-                        workspace={workspace}>
-                        <li>
-                          <NavigationItem
-                            icon={<DynamicIcon name={workspace.name} size={24} />}
-                            label={workspace.name}
-                            labelRender={
-                              <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                {workspace.name}
-                              </Typography.Paragraph>
-                            }
-                            path={paths.workspaceDetails(workspace.id)}
-                          />
-                        </li>
-                      </WorkspaceActionDropdown>
-                    ))}
+                    {workspaces
+                      .sort((a, b) => ((a.pinnedAt || 0) < (b.pinnedAt || 0) ? -1 : 1))
+                      .map((workspace) => (
+                        <WorkspaceActionDropdown
+                          key={workspace.id}
+                          returnIndexOnDelete={false}
+                          trigger={['contextMenu']}
+                          workspace={workspace}>
+                          <li>
+                            <NavigationItem
+                              icon={<DynamicIcon name={workspace.name} size={24} />}
+                              label={workspace.name}
+                              labelRender={
+                                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                                  {workspace.name}
+                                </Typography.Paragraph>
+                              }
+                              path={paths.workspaceDetails(workspace.id)}
+                            />
+                          </li>
+                        </WorkspaceActionDropdown>
+                      ))}
                   </ul>
                 ),
               NotLoaded: () => <Spinner />,

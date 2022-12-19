@@ -3,35 +3,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-09b18720cb71042df
-      Agent: ami-0f9f90f487608fe99
+      Agent: ami-0e869a96e81e4c106
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-07d16c043aa8e5153
-    #   Agent: ami-07d607bacc01685db
+    #   Agent: ami-03bd3b100feb865bb
     # ap-southeast-1:
     #   Master: ami-00e912d13fbb4f225
-    #   Agent: ami-00a7448716c007550
+    #   Agent: ami-0f3517aae74b1acae
     # ap-southeast-2:
     #   Master: ami-055166f8a8041fbf1
-    #   Agent: ami-0d21deaec03b109ed
+    #   Agent: ami-09ff97700ee2396b5
     eu-central-1:
       Master: ami-06148e0e81e5187c8
-      Agent: ami-00b8e14625cfffff7
+      Agent: ami-03f98ed935d6413bb
     eu-west-1:
       Master: ami-0fd8802f94ed1c969
-      Agent: ami-0d9b2638b858a0451
+      Agent: ami-0486dbd675e5d21fc
     # eu-west-2:
     #   Master: ami-04842bc62789b682e
-    #   Agent: ami-08c2f17a10d4b052e
+    #   Agent: ami-0ba5e33f4b5a82550
     us-east-1:
       Master: ami-0149b2da6ceec4bb0
-      Agent: ami-0b2014aa470f13435
+      Agent: ami-02aa57541c622dde4
     us-east-2:
       Master: ami-0d5bf08bc8017c83b
-      Agent: ami-003178452b1145c22
+      Agent: ami-06b2144e6efc0145e
     us-west-2:
       Master: ami-0c09c7eb16d3e8e70
-      Agent: ami-0c41987fab4c81bc3
+      Agent: ami-0a3fcac423fda2fd1
 
 Parameters:
   VpcCIDR:
@@ -758,7 +758,7 @@ Resources:
         MetadataOptions:
           HttpTokens: required
           HttpPutResponseHopLimit: 2
-        
+
   MasterInstance:
     Type: AWS::EC2::Instance
     Properties:
@@ -870,9 +870,6 @@ Resources:
                 agent_reconnect_backoff: ${AgentReconnectBackoff}
                 agent_config_file_contents: ${AgentConfigFileContents}
                 startup_script: |
-                  wget -O - https://fsx-lustre-client-repo-public-keys.s3.amazonaws.com/fsx-ubuntu-public-key.asc | sudo apt-key add -
-                  bash -c 'echo "deb https://fsx-lustre-client-repo.s3.amazonaws.com/ubuntu xenial main" > /etc/apt/sources.list.d/fsxlustreclientrepo.list && apt-get update'
-                  apt install -y lustre-client-modules-4.4.0-1109-aws
                   mkdir /mnt/fsx
                   mount -t lustre -o noatime,flock ${FSxVal} /mnt/fsx
                   if [ ! -z "${DockerUser}" ] && [ ! -z ${DockerPass} ]; then
