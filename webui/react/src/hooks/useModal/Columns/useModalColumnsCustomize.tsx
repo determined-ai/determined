@@ -28,10 +28,11 @@ const useModalColumnsCustomize = ({
   onSave,
 }: Props): ModalHooks => {
   const columnList = useRef(columns).current; // This is only to prevent rerendering
-  const { modalOpen: openOrUpdate, modalClose, modalRef, ...modalHook } = useModal();
+  const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     initialVisibleColumns ?? defaultVisibleColumns,
   );
+  const [modalVisible, setModalVisible] = useState(false);
 
   const modalContent = useMemo((): React.ReactNode => {
     return (
@@ -56,14 +57,15 @@ const useModalColumnsCustomize = ({
       okText: 'Save',
       onOk: () => {
         onSave?.(visibleColumns);
-        modalClose();
+        setModalVisible(false);
       },
       title: 'Customize Columns',
     };
-  }, [modalContent, onSave, visibleColumns, modalClose]);
+  }, [modalContent, onSave, visibleColumns]);
 
   const modalOpen = useCallback(
     ({ initialModalProps }: ShowModalProps) => {
+      setModalVisible(true);
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
     [modalProps, openOrUpdate],
@@ -75,10 +77,10 @@ const useModalColumnsCustomize = ({
    */
   useEffect(() => {
     const modal = modalRef.current;
-    if (modal) openOrUpdate(modalProps);
-  }, [modalProps, modalRef, openOrUpdate]);
+    if (modal && modalVisible) openOrUpdate(modalProps);
+  }, [modalProps, modalRef, modalVisible, openOrUpdate]);
 
-  return { modalClose, modalOpen, modalRef, ...modalHook };
+  return { modalOpen, modalRef, ...modalHook };
 };
 
 export default useModalColumnsCustomize;
