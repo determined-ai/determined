@@ -655,6 +655,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [columns]);
 
+  const initialVisibleColumns = useMemo(
+    () => settings.columns?.filter((col) => transferColumns.includes(col)),
+    [settings.columns, transferColumns],
+  );
+
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
     useModalExperimentMove({ onClose: handleActionComplete, user });
 
@@ -799,7 +804,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
+      initialVisibleColumns,
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 
