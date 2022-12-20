@@ -24,7 +24,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
-import { useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
+import { useCurrentUsers, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
 
@@ -37,6 +37,7 @@ const AppView: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
+  const loadableUser = useCurrentUsers();
   const infoLoadable = useDeterminedInfo();
   const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
@@ -108,8 +109,8 @@ const AppView: React.FC = () => {
 
   // Detect telemetry settings changes and update telemetry library.
   useEffect(() => {
-    updateTelemetry(auth, info);
-  }, [auth, info, updateTelemetry]);
+    updateTelemetry(auth, loadableUser, info);
+  }, [auth, loadableUser, info, updateTelemetry]);
 
   // Abort cancel signal when app unmounts.
   useEffect(() => {

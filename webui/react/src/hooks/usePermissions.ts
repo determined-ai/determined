@@ -78,7 +78,7 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const user = Loadable.match(useCurrentUsers().currentUser, {
+  const user = Loadable.match(useCurrentUsers(), {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

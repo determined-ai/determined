@@ -26,7 +26,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useFetchKnownRoles } from 'stores/knowRoles';
-import { FetchUsersConfig, useFetchUsers, useUsers, useUsersPagination } from 'stores/users';
+import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
@@ -121,11 +121,11 @@ const UserManagement: React.FC = () => {
   );
   const loadableUser = useUsers(apiConfig);
   const users = Loadable.match(loadableUser, {
-    Loaded: (users) => users,
+    Loaded: (users) => users.users,
     NotLoaded: () => [],
   });
-  const total = Loadable.match(useUsersPagination(apiConfig), {
-    Loaded: (pagination) => pagination.total ?? 0,
+  const total = Loadable.match(loadableUser, {
+    Loaded: (users) => users.pagination.total ?? 0,
     NotLoaded: () => 0,
   });
 

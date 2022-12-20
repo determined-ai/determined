@@ -44,7 +44,10 @@ const ModelVersionHeader: React.FC<Props> = ({
   onUpdateTags,
   onSaveName,
 }: Props) => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
   const [showUseInNotebook, setShowUseInNotebook] = useState(false);
 
   const { contextHolder: modalModelDownloadContextHolder, modalOpen: openModelDownload } =

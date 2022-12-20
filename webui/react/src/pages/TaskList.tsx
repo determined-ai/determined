@@ -80,8 +80,11 @@ interface SourceInfo {
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
 const TaskList: React.FC = () => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const user = Loadable.match(useCurrentUsers().currentUser, {
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
+  const user = Loadable.match(useCurrentUsers(), {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

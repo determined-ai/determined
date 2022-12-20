@@ -18,7 +18,7 @@ export const useStorage = (
   basePath: string,
   store: Storage = window.localStorage,
 ): StorageManager => {
-  const userNamespace = Loadable.match(useCurrentUsers().currentUser, {
+  const userNamespace = Loadable.match(useCurrentUsers(), {
     Loaded: (cUser) => (cUser ? `u:${cUser.id}` : ''),
     NotLoaded: () => '',
   });

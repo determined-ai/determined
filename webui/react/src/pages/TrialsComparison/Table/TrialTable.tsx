@@ -71,7 +71,10 @@ const TrialTable: React.FC<Props> = ({
 }: Props) => {
   const { settings, updateSettings } = tableSettingsHook;
 
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
 
   const { filters, setFilters } = collectionsInterface;
 

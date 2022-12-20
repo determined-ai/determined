@@ -4,7 +4,6 @@ import { useLocation } from 'react-router-dom';
 
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
-import { getCurrentUser } from 'services/api';
 import { updateDetApi } from 'services/apiConfig';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
@@ -30,7 +29,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     routeAll(authUrl);
   }, [info.externalLoginUri]);
 
-  const checkAuth = useCallback(async (): Promise<void> => {
+  const checkAuth = useCallback((): void => {
     /*
      * Check for the auth token from the following sources:
      *   1 - query param jwt from external authentication.
@@ -51,8 +50,7 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
       updateBearerToken(authToken);
 
       try {
-        const user = await getCurrentUser({ signal: canceler.signal });
-        setAuth({ isAuthenticated: true, token: authToken, user });
+        setAuth({ isAuthenticated: true, token: authToken });
       } catch (e) {
         if (isAborted(e)) return;
 

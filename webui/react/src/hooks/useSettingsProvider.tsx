@@ -35,7 +35,7 @@ export const UserSettings = createContext<UserSettingsContext>({
 
 export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const loadableAuth = useAuth();
-  const user = Loadable.match(useCurrentUsers().currentUser, {
+  const user = Loadable.match(useCurrentUsers(), {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

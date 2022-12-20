@@ -49,8 +49,11 @@ import WorkspaceCard from './WorkspaceList/WorkspaceCard';
 const { Option } = Select;
 
 const WorkspaceList: React.FC = () => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const user = Loadable.match(useCurrentUsers().currentUser, {
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
+  const user = Loadable.match(useCurrentUsers(), {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

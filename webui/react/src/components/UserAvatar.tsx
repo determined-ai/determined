@@ -2,7 +2,7 @@ import React from 'react';
 
 import Avatar, { Props as AvatarProps } from 'shared/components/Avatar';
 import useUI from 'shared/contexts/stores/UI';
-import { useUsers } from 'stores/users';
+import { useCurrentUsers } from 'stores/users';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
@@ -11,9 +11,12 @@ export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
 }
 
 const UserAvatar: React.FC<Props> = ({ userId, ...rest }) => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const currentUser = Loadable.match(useCurrentUsers(), {
+    Loaded: (cUser) => cUser,
+    NotLoaded: () => undefined,
+  });
   const { ui } = useUI();
-  const displayName = getDisplayName(users.find((user) => user.id === userId));
+  const displayName = getDisplayName(currentUser);
 
   return <Avatar {...rest} darkLight={ui.darkLight} displayName={displayName} />;
 };

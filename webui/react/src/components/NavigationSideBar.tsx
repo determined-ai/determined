@@ -120,7 +120,7 @@ const NavigationSideBar: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const { currentUser: loadableCurrentUser } = useCurrentUsers();
+  const loadableCurrentUser = useCurrentUsers();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

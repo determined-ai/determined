@@ -215,7 +215,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
-  const { currentUser: loadableCurrentUser } = useCurrentUsers();
+  const loadableCurrentUser = useCurrentUsers();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

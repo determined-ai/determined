@@ -98,8 +98,8 @@ const ModalForm: React.FC<Props> = ({ form, username = '' }) => (
 
 const useModalPasswordChange = (): ModalHooks => {
   const [form] = Form.useForm();
-  const loadableCUser = useCurrentUsers();
-  const authUser = Loadable.match(loadableCUser.currentUser, {
+  const loadableUser = useCurrentUsers();
+  const authUser = Loadable.match(loadableUser, {
     Loaded: (user) => user,
     NotLoaded: () => undefined,
   });

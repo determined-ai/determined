@@ -53,7 +53,7 @@ const NavigationTabbar: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const authUser = Loadable.match(useCurrentUsers().currentUser, {
+  const authUser = Loadable.match(useCurrentUsers(), {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

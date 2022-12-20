@@ -28,7 +28,6 @@ export interface DetailedUserList extends WithPagination {
 export interface Auth {
   isAuthenticated: boolean;
   token?: string;
-  user?: DetailedUser;
 }
 
 export interface SsoProvider {
