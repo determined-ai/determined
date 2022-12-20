@@ -26,6 +26,7 @@ import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
@@ -100,12 +101,14 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [canceler.signal, id, workspace, settings]);
 
   useEffect(() => {
-    fetchProjects();
+    setIsLoading(true);
+    fetchProjects().then(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
+      setIsLoading(true);
       updateSettings({ whose: value as WhoseProjects | undefined });
     },
     [updateSettings],
@@ -132,21 +135,22 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     [updateSettings],
   );
 
+  const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (!settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose) return;
 
     switch (settings.whose) {
       case WhoseProjects.All:
         updateSettings({ user: undefined });
         break;
       case WhoseProjects.Mine:
-        updateSettings({ user: user ? [user.username] : undefined });
+        updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseProjects.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
         break;
     }
-  }, [settings.whose, updateSettings, user, users]);
+  }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const saveProjectDescription = useCallback(async (newDescription: string, projectId: number) => {
     try {
