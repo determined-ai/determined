@@ -450,7 +450,7 @@ class _PyTorchTrialController:
         self.state.batches_trained += 1
 
         epoch_len = self.context._epoch_len
-        assert epoch_len, "Training dataloader not initialized"
+        assert epoch_len, "Training dataloader not initialized."
 
         # True epoch-based training is not supported. Epoch start/end is calculated with batch.
         epoch_idx, batch_in_epoch_idx = divmod(self.state.batches_trained - 1, epoch_len)
