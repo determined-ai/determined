@@ -14,7 +14,7 @@ hyperparameters:
   overwrite_values:
      pipe_parallel_size: 2
      model_parallel_size: 2
-     train_batch_size: 32
+     train_batch_size: 512
      train_micro_batch_size_per_gpu: 2
   wandb_group: null
   wandb_team: null
@@ -27,9 +27,9 @@ environment:
         - NCCL_SOCKET_IFNAME=ens,eth,ib
     force_pull_image: true
     image:
-      gpu: determinedai/gpt-neox:912cb32
+      gpu: determinedai/gpt-neox:4850e79
 resources:
-  slots_per_trial: 8
+  slots_per_trial: 16
 searcher:
   name: single
   metric: lm_loss
