@@ -245,9 +245,7 @@ const NavigationSideBar: React.FC = () => {
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
             {currentUser ? (
               <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
-            ) : (
-              ''
-            )}
+            ) : null}
           </Dropdown>
         </header>
         <main>

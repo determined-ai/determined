@@ -57,17 +57,13 @@ export const useFetchUsers = (
   const { updateUsers } = context;
 
   return useCallback(
-    async (cfg?: FetchUsersConfig): Promise<DetailedUserList | void> => {
-      try {
-        const config = cfg ?? {};
-        const response = await getUsers(config, { signal: canceler.signal });
+    async (cfg?: FetchUsersConfig): Promise<DetailedUserList> => {
+      const config = cfg ?? {};
+      const response = await getUsers(config, { signal: canceler.signal });
 
-        updateUsers(() => Loaded(response.users));
+      updateUsers(() => Loaded(response.users));
 
-        return response;
-      } catch (e) {
-        handleError(e);
-      }
+      return response;
     },
     [canceler, updateUsers],
   );
