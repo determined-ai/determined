@@ -29,7 +29,7 @@ import { useFetchKnownRoles } from 'stores/knowRoles';
 import { useFetchUsers, useUsers, useUsersPagination } from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
-import { Loadable } from 'utils/loadable';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {
@@ -106,11 +106,11 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 
 const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const loadableUser = useUsers();
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const fetchUsersHook = useFetchUsers(canceler);
-  const users = Loadable.match(useUsers(), {
+  const users = Loadable.match(loadableUser, {
     Loaded: (users) => users,
     NotLoaded: () => [],
   });
@@ -138,8 +138,6 @@ const UserManagement: React.FC = () => {
       });
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
-    } finally {
-      setIsLoading(false);
     }
   }, [settings, fetchUsersHook]);
 
@@ -246,7 +244,7 @@ const UserManagement: React.FC = () => {
         columns={columns}
         containerRef={pageRef}
         dataSource={users}
-        loading={isLoading}
+        loading={loadableUser === NotLoaded}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
@@ -264,7 +262,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, isLoading, settings, columns, total, updateSettings]);
+  }, [users, loadableUser, settings, columns, total, updateSettings]);
   return (
     <Page
       containerRef={pageRef}

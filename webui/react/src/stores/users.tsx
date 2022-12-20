@@ -50,9 +50,7 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-export const useFetchUsers = (
-  canceler: AbortController,
-): ((cfg?: FetchUsersConfig) => Promise<void>) => {
+export const useFetchUsers = (canceler: AbortController): ((cfg?: FetchUsersConfig) => void) => {
   const context = useContext(UsersContext);
 
   if (context === null) {
@@ -62,7 +60,7 @@ export const useFetchUsers = (
   const { updateUsers, updateUsersPagination } = context;
 
   return useCallback(
-    async (cfg?: FetchUsersConfig): Promise<void> => {
+    async (cfg?: FetchUsersConfig) => {
       const config = cfg ?? {};
       const response = await getUsers(config, { signal: canceler.signal });
 
