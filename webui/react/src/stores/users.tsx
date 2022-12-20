@@ -61,11 +61,15 @@ export const useFetchUsers = (canceler: AbortController): ((cfg?: FetchUsersConf
 
   return useCallback(
     async (cfg?: FetchUsersConfig) => {
-      const config = cfg ?? {};
-      const response = await getUsers(config, { signal: canceler.signal });
+      try {
+        const config = cfg ?? {};
+        const response = await getUsers(config, { signal: canceler.signal });
 
-      updateUsers(() => Loaded(response.users));
-      updateUsersPagination(() => Loaded(response.pagination));
+        updateUsers(() => Loaded(response.users));
+        updateUsersPagination(() => Loaded(response.pagination));
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch users.' });
+      }
     },
     [canceler, updateUsers, updateUsersPagination],
   );

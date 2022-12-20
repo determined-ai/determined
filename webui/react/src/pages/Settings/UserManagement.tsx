@@ -129,16 +129,12 @@ const UserManagement: React.FC = () => {
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    try {
-      fetchUsersHook({
-        limit: settings.tableLimit,
-        offset: settings.tableOffset,
-        orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-        sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
-      });
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch users.' });
-    }
+    fetchUsersHook({
+      limit: settings.tableLimit,
+      offset: settings.tableOffset,
+      orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+      sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
+    });
   }, [settings, fetchUsersHook]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
