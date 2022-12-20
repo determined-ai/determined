@@ -1,6 +1,5 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import {
-  Breadcrumb,
   Button,
   Card,
   Checkbox,
@@ -8,13 +7,13 @@ import {
   InputNumber,
   Pagination,
   Space,
-  Table,
   Tabs,
   Tooltip,
 } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+import Breadcrumb from 'components/Breadcrumb';
 import Grid, { GridMode } from 'components/Grid';
 import Logo from 'components/Logo';
 import LogViewer from 'components/LogViewer/LogViewer';
@@ -670,7 +669,6 @@ const ListsSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default list</strong>
-        <Table columns={mockColumns} dataSource={mockRows} rowKey="id" />
         <ResponsiveTable columns={mockColumns} dataSource={mockRows} rowKey="id" />
       </Card>
     </ComponentSection>

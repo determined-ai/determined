@@ -11,7 +11,7 @@ interface BreadcrumbItemProps {
   children?: ReactNode
 }
 
-type BreadcrumbItem = React.FC;
+type BreadcrumbItem = React.FC<BreadcrumbItemProps>;
 type BreadcrumbSeparator = React.FC;
 type BreadcrumbComponent = React.FC<BreadcrumbProps> & { Item: typeof BreadcrumbItem, Separator: typeof BreadcrumbSeparator };
 
