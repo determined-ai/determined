@@ -1,9 +1,8 @@
-import { Select, Space } from 'antd';
+import { Input, Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
@@ -177,11 +176,21 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     );
 
     const descriptionRenderer = (value: string, record: Project) => (
-      <InlineEditor
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={value}
         disabled={record.archived}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
-        value={value}
-        onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
+        title={record.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveProjectDescription(newDesc, record.id);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 
