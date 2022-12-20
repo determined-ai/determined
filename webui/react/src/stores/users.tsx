@@ -1,7 +1,7 @@
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
 import { getCurrentUser, getUsers } from 'services/api';
-import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
+import { V1GetUsersRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
 import { isEqual } from 'shared/utils/data';
 import { DetailedUser, DetailedUserList } from 'types';
 import handleError from 'utils/error';
@@ -11,7 +11,9 @@ type UsersContext = {
   currentUser: Loadable<DetailedUser>;
   updateCurrentUser: (fn: (currentUser: Loadable<DetailedUser>) => Loadable<DetailedUser>) => void;
   updateUsers: (fn: (users: Loadable<DetailedUser[]>) => Loadable<DetailedUser[]>) => void;
+  updateUsersPagination: (fn: (users: Loadable<V1Pagination>) => Loadable<V1Pagination>) => void;
   users: Loadable<DetailedUser[]>;
+  usersPagination: Loadable<V1Pagination>;
 };
 
 type UseCurentUserReturn = {
@@ -30,6 +32,7 @@ const UsersContext = createContext<UsersContext | null>(null);
 
 export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [users, setUsers] = useState<Loadable<DetailedUser[]>>(NotLoaded);
+  const [usersPagination, setUsersPagination] = useState<Loadable<V1Pagination>>(NotLoaded);
   const [currentUser, setCurrentUser] = useState<Loadable<DetailedUser>>(NotLoaded);
 
   return (
@@ -38,7 +41,9 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
         currentUser,
         updateCurrentUser: setCurrentUser,
         updateUsers: setUsers,
+        updateUsersPagination: setUsersPagination,
         users,
+        usersPagination,
       }}>
       {children}
     </UsersContext.Provider>
@@ -54,7 +59,7 @@ export const useFetchUsers = (
     throw new Error('Attempted to use useFetchUsers outside of Users Context');
   }
 
-  const { updateUsers } = context;
+  const { updateUsers, updateUsersPagination } = context;
 
   return useCallback(
     async (cfg?: FetchUsersConfig): Promise<void> => {
@@ -62,8 +67,9 @@ export const useFetchUsers = (
       const response = await getUsers(config, { signal: canceler.signal });
 
       updateUsers(() => Loaded(response.users));
+      updateUsersPagination(() => Loaded(response.pagination));
     },
-    [canceler, updateUsers],
+    [canceler, updateUsers, updateUsersPagination],
   );
 };
 
@@ -123,6 +129,16 @@ export const useUsers = (): Loadable<DetailedUser[]> => {
   }
 
   return context.users;
+};
+
+export const useUsersPagination = (): Loadable<V1Pagination> => {
+  const context = useContext(UsersContext);
+
+  if (context === null) {
+    throw new Error('Attempted to use useUsersPagination outside of Users Context');
+  }
+
+  return context.usersPagination;
 };
 
 export const useCurrentUsers = (): UseCurentUserReturn => {
