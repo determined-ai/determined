@@ -1,15 +1,10 @@
+import logging
+import os
 import typing
 
-from transformers import (
-    TrainerCallback,
-    TrainerState,
-    TrainerControl,
-    TrainingArguments,
-)
+from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
 
-import os
 import determined as det
-import logging
 
 
 class DetCallback(TrainerCallback):
@@ -28,7 +23,7 @@ class DetCallback(TrainerCallback):
         self.user_checkpoint_metadata = checkpoint_metadata
         self.load_last_checkpoint(args)
 
-        self.last_metrics: typing.Dict[str, float] = {'train_step': -1, 'eval_step': -1}
+        self.last_metrics: typing.Dict[str, float] = {"train_step": -1, "eval_step": -1}
 
         searcher_config = det.get_cluster_info().trial._config["searcher"]
         self.searcher_metric = searcher_config["metric"]
@@ -195,9 +190,7 @@ class DetCallback(TrainerCallback):
                 )
                 self.current_op.report_completed(state.best_metric)
             else:
-                self.current_op.report_completed(
-                    self.last_metrics[self.searcher_metric]
-                )
+                self.current_op.report_completed(self.last_metrics[self.searcher_metric])
 
         try:
             self.current_op = next(self.searcher_ops)

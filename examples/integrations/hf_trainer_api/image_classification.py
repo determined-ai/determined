@@ -13,16 +13,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 
+import json
 import logging
 import os
 import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 import datasets
 import numpy as np
 import torch
+import transformers
 from datasets import load_dataset
+from det_callback import DetCallback
 from PIL import Image
 from torchvision.transforms import (
     CenterCrop,
@@ -33,8 +37,6 @@ from torchvision.transforms import (
     Resize,
     ToTensor,
 )
-from det_callback import DetCallback
-import transformers
 from transformers import (
     MODEL_FOR_IMAGE_CLASSIFICATION_MAPPING,
     AutoConfig,
@@ -50,8 +52,6 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
-import json
-from pathlib import Path
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
@@ -124,9 +124,7 @@ class DataTrainingArguments:
     )
 
     def __post_init__(self):
-        if self.dataset_name is None and (
-            self.train_dir is None and self.validation_dir is None
-        ):
+        if self.dataset_name is None and (self.train_dir is None and self.validation_dir is None):
             raise ValueError(
                 "You must specify either a dataset name from the hub or a train and/or validation directory."
             )
@@ -153,15 +151,11 @@ class ModelArguments:
     )
     config_name: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "Pretrained config name or path if not the same as model_name"
-        },
+        metadata={"help": "Pretrained config name or path if not the same as model_name"},
     )
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={
-            "help": "Where do you want to store the pretrained models downloaded from s3"
-        },
+        metadata={"help": "Where do you want to store the pretrained models downloaded from s3"},
     )
     model_revision: str = field(
         default="main",
@@ -204,9 +198,7 @@ def dict2args(hparams):
 
 
 def parse_input_arguments(train_hps):
-    train_hps = (
-        train_hps["training_arguments"] if "training_arguments" in train_hps else {}
-    )
+    train_hps = train_hps["training_arguments"] if "training_arguments" in train_hps else {}
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
@@ -262,9 +254,7 @@ def main(det_callback, model_args, data_args, training_args):
                 f"Output directory ({training_args.output_dir}) already exists and is not empty. "
                 "Use --overwrite_output_dir to overcome."
             )
-        elif (
-            last_checkpoint is not None and training_args.resume_from_checkpoint is None
-        ):
+        elif last_checkpoint is not None and training_args.resume_from_checkpoint is None:
             logger.info(
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
@@ -316,14 +306,10 @@ def main(det_callback, model_args, data_args, training_args):
     # predictions and label_ids field) and has to return a dictionary string to float.
     def compute_metrics(p):
         """Computes accuracy on a batch of predictions"""
-        x = metric.compute(
-            predictions=np.argmax(p.predictions, axis=1), references=p.label_ids
-        )
+        x = metric.compute(predictions=np.argmax(p.predictions, axis=1), references=p.label_ids)
         print("compute_metrics")
         print(x)
-        return metric.compute(
-            predictions=np.argmax(p.predictions, axis=1), references=p.label_ids
-        )
+        return metric.compute(predictions=np.argmax(p.predictions, axis=1), references=p.label_ids)
 
     config = AutoConfig.from_pretrained(
         model_args.config_name or model_args.model_name_or_path,
@@ -377,16 +363,14 @@ def main(det_callback, model_args, data_args, training_args):
     def train_transforms(example_batch):
         """Apply _train_transforms across a batch."""
         example_batch["pixel_values"] = [
-            _train_transforms(pil_img.convert("RGB"))
-            for pil_img in example_batch["image"]
+            _train_transforms(pil_img.convert("RGB")) for pil_img in example_batch["image"]
         ]
         return example_batch
 
     def val_transforms(example_batch):
         """Apply _val_transforms across a batch."""
         example_batch["pixel_values"] = [
-            _val_transforms(pil_img.convert("RGB"))
-            for pil_img in example_batch["image"]
+            _val_transforms(pil_img.convert("RGB")) for pil_img in example_batch["image"]
         ]
         return example_batch
 
@@ -473,7 +457,5 @@ if __name__ == "__main__":
         distributed = det.core.DistributedContext.from_torch_distributed()
 
     with det.core.init(distributed=distributed) as core_context:
-        det_callback = DetCallback(
-            core_context, training_args, filter_metrics=["loss", "accuracy"]
-        )
+        det_callback = DetCallback(core_context, training_args, filter_metrics=["loss", "accuracy"])
         main(det_callback, model_args, data_args, training_args)
