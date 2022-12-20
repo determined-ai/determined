@@ -1,9 +1,8 @@
-import { Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import InlineEditor from 'components/InlineEditor';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
@@ -185,11 +184,21 @@ const ModelDetails: React.FC = () => {
     );
 
     const descriptionRenderer = (value: string, record: ModelVersion) => (
-      <InlineEditor
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={record.comment ?? ''}
         disabled={record.model.archived}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
-        value={record.comment ?? ''}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.version)}
+        title={record.model.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveVersionDescription(newDesc, record.version);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 

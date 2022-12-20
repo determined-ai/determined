@@ -28,3 +28,11 @@
     }
   }
 }
+.descriptionRenderer {
+  border: 1px solid transparent !important; // TODO: remove !important
+
+  &:focus,
+  &:hover {
+    border: 1px solid var(--theme-status-active) !important;
+  }
+}
