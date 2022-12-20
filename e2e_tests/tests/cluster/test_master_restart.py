@@ -15,6 +15,7 @@ from tests import experiment as exp
 from tests.cluster.test_users import det_spawn
 
 from .managed_cluster import ManagedCluster, get_agent_data
+from .test_groups import det_cmd_json
 from .utils import (
     command_succeeded,
     get_command_info,
@@ -172,6 +173,7 @@ def test_master_restart_shell(restartable_managed_cluster: ManagedCluster, downt
 
         assert task_id is not None
         wait_for_task_state("shell", task_id, "RUNNING")
+        pre_restart_queue = det_cmd_json(["job", "list", "--json"])
 
         if downtime >= 0:
             managed_cluster.kill_master()
@@ -179,6 +181,8 @@ def test_master_restart_shell(restartable_managed_cluster: ManagedCluster, downt
             managed_cluster.restart_master()
 
         wait_for_task_state("shell", task_id, "RUNNING")
+        post_restart_queue = det_cmd_json(["job", "list", "--json"])
+        assert pre_restart_queue == post_restart_queue
 
         child = det_spawn(["shell", "open", task_id])
         child.setecho(True)
