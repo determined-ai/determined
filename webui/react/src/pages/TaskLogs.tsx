@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'components/LogViewer/LogViewer';
 import LogViewerFilters, { Filters } from 'components/LogViewer/LogViewerFilters';
-import settingsConfig, { Settings } from 'components/LogViewer/LogViewerFilters.settings';
+import { Settings, settingsConfigForTask } from 'components/LogViewer/LogViewerFilters.settings';
 import Page from 'components/Page';
 import { commandTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
@@ -40,7 +40,8 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
   const taskTypeLabel = commandTypeToLabel[taskType as CommandType];
   const title = `${queries.id ? `${queries.id} ` : ''}Logs`;
 
-  const { resetSettings, settings, updateSettings } = useSettings<Settings>(settingsConfig);
+  const taskSettingsConfig = useMemo(() => settingsConfigForTask(taskId), [taskId]);
+  const { resetSettings, settings, updateSettings } = useSettings<Settings>(taskSettingsConfig);
 
   const filterValues: Filters = useMemo(
     () => ({
