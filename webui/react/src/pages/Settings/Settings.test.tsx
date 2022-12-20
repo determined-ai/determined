@@ -7,7 +7,7 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
-import { useCurrentUser, UsersProvider } from 'stores/users';
+import { UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import Settings from './Settings';
@@ -16,7 +16,7 @@ const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
 
 const Container: React.FC = () => {
-  const { updateCurrentUser } = useCurrentUser();
+  const updateCurrentUser = useUpdateCurrentUser();
 
   const currentUser: DetailedUser = useMemo(
     () => ({
@@ -30,7 +30,7 @@ const Container: React.FC = () => {
   );
 
   const loadUser = useCallback(() => {
-    updateCurrentUser(currentUser);
+    updateCurrentUser(currentUser.id);
   }, [updateCurrentUser, currentUser]);
 
   useEffect(() => loadUser(), [loadUser]);

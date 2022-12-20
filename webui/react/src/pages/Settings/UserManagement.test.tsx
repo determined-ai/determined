@@ -11,7 +11,7 @@ import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
 import { UserRolesProvider } from 'stores/userRoles';
-import { useCurrentUser, useFetchUsers, UsersProvider } from 'stores/users';
+import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
@@ -57,7 +57,7 @@ const currentUser: DetailedUser = {
 };
 
 const Container: React.FC = () => {
-  const { updateCurrentUser } = useCurrentUser();
+  const updateCurrentUser = useUpdateCurrentUser();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
   const { setAuth, setAuthCheck } = useAuth();
@@ -65,9 +65,9 @@ const Container: React.FC = () => {
 
   const loadUsers = useCallback(async () => {
     await fetchUsers();
-    setAuth({ isAuthenticated: true, user: { id: 1 } as DetailedUser });
+    setAuth({ isAuthenticated: true });
     setAuthCheck();
-    updateCurrentUser(currentUser);
+    updateCurrentUser(currentUser.id);
     updateInfo({ ...initInfo, featureSwitches: [], rbacEnabled: false });
   }, [fetchUsers, setAuthCheck, updateCurrentUser, setAuth, updateInfo]);
 

@@ -13,7 +13,7 @@ import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { useCurrentUser, UsersProvider } from 'stores/users';
+import { useCurrentUser, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import CodeViewer, { Props } from './CodeViewer';
@@ -106,18 +106,12 @@ const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
   const { setAuth, setAuthCheck } = useAuth();
-  const { updateCurrentUser } = useCurrentUser();
+  const updateCurrentUser = useUpdateCurrentUser();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
     setAuthCheck();
-    updateCurrentUser({
-      displayName: 'Test Username',
-      id: 1,
-      isActive: true,
-      isAdmin: true,
-      username: 'test-username',
-    });
+    updateCurrentUser(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
