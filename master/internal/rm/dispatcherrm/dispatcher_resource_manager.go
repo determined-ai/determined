@@ -1251,7 +1251,11 @@ func (m *dispatcherResourceManager) getAndCheckLauncherVersion(ctx *actor.Contex
 	resp, _, err := m.apiClient.InfoApi.GetServerVersion(m.authContext(ctx)).Execute()
 	if err == nil {
 		if checkMinimumLauncherVersion(resp) {
-			m.launcherVersionIsOK = true
+			if !m.launcherVersionIsOK {
+				m.launcherVersionIsOK = true
+				logrus.Info(fmt.Sprintf("Determined HPC launcher %s at %s:%d",
+					resp, m.rmConfig.LauncherHost, m.rmConfig.LauncherPort))
+			}
 		}
 	}
 	if !m.launcherVersionIsOK {
