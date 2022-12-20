@@ -30,3 +30,24 @@ func GetCommandOwnerID(ctx context.Context, taskID model.TaskID) (model.UserID, 
 
 	return ownerIDBun.OwnerID, nil
 }
+
+// GetCommandWorkspaceID gets a command's workspaceID from a taskID. Uses persisted command state.
+// Returns db.ErrNotFound if a command with given taskID does not exist.
+func GetCommandWorkspaceID(ctx context.Context, taskID model.TaskID) (model.AccessScopeID, error) {
+	workspaceIDBun := &struct {
+		bun.BaseModel `bun:"table:command_state"`
+		WorkspaceID   model.AccessScopeID `bun:"workspace_id"`
+	}{}
+
+	if err := Bun().NewSelect().Model(workspaceIDBun).
+		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id' AS workspace_id").
+		Where("task_id = ?", taskID).
+		Scan(ctx); err != nil {
+		if errors.Cause(err) == sql.ErrNoRows {
+			return 0, ErrNotFound
+		}
+		return 0, err
+	}
+
+	return workspaceIDBun.WorkspaceID, nil
+}
