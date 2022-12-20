@@ -382,7 +382,12 @@ func (m *dispatcherResourceManager) Receive(ctx *actor.Context) error {
 		return m.receiveJobQueueMsg(ctx)
 
 	case sproto.GetAllocationHandler:
-		ctx.Respond(m.reqList.TaskHandler(msg.ID))
+		handler := m.reqList.TaskHandler(msg.ID)
+		if handler == nil {
+			ctx.Respond(fmt.Errorf("allocation handler for allocation ID %s not found", msg.ID))
+			return nil
+		}
+		ctx.Respond(handler)
 
 	case sproto.GetAllocationSummary:
 		if resp := m.reqList.TaskSummary(msg.ID, m.groups, slurmSchedulerType); resp != nil {
