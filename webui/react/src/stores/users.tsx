@@ -3,7 +3,7 @@ import React, { createContext, PropsWithChildren, useCallback, useContext, useSt
 import { getCurrentUser, getUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
 import { isEqual } from 'shared/utils/data';
-import { DetailedUser, DetailedUserList } from 'types';
+import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
@@ -52,7 +52,7 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
 export const useFetchUsers = (
   canceler: AbortController,
-): ((cfg?: FetchUsersConfig) => Promise<DetailedUserList | void>) => {
+): ((cfg?: FetchUsersConfig) => Promise<void>) => {
   const context = useContext(UsersContext);
 
   if (context === null) {
