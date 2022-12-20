@@ -26,9 +26,10 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useFetchKnownRoles } from 'stores/knowRoles';
-import { useFetchUsers } from 'stores/users';
+import { useFetchUsers, useUsers, useUsersPagination } from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {
@@ -104,13 +105,19 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 };
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<DetailedUser[]>([]);
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const fetchUsersHook = useFetchUsers(canceler);
+  const users = Loadable.match(useUsers(), {
+    Loaded: (users) => users,
+    NotLoaded: () => [],
+  });
+  const total = Loadable.match(useUsersPagination(), {
+    Loaded: (pagination) => pagination.total ?? 0,
+    NotLoaded: () => 0,
+  });
 
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
 
@@ -119,23 +126,16 @@ const UserManagement: React.FC = () => {
 
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
-  const fetchUsers = useCallback(async (): Promise<void> => {
+  const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
     try {
-      const response = await fetchUsersHook({
+      fetchUsersHook({
         limit: settings.tableLimit,
         offset: settings.tableOffset,
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
         sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
       });
-      if (response) {
-        setTotal(response.pagination.total ?? 0);
-        setUsers((prev) => {
-          if (isEqual(prev, response.users)) return prev;
-          return response.users;
-        });
-      }
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch users.' });
     } finally {
