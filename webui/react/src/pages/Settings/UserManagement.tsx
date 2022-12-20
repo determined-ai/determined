@@ -26,7 +26,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useFetchKnownRoles } from 'stores/knowRoles';
-import { useFetchUsers, useUsers, useUsersPagination } from 'stores/users';
+import { FetchUsersConfig, useFetchUsers, useUsers, useUsersPagination } from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable, NotLoaded } from 'utils/loadable';
@@ -106,20 +106,28 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 
 const UserManagement: React.FC = () => {
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
-  const loadableUser = useUsers();
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
   const fetchUsersHook = useFetchUsers(canceler);
+  const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
+  const apiConfig = useMemo<FetchUsersConfig>(
+    () => ({
+      limit: settings.tableLimit,
+      offset: settings.tableOffset,
+      orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+      sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
+    }),
+    [settings],
+  );
+  const loadableUser = useUsers(apiConfig);
   const users = Loadable.match(loadableUser, {
     Loaded: (users) => users,
     NotLoaded: () => [],
   });
-  const total = Loadable.match(useUsersPagination(), {
+  const total = Loadable.match(useUsersPagination(apiConfig), {
     Loaded: (pagination) => pagination.total ?? 0,
     NotLoaded: () => 0,
   });
-
-  const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
 
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
@@ -129,13 +137,8 @@ const UserManagement: React.FC = () => {
   const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    fetchUsersHook({
-      limit: settings.tableLimit,
-      offset: settings.tableOffset,
-      orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-      sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
-    });
-  }, [settings, fetchUsersHook]);
+    fetchUsersHook(apiConfig);
+  }, [settings, apiConfig, fetchUsersHook]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {

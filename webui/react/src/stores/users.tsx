@@ -1,3 +1,4 @@
+import { Map } from 'immutable';
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
 
 import { getCurrentUser, getUsers } from 'services/api';
@@ -6,14 +7,18 @@ import { isEqual } from 'shared/utils/data';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { encodeParams } from 'utils/store';
+
+type UsersPagination = {
+  pagination: V1Pagination;
+  users: DetailedUser[];
+};
 
 type UsersContext = {
   currentUser: Loadable<DetailedUser>;
   updateCurrentUser: (fn: (currentUser: Loadable<DetailedUser>) => Loadable<DetailedUser>) => void;
-  updateUsers: (fn: (users: Loadable<DetailedUser[]>) => Loadable<DetailedUser[]>) => void;
-  updateUsersPagination: (fn: (users: Loadable<V1Pagination>) => Loadable<V1Pagination>) => void;
-  users: Loadable<DetailedUser[]>;
-  usersPagination: Loadable<V1Pagination>;
+  updateUsers: (users: Map<string, UsersPagination>) => void;
+  users: Map<string, UsersPagination>;
 };
 
 type UseCurentUserReturn = {
@@ -21,7 +26,7 @@ type UseCurentUserReturn = {
   updateCurrentUser: (user: DetailedUser, users?: DetailedUser[]) => void;
 };
 
-type FetchUsersConfig = {
+export type FetchUsersConfig = {
   limit: number;
   offset: number;
   orderBy: 'ORDER_BY_DESC' | 'ORDER_BY_ASC';
@@ -31,8 +36,9 @@ type FetchUsersConfig = {
 const UsersContext = createContext<UsersContext | null>(null);
 
 export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [users, setUsers] = useState<Loadable<DetailedUser[]>>(NotLoaded);
-  const [usersPagination, setUsersPagination] = useState<Loadable<V1Pagination>>(NotLoaded);
+  const [users, setUsers] = useState<Map<string, UsersPagination>>(() =>
+    Map<string, UsersPagination>(),
+  );
   const [currentUser, setCurrentUser] = useState<Loadable<DetailedUser>>(NotLoaded);
 
   return (
@@ -41,9 +47,7 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
         currentUser,
         updateCurrentUser: setCurrentUser,
         updateUsers: setUsers,
-        updateUsersPagination: setUsersPagination,
         users,
-        usersPagination,
       }}>
       {children}
     </UsersContext.Provider>
@@ -57,7 +61,7 @@ export const useFetchUsers = (canceler: AbortController): ((cfg?: FetchUsersConf
     throw new Error('Attempted to use useFetchUsers outside of Users Context');
   }
 
-  const { updateUsers, updateUsersPagination } = context;
+  const { users, updateUsers } = context;
 
   return useCallback(
     async (cfg?: FetchUsersConfig) => {
@@ -65,13 +69,12 @@ export const useFetchUsers = (canceler: AbortController): ((cfg?: FetchUsersConf
         const config = cfg ?? {};
         const response = await getUsers(config, { signal: canceler.signal });
 
-        updateUsers(() => Loaded(response.users));
-        updateUsersPagination(() => Loaded(response.pagination));
+        updateUsers(users.set(encodeParams(config), response));
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch users.' });
       }
     },
-    [canceler, updateUsers, updateUsersPagination],
+    [canceler, updateUsers, users],
   );
 };
 
@@ -108,13 +111,15 @@ export const useEnsureUsersFetched = (canceler: AbortController): (() => Promise
 
   return useCallback(
     async (cfg?: FetchUsersConfig): Promise<void> => {
-      if (users !== NotLoaded) return;
+      const config = cfg ?? {};
+      const usersPagination = users.get(encodeParams(config));
+
+      if (usersPagination) return;
 
       try {
-        const config = cfg ?? {};
         const response = await getUsers(config, { signal: canceler.signal });
 
-        updateUsers(() => Loaded(response.users));
+        updateUsers(users.set(encodeParams(config), response));
       } catch (e) {
         handleError(e);
       }
@@ -123,24 +128,29 @@ export const useEnsureUsersFetched = (canceler: AbortController): (() => Promise
   );
 };
 
-export const useUsers = (): Loadable<DetailedUser[]> => {
+export const useUsers = (cfg?: FetchUsersConfig): Loadable<DetailedUser[]> => {
   const context = useContext(UsersContext);
 
   if (context === null) {
     throw new Error('Attempted to use useUsers outside of Users Context');
   }
+  const config = cfg ?? {};
+  const usersPagination = context.users.get(encodeParams(config));
 
-  return context.users;
+  return usersPagination ? Loaded(usersPagination.users) : NotLoaded;
 };
 
-export const useUsersPagination = (): Loadable<V1Pagination> => {
+export const useUsersPagination = (cfg?: FetchUsersConfig): Loadable<V1Pagination> => {
   const context = useContext(UsersContext);
 
   if (context === null) {
     throw new Error('Attempted to use useUsersPagination outside of Users Context');
   }
 
-  return context.usersPagination;
+  const config = cfg ?? {};
+  const usersPagination = context.users.get(encodeParams(config));
+
+  return usersPagination ? Loaded(usersPagination.pagination) : NotLoaded;
 };
 
 export const useCurrentUsers = (): UseCurentUserReturn => {
@@ -149,7 +159,7 @@ export const useCurrentUsers = (): UseCurentUserReturn => {
   if (context === null) {
     throw new Error('Attempted to use useCurrentUser outside of User Context');
   }
-  const { currentUser, updateCurrentUser, updateUsers } = context;
+  const { currentUser, users: usersPagination, updateCurrentUser, updateUsers } = context;
 
   const userUpdateCallback = useCallback(
     (user: DetailedUser, users: DetailedUser[] = []) => {
@@ -163,15 +173,18 @@ export const useCurrentUsers = (): UseCurentUserReturn => {
         return Loaded(user);
       });
 
-      updateUsers((prevState) => {
-        if (!Loadable.isLoaded(prevState) || !usersArray.length) return prevState;
+      const cachedUsers = usersPagination.get(encodeParams({}));
 
-        if (isEqual(prevState.data, usersArray)) return prevState;
-
-        return Loaded(usersArray);
-      });
+      if (cachedUsers && usersArray.length && !isEqual(cachedUsers.users, usersArray)) {
+        updateUsers(
+          usersPagination.set(encodeParams({}), {
+            pagination: cachedUsers.pagination,
+            users: usersArray,
+          }),
+        );
+      }
     },
-    [updateCurrentUser, updateUsers],
+    [usersPagination, updateCurrentUser, updateUsers],
   );
 
   return {
