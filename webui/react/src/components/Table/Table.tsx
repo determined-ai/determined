@@ -13,8 +13,10 @@ import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { Pagination } from 'shared/types';
 import { getDuration } from 'shared/utils/datetime';
+import { useUsers } from 'stores/users';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask,
@@ -28,6 +30,7 @@ import {
   TrialItem,
   Workspace,
 } from 'types';
+import { Loadable } from 'utils/loadable';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
 
@@ -105,11 +108,15 @@ export const tooltipRenderer: Renderer = (text) => (
   </Tooltip>
 );
 
-export const userRenderer: Renderer<{ userId: number }> = (_, record) => (
-  <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-    <UserAvatar userId={record.userId} />
-  </div>
-);
+export const UserRenderer: Renderer<{ userId?: number }> = (_, record) => {
+  const users = Loadable.getOrElse([], useUsers());
+  const user = users.find((user) => user.id === record.userId);
+  return (
+    <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+      {user ? <UserAvatar user={user} /> : <Spinner />}
+    </div>
+  );
+};
 
 /* Command Task Table Column Renderers */
 

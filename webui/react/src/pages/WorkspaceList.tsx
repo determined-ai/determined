@@ -15,7 +15,7 @@ import {
   GenericRenderer,
   getFullPaginationConfig,
   stateRenderer,
-  userRenderer,
+  UserRenderer,
 } from 'components/Table/Table';
 import Toggle from 'components/Toggle';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
@@ -178,7 +178,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
-        render: userRenderer,
+        render: UserRenderer,
         title: 'User',
       },
       {

@@ -18,7 +18,7 @@ import {
   modelVersionNameRenderer,
   modelVersionNumberRenderer,
   relativeTimeRenderer,
-  userRenderer,
+  UserRenderer,
 } from 'components/Table/Table';
 import TagList from 'components/TagList';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
@@ -225,7 +225,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: userRenderer,
+        render: UserRenderer,
         title: 'User',
       },
       {

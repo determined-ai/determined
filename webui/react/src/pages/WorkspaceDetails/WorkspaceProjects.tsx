@@ -16,7 +16,7 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
   stateRenderer,
-  userRenderer,
+  UserRenderer,
 } from 'components/Table/Table';
 import Toggle from 'components/Toggle';
 import usePermissions from 'hooks/usePermissions';
@@ -219,7 +219,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: userRenderer,
+        render: UserRenderer,
         title: 'User',
       },
       {
