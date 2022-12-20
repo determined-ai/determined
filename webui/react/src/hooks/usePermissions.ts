@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
 import { useUserAssignments, useUserRoles } from 'stores/userRoles';
-import { useCurrentUsers } from 'stores/users';
+import { useCurrentUser } from 'stores/users';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
@@ -78,7 +78,8 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const user = Loadable.match(useCurrentUsers(), {
+  const loadableCurrentUser = useCurrentUser();
+  const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

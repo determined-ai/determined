@@ -23,7 +23,7 @@ import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
-import { useCurrentUsers } from 'stores/users';
+import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -120,7 +120,7 @@ const NavigationSideBar: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const loadableCurrentUser = useCurrentUsers();
+  const loadableCurrentUser = useCurrentUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,

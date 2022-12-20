@@ -7,7 +7,7 @@ import { V1LoginRequest } from 'services/api-ts-sdk';
 import { SetUserPasswordParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { useCurrentUsers, useFetchUsers, UsersProvider } from 'stores/users';
+import { useCurrentUser, useFetchUsers, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import useModalPasswordChange, {
@@ -65,7 +65,7 @@ const user = userEvent.setup();
 const Container: React.FC = () => {
   const { contextHolder, modalOpen } = useModalPasswordChange();
   const { setAuth } = useAuth();
-  const { updateCurrentUser } = useCurrentUsers();
+  const { updateCurrentUser } = useCurrentUser();
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
 

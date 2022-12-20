@@ -39,10 +39,10 @@ export type FetchUsersConfig = {
 const UsersContext = createContext<UsersContext | null>(null);
 
 export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [usersByKey, setUsersByKey] = useState<Map<string, UsersPagination>>(() =>
+  const [usersByKey, setUsersByKey] = useState<Map<string, UsersPagination>>(
     Map<string, UsersPagination>(),
   );
-  const [users, setUsers] = useState<Map<number, DetailedUser>>(() => Map<number, DetailedUser>());
+  const [users, setUsers] = useState<Map<number, DetailedUser>>(Map<number, DetailedUser>());
   const [currentUser, setCurrentUser] = useState<Loadable<number>>(NotLoaded);
 
   return (
@@ -222,7 +222,7 @@ export const useUpdateUser = (): ((
   return callback;
 };
 
-export const useCurrentUsers = (): Loadable<DetailedUser> => {
+export const useCurrentUser = (): Loadable<DetailedUser> => {
   const context = useContext(UsersContext);
 
   if (context === null) {

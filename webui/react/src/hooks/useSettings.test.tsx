@@ -7,7 +7,7 @@ import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { useCurrentUsers, UsersProvider } from 'stores/users';
+import { useCurrentUser, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import * as hook from './useSettings';
@@ -103,7 +103,7 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
 
 const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {
   const { setAuth, setAuthCheck } = useAuth();
-  const { updateCurrentUser } = useCurrentUsers();
+  const { updateCurrentUser } = useCurrentUser();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true, user: { id: 1 } as DetailedUser });

@@ -42,7 +42,7 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
-import { useCurrentUsers, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { ExperimentAction as Action, AnyTask, CommandState, CommandTask, CommandType } from 'types';
 import handleError from 'utils/error';
@@ -84,7 +84,8 @@ const TaskList: React.FC = () => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const user = Loadable.match(useCurrentUsers(), {
+  const loadableCurrentUser = useCurrentUser();
+  const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

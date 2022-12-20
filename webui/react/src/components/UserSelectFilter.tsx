@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import { useCurrentUsers, useUsers } from 'stores/users';
+import { useCurrentUser, useUsers } from 'stores/users';
 import { ALL_VALUE, User } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
@@ -27,7 +27,8 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state // TODO: handle loading state
-  const authUser = Loadable.match(useCurrentUsers(), {
+  const loadableCurrentUser = useCurrentUser();
+  const authUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

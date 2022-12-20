@@ -41,7 +41,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useCurrentUsers, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -62,7 +62,8 @@ const ModelRegistry: React.FC = () => {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
   }); // TODO: handle loading state
-  const user = Loadable.match(useCurrentUsers(), {
+  const loadableCurrentUser = useCurrentUser();
+  const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

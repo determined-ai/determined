@@ -10,7 +10,7 @@ import { deleteTrialsCollection, getTrialsCollections, patchTrialsCollection } f
 import Icon from 'shared/components/Icon';
 import { clone, finiteElseUndefined, isFiniteNumber } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
-import { useCurrentUsers } from 'stores/users';
+import { useCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -84,7 +84,8 @@ export const useTrialCollections = (
     getDefaultFilters(projectId),
   );
 
-  const user = Loadable.match(useCurrentUsers(), {
+  const loadableCurrentUser = useCurrentUser();
+  const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });

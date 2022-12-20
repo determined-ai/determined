@@ -7,7 +7,7 @@ import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPassword
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
 import { ErrorType } from 'shared/utils/error';
-import { useCurrentUsers, useUpdateUser } from 'stores/users';
+import { useCurrentUser, useUpdateUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -20,7 +20,7 @@ export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
 export const CHANGE_PASSWORD_TEXT = 'Change Password';
 
 const SettingsAccount: React.FC = () => {
-  const loadableCurrentUser = useCurrentUsers();
+  const loadableCurrentUser = useCurrentUser();
   const updateUser = useUpdateUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,

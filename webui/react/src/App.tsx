@@ -24,7 +24,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
-import { useCurrentUsers, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
+import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
 
@@ -37,7 +37,7 @@ const AppView: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const loadableUser = useCurrentUsers();
+  const loadableUser = useCurrentUser();
   const infoLoadable = useDeterminedInfo();
   const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());

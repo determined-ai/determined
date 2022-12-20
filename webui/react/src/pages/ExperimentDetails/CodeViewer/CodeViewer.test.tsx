@@ -13,7 +13,7 @@ import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { useCurrentUsers, UsersProvider } from 'stores/users';
+import { useCurrentUser, UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import CodeViewer, { Props } from './CodeViewer';
@@ -106,7 +106,7 @@ const user = userEvent.setup();
 
 const Container: React.FC<Props> = (props) => {
   const { setAuth, setAuthCheck } = useAuth();
-  const { updateCurrentUser } = useCurrentUsers();
+  const { updateCurrentUser } = useCurrentUser();
 
   useEffect(() => {
     setAuth({ isAuthenticated: true });
