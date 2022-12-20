@@ -33,7 +33,7 @@
       image:
         cpu: determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0
         cuda: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
-        rocm: determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-9119094
+        rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0
       pod_spec: null
       ports:
         qwer: 1234
