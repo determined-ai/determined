@@ -10,6 +10,27 @@
  Version 0.19
 **************
 
+Version 0.19.9
+==============
+
+**Release Date:** December 20, 2022
+
+**New Features**
+
+-  WebUI: Display total checkpoint size for experiments.
+
+-  WebUI: Add links from forked experiments and continued trials to their parents.
+
+-  API: Add structured fields to task log objects.
+
+-  Cluster: Add support for launcher-provided resource pools. Determined Enterprise Edition now
+   allows for custom resource pools to be defined that submit work to an underlying Slurm/PBS
+   partition on an HPC cluster with different submission options.
+
+-  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
+   <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
+   Apptainer/Singularity/PodMan.
+
 Version 0.19.8
 ==============
 
