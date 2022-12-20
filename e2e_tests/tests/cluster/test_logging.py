@@ -160,8 +160,11 @@ def check_logs(
             )
         ), "good filter returned no logs"
 
-    # Check nonsense is nonsense.
-    assert not any(log_fn(rank_ids=[-1])), "bad filter returned logs"
+    # Changed -1 to represent no-rank filter.
+    assert any(log_fn(rank_ids=[-1])), "-1 rank returns logs with no rank"
+
+    # Check other negative ranks are nonsense.
+    assert not any(log_fn(rank_ids=[-2])), "bad filter returned logs"
 
 
 def to_snake_case(camel_case: str) -> str:
