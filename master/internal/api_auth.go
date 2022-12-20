@@ -124,12 +124,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		return true, redirectToLogin(c)
 	}
 
-	taskID := c.Param("service")
-	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), model.TaskID(taskID))
-	if err != nil {
-		return true, err
-	}
-
+	taskID := model.TaskID(c.Param("service"))
 	var ctx context.Context
 
 	if c.Request() == nil || c.Request().Context() == nil {
@@ -138,13 +133,14 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		ctx = c.Request().Context()
 	}
 
-	workspaceID, err := db.GetCommandWorkspaceID(ctx, model.TaskID(taskID))
+	spec, err := db.GetCommandGenericSpec(ctx, taskID)
 	if err != nil {
 		return true, err
 	}
-	// TODO(DET-8733): if tsb then use tsb authz interface
+
+	// TODO(DET-8751): if tsb then use tsb authz interface
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *user, ownerID, workspaceID); err != nil {
+		ctx, *user, spec.Base.Owner.ID, spec.Metadata.WorkspaceID); err != nil {
 		return true, err
 	} else if !ok {
 		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
