@@ -1,4 +1,3 @@
-import abc
 import json
 import os
 import subprocess
@@ -10,6 +9,7 @@ import pytest
 
 from tests import config as conf
 
+from .abstract_cluster import Cluster
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
 from .utils import now_ts, set_master_port
 
@@ -40,29 +40,6 @@ DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devclus
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
-DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
-
-
-class Cluster(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def __init__(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def kill_master(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def restart_master(self) -> None:
-        pass
-
-    @abc.abstractmethod
-    def restart_agent(self, wait_for_amnesia: bool = True, wait_for_agent: bool = True) -> None:
-        pass
-
-    @abc.abstractmethod
-    def ensure_agent_ok(self) -> None:
-        pass
 
 
 def get_agent_data(master_url: str) -> List[Dict[str, Any]]:
@@ -189,11 +166,6 @@ class ManagedCluster(Cluster):
     def fetch_config_reattach_wait(self) -> float:
         s = self.fetch_config()["resource_pools"][0]["agent_reconnect_wait"]
         return float(s.rstrip("s"))
-
-    def log_marker(self, marker: str) -> None:
-        for log_path in DEVCLUSTER_LOG_PATH.glob("*.log"):
-            with log_path.open("a") as fout:
-                fout.write(marker)
 
 
 @pytest.fixture(scope="session", params=[True, False], ids=["reattach-on", "reattach-off"])
