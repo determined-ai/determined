@@ -4,8 +4,9 @@ import copy
 import os
 
 import constants
-from determined.experimental import client
 from ruamel import yaml
+
+from determined.experimental import client
 
 
 def parse_args():

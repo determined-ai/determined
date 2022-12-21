@@ -4,13 +4,12 @@ import logging
 import pathlib
 import shutil
 import tempfile
-
-import determined as det
 import uuid
 from typing import List
 
-from determined.common import util
+import determined as det
 from determined import searcher
+from determined.common import util
 
 
 class ModelInfoTuner(searcher.SearchMethod):
@@ -38,9 +37,7 @@ class ModelInfoTuner(searcher.SearchMethod):
         ds_config["autotuning"] = {
             "enabled": True,
             "model_info_path": "profile_model_info/model_info.json",
-            "model_info": {
-                "profile": True
-            }
+            "model_info": {"profile": True},
         }
 
         model_info_filename = "model_info_ds_config.json"
@@ -55,8 +52,12 @@ class ModelInfoTuner(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int,
-#            other_metrics: dict[str, Any]
+        self,
+        _: searcher.SearcherState,
+        request_id: uuid.UUID,
+        metric: float,
+        train_length: int,
+        #            other_metrics: dict[str, Any]
     ) -> List[searcher.Operation]:
         logging.info(f"validation completed; metric={metric}, train_length={train_length}")
         return []
@@ -71,9 +72,7 @@ class ModelInfoTuner(searcher.SearchMethod):
     # def on_trial_closed(
     #     self, _: searcher.SearcherState, request_id: uuid.UUID, trial_completion_info: Optional[dict[str, Any]] = None
     # ) -> List[searcher.Operation]:
-    def on_trial_closed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID
-    ):
+    def on_trial_closed(self, _: searcher.SearcherState, request_id: uuid.UUID):
         if request_id == self.model_info_profile_request_id:
             logging.info("model info profile trial closed")
 
@@ -98,6 +97,7 @@ class ModelInfoTuner(searcher.SearchMethod):
 
         model_info_hyperparameters = copy.deepcopy(self.hyperparameters)
         model_info_hyperparameters["deepspeed_config"] = self.model_info_config_path
+        model_info_hyperparameters["deepspeed_mode"] = "model_info_profiling"
         create = searcher.Create(
             request_id=self.model_info_profile_request_id,
             hparams=model_info_hyperparameters,
@@ -124,9 +124,9 @@ def main(exp_dir: str, exp_conf: str) -> None:
     }
     search_method = ModelInfoTuner(config, max_length=6, model_dir=exp_dir_path)
 
-    searcher_dir = pathlib.Path(exp_dir)\
-        .joinpath("local_deep_speed_trial_tuner")\
-        .joinpath("searcher_dir")
+    searcher_dir = (
+        pathlib.Path(exp_dir).joinpath("local_deep_speed_trial_tuner").joinpath("searcher_dir")
+    )
     searcher_dir.mkdir(parents=True)
     search_runner = searcher.LocalSearchRunner(search_method, searcher_dir=searcher_dir)
     experiment_id = search_runner.run(config, model_dir=exp_dir_path)
@@ -135,11 +135,14 @@ def main(exp_dir: str, exp_conf: str) -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
-    cifar10_moe_path = pathlib.Path(__file__).absolute().parent.parent.parent\
-        .joinpath("deepspeed").joinpath("cifar10_moe")
+    cifar10_moe_path = (
+        pathlib.Path(__file__)
+        .absolute()
+        .parent.parent.parent.joinpath("deepspeed")
+        .joinpath("cifar10_moe")
+    )
     print(cifar10_moe_path)
 
     with tempfile.TemporaryDirectory() as exp_dir:
         shutil.copytree(cifar10_moe_path, exp_dir, dirs_exist_ok=True)
         main(exp_dir, "zero_stages.yaml")
-

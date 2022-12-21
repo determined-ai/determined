@@ -2,12 +2,13 @@ import contextlib
 import importlib.util
 import json
 import logging
+import types
 from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union, cast
 
 import deepspeed
 import torch
 from deepspeed.runtime import config_utils
-from deepspeed.runtime.utils import get_ma_status, see_memory_usage
+from deepspeed.runtime.utils import get_ma_status
 
 import determined as det
 from determined import profiler, pytorch
@@ -119,8 +120,11 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
 
     def _is_model_info_trial(self) -> bool:
         # TODO we can think of a less hacky way
-        logging.warning(self.get_hparams()["deepspeed_config"])
-        return self.get_hparams()["deepspeed_config"] == "model_info_ds_config.json"
+        hparams = self.get_hparams()
+        if "deepspeed_mode" not in hparams:
+            return False
+        mode = hparams["deepspeed_mode"]
+        return isinstance(mode, str) and mode == "model_info_profiling"
 
     def _check_experiment_config_optimizations(self) -> None:
         """
@@ -217,7 +221,9 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                     "apply to wrapped model engine 1."
                 )
 
-        def alt_autotuning_profile_model_info(inner_self) -> bool:
+        def alt_autotuning_profile_model_info(
+            inner_self: deepspeed.DeepSpeedEngine,
+        ) -> bool:
             """
             Replace the standard autotuning_profile_model_info
             in order to capture and save the model info
@@ -262,12 +268,16 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                 elif "activation_mem_per_gpu" not in inner_self.autotuning_model_info:
                     if inner_self.global_rank == 0:
                         ma = inner_self.autotuning_model_info["memory_allocated"]
-                        activation_mem = get_ma_status() - ma
-                        inner_self.autotuning_model_info["activation_mem_per_gpu"] = activation_mem
+                        self._activation_mem = get_ma_status() - ma
+                        inner_self.autotuning_model_info[
+                            "activation_mem_per_gpu"
+                        ] = self._activation_mem
             return False
 
-        model.autotuning_profile_model_info = alt_autotuning_profile_model_info.__get__(
-            model, deepspeed.DeepSpeedEngine
+        function_type = types.MethodType
+        model.autotuning_profile_model_info = function_type(
+            alt_autotuning_profile_model_info,
+            model,
         )
 
         self.models.append(model)
