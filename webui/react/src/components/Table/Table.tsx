@@ -16,11 +16,11 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import { Pagination } from 'shared/types';
 import { getDuration } from 'shared/utils/datetime';
-import { useUsers } from 'stores/users';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask,
   CommandType,
+  DetailedUser,
   ExperimentItem,
   ModelItem,
   ModelVersion,
@@ -30,7 +30,6 @@ import {
   TrialItem,
   Workspace,
 } from 'types';
-import { Loadable } from 'utils/loadable';
 import { canBeOpened } from 'utils/task';
 import { openCommand } from 'utils/wait';
 
@@ -108,9 +107,7 @@ export const tooltipRenderer: Renderer = (text) => (
   </Tooltip>
 );
 
-export const UserRenderer: Renderer<{ userId?: number }> = (_, record) => {
-  const users = Loadable.getOrElse([], useUsers());
-  const user = users.find((user) => user.id === record.userId);
+export const userRenderer: React.FC<DetailedUser | undefined> = (user) => {
   return (
     <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
       {user ? <UserAvatar user={user} /> : <Spinner />}

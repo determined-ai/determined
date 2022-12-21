@@ -8,6 +8,7 @@ import {
   checkmarkRenderer,
   defaultRowClassName,
   getFullPaginationConfig,
+  userRenderer,
 } from 'components/Table/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
 import { useSettings } from 'hooks/useSettings';
@@ -23,6 +24,7 @@ import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
 import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
+import { useUsers } from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
 import {
@@ -46,6 +48,7 @@ interface Props {
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const loadableResourcePools = useResourcePools();
+  const users = Loadable.getOrElse([], useUsers());
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(
@@ -295,6 +298,9 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
                 );
               };
             }
+            break;
+          case 'user':
+            col.render = (_, r) => userRenderer(users.find((u) => u.id === r.userId));
             break;
         }
         return col;

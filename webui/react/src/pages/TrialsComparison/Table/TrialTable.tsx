@@ -14,7 +14,7 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import {
   getFullPaginationConfig,
   relativeTimeRenderer,
-  UserRenderer,
+  userRenderer,
 } from 'components/Table/Table';
 import TableFilterMultiSearch from 'components/Table/TableFilterMultiSearch';
 import TableFilterRank from 'components/Table/TableFilterRank';
@@ -420,7 +420,8 @@ const TrialTable: React.FC<Props> = ({
       filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
       isFiltered: () => !!filters.userIds?.length,
       key: 'userId',
-      render: UserRenderer,
+      render: (_: number, r: V1AugmentedTrial) =>
+        userRenderer(users.find((u) => u.id === r.userId)),
       sorter: true,
       title: 'User',
     }),
