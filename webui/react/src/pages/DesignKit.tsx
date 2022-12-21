@@ -1,29 +1,34 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import {
-  Button,
   Card,
-  Checkbox,
-  Input,
-  InputNumber,
-  Pagination,
+  Input, //TODO: Replace with kit component
+  InputNumber, //TODO: Replace with kit component
   Space,
-  Tabs,
-  Tooltip,
 } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-import Breadcrumb from 'components/Breadcrumb';
-import Grid, { GridMode } from 'components/Grid';
-import Logo from 'components/Logo';
-import LogViewer from 'components/LogViewer/LogViewer';
-import OverviewStats from 'components/OverviewStats';
-import Page from 'components/Page';
-import ResourcePoolCard from 'components/ResourcePoolCard';
-import SelectFilter from 'components/SelectFilter';
-import ResponsiveTable from 'components/Table/ResponsiveTable';
-import ThemeToggle from 'components/ThemeToggle';
-import UserAvatar from 'components/UserAvatar';
+import OverviewStats from 'components/OverviewStats'; //TODO: Rename?
+import ResourcePoolCard from 'components/ResourcePoolCard'; //TODO: Rename?
+import UserAvatar from 'components/UserAvatar'; //TODO: Rename?
+import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
+
+import Pivot from 'components/kit/Pivot';
+import Tooltip from 'components/kit/Tooltip';
+import Pagination from 'components/kit/Pagination';
+import Button from 'components/kit/Button';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Checkbox from 'components/kit/Checkbox';
+
+import LogViewer from 'components/LogViewer/LogViewer';  //TODO: Move to components/kit?
+import SelectFilter from 'components/SelectFilter'; //TODO: Move to components/kit?
+import ResponsiveTable from 'components/Table/ResponsiveTable'; //TODO: Move to components/kit?
+
+import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit? Add section to DesignKit page?
+import Logo from 'components/Logo'; //TODO: Move to components/kit? Add section to DesignKit page?
+import Page from 'components/Page'; //TODO: Move to components/kit? Add section to DesignKit page?
+import ThemeToggle from 'components/ThemeToggle'; //TODO: Move to components/kit? Add section to DesignKit page?
+
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
@@ -35,7 +40,6 @@ import { ShirtSize } from 'themes';
 import { BrandingType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
-import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader';
 
 const Components = {
   ActionBar: 'ActionBar',
@@ -49,9 +53,9 @@ const Components = {
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
-  Searchboxes: 'Search boxes',
-  Spinbuttons: 'Spin buttons',
-  Textfields: 'Input - text fields',
+  Searchboxes: 'Searchboxes',
+  Spinbuttons: 'Spinbuttons',
+  Textfields: 'Input - Textfields',
   Tooltips: 'Tooltips',
 } as const;
 
@@ -95,9 +99,11 @@ const ButtonsSection: React.FC = () => {
   return (
     <ComponentSection id="Buttons" title="Buttons">
       <Card>
-        Buttons give people a way to trigger an action. They&apos;re typically found in forms,
-        dialog panels, and dialogs. Some buttons are specialized for particular tasks, such as
-        navigation, repeated actions, or presenting menus.
+        <p>
+          <code>{'<Button>'}</code>s give people a way to trigger an action. They&apos;re typically found in forms,
+          dialog panels, and dialogs. Some buttons are specialized for particular tasks, such as
+          navigation, repeated actions, or presenting menus.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -233,8 +239,10 @@ const DropdownsSection: React.FC = () => {
   return (
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <Card>
-        A dropdown/combo box combines a text field and a dropdown giving people a way to select an
-        option from a list or enter their own choice.
+        <p>
+          A dropdown/combo box (<code>{'<SelectFilter>'}</code>) combines a text field and a dropdown giving people a way to select an
+          option from a list or enter their own choice.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -365,8 +373,10 @@ const CheckboxesSection: React.FC = () => {
   return (
     <ComponentSection id="Checkboxes" title="Checkboxes">
       <Card>
-        Check boxes (Checkbox) give people a way to select one or more items from a group, or switch
-        between two mutually exclusive options (checked or unchecked, on or off).
+        <p>
+          Checkboxes (<code>{'<Checkbox>'}</code>) give people a way to select one or more items from a group, or switch
+          between two mutually exclusive options (checked or unchecked, on or off).
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -425,10 +435,12 @@ const CheckboxesSection: React.FC = () => {
 
 const SearchboxesSection: React.FC = () => {
   return (
-    <ComponentSection id="Searchboxes" title="Search boxes">
+    <ComponentSection id="Searchboxes" title="Searchboxes">
       <Card>
-        A search box (SearchBox) provides an input field for searching content within a site or app
-        to find specific items.
+        <p>
+          A search box (<code>{'<Searchbox>'}</code>) provides an input field for searching content within a site or app
+          to find specific items.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -501,10 +513,12 @@ const SearchboxesSection: React.FC = () => {
 
 const SpinbuttonsSection: React.FC = () => {
   return (
-    <ComponentSection id="Spinbuttons" title="Spin buttons">
+    <ComponentSection id="Spinbuttons" title="Spinbuttons">
       <Card>
-        A spin button (SpinButton) allows someone to incrementally adjust a value in small steps.
-        It&apos;s mainly used for numeric values, but other values are supported too.
+        <p>
+          A spin button (<code>{'<Spinbutton>'}</code>) allows someone to incrementally adjust a value in small steps.
+          It&apos;s mainly used for numeric values, but other values are supported too.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -543,10 +557,12 @@ const SpinbuttonsSection: React.FC = () => {
 
 const TextfieldsSection: React.FC = () => {
   return (
-    <ComponentSection id="Textfields" title="Input - text fields">
+    <ComponentSection id="Textfields" title="Input - Textfields">
       <Card>
-        Text fields (TextField) give people a way to enter and edit text. They&apos;re used in
-        forms, modal dialogs, tables, and other surfaces where text input is required.
+        <p>
+          Text fields (<code>{'<Textfield>'}</code>) give people a way to enter and edit text. They&apos;re used in
+          forms, modal dialogs, tables, and other surfaces where text input is required.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -583,16 +599,7 @@ const TextfieldsSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default input - text field</strong>
-        <InputNumber defaultValue={3} />
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
-          <li>Number/type input starts 12px from border. </li>
-          <li>When in focus, use arrow up/down of keyboard to facilitate spinning.</li>
-        </ul>
-        <hr />
-        <strong>Variations and states of spin buttons</strong>
-        <InputNumber disabled />
+        <Input defaultValue="text" />
       </Card>
     </ComponentSection>
   );
@@ -622,9 +629,11 @@ const ListsSection: React.FC = () => {
   return (
     <ComponentSection id="Lists" title="Lists (tables)">
       <Card>
-        A list (DetailsList) is a robust way to display an information-rich collection of items, and
-        allow people to sort, group, and filter the content. Use a details list when information
-        density is critical.
+        <p>
+          A list (<code>{'<ResponsiveTable>'}</code>) is a robust way to display an information-rich collection of items, and
+          allow people to sort, group, and filter the content. Use a details list when information
+          density is critical.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Layout</strong>
@@ -680,7 +689,7 @@ const BreadcrumbsSection: React.FC = () => {
     <ComponentSection id="Breadcrumbs" title="Breadcrumbs">
       <Card>
         <p>
-          Breadcrumbs should be used as a navigational aid in your app or site. They indicate the
+          <code>{'<Breadcrumb>'}</code>s should be used as a navigational aid in your app or site. They indicate the
           current page&apos;s location within a hierarchy and help the user understand where they
           are in relation to the rest of that hierarchy. They also afford one-click access to higher
           levels of that hierarchy.
@@ -716,9 +725,11 @@ const FacepileSection: React.FC = () => {
   return (
     <ComponentSection id="Facepile" title="Facepile">
       <Card>
-        A face pile (Facepile) displays a list of personas. Each circle represents a person and
-        contains their image or initials. Often this control is used when sharing who has access to
-        a specific view or file, or when assigning someone a task within a workflow.
+        <p>
+          A face pile (<code>{'<Facepile>'}</code>) displays a list of personas. Each circle represents a person and
+          contains their image or initials. Often this control is used when sharing who has access to
+          a specific view or file, or when assigning someone a task within a workflow.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -778,7 +789,7 @@ const ActionBarSection: React.FC = () => {
     <ComponentSection id="ActionBar" title="ActionBar">
       <Card>
         <p>
-          ActionBar is a surface that houses commands that operate on the content of the window,
+          <code>{'<ActionBar>'}</code> is a surface that houses commands that operate on the content of the window,
           panel, or parent region it resides above. ActionBar are one of the most visible and
           recognizable ways to surface commands, and can be an intuitive method for interacting with
           content on the page; however, if overloaded or poorly organized, they can be difficult to
@@ -834,7 +845,7 @@ const PivotSection: React.FC = () => {
     <ComponentSection id="Pivot" title="Pivot">
       <Card>
         <p>
-          The Pivot control and related tabs pattern are used for navigating frequently accessed,
+          The Pivot control (<code>{'<Tabs>'}</code>) and related tabs pattern are used for navigating frequently accessed,
           distinct content categories. Pivots allow for navigation between two or more content views
           and relies on text headers to articulate the different sections of content.
         </p>
@@ -858,7 +869,7 @@ const PivotSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Pivot</strong>
-        <Tabs
+        <Pivot
           items={[
             { key: 'Overview', label: 'Overview' },
             { key: 'hyperparameters', label: 'Hyperparameters' },
@@ -878,9 +889,11 @@ const PaginationSection: React.FC = () => {
   return (
     <ComponentSection id="Pagination" title="Pagination">
       <Card>
-        Pagination is the process of splitting the contents of a website, or section of contents
-        from a website, into discrete pages. This user interface design pattern is used so users are
-        not overwhelmed by a mass of data on one page. Page breaks are automatically set.
+        <p>
+          <code>{'<Pagination>'}</code> is the process of splitting the contents of a website, or section of contents
+          from a website, into discrete pages. This user interface design pattern is used so users are
+          not overwhelmed by a mass of data on one page. Page breaks are automatically set.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -921,8 +934,10 @@ const DataCardsSection: React.FC = () => {
   return (
     <ComponentSection id="DataCards" title="DataCards">
       <Card>
-        A DataCard contains additional metadata or actions. This offers people a richer view into a
-        file than the typical grid view.
+        <p>
+          A DataCard (<code>{'<OverviewStats>'}</code>) contains additional metadata or actions. This offers people a richer view into a
+          file than the typical grid view.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -963,7 +978,7 @@ const DataCardsSection: React.FC = () => {
         </ul>
         <strong>DataCard variations</strong>
         <ul>
-          <li>Resource pool card</li>
+          <li>Resource pool card (<code>{'<ResourcePoolCard>'}</code>)</li>
           <ResourcePoolCard resourcePool={rps[0]} />
         </ul>
       </Card>
@@ -1017,8 +1032,10 @@ const LogViewerSection: React.FC = () => {
   return (
     <ComponentSection id="LogViewer" title="LogViewer">
       <Card>
-        A Logview prints events that have been configured to be triggered and return them to the
-        user in a running stream.
+        <p>
+          A Logview (<code>{'<LogViewer>'}</code>) prints events that have been configured to be triggered and return them to the
+          user in a running stream.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Content considerations</strong>
@@ -1059,10 +1076,12 @@ const TooltipsSection: React.FC = () => {
   return (
     <ComponentSection id="Tooltips" title="Tooltips">
       <Card>
-        A good tooltip briefly describes unlabeled controls or provides a bit of additional
-        information about labeled controls, when this is useful. It can also help customers navigate
-        the UI by offering additional—not redundant—information about control labels, icons, and
-        links. A tooltip should always add valuable information; use sparingly.
+        <p>
+          A good tooltip (<code>{'<Tooltip>'}</code>) briefly describes unlabeled controls or provides a bit of additional
+          information about labeled controls, when this is useful. It can also help customers navigate
+          the UI by offering additional—not redundant—information about control labels, icons, and
+          links. A tooltip should always add valuable information; use sparingly.
+        </p>
       </Card>
       <Card title="Best practices">
         <strong>Content</strong>

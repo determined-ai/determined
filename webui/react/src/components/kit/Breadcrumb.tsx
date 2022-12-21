@@ -8,16 +8,16 @@ interface BreadcrumbProps {
 }
 
 interface BreadcrumbItemProps {
-  children?: ReactNode
+  children?: ReactNode;
 }
 
 type BreadcrumbItem = React.FC<BreadcrumbItemProps>;
 type BreadcrumbSeparator = React.FC;
 type BreadcrumbComponent = React.FC<BreadcrumbProps> & { Item: typeof BreadcrumbItem, Separator: typeof BreadcrumbSeparator };
 
-const BreadcrumbDet: BreadcrumbComponent = (props: BreadcrumbProps): JSX.Element => {
+const BreadcrumbComponent: BreadcrumbComponent = ({ separator = '/', ...props }: BreadcrumbProps): JSX.Element => {
   return (
-    <Breadcrumb separator="" {...props} />);
+    <Breadcrumb separator={separator} {...props} />);
 };
 
 const BreadcrumbItem: BreadcrumbItem = (props: BreadcrumbItemProps) => {
@@ -32,7 +32,7 @@ const BreadcrumbSeparator: BreadcrumbSeparator = () => {
   );
 };
 
-BreadcrumbDet.Item = BreadcrumbItem;
-BreadcrumbDet.Separator = BreadcrumbSeparator;
+BreadcrumbComponent.Item = BreadcrumbItem;
+BreadcrumbComponent.Separator = BreadcrumbSeparator;
 
-export default BreadcrumbDet;
+export default BreadcrumbComponent;
