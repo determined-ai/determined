@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from termcolor import colored
+from determined import cli
 
 from determined.cli import render
 from determined.common import api, context, util, yaml
@@ -189,9 +190,15 @@ def list_tasks(args: Namespace) -> None:
     api_full_path = "api/v1/{}".format(api_path)
     table_header = RemoteTaskListTableHeaders[args._command]
 
-    if args.all:
-        params = {}  # type: Dict[str, Any]
-    else:
+    params: Dict[str, Any] = {}
+
+    if args.workspace_name is not None:
+        workspace_id = cli.workspace.get_workspace_by_name(
+            cli.setup_session(args), args.workspace_name
+        ).id
+        params["workspace_id"] = workspace_id
+
+    if not args.all:
         params = {"users": [authentication.must_cli_auth().get_session_user()]}
 
     res = api.get(args.master, api_full_path, params=params).json()[api_path]

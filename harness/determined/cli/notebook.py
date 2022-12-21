@@ -13,22 +13,6 @@ from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
-DEFAULT_WORKSPACE_NAME = "Uncategorized"
-
-
-def get_workspace_by_name(session: api.Session, workspace_name: str) -> bindings.v1Workspace:
-    """
-    take in a workspace name and validate with the server returning detected issues.
-    """
-    assert workspace_name, "workspace name cannot be empty"
-    resp = bindings.get_GetWorkspaces(session, name=workspace_name)
-    assert len(resp.workspaces) <= 1, "workspace name are assumed to be unique."
-    if len(resp.workspaces) == 0:
-        raise LookupError(f"workspace {workspace_name} not found")
-    workspace = resp.workspaces[0]
-    return workspace
-
-
 @authentication.required
 def start_notebook(args: Namespace) -> None:
     config = command.parse_config(args.config_file, None, args.config, args.volume)
@@ -37,7 +21,7 @@ def start_notebook(args: Namespace) -> None:
 
     workspace_id = None
     if args.workspace_name:
-        workspace = get_workspace_by_name(args.session, args.workspace_name)
+        workspace = cli.workspace.get_workspace_by_name(args.session, args.workspace_name)
         if workspace.archived:
             # TODO: consistent error handling.
             raise ValueError(f"workspace {workspace.name} is archived")
@@ -113,6 +97,7 @@ args_description = [
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
                 help="show all notebooks (including other users')"),
+            cli.workspace.workspace_arg,
             Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
         ], is_default=True),
         Cmd("config", partial(command.config),
@@ -122,8 +107,7 @@ args_description = [
         Cmd("start", start_notebook, "start a new notebook", [
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
-            Arg("--workspace-name", default=DEFAULT_WORKSPACE_NAME, type=str,
-                help="workspace name"),
+            cli.workspace.workspace_arg,
             Arg("-v", "--volume", action="append", default=[],
                 help=command.VOLUME_DESC),
             Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),

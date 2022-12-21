@@ -22,6 +22,18 @@ WORKSPACE_HEADERS = [
     "Agent Group",
 ]
 
+workspace_arg = Arg("--workspace-name", type=str, help="workspace name")
+
+
+def get_workspace_by_name(session: api.Session, workspace_name: str) -> bindings.v1Workspace:
+    assert workspace_name, "workspace name cannot be empty"
+    resp = bindings.get_GetWorkspaces(session, name=workspace_name)
+    assert len(resp.workspaces) <= 1, "workspace name are assumed to be unique."
+    if len(resp.workspaces) == 0:
+        raise LookupError(f"workspace {workspace_name} not found")
+    workspace = resp.workspaces[0]
+    return workspace
+
 
 def render_workspaces(
     workspaces: Sequence[bindings.v1Workspace], from_list_api: bool = False
