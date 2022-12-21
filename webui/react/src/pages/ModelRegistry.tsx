@@ -22,7 +22,7 @@ import {
   getFullPaginationConfig,
   modelNameRenderer,
   relativeTimeRenderer,
-  UserRenderer,
+  userRenderer,
 } from 'components/Table/Table';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
@@ -458,7 +458,7 @@ const ModelRegistry: React.FC = () => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: UserRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

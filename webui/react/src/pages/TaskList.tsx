@@ -26,7 +26,7 @@ import {
   taskNameRenderer,
   TaskRenderer,
   taskTypeRenderer,
-  UserRenderer,
+  userRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
@@ -406,7 +406,7 @@ const TaskList: React.FC = () => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
-        render: UserRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
             getDisplayName(users.find((u) => u.id === a.userId)),

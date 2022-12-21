@@ -21,6 +21,7 @@ import { StateOfUnion } from 'themes';
 import {
   CommandTask,
   CommandType,
+  DetailedUser,
   ExperimentItem,
   ModelItem,
   ModelVersion,
@@ -107,6 +108,14 @@ export const tooltipRenderer: Renderer = (text) => (
     <span>{text}</span>
   </Tooltip>
 );
+
+export const userRenderer: React.FC<DetailedUser | undefined> = (user) => {
+  return (
+    <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+      {user ? <UserAvatar user={user} /> : <Spinner />}
+    </div>
+  );
+};
 
 export const UserRenderer: Renderer<{ userId?: number }> = (_, record) => {
   const users = Loadable.getOrElse([], useUsers());
