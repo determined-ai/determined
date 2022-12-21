@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
 import { FetchArgs } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { generateAlphaNumeric } from 'shared/utils/string';
 import { LogLevelFromApi } from 'types';
 
@@ -77,9 +77,9 @@ const generateLogs = (
 
 const setup = (props: src.Props) => {
   return render(
-    <StoreProvider>
+    <UIProvider>
       <src.default {...props} />
-    </StoreProvider>,
+    </UIProvider>,
   );
 };
 

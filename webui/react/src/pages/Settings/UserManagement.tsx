@@ -14,6 +14,7 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
@@ -185,18 +186,11 @@ const UserManagement: React.FC = () => {
       {
         dataIndex: 'displayName',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
-        key: V1GetUsersRequestSortBy.DISPLAYNAME,
+        key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
+        render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
         sorter: true,
-        title: 'Display Name',
-      },
-      {
-        dataIndex: 'username',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['username'],
-        key: V1GetUsersRequestSortBy.USERNAME,
-        onCell: onRightClickableCell,
-        sorter: true,
-        title: 'User Name',
+        title: 'Name',
       },
       {
         dataIndex: 'isActive',
@@ -245,6 +239,7 @@ const UserManagement: React.FC = () => {
         columns={columns}
         containerRef={pageRef}
         dataSource={users}
+        interactiveColumns={false}
         loading={isLoading}
         pagination={getFullPaginationConfig(
           {

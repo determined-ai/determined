@@ -8,9 +8,9 @@ import React, { useEffect } from 'react';
 import { act } from 'react-dom/test-utils';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { paths } from 'routes/utils';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
@@ -83,11 +83,6 @@ jest.mock('components/MonacoEditor', () => ({
   __esModule: true,
   default: () => MonacoEditorMock,
 }));
-jest.mock('contexts/Store', () => ({
-  __esModule: true,
-  ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
-}));
 
 jest.mock('hooks/useSettings', () => {
   const actualModule = jest.requireActual('hooks/useSettings');
@@ -130,11 +125,11 @@ const setup = (
 ) => {
   render(
     <HistoryRouter history={history}>
-      <StoreProvider>
+      <UIProvider>
         <AuthProvider>
           <Container {...props} />
         </AuthProvider>
-      </StoreProvider>
+      </UIProvider>
     </HistoryRouter>,
   );
 };

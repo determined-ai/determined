@@ -822,6 +822,7 @@ export interface Workspace {
   numExperiments: number;
   numProjects: number;
   pinned: boolean;
+  pinnedAt?: Date;
   state: WorkspaceState;
   userId: number;
 }

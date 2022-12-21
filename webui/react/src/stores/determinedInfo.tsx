@@ -83,3 +83,18 @@ export const useDeterminedInfo = (): Loadable<DeterminedInfo> => {
   }
   return context.info;
 };
+
+export const useUpdateDeterminedInfo = (): ((dinfo: DeterminedInfo) => void) => {
+  const context = useContext(DeterminedInfoContext);
+
+  if (context === null) {
+    throw new Error('Attempted to use useDeterminedInfo outside of Determinednfo Context');
+  }
+  const { updateInfo } = context;
+  return useCallback(
+    (dinfo) => {
+      updateInfo(Loaded(dinfo));
+    },
+    [updateInfo],
+  );
+};

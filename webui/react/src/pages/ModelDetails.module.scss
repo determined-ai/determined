@@ -33,6 +33,14 @@
       text-align: center;
     }
   }
+  .descriptionRenderer {
+    border: 1px solid transparent;
+
+    &:focus,
+    &:hover {
+      border: 1px solid var(--theme-status-active);
+    }
+  }
 }
 .tagsRenderer {
   :global([aria-label='new-tag-trigger']) {

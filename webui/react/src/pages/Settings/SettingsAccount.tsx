@@ -73,7 +73,7 @@ const SettingsAccount: React.FC = () => {
   return (
     <div className={css.base}>
       <div className={css.avatar}>
-        <Avatar hideTooltip size={Size.ExtraLarge} userId={currentUser?.id} />
+        <Avatar hideTooltip size={Size.ExtraLarge} user={currentUser} />
       </div>
       <Divider />
       <div className={css.row}>

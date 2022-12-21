@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React, { Suspense } from 'react';
 
-import StoreProvider from 'contexts/Store';
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { ResourcePool } from 'types';
 
 import { RenderAllocationBarResourcePool } from './ResourcePoolCard';
@@ -15,11 +15,11 @@ jest.mock('services/api', () => ({
 
 const setup = (pool: ResourcePool) => {
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <Suspense>
         <RenderAllocationBarResourcePool resourcePool={pool} />
       </Suspense>
-    </StoreProvider>,
+    </UIProvider>,
   );
   return { view };
 };

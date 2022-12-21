@@ -25,7 +25,7 @@ import {
   expStateRenderer,
   getFullPaginationConfig,
   relativeTimeRenderer,
-  userRenderer,
+  UserRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
@@ -593,7 +593,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: userRenderer,
+        render: UserRenderer,
         sorter: true,
         title: 'User',
       },
@@ -654,6 +654,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       )
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [columns]);
+
+  const initialVisibleColumns = useMemo(
+    () => settings.columns?.filter((col) => transferColumns.includes(col)),
+    [settings.columns, transferColumns],
+  );
 
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
     useModalExperimentMove({ onClose: handleActionComplete, user });
@@ -799,7 +804,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
+      initialVisibleColumns,
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 

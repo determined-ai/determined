@@ -27,7 +27,7 @@ import {
   expStateRenderer,
   getFullPaginationConfig,
   relativeTimeRenderer,
-  userRenderer,
+  UserRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
@@ -99,7 +99,7 @@ import {
 } from 'utils/experiment';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
-import { openCommand } from 'utils/wait';
+import { openCommandResponse } from 'utils/wait';
 
 import {
   DEFAULT_COLUMN_WIDTHS,
@@ -465,9 +465,13 @@ const ProjectDetails: React.FC = () => {
         disabled={record.archived || !canEditExperiment}
         placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
-        onPressEnter={(e) => {
+        onBlur={(e) => {
           const newDesc = e.currentTarget.value;
           saveExperimentDescription(newDesc, record.id);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
           e.currentTarget.blur();
         }}
       />
@@ -633,7 +637,7 @@ const ProjectDetails: React.FC = () => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: userRenderer,
+        render: UserRenderer,
         sorter: true,
         title: 'User',
       },
@@ -695,6 +699,11 @@ const ProjectDetails: React.FC = () => {
       .map((column) => column.dataIndex?.toString() ?? '');
   }, [columns]);
 
+  const initialVisibleColumns = useMemo(
+    () => settings.columns?.filter((col) => transferColumns.includes(col)),
+    [settings.columns, transferColumns],
+  );
+
   const { contextHolder: modalExperimentMoveContextHolder, modalOpen: openMoveModal } =
     useModalExperimentMove({ onClose: handleActionComplete, user });
 
@@ -747,7 +756,7 @@ const ProjectDetails: React.FC = () => {
       try {
         const result = await sendBatchActions(action);
         if (action === Action.OpenTensorBoard && result) {
-          openCommand(result as CommandTask);
+          openCommandResponse(result as CommandResponse);
         }
 
         /*
@@ -839,7 +848,7 @@ const ProjectDetails: React.FC = () => {
     useModalColumnsCustomize({
       columns: transferColumns,
       defaultVisibleColumns: DEFAULT_COLUMNS,
-      initialVisibleColumns: settings.columns?.filter((col) => transferColumns.includes(col)),
+      initialVisibleColumns,
       onSave: handleUpdateColumns as (columns: string[]) => void,
     });
 

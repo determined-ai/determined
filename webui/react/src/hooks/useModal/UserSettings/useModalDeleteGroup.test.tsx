@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { DeleteGroupParams } from 'services/types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 
 import useModalDeleteGroup, { API_SUCCESS_MESSAGE, MODAL_HEADER } from './useModalDeleteGroup';
 
@@ -46,9 +46,9 @@ const setup = async () => {
     numMembers: 0,
   };
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <Container group={group} />
-    </StoreProvider>,
+    </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));

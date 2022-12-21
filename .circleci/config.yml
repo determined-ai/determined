@@ -1061,10 +1061,9 @@ jobs:
                 make -C model_hub build-docker-dev
                 make -C model_hub publish-docker-dev
             fi
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
-          path: master/dist/
-      - store_artifacts:
-          path: agent/dist/
+          path: /tmp/pkgs
 
   package-and-push-system-rc:
     docker:
@@ -1091,10 +1090,9 @@ jobs:
       - run: make -C agent publish
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
-          path: master/dist/
-      - store_artifacts:
-          path: agent/dist/
+          path: /tmp/pkgs
 
   package-and-push-system-release:
     docker:
@@ -1120,10 +1118,9 @@ jobs:
       - run: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
-          path: master/dist/
-      - store_artifacts:
-          path: agent/dist/
+          path: /tmp/pkgs
 
   publish-helm:
     docker:

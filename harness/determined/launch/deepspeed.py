@@ -142,6 +142,8 @@ def create_deepspeed_env_file() -> None:
         "DET_CHIEF_IP",
         "DET_MANUAL_INIT_DISTRIBUTED",
         "DET_DEEPSPEED_HOSTFILE_PATH",
+        "DET_MASTER_CERT_FILE",
+        "DET_MASTER_CERT_NAME",
     ]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = os.environ.copy()

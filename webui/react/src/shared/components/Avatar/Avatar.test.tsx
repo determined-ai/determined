@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TooltipProps } from 'antd/es/tooltip';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { DarkLight } from 'shared/themes';
 
 import Avatar, { Props } from './Avatar';
@@ -40,14 +40,14 @@ const setup = ({
   ...props
 }: Partial<Props> = {}) => {
   render(
-    <StoreProvider>
+    <UIProvider>
       <Avatar
         darkLight={darkLight}
         displayName={displayName}
         hideTooltip={hideTooltip}
         {...props}
       />
-    </StoreProvider>,
+    </UIProvider>,
   );
 };
 

@@ -1,4 +1,4 @@
-import { Button, Dropdown, Space, Typography } from 'antd';
+import { Button, Dropdown, Input, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import {
   FilterDropdownProps,
@@ -9,7 +9,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import FilterCounter from 'components/FilterCounter';
-import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -23,7 +22,7 @@ import {
   getFullPaginationConfig,
   modelNameRenderer,
   relativeTimeRenderer,
-  userRenderer,
+  UserRenderer,
 } from 'components/Table/Table';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
@@ -374,11 +373,21 @@ const ModelRegistry: React.FC = () => {
     );
 
     const descriptionRenderer = (value: string, record: ModelItem) => (
-      <InlineEditor
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={value}
         disabled={record.archived}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
-        value={value}
-        onSave={(newDescription: string) => saveModelDescription(record.name, newDescription)}
+        title={record.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveModelDescription(record.name, newDesc);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 
@@ -449,7 +458,7 @@ const ModelRegistry: React.FC = () => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: userRenderer,
+        render: UserRenderer,
         title: 'User',
       },
       {

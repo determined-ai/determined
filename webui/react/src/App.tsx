@@ -8,7 +8,6 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import StoreProvider from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
@@ -150,13 +149,11 @@ const AppView: React.FC = () => {
 const App: React.FC = () => {
   return (
     <HelmetProvider>
-      <StoreProvider>
-        <StoreContext>
-          <DndProvider backend={HTML5Backend}>
-            <AppView />
-          </DndProvider>
-        </StoreContext>
-      </StoreProvider>
+      <StoreContext>
+        <DndProvider backend={HTML5Backend}>
+          <AppView />
+        </DndProvider>
+      </StoreContext>
     </HelmetProvider>
   );
 };

@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider } from 'stores/auth';
 import { ExperimentsProvider } from 'stores/experiments';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
@@ -17,7 +17,7 @@ jest.mock('services/api', () => ({
 
 const setup = () => {
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <AuthProvider>
         <UserRolesProvider>
           <ExperimentsProvider>
@@ -29,7 +29,7 @@ const setup = () => {
           </ExperimentsProvider>
         </UserRolesProvider>
       </AuthProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
   return { view };
 };

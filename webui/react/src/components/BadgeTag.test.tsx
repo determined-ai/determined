@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import StoreProvider from 'contexts/Store';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { generateAlphaNumeric } from 'shared/utils/string';
 import { StateOfUnion } from 'themes';
 
@@ -35,11 +35,11 @@ jest.mock('antd', () => {
 
 const setup = ({ children = CONTENT, tooltip = CONTENT_TOOLTIP, ...props }: Props = {}) => {
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <BadgeTag tooltip={tooltip} {...props}>
         {children}
       </BadgeTag>
-    </StoreProvider>,
+    </UIProvider>,
   );
   return { view };
 };

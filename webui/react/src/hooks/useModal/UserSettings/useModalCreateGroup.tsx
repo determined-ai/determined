@@ -89,7 +89,7 @@ const ModalForm: React.FC<Props> = ({ form, users, group, groupRoles }) => {
           },
         ]}
         validateTrigger={['onSubmit', 'onChange']}>
-        <Input autoFocus maxLength={128} placeholder="Group Name" />
+        <Input autoComplete="off" autoFocus maxLength={128} placeholder="Group Name" />
       </Form.Item>
       {group ? (
         <Form.Item label={USER_ADD_LABEL} name={USER_ADD_NAME}>
