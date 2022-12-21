@@ -499,16 +499,4 @@ Currently, only experiments are organized within workspaces and projects. Other 
 notebooks, tensorboards, sheels, and commands (NTSC) are global entities. In the future, we plan to
 migrate NTSCs to workspaces to make them covered under RBAC model.
 
-When RBAC is enabled, as an interim measure, NTSC can only be accessed by the user who created the
-task, i.e. its owner, or by the users who have ``ADMINISTRATE_USER`` permission (i.e.
-``ClusterAdmin``).
-
-When RBAC is disabled, by default, every logged in user can access all NTSC on the cluster. We offer
-an option which restricts the access to NTSC only to the admins and the user who created the task,
-i.e. its owner. It can be enabled in the master config:
-
-.. code:: yaml
-
-   security:
-     authz:
-       _strict_ntsc_enabled: true
+When RBAC is disabled, by default, every logged in user can access all NTSC on the cluster.

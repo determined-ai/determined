@@ -3,23 +3,17 @@ package command
 import (
 	"context"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // NSCAuthZBasic is basic OSS controls.
 type NSCAuthZBasic struct{}
 
-// CanGetNSC returns true and nil error unless the developer master config option
-// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
-// an admin or if the user owns the task and a nil error.
+// CanGetNSC returns a nil error.
 func (a *NSCAuthZBasic) CanGetNSC(
 	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 ) (canGetCmd bool, serverError error) {
-	if !config.GetMasterConfig().Security.AuthZ.StrictNTSCEnabled {
-		return true, nil
-	}
-	return curUser.Admin || curUser.ID == ownerID, nil
+	return true, nil
 }
 
 // CanGetActiveTasksCount always returns a nil error.
