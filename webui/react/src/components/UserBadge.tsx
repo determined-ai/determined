@@ -4,14 +4,14 @@ import Avatar, { Props as AvatarProps } from 'shared/components/Avatar';
 import useUI from 'shared/contexts/stores/UI';
 import { getDisplayName, UserNameFields } from 'utils/user';
 
-import css from './UserAvatarTable.module.scss';
+import css from './UserBadge.module.scss';
 
 export interface Props extends Omit<AvatarProps, 'darkLight' | 'displayName'> {
   compact?: boolean;
   user: UserNameFields;
 }
 
-const UserAvatarTable: React.FC<Props> = ({ user, compact, ...rest }) => {
+const UserBadge: React.FC<Props> = ({ user, compact, ...rest }) => {
   const { ui } = useUI();
   const displayName = getDisplayName(user);
 
@@ -30,4 +30,4 @@ const UserAvatarTable: React.FC<Props> = ({ user, compact, ...rest }) => {
   );
 };
 
-export default UserAvatarTable;
+export default UserBadge;

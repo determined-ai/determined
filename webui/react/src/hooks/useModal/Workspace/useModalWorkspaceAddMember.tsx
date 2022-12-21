@@ -3,7 +3,7 @@ import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
-import UserAvatarTable from 'components/UserAvatarTable';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
@@ -151,7 +151,7 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  <UserAvatarTable compact user={option as UserNameFields} />
+                  <UserBadge compact user={option as UserNameFields} />
                 ) : (
                   <GroupAvatar groupName={getName(option)} />
                 ),

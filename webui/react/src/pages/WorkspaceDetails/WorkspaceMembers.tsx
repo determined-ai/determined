@@ -8,7 +8,7 @@ import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import UserAvatarTable from 'components/UserAvatarTable';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
@@ -215,7 +215,7 @@ const WorkspaceMembers: React.FC<Props> = ({
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
         const member = record as User;
-        return <UserAvatarTable user={member} />;
+        return <UserBadge user={member} />;
       }
       const group = record as V1GroupDetails;
       return <GroupAvatar groupName={group.name} />;

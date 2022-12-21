@@ -14,7 +14,7 @@ import {
   getFullPaginationConfig,
   relativeTimeRenderer,
 } from 'components/Table/Table';
-import UserAvatarTable from 'components/UserAvatarTable';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
@@ -188,7 +188,7 @@ const UserManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['displayName'],
         key: V1GetUsersRequestSortBy.NAME,
         onCell: onRightClickableCell,
-        render: (_: string, r: DetailedUser) => <UserAvatarTable user={r} />,
+        render: (_: string, r: DetailedUser) => <UserBadge user={r} />,
         sorter: true,
         title: 'Name',
       },
