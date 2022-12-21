@@ -2125,16 +2125,16 @@ workflows:
           mark: e2e_cpu_2a
           target-stage: agent2
 
-      - test-e2e:
-          name: test-e2e-cpu-strict-ntsc
-          requires:
-            - build-go
-          parallelism: 1
-          tf1: false
-          tf2: true
-          devcluster-config: strict-ntsc.devcluster.yaml
-          mark: test_strict_ntsc
-          target-stage: agent2
+      # - test-e2e:
+      #     name: test-e2e-cpu-strict-ntsc
+      #     requires:
+      #       - build-go
+      #     parallelism: 1
+      #     tf1: false
+      #     tf2: true
+      #     devcluster-config: strict-ntsc.devcluster.yaml
+      #     mark: test_strict_ntsc
+      #     target-stage: agent2
 
       - test-e2e:
           name: test-e2e-managed-devcluster
