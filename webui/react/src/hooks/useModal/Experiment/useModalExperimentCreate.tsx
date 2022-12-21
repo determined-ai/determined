@@ -151,9 +151,9 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
     (close?: () => void) => {
       /**
        * 'close' is an indicator for if cancel button (show config) is clicked or not.
-       * If cancel button (show config) is not clicked, 'close' is undefined.
+       * If cancel button (show config) is not clicked, 'close' is () => {}.
        */
-      if (!close) {
+      if (!close || close.toString() === 'function () {}') {
         modalClose(ModalCloseReason.Cancel);
       } else {
         setModalState((prev) => {
