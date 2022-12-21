@@ -15,6 +15,16 @@
           "component": "RegionSelector"
         }
       },
+      "defaultScheduler": {
+        "type": "string",
+        "enum": [
+          "default-scheduler",
+          "coscheduler"
+        ],
+        "form": true,
+        "title": "Scheduler",
+        "description": "Default Scheduler type for experiments and notebooks, can be overriden in experiment configuration. The standard scheduler is good for most use cases, however large distributed training jobs will want to use coscheduler to allow jobs to queue when resources to run all jobs in parallel are not available."
+      },
       "resources": {
         "type": "object",
         "title": "Default Resources",

@@ -24,6 +24,7 @@ The Determined application comes pre-configured with most intallations values to
 | Helm Chart Config Value  | Description |
 | ------------- | ------------- |
 | Region | Region where you are deploying determined. This should match the region where you intend to execute most of your training workloads.  |
+| Scheduler | Default Scheduler type for experiments and notebooks, can be overriden in experiment configuration. The standard scheduler is good for most use cases, however large distributed training jobs will want to use coscheduler to allow jobs to queue when resources to run all jobs in parallel are not available. (default: default-scheduler) |
 | vCPU Request | Default number of vCPUs for experiments, can be overriden in experiment configuration. (default: 8) |
 | Memory Request | Default memory allocation for experiemnts, can be overriden in experiment configuration. (default: 32Gi) |
 | GPU Type | Default GPU type for experiments and notebooks, can be overriden in experiment configuration. (default: RTX_A5000) |

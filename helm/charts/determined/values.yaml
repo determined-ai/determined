@@ -192,7 +192,7 @@ mounts: []
 ## Configure the default Determined scheduler
 ## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
 ## scheduling with preemption
-# defaultScheduler: preemption
+defaultScheduler: default-scheduler
 
 ## Configure settings about how Determined launches the Fluentbit sidecar.
 # fluent:

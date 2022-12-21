@@ -1,0 +1,36 @@
+name: huggingface_deepspeed_opt125m_single
+hyperparameters:
+  pretrained_model_name_or_path: facebook/opt-125m
+  cache_dir: /mnt/finetune-opt-125m/opt-125m
+  use_pretrained_weights: true
+  model_mode: causal-lm
+  deepspeed_config_file: "ds_config.json"
+  overwrite_deepspeed_args:
+    train_micro_batch_size_per_gpu: 16
+records_per_epoch: 116017  # This is from `len(preprocessed_dataset["train"])`
+data:
+  preprocessed_dataset_path: /mnt/finetune-opt-125m/wikitext/processed
+searcher:
+  name: single
+  metric: loss
+  smaller_is_better: true
+  max_length:
+    epochs: 10
+perform_initial_validation: true
+min_validation_period:
+  epochs: 1
+min_checkpoint_period:
+  epochs: 1
+environment:
+  image:
+    gpu: navarrepratt/hf_deepspeed_det:1
+resources:
+  slots_per_trial: 8
+profiling:
+  enabled: true
+entrypoint:
+  - python3
+  - -m
+  - determined.launch.deepspeed
+  - --trial
+  - lm_trial:HFDeepSpeedTrial
