@@ -20,10 +20,10 @@ interface PivotProps {
   type?: 'line' | 'card' | 'editable-card';
 }
 
-const PivotComponent: React.FC<PivotProps> = ({ type = 'line', ...props }: PivotProps) => {
+const Pivot: React.FC<PivotProps> = ({ type = 'line', ...props }: PivotProps) => {
   return (
     <Tabs type={type} {...props} />
   );
 };
 
-export default PivotComponent;
+export default Pivot;

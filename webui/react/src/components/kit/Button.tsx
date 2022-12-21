@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button as AntdButton } from 'antd';
 import React, { CSSProperties, MouseEvent, ReactNode } from 'react';
 
 interface ButtonProps {
@@ -16,10 +16,10 @@ interface ButtonProps {
   type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
 }
 
-const ButtonComponent: React.FC<ButtonProps> = ({ shape = 'default', size = 'middle', type = 'default', ...props }: ButtonProps) => {
+const Button: React.FC<ButtonProps> = ({ shape = 'default', size = 'middle', type = 'default', ...props }: ButtonProps) => {
   return (
-    <Button shape={shape} size={size} type={type} {...props} />
+    <AntdButton shape={shape} size={size} type={type} {...props} />
   );
 };
 
-export default ButtonComponent;
+export default Button;

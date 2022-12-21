@@ -1,4 +1,4 @@
-import { Pagination } from 'antd';
+import { Pagination as AntdPagination } from 'antd';
 import React, { ReactNode } from 'react';
 
 interface PaginationProps {
@@ -10,10 +10,10 @@ interface PaginationProps {
   total: number;
 }
 
-const PaginationComponent: React.FC<PaginationProps> = ({ current = 1, pageSize = 10, total = 0, ...props }: PaginationProps) => {
+const Pagination: React.FC<PaginationProps> = ({ current = 1, pageSize = 10, total = 0, ...props }: PaginationProps) => {
   return (
-    <Pagination current={current} pageSize={pageSize} total={total} {...props} />
+    <AntdPagination current={current} pageSize={pageSize} total={total} {...props} />
   );
 };
 
-export default PaginationComponent;
+export default Pagination;

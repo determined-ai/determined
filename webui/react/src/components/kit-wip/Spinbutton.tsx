@@ -11,9 +11,9 @@ interface SpinbuttonProps {
   value?: number;
 }
 
-const SpinbuttonComponent: React.FC<SpinbuttonProps> = (props: SpinbuttonProps) => {
+const Spinbutton: React.FC<SpinbuttonProps> = (props: SpinbuttonProps) => {
   return (
     <InputNumber {...props} />
   );
 };
-export default SpinbuttonComponent;
+export default Spinbutton;

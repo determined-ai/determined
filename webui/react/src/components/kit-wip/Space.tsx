@@ -1,4 +1,4 @@
-import { Space } from 'antd';
+import { Space as AntdSpace } from 'antd';
 import React, { ReactNode } from 'react';
 
 type SpaceSize = 'small' | 'middle' | 'large' | number;
@@ -12,10 +12,10 @@ interface SpaceProps {
   wrap?: boolean;
 }
 
-const SpaceComponent: React.FC<SpaceProps> = ({ size = 'small', ...props }: SpaceProps) => {
+const Space: React.FC<SpaceProps> = ({ size = 'small', ...props }: SpaceProps) => {
   return (
-    <Space size={size} {...props} />
+    <AntdSpace size={size} {...props} />
   );
 };
 
-export default SpaceComponent;
+export default Space;

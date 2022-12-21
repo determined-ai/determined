@@ -10,9 +10,9 @@ interface SearchboxProps {
   value?: string;
 }
 
-const SearchboxComponent: React.FC<SearchboxProps> = (props: SearchboxProps) => {
+const Searchbox: React.FC<SearchboxProps> = (props: SearchboxProps) => {
   return (
     <Input.Search {...props} />
   );
 };
-export default SearchboxComponent;
+export default Searchbox;

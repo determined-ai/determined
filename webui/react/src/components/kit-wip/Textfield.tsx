@@ -4,7 +4,7 @@ import React, { CSSProperties, ReactNode } from 'react';
 interface TextfieldProps {
 }
 
-const TextfieldComponent: React.FC<TextfieldProps> = (props: TextfieldProps) => {
+const Textfield: React.FC<TextfieldProps> = (props: TextfieldProps) => {
   return (
     <Input {...props} />
   );
@@ -14,4 +14,4 @@ const TextfieldComponent: React.FC<TextfieldProps> = (props: TextfieldProps) => 
 //Input.Group
 //Input.Password
 
-export default TextfieldComponent;
+export default Textfield;

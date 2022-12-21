@@ -1,4 +1,4 @@
-import { Checkbox } from 'antd';
+import { Checkbox as AntdCheckbox } from 'antd';
 import React, { ReactNode } from 'react';
 
 interface CheckboxProps {
@@ -9,10 +9,10 @@ interface CheckboxProps {
   onChange?: () => void;
 }
 
-const CheckboxComponent: React.FC<CheckboxProps> = (props: CheckboxProps) => {
+const Checkbox: React.FC<CheckboxProps> = (props: CheckboxProps) => {
   return (
-    <Checkbox {...props} />
+    <AntdCheckbox {...props} />
   );
 };
 
-export default CheckboxComponent;
+export default Checkbox;

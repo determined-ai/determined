@@ -1,4 +1,4 @@
-import { Card } from 'antd';
+import { Card as AntdCard } from 'antd';
 import React, { CSSProperties, ReactNode } from 'react';
 
 interface CardProps {
@@ -11,10 +11,10 @@ interface CardProps {
   title?: string;
 }
 
-const CardComponent: React.FC<CardProps> = (props: CardProps) => {
+const Card: React.FC<CardProps> = (props: CardProps) => {
   return (
-    <Card {...props} />
+    <AntdCard {...props} />
   );
 };
 
-export default CardComponent;
+export default Card;

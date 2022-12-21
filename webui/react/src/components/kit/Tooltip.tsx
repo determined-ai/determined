@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { Tooltip as AntdTooltip } from 'antd';
 import React, { ReactNode } from 'react';
 
 interface TooltipProps {
@@ -9,9 +9,9 @@ interface TooltipProps {
   trigger?: 'hover' | 'focus' | 'click' | 'contextMenu' | Array<string>;
 }
 
-const TooltipComponent: React.FC<TooltipProps> = ({ mouseEnterDelay = 0.1, placement = 'top', ...props }: TooltipProps) => {
+const Tooltip: React.FC<TooltipProps> = ({ mouseEnterDelay = 0.1, placement = 'top', ...props }: TooltipProps) => {
   return (
-    <Tooltip mouseEnterDelay={mouseEnterDelay} placement={placement} {...props} />
+    <AntdTooltip mouseEnterDelay={mouseEnterDelay} placement={placement} {...props} />
   );
 };
-export default TooltipComponent;
+export default Tooltip;

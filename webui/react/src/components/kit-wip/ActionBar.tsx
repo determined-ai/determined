@@ -3,7 +3,7 @@ import React, { ReactNode } from 'react';
 interface ActionBarProps {
 }
 
-const ActionBarComponent: React.FC<ActionBarProps> = (props: ActionBarProps) => {
+const ActionBar: React.FC<ActionBarProps> = (props: ActionBarProps) => {
   return (
     <div {...props} />
   );
@@ -11,4 +11,4 @@ const ActionBarComponent: React.FC<ActionBarProps> = (props: ActionBarProps) => 
 
 // ExperimentDetailsHeader
 
-export default ActionBarComponent;
+export default ActionBar;

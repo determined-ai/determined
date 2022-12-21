@@ -1,4 +1,4 @@
-import { Breadcrumb } from 'antd';
+import { Breadcrumb as AntdBreadcrumb } from 'antd';
 import React, { ReactNode } from 'react';
 
 interface BreadcrumbProps {
@@ -13,26 +13,26 @@ interface BreadcrumbItemProps {
 
 type BreadcrumbItem = React.FC<BreadcrumbItemProps>;
 type BreadcrumbSeparator = React.FC;
-type BreadcrumbComponent = React.FC<BreadcrumbProps> & { Item: typeof BreadcrumbItem, Separator: typeof BreadcrumbSeparator };
+type Breadcrumb = React.FC<BreadcrumbProps> & { Item: typeof BreadcrumbItem, Separator: typeof BreadcrumbSeparator };
 
-const BreadcrumbComponent: BreadcrumbComponent = ({ separator = '/', ...props }: BreadcrumbProps): JSX.Element => {
+const Breadcrumb: Breadcrumb = ({ separator = '/', ...props }: BreadcrumbProps): JSX.Element => {
   return (
-    <Breadcrumb separator={separator} {...props} />);
+    <AntdBreadcrumb separator={separator} {...props} />);
 };
 
 const BreadcrumbItem: BreadcrumbItem = (props: BreadcrumbItemProps) => {
   return (
-    <Breadcrumb.Item {...props} />
+    <AntdBreadcrumb.Item {...props} />
   );
 };
 
 const BreadcrumbSeparator: BreadcrumbSeparator = () => {
   return (
-    <Breadcrumb.Separator />
+    <AntdBreadcrumb.Separator />
   );
 };
 
-BreadcrumbComponent.Item = BreadcrumbItem;
-BreadcrumbComponent.Separator = BreadcrumbSeparator;
+Breadcrumb.Item = BreadcrumbItem;
+Breadcrumb.Separator = BreadcrumbSeparator;
 
-export default BreadcrumbComponent;
+export default Breadcrumb;
