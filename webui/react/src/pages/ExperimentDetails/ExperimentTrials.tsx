@@ -45,7 +45,11 @@ import { getMetricValue } from 'utils/metric';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentTrials.module.scss';
-import settingsConfig, { isOfSortKey, Settings } from './ExperimentTrials.settings';
+import settingsConfig, {
+  DEFAULT_COLUMNS,
+  isOfSortKey,
+  Settings,
+} from './ExperimentTrials.settings';
 import { columns as defaultColumns } from './ExperimentTrials.table';
 import TrialsComparisonModal from './TrialsComparisonModal';
 
@@ -459,7 +463,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
             preserveSelectedRowKeys: true,
             selectedRowKeys: settings.row ?? [],
           }}
-          settings={settings as InteractiveTableSettings}
+          settings={{ ...settings, columns: DEFAULT_COLUMNS } as InteractiveTableSettings}
           showSorterTooltip={false}
           size="small"
           updateSettings={updateSettings as UpdateSettings}
