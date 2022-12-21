@@ -136,7 +136,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
     }
     if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
       menuItems.push({ type: 'divider' });
-      menuItems.push({ key: MenuKey.Delete, label: 'Delete...' });
+      menuItems.push({ danger: true, key: MenuKey.Delete, label: 'Delete...' });
     }
     return { items: menuItems, onClick: onItemClick };
   }, [

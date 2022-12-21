@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
 import { SettingsProvider } from 'hooks/useSettingsProvider';
+import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
@@ -89,15 +90,17 @@ const Container: React.FC = () => {
 const setup = () =>
   render(
     <DeterminedInfoProvider>
-      <UsersProvider>
-        <AuthProvider>
-          <UserRolesProvider>
-            <DndProvider backend={HTML5Backend}>
-              <Container />
-            </DndProvider>
-          </UserRolesProvider>
-        </AuthProvider>
-      </UsersProvider>
+      <StoreProvider>
+        <UsersProvider>
+          <AuthProvider>
+            <UserRolesProvider>
+              <DndProvider backend={HTML5Backend}>
+                <Container />
+              </DndProvider>
+            </UserRolesProvider>
+          </AuthProvider>
+        </UsersProvider>
+      </StoreProvider>
     </DeterminedInfoProvider>,
   );
 
