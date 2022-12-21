@@ -6,17 +6,16 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import StoreProvider from 'contexts/Store';
 import { useFetchUsers, UsersProvider } from 'stores/users';
+import { DetailedUser } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';
 
-const testUsers = [
+const testUsers: DetailedUser[] = [
   {
     displayName: 'Bugs Bunny',
     id: 44,
-    initials: 'BB',
     isActive: true,
     isAdmin: true,
-    userId: 44,
     username: 'elmerFudd01',
   },
 ];
@@ -48,7 +47,7 @@ jest.mock('antd', () => {
   };
 });
 
-const Component = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {}) => {
+const Component = ({ user }: Partial<Props> = {}) => {
   const [canceler] = useState(new AbortController());
   const fetchUsers = useFetchUsers(canceler);
   const asyncFetch = useCallback(async () => {
@@ -60,16 +59,16 @@ const Component = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <UserAvatar hideTooltip={hideTooltip} userId={userId} {...props} />;
+  return <UserAvatar hideTooltip={false} user={user} />;
 };
 
-const setup = ({ hideTooltip = false, userId, ...props }: Partial<Props> = {}) => {
+const setup = (testUser: DetailedUser) => {
   const user = userEvent.setup();
 
   const view = render(
     <StoreProvider>
       <UsersProvider>
-        <Component hideTooltip={hideTooltip} userId={userId} {...props} />
+        <Component user={testUser} />
       </UsersProvider>
     </StoreProvider>,
   );
@@ -81,13 +80,13 @@ describe('UserAvatar', () => {
   it('should display initials of name', async () => {
     const testUser = testUsers[0];
     await waitFor(() => setup(testUser));
-    expect(await screen.findByText(testUser.initials)).toBeInTheDocument();
+    expect(await screen.findByText('BB')).toBeInTheDocument();
   });
 
   it('should display name on hover', async () => {
     const testUser = testUsers[0];
     const { user } = await waitFor(() => setup(testUser));
-    await act(async () => await user.hover(await screen.findByText(testUser.initials)));
-    expect(await screen.getByText(testUser.displayName)).toBeInTheDocument();
+    await act(async () => await user.hover(await screen.findByText('BB')));
+    expect(await screen.getByText(testUser.displayName || '')).toBeInTheDocument();
   });
 });
