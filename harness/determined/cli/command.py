@@ -62,6 +62,7 @@ CommandTableHeader = OrderedDict(
         ("state", "state"),
         ("exitStatus", "exitStatus"),
         ("resourcePool", "resourcePool"),
+        ("workspaceId", "workspaceId"),
     ]
 )
 
@@ -75,6 +76,7 @@ TensorboardTableHeader = OrderedDict(
         ("trialIds", "trialIds"),
         ("exitStatus", "exitStatus"),
         ("resourcePool", "resourcePool"),
+        ("workspaceId", "workspaceId"),
     ]
 )
 
