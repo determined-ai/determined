@@ -5,17 +5,10 @@ import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetUsersRequestSortBy } from 'services/api-ts-sdk';
 
-export type UserColumnName =
-  | 'action'
-  | 'displayName'
-  | 'username'
-  | 'isActive'
-  | 'isAdmin'
-  | 'modifiedAt';
+export type UserColumnName = 'action' | 'displayName' | 'isActive' | 'isAdmin' | 'modifiedAt';
 
 export const DEFAULT_COLUMNS: UserColumnName[] = [
   'displayName',
-  'username',
   'isActive',
   'isAdmin',
   'modifiedAt',
@@ -23,11 +16,10 @@ export const DEFAULT_COLUMNS: UserColumnName[] = [
 
 export const DEFAULT_COLUMN_WIDTHS: Record<UserColumnName, number> = {
   action: 20,
-  displayName: 80,
+  displayName: 60,
   isActive: 40,
   isAdmin: 40,
   modifiedAt: 80,
-  username: 120,
 };
 
 export interface UserManagementSettings extends InteractiveTableSettings {

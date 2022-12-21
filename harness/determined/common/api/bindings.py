@@ -4642,6 +4642,7 @@ class v1GetUsersRequestSortBy(enum.Enum):
     SORT_BY_ADMIN = "SORT_BY_ADMIN"
     SORT_BY_ACTIVE = "SORT_BY_ACTIVE"
     SORT_BY_MODIFIED_TIME = "SORT_BY_MODIFIED_TIME"
+    SORT_BY_NAME = "SORT_BY_NAME"
 
 class v1GetUsersResponse:
     pagination: "typing.Optional[v1Pagination]" = None

@@ -27,7 +27,7 @@ import {
   expStateRenderer,
   getFullPaginationConfig,
   relativeTimeRenderer,
-  userRenderer,
+  UserRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
@@ -623,7 +623,7 @@ const ProjectDetails: React.FC = () => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: userRenderer,
+        render: UserRenderer,
         sorter: true,
         title: 'User',
       },

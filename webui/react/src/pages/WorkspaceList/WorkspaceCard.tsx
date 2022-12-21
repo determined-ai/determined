@@ -8,7 +8,9 @@ import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { useUsers } from 'stores/users';
 import { Workspace } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import WorkspaceActionDropdown from './WorkspaceActionDropdown';
 import css from './WorkspaceCard.module.scss';
@@ -22,6 +24,9 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
   const handleCardClick = useCallback(() => {
     routeToReactUrl(paths.workspaceDetails(workspace.id));
   }, [workspace.id]);
+
+  const users = Loadable.getOrElse([], useUsers());
+  const user = users.find((user) => user.id === workspace.userId);
 
   return (
     <WorkspaceActionDropdown workspace={workspace} onComplete={fetchWorkspaces}>
@@ -46,7 +51,7 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
             {workspace.numProjects} project{workspace.numProjects === 1 ? '' : 's'}
           </p>
           <div className={css.avatar}>
-            <Avatar userId={workspace.userId} />
+            <Avatar user={user} />
           </div>
         </div>
         {workspace.pinned && <PushpinOutlined className={css.pinned} />}

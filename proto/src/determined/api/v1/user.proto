@@ -23,6 +23,8 @@ message GetUsersRequest {
     SORT_BY_ACTIVE = 4;
     // Returns users sorted by modified time.
     SORT_BY_MODIFIED_TIME = 5;
+    // Returns users sorted by username unless display name exist.
+    SORT_BY_NAME = 6;
   }
   // Sort users by the given field.
   SortBy sort_by = 1;
