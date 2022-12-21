@@ -79,12 +79,22 @@ func TestCanGetNTSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 
 	nbID := setupMockNBActor(t, api.m)
-	// check permission errors are returned with permission denied status.
+	// check permission errors are returned with not found status and follow the same pattern.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		false, nil,
 	).Once()
+	expectedNotFoundErrMsg := func(id string) string {
+		return fmt.Sprintf("not found %s", id)
+	}
 	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
-	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, codes.NotFound, status.Code(err))
+	require.Equal(t, expectedNotFoundErrMsg(nbID.String()), err.Error())
+
+	// check that
+	invalidID := "non-existing"
+	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: invalidID})
+	require.Equal(t, codes.NotFound, status.Code(err))
+	require.Equal(t, expectedNotFoundErrMsg(invalidID), err.Error())
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
@@ -93,6 +103,7 @@ func TestCanGetNTSC(t *testing.T) {
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
+	require.NotEqual(t, codes.NotFound, status.Code(err))
 }
 
 func TestAuthZCanTerminateNSC(t *testing.T) {
