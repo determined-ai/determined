@@ -5,8 +5,9 @@ import shutil
 import sys
 
 import constants
-import determined as det
 import utils
+
+import determined as det
 from determined.experimental.client import create_experiment
 
 

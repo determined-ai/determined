@@ -1,15 +1,16 @@
 import logging
 from typing import Any, Dict, Optional
 
-import deepspeed
-import determined as det
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import utils
 from attrdict import AttrDict
-from determined.pytorch import DataLoader
 from torch.utils.data import Dataset
+
+import deepspeed
+import determined as det
+from determined.pytorch import DataLoader
 
 
 class RandDataset(Dataset):
