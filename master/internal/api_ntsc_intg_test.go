@@ -78,23 +78,19 @@ func TestTasksCountAuthZ(t *testing.T) {
 func TestCanGetNTSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 
+	nbsActor := actor.AddrFromString("/notebooks")
 	nbID := setupMockNBActor(t, api.m)
 	// check permission errors are returned with not found status and follow the same pattern.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		false, nil,
 	).Once()
-	expectedNotFoundErrMsg := func(id string) string {
-		return fmt.Sprintf("not found %s", id)
-	}
-	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
-	require.Equal(t, codes.NotFound, status.Code(err))
-	require.Equal(t, expectedNotFoundErrMsg(nbID.String()), err.Error())
 
-	// check that
 	invalidID := "non-existing"
-	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: invalidID})
-	require.Equal(t, codes.NotFound, status.Code(err))
-	require.Equal(t, expectedNotFoundErrMsg(invalidID), err.Error())
+	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: invalidID})
+	require.Equal(t, errActorNotFound(nbsActor.Child(invalidID)), err)
+
+	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
+	require.Equal(t, errActorNotFound(nbsActor.Child(nbID)), err)
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(

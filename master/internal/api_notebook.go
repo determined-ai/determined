@@ -95,8 +95,9 @@ func (a *apiServer) GetNotebook(
 		model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
 		return nil, err
-	} else if !ok {
-		return nil, status.Error(codes.PermissionDenied, "not authorized to get notebook")
+	} else if !ok { // permission denied.
+		// report the error as if the notebook does not exist.
+		return nil, errActorNotFound(addr)
 	}
 	return resp, nil
 }
