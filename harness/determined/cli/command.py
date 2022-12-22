@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from termcolor import colored
-from determined import cli
 
+from determined import cli
 from determined.cli import render
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
