@@ -317,18 +317,26 @@ const NavigationSideBar: React.FC = () => {
                           </li>
                         </WorkspaceActionDropdown>
                       ))}
+                    {canCreateWorkspace ? (
+                      <li>
+                        <NavigationItem
+                          icon="add-small"
+                          iconSize="tiny"
+                          label="New Workspace"
+                          labelRender={
+                            <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                              New Workspace
+                            </Typography.Paragraph>
+                          }
+                          tooltip={settings.navbarCollapsed}
+                          onClick={handleCreateWorkspace}
+                        />
+                      </li>
+                    ) : null}
                   </ul>
                 ),
               NotLoaded: () => <Spinner />,
             })}
-            {canCreateWorkspace ? (
-              <NavigationItem
-                icon="add-small"
-                iconSize="tiny"
-                label="New Workspace"
-                onClick={handleCreateWorkspace}
-              />
-            ) : null}
           </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map((config) => (
