@@ -67,7 +67,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
 
   const menuItems: DropDownProps['menu'] = useMemo(() => {
     const MenuKey = {
-      Remove: 'remove',
+      Remove: 'Remove',
     } as const;
 
     const funcs = {
