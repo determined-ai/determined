@@ -67,7 +67,6 @@ const useModalWorkspaceAddMember = ({
   );
 
   const handleFilter = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (search: string, option?: SearchProp): boolean => {
       if (!option) return false;
       const label = option.label;
