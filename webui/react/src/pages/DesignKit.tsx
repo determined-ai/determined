@@ -1,9 +1,7 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import {
-  Card,
-  Input, //TODO: Replace with kit component
-  InputNumber, //TODO: Replace with kit component
-  Space,
+  Card, //TODO: Move to components/kit? Add section to DesignKit page?
+  Space, //TODO: Move to components/kit? Add section to DesignKit page?
 } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -13,6 +11,7 @@ import ResourcePoolCard from 'components/ResourcePoolCard'; //TODO: Rename?
 import UserAvatar from 'components/UserAvatar'; //TODO: Rename?
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
 
+import Input from 'components/kit/Input';
 import Pivot from 'components/kit/Pivot';
 import Tooltip from 'components/kit/Tooltip';
 import Pagination from 'components/kit/Pagination';
@@ -438,7 +437,7 @@ const SearchboxesSection: React.FC = () => {
     <ComponentSection id="Searchboxes" title="Searchboxes">
       <Card>
         <p>
-          A search box (<code>{'<Searchbox>'}</code>) provides an input field for searching content within a site or app
+          A search box (<code>{'<Input.Search>'}</code>) provides an input field for searching content within a site or app
           to find specific items.
         </p>
       </Card>
@@ -516,7 +515,7 @@ const SpinbuttonsSection: React.FC = () => {
     <ComponentSection id="Spinbuttons" title="Spinbuttons">
       <Card>
         <p>
-          A spin button (<code>{'<Spinbutton>'}</code>) allows someone to incrementally adjust a value in small steps.
+          A spin button (<code>{'<Input.Number>'}</code>) allows someone to incrementally adjust a value in small steps.
           It&apos;s mainly used for numeric values, but other values are supported too.
         </p>
       </Card>
@@ -540,7 +539,7 @@ const SpinbuttonsSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default spin button</strong>
-        <InputNumber defaultValue={3} />
+        <Input.Number defaultValue={3} />
         <strong>Guiding principles</strong>
         <ul>
           <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
@@ -549,7 +548,7 @@ const SpinbuttonsSection: React.FC = () => {
         </ul>
         <hr />
         <strong>Variations and states of spin buttons</strong>
-        <InputNumber disabled />
+        <Input.Number disabled />
       </Card>
     </ComponentSection>
   );
@@ -560,7 +559,7 @@ const TextfieldsSection: React.FC = () => {
     <ComponentSection id="Textfields" title="Input - Textfields">
       <Card>
         <p>
-          Text fields (<code>{'<Textfield>'}</code>) give people a way to enter and edit text. They&apos;re used in
+          Text fields (<code>{'<Input>'}</code>) give people a way to enter and edit text. They&apos;re used in
           forms, modal dialogs, tables, and other surfaces where text input is required.
         </p>
       </Card>
@@ -599,7 +598,7 @@ const TextfieldsSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default input - text field</strong>
-        <Input defaultValue="text" />
+        <Input />
       </Card>
     </ComponentSection>
   );
@@ -726,7 +725,7 @@ const FacepileSection: React.FC = () => {
     <ComponentSection id="Facepile" title="Facepile">
       <Card>
         <p>
-          A face pile (<code>{'<Facepile>'}</code>) displays a list of personas. Each circle represents a person and
+          A face pile (<code>{'<UserAvatar>'}</code>) displays a list of personas. Each circle represents a person and
           contains their image or initials. Often this control is used when sharing who has access to
           a specific view or file, or when assigning someone a task within a workflow.
         </p>
