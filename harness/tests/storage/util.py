@@ -45,9 +45,9 @@ EXPECTED_FILES_N1 = {
 
 
 def create_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Optional[Dict] = None) -> None:
+    """Create a new checkpoint."""
     if expected_files is None:
         expected_files = EXPECTED_FILES
-    """Create a new checkpoint."""
     for file, content in expected_files.items():
         path = checkpoint_dir.joinpath(file)
         path.parent.mkdir(parents=True, exist_ok=True)
