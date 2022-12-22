@@ -3,9 +3,8 @@ import csv
 import inspect
 import pathlib
 import sys
-from collections import OrderedDict
 from datetime import timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, OrderedDict, Sequence, Union
 
 import dateutil.parser
 import tabulate
@@ -18,12 +17,14 @@ _FORMAT = "presto"
 _DEFAULT_VALUE = "N/A"
 
 
-def select_values(values: List[Dict[str, Any]], headers: OrderedDict) -> List[Dict[str, Any]]:
+def select_values(
+    values: List[Dict[str, Any]], headers: OrderedDict[str, str]
+) -> List[Dict[str, Any]]:
     return [{k: item.get(k, _DEFAULT_VALUE) for k in headers.keys()} for item in values]
 
 
 def render_table(
-    values: List[Dict[str, Any]], headers: OrderedDict, table_fmt: str = _FORMAT
+    values: List[Dict[str, Any]], headers: OrderedDict[str, str], table_fmt: str = _FORMAT
 ) -> None:
     # Only display selected columns
     values = select_values(values, headers)

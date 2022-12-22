@@ -4,7 +4,9 @@ import re
 from argparse import Namespace
 from collections import OrderedDict, namedtuple
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import IO, Any, Dict, Iterable, List, Optional
+from typing import OrderedDict as TypedOrderedDict
+from typing import Tuple, Union
 
 from termcolor import colored
 
@@ -62,7 +64,7 @@ CommandTableHeader = OrderedDict(
         ("state", "state"),
         ("exitStatus", "exitStatus"),
         ("resourcePool", "resourcePool"),
-        ("workspaceId", "workspaceId"),
+        ("workspaceName", "workspaceName"),
     ]
 )
 
@@ -113,7 +115,7 @@ RemoteTaskOldAPIs = {
     TaskTypeTensorBoard: "tensorboard",
 }
 
-RemoteTaskListTableHeaders = {
+RemoteTaskListTableHeaders: Dict[str, TypedOrderedDict[str, str]] = {
     "notebook": CommandTableHeader,
     "command cmd": CommandTableHeader,
     "shell": CommandTableHeader,
@@ -210,9 +212,17 @@ def list_tasks(args: Namespace) -> None:
             print(command["id"])
         return
 
+    # swap workspace_id for workspace name.
+    w_names = cli.workspace.get_workspace_names(cli.setup_session(args))
+
     for item in res:
         if item["state"].startswith("STATE_"):
             item["state"] = item["state"][6:]
+        if "workspaceId" in item:
+            wId = item["workspaceId"]
+            del item["workspaceId"]
+            assert wId in w_names, f"workspace id {wId} is not found"
+            item["workspaceName"] = w_names[wId]
 
     if getattr(args, "json", None):
         print(json.dumps(res, indent=4))
