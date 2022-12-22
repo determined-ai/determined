@@ -290,51 +290,50 @@ const NavigationSideBar: React.FC = () => {
               tooltip={settings.navbarCollapsed}
             />
             {Loadable.match(pinnedWorkspaces, {
-              Loaded: (workspaces) =>
-                workspaces.length === 0 ? (
-                  <p className={css.noWorkspaces}>No pinned workspaces</p>
-                ) : (
-                  <ul className={css.pinnedWorkspaces} role="list">
-                    {workspaces
-                      .sort((a, b) => ((a.pinnedAt || 0) < (b.pinnedAt || 0) ? -1 : 1))
-                      .map((workspace) => (
-                        <WorkspaceActionDropdown
-                          key={workspace.id}
-                          returnIndexOnDelete={false}
-                          trigger={['contextMenu']}
-                          workspace={workspace}>
-                          <li>
-                            <NavigationItem
-                              icon={<DynamicIcon name={workspace.name} size={24} />}
-                              label={workspace.name}
-                              labelRender={
-                                <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                  {workspace.name}
-                                </Typography.Paragraph>
-                              }
-                              path={paths.workspaceDetails(workspace.id)}
-                            />
-                          </li>
-                        </WorkspaceActionDropdown>
-                      ))}
-                    {canCreateWorkspace ? (
-                      <li>
-                        <NavigationItem
-                          icon="add-small"
-                          iconSize="tiny"
-                          label="New Workspace"
-                          labelRender={
-                            <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                              New Workspace
-                            </Typography.Paragraph>
-                          }
-                          tooltip={settings.navbarCollapsed}
-                          onClick={handleCreateWorkspace}
-                        />
-                      </li>
-                    ) : null}
-                  </ul>
-                ),
+              Loaded: (workspaces) => (
+                <ul className={css.pinnedWorkspaces} role="list">
+                  {workspaces
+                    .sort((a, b) => ((a.pinnedAt || 0) < (b.pinnedAt || 0) ? -1 : 1))
+                    .map((workspace) => (
+                      <WorkspaceActionDropdown
+                        key={workspace.id}
+                        returnIndexOnDelete={false}
+                        trigger={['contextMenu']}
+                        workspace={workspace}>
+                        <li>
+                          <NavigationItem
+                            icon={<DynamicIcon name={workspace.name} size={24} />}
+                            label={workspace.name}
+                            labelRender={
+                              <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                                {workspace.name}
+                              </Typography.Paragraph>
+                            }
+                            path={paths.workspaceDetails(workspace.id)}
+                          />
+                        </li>
+                      </WorkspaceActionDropdown>
+                    ))}
+                  {canCreateWorkspace ? (
+                    <li>
+                      <NavigationItem
+                        icon="add-small"
+                        iconSize="tiny"
+                        label="New Workspace"
+                        labelRender={
+                          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                            New Workspace
+                          </Typography.Paragraph>
+                        }
+                        tooltip={settings.navbarCollapsed}
+                        onClick={handleCreateWorkspace}
+                      />
+                    </li>
+                  ) : (
+                    <p className={css.noWorkspaces}>No pinned workspaces</p>
+                  )}
+                </ul>
+              ),
               NotLoaded: () => <Spinner />,
             })}
           </section>
