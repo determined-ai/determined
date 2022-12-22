@@ -26,6 +26,7 @@ workspace_arg: Arg = Arg("--workspace-name", type=str, help="workspace name")
 
 
 def get_workspace_names(session: api.Session) -> Dict[int, str]:
+    """Get a mapping of workspace IDs to workspace names."""
     resp = bindings.get_GetWorkspaces(session)
     mapping = {}
     for w in resp.workspaces:
@@ -35,6 +36,7 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
 
 
 def get_workspace_by_name(session: api.Session, workspace_name: str) -> bindings.v1Workspace:
+    """Get a workspace by name."""
     assert workspace_name, "workspace name cannot be empty"
     resp = bindings.get_GetWorkspaces(session, name=workspace_name)
     assert len(resp.workspaces) <= 1, "workspace name are assumed to be unique."
