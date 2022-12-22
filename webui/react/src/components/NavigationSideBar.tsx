@@ -329,9 +329,9 @@ const NavigationSideBar: React.FC = () => {
                         onClick={handleCreateWorkspace}
                       />
                     </li>
-                  ) : (
+                  ) : workspaces.length === 0 ? (
                     <p className={css.noWorkspaces}>No pinned workspaces</p>
-                  )}
+                  ) : null}
                 </ul>
               ),
               NotLoaded: () => <Spinner />,
