@@ -59,7 +59,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   } = useModalWorkspaceRemoveMember({
     name,
     onClose: fetchMembers,
-    roleIds: roleIds,
+    roleIds,
     scopeWorkspaceId: workspace.id,
     userOrGroup,
     userOrGroupId: getIdFromUserOrGroup(userOrGroup),
