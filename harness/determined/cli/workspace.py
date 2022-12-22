@@ -22,7 +22,7 @@ WORKSPACE_HEADERS = [
     "Agent Group",
 ]
 
-workspace_arg = Arg("--workspace-name", type=str, help="workspace name")
+workspace_arg: Arg = Arg("--workspace-name", type=str, help="workspace name")
 
 
 def get_workspace_by_name(session: api.Session, workspace_name: str) -> bindings.v1Workspace:
