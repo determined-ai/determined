@@ -16,7 +16,7 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
+import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { useAgents, useClusterOverview } from 'stores/agents';
@@ -35,6 +35,7 @@ interface ItemProps extends LinkProps {
   action?: React.ReactNode;
   badge?: number;
   icon: string | React.ReactNode;
+  iconSize?: IconSize;
   label: string;
   labelRender?: React.ReactNode;
   status?: string;
@@ -84,7 +85,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
           <div className={css.icon}>
-            <Icon name={props.icon} size="large" />
+            <Icon name={props.icon} size={props.iconSize || 'large'} />
           </div>
         ) : (
           <div className={css.icon}>{props.icon}</div>
@@ -280,11 +281,6 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
-                  {canCreateWorkspace ? (
-                    <Button type="text" onClick={handleCreateWorkspace}>
-                      <Icon name="add-small" size="tiny" />
-                    </Button>
-                  ) : null}
                 </div>
               }
               icon="workspaces"
@@ -325,6 +321,14 @@ const NavigationSideBar: React.FC = () => {
                 ),
               NotLoaded: () => <Spinner />,
             })}
+            {canCreateWorkspace ? (
+              <NavigationItem
+                icon="add-small"
+                iconSize="tiny"
+                label="New Workspace"
+                onClick={handleCreateWorkspace}
+              />
+            ) : null}
           </section>
           <section className={css.bottom}>
             {menuConfig.bottom.map((config) => (
