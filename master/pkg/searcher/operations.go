@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 
@@ -185,6 +186,58 @@ type Checkpoint struct {
 
 func (c Checkpoint) String() string {
 	return fmt.Sprintf("{Checkpoint %s}", c.RequestID)
+}
+
+// Metrics inteface.
+type (
+	// Metrics interface.
+	Metrics interface {
+		// ToScalarProto converts metrics to their protobuf representation
+		// as a scalar metric if possible.
+		ToScalarProto() (*experimentv1.ValidationCompleted_Metric, error)
+
+		// ToStructProto converts metrics to their protobuf representation
+		// as a metrics dictionary if possible.
+		ToStructProto() (*experimentv1.ValidationCompleted_AllMetrics, error)
+	}
+
+	// ScalarMetric as used by built-in search methods.
+	ScalarMetric struct {
+		Value float64
+	}
+
+	// MetricsDict is the dictionary of all metrics as used by some custom search methods.
+	MetricsDict struct {
+		Value *structpb.Struct
+	}
+)
+
+// ToScalarProto converts ScalarMetric to its protobuf representation.
+// as a scalar.
+func (metric ScalarMetric) ToScalarProto() (*experimentv1.ValidationCompleted_Metric, error) {
+	return &experimentv1.ValidationCompleted_Metric{
+		Metric: metric.Value,
+	}, nil
+}
+
+// ToStructProto returns nil, error.
+func (metric ScalarMetric) ToStructProto() (*experimentv1.ValidationCompleted_AllMetrics, error) {
+	return nil, fmt.Errorf("cannot convert scalar %f to struct", metric)
+}
+
+// ToStructProto converts MetricsDict to its protobuf representation.
+func (allMetrics MetricsDict) ToStructProto() (
+	*experimentv1.ValidationCompleted_AllMetrics, error,
+) {
+	protoMetrics := allMetrics.Value
+	return &experimentv1.ValidationCompleted_AllMetrics{
+		AllMetrics: protoMetrics,
+	}, nil
+}
+
+// ToScalarProto returns nil, error.
+func (allMetrics MetricsDict) ToScalarProto() (*experimentv1.ValidationCompleted_Metric, error) {
+	return nil, fmt.Errorf("cannot convert struct %v to scalar", allMetrics)
 }
 
 // ValidateAfter is an operation emitted by search methods to signal the trial train until

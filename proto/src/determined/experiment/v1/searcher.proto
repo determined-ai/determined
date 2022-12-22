@@ -41,15 +41,21 @@ message TrialProgress {
 message ValidationCompleted {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "request_id", "metric", "validate_after_length" ]
+      required: [ "request_id", "metrics", "validate_after_length" ]
     }
   };
   // UUID identifying the trial to the searcher.
   string request_id = 1;
-  // Value of the validation metric used to direct the search.
-  double metric = 2;
+  // Either a single validation metric used to direct the search,
+  // or a dictionary of all metrics
+  oneof metrics {
+    // Value of the validation metric used to direct the search.
+    double metric = 2;
+    // All validation metrics.
+    google.protobuf.Struct all_metrics = 3;
+  }
   // Length from ValidateAfterOperation.
-  uint64 validate_after_length = 3;
+  uint64 validate_after_length = 4;
 }
 
 // TrialClosed is a searcher event triggered when a trial has successfully
@@ -143,9 +149,14 @@ message SetSearcherProgressOperation {
 message CompleteValidateAfterOperation {
   // The ValidateAfterOperation being completed.
   ValidateAfterOperation op = 1;
-  // The value of searcher metric associated with this completed metric.
-  // The metric provided should be the metric used to guide HP search.
-  double searcher_metric = 2;
+  // A searcher metric or all metrics.
+  oneof metrics {
+    // The value of searcher metric associated with this completed metric.
+    // The metric provided should be the metric used to guide HP search.
+    double searcher_metric = 2;
+    // All validation metrics.
+    google.protobuf.Struct all_metrics = 3;
+  }
 }
 
 // Create a trial with given hyperparameters.

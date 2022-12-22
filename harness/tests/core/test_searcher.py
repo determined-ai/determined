@@ -67,7 +67,7 @@ def test_searcher_workers_ask_chief(dummy: bool) -> None:
                 with parallel.raises_when(
                     pex.rank != 0, RuntimeError, match="op.report_completed.*chief"
                 ):
-                    op.report_completed(0.0)
+                    op.report_completed(0.0, {"foo": 0.0})
 
             return searcher
 

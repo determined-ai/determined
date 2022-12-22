@@ -1,5 +1,6 @@
 import abc
 import contextlib
+import dataclasses
 import json
 import logging
 import os
@@ -554,13 +555,13 @@ class DeepSpeedTrialController(det.TrialController):
     def _compute_validation_metrics(self) -> workload.Response:
         if self.context._is_model_info_trial():
             logging.info("Computing validation metrics for model info trial")
+            searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
+            metrics = dict(self.context.models[0].autotuning_model_info)
+            metrics[searcher_metric_name] = 0.0  # searcher metric must be present
             if self.is_chief:
-                searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
                 return {
                     "num_inputs": 0,
-                    "validation_metrics": {
-                        searcher_metric_name: self.context.model_info.activation_mem_per_gpu,
-                    },
+                    "validation_metrics": dataclasses.asdict(self.context.model_info),
                 }
             return {}
 

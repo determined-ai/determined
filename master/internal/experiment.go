@@ -49,7 +49,7 @@ type (
 	trialCompleteOperation struct {
 		requestID model.RequestID
 		op        searcher.ValidateAfter
-		metric    float64
+		metrics   searcher.Metrics
 	}
 	trialReportEarlyExit struct {
 		requestID model.RequestID
@@ -279,7 +279,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		state.Complete = true
 		e.TrialSearcherState[msg.op.RequestID] = state
 		ctx.Tell(ctx.Child(msg.op.RequestID), state)
-		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metric, msg.op)
+		ops, err := e.searcher.ValidationCompleted(msg.requestID, msg.metrics, msg.op)
 		e.processOperations(ctx, ops, err)
 	case trialReportEarlyExit:
 		state, ok := e.TrialSearcherState[msg.requestID]

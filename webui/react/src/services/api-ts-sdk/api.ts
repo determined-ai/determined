@@ -1746,6 +1746,12 @@ export interface V1CompleteValidateAfterOperation {
      * @memberof V1CompleteValidateAfterOperation
      */
     searcherMetric?: number;
+    /**
+     * All validation metrics.
+     * @type {any}
+     * @memberof V1CompleteValidateAfterOperation
+     */
+    allMetrics?: any;
 }
 
 /**
@@ -9395,7 +9401,13 @@ export interface V1ValidationCompleted {
      * @type {number}
      * @memberof V1ValidationCompleted
      */
-    metric: number;
+    metric?: number;
+    /**
+     * All validation metrics.
+     * @type {any}
+     * @memberof V1ValidationCompleted
+     */
+    allMetrics?: any;
     /**
      * Length from ValidateAfterOperation.
      * @type {string}

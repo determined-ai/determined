@@ -63,7 +63,7 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics={"x": x}
         )
-        op.report_completed(x)
+        op.report_completed(x, metrics={"x": x})
 
     # NEW: after searching, save a checkpoint if our last one is not up-to-date.
     if last_checkpoint_batch != steps_completed:

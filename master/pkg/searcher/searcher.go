@@ -140,13 +140,13 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialU
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
 func (s *Searcher) ValidationCompleted(
-	requestID model.RequestID, metric float64, op ValidateAfter,
+	requestID model.RequestID, metrics Metrics, op ValidateAfter,
 ) ([]Operation, error) {
 	if _, ok := s.CompletedOperations[op.String()]; ok {
 		return nil, fmt.Errorf("operation %v was already completed", op)
 	}
 
-	operations, err := s.method.validationCompleted(s.context(), requestID, metric, op)
+	operations, err := s.method.validationCompleted(s.context(), requestID, metrics, op)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}

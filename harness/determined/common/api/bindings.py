@@ -1614,15 +1614,19 @@ class v1CompareTrialsResponse:
         return out
 
 class v1CompleteValidateAfterOperation:
+    allMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     op: "typing.Optional[v1ValidateAfterOperation]" = None
     searcherMetric: "typing.Optional[float]" = None
 
     def __init__(
         self,
         *,
+        allMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         op: "typing.Union[v1ValidateAfterOperation, None, Unset]" = _unset,
         searcherMetric: "typing.Union[float, None, Unset]" = _unset,
     ):
+        if not isinstance(allMetrics, Unset):
+            self.allMetrics = allMetrics
         if not isinstance(op, Unset):
             self.op = op
         if not isinstance(searcherMetric, Unset):
@@ -1632,6 +1636,8 @@ class v1CompleteValidateAfterOperation:
     def from_json(cls, obj: Json) -> "v1CompleteValidateAfterOperation":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "allMetrics" in obj:
+            kwargs["allMetrics"] = obj["allMetrics"]
         if "op" in obj:
             kwargs["op"] = v1ValidateAfterOperation.from_json(obj["op"]) if obj["op"] is not None else None
         if "searcherMetric" in obj:
@@ -1641,6 +1647,8 @@ class v1CompleteValidateAfterOperation:
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "allMetrics" in vars(self):
+            out["allMetrics"] = self.allMetrics
         if not omit_unset or "op" in vars(self):
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         if not omit_unset or "searcherMetric" in vars(self):
@@ -11458,33 +11466,45 @@ class v1ValidateAfterOperation:
         return out
 
 class v1ValidationCompleted:
+    allMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    metric: "typing.Optional[float]" = None
 
     def __init__(
         self,
         *,
-        metric: float,
         requestId: str,
         validateAfterLength: str,
+        allMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        metric: "typing.Union[float, None, Unset]" = _unset,
     ):
-        self.metric = metric
         self.requestId = requestId
         self.validateAfterLength = validateAfterLength
+        if not isinstance(allMetrics, Unset):
+            self.allMetrics = allMetrics
+        if not isinstance(metric, Unset):
+            self.metric = metric
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationCompleted":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "metric": float(obj["metric"]),
             "requestId": obj["requestId"],
             "validateAfterLength": obj["validateAfterLength"],
         }
+        if "allMetrics" in obj:
+            kwargs["allMetrics"] = obj["allMetrics"]
+        if "metric" in obj:
+            kwargs["metric"] = float(obj["metric"]) if obj["metric"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "metric": dump_float(self.metric),
             "requestId": self.requestId,
             "validateAfterLength": self.validateAfterLength,
         }
+        if not omit_unset or "allMetrics" in vars(self):
+            out["allMetrics"] = self.allMetrics
+        if not omit_unset or "metric" in vars(self):
+            out["metric"] = None if self.metric is None else dump_float(self.metric)
         return out
 
 class v1ValidationHistoryEntry:

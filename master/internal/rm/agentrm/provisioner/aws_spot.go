@@ -400,7 +400,8 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 // Convert c.spot.trackedReqs to a list of Instances. For the requests that have
 // been fulfilled, this requires querying the EC2 API to find the instance state.
 func (c *awsCluster) buildInstanceListFromTrackedReqs(
-	ctx *actor.Context) ([]*model.Instance, error) {
+	ctx *actor.Context,
+) ([]*model.Instance, error) {
 	runningSpotInstanceIds := newSetOfStrings()
 	pendingSpotRequestsAsInstances := make([]*model.Instance, 0)
 

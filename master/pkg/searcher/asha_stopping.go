@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"sort"
 
@@ -136,12 +137,18 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 }
 
 func (s *asyncHalvingStoppingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
+	ctx context, requestID model.RequestID, metrics Metrics, op ValidateAfter,
 ) ([]Operation, error) {
-	if !s.SmallerIsBetter {
-		metric *= -1
+	switch metric := metrics.(type) {
+	case ScalarMetric:
+		value := metric.Value
+		if !s.SmallerIsBetter {
+			value *= -1
+		}
+		return s.promoteAsync(ctx, requestID, value), nil
+	default:
+		panic(fmt.Sprintf("Unexpected metric type for ASHA built-in search method %v", metrics))
 	}
-	return s.promoteAsync(ctx, requestID, metric), nil
 }
 
 func (s *asyncHalvingStoppingSearch) promoteAsync(
