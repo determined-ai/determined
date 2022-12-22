@@ -281,6 +281,10 @@ func (a *apiServer) PostWorkspace(
 		return nil, status.Errorf(codes.InvalidArgument,
 			"name '%s' must be at most 80 character long", req.Name)
 	}
+	if len(strings.Trim(req.Name, " ")) == 0 {
+		return nil, status.Error(codes.InvalidArgument,
+			"name must contain at least non-whitespace letter")
+	}
 
 	if req.AgentUserGroup != nil {
 		err = workspace.AuthZProvider.Get().CanCreateWorkspaceWithAgentUserGroup(ctx, *curUser)
@@ -368,6 +372,22 @@ func (a *apiServer) PatchWorkspace(
 
 	insertColumns := []string{}
 	updatedWorkspace := model.Workspace{}
+
+	if req.Workspace.Name != nil {
+		workspaceName := req.Workspace.Name.Value
+		if len(workspaceName) < 1 {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"name '%s' must be at least 1 character long", workspaceName)
+		}
+		if len(workspaceName) > 80 {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"name '%s' must be at most 80 character long", workspaceName)
+		}
+		if len(strings.Trim(workspaceName, " ")) == 0 {
+			return nil, status.Error(codes.InvalidArgument,
+				"name must contain at least non-whitespace letter")
+		}
+	}
 
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
 		if err = workspace.AuthZProvider.Get().
