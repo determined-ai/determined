@@ -21,7 +21,9 @@ def start_notebook(args: Namespace) -> None:
 
     workspace_id = None
     if args.workspace_name:
-        workspace = cli.workspace.get_workspace_by_name(args.session, args.workspace_name)
+        workspace = cli.workspace.get_workspace_by_name(
+            cli.setup_session(args), args.workspace_name
+        )
         if workspace.archived:
             # TODO: consistent error handling.
             raise ValueError(f"workspace {workspace.name} is archived")
