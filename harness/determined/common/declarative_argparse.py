@@ -3,6 +3,8 @@ import itertools
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, cast
 
+from determined.cli.errors import CliHandler, report_cli_errors
+
 
 def make_prefixes(desc: str) -> List[str]:
     parts = desc.split("|")
@@ -38,7 +40,7 @@ class Cmd:
     def __init__(
         self,
         name: str,
-        func: Optional[Callable],
+        func: Optional[CliHandler],
         help_str: str,
         subs: List[Any],
         is_default: bool = False,
@@ -50,7 +52,7 @@ class Cmd:
         """
         self.name = name
         self.help_str = help_str
-        self.func = func
+        self.func = report_cli_errors(func) if func else None
         if self.func:
             # Force the help string onto the actual function for later. This
             # can be used to print the help string

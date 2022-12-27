@@ -1,8 +1,9 @@
-from typing import Callable, Any
+import argparse
 import sys
+from typing import Any, Callable
+
 from requests import RequestException
 from termcolor import colored
-import argparse
 
 from harness.determined.common.api.bindings import APIHttpError
 
@@ -24,7 +25,10 @@ class CliError(Exception):
     pass
 
 
-def report_cli_errors(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
+CliHandler = Callable[[argparse.Namespace], Any]
+
+
+def report_cli_errors(func: CliHandler) -> CliHandler:
     def wrapper(args: argparse.Namespace) -> Any:
         try:
             return func(args)
