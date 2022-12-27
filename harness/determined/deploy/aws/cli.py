@@ -12,6 +12,7 @@ from termcolor import colored
 
 from determined.common.declarative_argparse import Arg, ArgGroup, BoolOptArg, Cmd
 from determined.deploy.errors import MasterTimeoutExpired
+from harness.determined.cli.errors import CliError
 
 from . import aws, constants
 from .deployment_types import base, govcloud, secure, simple, vpc
@@ -128,9 +129,10 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         except NoCredentialsError:
             error_no_credentials()
         except Exception as e:
-            print(e)
-            print("Stack Deletion Failed. Check the AWS CloudFormation Console for details.")
-            sys.exit(1)
+            raise CliError(
+                "Stack Deletion Failed. Check the AWS CloudFormation Console for details.",
+                e_stack=e,
+            )
 
         print("Delete Successful")
         return

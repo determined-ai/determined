@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List
 from determined import cli
 from determined.cli import render
 from determined.cli import task as cli_task
+from determined.cli.errors import CliError
 from determined.common import api
 from determined.common.api import authentication, bindings
 from determined.common.check import check_false
@@ -147,8 +148,7 @@ def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
         check_false(args.all and args.agent_id)
 
         if not (args.all or args.agent_id):
-            print("Error: must specify exactly one of `--all` or agent_id", file=sys.stderr)
-            sys.exit(1)
+            raise CliError("Must specify exactly on of --all or --agent-id")
 
         if args.agent_id:
             agent_ids = [args.agent_id]
