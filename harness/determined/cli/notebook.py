@@ -1,5 +1,3 @@
-import argparse
-import sys
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path

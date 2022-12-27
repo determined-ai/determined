@@ -43,7 +43,7 @@ def get_workspace_by_name(
     resp = bindings.get_GetWorkspaces(session, name=workspace_name)
     assert len(resp.workspaces) <= 1, "workspace name are assumed to be unique."
     if len(resp.workspaces) == 0:
-        return
+        return None
     workspace = resp.workspaces[0]
     return workspace
 
