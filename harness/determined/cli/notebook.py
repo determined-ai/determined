@@ -1,9 +1,7 @@
-import argparse
-import sys
 from argparse import ONE_OR_MORE, FileType, Namespace
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Any, List
 
 from termcolor import colored
 
@@ -15,27 +13,7 @@ from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
-def expected_exceptions(func: Callable[[argparse.Namespace], Any]) -> Callable[..., Any]:
-    def wrapper(args: argparse.Namespace) -> Any:
-        try:
-            return func(args)
-        except Exception as e:
-            """
-            DISCUSS: is this a good pattern in Python? if so we could do this at argparse.Cmd
-            level there are some expected exceptions that we rather not individually handle
-            and early break in cli commands. and for there we assume that we don't want to
-            show the call stack to the end user. maybe the callstack can be controlled w/
-            a flag. (dev, prod)
-            """
-            # TODO: define expected types.
-            print(colored(f"Error: {e}", "red"), file=sys.stderr)
-            sys.exit(1)
-
-    return wrapper
-
-
 @authentication.required
-@expected_exceptions
 def start_notebook(args: Namespace) -> None:
     config = command.parse_config(args.config_file, None, args.config, args.volume)
 
