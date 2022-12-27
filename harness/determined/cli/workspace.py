@@ -35,13 +35,15 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
     return mapping
 
 
-def get_workspace_by_name(session: api.Session, workspace_name: str) -> bindings.v1Workspace:
+def get_workspace_by_name(
+    session: api.Session, workspace_name: str
+) -> Optional[bindings.v1Workspace]:
     """Get a workspace by name."""
     assert workspace_name, "workspace name cannot be empty"
     resp = bindings.get_GetWorkspaces(session, name=workspace_name)
     assert len(resp.workspaces) <= 1, "workspace name are assumed to be unique."
     if len(resp.workspaces) == 0:
-        raise LookupError(f"workspace {workspace_name} not found")
+        return
     workspace = resp.workspaces[0]
     return workspace
 

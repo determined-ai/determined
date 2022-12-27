@@ -197,10 +197,13 @@ def list_tasks(args: Namespace) -> None:
     params: Dict[str, Any] = {}
 
     if "workspace_name" in args and args.workspace_name is not None:
-        workspace_id = cli.workspace.get_workspace_by_name(
+        workspace = cli.workspace.get_workspace_by_name(
             cli.setup_session(args), args.workspace_name
-        ).id
-        params["workspace_id"] = workspace_id
+        )
+        if workspace is None:
+            return cli.report_cli_error(f'Workspace "{args.workspace_name}" not found.')
+
+        params["workspace_id"] = workspace.id
 
     if not args.all:
         params = {"users": [authentication.must_cli_auth().get_session_user()]}
