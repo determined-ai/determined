@@ -21,9 +21,7 @@ func (a *NSCAuthZBasic) CanGetNSC(
 func (a *NSCAuthZBasic) FilterNSCWorkspaces(
 	ctx context.Context, curUser model.User, workspaceSet model.AccessScopeSet,
 ) (model.AccessScopeSet, error) {
-	// TODO: go based off of a.CanGetNSC. blocked on deprecating ntsc.
-	// blocked on DET-8782.
-	return model.AccessScopeSet{}, nil
+	return workspaceSet, nil
 }
 
 // CanGetActiveTasksCount always returns a nil error.
