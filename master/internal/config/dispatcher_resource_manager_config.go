@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -12,6 +13,14 @@ const (
 	singularity = "singularity"
 	podman      = "podman"
 	enroot      = "enroot"
+)
+
+// job labeling modes.
+const (
+	Project     = "project"
+	Workspace   = "workspace"
+	Label       = "label"
+	LabelPrefix = "label:"
 )
 
 // DispatcherResourceManagerConfig is the object that stores the values of
@@ -39,6 +48,7 @@ type DispatcherResourceManagerConfig struct {
 	GresSupported              bool    `json:"gres_supported"`
 	DefaultAuxResourcePool     *string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool *string `json:"default_compute_resource_pool"`
+	JobProjectSource           *string `json:"job_project_source"`
 
 	Security           *DispatcherSecurityConfig                     `json:"security"`
 	PartitionOverrides map[string]DispatcherPartitionOverrideConfigs `json:"partition_overrides"`
@@ -56,6 +66,22 @@ func (c DispatcherResourceManagerConfig) Validate() []error {
 		c.LauncherContainerRunType == podman ||
 		c.LauncherContainerRunType == enroot) {
 		return []error{fmt.Errorf("invalid launch container run type: '%s'", c.LauncherContainerRunType)}
+	}
+	return c.validateJobProjectSource()
+}
+
+func (c DispatcherResourceManagerConfig) validateJobProjectSource() []error {
+	switch {
+	case c.JobProjectSource == nil:
+	case *c.JobProjectSource == Project:
+	case *c.JobProjectSource == Workspace:
+	case *c.JobProjectSource == Label:
+	case strings.HasPrefix(*c.JobProjectSource, LabelPrefix):
+	default:
+		return []error{fmt.Errorf(
+			"invalid job_project_source value: '%s'. "+
+				"Specify one of project, workspace or label[:value]",
+			*c.JobProjectSource)}
 	}
 	return nil
 }
