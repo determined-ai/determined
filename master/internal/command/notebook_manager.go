@@ -1,5 +1,4 @@
 // Package command provides utilities for commands.
-//nolint:dupl
 package command
 
 import (
