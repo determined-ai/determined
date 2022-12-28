@@ -13,7 +13,7 @@ type NSCAuthZ interface {
 	// GET /api/v1/commands/:nsc_id
 	// GET /tasks
 	CanGetNSC(
-		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) (canGetNsc bool, serverError error)
 
 	// GET /api/v1/NSCs

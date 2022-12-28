@@ -86,8 +86,7 @@ func (a *apiServer) GetNotebook(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, model.UserID(resp.Notebook.UserId),
-		model.AccessScopeID(resp.Notebook.WorkspaceId),
+		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
 		return nil, err
 	} else if !ok {

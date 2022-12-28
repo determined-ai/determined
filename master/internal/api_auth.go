@@ -140,7 +140,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 
 	// TODO(DET-8751): if tsb then use tsb authz interface
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *user, spec.Base.Owner.ID, spec.Metadata.WorkspaceID); err != nil {
+		ctx, *user, spec.Metadata.WorkspaceID); err != nil {
 		return true, err
 	} else if !ok {
 		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)

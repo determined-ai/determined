@@ -12,7 +12,7 @@ type NSCAuthZBasic struct{}
 
 // CanGetNSC returns a nil error.
 func (a *NSCAuthZBasic) CanGetNSC(
-	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
+	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) (canGetCmd bool, serverError error) {
 	return true, nil
 }
