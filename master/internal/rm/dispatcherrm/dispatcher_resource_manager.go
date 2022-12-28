@@ -660,7 +660,9 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		manifest, impersonatedUser, payloadName, err := msg.Spec.ToDispatcherManifest(
 			m.rmConfig.MasterHost, m.rmConfig.MasterPort, m.masterTLSConfig.CertificateName,
 			req.SlotsNeeded, slotType, partition, tresSupported, gresSupported,
-			m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType)
+			m.rmConfig.LauncherContainerRunType, m.wlmType == pbsSchedulerType,
+			m.rmConfig.JobProjectSource,
+		)
 		if err != nil {
 			sendResourceStateChangedErrorResponse(ctx, err, msg,
 				"unable to create the launcher manifest")

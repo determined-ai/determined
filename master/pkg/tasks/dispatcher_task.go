@@ -3,9 +3,11 @@ package tasks
 import (
 	"archive/tar"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -13,11 +15,13 @@ import (
 	"github.com/sirupsen/logrus"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const (
@@ -76,6 +80,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	gresSupported bool,
 	containerRunType string,
 	isPbsLauncher bool,
+	labelMode *string,
 ) (*launcher.Manifest, string, string, error) {
 	/*
 	 * The user that the "launcher" is going to run the Determined task
@@ -188,6 +193,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	if err != nil {
 		return nil, "", "", err
 	}
+	pbsProj, slurmProj := t.jobAndProjectLabels(labelMode)
 
 	resources, resourceOpts := t.computeResources(tresSupported, numSlots,
 		slotType, gresSupported, isPbsLauncher)
@@ -202,6 +208,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		logrus.WithError(errList[0]).Error("Forbidden slurm option specified")
 		return nil, "", "", errList[0]
 	}
+	slurmArgs = append(slurmArgs, slurmProj...)
 	customParams["slurmArgs"] = slurmArgs
 
 	var pbsArgs []string
@@ -213,6 +220,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 		logrus.WithError(errList[0]).Error("Forbidden PBS option specified")
 		return nil, "", "", errList[0]
 	}
+	pbsArgs = append(pbsArgs, pbsProj...)
 	customParams["pbsArgs"] = pbsArgs
 
 	if containerRunType == podman {
@@ -263,6 +271,67 @@ func (t *TaskSpec) ToDispatcherManifest(
 	// manifest.SetManifestVersion("latest") //?
 
 	return &manifest, impersonatedUser, payloadName, err
+}
+
+// jobAndProjectLabels returns as command options the strings necessary to label
+// the job in the specified mode.
+func (t *TaskSpec) jobAndProjectLabels(mode *string) (pbsResult, slurmResult []string) {
+	// Recover the configuration from the JSON in the env. var.
+	configJSON := t.ExtraEnvVars["DET_EXPERIMENT_CONFIG"]
+	var expConf expconf.ExperimentConfig
+	if err := json.Unmarshal([]byte(configJSON), &expConf); err != nil {
+		logrus.Infof("Unable to Unmarshal exp config: %s", err)
+		return pbsResult, slurmResult
+	}
+	switch {
+	case (mode == nil || *mode == config.Project):
+		return computeJobProjectResult(expConf.RawProject)
+	case *mode == config.Workspace:
+		return computeJobProjectResult(expConf.RawWorkspace)
+	case *mode == config.Label:
+		return computeJobProjectResultForLabels(expConf.Labels(), "")
+	case strings.HasPrefix(*mode, config.LabelPrefix):
+		prefix := strings.TrimPrefix(*mode, config.LabelPrefix)
+		return computeJobProjectResultForLabels(expConf.Labels(), prefix)
+	}
+	return pbsResult, slurmResult
+}
+
+func computeJobProjectResult(labelValue *string) (pbsResult, slurmResult []string) {
+	if labelValue == nil || *labelValue == "" {
+		return slurmResult, pbsResult
+	}
+	slurmResult = append(slurmResult, formatSlurmLabelResult(*labelValue))
+	pbsResult = append(pbsResult, formatPbsLabelResult(*labelValue))
+	return pbsResult, slurmResult
+}
+
+func computeJobProjectResultForLabels(
+	labels expconf.Labels, prefix string,
+) (pbsResult, slurmResult []string) {
+	var labelNames []string
+	for labelName := range labels {
+		if prefix != "" && !strings.HasPrefix(labelName, prefix) {
+			continue
+		}
+		labelName = strings.TrimPrefix(labelName, prefix)
+		labelNames = append(labelNames, labelName)
+	}
+	if len(labelNames) == 0 {
+		return pbsResult, slurmResult
+	}
+	sort.Strings(labelNames) // to make the tests more reliable
+	slurmResult = append(slurmResult, formatSlurmLabelResult(strings.Join(labelNames, ",")))
+	pbsResult = append(pbsResult, formatPbsLabelResult(strings.Join(labelNames, "_")))
+	return pbsResult, slurmResult
+}
+
+func formatPbsLabelResult(label string) string {
+	return fmt.Sprintf("-P %s", label)
+}
+
+func formatSlurmLabelResult(label string) string {
+	return fmt.Sprintf("--wckey=%s", label)
 }
 
 // computeResources calculates the job resource requirements. It also returns any

@@ -1335,6 +1335,7 @@ jobs:
       - make-package
       - run: make -C master publish
       - run: make -C agent publish
+
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs

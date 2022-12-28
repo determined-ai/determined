@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -645,7 +646,7 @@ func Test_ToDispatcherManifest(t *testing.T) {
 			manifest, userName, payloadName, err := ts.ToDispatcherManifest(
 				"masterHost", 8888, "certName", 16, tt.slotType,
 				"slurm_partition1", tt.tresSupported, tt.gresSupported, tt.containerRunType,
-				tt.isPbsScheduler)
+				tt.isPbsScheduler, nil)
 
 			if tt.wantErr {
 				assert.ErrorContains(t, err, tt.errorContains)
@@ -1297,6 +1298,172 @@ func TestTaskSpec_computeResources(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotOpts, tt.wantOpts) {
 				t.Errorf("TaskSpec.computeResources() opts = %v, want %v", gotOpts, tt.wantOpts)
+			}
+		})
+	}
+}
+
+func TestTaskSpec_jobAndProjectSource(t *testing.T) {
+	type fields struct {
+		// Description            string
+		// LoggingFields          map[string]string
+		// ClusterID              string
+		// HarnessPath            string
+		// MasterCert             *tls.Certificate
+		// SSHRsaSize             int
+		// SegmentEnabled         bool
+		// SegmentAPIKey          string
+		// TaskContainerDefaults  model.TaskContainerDefaultsConfig
+		// Environment            expconf.EnvironmentConfig
+		// ResourcesConfig        expconf.ResourcesConfig
+		// WorkDir                string
+		// Owner                  *model.User
+		// AgentUserGroup         *model.AgentUserGroup
+		// ExtraArchives          []cproto.RunArchive
+		ExtraEnvVars map[string]string
+		// Entrypoint             []string
+		// Mounts                 []mount.Mount
+		// UseHostMode            bool
+		// ShmSize                int64
+		// TaskID                 string
+		// AllocationID           string
+		// AllocationSessionToken string
+		// ResourcesID            string
+		// ContainerID            string
+		// Devices                []device.Device
+		// UserSessionToken       string
+		// TaskType               model.TaskType
+		// SlurmConfig            expconf.SlurmConfig
+		// PbsConfig              expconf.PbsConfig
+	}
+	type args struct {
+		mode *string
+	}
+	tests := []struct {
+		name            string
+		fields          fields
+		args            args
+		wantPbsResult   []string
+		wantSlurmResult []string
+	}{
+		{
+			name: "Default mode; workspace & project not specified",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"project":"","workspace":""}`,
+				},
+			},
+			args: args{
+				mode: nil,
+			},
+		},
+		{
+			name: "Default mode; workspace & project values present",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
+				},
+			},
+			args: args{
+				mode: nil,
+			},
+			wantPbsResult:   []string{"-P project1"},
+			wantSlurmResult: []string{"--wckey=project1"},
+		},
+		{
+			name: "Project mode",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
+				},
+			},
+			args: args{
+				mode: ptrs.Ptr("project"),
+			},
+			wantPbsResult:   []string{"-P project1"},
+			wantSlurmResult: []string{"--wckey=project1"},
+		},
+		{
+			name: "workspace mode",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
+				},
+			},
+			args: args{
+				mode: ptrs.Ptr("workspace"),
+			},
+			wantPbsResult:   []string{"-P workspace1"},
+			wantSlurmResult: []string{"--wckey=workspace1"},
+		},
+		{
+			name: "label mode",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1",` +
+						`"labels":["label1","label2"]}`,
+				},
+			},
+			args: args{
+				mode: ptrs.Ptr("label"),
+			},
+			wantPbsResult:   []string{"-P label1_label2"},
+			wantSlurmResult: []string{"--wckey=label1,label2"},
+		},
+		{
+			name: "label mode, but no labels specified",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1"}`,
+				},
+			},
+			args: args{
+				mode: ptrs.Ptr("label"),
+			},
+			// wantPbsResult:   []string{"-P label1_label2"},
+			// wantSlurmResult: []string{"--wckey=label1,label2"},
+		},
+		{
+			name: "label mode, empty prefix",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"project":"project1","workspace":"workspace1",` +
+						`"labels":["label1","label2"]}`,
+				},
+			},
+			args: args{
+				mode: ptrs.Ptr("label:"),
+			},
+			wantPbsResult:   []string{"-P label1_label2"},
+			wantSlurmResult: []string{"--wckey=label1,label2"},
+		},
+		{
+			name: "label:prefix mode",
+			fields: fields{
+				ExtraEnvVars: map[string]string{
+					"DET_EXPERIMENT_CONFIG": `{"labels":["label1","label2","no-match"]}`,
+				},
+			},
+			args: args{
+				mode: ptrs.Ptr("label:lab"),
+			},
+			wantPbsResult:   []string{"-P el1_el2"},
+			wantSlurmResult: []string{"--wckey=el1,el2"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := &TaskSpec{
+				ExtraEnvVars: tt.fields.ExtraEnvVars,
+			}
+			gotPbsResult, gotSlurmResult := tr.jobAndProjectLabels(tt.args.mode)
+			if !reflect.DeepEqual(gotPbsResult, tt.wantPbsResult) {
+				t.Errorf("TaskSpec.jobAndProjectSource() gotPbsResult = %v, want %v",
+					gotPbsResult, tt.wantPbsResult)
+			}
+			if !reflect.DeepEqual(gotSlurmResult, tt.wantSlurmResult) {
+				t.Errorf("TaskSpec.jobAndProjectSource() gotSlurmResult = %v, want %v",
+					gotSlurmResult, tt.wantSlurmResult)
 			}
 		})
 	}
