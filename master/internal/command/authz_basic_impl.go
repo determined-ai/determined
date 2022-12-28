@@ -17,7 +17,8 @@ func (a *NSCAuthZBasic) CanGetNSC(
 	return true, nil
 }
 
-// FilterNSCWorkspaces determines which workspaces out of the given ones the user has view access to.
+// FilterNSCWorkspaces determines which workspaces out of the given workspaces
+// the user has view access to.
 func (a *NSCAuthZBasic) FilterNSCWorkspaces(
 	ctx context.Context, curUser model.User, workspaceSet model.AccessScopeSet,
 ) (model.AccessScopeSet, error) {

@@ -59,7 +59,9 @@ func (a *apiServer) GetNotebooks(
 	for _, nb := range resp.Notebooks {
 		requestedScopes[model.AccessScopeID(nb.WorkspaceId)] = true
 	}
-	premittedScopes, err := command.AuthZProvider.Get().FilterNSCWorkspaces(ctx, *curUser, requestedScopes)
+	premittedScopes, err := command.AuthZProvider.Get().FilterNSCWorkspaces(
+		ctx, *curUser, requestedScopes,
+	)
 	if err != nil {
 		return nil, err
 	}
