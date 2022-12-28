@@ -15,6 +15,7 @@ import {
   updateGroup,
 } from 'services/api';
 import { V1AgentUserGroup, V1GroupSearchResult } from 'services/api-ts-sdk';
+import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
@@ -38,7 +39,7 @@ export const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 export const GROUP_LABEL = 'Add to Groups';
 export const GROUP_NAME = 'groups';
-export const ROLE_LABEL = 'Roles';
+export const ROLE_LABEL = 'Global Roles';
 export const ROLE_NAME = 'roles';
 
 interface Props {
@@ -94,7 +95,7 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
   }
 
   return (
-    <Form<FormValues> form={form} labelCol={{ span: 8 }} wrapperCol={{ span: 14 }}>
+    <Form<FormValues> form={form} labelCol={{ span: 24 }}>
       <Form.Item
         initialValue={user?.username}
         label={USER_NAME_LABEL}
@@ -165,12 +166,18 @@ const ModalForm: React.FC<Props> = ({ form, user, groups, viewOnly, roles }) => 
       )}
       {rbacEnabled && canModifyPermissions && (
         <>
-          <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
+          <Form.Item
+            label={(
+              <span>
+                {ROLE_LABEL} <Icon name="info" size="small" title="This user role will be applied for all workspaces and areas across the cluster." />
+              </span>
+            )}
+            name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
               mode="multiple"
               optionFilterProp="children"
-              placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
+              placeholder={viewOnly ? 'No Roles Added' : 'Add Global Roles'}
               showSearch>
               {Loadable.match(knowRolesLoadable, {
                 Loaded: () =>
@@ -326,7 +333,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
           />
         ),
         icon: null,
-        okText: viewOnly ? 'Close' : user ? 'Update' : 'Create User',
+        okText: viewOnly ? 'Close' : 'Add User',
         onCancel: handleCancel,
         onOk: () => handleOk(viewOnly),
         title: (
