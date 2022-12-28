@@ -32,9 +32,7 @@ advise user to reset password as soon as possible.`;
 export const API_SUCCESS_MESSAGE_EDIT = 'User has been updated';
 export const DISPLAY_NAME_NAME = 'displayName';
 export const DISPLAY_NAME_LABEL = 'Display Name';
-export const MODAL_HEADER_LABEL_CREATE = 'Create User';
-export const MODAL_HEADER_LABEL_EDIT = 'Edit User';
-export const MODAL_HEADER_LABEL_VIEW = 'View User';
+export const MODAL_HEADER_LABEL = 'Add User';
 export const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 export const GROUP_LABEL = 'Add to Groups';
@@ -338,11 +336,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
         onOk: () => handleOk(viewOnly),
         title: (
           <h5>
-            {user
-              ? viewOnly
-                ? MODAL_HEADER_LABEL_VIEW
-                : MODAL_HEADER_LABEL_EDIT
-              : MODAL_HEADER_LABEL_CREATE}
+            {MODAL_HEADER_LABEL}
           </h5>
         ),
         width: 520,
