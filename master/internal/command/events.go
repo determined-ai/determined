@@ -145,7 +145,7 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 		return err
 	}
 
-	// TODO: separate NTSC types: tensorboards would need to consult ExperimentAuthZ.
+	// TODO(DET-8751): separate NTSC types: tensorboards would need to consult ExperimentAuthZ.
 	if ok, err := AuthZProvider.Get().CanGetNSC(reqCtx, curUser, *snapshot.Task.Job.OwnerID,
 		snapshot.GenericCommandSpec.Metadata.WorkspaceID,
 	); err != nil {

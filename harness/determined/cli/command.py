@@ -4,10 +4,13 @@ import re
 from argparse import Namespace
 from collections import OrderedDict, namedtuple
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import IO, Any, Dict, Iterable, List, Optional
+from typing import OrderedDict as TypedOrderedDict
+from typing import Tuple, Union
 
 from termcolor import colored
 
+from determined import cli
 from determined.cli import render
 from determined.common import api, context, util, yaml
 from determined.common.api import authentication
@@ -61,6 +64,7 @@ CommandTableHeader = OrderedDict(
         ("state", "state"),
         ("exitStatus", "exitStatus"),
         ("resourcePool", "resourcePool"),
+        ("workspaceName", "workspaceName"),
     ]
 )
 
@@ -74,6 +78,7 @@ TensorboardTableHeader = OrderedDict(
         ("trialIds", "trialIds"),
         ("exitStatus", "exitStatus"),
         ("resourcePool", "resourcePool"),
+        ("workspaceId", "workspaceId"),
     ]
 )
 
@@ -110,7 +115,7 @@ RemoteTaskOldAPIs = {
     TaskTypeTensorBoard: "tensorboard",
 }
 
-RemoteTaskListTableHeaders = {
+RemoteTaskListTableHeaders: Dict[str, TypedOrderedDict[str, str]] = {
     "notebook": CommandTableHeader,
     "command cmd": CommandTableHeader,
     "shell": CommandTableHeader,
@@ -189,9 +194,18 @@ def list_tasks(args: Namespace) -> None:
     api_full_path = "api/v1/{}".format(api_path)
     table_header = RemoteTaskListTableHeaders[args._command]
 
-    if args.all:
-        params = {}  # type: Dict[str, Any]
-    else:
+    params: Dict[str, Any] = {}
+
+    if "workspace_name" in args and args.workspace_name is not None:
+        workspace = cli.workspace.get_workspace_by_name(
+            cli.setup_session(args), args.workspace_name
+        )
+        if workspace is None:
+            return cli.report_cli_error(f'Workspace "{args.workspace_name}" not found.')
+
+        params["workspace_id"] = workspace.id
+
+    if not args.all:
         params = {"users": [authentication.must_cli_auth().get_session_user()]}
 
     res = api.get(args.master, api_full_path, params=params).json()[api_path]
@@ -201,9 +215,17 @@ def list_tasks(args: Namespace) -> None:
             print(command["id"])
         return
 
+    # swap workspace_id for workspace name.
+    w_names = cli.workspace.get_workspace_names(cli.setup_session(args))
+
     for item in res:
         if item["state"].startswith("STATE_"):
             item["state"] = item["state"][6:]
+        if "workspaceId" in item:
+            wId = item["workspaceId"]
+            del item["workspaceId"]
+            assert wId in w_names, f"workspace id {wId} is not found"
+            item["workspaceName"] = w_names[wId]
 
     if getattr(args, "json", None):
         print(json.dumps(res, indent=4))
