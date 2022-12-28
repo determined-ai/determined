@@ -68,7 +68,12 @@ func expFromAllocationID(
 }
 
 func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
-	taskOwnerID, err := db.GetCommandOwnerID(ctx, taskID)
+	snapshot := command.CommandSnapshot{}
+	err := db.Bun().NewSelect().Model(&snapshot).
+		Relation("Task.Job").
+		Where("task.task_id = ?", taskID).
+		Scan(ctx)
+
 	if errors.Is(err, db.ErrNotFound) {
 		// Non NTSC case like checkpointGC case or the task just does not exist.
 		// TODO(nick) eventually control access to checkpointGC.
@@ -77,7 +82,7 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 		return false, err
 	}
 	return command.AuthZProvider.Get().CanGetNSC(
-		ctx, curUser, command.PlaceHolderWorkspace,
+		ctx, curUser, snapshot.GenericCommandSpec.Metadata.WorkspaceID,
 	)
 }
 
