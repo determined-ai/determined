@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -91,7 +92,8 @@ func (a *apiServer) GetNotebook(
 		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
 		return nil, err
-	} else if !ok {
+	} else if !ok { // permission denied.
+		// report the error as if the notebook does not exist.
 		return nil, errActorNotFound(addr)
 	}
 	return resp, nil
@@ -110,8 +112,7 @@ func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID stri
 	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)
-
-	return err
+	return apiutils.MapAndFilterErrors(err, nil, nil)
 }
 
 func (a *apiServer) IdleNotebook(
@@ -147,9 +148,12 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanTerminateNSC(
-		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
+	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), int(req.Priority),
 	)
+	if err != nil {
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
+	}
 
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
@@ -176,7 +180,7 @@ func (a *apiServer) LaunchNotebook(
 	if err = command.AuthZProvider.Get().CanCreateNSC(
 		ctx, *user, model.AccessScopeID(workspaceID),
 	); err != nil {
-		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
 
 	spec.WatchProxyIdleTimeout = true
