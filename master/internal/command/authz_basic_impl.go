@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // NSCAuthZBasic is basic OSS controls.
@@ -38,7 +37,7 @@ func (a *NSCAuthZBasic) CanCreateNSC(
 
 // CanSetNSCsPriority always returns a nil error.
 func (a *NSCAuthZBasic) CanSetNSCsPriority(
-	ctx context.Context, curUser model.User, c *tasks.GenericCommandSpec, priority int,
+	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 ) error {
 	return nil
 }
