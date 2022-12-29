@@ -33,22 +33,27 @@ builds:
 
 archives:
   - wrap_in_directory: "true"
+    rlcp: true
     files:
       - src: "packaging/master.yaml"
-        dst: "/etc/determined/"
+        dst: "etc/determined/"
         strip_parent: true
-      - "build/growforest"
+
       - src: "packaging/determined-master.service"
-        dst: "/lib/systemd/system/"
+        dst: "lib/systemd/system/"
         strip_parent: true
       - src: "packaging/determined-master.socket"
-        dst: "/lib/systemd/system/"
+        dst: "lib/systemd/system/"
+        strip_parent: true
       - src: "packaging/LICENSE"
         strip_parent: true
-      - "static/**/*"
-      - "build/swagger/"
-      - "build/webui/"
-      - "build/wheels/"
+      - src: "static/**/*"
+        dst: "share/static"
+      - src: "build/**/*"
+        dst: "share"
+      - src: "build/growforest"
+        dst: "share"
+        strip_parent: true
 
 brews:
   - name: determined-master
@@ -67,6 +72,7 @@ brews:
       Checkpoints are stored in #{var}/determined/data by default.
     homepage: "https://github.com/determined-ai/determined"
     license: "Apache-2.0"
+    folder: Formula
     skip_upload: true
     dependencies:
       - "postgresql@14"
@@ -74,11 +80,7 @@ brews:
       bin.install "determined-master"
 
       doc.install "LICENSE"
-      pkgshare.install "static"
-      pkgshare.install "build/growforest" => "growforest"
-      pkgshare.install "build/swagger" => "swagger"
-      pkgshare.install "build/webui" => "webui"
-      pkgshare.install "build/wheels" => "wheels"
+      pkgshare.install Dir["share/*"]
 
       (var/"cache/determined").mkpath
       (var/"determined/data").mkpath
@@ -88,13 +90,12 @@ brews:
       inreplace "etc/determined/master.yaml" do |s|
         s.gsub! "  host_path: /tmp", "  host_path: #{var}/determined/data"
       end
-      etc.install "etc/determined/master.yaml" => "determined/master.yaml"
-
-      (etc/"determined/master.yaml").append_lines <<~EOS
+      Pathname("etc/determined/master.yaml").append_lines <<~EOS
         root: #{pkgshare}
         cache:
           cache_dir: #{var}/cache/determined
       EOS
+      etc.install "etc/determined/master.yaml" => "determined/master.yaml"
     service: |
       run [opt_bin/"determined-master", "--config-file", etc/"determined/master.yaml"]
       keep_alive false

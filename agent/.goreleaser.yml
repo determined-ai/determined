@@ -15,9 +15,10 @@ builds:
 
 archives:
   - wrap_in_directory: "true"
+    rlcp: true
     files:
       - src: "packaging/agent.yaml"
-        dst: "/etc/determined/"
+        dst: "etc/determined/"
         strip_parent: true
       - src: "packaging/LICENSE"
         strip_parent: true
@@ -32,6 +33,7 @@ brews:
       Determined agent config is located at #{etc}/determined/agent.yaml
     homepage: "https://github.com/determined-ai/determined"
     license: "Apache-2.0"
+    folder: Formula
     skip_upload: true
     install: |
       bin.install "determined-agent"
@@ -46,11 +48,11 @@ brews:
         s.gsub! "# master_port: 80", "master_port: 8080"
       end
 
-      etc.install "etc/determined/agent.yaml" => "determined/agent.yaml"
-
-      (etc/"determined/agent.yaml").append_lines <<~EOS
+      Pathname("etc/determined/agent.yaml").append_lines <<~EOS
         container_master_host: host.docker.internal
       EOS
+
+      etc.install "etc/determined/agent.yaml" => "determined/agent.yaml"
     service: |
       run [opt_bin/"determined-agent", "--config-file", etc/"determined/agent.yaml"]
       keep_alive false
