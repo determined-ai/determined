@@ -78,21 +78,28 @@ func TestTasksCountAuthZ(t *testing.T) {
 func TestCanGetNTSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 
+	nbsActor := actor.AddrFromString("/notebooks")
 	nbID := setupMockNBActor(t, api.m)
-	// check permission errors are returned withe permission denied status.
+	// check permission errors are returned with not found status and follow the same pattern.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		false, nil,
 	).Once()
-	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
-	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
-	// check other errors are not returned withe permission denied status.
+	invalidID := "non-existing"
+	_, err := api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: invalidID})
+	require.Equal(t, errActorNotFound(nbsActor.Child(invalidID)), err)
+
+	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
+	require.Equal(t, errActorNotFound(nbsActor.Child(nbID)), err)
+
+	// check other errors are not returned with permission denied status.
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		false, errors.New("other error"),
 	)
 	_, err = api.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
+	require.NotEqual(t, codes.NotFound, status.Code(err))
 }
 
 func TestAuthZCanTerminateNSC(t *testing.T) {
@@ -102,14 +109,14 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 		true, nil,
 	)
 
-	// check permission errors are returned withe permission denied status.
+	// check permission errors are returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Once()
 	_, err := api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: string(nbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
-	// check other errors are not returned withe permission denied status.
+	// check other errors are not returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
 		errors.New("other error"),
 	)

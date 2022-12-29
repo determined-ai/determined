@@ -95,8 +95,9 @@ func (a *apiServer) GetNotebook(
 		model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
 		return nil, err
-	} else if !ok {
-		return nil, status.Error(codes.PermissionDenied, "not authorized to get notebook")
+	} else if !ok { // permission denied.
+		// report the error as if the notebook does not exist.
+		return nil, errActorNotFound(addr)
 	}
 	return resp, nil
 }
@@ -130,13 +131,10 @@ func (a *apiServer) IdleNotebook(
 func (a *apiServer) KillNotebook(
 	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
-	// CHECK: do we want to depend on "can view notebook" permission to kill it?
 	err = a.validateAndKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
-	// CHECK: when an NTSC is killed we also responds with the NTSC object.
-	// Is it okay to return this to a user who doesn't have view permission but has update permissions?
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
