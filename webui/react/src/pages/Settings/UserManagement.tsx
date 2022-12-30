@@ -190,7 +190,7 @@ const UserManagement: React.FC = () => {
   }, [fetchKnownRoles, rbacEnabled]);
 
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
-    useModalCreateUser({ groups, onClose: fetchUsers });
+    useModalCreateUser({ onClose: fetchUsers });
 
   const onClickCreateUser = useCallback(() => {
     openCreateUserModal();
