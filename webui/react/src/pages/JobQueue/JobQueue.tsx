@@ -57,10 +57,10 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const [rpStats, setRpStats] = useState<RPStats[]>(
     resourcePools.map(
       (rp) =>
-      ({
-        resourcePool: rp.name,
-        stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
-      } as RPStats),
+        ({
+          resourcePool: rp.name,
+          stats: { preemptibleCount: 0, queuedCount: 0, scheduledCount: 0 },
+        } as RPStats),
     ),
   );
   const [jobs, setJobs] = useState<Job[]>([]);
