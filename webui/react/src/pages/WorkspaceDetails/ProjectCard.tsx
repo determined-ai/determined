@@ -31,7 +31,10 @@ const ProjectCard: React.FC<Props> = ({
     routeToReactUrl(paths.projectDetails(project.id));
   }, [project.id]);
 
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.match(useUsers(), {
+    Loaded: (usersPagination) => usersPagination.users,
+    NotLoaded: () => [],
+  });
   const user = users.find((user) => user.id === project.userId);
   return (
     <ProjectActionDropdown
