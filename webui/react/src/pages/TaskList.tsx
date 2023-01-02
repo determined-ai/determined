@@ -408,7 +408,7 @@ const TaskList: React.FC = () => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
             getDisplayName(users.find((u) => u.id === a.userId)),

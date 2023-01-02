@@ -45,12 +45,13 @@ const ModelHeader: React.FC<Props> = ({
   const { contextHolder, modalOpen } = useModalModelDelete();
 
   const infoRows: InfoRow[] = useMemo(() => {
+    const user = users.find((user) => user.id === model.userId);
     return [
       {
         content: (
           <Space>
-            <Avatar userId={model.userId} />
-            {`${getDisplayName(users.find((user) => user.id === model.userId))} on
+            <Avatar user={user} />
+            {`${getDisplayName(user)} on
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
           </Space>
         ),

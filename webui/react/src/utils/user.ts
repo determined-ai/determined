@@ -1,7 +1,7 @@
 import { V1Group, V1Role, V1RoleAssignment, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import { DetailedUser, User, UserOrGroup, UserRole } from 'types';
 
-interface UserNameFields {
+export interface UserNameFields {
   displayName?: string;
   username?: string;
 }

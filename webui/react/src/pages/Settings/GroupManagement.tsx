@@ -2,6 +2,7 @@ import { Button, Dropdown, message, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import GroupAvatar from 'components/GroupAvatar';
 import Page from 'components/Page';
 import InteractiveTable, {
   InteractiveTableSettings,
@@ -268,8 +269,8 @@ const GroupManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: 'name',
         onCell: onRightClickableCell,
-        render: (_: string, r: V1GroupSearchResult) => r.group.name,
-        title: 'Group Name',
+        render: (_: string, r: V1GroupSearchResult) => <GroupAvatar groupName={r.group.name} />,
+        title: 'Group',
       },
       {
         dataIndex: 'users',

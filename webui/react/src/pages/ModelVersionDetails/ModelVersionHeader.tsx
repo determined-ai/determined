@@ -61,12 +61,13 @@ const ModelVersionHeader: React.FC<Props> = ({
   }, [modelVersion, openModelDownload]);
 
   const infoRows: InfoRow[] = useMemo(() => {
+    const user = users.find((user) => user.id === modelVersion.userId);
     return [
       {
         content: (
           <Space>
-            <Avatar userId={modelVersion.userId} />
-            {getDisplayName(users.find((user) => user.id === modelVersion.userId))}
+            <Avatar user={user} />
+            {getDisplayName(user)}
             on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
           </Space>
         ),

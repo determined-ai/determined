@@ -234,7 +234,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -262,7 +262,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [fetchProjects, saveProjectDescription, user, workspace?.archived]);
+  }, [fetchProjects, saveProjectDescription, user, workspace?.archived, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {

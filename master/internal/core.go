@@ -992,7 +992,7 @@ func (m *Master) Run(ctx context.Context) error {
 		return c.File(reactIndex)
 	})
 
-	m.echo.Static("/api/v1/api.swagger.json",
+	m.echo.File("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
 	m.echo.GET("/config", api.Route(m.getConfig))

@@ -180,7 +180,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
         key: 'user',
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -210,7 +210,7 @@ const WorkspaceList: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<Workspace>[];
-  }, [fetchWorkspaces]);
+  }, [fetchWorkspaces, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {

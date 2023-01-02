@@ -37,8 +37,10 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
+import { useUsers } from 'stores/users';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -60,6 +62,7 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
+  const users = Loadable.getOrElse([], useUsers());
 
   const {
     settings,
@@ -234,7 +237,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -250,7 +253,7 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription]);
+  }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription, users]);
 
   const handleTableChange = useCallback(
     (

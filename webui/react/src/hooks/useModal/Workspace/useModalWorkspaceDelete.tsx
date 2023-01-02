@@ -1,6 +1,6 @@
-import { Input } from 'antd';
+import { Form, Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { paths } from 'routes/utils';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -11,6 +11,10 @@ import { Workspace } from 'types';
 import handleError from 'utils/error';
 
 import css from './useModalWorkspaceDelete.module.scss';
+
+interface FormInputs {
+  workspaceName: string;
+}
 
 interface Props {
   onClose?: () => void;
@@ -23,18 +27,15 @@ const useModalWorkspaceDelete = ({
   returnIndexOnDelete,
   workspace,
 }: Props): ModalHooks => {
-  const [name, setName] = useState('');
+  const [form] = Form.useForm<FormInputs>();
+  const workspaceNameValue = Form.useWatch('workspaceName', form);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose });
   const deleteWorkspace = useDeleteWorkspace();
 
-  const handleNameInput = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-  }, []);
-
   const modalContent = useMemo(() => {
     return (
-      <div className={css.base}>
+      <Form autoComplete="off" className={css.base} form={form} layout="vertical">
         <p>
           Are you sure you want to delete <strong>&quot;{workspace.name}&quot;</strong>?
         </p>
@@ -42,13 +43,25 @@ const useModalWorkspaceDelete = ({
           All projects, experiments, and notes within it will also be deleted. This cannot be
           undone.
         </p>
-        <label className={css.label} htmlFor="name">
-          Enter workspace name to confirm deletion.
-        </label>
-        <Input autoComplete="off" id="name" value={name} onChange={handleNameInput} />
-      </div>
+        <Form.Item
+          label={
+            <div>
+              Please type <strong>{workspace.name}</strong> to confirm
+            </div>
+          }
+          name="workspaceName"
+          rules={[
+            {
+              message: 'Please type the workspace name to confirm',
+              pattern: new RegExp(`^${workspace.name}$`),
+              required: true,
+            },
+          ]}>
+          <Input autoComplete="off" />
+        </Form.Item>
+      </Form>
     );
-  }, [handleNameInput, name, workspace.name]);
+  }, [form, workspace.name]);
 
   const handleOk = useCallback(async () => {
     try {
@@ -67,24 +80,20 @@ const useModalWorkspaceDelete = ({
     }
   }, [workspace.id, deleteWorkspace, returnIndexOnDelete]);
 
-  const getModalProps = useCallback(
-    (name = ''): ModalFuncProps => {
-      return {
-        closable: true,
-        content: modalContent,
-        icon: null,
-        okButtonProps: { danger: true, disabled: name !== workspace.name },
-        okText: 'Delete Workspace',
-        onOk: handleOk,
-        title: 'Delete Workspace',
-      };
-    },
-    [handleOk, modalContent, workspace.name],
-  );
+  const getModalProps = useCallback((): ModalFuncProps => {
+    return {
+      closable: true,
+      content: modalContent,
+      icon: null,
+      okButtonProps: { danger: true, disabled: workspaceNameValue !== workspace.name },
+      okText: 'Delete Workspace',
+      onOk: handleOk,
+      title: 'Delete Workspace',
+    };
+  }, [handleOk, modalContent, workspace.name, workspaceNameValue]);
 
   const modalOpen = useCallback(
     (initialModalProps: ModalFuncProps = {}) => {
-      setName('');
       openOrUpdate({ ...getModalProps(), ...initialModalProps });
     },
     [getModalProps, openOrUpdate],
@@ -95,8 +104,8 @@ const useModalWorkspaceDelete = ({
    * title, and buttons, update the modal.
    */
   useEffect(() => {
-    if (modalRef.current) openOrUpdate(getModalProps(name));
-  }, [getModalProps, modalRef, name, openOrUpdate]);
+    if (modalRef.current) openOrUpdate(getModalProps());
+  }, [getModalProps, modalRef, openOrUpdate, workspaceNameValue]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

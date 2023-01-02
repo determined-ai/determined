@@ -3,17 +3,17 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
+import GroupAvatar from 'components/GroupAvatar';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
-import Avatar from 'components/UserAvatar';
+import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { V1Group, V1GroupDetails, V1Role, V1RoleWithAssignments } from 'services/api-ts-sdk';
-import { Size } from 'shared/components/Avatar';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { alphaNumericSorter } from 'shared/utils/sort';
@@ -41,14 +41,14 @@ interface Props {
 interface GroupOrMemberActionDropdownProps {
   fetchMembers: () => void;
   name: string;
-  roleId: number;
+  roleIds: number[];
   userOrGroup: UserOrGroup;
   workspace: Workspace;
 }
 
 const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
   name,
-  roleId,
+  roleIds,
   userOrGroup,
   workspace,
   fetchMembers,
@@ -59,7 +59,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   } = useModalWorkspaceRemoveMember({
     name,
     onClose: fetchMembers,
-    roleIds: [roleId],
+    roleIds,
     scopeWorkspaceId: workspace.id,
     userOrGroup,
     userOrGroupId: getIdFromUserOrGroup(userOrGroup),
@@ -81,7 +81,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
     };
 
     return {
-      items: [{ danger: true, key: 'remove', label: MenuKey.Remove }],
+      items: [{ danger: true, key: MenuKey.Remove, label: 'Remove' }],
       onClick: onItemClick,
     };
   }, [openWorkspaceRemoveMemberModal]);
@@ -215,35 +215,10 @@ const WorkspaceMembers: React.FC<Props> = ({
     const nameRenderer = (value: string, record: UserOrGroup) => {
       if (isUser(record)) {
         const member = record as User;
-        return (
-          <>
-            <div className={css.userAvatarRowItem}>
-              <Avatar size={Size.Medium} userId={member.id} />
-            </div>
-            <div className={css.userRowItem}>
-              {member?.displayName ? (
-                <>
-                  <div>{member.displayName}</div>
-                  <div>{member.username}</div>
-                </>
-              ) : (
-                <div>{member.username}</div>
-              )}
-            </div>
-          </>
-        );
+        return <UserBadge user={member} />;
       }
       const group = record as V1GroupDetails;
-      return (
-        <>
-          <div className={css.userAvatarRowItem}>
-            <Icon name="group" />
-          </div>
-          <div className={css.userRowItem}>
-            <div>{group.name}</div>
-          </div>
-        </>
-      );
+      return <GroupAvatar groupName={group.name} />;
     };
 
     const roleRenderer = (value: string, record: UserOrGroup) => (
@@ -263,7 +238,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         <GroupOrMemberActionDropdown
           fetchMembers={fetchMembers}
           name={getName(record)}
-          roleId={assignedRole.role.roleId}
+          roleIds={[assignedRole.role.roleId]}
           userOrGroup={record}
           workspace={workspace}
         />

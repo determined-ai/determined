@@ -180,6 +180,10 @@ data:
     tensorboard_timeout: {{ .Values.tensorboardTimeout }}
     {{- end }}
 
+    {{- if .Values.notebookTimeout }}
+    notebook_timeout: {{ .Values.notebookTimeout }}
+    {{- end }}
+
     {{- if .Values.logging }}
     logging:
       {{- if .Values.logging.type }}

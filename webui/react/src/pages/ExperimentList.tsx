@@ -595,7 +595,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: ExperimentListSettings) => !!settings.user,
         key: V1GetExperimentsRequestSortBy.USER,
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         sorter: true,
         title: 'User',
       },

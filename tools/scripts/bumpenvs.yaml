@@ -2,38 +2,38 @@ ap_northeast_1_agent_ami:
   new: ami-0e869a96e81e4c106
   old: ami-0ac67818e3bb00e4e
 ap_northeast_1_bastion_ami:
-  new: ami-09b18720cb71042df
-  old: ami-03d4ca505ac37a9d2
+  new: ami-0c7cb70d3eb61492b
+  old: ami-09b18720cb71042df
 ap_northeast_1_master_ami:
-  new: ami-09b18720cb71042df
-  old: ami-03d4ca505ac37a9d2
+  new: ami-0c7cb70d3eb61492b
+  old: ami-09b18720cb71042df
 ap_northeast_2_agent_ami:
   new: ami-03bd3b100feb865bb
   old: ami-08aa4a5d3ace122dc
 ap_northeast_2_bastion_ami:
-  new: ami-07d16c043aa8e5153
-  old: ami-04ac3e07ee01e3016
+  new: ami-003bb1772f36a39a3
+  old: ami-07d16c043aa8e5153
 ap_northeast_2_master_ami:
-  new: ami-07d16c043aa8e5153
-  old: ami-04ac3e07ee01e3016
+  new: ami-003bb1772f36a39a3
+  old: ami-07d16c043aa8e5153
 ap_southeast_1_agent_ami:
   new: ami-0f3517aae74b1acae
   old: ami-06d279ec952eaba80
 ap_southeast_1_bastion_ami:
-  new: ami-00e912d13fbb4f225
-  old: ami-086212dd5dd68c9b7
+  new: ami-09f03fa5572692399
+  old: ami-00e912d13fbb4f225
 ap_southeast_1_master_ami:
-  new: ami-00e912d13fbb4f225
-  old: ami-086212dd5dd68c9b7
+  new: ami-09f03fa5572692399
+  old: ami-00e912d13fbb4f225
 ap_southeast_2_agent_ami:
   new: ami-09ff97700ee2396b5
   old: ami-0e39b22dc5dd34d17
 ap_southeast_2_bastion_ami:
-  new: ami-055166f8a8041fbf1
-  old: ami-00d1237fa493f4d9a
+  new: ami-06139e5e22cc2f7b1
+  old: ami-055166f8a8041fbf1
 ap_southeast_2_master_ami:
-  new: ami-055166f8a8041fbf1
-  old: ami-00d1237fa493f4d9a
+  new: ami-06139e5e22cc2f7b1
+  old: ami-055166f8a8041fbf1
 deepspeed_gpu_0_hashed:
   new: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-24586f0
   old: determinedai/environments-dev:cuda-11.3-pytorch-1.10-tf-2.8-deepspeed-0.7.0-gpu-1c769fb
@@ -48,29 +48,29 @@ eu_central_1_agent_ami:
   new: ami-03f98ed935d6413bb
   old: ami-0992365672c79327f
 eu_central_1_bastion_ami:
-  new: ami-06148e0e81e5187c8
-  old: ami-083e9f3cc36cb84a8
+  new: ami-0b81e95bb0a06ea8c
+  old: ami-06148e0e81e5187c8
 eu_central_1_master_ami:
-  new: ami-06148e0e81e5187c8
-  old: ami-083e9f3cc36cb84a8
+  new: ami-0b81e95bb0a06ea8c
+  old: ami-06148e0e81e5187c8
 eu_west_1_agent_ami:
   new: ami-0486dbd675e5d21fc
   old: ami-0fd6b6d9b94c7bede
 eu_west_1_bastion_ami:
-  new: ami-0fd8802f94ed1c969
-  old: ami-0e88bd5a70756fd88
+  new: ami-029cfca952b331b52
+  old: ami-0fd8802f94ed1c969
 eu_west_1_master_ami:
-  new: ami-0fd8802f94ed1c969
-  old: ami-0e88bd5a70756fd88
+  new: ami-029cfca952b331b52
+  old: ami-0fd8802f94ed1c969
 eu_west_2_agent_ami:
   new: ami-0ba5e33f4b5a82550
   old: ami-01ced4332107015cd
 eu_west_2_bastion_ami:
-  new: ami-04842bc62789b682e
-  old: ami-031ddf8bd79d677fd
+  new: ami-035469b606478d63d
+  old: ami-04842bc62789b682e
 eu_west_2_master_ami:
-  new: ami-04842bc62789b682e
-  old: ami-031ddf8bd79d677fd
+  new: ami-035469b606478d63d
+  old: ami-04842bc62789b682e
 gcp_env:
   new: det-environments-24586f0
   old: det-environments-1c769fb
@@ -248,20 +248,20 @@ us_east_1_agent_ami:
   new: ami-02aa57541c622dde4
   old: ami-046b7034463927b19
 us_east_1_bastion_ami:
-  new: ami-0149b2da6ceec4bb0
-  old: ami-079ca844e323047c2
+  new: ami-0b93ce03dcbcb10f6
+  old: ami-0149b2da6ceec4bb0
 us_east_1_master_ami:
-  new: ami-0149b2da6ceec4bb0
-  old: ami-079ca844e323047c2
+  new: ami-0b93ce03dcbcb10f6
+  old: ami-0149b2da6ceec4bb0
 us_east_2_agent_ami:
   new: ami-06b2144e6efc0145e
   old: ami-0007c0c6ce12d38d5
 us_east_2_bastion_ami:
-  new: ami-0d5bf08bc8017c83b
-  old: ami-0d68d031be2577777
+  new: ami-0cbea92f2377277a4
+  old: ami-0d5bf08bc8017c83b
 us_east_2_master_ami:
-  new: ami-0d5bf08bc8017c83b
-  old: ami-0d68d031be2577777
+  new: ami-0cbea92f2377277a4
+  old: ami-0d5bf08bc8017c83b
 us_gov_east_1_agent_ami:
   new: ami-0a2c45c9ffe923133
   old: ami-0fa525bfacbc01e8e
@@ -278,8 +278,8 @@ us_west_2_agent_ami:
   new: ami-0a3fcac423fda2fd1
   old: ami-019ff350b7d96ca14
 us_west_2_bastion_ami:
-  new: ami-0c09c7eb16d3e8e70
-  old: ami-0123376e204addb71
+  new: ami-0d31d7c9fc9503726
+  old: ami-0c09c7eb16d3e8e70
 us_west_2_master_ami:
-  new: ami-0c09c7eb16d3e8e70
-  old: ami-0123376e204addb71
+  new: ami-0d31d7c9fc9503726
+  old: ami-0c09c7eb16d3e8e70
