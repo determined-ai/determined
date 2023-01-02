@@ -2,8 +2,6 @@ import React from 'react';
 
 import Avatar, { Props as AvatarProps } from 'shared/components/Avatar';
 import useUI from 'shared/contexts/stores/UI';
-import { useCurrentUser } from 'stores/users';
-import { Loadable } from 'utils/loadable';
 import { DetailedUser } from 'types';
 import { getDisplayName } from 'utils/user';
 

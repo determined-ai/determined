@@ -238,7 +238,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={users}
         interactiveColumns={false}
-        loading={isLoading || loadableUser === NotLoaded}
+        loading={loadableUser === NotLoaded}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
