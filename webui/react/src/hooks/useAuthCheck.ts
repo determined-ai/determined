@@ -43,6 +43,7 @@ const useAuthCheck = (): (() => void) => {
      * If an external login URL is provided, redirect there.
      * Otherwise mark that we checked the auth and skip auth token validation.
      */
+
     if (authToken) {
       updateBearerToken(authToken);
 
