@@ -5,18 +5,15 @@ import { useLocation } from 'react-router-dom';
 import { globalStorage } from 'globalStorage';
 import { routeAll } from 'routes/utils';
 import { updateDetApi } from 'services/apiConfig';
-import { ErrorType } from 'shared/utils/error';
-import { isAborted, isAuthFailure } from 'shared/utils/service';
 import { AUTH_COOKIE_KEY, useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
-import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
-const useAuthCheck = (canceler: AbortController): (() => void) => {
+const useAuthCheck = (): (() => void) => {
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const location = useLocation();
-  const { setAuth, resetAuth, setAuthCheck } = useAuth();
+  const { setAuth, setAuthCheck } = useAuth();
 
   const updateBearerToken = useCallback((token: string) => {
     globalStorage.authToken = token;
@@ -49,40 +46,17 @@ const useAuthCheck = (canceler: AbortController): (() => void) => {
     if (authToken) {
       updateBearerToken(authToken);
 
-      try {
-        setAuth({ isAuthenticated: true, token: authToken });
-      } catch (e) {
-        if (isAborted(e)) return;
-
-        const isAuthError = isAuthFailure(e, !!info.externalLoginUri);
-        handleError(e, {
-          isUserTriggered: false,
-          publicMessage: 'Unable to verify current user.',
-          publicSubject: 'GET user failed',
-          silent: true,
-          type: isAuthError ? ErrorType.Auth : ErrorType.Server,
-        });
-
-        if (isAuthError) {
-          updateDetApi({ apiKey: undefined });
-          resetAuth();
-
-          if (info.externalLoginUri) redirectToExternalSignin();
-        }
-      } finally {
-        setAuthCheck();
-      }
+      setAuth({ isAuthenticated: true, token: authToken });
+      setAuthCheck();
     } else if (info.externalLoginUri) {
       redirectToExternalSignin();
     } else {
       setAuthCheck();
     }
   }, [
-    canceler,
     info.externalLoginUri,
     location.search,
     setAuth,
-    resetAuth,
     setAuthCheck,
     redirectToExternalSignin,
     updateBearerToken,
