@@ -209,6 +209,7 @@ export const useUpdateUser = (): ((
     (id: number, updater: (arg0: DetailedUser) => DetailedUser) => {
       updateUsers((prevState) => {
         if (prevState.has(id)) {
+          // this state is statically guaranteed to be non-null
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           return prevState.update(id, (detailedUser) => updater(detailedUser!));
         }
@@ -228,7 +229,7 @@ export const useCurrentUser = (): Loadable<DetailedUser> => {
   if (context === null) {
     throw new Error('Attempted to use useCurrentUser outside of User Context');
   }
-  const { currentUser, users } = context;
+  const { currentUser, users } = context; // this state is statically guaranteed to be non-null
 
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const loadedUser = Loadable.map(currentUser, (userId) => users.get(userId)!);
