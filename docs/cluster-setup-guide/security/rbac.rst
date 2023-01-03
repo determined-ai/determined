@@ -408,7 +408,7 @@ projects and experiments within its scope.
 ``WorkspaceAdmin`` role supersedes the ``Editor`` role, and includes permissions to edit or delete
 workspaces, and modify role assignments within its scope.
 
-Users who posess this role on a particular workspace can assign roles to other users on this
+Users who take this role on a particular workspace can assign roles to other users on this
 workspace, that is, add other members (viewers, editors, or workspace admins) to the workspace.
 
 ``WorkspaceCreator``
