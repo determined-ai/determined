@@ -2,9 +2,7 @@ import { Form, Input, InputNumber, message } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback, useEffect } from 'react';
 
-import {
-  patchUser,
-} from 'services/api';
+import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
@@ -85,53 +83,37 @@ const useModalCreateUser = ({ user }: ModalProps): ModalHooks => {
     form.resetFields();
   }, [form]);
 
-  const handleOk = useCallback(
-    async () => {
-      await form.validateFields();
+  const handleOk = useCallback(async () => {
+    await form.validateFields();
 
-      const formData = form.getFieldsValue();
-      const { agentUid, agentUser, agentGid, agentGroup } = formData;
-      const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
-      formData.agentUserGroup = agentUserGroup;
+    const formData = form.getFieldsValue();
+    const { agentUid, agentUser, agentGid, agentGroup } = formData;
+    const agentUserGroup: V1AgentUserGroup = { agentGid, agentGroup, agentUid, agentUser };
+    formData.agentUserGroup = agentUserGroup;
 
-      try {
-        await patchUser({ userId: user.id, userParams: formData });
-      } catch (e) {
-        message.error('Error configuring agent');
-        handleError(e, { silent: true, type: ErrorType.Input });
+    try {
+      await patchUser({ userId: user.id, userParams: formData });
+    } catch (e) {
+      message.error('Error configuring agent');
+      handleError(e, { silent: true, type: ErrorType.Input });
 
-        // Re-throw error to prevent modal from getting dismissed.
-        throw e;
-      }
-    },
-    [
-      form,
-      user,
-    ],
-  );
+      // Re-throw error to prevent modal from getting dismissed.
+      throw e;
+    }
+  }, [form, user]);
 
-  const modalOpen = useCallback(
-    () => {
-      openOrUpdate({
-        closable: true,
-        content: (
-          <ModalForm
-            form={form}
-            user={user}
-          />
-        ),
-        icon: null,
-        okText: 'Save',
-        onCancel: handleCancel,
-        onOk: () => handleOk(),
-        title: (
-          <h5>Configure Agent</h5>
-        ),
-        width: 520,
-      });
-    },
-    [form, handleCancel, handleOk, openOrUpdate, user],
-  );
+  const modalOpen = useCallback(() => {
+    openOrUpdate({
+      closable: true,
+      content: <ModalForm form={form} user={user} />,
+      icon: null,
+      okText: 'Save',
+      onCancel: handleCancel,
+      onOk: () => handleOk(),
+      title: <h5>Configure Agent</h5>,
+      width: 520,
+    });
+  }, [form, handleCancel, handleOk, openOrUpdate, user]);
   return { modalOpen, ...modalHook };
 };
 

@@ -3,9 +3,7 @@ import { FormInstance } from 'antd/lib/form/hooks/useForm';
 import React, { useCallback } from 'react';
 
 import useFeature from 'hooks/useFeature';
-import {
-  updateGroup,
-} from 'services/api';
+import { updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
@@ -66,58 +64,42 @@ const useModalCreateUser = ({ groups, user }: ModalProps): ModalHooks => {
     form.resetFields();
   }, [form]);
 
-  const handleOk = useCallback(
-    async () => {
-      await form.validateFields();
+  const handleOk = useCallback(async () => {
+    await form.validateFields();
 
-      const formData = form.getFieldsValue();
+    const formData = form.getFieldsValue();
 
-      try {
-        if (user) {
-          const uid = user?.id;
-          if (uid && formData[FIELD_NAME]) {
-            (formData[FIELD_NAME] as number[]).forEach(async (gid) => {
-              await updateGroup({ addUsers: [uid], groupId: gid });
-            });
-          }
-          form.resetFields();
+    try {
+      if (user) {
+        const uid = user?.id;
+        if (uid && formData[FIELD_NAME]) {
+          (formData[FIELD_NAME] as number[]).forEach(async (gid) => {
+            await updateGroup({ addUsers: [uid], groupId: gid });
+          });
         }
-      } catch (e) {
-        message.error('Error adding user to groups');
-        handleError(e, { silent: true, type: ErrorType.Input });
-
-        // Re-throw error to prevent modal from getting dismissed.
-        throw e;
+        form.resetFields();
       }
-    },
-    [
-      form,
-      user,
-    ],
-  );
+    } catch (e) {
+      message.error('Error adding user to groups');
+      handleError(e, { silent: true, type: ErrorType.Input });
 
-  const modalOpen = useCallback(
-    () => {
-      openOrUpdate({
-        closable: true,
-        content: (
-          <ModalForm
-            form={form}
-            groups={groups}
-          />
-        ),
-        icon: null,
-        okText: 'Save',
-        onCancel: handleCancel,
-        onOk: () => handleOk(),
-        title: (
-          <h5>Add to Groups</h5>
-        ),
-        width: 520,
-      });
-    },
-    [form, handleCancel, handleOk, openOrUpdate, groups],
-  );
+      // Re-throw error to prevent modal from getting dismissed.
+      throw e;
+    }
+  }, [form, user]);
+
+  const modalOpen = useCallback(() => {
+    openOrUpdate({
+      closable: true,
+      content: <ModalForm form={form} groups={groups} />,
+      icon: null,
+      okText: 'Save',
+      onCancel: handleCancel,
+      onOk: () => handleOk(),
+      title: <h5>Add to Groups</h5>,
+      width: 520,
+    });
+  }, [form, handleCancel, handleOk, openOrUpdate, groups]);
   return { modalOpen, ...modalHook };
 };
 

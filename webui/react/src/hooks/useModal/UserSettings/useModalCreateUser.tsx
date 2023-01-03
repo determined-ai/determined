@@ -1,6 +1,5 @@
 import { Form, Input, message, Select, Switch, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
-import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -90,11 +89,16 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
       {rbacEnabled && canModifyPermissions && (
         <>
           <Form.Item
-            label={(
+            label={
               <span>
-                {ROLE_LABEL} <Icon name="info" size="small" title="This user role will be applied for all workspaces and areas across the cluster." />
+                {ROLE_LABEL}{' '}
+                <Icon
+                  name="info"
+                  size="small"
+                  title="This user role will be applied for all workspaces and areas across the cluster."
+                />
               </span>
-            )}
+            }
             name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
@@ -183,8 +187,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
           if (canModifyPermissions) {
-            newRole &&
-              (await assignRolesToUser({ roleIds: [newRole], userId: user.id }));
+            newRole && (await assignRolesToUser({ roleIds: [newRole], userId: user.id }));
             oldRoles.size > 0 &&
               (await removeRolesFromUser({ roleIds: Array.from(oldRoles), userId: user.id }));
           }
@@ -199,7 +202,9 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
             await assignRolesToUser({ roleIds: [newRole], userId: uid });
           }
 
-          message.success('New user with empty password has been created, advise user to reset password as soon as possible.');
+          message.success(
+            'New user with empty password has been created, advise user to reset password as soon as possible.',
+          );
           form.resetFields();
         }
         onClose?.();
@@ -229,21 +234,12 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
       openOrUpdate({
         closable: true,
         // passing a default brandind due to changes on the initial state
-        content: (
-          <ModalForm
-            form={form}
-            roles={userRoles}
-            user={user}
-            viewOnly={viewOnly}
-          />
-        ),
+        content: <ModalForm form={form} roles={userRoles} user={user} viewOnly={viewOnly} />,
         icon: null,
         okText: viewOnly ? 'Close' : 'Save',
         onCancel: handleCancel,
         onOk: () => handleOk(viewOnly),
-        title: (
-          <h5>Add User</h5>
-        ),
+        title: <h5>Add User</h5>,
         width: 520,
       });
     },
