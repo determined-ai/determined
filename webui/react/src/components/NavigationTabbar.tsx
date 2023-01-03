@@ -6,6 +6,8 @@ import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import usePermissions from 'hooks/usePermissions';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
@@ -75,6 +77,13 @@ const NavigationTabbar: React.FC = () => {
 
   const showNavigation = isAuthenticated && ui.showChrome;
 
+  const { canCreateWorkspace } = usePermissions();
+  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
+    useModalWorkspaceCreate();
+  const handleCreateWorkspace = useCallback(() => {
+    openWorkspaceCreateModal();
+  }, [openWorkspaceCreateModal]);
+
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
   const handleWorkspacesOpen = useCallback(() => {
@@ -120,13 +129,24 @@ const NavigationTabbar: React.FC = () => {
             path: paths.workspaceList(),
           },
           ...Loadable.match(pinnedWorkspaces, {
-            Loaded: (workspaces) =>
-              workspaces.map((workspace) => ({
+            Loaded: (workspaces) => {
+              const workspaceIcons = workspaces.map((workspace) => ({
                 icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
                 label: workspace.name,
                 onClick: (e: AnyMouseEvent) =>
                   handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-              })),
+              }));
+              if (canCreateWorkspace) {
+                return workspaceIcons.concat([
+                  {
+                    icon: <DynamicIcon name="+" size={24} style={{ color: 'black' }} />,
+                    label: 'New Workspace',
+                    onClick: handleCreateWorkspace,
+                  },
+                ]);
+              }
+              return workspaceIcons;
+            },
             NotLoaded: () => [
               {
                 icon: <Spinner />,
@@ -196,6 +216,7 @@ const NavigationTabbar: React.FC = () => {
         onCancel={handleActionSheetCancel}
       />
       {modalJupyterLabContextHolder}
+      {modalWorkspaceCreateContextHolder}
     </nav>
   );
 };
