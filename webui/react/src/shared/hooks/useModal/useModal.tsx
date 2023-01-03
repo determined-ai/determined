@@ -43,19 +43,6 @@ interface ModalOptions {
   rawOk?: boolean;
 }
 
-/**
- * Clone these set of props to create a new modal reference,
- * so that re-opening of this modal will work properly.
- * If you skip the clone step, when attempting to re-open the
- * same modal to show the "cannot delete" message will fail.
- */
-
-const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
-  maskClosable: true,
-  open: true,
-  style: { minWidth: 280 },
-};
-
 type AntModalPromise = (...args: any[]) => any;
 
 interface ModalConfig {
@@ -137,7 +124,9 @@ function useModal<T = RecordUnknown>(config: ModalConfig = {}): ModalHooks<T> {
     if (!modalProps || modalProps === prevModalProps) return;
 
     const completeModalProps: ModalFuncProps = {
-      ...DEFAULT_MODAL_PROPS,
+      maskClosable: true,
+      open: true,
+      style: { minWidth: 280 },
       ...modalProps,
       onCancel: config.options?.rawCancel
         ? modalProps.onCancel

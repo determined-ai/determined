@@ -24,45 +24,40 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose: handleOnClose });
 
-  const handleOk = useCallback(async (modelVersion: ModelVersion) => {
-    if (!modelVersion) return Promise.reject();
-
-    try {
-      await deleteModelVersion({
-        modelName: modelVersion.model.name ?? '',
-        versionNum: modelVersion.version ?? 0,
-      });
-      routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
-    } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
-        publicSubject: `Unable to delete model version ${modelVersion.version}.`,
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
-
-  const getModalProps = useCallback(
-    (modelVersion: ModelVersion): ModalFuncProps => {
-      return {
-        closable: true,
-        content: `
+  const getModalProps = useCallback((modelVersion: ModelVersion): ModalFuncProps => {
+    return {
+      closable: true,
+      content: `
         Are you sure you want to delete this version
         "Version ${modelVersion.version}" from this model?
       `,
-        icon: null,
-        maskClosable: true,
-        okButtonProps: { type: 'primary' },
-        okText: 'Delete Version',
-        okType: 'danger',
-        onOk: () => handleOk(modelVersion),
-        title: 'Confirm Delete',
-      };
-    },
-    [handleOk],
-  );
+      icon: null,
+      maskClosable: true,
+      okButtonProps: { type: 'primary' },
+      okText: 'Delete Version',
+      okType: 'danger',
+      onOk: async () => {
+        if (!modelVersion) return Promise.reject();
+
+        try {
+          await deleteModelVersion({
+            modelName: modelVersion.model.name ?? '',
+            versionNum: modelVersion.version ?? 0,
+          });
+          routeToReactUrl(paths.modelDetails(String(modelVersion.model.id)));
+        } catch (e) {
+          handleError(e, {
+            level: ErrorLevel.Error,
+            publicMessage: 'Please try again later.',
+            publicSubject: `Unable to delete model version ${modelVersion.version}.`,
+            silent: false,
+            type: ErrorType.Server,
+          });
+        }
+      },
+      title: 'Confirm Delete',
+    };
+  }, []);
 
   /**
    * When modal props changes are detected, such as modal content
