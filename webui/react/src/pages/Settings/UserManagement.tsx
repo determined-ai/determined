@@ -84,10 +84,10 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 
   const menuItems: MenuProps['items'] = canModifyUsers
     ? [
-        { key: MenuKey.View, label: 'View Profile' },
-        { key: MenuKey.Edit, label: 'Edit' },
-        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-      ]
+      { key: MenuKey.View, label: 'View Profile' },
+      { key: MenuKey.Edit, label: 'Edit' },
+      { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+    ]
     : [{ key: MenuKey.View, label: 'View Profile' }];
 
   return (
@@ -156,8 +156,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings]);
+  }, [fetchUsers]);
 
   useEffect(() => {
     fetchGroups();
