@@ -548,21 +548,25 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 	case *apiv1.KillExperimentRequest:
-		switch {
-		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
+		// Allow killing an experiment being canceled.
+		// Canceleation can take up to preemptionTimeoutDuration (one hour)
+		// if a trial ignores or fumbles the preemption signal.
+		if e.State != model.StoppingCanceledState &&
+			(model.StoppingStates[e.State] || model.TerminalStates[e.State]) {
+			ctx.Respond(&apiv1.KillExperimentResponse{})
+			return nil
+		}
+
+		switch ok := e.updateState(ctx, model.StateWithReason{
+			State:               model.StoppingKilledState,
+			InformationalReason: "user requested kill",
+		}); ok {
+		case true:
 			ctx.Respond(&apiv1.KillExperimentResponse{})
 		default:
-			switch ok := e.updateState(ctx, model.StateWithReason{
-				State:               model.StoppingKilledState,
-				InformationalReason: "user requested kill",
-			}); ok {
-			case true:
-				ctx.Respond(&apiv1.KillExperimentResponse{})
-			default:
-				ctx.Respond(status.Errorf(codes.FailedPrecondition,
-					"experiment in incompatible state %s", e.State,
-				))
-			}
+			ctx.Respond(status.Errorf(codes.FailedPrecondition,
+				"experiment in incompatible state %s", e.State,
+			))
 		}
 
 	default:
