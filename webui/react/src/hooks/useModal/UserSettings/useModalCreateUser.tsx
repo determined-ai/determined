@@ -31,7 +31,8 @@ export const USER_NAME_LABEL = 'User Name';
 const ROLE_LABEL = 'Global Role';
 const ROLE_NAME = 'roles';
 export const MODAL_HEADER_LABEL = 'Add User';
-export const API_SUCCESS_MESSAGE_CREATE = 'New user with empty password has been created, advise user to reset password as soon as possible.';
+export const API_SUCCESS_MESSAGE_CREATE =
+  'New user with empty password has been created, advise user to reset password as soon as possible.';
 export const BUTTON_NAME = 'Save';
 
 interface Props {
@@ -110,7 +111,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
               showSearch>
               {Loadable.match(knowRolesLoadable, {
                 Loaded: () =>
-                  knownRoles.map((r) => (
+                  knownRoles.map((r: UserRole) => (
                     <Select.Option
                       disabled={
                         roles?.find((ro) => ro.id === r.id)?.fromGroup?.length ||
