@@ -177,11 +177,17 @@ class SharedFSStorageManager(storage.StorageManager):
         )
         return cls(base_path)
 
-    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def post_store_path(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         """
         Nothing to clean up after writing directly to shared_fs.
         """
-        pass
+        if paths is not None:
+            logging.warning(
+                "Ignoring partial checkpoint upload to shared_fs; all files written were written "
+                "directly to shared_fs."
+            )
 
     def store_path_is_direct_access(self) -> bool:
         return True
@@ -221,9 +227,29 @@ class SharedFSStorageManager(storage.StorageManager):
             raise errors.CheckpointNotFound(f"Storage path is not a directory: {storage_dir}")
         shutil.rmtree(storage_dir, ignore_errors=False)
 
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         src = os.fspath(src)
-        copytree(src, os.path.join(self._base_path, dst), dirs_exist_ok=True)
+
+        if paths is None:
+            ignore = None
+        else:
+            paths_set = set(paths)
+
+            def ignore(ign_dir: str, names: List[str]) -> List[str]:
+                out = []
+                # rel_dir would be "subdir" instead of "/determined_shared_fs/UUID/subdir"
+                rel_dir = os.path.relpath(ign_dir, src)
+                for name in names:
+                    # ckp_path would be "subdir/file"
+                    ckpt_path = os.path.join(rel_dir, name)
+                    if ckpt_path not in paths_set:
+                        out.append(name)
+
+                return out
+
+        copytree(src, os.path.join(self._base_path, dst), ignore=ignore, dirs_exist_ok=True)
 
     def download(
         self,

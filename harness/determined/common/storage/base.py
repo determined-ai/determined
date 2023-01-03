@@ -2,7 +2,13 @@ import abc
 import contextlib
 import os
 import pathlib
-from typing import Any, Callable, Dict, Iterator, Optional, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Union
+
+# Paths should be a sorted list of paths relative to the checkpoint root that indicate what paths
+# should be uploaded.  A directory should always appear in Paths if any subpath under that directory
+# appears in Paths.
+Paths = List[str]
+
 
 # Selector accepts a path relative to the checkpoint root, and returns a boolean indicating if the
 # path should be downloaded. For every path selected, all parent directories are also selected
@@ -67,7 +73,9 @@ class StorageManager(metaclass=abc.ABCMeta):
         return pathlib.Path(storage_dir)
 
     @abc.abstractmethod
-    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def post_store_path(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[Paths] = None
+    ) -> None:
         """
         Subclasses typically push to persistent storage if necessary, then delete the src directory,
         if necessary.
@@ -75,14 +83,14 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @contextlib.contextmanager
-    def store_path(self, dst: str) -> Iterator[pathlib.Path]:
+    def store_path(self, dst: str, paths: Optional[Paths] = None) -> Iterator[pathlib.Path]:
         """
         Prepare a local directory to be written to the storage backend.
         """
 
         path = self.pre_store_path(dst)
         yield path
-        self.post_store_path(path, dst)
+        self.post_store_path(path, dst, paths)
 
     @abc.abstractmethod
     def store_path_is_direct_access(self) -> bool:
@@ -103,7 +111,7 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(self, src: Union[str, os.PathLike], dst: str, paths: Optional[Paths] = None) -> None:
         pass
 
     @abc.abstractmethod

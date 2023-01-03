@@ -34,10 +34,12 @@ class AzureStorageManager(storage.CloudStorageManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         src = os.fspath(src)
         logging.info(f"Uploading to Azure Blob Storage: {dst}")
-        for rel_path in sorted(self._list_directory(src)):
+        for rel_path in sorted(paths or self._list_directory(src)):
             # Use posixpath so that we always use forward slashes, even on Windows.
             container_blob = posixpath.join(self.container, dst, rel_path)
 

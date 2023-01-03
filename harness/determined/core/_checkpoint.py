@@ -202,6 +202,7 @@ class CheckpointContext:
         metadata: Optional[Dict[str, Any]] = None,
         *,
         shard: bool = False,
+        paths: Optional[storage.Paths] = None,
     ) -> str:
         """
         ``upload()`` chooses a random ``storage_id``, then uploads the contents of ``ckpt_dir`` to
@@ -249,7 +250,7 @@ class CheckpointContext:
             storage_id = self._dist.broadcast(storage_id)
 
             assert storage_id
-            return self._upload_sharded(ckpt_dir, storage_id, metadata)
+            return self._upload_sharded(ckpt_dir, storage_id, metadata, paths=paths)
 
     def _upload_single(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> str:
         storage_id = str(uuid.uuid4())
@@ -263,7 +264,12 @@ class CheckpointContext:
         return storage_id
 
     def _upload_sharded(
-        self, ckpt_dir: Optional[str], storage_id: str, metadata: Optional[Dict[str, Any]] = None
+        self,
+        ckpt_dir: Optional[str],
+        storage_id: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        *,
+        paths: Optional[storage.Paths] = None,
     ) -> str:
         ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
         if not any(ckpt_dir_mask):
@@ -414,7 +420,11 @@ class CheckpointContext:
 
     @contextlib.contextmanager
     def store_path(
-        self, metadata: Optional[Dict[str, Any]] = None, *, shard: bool = False
+        self,
+        metadata: Optional[Dict[str, Any]] = None,
+        *,
+        shard: bool = False,
+        paths: Optional[storage.Paths] = None,
     ) -> Iterator[Tuple[pathlib.Path, str]]:
         """
         ``store_path()`` is a context manager which chooses a random path and prepares a directory
