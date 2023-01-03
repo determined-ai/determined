@@ -1,5 +1,5 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -24,18 +24,15 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
-  const [modelVersion, setModelVersion] = useState<ModelVersion>();
-
   const { canDeleteModelVersion } = usePermissions();
 
   const handleOnClose = useCallback(() => {
-    setModelVersion(undefined);
     onClose?.(ModalCloseReason.Cancel);
   }, [onClose]);
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal({ onClose: handleOnClose });
 
-  const handleOk = useCallback(async () => {
+  const handleOk = useCallback(async (modelVersion: ModelVersion) => {
     if (!modelVersion) return Promise.reject();
 
     try {
@@ -53,7 +50,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
         type: ErrorType.Server,
       });
     }
-  }, [modelVersion]);
+  }, []);
 
   const getModalProps = useCallback(
     (modelVersion: ModelVersion): ModalFuncProps => {
@@ -69,7 +66,7 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
             okButtonProps: { type: 'primary' },
             okText: 'Delete Version',
             okType: 'danger',
-            onOk: handleOk,
+            onOk: () => handleOk(modelVersion),
             title: 'Confirm Delete',
           }
         : clone(CANNOT_DELETE_MODAL_PROPS);
@@ -77,15 +74,16 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
     [canDeleteModelVersion, handleOk],
   );
 
-  const modalOpen = useCallback((modelVersion: ModelVersion) => setModelVersion(modelVersion), []);
-
   /**
    * When modal props changes are detected, such as modal content
    * title, and buttons, update the modal.
    */
-  useEffect(() => {
-    if (modelVersion) openOrUpdate(getModalProps(modelVersion));
-  }, [getModalProps, modelVersion, openOrUpdate]);
+  const modalOpen = useCallback(
+    (modelVersion: ModelVersion) => {
+      openOrUpdate(getModalProps(modelVersion));
+    },
+    [getModalProps, openOrUpdate],
+  );
 
   return { modalOpen, ...modalHook };
 };
