@@ -42,7 +42,7 @@ const AppView: React.FC = () => {
   const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
-  const checkAuth = useAuthCheck(canceler);
+  const checkAuth = useAuthCheck();
 
   const isServerReachable = useMemo(() => {
     return Loadable.match(infoLoadable, {

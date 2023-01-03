@@ -220,8 +220,7 @@ const useModalCreateUser = ({ groups, onClose, user }: ModalProps): ModalHooks =
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const [canceler] = useState(new AbortController());
-  const checkAuth = useAuthCheck(canceler);
+  const checkAuth = useAuthCheck();
 
   const fetchUserRoles = useCallback(async () => {
     if (user !== undefined && rbacEnabled && canAssignRoles({})) {
