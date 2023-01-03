@@ -82,11 +82,11 @@
     }
   }
   & code {
-    padding: 0.2em 0.4em;
-    margin: 0;
-    font-size: 85%;
-    white-space: break-spaces;
     background-color: var(--theme-float-strong);
     border-radius: 6px;
+    font-size: 85%;
+    margin: 0;
+    padding: 0.2em 0.4em;
+    white-space: break-spaces;
   }
 }

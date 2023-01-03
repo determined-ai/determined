@@ -10,9 +10,7 @@ interface CheckboxProps {
 }
 
 const Checkbox: React.FC<CheckboxProps> = (props: CheckboxProps) => {
-  return (
-    <AntdCheckbox {...props} />
-  );
+  return <AntdCheckbox {...props} />;
 };
 
 export default Checkbox;

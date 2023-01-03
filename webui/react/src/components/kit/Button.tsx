@@ -16,10 +16,13 @@ interface ButtonProps {
   type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
 }
 
-const Button: React.FC<ButtonProps> = ({ shape = 'default', size = 'middle', type = 'default', ...props }: ButtonProps) => {
-  return (
-    <AntdButton shape={shape} size={size} type={type} {...props} />
-  );
+const Button: React.FC<ButtonProps> = ({
+  shape = 'default',
+  size = 'middle',
+  type = 'default',
+  ...props
+}: ButtonProps) => {
+  return <AntdButton shape={shape} size={size} type={type} {...props} />;
 };
 
 export default Button;

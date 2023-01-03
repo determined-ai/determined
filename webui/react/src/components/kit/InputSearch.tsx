@@ -11,9 +11,7 @@ interface InputSearchProps {
 }
 
 const InputSearch: React.FC<InputSearchProps> = (props: InputSearchProps) => {
-  return (
-    <Input.Search {...props} />
-  );
+  return <Input.Search {...props} />;
 };
 
 export default InputSearch;

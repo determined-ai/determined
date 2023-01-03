@@ -5,7 +5,7 @@ export type TabItem = {
   children?: ReactNode;
   key: string;
   label: string;
-}
+};
 
 interface PivotProps {
   activeKey?: string;
@@ -21,9 +21,7 @@ interface PivotProps {
 }
 
 const Pivot: React.FC<PivotProps> = ({ type = 'line', ...props }: PivotProps) => {
-  return (
-    <Tabs type={type} {...props} />
-  );
+  return <Tabs type={type} {...props} />;
 };
 
 export default Pivot;

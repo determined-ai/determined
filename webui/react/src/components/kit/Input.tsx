@@ -5,17 +5,15 @@ import InputNumber from './InputNumber';
 import InputSearch from './InputSearch';
 
 const Input: Input = forwardRef<InputRef, InputProps>((props: InputProps, ref) => {
-  return (
-    <AntdInput ref={ref} {...props} />
-  );
+  return <AntdInput ref={ref} {...props} />;
 }) as Input;
 
 type Input = ForwardRefExoticComponent<InputProps & RefAttributes<InputRef>> & {
-  Group: typeof AntdInput.Group,
-  Number: typeof InputNumber,
-  Password: typeof AntdInput.Password,
-  Search: typeof InputSearch,
-  TextArea: typeof AntdInput.TextArea,
+  Group: typeof AntdInput.Group;
+  Number: typeof InputNumber;
+  Password: typeof AntdInput.Password;
+  Search: typeof InputSearch;
+  TextArea: typeof AntdInput.TextArea;
 };
 
 Input.Group = AntdInput.Group;

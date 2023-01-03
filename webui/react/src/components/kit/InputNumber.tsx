@@ -12,8 +12,6 @@ interface InputNumberProps {
 }
 
 const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {
-  return (
-    <AntdInputNumber {...props} />
-  );
+  return <AntdInputNumber {...props} />;
 };
 export default InputNumber;
