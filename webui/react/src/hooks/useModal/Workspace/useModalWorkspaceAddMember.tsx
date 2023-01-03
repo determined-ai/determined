@@ -26,6 +26,15 @@ interface FormInputs {
   userOrGroupId: string;
 }
 
+interface SearchProp {
+  label: {
+    props: {
+      groupName?: string;
+      user?: User;
+    };
+  };
+}
+
 const useModalWorkspaceAddMember = ({
   addableUsersAndGroups,
   rolesAssignableToScope,
@@ -58,16 +67,20 @@ const useModalWorkspaceAddMember = ({
   );
 
   const handleFilter = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (search: string, option: any): boolean => {
-      const label = option.label as string;
+    (search: string, option?: SearchProp): boolean => {
+      if (!option) return false;
+      const label = option.label;
       const userOrGroup = addableUsersAndGroups.find((u) => {
-        if (isUser(u)) {
+        if (isUser(u) && !!label.props.user) {
           const user = u as User;
-          return user?.displayName === label || user?.username === label;
-        } else {
+          return (
+            user?.displayName === label.props.user.displayName ||
+            user?.username === label.props.user.username
+          );
+        }
+        if (!isUser(u) && !!label.props.groupName) {
           const group = u as V1Group;
-          return group.name === label;
+          return group.name === label.props.groupName;
         }
       });
       if (!userOrGroup) return false;

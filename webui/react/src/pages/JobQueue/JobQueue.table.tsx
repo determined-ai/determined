@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import Link from 'components/Link';
 import { ColumnDef } from 'components/Table/InteractiveTable';
-import { relativeTimeRenderer, UserRenderer } from 'components/Table/Table';
+import { relativeTimeRenderer } from 'components/Table/Table';
 import { paths } from 'routes/utils';
 import { getJupyterLabs, getTensorBoards } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -175,7 +175,6 @@ export const columns: ColumnDef<Job>[] = [
     dataIndex: 'user',
     defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
     key: 'user',
-    render: UserRenderer,
     title: 'User',
   },
   {

@@ -5,7 +5,7 @@ import { TooltipProps } from 'antd/es/tooltip';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
-import { useFetchUsers, UsersProvider } from 'stores/users';
+import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
 import UserAvatar, { Props } from './UserAvatar';
@@ -53,9 +53,11 @@ const Component = ({ user }: Partial<Props> = {}) => {
   const asyncFetch = useCallback(async () => {
     await fetchUsers();
   }, [fetchUsers]);
+  const updateCurrentUser = useUpdateCurrentUser();
 
   useEffect(() => {
     asyncFetch();
+    updateCurrentUser(44);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

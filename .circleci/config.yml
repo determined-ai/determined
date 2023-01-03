@@ -571,7 +571,7 @@ commands:
           steps:
             - run:
                 name: set reattach-enabled
-                command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents >> /tmp/det-deploy-extra-args
+                command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents --notebook-timeout 1800 >> /tmp/det-deploy-extra-args
       - run:
           name: Deploy AWS cluster
           command: |

@@ -110,9 +110,10 @@ func commandFromSnapshot(
 	taskType := snapshot.Task.TaskType
 	jobID := snapshot.Task.Job.JobID
 	cmd := &command{
-		db:         db,
-		rm:         rm,
-		taskLogger: taskLogger,
+		db:             db,
+		rm:             rm,
+		taskLogger:     taskLogger,
+		registeredTime: snapshot.RegisteredTime,
 
 		GenericCommandSpec: snapshot.GenericCommandSpec,
 
@@ -232,8 +233,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.AddLabels(c.logCtx)
 		c.allocationID = model.AllocationID(fmt.Sprintf("%s.%d", c.taskID, 1))
-		c.registeredTime = ctx.Self().RegisteredTime()
 		if !c.restored {
+			c.registeredTime = ctx.Self().RegisteredTime().Truncate(time.Millisecond)
 			if err := c.db.AddJob(&model.Job{
 				JobID:   c.jobID,
 				JobType: c.jobType,
@@ -568,7 +569,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		Description:    c.Config.Description,
 		Container:      allo.FirstContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
-		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Username:       c.Base.Owner.Username,
 		UserId:         int32(c.Base.Owner.ID),
 		DisplayName:    c.Base.Owner.DisplayName.ValueOrZero(),
@@ -586,7 +587,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		State:        state,
 		Description:  c.Config.Description,
 		Container:    allo.FirstContainer().ToProto(),
-		StartTime:    protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:    protoutils.ToTimestamp(c.registeredTime),
 		Username:     c.Base.Owner.Username,
 		UserId:       int32(c.Base.Owner.ID),
 		DisplayName:  c.Base.Owner.DisplayName.ValueOrZero(),
@@ -603,7 +604,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Id:             c.stringID(),
 		State:          state,
 		Description:    c.Config.Description,
-		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Container:      allo.FirstContainer().ToProto(),
 		PrivateKey:     *c.Metadata.PrivateKey,
 		PublicKey:      *c.Metadata.PublicKey,
@@ -625,7 +626,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		Id:             c.stringID(),
 		State:          state,
 		Description:    c.Config.Description,
-		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Container:      allo.FirstContainer().ToProto(),
 		ServiceAddress: c.serviceAddress(),
 		ExperimentIds:  c.Metadata.ExperimentIDs,

@@ -67,6 +67,7 @@ class cloudformation:
     AGENT_IMAGE_NAME = "AgentImageName"
     DOCKER_USER = "DockerUser"
     DOCKER_PASS = "DockerPass"
+    NOTEBOOK_TIMEOUT = "NotebookTimeout"
 
 
 class misc:

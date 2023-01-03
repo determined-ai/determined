@@ -134,7 +134,7 @@ const WebhooksView: React.FC = () => {
       triggers.map((t) => {
         if (t.triggerType === V1TriggerType.EXPERIMENTSTATECHANGE) {
           return (
-            <li className={css.listBadge}>
+            <li className={css.listBadge} key={t.id}>
               <Badge state={t.condition.state} type={BadgeType.State} />
             </li>
           );

@@ -17,6 +17,7 @@ import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
+import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -53,8 +54,9 @@ const NavigationTabbar: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const authUser = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const loadableCurrentUser = useCurrentUser();
+  const authUser = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const loadableResourcePools = useResourcePools();

@@ -13,7 +13,7 @@ import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import { useAuth } from 'stores/auth';
 import { useEnsureUserRolesAndAssignmentsFetched } from 'stores/userRoles';
-import { useCurrentUsers } from 'stores/users';
+import { useUpdateCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 
 import css from './DeterminedAuth.module.scss';
@@ -32,7 +32,7 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
-  const { updateCurrentUser } = useCurrentUsers();
+  const updateCurrentUser = useUpdateCurrentUser();
   const { setAuth } = useAuth();
   const fetchMyRoles = useEnsureUserRolesAndAssignmentsFetched(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
@@ -54,8 +54,8 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
           { signal: canceler.signal },
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
-        setAuth({ isAuthenticated: true, token, user });
-        updateCurrentUser(user);
+        setAuth({ isAuthenticated: true, token });
+        updateCurrentUser(user.id);
         if (rbacEnabled) {
           await fetchMyRoles();
         }

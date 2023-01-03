@@ -10,6 +10,40 @@ from determined.common.api import certs
 from determined.deploy import healthcheck
 from determined.deploy.aws import aws, constants
 
+COMMON_TEMPLATE_PARAMETER_KEYS = [
+    constants.cloudformation.ENABLE_CORS,
+    constants.cloudformation.MASTER_TLS_CERT,
+    constants.cloudformation.MASTER_TLS_KEY,
+    constants.cloudformation.MASTER_CERT_NAME,
+    constants.cloudformation.KEYPAIR,
+    constants.cloudformation.MASTER_INSTANCE_TYPE,
+    constants.cloudformation.AUX_AGENT_INSTANCE_TYPE,
+    constants.cloudformation.COMPUTE_AGENT_INSTANCE_TYPE,
+    constants.cloudformation.INBOUND_CIDR,
+    constants.cloudformation.VERSION,
+    constants.cloudformation.DB_PASSWORD,
+    constants.cloudformation.MAX_IDLE_AGENT_PERIOD,
+    constants.cloudformation.MAX_AGENT_STARTING_PERIOD,
+    constants.cloudformation.MAX_AUX_CONTAINERS_PER_AGENT,
+    constants.cloudformation.MAX_DYNAMIC_AGENTS,
+    constants.cloudformation.SPOT_ENABLED,
+    constants.cloudformation.SPOT_MAX_PRICE,
+    constants.cloudformation.CPU_ENV_IMAGE,
+    constants.cloudformation.GPU_ENV_IMAGE,
+    constants.cloudformation.LOG_GROUP_PREFIX,
+    constants.cloudformation.IMAGE_REPO_PREFIX,
+    constants.cloudformation.MASTER_CONFIG_TEMPLATE,
+    constants.cloudformation.AGENT_REATTACH_ENABLED,
+    constants.cloudformation.AGENT_RECONNECT_ATTEMPTS,
+    constants.cloudformation.AGENT_RECONNECT_BACKOFF,
+    constants.cloudformation.AGENT_CONFIG_FILE_CONTENTS,
+    constants.cloudformation.MASTER_IMAGE_NAME,
+    constants.cloudformation.AGENT_IMAGE_NAME,
+    constants.cloudformation.DOCKER_USER,
+    constants.cloudformation.DOCKER_PASS,
+    constants.cloudformation.NOTEBOOK_TIMEOUT,
+]  # type: List[str]
+
 
 class DeterminedDeployment(metaclass=abc.ABCMeta):
     template_parameter_keys = []  # type: List[str]

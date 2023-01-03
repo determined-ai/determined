@@ -41,14 +41,14 @@ interface Props {
 interface GroupOrMemberActionDropdownProps {
   fetchMembers: () => void;
   name: string;
-  roleId: number;
+  roleIds: number[];
   userOrGroup: UserOrGroup;
   workspace: Workspace;
 }
 
 const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = ({
   name,
-  roleId,
+  roleIds,
   userOrGroup,
   workspace,
   fetchMembers,
@@ -59,7 +59,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   } = useModalWorkspaceRemoveMember({
     name,
     onClose: fetchMembers,
-    roleIds: [roleId],
+    roleIds,
     scopeWorkspaceId: workspace.id,
     userOrGroup,
     userOrGroupId: getIdFromUserOrGroup(userOrGroup),
@@ -81,7 +81,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
     };
 
     return {
-      items: [{ danger: true, key: 'remove', label: MenuKey.Remove }],
+      items: [{ danger: true, key: MenuKey.Remove, label: 'Remove' }],
       onClick: onItemClick,
     };
   }, [openWorkspaceRemoveMemberModal]);
@@ -238,7 +238,7 @@ const WorkspaceMembers: React.FC<Props> = ({
         <GroupOrMemberActionDropdown
           fetchMembers={fetchMembers}
           name={getName(record)}
-          roleId={assignedRole.role.roleId}
+          roleIds={[assignedRole.role.roleId]}
           userOrGroup={record}
           workspace={workspace}
         />
