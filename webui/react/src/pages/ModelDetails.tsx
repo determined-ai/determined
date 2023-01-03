@@ -62,7 +62,10 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.match(useUsers(), {
+    Loaded: (usersPagination) => usersPagination.users,
+    NotLoaded: () => [],
+  });
 
   const {
     settings,

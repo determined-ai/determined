@@ -25,7 +25,10 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
     routeToReactUrl(paths.workspaceDetails(workspace.id));
   }, [workspace.id]);
 
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.match(useUsers(), {
+    Loaded: (usersPagination) => usersPagination.users,
+    NotLoaded: () => [],
+  });
   const user = users.find((user) => user.id === workspace.userId);
 
   return (

@@ -19,7 +19,7 @@ import useFeature from 'hooks/useFeature';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
-import { getGroups, getUsers, patchUser } from 'services/api';
+import { getGroups, patchUser } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult } from 'services/api-ts-sdk';
 import dropdownCss from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon/Icon';
@@ -27,8 +27,10 @@ import { ValueOf } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useFetchKnownRoles } from 'stores/knowRoles';
+import { FetchUsersConfig, useFetchUsers, useUsers } from 'stores/users';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
+import { Loadable, NotLoaded } from 'utils/loadable';
 
 import css from './UserManagement.module.scss';
 import settingsConfig, {
@@ -104,44 +106,40 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 };
 
 const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<DetailedUser[]>([]);
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-
+  const fetchUsersHook = useFetchUsers(canceler);
   const { settings, updateSettings } = useSettings<UserManagementSettings>(settingsConfig);
+  const apiConfig = useMemo<FetchUsersConfig>(
+    () => ({
+      limit: settings.tableLimit,
+      offset: settings.tableOffset,
+      orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+      sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
+    }),
+    [settings],
+  );
+  const loadableUser = useUsers(apiConfig);
+  const users = Loadable.match(loadableUser, {
+    Loaded: (users) => users.users,
+    NotLoaded: () => [],
+  });
+  const total = Loadable.match(loadableUser, {
+    Loaded: (users) => users.pagination.total ?? 0,
+    NotLoaded: () => 0,
+  });
 
   const rbacEnabled = useFeature().isOn('rbac');
   const { canModifyUsers } = usePermissions();
 
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
-  const fetchUsers = useCallback(async (): Promise<void> => {
+  const fetchUsers = useCallback((): void => {
     if (!settings) return;
 
-    try {
-      const response = await getUsers(
-        {
-          limit: settings.tableLimit,
-          offset: settings.tableOffset,
-          orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
-          sortBy: validateDetApiEnum(V1GetUsersRequestSortBy, settings.sortKey),
-        },
-        { signal: canceler.signal },
-      );
-      setTotal(response.pagination.total ?? 0);
-      setUsers((prev) => {
-        if (isEqual(prev, response.users)) return prev;
-        return response.users;
-      });
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch users.' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [canceler.signal, settings]);
+    fetchUsersHook(apiConfig);
+  }, [settings, apiConfig, fetchUsersHook]);
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     try {
@@ -158,8 +156,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings]);
+  }, [fetchUsers]);
 
   useEffect(() => {
     fetchGroups();
@@ -240,7 +237,7 @@ const UserManagement: React.FC = () => {
         containerRef={pageRef}
         dataSource={users}
         interactiveColumns={false}
-        loading={isLoading}
+        loading={loadableUser === NotLoaded}
         pagination={getFullPaginationConfig(
           {
             limit: settings.tableLimit,
@@ -258,7 +255,7 @@ const UserManagement: React.FC = () => {
     ) : (
       <SkeletonTable columns={columns.length} />
     );
-  }, [users, isLoading, settings, columns, total, updateSettings]);
+  }, [users, loadableUser, settings, columns, total, updateSettings]);
   return (
     <Page
       containerRef={pageRef}

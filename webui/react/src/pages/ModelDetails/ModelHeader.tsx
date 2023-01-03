@@ -37,7 +37,10 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
   const { canDeleteModel } = usePermissions();
   const { contextHolder, modalOpen } = useModalModelDelete();
 

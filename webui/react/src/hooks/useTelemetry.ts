@@ -3,7 +3,7 @@ import { useRef } from 'react';
 
 import { getTelemetry } from 'services/api';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { Auth, DeterminedInfo } from 'types';
+import { Auth, DetailedUser, DeterminedInfo } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -21,14 +21,14 @@ class Telemetry {
     this.isIdentified = false;
   }
 
-  async update(auth: Loadable<Auth>, info: DeterminedInfo) {
+  async update(auth: Loadable<Auth>, user: Loadable<DetailedUser>, info: DeterminedInfo) {
     if (!info.isTelemetryEnabled) return;
 
     // Attempt to load analytics first.
     await this.load(info);
 
     // Update identify if necessary.
-    this.identify(auth, info);
+    this.identify(auth, user, info);
   }
 
   reset() {
@@ -70,7 +70,7 @@ class Telemetry {
     }
   }
 
-  identify(auth: Loadable<Auth>, info: DeterminedInfo) {
+  identify(auth: Loadable<Auth>, user: Loadable<DetailedUser>, info: DeterminedInfo) {
     if (!this.isLoaded || !analytics?.identify) return;
 
     /*
@@ -81,15 +81,16 @@ class Telemetry {
       if (
         !this.isIdentified &&
         Loadable.isLoaded(auth) &&
+        Loadable.isLoaded(user) &&
         auth.data.isAuthenticated &&
-        auth.data.user
+        user.data
       ) {
-        analytics.identify(auth.data.user.id.toString(), {
+        analytics.identify(user.data.id.toString(), {
           clusterId: info.clusterId,
           clusterName: info.clusterName,
           edition: 'OSS',
           masterId: info.masterId,
-          username: auth.data.user.username,
+          username: user.data.username,
           version: info.version,
         });
         this.isIdentified = true;
@@ -117,7 +118,11 @@ export const telemetryInstance = new Telemetry();
 interface TelemetryHook {
   track: (...args: any[]) => void;
   trackPage: (...args: any[]) => void;
-  updateTelemetry: (auth: Loadable<Auth>, info: DeterminedInfo) => void;
+  updateTelemetry: (
+    auth: Loadable<Auth>,
+    user: Loadable<DetailedUser>,
+    info: DeterminedInfo,
+  ) => void;
 }
 
 const useTelemetry = (): TelemetryHook => {
