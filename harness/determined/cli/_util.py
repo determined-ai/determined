@@ -1,6 +1,9 @@
 import argparse
 import functools
-from typing import Any, Callable, Dict, List
+import sys
+from typing import Any, Callable, Dict, List, Union
+
+from termcolor import colored
 
 from determined.common import api, declarative_argparse, util
 from determined.common.api import authentication, bindings, certs
@@ -110,3 +113,8 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
         return wrapper
 
     return decorator
+
+
+def report_cli_error(msg: Union[str, Exception]) -> None:
+    print(colored(f"Error: {msg}", "red"), file=sys.stderr)
+    sys.exit(1)

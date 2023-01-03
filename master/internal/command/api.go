@@ -45,8 +45,10 @@ func RegisterAPIHandler(
 	refs := []*actor.Ref{commandManagerRef, notebookManagerRef, shellManagerRef, tensorboardManagerRef}
 	system.AskAll(actor.Ping{}, refs...).GetAll()
 
-	echo.Any("/commands*", api.Route(system, nil), middleware...)
-	echo.Any("/notebooks*", api.Route(system, nil), middleware...)
-	echo.Any("/shells*", api.Route(system, nil), middleware...)
-	echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
+	if echo != nil {
+		echo.Any("/commands*", api.Route(system, nil), middleware...)
+		echo.Any("/notebooks*", api.Route(system, nil), middleware...)
+		echo.Any("/shells*", api.Route(system, nil), middleware...)
+		echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
+	}
 }
