@@ -181,6 +181,7 @@ const ModelDetails: React.FC = () => {
 
     const actionRenderer = (_: string, record: ModelVersion) => (
       <ModelVersionActionDropdown
+        version={record}
         onDelete={() => deleteModelVersion(record)}
         onDownload={() => downloadModel(record)}
       />
@@ -409,6 +410,7 @@ const ModelDetails: React.FC = () => {
     }) => (
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
+        version={record}
         onDelete={() => deleteModelVersion(record)}
         onDownload={() => downloadModel(record)}
         onVisibleChange={onVisibleChange}>

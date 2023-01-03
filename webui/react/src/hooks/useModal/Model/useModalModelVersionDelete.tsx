@@ -1,15 +1,9 @@
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { useCallback } from 'react';
 
-import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { deleteModelVersion } from 'services/api';
-import useModal, {
-  CANNOT_DELETE_MODAL_PROPS,
-  ModalHooks as Hooks,
-  ModalCloseReason,
-} from 'shared/hooks/useModal/useModal';
-import { clone } from 'shared/utils/data';
+import useModal, { ModalHooks as Hooks, ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { ModelVersion } from 'types';
@@ -24,8 +18,6 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
 }
 
 const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
-  const { canDeleteModelVersion } = usePermissions();
-
   const handleOnClose = useCallback(() => {
     onClose?.(ModalCloseReason.Cancel);
   }, [onClose]);
@@ -54,24 +46,22 @@ const useModalModelVersionDelete = ({ onClose }: Props = {}): ModalHooks => {
 
   const getModalProps = useCallback(
     (modelVersion: ModelVersion): ModalFuncProps => {
-      return canDeleteModelVersion({ modelVersion })
-        ? {
-            closable: true,
-            content: `
+      return {
+        closable: true,
+        content: `
         Are you sure you want to delete this version
         "Version ${modelVersion.version}" from this model?
       `,
-            icon: null,
-            maskClosable: true,
-            okButtonProps: { type: 'primary' },
-            okText: 'Delete Version',
-            okType: 'danger',
-            onOk: () => handleOk(modelVersion),
-            title: 'Confirm Delete',
-          }
-        : clone(CANNOT_DELETE_MODAL_PROPS);
+        icon: null,
+        maskClosable: true,
+        okButtonProps: { type: 'primary' },
+        okText: 'Delete Version',
+        okType: 'danger',
+        onOk: () => handleOk(modelVersion),
+        title: 'Confirm Delete',
+      };
     },
-    [canDeleteModelVersion, handleOk],
+    [handleOk],
   );
 
   /**

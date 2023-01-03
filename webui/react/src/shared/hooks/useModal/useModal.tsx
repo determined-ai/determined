@@ -49,16 +49,6 @@ interface ModalOptions {
  * If you skip the clone step, when attempting to re-open the
  * same modal to show the "cannot delete" message will fail.
  */
-export const CANNOT_DELETE_MODAL_PROPS: Partial<ModalFuncProps> = {
-  cancelText: 'Okay',
-  closable: true,
-  content: 'Only the item creator or an admin can delete this item.',
-  icon: null,
-  maskClosable: true,
-  okButtonProps: { style: { display: 'none' } },
-  okText: undefined,
-  title: 'Unable to Delete',
-};
 
 const DEFAULT_MODAL_PROPS: Partial<ModalFuncProps> = {
   maskClosable: true,
