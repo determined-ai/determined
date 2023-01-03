@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
 
   const fetchTasks = useCallback(
     async (user: DetailedUser) => {
-      const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
+      const [commands, jupyterLabs, shells, tensorboards] = await Promise.allSettled([
         getCommands({
           limit: FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
