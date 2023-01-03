@@ -23,13 +23,16 @@ import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 const ADMIN_NAME = 'admin';
-const ADMIN_LABEL = 'Admin';
+export const ADMIN_LABEL = 'Admin';
 const DISPLAY_NAME_NAME = 'displayName';
-const DISPLAY_NAME_LABEL = 'Display Name';
+export const DISPLAY_NAME_LABEL = 'Display Name';
 const USER_NAME_NAME = 'username';
-const USER_NAME_LABEL = 'User Name';
+export const USER_NAME_LABEL = 'User Name';
 const ROLE_LABEL = 'Global Role';
 const ROLE_NAME = 'roles';
+export const MODAL_HEADER_LABEL = 'Add User';
+export const API_SUCCESS_MESSAGE_CREATE = 'New user with empty password has been created, advise user to reset password as soon as possible.';
+export const BUTTON_NAME = 'Save';
 
 interface Props {
   form: FormInstance;
@@ -202,9 +205,7 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
             await assignRolesToUser({ roleIds: [newRole], userId: uid });
           }
 
-          message.success(
-            'New user with empty password has been created, advise user to reset password as soon as possible.',
-          );
+          message.success(API_SUCCESS_MESSAGE_CREATE);
           form.resetFields();
         }
         onClose?.();
@@ -236,10 +237,10 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
         // passing a default brandind due to changes on the initial state
         content: <ModalForm form={form} roles={userRoles} user={user} viewOnly={viewOnly} />,
         icon: null,
-        okText: viewOnly ? 'Close' : 'Save',
+        okText: viewOnly ? 'Close' : BUTTON_NAME,
         onCancel: handleCancel,
         onOk: () => handleOk(viewOnly),
-        title: <h5>Add User</h5>,
+        title: <h5>{MODAL_HEADER_LABEL}</h5>,
         width: 520,
       });
     },
