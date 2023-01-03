@@ -11,6 +11,7 @@ import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
@@ -104,12 +105,14 @@ const ModelVersionHeader: React.FC<Props> = ({
     ] as InfoRow[];
   }, [modelVersion, onSaveDescription, onUpdateTags, users]);
 
+  const { canDeleteModelVersion } = usePermissions();
+
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);
   }, [openModalVersionDelete, modelVersion]);
 
-  const actions: Action[] = useMemo(
-    () => [
+  const actions: Action[] = useMemo(() => {
+    const items: Action[] = [
       {
         danger: false,
         disabled: false,
@@ -124,16 +127,18 @@ const ModelVersionHeader: React.FC<Props> = ({
         onClick: () => setShowUseInNotebook(true),
         text: 'Use in Notebook',
       },
-      {
+    ];
+    if (canDeleteModelVersion({ modelVersion })) {
+      items.push({
         danger: true,
         disabled: false,
         key: 'deregister-version',
         onClick: handleDelete,
         text: 'Deregister Version',
-      },
-    ],
-    [handleDelete, handleDownloadModel],
-  );
+      });
+    }
+    return items;
+  }, [handleDelete, handleDownloadModel, canDeleteModelVersion, modelVersion]);
 
   const referenceText = useMemo(() => {
     const escapedModelName = modelVersion.model.name.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -224,11 +229,13 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
                 {action.text}
               </Button>
             ))}
-            <Dropdown menu={menu} trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
-            </Dropdown>
+            {actions.length > 2 && (
+              <Dropdown menu={menu} trigger={['click']}>
+                <Button type="text">
+                  <Icon name="overflow-horizontal" size="tiny" />
+                </Button>
+              </Dropdown>
+            )}
           </div>
         </div>
         <InfoBox rows={infoRows} separator={false} />
