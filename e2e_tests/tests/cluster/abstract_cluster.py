@@ -1,4 +1,5 @@
 import abc
+from pathlib import Path
 
 DEVCLUSTER_LOG_PATH = Path("/tmp/devcluster")
 
