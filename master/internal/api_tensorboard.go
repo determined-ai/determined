@@ -80,7 +80,7 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
-	filtered, err := command.TbAuthZProvider.Get().FilterTensorboards(
+	filtered, err := command.AuthZProvider.Get().FilterTensorboards(
 		ctx, curUser, resp.Tensorboards)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if ok, err := command.TbAuthZProvider.Get().CanGetTensorboard(
+	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
 		ctx, curUser, resp.Tensorboard); err != nil {
 		return nil, err
 	} else if !ok {
@@ -128,7 +128,7 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	err = command.TbAuthZProvider.Get().CanTerminateTensorboard(
+	err = command.AuthZProvider.Get().CanTerminateTensorboard(
 		ctx, curUser, getResponse.Tensorboard)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (a *apiServer) SetTensorboardPriority(
 		return nil, err
 	}
 
-	err = command.TbAuthZProvider.Get().CanSetTensorboardPriority(
+	err = command.AuthZProvider.Get().CanSetTensorboardPriority(
 		ctx, curUser, getResponse.Tensorboard)
 	if err != nil {
 		return nil, err
