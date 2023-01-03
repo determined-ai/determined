@@ -226,11 +226,13 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
                 {action.text}
               </Button>
             ))}
-            <Dropdown menu={menu} trigger={['click']}>
-              <Button type="text">
-                <Icon name="overflow-horizontal" size="tiny" />
-              </Button>
-            </Dropdown>
+            {actions.length > 2 && (
+              <Dropdown menu={menu} trigger={['click']}>
+                <Button type="text">
+                  <Icon name="overflow-horizontal" size="tiny" />
+                </Button>
+              </Dropdown>
+            )}
           </div>
         </div>
         <InfoBox rows={infoRows} separator={false} />
