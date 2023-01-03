@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from determined.common import yaml
+from determined.common.api import bindings
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -356,6 +357,24 @@ def test_log_null_bytes() -> None:
 def test_graceful_trial_termination() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/grid-graceful-trial-termination.yaml"))
     exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 2)
+
+
+@pytest.mark.e2e_cpu
+def test_kill_experiment_ignoring_preemption() -> None:
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("core_api/sleep.yaml"),
+        conf.fixtures_path("core_api"),
+        None,
+    )
+    exp.wait_for_experiment_state(exp_id, bindings.determinedexperimentv1State.STATE_RUNNING)
+
+    bindings.post_CancelExperiment(exp.experiment.determined_test_session(), id=exp_id)
+    exp.wait_for_experiment_state(
+        exp_id, bindings.determinedexperimentv1State.STATE_STOPPING_CANCELED
+    )
+
+    bindings.post_KillExperiment(exp.experiment.determined_test_session(), id=exp_id)
+    exp.wait_for_experiment_state(exp_id, bindings.determinedexperimentv1State.STATE_CANCELED)
 
 
 @pytest.mark.e2e_cpu
