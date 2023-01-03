@@ -28,7 +28,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { dateTimeStringSorter } from 'shared/utils/sort';
-import { useAuth } from 'stores/auth';
+import { useCurrentUser } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -46,9 +46,9 @@ const Dashboard: React.FC = () => {
   const [canceler] = useState(new AbortController());
   const [tableLoading, setTableLoading] = useState<boolean>(true);
   const [projectsLoading, setProjectsLoading] = useState<boolean>(true);
-  const loadableAuth = useAuth();
-  const authUser = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const loadableCurrentUser = useCurrentUser();
+  const currentUser = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
 
   const fetchTasks = useCallback(
     async (user: DetailedUser) => {
-      const [commands, jupyterLabs, shells, tensorboards] = await Promise.allSettled([
+      const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
         getCommands({
           limit: FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
@@ -124,11 +124,11 @@ const Dashboard: React.FC = () => {
   const fetchAll = useCallback(async () => {
     await fetchProjects();
     setProjectsLoading(false);
-    if (!authUser) return;
-    await fetchExperiments(authUser);
-    await fetchTasks(authUser);
+    if (!currentUser) return;
+    await fetchExperiments(currentUser);
+    await fetchTasks(currentUser);
     setTableLoading(false);
-  }, [authUser, fetchExperiments, fetchTasks, fetchProjects]);
+  }, [currentUser, fetchExperiments, fetchTasks, fetchProjects]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -163,7 +163,7 @@ const Dashboard: React.FC = () => {
             mode={GridMode.ScrollableRow}>
             {projects.map((project) => (
               <ProjectCard
-                curUser={authUser}
+                curUser={currentUser}
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
