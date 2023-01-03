@@ -34,10 +34,11 @@ const (
 
 // Instance connects a provider's name for a compute resource to the Determined agent name.
 type Instance struct {
-	ID         string
-	LaunchTime time.Time
-	AgentName  string
-	State      InstanceState
+	ID                  string
+	LaunchTime          time.Time
+	LastStateChangeTime time.Time
+	AgentName           string
+	State               InstanceState
 }
 
 func (inst Instance) String() string {
