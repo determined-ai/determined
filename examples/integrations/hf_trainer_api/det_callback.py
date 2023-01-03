@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import typing
@@ -13,14 +14,14 @@ class DetCallback(TrainerCallback):
         core_context: det.core.Context,
         args: TrainingArguments,
         filter_metrics: typing.List[str] = None,
-        checkpoint_metadata: typing.Dict = None,
+        user_data: typing.Dict = None,
     ) -> None:
         super().__init__()
 
         self.core_context = core_context
 
         self.filter_metrics = filter_metrics
-        self.user_checkpoint_metadata = checkpoint_metadata
+        self.user_data = user_data
         self.load_last_checkpoint(args)
 
         self.last_metrics: typing.Dict[str, float] = {"train_step": -1, "eval_step": -1}
@@ -95,9 +96,8 @@ class DetCallback(TrainerCallback):
 
         # local_path is where HF Trainer saves model and tokenizer.
         local_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
-
         if state.is_world_process_zero:
-            if self.user_checkpoint_metadata is not None:
+            if self.user_data is not None:
                 self._on_save_user_data(local_path)
 
         det_checkpoint_metadata = {
@@ -106,21 +106,19 @@ class DetCallback(TrainerCallback):
         }
 
         self.core_context.checkpoint.upload(
-            local_path, metadata=det_checkpoint_metadata, shard=True
+            args.output_dir, metadata=det_checkpoint_metadata, shard=True
         )
 
         if self.core_context.preempt.should_preempt():
             raise Exception("Process preempted / killed")
 
-    def _on_save_user_data(self, save_path) -> None:
+    def _on_save_user_data(self, save_path: str) -> None:
         """
         User-defined saving of objects from self.checkpoint_metadata under save_path.
         After objects are saved, Determined handles uploading and downloading objects to/from selected storage.
         """
-        raise NotImplementedError(
-            "No implementation for _on_save_user_data. "
-            "Objects passed to the callback via checkpoint_metadata will not be saved."
-        )
+        with open(os.path.join(save_path, "my_data.json"), "w") as f:
+            json.dump(self.user_data, f)
 
     def load_last_checkpoint(self, args: TrainingArguments) -> None:
         info = det.get_cluster_info()
@@ -128,6 +126,14 @@ class DetCallback(TrainerCallback):
 
         latest_checkpoint = info.latest_checkpoint
         if latest_checkpoint is not None:
+
+            # To resume DeepSpeed, each node requires ALL sharded model/optimizer states,
+            # so we can skip using selector and just download all files.
+            self.core_context.checkpoint.download(latest_checkpoint, args.output_dir)
+
+            # Use metadata to decide whether the current trial is forked/continued
+            # (trial_id != prev_trial_id) or unpaused (trial_id == prev_trial_id).
+            # Set checkpoint path for Trainer to load the last reported checkpoint.
             metadata = self.core_context.checkpoint.get_metadata(latest_checkpoint)
             prev_trial_id = metadata["trial_id"]
             trial_id = info.trial.trial_id
@@ -135,11 +141,8 @@ class DetCallback(TrainerCallback):
                 resume_step = 0
             else:
                 resume_step = metadata["steps_completed"]
-            checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
 
-            # To resume DeepSpeed, each node requires ALL sharded model/optimizer states,
-            # so we can skip using selector and just download all files.
-            self.core_context.checkpoint.download(latest_checkpoint, checkpoint_path)
+            checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
             args.resume_from_checkpoint = checkpoint_path
 
     def on_step_end(
