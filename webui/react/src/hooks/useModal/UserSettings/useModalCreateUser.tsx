@@ -1,5 +1,6 @@
 import { Form, Input, message, Select, Switch, Typography } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import useAuthCheck from 'hooks/useAuthCheck';
@@ -28,7 +29,7 @@ const DISPLAY_NAME_NAME = 'displayName';
 export const DISPLAY_NAME_LABEL = 'Display Name';
 const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
-const ROLE_LABEL = 'Global Role';
+const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
 export const MODAL_HEADER_LABEL = 'Add User';
 export const API_SUCCESS_MESSAGE_CREATE =
@@ -106,8 +107,9 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
             name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
+              mode="multiple"
               optionFilterProp="children"
-              placeholder={viewOnly ? 'No Roles Added' : 'Add Global Role'}
+              placeholder={viewOnly ? 'No Roles Added' : 'Add Global Roles'}
               showSearch>
               {Loadable.match(knowRolesLoadable, {
                 Loaded: () =>
@@ -184,16 +186,19 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
 
       const formData = form.getFieldsValue();
 
-      const newRole: number = formData[ROLE_NAME];
+      const newRoles: Set<number> = new Set(formData[ROLE_NAME]);
       const oldRoles = new Set((userRoles ?? []).map((r) => r.id));
+      const rolesToAdd = filter((r: number) => !oldRoles.has(r))(newRoles);
+      const rolesToRemove = filter((r: number) => !newRoles.has(r))(oldRoles);
 
       try {
         if (user) {
           await patchUser({ userId: user.id, userParams: formData });
           if (canModifyPermissions) {
-            newRole && (await assignRolesToUser({ roleIds: [newRole], userId: user.id }));
-            oldRoles.size > 0 &&
-              (await removeRolesFromUser({ roleIds: Array.from(oldRoles), userId: user.id }));
+            rolesToAdd.size > 0 &&
+              (await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: user.id }));
+            rolesToRemove.size > 0 &&
+              (await removeRolesFromUser({ roleIds: Array.from(rolesToRemove), userId: user.id }));
           }
           fetchUserRoles();
           if (currentUser && currentUser.id === user.id) checkAuth();
@@ -202,8 +207,8 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
           formData['active'] = true;
           const u = await postUser({ user: formData });
           const uid = u.user?.id;
-          if (uid && newRole) {
-            await assignRolesToUser({ roleIds: [newRole], userId: uid });
+          if (uid && rolesToAdd.size > 0) {
+            await assignRolesToUser({ roleIds: Array.from(rolesToAdd), userId: uid });
           }
 
           message.success(API_SUCCESS_MESSAGE_CREATE);
