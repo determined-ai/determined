@@ -287,8 +287,7 @@ func (a *apiServer) PostWorkspace(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = validateWorkspaceName(req.Name)
-	if err != nil {
+	if err = validateWorkspaceName(req.Name); err != nil {
 		return nil, err
 	}
 
