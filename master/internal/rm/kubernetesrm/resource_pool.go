@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
@@ -11,8 +12,13 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -544,5 +550,97 @@ func (k *kubernetesResourcePool) schedulePendingTasks(ctx *actor.Context) {
 
 			k.assignResources(ctx, req)
 		}
+	}
+}
+
+type k8sPodResources struct {
+	req             *sproto.AllocateRequest
+	podsActor       *actor.Ref
+	group           *tasklist.Group
+	containerID     cproto.ID
+	slots           int
+	initialPosition decimal.Decimal
+}
+
+// Summary summarizes a container allocation.
+func (p k8sPodResources) Summary() sproto.ResourcesSummary {
+	return sproto.ResourcesSummary{
+		AllocationID:  p.req.AllocationID,
+		ResourcesID:   sproto.ResourcesID(p.containerID),
+		ResourcesType: sproto.ResourcesTypeK8sPod,
+		AgentDevices: map[aproto.ID][]device.Device{
+			// TODO: Make it more obvious k8s can't be trusted.
+			aproto.ID(p.podsActor.Address().Local()): nil,
+		},
+
+		ContainerID: &p.containerID,
+	}
+}
+
+// Start notifies the pods actor that it should launch a pod for the provided task spec.
+func (p k8sPodResources) Start(
+	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
+) error {
+	p.setPosition(&spec)
+	spec.ContainerID = string(p.containerID)
+	spec.ResourcesID = string(p.containerID)
+	spec.AllocationID = string(p.req.AllocationID)
+	spec.AllocationSessionToken = rri.Token
+	spec.TaskID = string(p.req.TaskID)
+	spec.UseHostMode = rri.IsMultiAgent
+	spec.ResourcesConfig.SetPriority(p.group.Priority)
+	if spec.LoggingFields == nil {
+		spec.LoggingFields = map[string]string{}
+	}
+	spec.LoggingFields["allocation_id"] = spec.AllocationID
+	spec.LoggingFields["task_id"] = spec.TaskID
+	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
+	return ctx.Ask(p.podsActor, StartTaskPod{
+		TaskActor:  p.req.AllocationRef,
+		Spec:       spec,
+		Slots:      p.slots,
+		Rank:       rri.AgentRank,
+		LogContext: logCtx,
+	}).Error()
+}
+
+func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
+	newSpec := spec.Environment.PodSpec()
+	if newSpec == nil {
+		newSpec = &expconf.PodSpec{}
+	}
+	if newSpec.Labels == nil {
+		newSpec.Labels = make(map[string]string)
+	}
+	newSpec.Labels["determined-queue-position"] = p.initialPosition.String()
+	spec.Environment.SetPodSpec(newSpec)
+}
+
+// Kill notifies the pods actor that it should stop the pod.
+func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
+	ctx.Tell(p.podsActor, KillTaskPod{
+		PodID: p.containerID,
+	})
+}
+
+func (p k8sPodResources) Persist() error {
+	return nil
+}
+
+func newResourcePool(rmConfig *config.KubernetesResourceManagerConfig,
+	podsActor *actor.Ref) *kubernetesResourcePool {
+	return &kubernetesResourcePool{
+		config:            rmConfig,
+		reqList:           tasklist.New(),
+		groups:            map[*actor.Ref]*tasklist.Group{},
+		addrToContainerID: map[*actor.Ref]cproto.ID{},
+		containerIDtoAddr: map[string]*actor.Ref{},
+		jobIDtoAddr:       map[model.JobID]*actor.Ref{},
+		addrToJobID:       map[*actor.Ref]model.JobID{},
+		groupActorToID:    map[*actor.Ref]model.JobID{},
+		IDToGroupActor:    map[model.JobID]*actor.Ref{},
+		slotsUsedPerGroup: map[*tasklist.Group]int{},
+		podsActor:         podsActor,
+		queuePositions:    tasklist.InitializeJobSortState(true),
 	}
 }

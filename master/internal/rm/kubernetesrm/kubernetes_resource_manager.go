@@ -7,7 +7,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -17,12 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
-	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
@@ -115,23 +109,24 @@ func (k ResourceManager) ResolveResourcePool(
 }
 
 // ValidateResources ensures enough resources are available in the resource pool.
+// This is a no-op for k8s.
 func (k ResourceManager) ValidateResources(
 	ctx actor.Messenger,
 	name string,
 	slots int,
 	command bool,
 ) error {
-	// TODO
 	return nil
 }
 
-// ValidateResourcePool validates a resource pool is none or the k8s dummy pool.
+// ValidateResourcePool validates that the named resource pool exists.
 func (k ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
 	_, err := k.GetResourcePoolRef(ctx, name)
 	return err
 }
 
-// CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
+// CheckMaxSlotsExceeded checks if the named resource pool has a capacity of at least the
+// given number of slots.
 func (k ResourceManager) CheckMaxSlotsExceeded(
 	ctx actor.Messenger, name string, slots int,
 ) (bool, error) {
@@ -261,20 +256,7 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 
 		k.pools[KubernetesDummyResourcePool] = ctx.Self().System().MustActorOf(
 			actor.Addr(KubernetesDummyResourcePool),
-			&kubernetesResourcePool{
-				config:            k.config,
-				reqList:           tasklist.New(),
-				groups:            map[*actor.Ref]*tasklist.Group{},
-				addrToContainerID: map[*actor.Ref]cproto.ID{},
-				containerIDtoAddr: map[string]*actor.Ref{},
-				jobIDtoAddr:       map[model.JobID]*actor.Ref{},
-				addrToJobID:       map[*actor.Ref]model.JobID{},
-				groupActorToID:    map[*actor.Ref]model.JobID{},
-				IDToGroupActor:    map[model.JobID]*actor.Ref{},
-				slotsUsedPerGroup: map[*tasklist.Group]int{},
-				podsActor:         k.podsActor,
-				queuePositions:    tasklist.InitializeJobSortState(true),
-			},
+			newResourcePool(k.config, k.podsActor),
 		)
 
 	case
@@ -345,80 +327,6 @@ func (k *kubernetesResourceManager) forwardToPool(
 	} else {
 		ctx.Tell(k.pools[resourcePool], msg)
 	}
-}
-
-type k8sPodResources struct {
-	req             *sproto.AllocateRequest
-	podsActor       *actor.Ref
-	group           *tasklist.Group
-	containerID     cproto.ID
-	slots           int
-	initialPosition decimal.Decimal
-}
-
-// Summary summarizes a container allocation.
-func (p k8sPodResources) Summary() sproto.ResourcesSummary {
-	return sproto.ResourcesSummary{
-		AllocationID:  p.req.AllocationID,
-		ResourcesID:   sproto.ResourcesID(p.containerID),
-		ResourcesType: sproto.ResourcesTypeK8sPod,
-		AgentDevices: map[aproto.ID][]device.Device{
-			// TODO: Make it more obvious k8s can't be trusted.
-			aproto.ID(p.podsActor.Address().Local()): nil,
-		},
-
-		ContainerID: &p.containerID,
-	}
-}
-
-// Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p k8sPodResources) Start(
-	ctx *actor.Context, logCtx logger.Context, spec tasks.TaskSpec, rri sproto.ResourcesRuntimeInfo,
-) error {
-	p.setPosition(&spec)
-	spec.ContainerID = string(p.containerID)
-	spec.ResourcesID = string(p.containerID)
-	spec.AllocationID = string(p.req.AllocationID)
-	spec.AllocationSessionToken = rri.Token
-	spec.TaskID = string(p.req.TaskID)
-	spec.UseHostMode = rri.IsMultiAgent
-	spec.ResourcesConfig.SetPriority(p.group.Priority)
-	if spec.LoggingFields == nil {
-		spec.LoggingFields = map[string]string{}
-	}
-	spec.LoggingFields["allocation_id"] = spec.AllocationID
-	spec.LoggingFields["task_id"] = spec.TaskID
-	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
-	return ctx.Ask(p.podsActor, StartTaskPod{
-		TaskActor:  p.req.AllocationRef,
-		Spec:       spec,
-		Slots:      p.slots,
-		Rank:       rri.AgentRank,
-		LogContext: logCtx,
-	}).Error()
-}
-
-func (p k8sPodResources) setPosition(spec *tasks.TaskSpec) {
-	newSpec := spec.Environment.PodSpec()
-	if newSpec == nil {
-		newSpec = &expconf.PodSpec{}
-	}
-	if newSpec.Labels == nil {
-		newSpec.Labels = make(map[string]string)
-	}
-	newSpec.Labels["determined-queue-position"] = p.initialPosition.String()
-	spec.Environment.SetPodSpec(newSpec)
-}
-
-// Kill notifies the pods actor that it should stop the pod.
-func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
-	ctx.Tell(p.podsActor, KillTaskPod{
-		PodID: p.containerID,
-	})
-}
-
-func (p k8sPodResources) Persist() error {
-	return nil
 }
 
 // TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
