@@ -51,17 +51,16 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 	return nil
 }
 
-func validateWorkspaceName(name string) (string, error) {
+func validateWorkspaceName(name string) error {
 	switch {
 	case len(name) < 1:
-		return "", status.Errorf(codes.InvalidArgument, "name '%s' must be at least 1 character long", name)
+		return status.Errorf(codes.InvalidArgument, "name '%s' must be at least 1 character long", name)
 	case len(name) > 80:
-		return "", status.Errorf(codes.InvalidArgument, "name '%s' must be at most 80 character long", name)
+		return status.Errorf(codes.InvalidArgument, "name '%s' must be at most 80 character long", name)
 	case len(strings.TrimFunc(name, unicode.IsSpace)) == 0:
-		return "", status.Error(codes.InvalidArgument, "name must contain at least non-whitespace letter")
+		return status.Error(codes.InvalidArgument, "name must contain at least non-whitespace letter")
 	default:
-		trimmedName := strings.TrimFunc(name, unicode.IsSpace)
-		return trimmedName, nil
+		return nil
 	}
 }
 
@@ -288,11 +287,10 @@ func (a *apiServer) PostWorkspace(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	trimmedWName, err := validateWorkspaceName(req.Name)
+	err = validateWorkspaceName(req.Name)
 	if err != nil {
 		return nil, err
 	}
-	req.Name = trimmedWName
 
 	if req.AgentUserGroup != nil {
 		err = workspace.AuthZProvider.Get().CanCreateWorkspaceWithAgentUserGroup(ctx, *curUser)
@@ -382,11 +380,10 @@ func (a *apiServer) PatchWorkspace(
 	updatedWorkspace := model.Workspace{}
 
 	if req.Workspace.Name != nil {
-		trimmedWName, err := validateWorkspaceName(req.Workspace.Name.Value)
+		err = validateWorkspaceName(req.Workspace.Name.Value)
 		if err != nil {
 			return nil, err
 		}
-		req.Workspace.Name.Value = trimmedWName
 	}
 
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
