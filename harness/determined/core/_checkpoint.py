@@ -291,13 +291,34 @@ class CheckpointContext:
         # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
         want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
 
-        # Decide what we are going to upload.
+        # Decide what we are going to upload; get all files in the ckpt_dir to the
+        # uploading rank and filter them based on the selectors set for local ranks.
+        # For detailed description see download().
         if want_upload:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
-            if selector is not None:
-                resources = {key: resources[key] for key in resources if selector(key)}
+
+            def _selector(path: str) -> bool:
+                if not selector:
+                    return True
+
+                _ = self._dist.broadcast_local(path)
+                upload_path = self._dist.gather_local(
+                    selector(path) if selector is not None else True
+                )
+                assert upload_path
+                return any(upload_path)
+
+            resources = {key: resources[key] for key in resources if _selector(key)}
+            self._dist.broadcast_local(None)
+
         else:
+            while True:
+                name = self._dist.broadcast_local(None)
+                if name is None:
+                    break
+                _ = self._dist.gather_local(selector(name) if selector is not None else True)
+
             resources = {}
 
         # Merge resources, detect conflicts.
