@@ -23,7 +23,7 @@ const (
 )
 
 // Instance connects a provider's name for a compute resource to the Determined agent name.
-// This struct is identical to provisioner/instance.go but is used for telemetry to avoid import cycle.
+// This struct is identical to provisioner.Instance but is used for telemetry to avoid import cycle.
 type Instance struct {
 	ID                  string
 	LaunchTime          time.Time

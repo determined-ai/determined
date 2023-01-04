@@ -2,7 +2,6 @@ package provisioner
 
 import (
 	"crypto/tls"
-	"github.com/determined-ai/determined/master/internal/telemetry"
 	"time"
 
 	"github.com/pkg/errors"
@@ -10,6 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 )
@@ -150,10 +150,13 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 		p.provider.launch(ctx, numToLaunch)
 	}
 
-	telemetry.ReportProvisionerTick(ctx.Self().System(), createInstanceTelemetry(instances), p.InstanceType())
+	telemetry.ReportProvisionerTick(ctx.Self().System(),
+		createInstanceTelemetry(instances),
+		p.InstanceType())
 }
 
-// createInstanceTelemetry converts provisioner.Instance structs to telemetry.Instance structs to avoid import cycle.
+// createInstanceTelemetry converts provisioner.Instance structs
+// to telemetry.Instance structs to avoid import cycle.
 func createInstanceTelemetry(instances []*Instance) []*telemetry.Instance {
 	tInstances := make([]*telemetry.Instance, 0, len(instances))
 	for _, inst := range instances {
