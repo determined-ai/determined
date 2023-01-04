@@ -46,14 +46,12 @@
             "default": {}
         },
         "data_layer": {
+            "$comment": "the data_layer feature was removed in 0.19.10, and the config is ignored",
             "type": [
                 "object",
                 "null"
             ],
-            "default": {
-                "type": "shared_fs"
-            },
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/data-layer.json"
+            "default": null
         },
         "debug": {
             "type": [

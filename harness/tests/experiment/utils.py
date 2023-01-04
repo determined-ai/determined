@@ -108,7 +108,6 @@ def make_default_exp_config(
             "tensor_fusion_threshold": 100,
             "tensor_fusion_cycle_time": 3.5,
         },
-        "data_layer": {"type": "shared_fs"},
         "checkpoint_storage": {
             "type": "shared_fs",
             "host_path": checkpoint_dir or "/tmp",

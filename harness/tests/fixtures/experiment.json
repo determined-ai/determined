@@ -39,11 +39,6 @@
       "data": {
         "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
       },
-      "data_layer": {
-        "container_storage_path": null,
-        "host_storage_path": null,
-        "type": "shared_fs"
-      },
       "debug": false,
       "description": null,
       "entrypoint": "model_def:GANTrial",

@@ -46,7 +46,6 @@ var unauthenticatedPointsList = []string{
 	"/docs/.*",
 	"/info",
 	"/task-logs",
-	"/ws/data-layer/.*",
 	"/agents",
 	"/det",
 	"/det/.*",

@@ -22,6 +22,7 @@
     data:
       any: thing
     data_layer:
+      # data_layer feature is gone, and the config is ignored
       container_storage_path: null
       type: shared_fs
     debug: false
@@ -158,10 +159,6 @@
     checkpoint_policy: best
     checkpoint_storage: null
     data: {}
-    data_layer:
-      type: shared_fs
-      container_storage_path: null
-      host_storage_path: null
     debug: false
     description: null
     entrypoint: model_def:MyTrial

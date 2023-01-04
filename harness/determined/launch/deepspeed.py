@@ -201,7 +201,7 @@ def main(script: List[str]) -> int:
     resources_id = os.environ.get("DET_RESOURCES_ID")
     assert resources_id is not None, "Unable to run with DET_RESOURCES_ID unset"
 
-    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
+    # TODO: refactor websocket and profiling to to not use the cli_cert.
     cert = certs.default_load(info.master_url)
     certs.cli_cert = cert
 

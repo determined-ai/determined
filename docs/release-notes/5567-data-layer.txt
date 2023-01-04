@@ -1,0 +1,8 @@
+:orphan:
+
+**Removed Features**
+
+-  The data layer feature, which was deprecated in 0.18.0 (May 2022), has been removed.  A migration
+   guide to use the underlying `yogadl library<https://yogadl.readthedocs.io/en/latest/>`_ directly
+   may be found `here<https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_.
+   Affected users are encouraged to follow the migration guide before upgrading to avoid downtime.
