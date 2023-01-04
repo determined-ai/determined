@@ -138,9 +138,16 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		return true, err
 	}
 
-	// TODO(DET-8751): if tsb then use tsb authz interface
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *user, spec.Base.Owner.ID, spec.Metadata.WorkspaceID); err != nil {
+	var ok bool
+	if spec.TaskType == model.TaskTypeTensorboard {
+		// TODO(DET-8781): replace this with a call to the tensorboard authz method.
+		ok, err = command.AuthZProvider.Get().CanGetNSC(
+			ctx, *user, spec.Base.Owner.ID, spec.Metadata.WorkspaceID)
+	} else {
+		ok, err = command.AuthZProvider.Get().CanGetNSC(
+			ctx, *user, spec.Base.Owner.ID, spec.Metadata.WorkspaceID)
+	}
+	if err != nil {
 		return true, err
 	} else if !ok {
 		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
