@@ -1,17 +1,15 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
-import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ErrorType } from 'shared/utils/error';
-import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
+import { ExperimentBase, MetricType, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
 
-import TrialChart from './TrialChart';
+import TrialCharts from './TrialCharts';
 import css from './TrialDetailsOverview.module.scss';
-import settingsConfig, { Settings } from './TrialDetailsOverview.settings';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -19,11 +17,6 @@ export interface Props {
 }
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
-  const storagePath = `trial-detail/experiment/${experiment.id}`;
-  const { settings, updateSettings } = useSettings<Settings>(
-    Object.assign(settingsConfig, { storagePath }),
-  );
-
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment.workspaceId },
   });
@@ -39,45 +32,25 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [experiment.id],
   );
 
-  const metricNames = useMetricNames(experiment.id, handleMetricNamesError);
-
-  const { defaultMetrics, metrics } = useMemo(() => {
-    const validationMetric = experiment?.config?.searcher.metric;
-    const defaultValidationMetric = metricNames.find(
-      (metricName) =>
-        metricName.name === validationMetric && metricName.type === MetricType.Validation,
-    );
-    const fallbackMetric = metricNames[0];
-    const defaultMetric = defaultValidationMetric || fallbackMetric;
-    const defaultMetrics = defaultMetric ? [defaultMetric] : [];
-    const settingMetrics: Metric[] = (settings.metric || []).map((metric) => {
-      const splitMetric = metric.split('|');
-      return { name: splitMetric[1], type: splitMetric[0] as MetricType };
-    });
-    const metrics = settingMetrics.length !== 0 ? settingMetrics : defaultMetrics;
-    return { defaultMetrics, metrics };
-  }, [experiment?.config?.searcher, metricNames, settings.metric]);
-
-  const handleMetricChange = useCallback(
-    (value: Metric[]) => {
-      const newMetrics = value.map((metricName) => `${metricName.type}|${metricName.name}`);
-      updateSettings({ metric: newMetrics, tableOffset: 0 });
-    },
-    [updateSettings],
-  );
+  const validationMetric = experiment?.config?.searcher.metric;
+  const metricNames = useMetricNames(experiment.id, handleMetricNamesError).sort((a, b) => {
+    if (a.name === validationMetric && a.type === MetricType.Validation) {
+      return -1;
+    } else if (b.name === validationMetric && b.type === MetricType.Validation) {
+      return 1;
+    }
+    return 0;
+  });
 
   return (
     <div className={css.base}>
       <TrialInfoBox experiment={experiment} trial={trial} />
       {showExperimentArtifacts ? (
         <>
-          <TrialChart
-            defaultMetricNames={defaultMetrics}
+          <TrialCharts
             metricNames={metricNames}
-            metrics={metrics}
             trialId={trial?.id}
             trialTerminated={terminalRunStates.has(trial?.state ?? RunState.Active)}
-            onMetricChange={handleMetricChange}
           />
         </>
       ) : null}

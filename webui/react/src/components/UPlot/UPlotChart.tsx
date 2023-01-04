@@ -15,7 +15,7 @@ import { FacetedData } from './types';
 import css from './UPlotChart.module.scss';
 
 export interface Options extends Omit<uPlot.Options, 'width'> {
-  key?: number;
+  key?: number | string;
   width?: number;
 }
 
@@ -233,15 +233,18 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   return (
-    <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
-      {!hasData && (
-        <Message
-          style={{ height: options?.height ?? 'auto' }}
-          title={noDataMessage || 'No Data to plot.'}
-          type={MessageType.Empty}
-        />
-      )}
-    </div>
+    <>
+      {title && <h5>{title}</h5>}
+      <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
+        {!hasData && (
+          <Message
+            style={{ height: options?.height ?? 'auto' }}
+            title={noDataMessage || 'No Data to plot.'}
+            type={MessageType.Empty}
+          />
+        )}
+      </div>
+    </>
   );
 };
 
