@@ -186,13 +186,13 @@ func (k ResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) boo
 	return false
 }
 
-// IsReattachEnabled returns a boolean based on the k8s rm config _reattach_kubernetes_resources.
+// IsReattachEnabled returns a boolean based on the k8s rm config _reattach_resources.
 func (k ResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
 	return config.GetMasterConfig().ResourceManager.KubernetesRM.ReattachResources
 }
 
 // IsReattachEnabledForRP returns a boolean
-// based on the k8s rm config _reattach_kubernetes_resources.
+// based on the k8s rm config _reattach_resources.
 func (k ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rp string) bool {
 	return k.IsReattachEnabled(ctx)
 }

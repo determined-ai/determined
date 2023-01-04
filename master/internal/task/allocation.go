@@ -673,7 +673,6 @@ func (a *Allocation) RestoreResourceFailure(
 		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
 		case a.model.StartTime == nil:
 			break
-
 		case heartbeat.Before(*a.model.StartTime):
 			a.model.EndTime = a.model.StartTime
 		default:
