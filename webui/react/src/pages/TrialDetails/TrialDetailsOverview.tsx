@@ -5,7 +5,6 @@ import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import Spinner from 'shared/components/Spinner';
 import { ErrorType } from 'shared/utils/error';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError from 'utils/error';
@@ -13,7 +12,6 @@ import handleError from 'utils/error';
 import TrialChart from './TrialChart';
 import css from './TrialDetailsOverview.module.scss';
 import settingsConfig, { Settings } from './TrialDetailsOverview.settings';
-import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -81,19 +79,6 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
             trialTerminated={terminalRunStates.has(trial?.state ?? RunState.Active)}
             onMetricChange={handleMetricChange}
           />
-          {settings ? (
-            <TrialDetailsWorkloads
-              defaultMetrics={defaultMetrics}
-              experiment={experiment}
-              metricNames={metricNames}
-              metrics={metrics}
-              settings={settings}
-              trial={trial}
-              updateSettings={updateSettings}
-            />
-          ) : (
-            <Spinner spinning />
-          )}
         </>
       ) : null}
     </div>
