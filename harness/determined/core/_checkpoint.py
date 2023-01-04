@@ -244,7 +244,7 @@ class CheckpointContext:
                     "cannot call .upload(ckpt_dir=None, shard=False), which would result in doing "
                     "nothing at all"
                 )
-            return self._upload_single(ckpt_dir, metadata)
+            return self._upload_single(ckpt_dir, metadata, selector=selector)
         else:
             storage_id = None
             if self._dist.rank == 0:
@@ -254,14 +254,27 @@ class CheckpointContext:
             assert storage_id
             return self._upload_sharded(ckpt_dir, storage_id, metadata, selector=selector)
 
-    def _upload_single(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+    def _upload_single(
+        self,
+        ckpt_dir: str,
+        metadata: Optional[Dict[str, Any]] = None,
+        *,
+        selector: Optional[Callable[[str], bool]] = None,
+    ) -> str:
         storage_id = str(uuid.uuid4())
         resources = self._storage_manager._list_directory(ckpt_dir)
 
         # Add metadata pre-upload but without counting it among resources.
         self._write_metadata_file(ckpt_dir, metadata or {})
 
-        self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+        if selector is not None:
+            resources = {key: resources[key] for key in resources if selector(key)}
+            paths = list(resources.keys())
+            paths.append("metadata.json")
+        else:
+            paths = None
+
+        self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
         self._report_checkpoint(storage_id, resources, metadata)
         return storage_id
 
