@@ -175,16 +175,44 @@ def run_storage_lifecycle_test(
         try:
             manager.download(storage_id, path, selector=selector)
             validate_checkpoint(path, expected_files_subset)
+            manager.delete(storage_id)
+            with pytest.raises(errors.CheckpointNotFound):
+                manager.download(storage_id, path)
+            if post_delete_cb is not None:
+                post_delete_cb(storage_id)
         finally:
             shutil.rmtree(path, ignore_errors=True)
 
-    # Clean up
+    # Test upload with selector.
+    checkpoints = []
+    for _ in range(2):
+        storage_id = str(uuid.uuid4())
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        try:
+            create_checkpoint(path)
+            manager.upload(path, storage_id, paths=["subdir/file1.txt", "empty_dir/"])
+            checkpoints.append(storage_id)
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
+
+    expected_files_subset = {
+        "subdir/": None,
+        "subdir/file1.txt": "nested file 1",
+        "empty_dir/": None,
+    }
+
     for storage_id in checkpoints:
-        manager.delete(storage_id)
-        with pytest.raises(errors.CheckpointNotFound):
+        path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
+        try:
             manager.download(storage_id, path)
-        if post_delete_cb is not None:
-            post_delete_cb(storage_id)
+            validate_checkpoint(path, expected_files_subset)
+            manager.delete(storage_id)
+            with pytest.raises(errors.CheckpointNotFound):
+                manager.download(storage_id, path)
+            if post_delete_cb is not None:
+                post_delete_cb(storage_id)
+        finally:
+            shutil.rmtree(path, ignore_errors=True)
 
 
 def run_tensorboard_fetcher_test(

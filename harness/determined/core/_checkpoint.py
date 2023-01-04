@@ -272,7 +272,7 @@ class CheckpointContext:
             paths = list(resources.keys())
             paths.append("metadata.json")
         else:
-            paths = None
+            paths = []
 
         self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
         self._report_checkpoint(storage_id, resources, metadata)
@@ -346,7 +346,7 @@ class CheckpointContext:
 
         if want_upload:
             assert ckpt_dir
-            # If more than one rank has a file of the same name and content,
+            # If more than one uploading rank has a file of the same name and content,
             # use the smallest rank to upload the file.
             paths = list(
                 filter(
