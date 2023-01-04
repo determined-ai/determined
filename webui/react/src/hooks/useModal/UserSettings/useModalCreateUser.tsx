@@ -13,7 +13,6 @@ import {
   postUser,
   removeRolesFromUser,
 } from 'services/api';
-import Icon from 'shared/components/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
@@ -94,16 +93,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
       {rbacEnabled && canModifyPermissions && (
         <>
           <Form.Item
-            label={
-              <span>
-                {ROLE_LABEL}{' '}
-                <Icon
-                  name="info"
-                  size="small"
-                  title="This user role will be applied for all workspaces and areas across the cluster."
-                />
-              </span>
-            }
+            label={ROLE_LABEL}
             name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
