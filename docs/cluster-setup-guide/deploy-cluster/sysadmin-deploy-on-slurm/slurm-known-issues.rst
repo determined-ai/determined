@@ -96,9 +96,9 @@ Some constraints are due to differences in behavior between Docker and Singulari
  Singularity Known Issues
 **************************
 
-   -  If Singularity version is less than 3.10 or if Apptainer version is less than 1.1, when
-      deployed on PBS cluster, the experiment configuration cannot have embedded double quote "
-      character.
+   Launching a PBS jobs with an experiment configuration which includes an embedded double quote
+   character (") may cause the job to fail with the json.decoder.JSONDecodeError unless you have
+   Singularity 3.10 or greater or Apptainer 1.1 or greater.
 
 *********************
  PodMan Known Issues
