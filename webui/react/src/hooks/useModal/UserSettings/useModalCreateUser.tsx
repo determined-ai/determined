@@ -24,17 +24,17 @@ import { Loadable } from 'utils/loadable';
 
 const ADMIN_NAME = 'admin';
 export const ADMIN_LABEL = 'Admin';
+export const API_SUCCESS_MESSAGE_CREATE =
+  'New user with empty password has been created, advise user to reset password as soon as possible.';
 const DISPLAY_NAME_NAME = 'displayName';
 export const DISPLAY_NAME_LABEL = 'Display Name';
-const USER_NAME_NAME = 'username';
-export const USER_NAME_LABEL = 'User Name';
-const ROLE_LABEL = 'Global Roles';
-const ROLE_NAME = 'roles';
 export const MODAL_HEADER_LABEL_CREATE = 'Add User';
 const MODAL_HEADER_LABEL_VIEW = 'View User';
 const MODAL_HEADER_LABEL_EDIT = 'Edit User';
-export const API_SUCCESS_MESSAGE_CREATE =
-  'New user with empty password has been created, advise user to reset password as soon as possible.';
+const USER_NAME_NAME = 'username';
+export const USER_NAME_LABEL = 'User Name';
+const ROLE_LABEL = 'Roles';
+const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
 
 interface Props {
@@ -101,7 +101,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
               disabled={(user !== undefined && roles === null) || viewOnly}
               mode="multiple"
               optionFilterProp="children"
-              placeholder={viewOnly ? 'No Roles Added' : 'Add Global Roles'}
+              placeholder={viewOnly ? 'No Roles Added' : 'Add Roles'}
               showSearch>
               {Loadable.match(knowRolesLoadable, {
                 Loaded: () =>
