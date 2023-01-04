@@ -85,7 +85,7 @@ func (a *apiServer) filterTensorboards(
 	var filteredTensorboards []*tensorboardv1.Tensorboard
 
 	for _, tb := range tensorboards {
-		if _, ok := filteredScopes[tb.WorkspaceId]; ok {
+		if _, ok := filteredScopes[model.AccessScopeID(tb.WorkspaceId)]; ok {
 			filteredTensorboards = append(filteredTensorboards, tb)
 		}
 	}
