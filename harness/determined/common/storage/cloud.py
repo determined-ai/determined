@@ -22,14 +22,12 @@ class CloudStorageManager(storage.StorageManager):
         finally:
             shutil.rmtree(dst, ignore_errors=True)
 
-    def post_store_path(
-        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
-    ) -> None:
+    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
         """
         post_store_path uploads the checkpoint to cloud storage and deletes the original files.
         """
         try:
-            self.upload(src, dst, paths)
+            self.upload(src, dst)
         finally:
             shutil.rmtree(src, ignore_errors=True)
 

@@ -73,9 +73,7 @@ class StorageManager(metaclass=abc.ABCMeta):
         return pathlib.Path(storage_dir)
 
     @abc.abstractmethod
-    def post_store_path(
-        self, src: Union[str, os.PathLike], dst: str, paths: Optional[Paths] = None
-    ) -> None:
+    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
         """
         Subclasses typically push to persistent storage if necessary, then delete the src directory,
         if necessary.
@@ -83,14 +81,14 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @contextlib.contextmanager
-    def store_path(self, dst: str, paths: Optional[Paths] = None) -> Iterator[pathlib.Path]:
+    def store_path(self, dst: str) -> Iterator[pathlib.Path]:
         """
         Prepare a local directory to be written to the storage backend.
         """
 
         path = self.pre_store_path(dst)
         yield path
-        self.post_store_path(path, dst, paths)
+        self.post_store_path(path, dst)
 
     @abc.abstractmethod
     def store_path_is_direct_access(self) -> bool:
