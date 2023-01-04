@@ -44,8 +44,8 @@ func (a *NSCAuthZBasic) CanSetNSCsPriority(
 }
 
 func (a *NSCAuthZBasic) AccessibleScopes(
-	ctx context.Context, curUser model.User, scopes []model.AccessScopeID,
-) ([]model.AccessScopeID, error) {
+	ctx context.Context, curUser model.User, scopes map[model.AccessScopeID]bool,
+) (map[model.AccessScopeID]bool, error) {
 	return scopes, nil
 }
 
@@ -56,13 +56,6 @@ func (a *NSCAuthZBasic) CanGetTensorboard(
 	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 ) (canGetTensorboards bool, serverError error) {
 	return true, nil
-}
-
-// FilterTensorboards always returns the same list.
-func (a *NSCAuthZBasic) FilterTensorboards(
-	ctx context.Context, curUser model.User, tensorboards []*tensorboardv1.Tensorboard,
-) ([]*tensorboardv1.Tensorboard, error) {
-	return tensorboards, nil
 }
 
 // CanTerminateTensorboard always returns nil.

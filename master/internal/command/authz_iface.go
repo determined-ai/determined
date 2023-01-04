@@ -37,19 +37,14 @@ type NSCAuthZ interface {
 	) error
 
 	AccessibleScopes(
-		ctx context.Context, curUser model.User, scopes []model.AccessScopeID,
-	) ([]model.AccessScopeID, error)
+		ctx context.Context, curUser model.User, scopes map[model.AccessScopeID]bool,
+	) (map[model.AccessScopeID]bool, error)
 
 	// Tensorboard functions
 	// GET /api/v1/tensorboards/:tb_id
 	CanGetTensorboard(
 		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 	) (canGetTensorboard bool, serverError error)
-
-	// GET /api/v1/tensorboards
-	FilterTensorboards(
-		ctx context.Context, curUser model.User, tensorboards []*tensorboardv1.Tensorboard,
-	) ([]*tensorboardv1.Tensorboard, error)
 
 	// POST /api/v1/tensorboards/:tb_id/kill
 	CanTerminateTensorboard(

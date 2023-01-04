@@ -68,6 +68,31 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 	return filesArchive
 }
 
+func (a *apiServer) filterTensorboards(
+	ctx context.Context, curUser model.User, tensorboards []*tensorboardv1.Tensorboard,
+) ([]*tensorboardv1.Tensorboard, error) {
+	scopes := map[model.AccessScopeID]bool{}
+	for _, tb := range tensorboards {
+		scopes[model.AccessScopeID(tb.WorkspaceId)] = true
+	}
+
+	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, curUser, scopes)
+	if err != nil {
+		return nil, err
+	}
+
+	var filteredTensorboards []*tensorboardv1.Tensorboard
+
+	for _, tb := range tensorboards {
+		if _, ok := filteredScopes[tb.WorkspaceId]; ok {
+			filteredTensorboards = append(filteredTensorboards, tb)
+		}
+	}
+
+	return filteredTensorboards, nil
+}
+
 func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
@@ -80,13 +105,8 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
-	filtered, err := command.AuthZProvider.Get().FilterTensorboards(
-		ctx, *curUser, resp.Tensorboards)
-	if err != nil {
-		return nil, err
-	}
-
-	resp.Tensorboards = filtered
+	filteredTensorboards, err := a.filterTensorboards(ctx, *curUser, resp.Tensorboards)
+	resp.Tensorboards = filteredTensorboards
 
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
