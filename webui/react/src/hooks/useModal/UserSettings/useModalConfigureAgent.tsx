@@ -67,6 +67,7 @@ const ModalForm: React.FC<Props> = ({ form, user }) => {
 };
 
 interface ModalProps {
+  onClose?: () => void;
   user: DetailedUser;
 }
 
@@ -74,7 +75,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: () => void;
 }
 
-const useModalCreateUser = ({ user }: ModalProps): ModalHooks => {
+const useModalCreateUser = ({ user, onClose }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
@@ -93,6 +94,7 @@ const useModalCreateUser = ({ user }: ModalProps): ModalHooks => {
 
     try {
       await patchUser({ userId: user.id, userParams: formData });
+      onClose?.();
     } catch (e) {
       message.error('Error configuring agent');
       handleError(e, { silent: true, type: ErrorType.Input });
@@ -100,7 +102,7 @@ const useModalCreateUser = ({ user }: ModalProps): ModalHooks => {
       // Re-throw error to prevent modal from getting dismissed.
       throw e;
     }
-  }, [form, user]);
+  }, [form, user, onClose]);
 
   const modalOpen = useCallback(() => {
     openOrUpdate({

@@ -54,7 +54,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const { modalOpen: openAddToGroupsModal, contextHolder: modalAddToGroupsContextHolder } =
     useModalAddToGroup({ groups, user });
   const { modalOpen: openConfigureAgentModal, contextHolder: modalConfigureAgentContextHolder } =
-    useModalConfigureAgent({ user });
+    useModalConfigureAgent({ onClose: fetchUsers, user });
 
   const { canModifyUsers } = usePermissions();
 
@@ -96,12 +96,12 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 
   const menuItems: MenuProps['items'] = canModifyUsers
     ? [
-        { key: MenuKey.View, label: 'View Profile' },
-        { key: MenuKey.Edit, label: 'Edit' },
-        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        { key: MenuKey.Add, label: 'Add to Groups' },
-        { key: MenuKey.Configure, label: 'Configure Agent' },
-      ]
+      { key: MenuKey.View, label: 'View Profile' },
+      { key: MenuKey.Edit, label: 'Edit' },
+      { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+      { key: MenuKey.Add, label: 'Add to Groups' },
+      { key: MenuKey.Configure, label: 'Configure Agent' },
+    ]
     : [{ key: MenuKey.View, label: 'View Profile' }];
 
   return (
