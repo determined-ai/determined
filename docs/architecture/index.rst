@@ -23,3 +23,41 @@ agent has no state and only communicates with the master. Each agent is responsi
 The **trial runner** runs a trial in a containerized environment. So the trial runners are expected
 to have access to the data that will be used in training. The **agents** are responsible for
 reporting the states of **trial runner** to the master.
+
+## Diagram
+
+    ┌─────────────────────────────Deployment─┐
+    │                                        │
+    │ ┌─Cluster────────────────┐             │
+    │ │                        │             │
+    │ │    ┌────────────────┐  │             │
+    │ │   ┌┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼│  │             │
+    │ │  ┌┴───────────────┼┼│  │             │
+    │ │  │                │┼┤◄─┼───┐         │
+    │ │  │ Agent(s)...    │┼│  │   │         │
+    │ │  │ ┌───────────┐  │┼│  │   │         │
+    │ │  │ │Trial(s)...├┐ │┼│  │   │         │
+    │ │  │ └┬──────────┼│ │┼│  │   │         │
+    │ │  │  └───────────┘ │┼┘  │   │         │
+    │ │  │                ├┘   │   ▼         │
+    │ │  └────────────────┘    │ ┌─────────┐ │
+    │ │        ▲               │ │         │ │
+    │ │        │               │ │ Storage │ │
+    │ │        ▼               │ │         │ │
+    │ │  ┌───────────────┐     │ └────┬────┘ │
+    │ │  │               │     │   ▲  │      │
+    │ │  │    Master     │     │   │  │      │
+    │ │  │               │◄────┼───┘  │      │
+    │ │  └───────────────┘     │      │      │
+    │ │     ▲        ▲         │      │      │
+    │ │     │        │         │      │      │
+    │ └─────┼────────┼─────────┘      │      │
+    │       │        │                │      │
+    └───────┼────────┼────────────────┼──────┘
+            │        │      ▲         │
+            ▼        ▼      │         │
+    ┌──────────┐  ┌─────────┴────┐    │
+    │          │  │              │    │
+    │ Web View │  │ Command Line │◄───┘
+    │          │  │              │
+    └──────────┘  └──────────────┘
