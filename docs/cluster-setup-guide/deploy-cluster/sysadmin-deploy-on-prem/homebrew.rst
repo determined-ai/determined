@@ -56,6 +56,11 @@ them on separate nodes, or install the agents on multiple machines and connect t
 #. Determined agent uses docker to run your workloads. See Docker for Mac installation instructions
    :ref:`here <install-docker-on-macos>`.
 
+#. By default, determined will store checkpoints in ``$(brew --prefix)/var/determined/data``, which
+   is typically ``/usr/local/var/determined/data`` or ``/opt/homebrew/var/determined/data``. Make
+   sure to configure it as a shared path for Docker for Mac in Docker -> Preferences... -> Resources
+   -> File Sharing.
+
 #. When installing on a different machine than the master, add Homebrew tap.
 
    .. code::

@@ -70,6 +70,8 @@ brews:
         createdb determined
 
       Checkpoints are stored in #{var}/determined/data by default.
+      Make sure to configure it as a shared path for Docker for Mac in
+      Docker -> Preferences... -> Resources -> File Sharing.
     homepage: "https://github.com/determined-ai/determined"
     license: "Apache-2.0"
     folder: Formula
