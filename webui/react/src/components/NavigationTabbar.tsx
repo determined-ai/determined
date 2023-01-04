@@ -139,7 +139,13 @@ const NavigationTabbar: React.FC = () => {
               if (canCreateWorkspace) {
                 return workspaceIcons.concat([
                   {
-                    icon: <DynamicIcon name="+" size={24} style={{ color: 'black' }} />,
+                    icon: (
+                      <DynamicIcon
+                        name="+"
+                        size={24}
+                        style={{ backgroundColor: '#ccc', color: 'black' }}
+                      />
+                    ),
                     label: 'New Workspace',
                     onClick: handleCreateWorkspace,
                   },
