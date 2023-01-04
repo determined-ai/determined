@@ -2,6 +2,7 @@ import { Empty } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
+import Grid, { GridMode } from 'components/Grid';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
@@ -13,6 +14,7 @@ import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
+import { ShirtSize } from 'themes';
 import { Metric, MetricContainer, Scale } from 'types';
 
 interface Props {
@@ -121,17 +123,17 @@ const TrialCharts: React.FC<Props> = ({ metricNames, trialId, trialTerminated }:
   return (
     <>
       <Section options={options} title="Metrics" />
-      <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
+      <Spinner className={css.chartContainer} conditionalRender spinning={!trialId}>
         {chartData.length === 0 || chartData[0].length === 0 || chartData[0][0].length === 0 ? (
           <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
-          chartOptions.map((co, idx) => (
-            <Section bodyBorder key={idx}>
-              <div className={css.base}>
+          <Grid gap={ShirtSize.Medium} minItemWidth={500} mode={GridMode.AutoFill}>
+            {chartOptions.map((co, idx) => (
+              <Section bodyBorder className={css.chartbox} key={idx}>
                 <UPlotChart data={chartData[idx]} options={co} title={co.series[1].label} />
-              </div>
-            </Section>
-          ))
+              </Section>
+            ))}
+          </Grid>
         )}
       </Spinner>
     </>

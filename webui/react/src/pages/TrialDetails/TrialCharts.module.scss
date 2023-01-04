@@ -1,15 +1,13 @@
-.base {
+.chartContainer {
+  display: flex;
+  width: 100%;
+}
+.chartbox {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
-.spinner {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-.base h5 {
+.chartbox h5 {
   align-items: center;
   text-align: center;
 }
