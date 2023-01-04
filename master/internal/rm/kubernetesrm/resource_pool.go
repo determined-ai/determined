@@ -42,6 +42,24 @@ type kubernetesResourcePool struct {
 	reschedule     bool
 }
 
+func newResourcePool(rmConfig *config.KubernetesResourceManagerConfig,
+	podsActor *actor.Ref) *kubernetesResourcePool {
+	return &kubernetesResourcePool{
+		config:            rmConfig,
+		reqList:           tasklist.New(),
+		groups:            map[*actor.Ref]*tasklist.Group{},
+		addrToContainerID: map[*actor.Ref]cproto.ID{},
+		containerIDtoAddr: map[string]*actor.Ref{},
+		jobIDtoAddr:       map[model.JobID]*actor.Ref{},
+		addrToJobID:       map[*actor.Ref]model.JobID{},
+		groupActorToID:    map[*actor.Ref]model.JobID{},
+		IDToGroupActor:    map[model.JobID]*actor.Ref{},
+		slotsUsedPerGroup: map[*tasklist.Group]int{},
+		podsActor:         podsActor,
+		queuePositions:    tasklist.InitializeJobSortState(true),
+	}
+}
+
 func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 	reschedule := true
 	defer func() {
@@ -625,22 +643,4 @@ func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 
 func (p k8sPodResources) Persist() error {
 	return nil
-}
-
-func newResourcePool(rmConfig *config.KubernetesResourceManagerConfig,
-	podsActor *actor.Ref) *kubernetesResourcePool {
-	return &kubernetesResourcePool{
-		config:            rmConfig,
-		reqList:           tasklist.New(),
-		groups:            map[*actor.Ref]*tasklist.Group{},
-		addrToContainerID: map[*actor.Ref]cproto.ID{},
-		containerIDtoAddr: map[string]*actor.Ref{},
-		jobIDtoAddr:       map[model.JobID]*actor.Ref{},
-		addrToJobID:       map[*actor.Ref]model.JobID{},
-		groupActorToID:    map[*actor.Ref]model.JobID{},
-		IDToGroupActor:    map[model.JobID]*actor.Ref{},
-		slotsUsedPerGroup: map[*tasklist.Group]int{},
-		podsActor:         podsActor,
-		queuePositions:    tasklist.InitializeJobSortState(true),
-	}
 }

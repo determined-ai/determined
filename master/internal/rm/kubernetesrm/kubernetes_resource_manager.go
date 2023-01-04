@@ -125,42 +125,14 @@ func (k ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) 
 	return err
 }
 
-// CheckMaxSlotsExceeded checks if the named resource pool has a capacity of at least the
-// given number of slots.
-func (k ResourceManager) CheckMaxSlotsExceeded(
-	ctx actor.Messenger, name string, slots int,
-) (bool, error) {
-	ref, err := k.GetResourcePoolRef(ctx, name)
-	if err != nil {
-		return false, err
-	}
-	resp := ref.System().Ask(ref, sproto.CapacityCheck{ // TODO
-		Slots: slots,
-	})
-	if resp.Error() != nil {
-		return false, resp.Error()
-	}
-	return resp.Get().(sproto.CapacityCheckResponse).CapacityExceeded, nil
-}
-
 // ValidateResourcePoolAvailability checks the available resources for a given pool.
+// This is a no-op for k8s.
 func (k ResourceManager) ValidateResourcePoolAvailability(
 	ctx actor.Messenger,
 	name string,
 	slots int,
 ) ([]command.LaunchWarning, error) {
-	if slots == 0 {
-		return nil, nil
-	}
-
-	switch exceeded, err := k.CheckMaxSlotsExceeded(ctx, name, slots); {
-	case err != nil:
-		return nil, fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
-	case exceeded:
-		return []command.LaunchWarning{command.CurrentSlotsExceeded}, nil
-	default:
-		return nil, nil
-	}
+	return nil, nil
 }
 
 // GetDefaultComputeResourcePool requests the default compute resource pool.
