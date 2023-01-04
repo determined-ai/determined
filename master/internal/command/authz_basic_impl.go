@@ -72,13 +72,6 @@ func (a *NSCAuthZBasic) CanTerminateTensorboard(
 	return nil
 }
 
-// CanSetTensorboardPriority always returns nil.
-func (a *NSCAuthZBasic) CanSetTensorboardPriority(
-	ctx context.Context, curUser *model.User, tb *tensorboardv1.Tensorboard,
-) error {
-	return nil
-}
-
 func init() {
 	AuthZProvider.Register("basic", &NSCAuthZBasic{})
 }

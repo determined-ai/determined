@@ -128,8 +128,8 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanTerminateTensorboard(
-		ctx, curUser, getResponse.Tensorboard)
+	err = command.AuthZProvider.Get().CanTerminateNSC(
+		ctx, curUser, getResponse.Tensorboard.WorkspaceId)
 	if err != nil {
 		return nil, err
 	}

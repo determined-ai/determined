@@ -31,6 +31,7 @@ type NSCAuthZ interface {
 	) error
 
 	// PATCH /NSCs/:nsc_id
+	// POST /api/v1/tensorboards/:tb_id/set_priority
 	CanSetNSCsPriority(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 	) error
@@ -38,7 +39,7 @@ type NSCAuthZ interface {
 	// Tensorboard functions
 	// GET /api/v1/tensorboards/:tb_id
 	CanGetTensorboard(
-		ctx context.Context, curUser *model.User, tb *tensorboardv1.Tensorboard,
+		ctx context.Context, curUser *model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 	) (canGetTensorboard bool, serverError error)
 
 	// GET /api/v1/tensorboards
@@ -48,11 +49,6 @@ type NSCAuthZ interface {
 
 	// POST /api/v1/tensorboards/:tb_id/kill
 	CanTerminateTensorboard(
-		ctx context.Context, curUser *model.User, tb *tensorboardv1.Tensorboard,
-	) error
-
-	// POST /api/v1/tensorboards/:tb_id/set_priority
-	CanSetTensorboardPriority(
 		ctx context.Context, curUser *model.User, tb *tensorboardv1.Tensorboard,
 	) error
 }
