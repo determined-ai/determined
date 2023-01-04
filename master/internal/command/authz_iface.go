@@ -36,6 +36,11 @@ type NSCAuthZ interface {
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 	) error
 
+
+	AccessibleScopes(
+		ctx context.Context, curUser model.User, scopes []model.AccessScopeID,
+	) ([]model.AccessScopeID, error)
+
 	// Tensorboard functions
 	// GET /api/v1/tensorboards/:tb_id
 	CanGetTensorboard(
