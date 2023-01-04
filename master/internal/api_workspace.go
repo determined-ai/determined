@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -48,6 +49,20 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 		return err
 	}
 	return nil
+}
+
+func validateWorkspaceName(name string) (string, error) {
+	switch {
+	case len(name) < 1:
+		return "", status.Errorf(codes.InvalidArgument, "name '%s' must be at least 1 character long", name)
+	case len(name) > 80:
+		return "", status.Errorf(codes.InvalidArgument, "name '%s' must be at most 80 character long", name)
+	case len(strings.TrimFunc(name, unicode.IsSpace)) == 0:
+		return "", status.Error(codes.InvalidArgument, "name must contain at least non-whitespace letter")
+	default:
+		trimmedName := strings.TrimFunc(name, unicode.IsSpace)
+		return trimmedName, nil
+	}
 }
 
 func (a *apiServer) GetWorkspaceByID(
@@ -273,18 +288,11 @@ func (a *apiServer) PostWorkspace(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	if len(req.Name) < 1 {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"name '%s' must be at least 1 character long", req.Name)
+	trimmedWName, err := validateWorkspaceName(req.Name)
+	if err != nil {
+		return nil, err
 	}
-	if len(req.Name) > 80 {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"name '%s' must be at most 80 character long", req.Name)
-	}
-	if len(strings.Trim(req.Name, " ")) == 0 {
-		return nil, status.Error(codes.InvalidArgument,
-			"name must contain at least non-whitespace letter")
-	}
+	req.Name = trimmedWName
 
 	if req.AgentUserGroup != nil {
 		err = workspace.AuthZProvider.Get().CanCreateWorkspaceWithAgentUserGroup(ctx, *curUser)
@@ -374,19 +382,11 @@ func (a *apiServer) PatchWorkspace(
 	updatedWorkspace := model.Workspace{}
 
 	if req.Workspace.Name != nil {
-		workspaceName := req.Workspace.Name.Value
-		if len(workspaceName) < 1 {
-			return nil, status.Errorf(codes.InvalidArgument,
-				"name '%s' must be at least 1 character long", workspaceName)
+		trimmedWName, err := validateWorkspaceName(req.Workspace.Name.Value)
+		if err != nil {
+			return nil, err
 		}
-		if len(workspaceName) > 80 {
-			return nil, status.Errorf(codes.InvalidArgument,
-				"name '%s' must be at most 80 character long", workspaceName)
-		}
-		if len(strings.Trim(workspaceName, " ")) == 0 {
-			return nil, status.Error(codes.InvalidArgument,
-				"name must contain at least non-whitespace letter")
-		}
+		req.Workspace.Name.Value = trimmedWName
 	}
 
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
