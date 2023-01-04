@@ -150,5 +150,36 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 		p.provider.launch(ctx, numToLaunch)
 	}
 
-	telemetry.ReportProvisionerTick(ctx.Self().System(), instances, p)
+	telemetry.ReportProvisionerTick(ctx.Self().System(), createInstanceTelemetry(instances), p.InstanceType())
+}
+
+// createInstanceTelemetry converts provisioner.Instance structs to telemetry.Instance structs to avoid import cycle.
+func createInstanceTelemetry(instances []*Instance) []*telemetry.Instance {
+	tInstances := make([]*telemetry.Instance, 0, len(instances))
+	for _, inst := range instances {
+		telemetrized := &telemetry.Instance{
+			ID:                  inst.ID,
+			LaunchTime:          inst.LaunchTime,
+			LastStateChangeTime: inst.LastStateChangeTime,
+			AgentName:           inst.AgentName,
+		}
+		switch inst.State {
+		case Unknown:
+			telemetrized.State = telemetry.Unknown
+		case Starting:
+			telemetrized.State = telemetry.Starting
+		case Running:
+			telemetrized.State = telemetry.Running
+		case Stopping:
+			telemetrized.State = telemetry.Stopping
+		case Stopped:
+			telemetrized.State = telemetry.Stopped
+		case Terminating:
+			telemetrized.State = telemetry.Terminating
+		case SpotRequestPendingAWS:
+			telemetrized.State = telemetry.SpotRequestPendingAWS
+		}
+		tInstances = append(tInstances, telemetrized)
+	}
+	return tInstances
 }
