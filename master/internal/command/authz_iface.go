@@ -38,7 +38,7 @@ type NSCAuthZ interface {
 
 
 	AccessibleScopes(
-		ctx context.Context, curUser model.User, scopes []model.AccessScopeID,
+		ctx context.Context, curUser model.UserID, scopes []model.AccessScopeID,
 	) ([]model.AccessScopeID, error)
 
 	// Tensorboard functions
