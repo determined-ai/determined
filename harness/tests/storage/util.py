@@ -63,8 +63,6 @@ def validate_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> N
     assert checkpoint_dir.exists()
     files_found = set(storage.StorageManager._list_directory(checkpoint_dir))
     assert files_found == set(expected_files.keys()), (files_found, expected_files)
-    logging.info(f"files_found={files_found}")
-    logging.info(f"expected_files={expected_files}")
     for found in files_found:
         path = checkpoint_dir.joinpath(found)
         if expected_files[found] is None:
@@ -74,6 +72,17 @@ def validate_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> N
             with path.open() as f:
                 text = f.read()
                 assert text == expected_files[found], (text, expected_files[found])
+
+
+def sync_and_clean(
+    pex: parallel.Execution,
+    clean_up: Optional[Callable],
+    storage_id: str,
+    storage_manager: storage.StorageManager,
+) -> None:
+    pex.distributed.allgather(None)
+    if pex.distributed.rank == 0 and clean_up is not None:
+        clean_up(storage_id, storage_manager)
 
 
 def run_storage_lifecycle_test(
@@ -353,27 +362,64 @@ def run_storage_upload_download_sharded_test(
     finally:
         shutil.rmtree(download_dir, ignore_errors=True)
 
-    pex.distributed.allgather(None)
-    if pex.distributed.rank == 0 and clean_up is not None:
-        clean_up(storage_id, storage_manager)
+    sync_and_clean(pex, clean_up, storage_id, storage_manager)
 
     # 4. Upload sharded data from rank 1 only.
     # Metadata should be saved and uploaded as well.
     storage_id = checkpoint_context.upload(
         ckpt_dir if pex.distributed.rank == 1 else None, metadata, shard=True
     )
-    download_dir = tmp_path.joinpath(f"test5_download_{pex.distributed.rank}")
+    download_dir = tmp_path.joinpath(f"test4_download_{pex.distributed.rank}")
     checkpoint_context.download(storage_id, download_dir)
     validate_checkpoint(
         download_dir,
         expected_files={**EXPECTED_FILES_N1, **{"metadata.json": '{\n  "steps_completed": 1\n}'}},
     )
+    sync_and_clean(pex, clean_up, storage_id, storage_manager)
 
-    pex.distributed.allgather(None)
-    if pex.distributed.rank == 0 and clean_up is not None:
-        clean_up(storage_id, storage_manager)
+    # 5. Test uploading selected paths: rank 0 uploads a subset of files,
+    # rank 1 uploads all files.
+    if pex.distributed.rank == 0:
 
-    # 5. Test uploading two files with the same name and different content
+        def selector(x: str) -> bool:
+            return x in x in ["file_repeated", "file0_0", "subdir/file_repeated"]
+
+    else:
+        selector = None
+
+    storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True, selector=selector)
+
+    download_dir = tmp_path.joinpath(f"test5_download_{pex.distributed.rank}")
+    checkpoint_context.download(storage_id, download_dir)
+    validate_checkpoint(
+        download_dir,
+        expected_files={
+            **EXPECTED_FILES_N1,
+            **{
+                "file_repeated": "file repeated",
+                "file0_0": "file 0 node 0",
+                "subdir/": None,
+                "subdir/file_repeated": "nested file repeated",
+            },
+        },
+    )
+    sync_and_clean(pex, clean_up, storage_id, storage_manager)
+
+    # 6. Test uploading selected paths: ranks try to upload not existing paths.
+    def selector_upload(x: str) -> bool:
+        return x == "there_is_no_file_with_such_name"
+
+    storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True, selector=selector_upload)
+
+    download_dir = tmp_path.joinpath(f"test6_download_{pex.distributed.rank}")
+    checkpoint_context.download(storage_id, download_dir)
+    validate_checkpoint(
+        download_dir,
+        expected_files={"metadata.json": '{\n  "steps_completed": 1\n}'},
+    )
+    sync_and_clean(pex, clean_up, storage_id, storage_manager)
+
+    # 7. Test uploading two files with the same name and different content
     # raises an error.
     with parallel.raises_when(
         True,
@@ -387,30 +433,6 @@ def run_storage_upload_download_sharded_test(
 
         pex.distributed.allgather(None)
         checkpoint_context.upload(ckpt_dir, metadata, shard=True)
-
-    # 6. Test uploading selected paths.
-    def selector(x: str) -> bool:
-        return x in ["file_repeated", "file0_0", "subdir/file_repeated"]
-
-    create_checkpoint(ckpt_dir, EXPECTED_FILES_N0)
-    pex.distributed.allgather(None)
-    storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True, selector=selector)
-
-    download_dir = tmp_path.joinpath(f"test6_download_{pex.distributed.rank}")
-    checkpoint_context.download(storage_id, download_dir)
-    validate_checkpoint(
-        download_dir,
-        expected_files={
-            "file_repeated": "file repeated",
-            "file0_0": "file 0 node 0",
-            "subdir/": None,
-            "subdir/file_repeated": "nested file repeated",
-        },
-    )
-
-    pex.distributed.allgather(None)
-    if pex.distributed.rank == 0 and clean_up is not None:
-        clean_up(storage_id, storage_manager)
 
 
 def run_storage_store_restore_sharded_test(

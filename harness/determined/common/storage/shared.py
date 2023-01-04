@@ -5,7 +5,7 @@ import pathlib
 import shutil
 import sys
 import typing
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from determined import errors
 from determined.common import check, storage
@@ -231,6 +231,7 @@ class SharedFSStorageManager(storage.StorageManager):
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
     ) -> None:
         src = os.fspath(src)
+        maybe_dangling = []
 
         if paths is None:
             ignore = None
@@ -238,18 +239,17 @@ class SharedFSStorageManager(storage.StorageManager):
             paths_set = set(paths)
 
             def ignore(ign_dir: str, names: List[str]) -> List[str]:
-                out = []
-                # rel_dir would be "subdir" instead of "/determined_shared_fs/UUID/subdir"
-                rel_dir = os.path.relpath(ign_dir, src)
-                for name in names:
-                    # ckp_path would be "subdir/file"
-                    ckpt_path = os.path.join(rel_dir, name)
-                    if ckpt_path not in paths_set:
-                        out.append(name)
+                def selector(x: str) -> bool:
+                    return x in paths_set
 
+                out, local_maybe_dangling = self._ignore_files(ign_dir, names, src, selector)
+                maybe_dangling.extend(local_maybe_dangling)
                 return out
 
-        copytree(src, os.path.join(self._base_path, dst), ignore=ignore, dirs_exist_ok=True)
+        dst = os.path.join(self._base_path, dst)
+        copytree(src, dst, ignore=ignore, dirs_exist_ok=True)
+
+        self._cleanup_dangling_dirs(dst, maybe_dangling)
 
     def download(
         self,
@@ -258,7 +258,6 @@ class SharedFSStorageManager(storage.StorageManager):
         selector: Optional[storage.Selector] = None,
     ) -> None:
         dst = os.fspath(dst)
-
         maybe_dangling = []
 
         if selector is None:
@@ -267,40 +266,8 @@ class SharedFSStorageManager(storage.StorageManager):
 
             def ignore(ign_dir: str, names: List[str]) -> List[str]:
                 assert selector
-                out: List[str] = []
-
-                start_path = os.path.join(self._base_path, src)
-
-                # rel_dir would be "subdir" instead of "/determined_shared_fs/UUID/subdir"
-                rel_dir = os.path.relpath(ign_dir, start_path)
-
-                # rel_dir == "." happens only for the top dir.
-                # Since users provide selector with respect to the current dir (w/o using "."),
-                # let's convert "." to empty path.
-                if rel_dir == ".":
-                    rel_dir = ""
-
-                for name in names:
-                    # ckpt_path would be "subdir/file"
-                    path = os.path.join(rel_dir, name)
-
-                    # src_path would be "/determined_shared_fs/UUID/subdir/file"
-                    src_path = os.path.join(ign_dir, name)
-                    if os.path.isdir(src_path):
-                        # shutil removes '/' from dir names; we will add it manually.
-                        path = os.path.join(path, "")
-
-                    if selector(path):
-                        # The user wants this file or directory.
-                        continue
-
-                    if os.path.isdir(src_path):
-                        # The user does not want this directory, but we don't yet know if there
-                        # might be a subfile or subdirectory which they do want.  Let copytree
-                        # continue and revisit this later.
-                        maybe_dangling.append(path)
-                        continue
-                    out.append(name)
+                out, local_maybe_dangling = self._ignore_files(ign_dir, names, src, selector)
+                maybe_dangling.extend(local_maybe_dangling)
                 return out
 
         try:
@@ -310,6 +277,53 @@ class SharedFSStorageManager(storage.StorageManager):
                 f"Did not find checkpoint {src} in shared_fs storage"
             ) from None
 
+        self._cleanup_dangling_dirs(dst, maybe_dangling)
+
+    def _ignore_files(
+        self,
+        ign_dir: str,
+        names: List[str],
+        src: Union[str, os.PathLike],
+        selector: storage.Selector,
+    ) -> Tuple[List[str], List[str]]:
+        out: List[str] = []
+        maybe_dangling: List[str] = []
+        start_path = os.path.join(self._base_path, src)
+
+        # rel_dir would be "subdir" instead of "/determined_shared_fs/UUID/subdir"
+        rel_dir = os.path.relpath(ign_dir, start_path)
+
+        # rel_dir == "." happens only for the top dir.
+        # Since users provide selector with respect to the current dir (w/o using "."),
+        # let's convert "." to empty path.
+        if rel_dir == ".":
+            rel_dir = ""
+
+        for name in names:
+            # ckpt_path would be "subdir/file"
+            path = os.path.join(rel_dir, name)
+
+            # src_path would be "/determined_shared_fs/UUID/subdir/file"
+            src_path = os.path.join(ign_dir, name)
+            if os.path.isdir(src_path):
+                # shutil removes '/' from dir names; we will add it manually.
+                path = os.path.join(path, "")
+
+            if selector(path):
+                # The user wants this file or directory.
+                continue
+
+            if os.path.isdir(src_path):
+                # The user does not want this directory, but we don't yet know if there
+                # might be a subfile or subdirectory which they do want.  Let copytree
+                # continue and revisit this later.
+                maybe_dangling.append(path)
+                continue
+            out.append(name)
+
+        return out, maybe_dangling
+
+    def _cleanup_dangling_dirs(self, dst: str, maybe_dangling: List[str]) -> None:
         # Any directory which was not wanted (but which we had to recurse into anyway), we now
         # attempt to remove.  By traversing the list in reverse order, any terminal maybe_dangling
         # directories will be removed, and the others will raise OSErrors, which we can ignore.

@@ -213,7 +213,9 @@ class CheckpointContext:
 
         When ``shard=True``, ``upload()`` becomes a synchronization point between workers, so all
         workers must call upload().  Those workers with nothing to upload may pass
-        ``ckpt_dir=None``.  The final checkpoint stored in checkpoint storage will contain a union
+        ``ckpt_dir=None``. Each worker may optionally provide a ``selector`` that accepts a path
+        relative to the checkpoint root, and returns True for paths that should be uploaded.
+        The final checkpoint stored in checkpoint storage will contain a union
         of the contents from each ckpt_dir.
 
         Returns:  The ``storage_id`` for this checkpoint.
@@ -310,7 +312,16 @@ class CheckpointContext:
 
         if want_upload:
             assert ckpt_dir
-            paths = list(resources.keys())
+            # If more than one rank has a file of the same name and content,
+            # use the smallest rank to upload the file.
+            paths = list(
+                filter(
+                    lambda x: x not in conflicts or min(conflicts[x]) == self._dist.rank,
+                    list(resources.keys()),
+                )
+            )
+            # Since metadata is not counted among resources, append it manually.
+            paths.append("metadata.json")
             self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
 
         # Synchronize workers.

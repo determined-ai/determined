@@ -11,8 +11,8 @@ Paths = List[str]
 
 
 # Selector accepts a path relative to the checkpoint root, and returns a boolean indicating if the
-# path should be downloaded. For every path selected, all parent directories are also selected
-# (even if the selector returns False for them).
+# path should be uploaded/downloaded. For every path selected, all parent directories are also
+# selected (even if the selector returns False for them).
 Selector = Callable[[str], bool]
 
 
