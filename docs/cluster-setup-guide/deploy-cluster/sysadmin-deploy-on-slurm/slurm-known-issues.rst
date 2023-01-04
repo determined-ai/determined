@@ -92,6 +92,14 @@ Some constraints are due to differences in behavior between Docker and Singulari
    | ``environment.registry_auth.email``  | No equivalent setting in Singularity.                |
    +--------------------------------------+------------------------------------------------------+
 
+**************************
+ Singularity Known Issues
+**************************
+
+   -  If Singularity version is less than 3.10 or if Apptainer version is less than 1.1, when
+      deployed on PBS cluster, the experiment configuration cannot have embedded double quote "
+      character.
+
 *********************
  PodMan Known Issues
 *********************
