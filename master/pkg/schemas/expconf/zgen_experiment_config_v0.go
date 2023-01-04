@@ -38,17 +38,6 @@ func (e *ExperimentConfigV0) SetCheckpointStorage(val CheckpointStorageConfigV0)
 	e.RawCheckpointStorage = &val
 }
 
-func (e ExperimentConfigV0) DataLayer() DataLayerConfigV0 {
-	if e.RawDataLayer == nil {
-		panic("You must call WithDefaults on ExperimentConfigV0 before .DataLayer")
-	}
-	return *e.RawDataLayer
-}
-
-func (e *ExperimentConfigV0) SetDataLayer(val DataLayerConfigV0) {
-	e.RawDataLayer = &val
-}
-
 func (e ExperimentConfigV0) Data() map[string]interface{} {
 	return e.RawData
 }

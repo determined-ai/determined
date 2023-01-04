@@ -48,7 +48,10 @@ interface Props {
 
 const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
   const loadableResourcePools = useResourcePools();
-  const users = Loadable.getOrElse([], useUsers());
+  const users = Loadable.match(useUsers(), {
+    Loaded: (usersPagination) => usersPagination.users,
+    NotLoaded: () => [],
+  });
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(

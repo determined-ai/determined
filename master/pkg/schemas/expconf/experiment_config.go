@@ -20,7 +20,6 @@ type ExperimentConfigV0 struct {
 	RawBindMounts               BindMountsConfigV0          `json:"bind_mounts"`
 	RawCheckpointPolicy         *string                     `json:"checkpoint_policy"`
 	RawCheckpointStorage        *CheckpointStorageConfigV0  `json:"checkpoint_storage"`
-	RawDataLayer                *DataLayerConfigV0          `json:"data_layer"`
 	RawData                     map[string]interface{}      `json:"data"`
 	RawDebug                    *bool                       `json:"debug"`
 	RawDescription              *string                     `json:"description"`

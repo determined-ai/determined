@@ -55,41 +55,6 @@
     save_trial_best: 1
     save_trial_latest: 1
 
-
-- name: shared_fs data layer (valid)
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json
-    - http://determined.ai/schemas/expconf/v0/data-layer.json
-  case:
-    type: shared_fs
-    host_storage_path: /asdf/asdf
-    container_storage_path: /asdf/asdf
-
-- name: s3 data layer (valid)
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/data-layer-s3.json
-    - http://determined.ai/schemas/expconf/v0/data-layer.json
-  case:
-    type: s3
-    bucket: asdf
-    bucket_directory_path: /asdf/asdf
-    local_cache_container_path: /asdf/asdf
-    local_cache_host_path: /asdf/asdf
-    access_key: "samIAM"
-    secret_key: gr33n3ggsNham
-    endpoint_url: "https://asdf.com:9000"
-
-- name: gcs data layer (valid)
-  sane_as:
-    - http://determined.ai/schemas/expconf/v0/data-layer-gcs.json
-    - http://determined.ai/schemas/expconf/v0/data-layer.json
-  case:
-    type: gcs
-    bucket: asdf
-    bucket_directory_path: /asdf/asdf
-    local_cache_container_path: /asdf/asdf
-    local_cache_host_path: /asdf/asdf
-
 - name: records length (valid)
   sane_as:
     - http://determined.ai/schemas/expconf/v0/length.json

@@ -12,8 +12,14 @@ export interface Settings {
   searchText?: string;
 }
 
-const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'log-viewer-filters',
+export const settingsConfigForTask = (taskId: string): SettingsConfig<Settings> =>
+  settingsConfigForLogs(taskId);
+
+export const settingsConfigForTrial = (id: number): SettingsConfig<Settings> =>
+  settingsConfigForLogs(id);
+
+const settingsConfigForLogs = (id: number | string): SettingsConfig<Settings> => ({
+  applicableRoutespace: `log-viewer-filters-${id}`,
   settings: {
     agentId: {
       defaultValue: undefined,
@@ -60,6 +66,4 @@ const config: SettingsConfig<Settings> = {
     },
   },
   storagePath: 'log-viewer-filters',
-};
-
-export default config;
+});

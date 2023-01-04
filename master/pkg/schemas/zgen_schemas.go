@@ -171,44 +171,6 @@ var (
     }
 }
 `)
-	textCheckDataLayerCacheV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json",
-    "title": "CheckDataLayerCache",
-    "checks": {
-        "local_cache_container_path must be specified if local_cache_host_path is set": {
-            "not": {
-                "required": [
-                    "local_cache_host_path"
-                ],
-                "properties": {
-                    "local_cache_container_path": {
-                        "type": "null"
-                    },
-                    "local_cache_host_path": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "local_cache_host_path must be specified if local_cache_container_path is set": {
-            "not": {
-                "required": [
-                    "local_cache_container_path"
-                ],
-                "properties": {
-                    "local_cache_container_path": {
-                        "type": "string"
-                    },
-                    "local_cache_host_path": {
-                        "type": "null"
-                    }
-                }
-            }
-        }
-    }
-}
-`)
 	textCheckEpochNotUsedV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
     "$id": "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json",
@@ -407,216 +369,6 @@ var (
             "default": 1,
             "minimum": 0
         }
-    }
-}
-`)
-	textGCSDataLayerConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer-gcs.json",
-    "title": "GCSDataLayerConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "type"
-    ],
-    "eventuallyRequired": [
-        "bucket",
-        "bucket_directory_path"
-    ],
-    "properties": {
-        "type": {
-            "const": "gcs"
-        },
-        "bucket": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "bucket_directory_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "local_cache_host_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_host_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "local_cache_container_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_container_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        }
-    },
-    "allOf": [
-        {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json"
-        }
-    ]
-}
-`)
-	textS3DataLayerConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer-s3.json",
-    "title": "S3DataLayerConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "type"
-    ],
-    "eventuallyRequired": [
-        "bucket",
-        "bucket_directory_path"
-    ],
-    "properties": {
-        "type": {
-            "const": "s3"
-        },
-        "bucket": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "bucket_directory_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "local_cache_host_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_host_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "local_cache_container_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "local_cache_container_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "access_key": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "secret_key": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        },
-        "endpoint_url": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "default": null
-        }
-    },
-    "allOf": [
-        {
-            "$ref": "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json"
-        }
-    ]
-}
-`)
-	textSharedFSDataLayerConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json",
-    "title": "SharedFSDataLayerConfig",
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-        "type"
-    ],
-    "properties": {
-        "type": {
-            "const": "shared_fs"
-        },
-        "host_storage_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "host_storage_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        },
-        "container_storage_path": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "checks": {
-                "container_storage_path must be an absolute path": {
-                    "pattern": "^/"
-                }
-            },
-            "default": null
-        }
-    }
-}
-`)
-	textDataLayerConfigV0 = []byte(`{
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "http://determined.ai/schemas/expconf/v0/data-layer.json",
-    "title": "DataLayerConfig",
-    "union": {
-        "defaultMessage": "is not an object where object[\"type\"] is one of 'shared_fs', 's3', or 'gcs'",
-        "items": [
-            {
-                "unionKey": "const:type=shared_fs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json"
-            },
-            {
-                "unionKey": "const:type=gcs",
-                "$ref": "http://determined.ai/schemas/expconf/v0/data-layer-gcs.json"
-            },
-            {
-                "unionKey": "const:type=s3",
-                "$ref": "http://determined.ai/schemas/expconf/v0/data-layer-s3.json"
-            }
-        ]
     }
 }
 `)
@@ -978,14 +730,12 @@ var (
             "default": {}
         },
         "data_layer": {
+            "$comment": "the data_layer feature was removed in 0.19.10, and the config is ignored",
             "type": [
                 "object",
                 "null"
             ],
-            "default": {
-                "type": "shared_fs"
-            },
-            "optionalRef": "http://determined.ai/schemas/expconf/v0/data-layer.json"
+            "default": null
         },
         "debug": {
             "type": [
@@ -3312,8 +3062,6 @@ var (
 
 	schemaBindMountsConfigV0 interface{}
 
-	schemaCheckDataLayerCacheV0 interface{}
-
 	schemaCheckEpochNotUsedV0 interface{}
 
 	schemaCheckGridHyperparameterV0 interface{}
@@ -3321,14 +3069,6 @@ var (
 	schemaCheckPositiveLengthV0 interface{}
 
 	schemaCheckpointStorageConfigV0 interface{}
-
-	schemaGCSDataLayerConfigV0 interface{}
-
-	schemaS3DataLayerConfigV0 interface{}
-
-	schemaSharedFSDataLayerConfigV0 interface{}
-
-	schemaDataLayerConfigV0 interface{}
 
 	schemaDeviceV0 interface{}
 
@@ -3489,26 +3229,6 @@ func ParsedBindMountsConfigV0() interface{} {
 	return schemaBindMountsConfigV0
 }
 
-func ParsedCheckDataLayerCacheV0() interface{} {
-	cacheLock.RLock()
-	if schemaCheckDataLayerCacheV0 != nil {
-		cacheLock.RUnlock()
-		return schemaCheckDataLayerCacheV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaCheckDataLayerCacheV0 != nil {
-		return schemaCheckDataLayerCacheV0
-	}
-	err := json.Unmarshal(textCheckDataLayerCacheV0, &schemaCheckDataLayerCacheV0)
-	if err != nil {
-		panic("invalid embedded json for CheckDataLayerCacheV0")
-	}
-	return schemaCheckDataLayerCacheV0
-}
-
 func ParsedCheckEpochNotUsedV0() interface{} {
 	cacheLock.RLock()
 	if schemaCheckEpochNotUsedV0 != nil {
@@ -3587,86 +3307,6 @@ func ParsedCheckpointStorageConfigV0() interface{} {
 		panic("invalid embedded json for CheckpointStorageConfigV0")
 	}
 	return schemaCheckpointStorageConfigV0
-}
-
-func ParsedGCSDataLayerConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaGCSDataLayerConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaGCSDataLayerConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaGCSDataLayerConfigV0 != nil {
-		return schemaGCSDataLayerConfigV0
-	}
-	err := json.Unmarshal(textGCSDataLayerConfigV0, &schemaGCSDataLayerConfigV0)
-	if err != nil {
-		panic("invalid embedded json for GCSDataLayerConfigV0")
-	}
-	return schemaGCSDataLayerConfigV0
-}
-
-func ParsedS3DataLayerConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaS3DataLayerConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaS3DataLayerConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaS3DataLayerConfigV0 != nil {
-		return schemaS3DataLayerConfigV0
-	}
-	err := json.Unmarshal(textS3DataLayerConfigV0, &schemaS3DataLayerConfigV0)
-	if err != nil {
-		panic("invalid embedded json for S3DataLayerConfigV0")
-	}
-	return schemaS3DataLayerConfigV0
-}
-
-func ParsedSharedFSDataLayerConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaSharedFSDataLayerConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaSharedFSDataLayerConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaSharedFSDataLayerConfigV0 != nil {
-		return schemaSharedFSDataLayerConfigV0
-	}
-	err := json.Unmarshal(textSharedFSDataLayerConfigV0, &schemaSharedFSDataLayerConfigV0)
-	if err != nil {
-		panic("invalid embedded json for SharedFSDataLayerConfigV0")
-	}
-	return schemaSharedFSDataLayerConfigV0
-}
-
-func ParsedDataLayerConfigV0() interface{} {
-	cacheLock.RLock()
-	if schemaDataLayerConfigV0 != nil {
-		cacheLock.RUnlock()
-		return schemaDataLayerConfigV0
-	}
-	cacheLock.RUnlock()
-
-	cacheLock.Lock()
-	defer cacheLock.Unlock()
-	if schemaDataLayerConfigV0 != nil {
-		return schemaDataLayerConfigV0
-	}
-	err := json.Unmarshal(textDataLayerConfigV0, &schemaDataLayerConfigV0)
-	if err != nil {
-		panic("invalid embedded json for DataLayerConfigV0")
-	}
-	return schemaDataLayerConfigV0
 }
 
 func ParsedDeviceV0() interface{} {
@@ -4610,8 +4250,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textBindMountV0
 	url = "http://determined.ai/schemas/expconf/v0/bind-mounts.json"
 	cachedSchemaBytesMap[url] = textBindMountsConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/check-data-layer-cache.json"
-	cachedSchemaBytesMap[url] = textCheckDataLayerCacheV0
 	url = "http://determined.ai/schemas/expconf/v0/check-epoch-not-used.json"
 	cachedSchemaBytesMap[url] = textCheckEpochNotUsedV0
 	url = "http://determined.ai/schemas/expconf/v0/check-grid-hyperparameter.json"
@@ -4620,14 +4258,6 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textCheckPositiveLengthV0
 	url = "http://determined.ai/schemas/expconf/v0/checkpoint-storage.json"
 	cachedSchemaBytesMap[url] = textCheckpointStorageConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/data-layer-gcs.json"
-	cachedSchemaBytesMap[url] = textGCSDataLayerConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/data-layer-s3.json"
-	cachedSchemaBytesMap[url] = textS3DataLayerConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json"
-	cachedSchemaBytesMap[url] = textSharedFSDataLayerConfigV0
-	url = "http://determined.ai/schemas/expconf/v0/data-layer.json"
-	cachedSchemaBytesMap[url] = textDataLayerConfigV0
 	url = "http://determined.ai/schemas/expconf/v0/device.json"
 	cachedSchemaBytesMap[url] = textDeviceV0
 	url = "http://determined.ai/schemas/expconf/v0/devices.json"

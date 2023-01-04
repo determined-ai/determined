@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class ExperimentConfig(dict):
@@ -31,9 +31,6 @@ class ExperimentConfig(dict):
 
     def profiling_sync_timings(self) -> bool:
         return bool(self.get("profiling", {}).get("sync_timings", True))
-
-    def get_data_layer_type(self) -> str:
-        return cast(str, self["data_layer"]["type"])
 
     def get_records_per_epoch(self) -> Optional[int]:
         records_per_epoch = self.get("records_per_epoch")

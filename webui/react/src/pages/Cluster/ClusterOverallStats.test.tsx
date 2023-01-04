@@ -7,6 +7,7 @@ import { ExperimentsProvider } from 'stores/experiments';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { TasksProvider } from 'stores/tasks';
 import { UserRolesProvider } from 'stores/userRoles';
+import { UsersProvider } from 'stores/users';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
 
@@ -19,15 +20,17 @@ const setup = () => {
   const view = render(
     <UIProvider>
       <AuthProvider>
-        <UserRolesProvider>
-          <ExperimentsProvider>
-            <TasksProvider>
-              <ResourcePoolsProvider>
-                <ClusterOverallStats />
-              </ResourcePoolsProvider>
-            </TasksProvider>
-          </ExperimentsProvider>
-        </UserRolesProvider>
+        <UsersProvider>
+          <UserRolesProvider>
+            <ExperimentsProvider>
+              <TasksProvider>
+                <ResourcePoolsProvider>
+                  <ClusterOverallStats />
+                </ResourcePoolsProvider>
+              </TasksProvider>
+            </ExperimentsProvider>
+          </UserRolesProvider>
+        </UsersProvider>
       </AuthProvider>
     </UIProvider>,
   );

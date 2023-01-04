@@ -32,7 +32,6 @@ export const generateTestExperimentData = (): {
         storagePath: 'determined-checkpoint',
         type: CheckpointStorageType.SharedFS,
       },
-      dataLayer: { type: 'shared_fs' },
       hyperparameters: {
         categorical: {
           maxval: 64,

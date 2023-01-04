@@ -17,7 +17,7 @@ import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
-import { useCurrentUsers } from 'stores/users';
+import { useCurrentUser } from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -145,9 +145,12 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
   // Null means the roles have not yet loaded
   const [userRoles, setUserRoles] = useState<UserRole[] | null>(null);
   const { canAssignRoles, canModifyPermissions } = usePermissions();
-  const currentUser = Loadable.getOrElse(undefined, useCurrentUsers().currentUser);
-  const [canceler] = useState(new AbortController());
-  const checkAuth = useAuthCheck(canceler);
+  const loadableCurrentUser = useCurrentUser();
+  const currentUser = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
+    NotLoaded: () => undefined,
+  });
+  const checkAuth = useAuthCheck();
 
   const fetchUserRoles = useCallback(async () => {
     if (user !== undefined && rbacEnabled && canAssignRoles({})) {

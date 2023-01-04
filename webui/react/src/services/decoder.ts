@@ -356,12 +356,6 @@ export const ioToExperimentConfig = (
           type: (io.checkpoint_storage.type as types.CheckpointStorageType) || undefined,
         }
       : undefined,
-    dataLayer: io.data_layer
-      ? {
-          containerStoragePath: io.data_layer.container_storage_path || undefined,
-          type: io.data_layer.type,
-        }
-      : undefined,
     description: io.description || undefined,
     hyperparameters: ioToHyperparametereters(io.hyperparameters),
     labels: io.labels || undefined,
