@@ -30,7 +30,9 @@ const USER_NAME_NAME = 'username';
 export const USER_NAME_LABEL = 'User Name';
 const ROLE_LABEL = 'Global Roles';
 const ROLE_NAME = 'roles';
-export const MODAL_HEADER_LABEL = 'Add User';
+export const MODAL_HEADER_LABEL_CREATE = 'Add User';
+const MODAL_HEADER_LABEL_VIEW = 'View User';
+const MODAL_HEADER_LABEL_EDIT = 'Edit User';
 export const API_SUCCESS_MESSAGE_CREATE =
   'New user with empty password has been created, advise user to reset password as soon as possible.';
 export const BUTTON_NAME = 'Save';
@@ -236,7 +238,15 @@ const useModalCreateUser = ({ onClose, user }: ModalProps): ModalHooks => {
         okText: viewOnly ? 'Close' : BUTTON_NAME,
         onCancel: handleCancel,
         onOk: () => handleOk(viewOnly),
-        title: <h5>{MODAL_HEADER_LABEL}</h5>,
+        title: (
+          <h5>
+            {user
+              ? viewOnly
+                ? MODAL_HEADER_LABEL_VIEW
+                : MODAL_HEADER_LABEL_EDIT
+              : MODAL_HEADER_LABEL_CREATE}
+          </h5>
+        ),
         width: 520,
       });
     },

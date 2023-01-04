@@ -16,7 +16,7 @@ import useModalCreateUser, {
   API_SUCCESS_MESSAGE_CREATE,
   BUTTON_NAME,
   DISPLAY_NAME_LABEL,
-  MODAL_HEADER_LABEL,
+  MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
 } from './useModalCreateUser';
 
@@ -62,7 +62,7 @@ const setup = async () => {
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
-  await view.findByRole('heading', { name: MODAL_HEADER_LABEL });
+  await view.findByRole('heading', { name: MODAL_HEADER_LABEL_CREATE });
 
   // Check for the modal to finish loading.
   await waitFor(() => {
@@ -88,7 +88,7 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).not.toBeInTheDocument();
     });
   });
 
@@ -99,7 +99,7 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).not.toBeInTheDocument();
     });
   });
 
@@ -128,7 +128,7 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).not.toBeInTheDocument();
     });
 
     // Check that the API method was called with the correct parameters.
