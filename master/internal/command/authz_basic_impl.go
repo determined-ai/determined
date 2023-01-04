@@ -3,10 +3,8 @@ package command
 import (
 	"context"
 
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
-
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 // NSCAuthZBasic is basic OSS controls.
@@ -46,7 +44,8 @@ func (a *NSCAuthZBasic) CanSetNSCsPriority(
 }
 
 func (a *NSCAuthZBasic) AccessibleScopes(
-	ctx context.Context, curUser model.UserID, scopes []model.AccessScopeID) ([]model.AccessScopeID, error) {
+	ctx context.Context, curUser model.User, scopes []model.AccessScopeID,
+) ([]model.AccessScopeID, error) {
 	return scopes, nil
 }
 
@@ -54,21 +53,21 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the tensorboard and a nil error.
 func (a *NSCAuthZBasic) CanGetTensorboard(
-	ctx context.Context, curUser *model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
+	ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
 ) (canGetTensorboards bool, serverError error) {
 	return true, nil
 }
 
 // FilterTensorboards always returns the same list.
 func (a *NSCAuthZBasic) FilterTensorboards(
-	ctx context.Context, curUser *model.User, tensorboards []*tensorboardv1.Tensorboard,
+	ctx context.Context, curUser model.User, tensorboards []*tensorboardv1.Tensorboard,
 ) ([]*tensorboardv1.Tensorboard, error) {
 	return tensorboards, nil
 }
 
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZBasic) CanTerminateTensorboard(
-	ctx context.Context, curUser *model.User, tb *tensorboardv1.Tensorboard,
+	ctx context.Context, curUser model.User, tb *tensorboardv1.Tensorboard,
 ) error {
 	return nil
 }
