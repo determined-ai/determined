@@ -1,11 +1,9 @@
 import { Empty } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-// import { InfiniteLoader } from 'react-window-infinite-loader';
-// import AutoSizer from 'react-virtualized-auto-sizer';
-import { FixedSizeList } from 'react-window';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeGrid } from 'react-window';
 import { AlignedData } from 'uplot';
 
-import Grid, { GridMode } from 'components/Grid';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import Section from 'components/Section';
@@ -17,7 +15,6 @@ import { compareTrials } from 'services/api';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { glasbeyColor } from 'shared/utils/color';
-import { ShirtSize } from 'themes';
 import { Metric, MetricContainer, Scale } from 'types';
 
 interface Props {
@@ -130,25 +127,35 @@ const TrialCharts: React.FC<Props> = ({ metricNames, trialId, trialTerminated }:
         {chartData.length === 0 || chartData[0].length === 0 || chartData[0][0].length === 0 ? (
           <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
-          <Grid gap={ShirtSize.Medium} minItemWidth={500} mode={GridMode.AutoFit}>
-            <FixedSizeList
-              height={chartOptions.length > 1 ? 1000 : 500}
-              itemCount={chartOptions.length}
-              itemSize={480}
-              width="100%">
-              {({ index, style }) => (
-                <div style={style}>
-                  <Section bodyBorder className={css.chartbox} key={index}>
-                    <UPlotChart
-                      data={chartData[index]}
-                      options={chartOptions[index]}
-                      title={chartOptions[index].series[1].label}
-                    />
-                  </Section>
-                </div>
-              )}
-            </FixedSizeList>
-          </Grid>
+          <AutoSizer>
+            {({ width }) => {
+              const columnCount = Math.max(1, Math.floor(width / 540));
+              return (
+                <FixedSizeGrid
+                  columnCount={columnCount}
+                  columnWidth={Math.floor(width / columnCount)}
+                  height={chartOptions.length > 1 ? 1000 : 500}
+                  rowCount={Math.ceil(chartOptions.length / columnCount)}
+                  rowHeight={480}
+                  width={width}>
+                  {({ columnIndex, rowIndex, style }) => {
+                    const index = columnIndex * columnCount + rowIndex;
+                    return (
+                      <div style={style}>
+                        <Section bodyBorder className={css.chartbox} key={index}>
+                          <UPlotChart
+                            data={chartData[index]}
+                            options={chartOptions[index]}
+                            title={chartOptions[index].series[1].label}
+                          />
+                        </Section>
+                      </div>
+                    );
+                  }}
+                </FixedSizeGrid>
+              );
+            }}
+          </AutoSizer>
         )}
       </Spinner>
     </>
