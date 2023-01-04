@@ -54,7 +54,7 @@ them on separate nodes, or install the agents on multiple machines and connect t
 **********************
 
 #. Determined agent uses docker to run your workloads. See Docker for Mac installation instructions
-   :ref:`here <system-requirements>`.
+   :ref:`here <install-docker-on-macos>`.
 
 #. When installing on a different machine than the master, add Homebrew tap.
 

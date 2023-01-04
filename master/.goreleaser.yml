@@ -73,7 +73,6 @@ brews:
     homepage: "https://github.com/determined-ai/determined"
     license: "Apache-2.0"
     folder: Formula
-    skip_upload: true
     dependencies:
       - "postgresql@14"
     install: |
