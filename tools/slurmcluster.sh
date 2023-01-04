@@ -158,7 +158,7 @@ USERPORT_madagund=8083
 USERPORT_laney=8084
 USERPORT_rcorujo=8085
 USERPORT_phillipgaisford=8086
-USERPORT_pankaj=8087
+USERPORT_mandalpa=8087
 USERPORT_alyssa=8088
 USERPORT_jerryharrow=8090
 USERPORT_canmingcobble=8092
@@ -170,10 +170,13 @@ if [[ -z $USERPORT ]]; then
 fi
 
 # Re-map names that include - as variables with embedded - are treated as math expressions
+
 if [[ $CLUSTER == "casablanca-login" ]]; then
     CLUSTER=casablanca_login
+elif [[ $CLUSTER == "casablanca" ]]; then
+    CLUSTER=casablanca_login
 elif [[ $CLUSTER == "casablanca-mgmt1" ]]; then
-    CLUSTER=casablanca
+    CLUSTER=casablanca_mgmt1
 elif [[ $CLUSTER == "casablanca-login2" ]]; then
     CLUSTER=casablanca_login2
 fi
@@ -183,7 +186,7 @@ DEV_LAUNCHER_PORT_madagund=18083
 DEV_LAUNCHER_PORT_laney=18084
 DEV_LAUNCHER_PORT_rcorujo=18085
 DEV_LAUNCHER_PORT_phillipgaisford=18086
-DEV_LAUNCHER_PORT_pankaj=18087
+DEV_LAUNCHER_PORT_mandalpa=18087
 DEV_LAUNCHER_PORT_alyssa=18088
 DEV_LAUNCHER_PORT_jerryharrow=18090
 DEV_LAUNCHER_PORT_canmingcobble=18092
@@ -200,18 +203,6 @@ OPT_TRESSUPPORTED_atlas=false
 OPT_GRESSUPPORTED_atlas=false
 OPT_PROTOCOL_atlas=http
 
-# Configuration for casablanca (really casablanca-mgmt1)
-OPT_name_casablanca=casablanca-mgmt1.us.cray.com
-OPT_LAUNCHERHOST_casablanca=localhost
-OPT_LAUNCHERPORT_casablanca=8181
-OPT_LAUNCHERPROTOCOL_casablanca=http
-OPT_CHECKPOINTPATH_casablanca=/mnt/lustre/foundation_engineering/determined-cp
-OPT_MASTERHOST_casablanca=casablanca-mgmt1.us.cray.com
-OPT_MASTERPORT_casablanca=$USERPORT
-OPT_TRESSUPPORTED_casablanca=true
-OPT_PROTOCOL_casablanca=http
-
-
 # Configuration for horizon
 OPT_name_horizon=horizon.us.cray.com
 OPT_LAUNCHERHOST_horizon=localhost
@@ -222,6 +213,16 @@ OPT_MASTERHOST_horizon=horizon
 OPT_MASTERPORT_horizon=$USERPORT
 OPT_TRESSUPPORTED_horizon=false
 OPT_PROTOCOL_horizon=http
+
+# Configuration for casablanca-mgmt1 (uses suffix casablanca_mgmt1)
+OPT_name_casablanca_mgmt1=casablanca-mgmt1.us.cray.com
+OPT_LAUNCHERHOST_casablanca_mgmt1=localhost
+OPT_LAUNCHERPORT_casablanca_mgmt1=8181
+OPT_LAUNCHERPROTOCOL_casablanca_mgmt1=http
+OPT_CHECKPOINTPATH_casablanca_mgmt1=/mnt/lustre/foundation_engineering/determined-cp
+OPT_MASTERHOST_casablanca_mgmt1=casablanca-mgmt1.us.cray.com
+OPT_MASTERPORT_casablanca_mgmt1=$USERPORT
+OPT_TRESSUPPORTED_casablanca_mgmt1=true
 
 # Configuration for casablanca-login (uses suffix casablanca_login)
 OPT_name_casablanca_login=casablanca-login.us.cray.com
