@@ -88,7 +88,9 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -99,7 +101,9 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -128,7 +132,9 @@ describe('useModalCreateUser', () => {
 
     // Check for the modal to be dismissed.
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: MODAL_HEADER_LABEL_CREATE }),
+      ).not.toBeInTheDocument();
     });
 
     // Check that the API method was called with the correct parameters.

@@ -94,9 +94,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
       )}
       {rbacEnabled && canModifyPermissions && (
         <>
-          <Form.Item
-            label={ROLE_LABEL}
-            name={ROLE_NAME}>
+          <Form.Item label={ROLE_LABEL} name={ROLE_NAME}>
             <Select
               disabled={(user !== undefined && roles === null) || viewOnly}
               mode="multiple"
