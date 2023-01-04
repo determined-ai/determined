@@ -343,7 +343,7 @@ The master supports the following configuration settings:
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to the Slurm/PBS default partition
          if it has GPU resources and if no resource pool is specified.
 
-      -  ``job_project_source``: configures labelling of jobs on the HPC cluster (via Slurm
+      -  ``job_project_source``: Configures labelling of jobs on the HPC cluster (via Slurm
          ``--wckey`` or PBS ``-P``). Allowed values are:
 
          -  ``project``: Use the project name of the experiment (this is the default, if no project
@@ -352,12 +352,16 @@ The master supports the following configuration settings:
          -  ``workspace``: Use the workspace name of the project (if no workspace, nothing is passed
             to workload manager).
 
-         -  ``label[:prefix]``: Use the value from the experiment configuration labels list (if no
-            matching labels, nothing is passed to workload manager). If a label begins with prefix,
-            remove it and use the remainder as the value for the WCKey/Project. If multiple values
-            begin with prefix, the values are concatenated together with a comma (,) separator on
-            Slurm or underscore (_) with PBS. If the prefix is not specified or empty, all labels
-            will be matched (and therefore concatenated).
+         -  ``label`` [:``prefix``]: Use the value from the experiment configuration tags list (if
+            no matching tags, nothing is passed to workload manager). If a tag begins with the
+            specified ``prefix``, remove the prefix and use the remainder as the value for the
+            WCKey/Project. If multiple tag values begin with ``prefix``, the remainders are
+            concatenated with a comma (,) separator on Slurm or underscore (_) with PBS. If a
+            ``prefix`` is not specified or empty, all tags will be matched (and therefore
+            concatenated). Workload managers do not generally support multiple WCKey/Project values
+            so it is recommended that ``prefix`` is configured to match a single label to enable use
+            of the workload manager reporting tools that summarize usage by each WCKey/Project
+            value.
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when
