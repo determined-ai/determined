@@ -4357,6 +4357,7 @@ class v1GetTensorboardsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetTensorboardsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -12657,7 +12658,7 @@ def get_GetCommands(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetCommandsResponse":
@@ -13300,7 +13301,7 @@ def get_GetNotebooks(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetNotebooksResponse":
@@ -13494,7 +13495,7 @@ def get_GetShells(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetShellsResponse":
