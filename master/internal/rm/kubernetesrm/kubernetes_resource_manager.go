@@ -132,6 +132,10 @@ func (k ResourceManager) ValidateResourcePoolAvailability(
 	name string,
 	slots int,
 ) ([]command.LaunchWarning, error) {
+	if _, err := k.GetResourcePoolRef(ctx, name); err != nil {
+		return nil, fmt.Errorf("%s is an invalid resource pool", name)
+	}
+
 	return nil, nil
 }
 
