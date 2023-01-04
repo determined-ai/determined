@@ -202,7 +202,7 @@ class CheckpointContext:
         metadata: Optional[Dict[str, Any]] = None,
         *,
         shard: bool = False,
-        paths: Optional[storage.Paths] = None,
+        selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
         """
         ``upload()`` chooses a random ``storage_id``, then uploads the contents of ``ckpt_dir`` to
@@ -250,7 +250,7 @@ class CheckpointContext:
             storage_id = self._dist.broadcast(storage_id)
 
             assert storage_id
-            return self._upload_sharded(ckpt_dir, storage_id, metadata, paths=paths)
+            return self._upload_sharded(ckpt_dir, storage_id, metadata, selector=selector)
 
     def _upload_single(self, ckpt_dir: str, metadata: Optional[Dict[str, Any]] = None) -> str:
         storage_id = str(uuid.uuid4())
@@ -269,7 +269,7 @@ class CheckpointContext:
         storage_id: str,
         metadata: Optional[Dict[str, Any]] = None,
         *,
-        paths: Optional[storage.Paths] = None,
+        selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
         ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
         if not any(ckpt_dir_mask):
@@ -293,6 +293,8 @@ class CheckpointContext:
         if want_upload:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
+            if selector is not None:
+                resources = {key: resources[key] for key in resources if selector(key)}
         else:
             resources = {}
 
@@ -308,7 +310,8 @@ class CheckpointContext:
 
         if want_upload:
             assert ckpt_dir
-            self._storage_manager.upload(src=ckpt_dir, dst=storage_id)
+            paths = list(resources.keys())
+            self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
 
         # Synchronize workers.
         _ = self._dist.allgather(None)

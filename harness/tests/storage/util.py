@@ -388,6 +388,30 @@ def run_storage_upload_download_sharded_test(
         pex.distributed.allgather(None)
         checkpoint_context.upload(ckpt_dir, metadata, shard=True)
 
+    # 6. Test uploading selected paths.
+    def selector(x: str) -> bool:
+        return x in ["file_repeated", "file0_0", "subdir/file_repeated"]
+
+    create_checkpoint(ckpt_dir, EXPECTED_FILES_N0)
+    pex.distributed.allgather(None)
+    storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True, selector=selector)
+
+    download_dir = tmp_path.joinpath(f"test6_download_{pex.distributed.rank}")
+    checkpoint_context.download(storage_id, download_dir)
+    validate_checkpoint(
+        download_dir,
+        expected_files={
+            "file_repeated": "file repeated",
+            "file0_0": "file 0 node 0",
+            "subdir/": None,
+            "subdir/file_repeated": "nested file repeated",
+        },
+    )
+
+    pex.distributed.allgather(None)
+    if pex.distributed.rank == 0 and clean_up is not None:
+        clean_up(storage_id, storage_manager)
+
 
 def run_storage_store_restore_sharded_test(
     pex: parallel.Execution,
