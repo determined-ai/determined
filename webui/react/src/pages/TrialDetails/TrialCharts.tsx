@@ -133,22 +133,27 @@ const TrialCharts: React.FC<Props> = ({ metricNames, trialId, trialTerminated }:
               return (
                 <FixedSizeGrid
                   columnCount={columnCount}
-                  columnWidth={Math.floor(width / columnCount)}
+                  columnWidth={Math.floor(width / columnCount) - 10}
                   height={chartOptions.length > 1 ? 1000 : 500}
                   rowCount={Math.ceil(chartOptions.length / columnCount)}
                   rowHeight={480}
                   width={width}>
                   {({ columnIndex, rowIndex, style }) => {
-                    const index = columnIndex * columnCount + rowIndex;
+                    const index = rowIndex * columnCount + columnIndex;
                     return (
                       <div style={style}>
-                        <Section bodyBorder className={css.chartbox} key={index}>
-                          <UPlotChart
-                            data={chartData[index]}
-                            options={chartOptions[index]}
-                            title={chartOptions[index].series[1].label}
-                          />
-                        </Section>
+                        {index < chartOptions.length && (
+                          <Section
+                            bodyBorder
+                            className={css.chartbox}
+                            key={`${rowIndex}_${columnIndex}`}>
+                            <UPlotChart
+                              data={chartData[index]}
+                              options={chartOptions[index]}
+                              title={chartOptions[index].series[1].label}
+                            />
+                          </Section>
+                        )}
                       </div>
                     );
                   }}
