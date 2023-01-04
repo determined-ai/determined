@@ -1,5 +1,8 @@
 import { Empty } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+// import { InfiniteLoader } from 'react-window-infinite-loader';
+// import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeList } from 'react-window';
 import { AlignedData } from 'uplot';
 
 import Grid, { GridMode } from 'components/Grid';
@@ -127,12 +130,24 @@ const TrialCharts: React.FC<Props> = ({ metricNames, trialId, trialTerminated }:
         {chartData.length === 0 || chartData[0].length === 0 || chartData[0][0].length === 0 ? (
           <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
-          <Grid gap={ShirtSize.Medium} minItemWidth={500} mode={GridMode.AutoFill}>
-            {chartOptions.map((co, idx) => (
-              <Section bodyBorder className={css.chartbox} key={idx}>
-                <UPlotChart data={chartData[idx]} options={co} title={co.series[1].label} />
-              </Section>
-            ))}
+          <Grid gap={ShirtSize.Medium} minItemWidth={500} mode={GridMode.AutoFit}>
+            <FixedSizeList
+              height={chartOptions.length > 1 ? 1000 : 500}
+              itemCount={chartOptions.length}
+              itemSize={480}
+              width="100%">
+              {({ index, style }) => (
+                <div style={style}>
+                  <Section bodyBorder className={css.chartbox} key={index}>
+                    <UPlotChart
+                      data={chartData[index]}
+                      options={chartOptions[index]}
+                      title={chartOptions[index].series[1].label}
+                    />
+                  </Section>
+                </div>
+              )}
+            </FixedSizeList>
           </Grid>
         )}
       </Spinner>
