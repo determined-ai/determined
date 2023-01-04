@@ -110,6 +110,9 @@ type KubernetesResourceManagerConfig struct {
 	CredsDir                 string                  `json:"_creds_dir,omitempty"`
 	MasterIP                 string                  `json:"_master_ip,omitempty"`
 	MasterPort               int32                   `json:"_master_port,omitempty"`
+	// TODO(nick) this will eventually move down to resource pools when added to k8s
+	// so this is just an experimental feature flag for now.
+	ReattachResources bool `json:"_reattach_resources"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{

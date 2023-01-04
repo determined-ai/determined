@@ -120,6 +120,8 @@ type (
 	SetAllocationProxyAddress struct {
 		ProxyAddress string
 	}
+	// AllocationNotRestoring asks the allocation if it is in the middle of a restore.
+	AllocationNotRestoring struct{}
 )
 
 const (
@@ -133,6 +135,9 @@ func NewAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
 	logger *Logger,
 ) actor.Actor {
+	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
+		"allocation-id": req.AllocationID,
+	})
 	return &Allocation{
 		db:     db,
 		rm:     rm,
@@ -149,9 +154,7 @@ func NewAllocation(
 
 		resources: resourcesList{},
 
-		logCtx: detLogger.MergeContexts(logCtx, detLogger.Context{
-			"allocation-id": req.AllocationID,
-		}),
+		logCtx: req.LogContext,
 	}
 }
 
@@ -184,6 +187,14 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.RequestResources(ctx); err != nil {
 			a.Error(ctx, err)
 		}
+
+	case AllocationNotRestoring:
+		if a.req.Restore && !a.restored {
+			ctx.Respond(ErrAllocationStillRestoring{})
+		} else {
+			ctx.Respond(true)
+		}
+
 	case sproto.ResourcesAllocated:
 		if err := a.ResourcesAllocated(ctx, msg); err != nil {
 			a.Error(ctx, err)
@@ -479,6 +490,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 	}
 
+	a.restored = a.req.Restore
 	a.resourcesStarted = true
 	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
 	return nil
@@ -661,6 +673,7 @@ func (a *Allocation) RestoreResourceFailure(
 		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
 		case a.model.StartTime == nil:
 			break
+
 		case heartbeat.Before(*a.model.StartTime):
 			a.model.EndTime = a.model.StartTime
 		default:

@@ -17,6 +17,13 @@ func (e ErrTimeoutExceeded) Error() string {
 	return fmt.Sprintf("timeout exceeded: %s", e.Message)
 }
 
+// ErrAllocationStillRestoring is returned when the allocation is in progress of a restore.
+type ErrAllocationStillRestoring struct{}
+
+func (e ErrAllocationStillRestoring) Error() string {
+	return "allocation still in progress of restoring"
+}
+
 // ErrNoAllocation is returned an operation is tried without a requested allocation.
 type ErrNoAllocation struct {
 	Action string
