@@ -89,23 +89,26 @@ const TrialCharts: React.FC<Props> = ({ metricNames, trialId, trialTerminated }:
 
   const chartOptions: Options[] = useMemo(
     () =>
-      metricNames.map((metric, index) => ({
-        axes: [{ label: 'Batches' }, { label: 'Metric Value' }],
-        height: 400,
-        key: `${trialId}_${metric.name}`,
-        legend: { show: false },
-        plugins: [tooltipsPlugin(), trackAxis()],
-        scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
-        series: [
-          { label: 'Batch' },
-          {
-            label: getChartMetricLabel(metric),
-            spanGaps: true,
-            stroke: glasbeyColor(index),
-            width: 2,
-          },
-        ],
-      })),
+      metricNames.map((metric, index) => {
+        const color = glasbeyColor(index);
+        return {
+          axes: [{ label: 'Batches' }, { label: 'Metric Value' }],
+          height: 400,
+          key: `${trialId}_${metric.name}`,
+          legend: { show: false },
+          plugins: [tooltipsPlugin({ color }), trackAxis()],
+          scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
+          series: [
+            { label: 'Batch' },
+            {
+              label: getChartMetricLabel(metric),
+              spanGaps: true,
+              stroke: color,
+              width: 2,
+            },
+          ],
+        };
+      }),
     [metricNames, scale, trialId],
   );
 

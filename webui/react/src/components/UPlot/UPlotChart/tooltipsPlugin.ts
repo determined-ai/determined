@@ -7,13 +7,16 @@ import css from './tooltipsPlugin.module.scss';
 export type ChartTooltip = string | null;
 
 interface Props {
+  color?: string;
   getXTooltipHeader?: (xIndex: number) => ChartTooltip;
   getXTooltipYLabels?: (xIndex: number) => ChartTooltip[];
-  isShownEmptyVal: boolean;
+  isShownEmptyVal?: boolean;
 }
 
 export const tooltipsPlugin = (
-  { getXTooltipHeader, getXTooltipYLabels, isShownEmptyVal }: Props = { isShownEmptyVal: true },
+  { color, getXTooltipHeader, getXTooltipYLabels, isShownEmptyVal }: Props = {
+    isShownEmptyVal: true,
+  },
 ): Plugin => {
   let barEl: HTMLDivElement | null = null;
   let displayedIdx: number | null = null;
@@ -49,7 +52,9 @@ export const tooltipsPlugin = (
       if (isShownEmptyVal || valueRaw)
         html += `
           <div class="${cssClass}">
-            <span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>
+            <span class="${css.color}" style="background-color: ${
+          color || glasbeyColor(i - 1)
+        }"></span>
             ${label ? label + '<br />' : ''}
             ${serie.label}: ${valueRaw != null ? valueRaw : 'N/A'}
           </div>`;
