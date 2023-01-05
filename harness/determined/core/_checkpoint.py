@@ -346,8 +346,10 @@ class CheckpointContext:
 
         if want_upload:
             assert ckpt_dir
-            # If more than one uploading rank has a file of the same name and content,
-            # use the smallest rank to upload the file.
+            # If there is a conflict (two files with the same name have different content hashes)
+            # then exception is thrown from _try_resolving_conflicts().
+            # If we are here, there may still be multiple ranks having the same version of the file.
+            # To avoid uploading the same file multiple times, we use the smallest rank to upload.
             paths = list(
                 filter(
                     lambda x: x not in conflicts or min(conflicts[x]) == self._dist.rank,
@@ -468,11 +470,7 @@ class CheckpointContext:
 
     @contextlib.contextmanager
     def store_path(
-        self,
-        metadata: Optional[Dict[str, Any]] = None,
-        *,
-        shard: bool = False,
-        paths: Optional[storage.Paths] = None,
+        self, metadata: Optional[Dict[str, Any]] = None, *, shard: bool = False
     ) -> Iterator[Tuple[pathlib.Path, str]]:
         """
         ``store_path()`` is a context manager which chooses a random path and prepares a directory
