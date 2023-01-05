@@ -137,19 +137,11 @@ const NavigationTabbar: React.FC = () => {
                   handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
               }));
               if (canCreateWorkspace) {
-                return workspaceIcons.concat([
-                  {
-                    icon: (
-                      <DynamicIcon
-                        name="+"
-                        size={24}
-                        style={{ backgroundColor: '#ccc', color: 'black' }}
-                      />
-                    ),
-                    label: 'New Workspace',
-                    onClick: handleCreateWorkspace,
-                  },
-                ]);
+                workspaceIcons.push({
+                  icon: <Icon name="add-small" size="large" />,
+                  label: 'New Workspace',
+                  onClick: handleCreateWorkspace,
+                });
               }
               return workspaceIcons;
             },

@@ -85,7 +85,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
           <div className={css.icon}>
-            <Icon name={props.icon} size={props.iconSize || 'large'} />
+            <Icon name={props.icon} size={props.iconSize ?? 'large'} />
           </div>
         ) : (
           <div className={css.icon}>{props.icon}</div>
@@ -293,7 +293,7 @@ const NavigationSideBar: React.FC = () => {
               Loaded: (workspaces) => (
                 <ul className={css.pinnedWorkspaces} role="list">
                   {workspaces
-                    .sort((a, b) => ((a.pinnedAt || 0) < (b.pinnedAt || 0) ? -1 : 1))
+                    .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
                     .map((workspace) => (
                       <WorkspaceActionDropdown
                         key={workspace.id}
@@ -330,7 +330,7 @@ const NavigationSideBar: React.FC = () => {
                       />
                     </li>
                   ) : workspaces.length === 0 ? (
-                    <p className={css.noWorkspaces}>No pinned workspaces</p>
+                    <div className={css.noWorkspaces}>No pinned workspaces</div>
                   ) : null}
                 </ul>
               ),
