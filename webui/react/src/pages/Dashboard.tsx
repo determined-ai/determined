@@ -27,10 +27,12 @@ import {
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
+import { ErrorType } from 'shared/utils/error';
 import { dateTimeStringSorter } from 'shared/utils/sort';
 import { useCurrentUser } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { CommandTask, DetailedUser, ExperimentItem, Project } from 'types';
+import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
 import css from './Dashboard.module.scss';
@@ -57,7 +59,7 @@ const Dashboard: React.FC = () => {
 
   const fetchTasks = useCallback(
     async (user: DetailedUser) => {
-      const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
+      const results = await Promise.allSettled([
         getCommands({
           limit: FETCH_LIMIT,
           orderBy: 'ORDER_BY_DESC',
@@ -87,7 +89,10 @@ const Dashboard: React.FC = () => {
           users: [user.id.toString()],
         }),
       ]);
-      const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
+      const newTasks = results.reduce((acc, current) => {
+        if (current.status === 'fulfilled') return acc.concat(current.value);
+        return acc;
+      }, [] as CommandTask[]);
       setTasks(newTasks);
     },
     [canceler],
@@ -95,30 +100,46 @@ const Dashboard: React.FC = () => {
 
   const fetchExperiments = useCallback(
     async (user: DetailedUser) => {
-      const response = await getExperiments(
-        {
-          limit: FETCH_LIMIT,
-          orderBy: 'ORDER_BY_DESC',
-          sortBy: 'SORT_BY_START_TIME',
-          userIds: [user.id],
-        },
-        {
-          signal: canceler.signal,
-        },
-      );
-      setExperiments(response.experiments);
+      try {
+        const response = await getExperiments(
+          {
+            limit: FETCH_LIMIT,
+            orderBy: 'ORDER_BY_DESC',
+            sortBy: 'SORT_BY_START_TIME',
+            users: [user.id.toString()],
+          },
+          {
+            signal: canceler.signal,
+          },
+        );
+        setExperiments(response.experiments);
+      } catch (e) {
+        handleError(e, {
+          publicSubject: 'Error fetching experiments for dashboard',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
     },
     [canceler],
   );
 
   const fetchProjects = useCallback(async () => {
-    const projects = await getProjectsByUserActivity(
-      { limit: FETCH_LIMIT },
-      {
-        signal: canceler.signal,
-      },
-    );
-    setProjects(projects);
+    try {
+      const projects = await getProjectsByUserActivity(
+        { limit: FETCH_LIMIT },
+        {
+          signal: canceler.signal,
+        },
+      );
+      setProjects(projects);
+    } catch (e) {
+      handleError(e, {
+        publicSubject: 'Error fetching projects for dashboard',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
   }, [canceler]);
 
   const fetchAll = useCallback(async () => {
