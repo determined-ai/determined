@@ -249,6 +249,15 @@ def test_remote_search_runner() -> None:
 
 
 @pytest.mark.distributed
+def test_pytorch_no_op_set_stop_requested_distributed() -> None:
+    config = conf.load_config(conf.fixtures_path("pytorch_no_op/const.yaml"))
+    config = conf.set_slots_per_trial(config, 2)
+    config = conf.set_environment_variables(config, ["STOP_REQUESTED"])
+
+    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("pytorch_no_op"), 1)
+
+
+@pytest.mark.distributed
 @pytest.mark.gpu_required
 def test_textual_inversion_stable_diffusion_finetune() -> None:
     """Requires downloading weights from Hugging Face via an authorization token. The experiment

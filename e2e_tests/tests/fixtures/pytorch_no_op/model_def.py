@@ -1,3 +1,4 @@
+import os
 import random
 from typing import Any, Dict, Tuple
 
@@ -45,6 +46,8 @@ class NoopPyTorchTrial(pytorch.PyTorchTrial):
         rank = self.context.distributed.get_rank()
         print(f"finished train_batch for rank {rank}")
         print(f"rank {rank} finished batch {batch_idx} in epoch {epoch_idx}")
+
+        self.context.set_stop_requested("STOP_REQUESTED" in os.environ)
 
         return {"loss": loss, "w_real": w_real}
 
