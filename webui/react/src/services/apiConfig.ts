@@ -1210,7 +1210,7 @@ export const createWorkspace: DetApi<
     return decoder.mapV1Workspace(response.workspace);
   },
   request: (params, options) =>
-    detApi.Workspaces.postWorkspace({ ...params, name: params.name.trim() }, options),
+    detApi.Workspaces.postWorkspace({ ...params, name: params.name }, options),
 };
 
 export const getWorkspaceMembers: DetApi<

@@ -159,22 +159,6 @@ def set_tf2_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
     return set_image(config, TF2_CPU_IMAGE, TF2_GPU_IMAGE)
 
 
-def set_shared_fs_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
-    config = config.copy()
-    config["data_layer"] = {}
-    config["data_layer"]["type"] = "shared_fs"
-    return config
-
-
-def set_s3_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
-    config = config.copy()
-    config["data_layer"] = {}
-    config["data_layer"]["type"] = "s3"
-    config["data_layer"]["bucket"] = "yogadl-test"
-    config["data_layer"]["bucket_directory_path"] = "determined_integration_tests"
-    return config
-
-
 def set_random_seed(config: Dict[Any, Any], seed: int) -> Dict[Any, Any]:
     config = config.copy()
     config.setdefault("reproducibility", {})

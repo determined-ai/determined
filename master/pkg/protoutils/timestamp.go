@@ -16,14 +16,23 @@ func ToTimestamp(t time.Time) *timestamp.Timestamp {
 	}
 }
 
+// ToTime converts a *timestamppb.Timestamp to a *time.Time.
+func ToTime(pt *timestamppb.Timestamp) (time.Time, error) {
+	if err := pt.CheckValid(); err != nil {
+		return time.Time{}, err
+	}
+	return pt.AsTime(), nil
+}
+
 // TimeSliceFromProto converts a slice of *timestamppb.Timestamp to a slice of time.Time.
 func TimeSliceFromProto(pTimes []*timestamppb.Timestamp) ([]time.Time, error) {
 	ts := make([]time.Time, len(pTimes))
 	for i, pt := range pTimes {
-		if err := pt.CheckValid(); err != nil {
+		var err error
+		ts[i], err = ToTime(pt)
+		if err != nil {
 			return nil, err
 		}
-		ts[i] = pt.AsTime()
 	}
 	return ts, nil
 }

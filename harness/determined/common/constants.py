@@ -33,8 +33,6 @@ COMPLETED = "COMPLETED"
 DELETED = "DELETED"
 ERROR = "ERROR"
 
-TERMINAL_STATES = {COMPLETED, CANCELED, ERROR}
-
 SHARED_FS_CONTAINER_PATH = "/determined_shared_fs"
 
 # By default, we ignore:

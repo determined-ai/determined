@@ -12,7 +12,6 @@ type (
 	CheckpointStorageConfig   = CheckpointStorageConfigV0
 	ConstHyperparameter       = ConstHyperparameterV0
 	CustomConfig              = CustomConfigV0
-	DataLayerConfig           = DataLayerConfigV0
 	DevicesConfig             = DevicesConfigV0
 	Device                    = DeviceV0
 	DoubleHyperparameter      = DoubleHyperparameterV0
@@ -22,7 +21,6 @@ type (
 	EnvironmentVariablesMap   = EnvironmentVariablesMapV0
 	ExperimentConfig          = ExperimentConfigV0
 	GCSConfig                 = GCSConfigV0
-	GCSDataLayerConfig        = GCSDataLayerConfigV0
 	GridConfig                = GridConfigV0
 	HDFSConfig                = HDFSConfigV0
 	Hyperparameter            = HyperparameterV0
@@ -37,10 +35,8 @@ type (
 	ReproducibilityConfig     = ReproducibilityConfigV0
 	ResourcesConfig           = ResourcesConfigV0
 	S3Config                  = S3ConfigV0
-	S3DataLayerConfig         = S3DataLayerConfigV0
 	SearcherConfig            = SearcherConfigV0
 	SharedFSConfig            = SharedFSConfigV0
-	SharedFSDataLayerConfig   = SharedFSDataLayerConfigV0
 	SingleConfig              = SingleConfigV0
 	SlurmConfig               = SlurmConfigV0
 	PbsConfig                 = PbsConfigV0

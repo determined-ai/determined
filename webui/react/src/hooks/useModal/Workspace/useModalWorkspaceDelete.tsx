@@ -37,7 +37,8 @@ const useModalWorkspaceDelete = ({
     return (
       <Form autoComplete="off" className={css.base} form={form} layout="vertical">
         <p>
-          Are you sure you want to delete <strong>&quot;{workspace.name}&quot;</strong>?
+          Are you sure you want to delete{' '}
+          <strong className={css.pre}>&quot;{workspace.name}&quot;</strong>?
         </p>
         <p>
           All projects, experiments, and notes within it will also be deleted. This cannot be
@@ -46,7 +47,7 @@ const useModalWorkspaceDelete = ({
         <Form.Item
           label={
             <div>
-              Please type <strong>{workspace.name}</strong> to confirm
+              Please type <mark className={css.pre}>{workspace.name}</mark> to confirm
             </div>
           }
           name="workspaceName"

@@ -149,21 +149,6 @@ func (s TrialSpec) ToTaskSpec(keys *ssh.PrivateAndPublicKeys) TaskSpec {
 			&mount.BindOptions{Propagation: expconf.DefaultSharedFSPropagation},
 		)
 	}
-	if c := s.ExperimentConfig.DataLayer().RawSharedFSConfig; c != nil {
-		if c.HostStoragePath() != nil && c.ContainerStoragePath() != nil {
-			addMount(*c.HostStoragePath(), *c.ContainerStoragePath(), nil)
-		}
-	}
-	if c := s.ExperimentConfig.DataLayer().RawS3Config; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
-		}
-	}
-	if c := s.ExperimentConfig.DataLayer().RawGCSConfig; c != nil {
-		if c.LocalCacheHostPath() != nil && c.LocalCacheContainerPath() != nil {
-			addMount(*c.LocalCacheHostPath(), *c.LocalCacheContainerPath(), nil)
-		}
-	}
 	res.Mounts = mounts
 	res.TaskType = model.TaskTypeTrial
 

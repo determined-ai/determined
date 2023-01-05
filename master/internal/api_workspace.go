@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -48,6 +49,19 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 		return err
 	}
 	return nil
+}
+
+func validateWorkspaceName(name string) error {
+	switch {
+	case len(name) < 1:
+		return status.Errorf(codes.InvalidArgument, "name '%s' must be at least 1 character long", name)
+	case len(name) > 80:
+		return status.Errorf(codes.InvalidArgument, "name '%s' must be at most 80 character long", name)
+	case len(strings.TrimFunc(name, unicode.IsSpace)) == 0:
+		return status.Error(codes.InvalidArgument, "name must contain at least non-whitespace letter")
+	default:
+		return nil
+	}
 }
 
 func (a *apiServer) GetWorkspaceByID(
@@ -273,13 +287,8 @@ func (a *apiServer) PostWorkspace(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	if len(req.Name) < 1 {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"name '%s' must be at least 1 character long", req.Name)
-	}
-	if len(req.Name) > 80 {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"name '%s' must be at most 80 character long", req.Name)
+	if err = validateWorkspaceName(req.Name); err != nil {
+		return nil, err
 	}
 
 	if req.AgentUserGroup != nil {
@@ -368,6 +377,13 @@ func (a *apiServer) PatchWorkspace(
 
 	insertColumns := []string{}
 	updatedWorkspace := model.Workspace{}
+
+	if req.Workspace.Name != nil {
+		err = validateWorkspaceName(req.Workspace.Name.Value)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if req.Workspace.Name != nil && req.Workspace.Name.Value != currWorkspace.Name {
 		if err = workspace.AuthZProvider.Get().

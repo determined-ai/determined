@@ -1,20 +1,17 @@
 import json as _json
 import os
-import sys
 import webbrowser
 from types import TracebackType
-from typing import Any, Dict, Iterator, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterator, Optional, Tuple, Union
 from urllib import parse
 
 import lomond
 import requests
 import urllib3
-from termcolor import colored
 
 import determined as det
 import determined.common.requests
-from determined.common import api
-from determined.common.api import authentication, bindings, certs, errors
+from determined.common.api import authentication, certs, errors
 
 
 def parse_master_address(master_address: str) -> parse.ParseResult:
@@ -365,9 +362,3 @@ def ws(host: str, path: str) -> WebSocket:
     token = authentication.must_cli_auth().get_session_token()
     websocket.add_header("Authorization".encode(), "Bearer {}".format(token).encode())
     return WebSocket(websocket)
-
-
-def handle_warnings(warnings: Optional[Sequence[bindings.v1LaunchWarning]]) -> None:
-    if warnings:
-        for warning in warnings:
-            print(colored(api.WARNING_MESSAGE_MAP[warning], "yellow"), file=sys.stderr)

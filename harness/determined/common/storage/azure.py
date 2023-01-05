@@ -66,6 +66,8 @@ class AzureStorageManager(storage.CloudStorageManager):
         for blob in self.client.list_files(self.container, file_prefix=src):
             found = True
             relname = os.path.relpath(blob, src)
+            if blob.endswith("/"):
+                relname = os.path.join(relname, "")
             if selector is not None and not selector(relname):
                 continue
             _dst = os.path.join(dst, relname)

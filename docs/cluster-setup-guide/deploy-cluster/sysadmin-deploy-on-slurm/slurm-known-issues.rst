@@ -92,6 +92,14 @@ Some constraints are due to differences in behavior between Docker and Singulari
    | ``environment.registry_auth.email``  | No equivalent setting in Singularity.                |
    +--------------------------------------+------------------------------------------------------+
 
+**************************
+ Singularity Known Issues
+**************************
+
+   Launching a PBS jobs with an experiment configuration which includes an embedded double quote
+   character (") may cause the job to fail with the json.decoder.JSONDecodeError unless you have
+   Singularity 3.10 or greater or Apptainer 1.1 or greater.
+
 *********************
  PodMan Known Issues
 *********************

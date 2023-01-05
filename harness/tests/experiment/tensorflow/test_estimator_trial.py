@@ -2,7 +2,7 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 import pytest
 import tensorflow as tf
@@ -14,42 +14,26 @@ from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import estimator_linear_model, estimator_xor_model
 
 
-@pytest.fixture(
-    scope="function",
-    params=[
-        estimator_xor_model.XORTrial,
-        estimator_xor_model.XORTrialDataLayer,
-    ],
-)
-def xor_trial_controller(request):
-    """
-    This fixture will provide a function that takes a hyperparameters dictionary as input and
-    returns a trial controller. It is parameterized over different implementations, so that any test
-    that uses it may test a full set of implementations.
-    """
-
-    def _xor_trial_controller(
-        hparams: Dict[str, Any],
-        workloads: workload.Stream,
-        scheduling_unit: int = 1,
-        exp_config: Optional[Dict] = None,
-        checkpoint_dir: Optional[str] = None,
-        latest_checkpoint: Optional[Dict[str, Any]] = None,
-        steps_completed: int = 0,
-    ) -> det.TrialController:
-        return utils.make_trial_controller_from_trial_implementation(
-            trial_class=request.param,
-            hparams=hparams,
-            workloads=workloads,
-            scheduling_unit=scheduling_unit,
-            exp_config=exp_config,
-            trial_seed=325,
-            checkpoint_dir=checkpoint_dir,
-            latest_checkpoint=latest_checkpoint,
-            steps_completed=steps_completed,
-        )
-
-    return _xor_trial_controller
+def xor_trial_controller(
+    hparams: Dict[str, Any],
+    workloads: workload.Stream,
+    scheduling_unit: int = 1,
+    exp_config: Optional[Dict] = None,
+    checkpoint_dir: Optional[str] = None,
+    latest_checkpoint: Optional[Dict[str, Any]] = None,
+    steps_completed: int = 0,
+) -> det.TrialController:
+    return utils.make_trial_controller_from_trial_implementation(
+        trial_class=estimator_xor_model.XORTrial,
+        hparams=hparams,
+        workloads=workloads,
+        scheduling_unit=scheduling_unit,
+        exp_config=exp_config,
+        trial_seed=325,
+        checkpoint_dir=checkpoint_dir,
+        latest_checkpoint=latest_checkpoint,
+        steps_completed=steps_completed,
+    )
 
 
 class TestXORTrial:
@@ -62,7 +46,7 @@ class TestXORTrial:
             "shuffle": False,
         }
 
-    def test_xor_training(self, xor_trial_controller: Callable) -> None:
+    def test_xor_training(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
@@ -83,7 +67,7 @@ class TestXORTrial:
         controller = xor_trial_controller(self.hparams, make_workloads(), scheduling_unit=1000)
         controller.run()
 
-    def test_reproducibility(self, xor_trial_controller: Callable) -> None:
+    def test_reproducibility(self) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
             return xor_trial_controller(self.hparams, workloads, scheduling_unit=100)
 
@@ -91,7 +75,7 @@ class TestXORTrial:
             controller_fn=controller_fn, steps=3, validation_freq=1, scheduling_unit=100
         )
 
-    def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
+    def test_checkpointing(self, tmp_path: Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
         steps_completed = 0
@@ -142,9 +126,7 @@ class TestXORTrial:
         )
         controller.run()
 
-    def test_checkpointing_with_serving_fn(
-        self, tmp_path: Path, xor_trial_controller: Callable
-    ) -> None:
+    def test_checkpointing_with_serving_fn(self, tmp_path: Path) -> None:
         checkpoint_dir = str(tmp_path.joinpath("checkpoint"))
         latest_checkpoint = None
 
@@ -181,7 +163,7 @@ class TestXORTrial:
         assert len(dirs) == 1
         load_saved_model(os.path.join(export_path, dirs[0]))
 
-    def test_optimizer_state(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
+    def test_optimizer_state(self, tmp_path: Path) -> None:
         def make_trial_controller_fn(
             workloads: workload.Stream,
             checkpoint_dir: Optional[str] = None,
