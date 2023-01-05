@@ -52,12 +52,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         core_context: det.core.Context,
         trial_seed: int,
         hparams: Dict,
-        slots_per_trial: int,
-        num_gpus: int,
         exp_conf: Dict[str, Any],
         aggregation_frequency: int,
-        fp16_compression: bool,
-        average_aggregated_gradients: bool,
         steps_completed: int,
         managed_training: bool,
         debug_enabled: bool,
@@ -67,11 +63,10 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         pytorch._PyTorchReducerContext.__init__(self, self.distributed.allgather)
         self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
             hparams=hparams,
-            slots_per_trial=slots_per_trial,
+            slots_per_trial=self.distributed.get_size(),
             trialname="PyTorchTrial",
         )
         self._hparams = hparams
-        self._num_gpus = num_gpus
         self._debug_enabled = debug_enabled
         self._exp_conf = exp_conf
 
@@ -87,6 +82,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer]
+        self._optimizer_settings = {}  # type: Dict[torch.optim.Optimizer, Dict]
         self.profiler = None  # type: Any
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
         self._epoch_len = None  # type: Optional[int]
@@ -115,8 +111,6 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._managed_training = managed_training
 
         self._aggregation_frequency = aggregation_frequency
-        self._fp16_compression = fp16_compression
-        self._average_aggregated_gradients = average_aggregated_gradients
 
         self._stop_requested = False
 
@@ -261,6 +255,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
     def wrap_optimizer(
         self,
         optimizer: torch.optim.Optimizer,
+        fp16_compression: bool,
+        average_aggregated_gradients: bool,
         backward_passes_per_step: int = 1,
     ) -> torch.optim.Optimizer:
         """Returns a wrapped optimizer.
@@ -299,19 +295,30 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                     f"got {backward_passes_per_step}.",
                 )
 
+            # This is to support backwards compatibility. New codepaths should pass these into wrap_optimizer
+            # directly
+            if fp16_compression is None:
+                fp16_compression = bool(self._exp_conf["optimizations"]["gradient_compression"])
+
+            if average_aggregated_gradients is None:
+                average_aggregated_gradients = bool(
+                    self._exp_conf["optimizations"]["average_aggregated_gradients"]
+                )
+
             if self.distributed.size > 1 and self._distributed_backend.use_horovod():
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
                     backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
                     compression=hvd.Compression.fp16
-                    if self._fp16_compression
+                    if fp16_compression
                     else hvd.Compression.none,
                 )
                 logging.debug(
                     "Initialized optimizer for distributed and optimized parallel training."
                 )
 
+        self._optimizer_settings[optimizer] = {"average_aggregated_gradients": average_aggregated_gradients}
         self.optimizers.append(optimizer)
         return optimizer
 
@@ -394,14 +401,14 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
 
     def _init_device(self) -> torch.device:
         if self.distributed.size > 1:
-            if self._num_gpus > 0:
+            if self.distributed.get_num_agents() > 0:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
                 device = torch.device("cuda", self.distributed.local_rank)
                 torch.cuda.set_device(device)
             else:
                 device = torch.device("cpu")
-        elif self._num_gpus > 0:
+        elif self.distributed.get_num_agents() > 0:
             device = torch.device("cuda", 0)
         else:
             device = torch.device("cpu")
@@ -790,7 +797,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             else apex.amp.master_params(optimizer)
         )
 
-        if self._average_aggregated_gradients:
+        if self._optimizer_settings[optimizer]["average_aggregated_gradients"]:
             self._average_gradients(parameters=parameters, divisor=self._aggregation_frequency)
 
         if clip_grads is not None:
