@@ -3,7 +3,6 @@ import { RawValueType } from 'rc-select/lib/BaseSelect';
 import { LabelInValueType } from 'rc-select/lib/Select';
 import React, { useState } from 'react';
 
-import useFeature from 'hooks/useFeature';
 import {
   assignRolesToGroup,
   assignRolesToUser,
@@ -34,24 +33,6 @@ const RoleRenderer: React.FC<Props> = ({
 }) => {
   const roleAssignment = getAssignedRole(userOrGroup, assignments);
   const [memberRoleId, setMemberRole] = useState(roleAssignment?.role?.roleId);
-  let knownRoles = rolesAssignableToScope;
-
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
-
-  knownRoles = mockWorkspaceMembers
-    ? [
-        {
-          name: 'Editor',
-          permissions: [],
-          roleId: 1,
-        },
-        {
-          name: 'Viewer',
-          permissions: [],
-          roleId: 2,
-        },
-      ]
-    : knownRoles;
 
   return (
     <Select
@@ -102,7 +83,7 @@ const RoleRenderer: React.FC<Props> = ({
           });
         }
       }}>
-      {knownRoles.map((role) => (
+      {rolesAssignableToScope.map((role) => (
         <Select.Option key={role.roleId} value={role.roleId}>
           {role.name}
         </Select.Option>

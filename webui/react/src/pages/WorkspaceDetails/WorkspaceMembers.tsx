@@ -9,7 +9,6 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import UserBadge from 'components/UserBadge';
-import useFeature from 'hooks/useFeature';
 import useModalWorkspaceRemoveMember from 'hooks/useModal/Workspace/useModalWorkspaceRemoveMember';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
@@ -112,67 +111,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(settingsConfig);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
-
-  const usersAndGroups: UserOrGroup[] = useMemo(
-    () =>
-      mockWorkspaceMembers
-        ? [
-            {
-              displayName: 'Test User One Display Name',
-              id: 1,
-              username: 'TestUserOneUserName',
-            },
-            {
-              id: 2,
-              username: 'TestUserTwoUserName',
-            },
-            {
-              groupId: 1,
-              name: 'Test Group 1 Name',
-            },
-            {
-              groupId: 2,
-              name: 'Test Group 2 Name',
-            },
-          ]
-        : [...usersAssignedDirectly, ...groupsAssignedDirectly],
-    [groupsAssignedDirectly, mockWorkspaceMembers, usersAssignedDirectly],
-  );
-  if (mockWorkspaceMembers) {
-    assignments = [
-      {
-        groupRoleAssignments: [
-          {
-            groupId: 1,
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-          },
-          {
-            groupId: 2,
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-          },
-        ],
-        userRoleAssignments: [
-          {
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-            userId: 1,
-          },
-          {
-            roleAssignment: {
-              role: { roleId: 1 },
-            },
-            userId: 2,
-          },
-        ],
-      },
-    ];
-  }
+  const usersAndGroups: UserOrGroup[] = [...usersAssignedDirectly, ...groupsAssignedDirectly];
 
   useEffect(() => {
     onFilterUpdate(settings.name);

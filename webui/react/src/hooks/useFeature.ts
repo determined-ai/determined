@@ -7,7 +7,6 @@ import { Loadable } from 'utils/loadable';
 // Add new feature switches below using `|`
 export type ValidFeature =
   | 'rbac'
-  | 'mock_workspace_members'
   | 'mock_permissions_read'
   | 'trials_comparison'
   | 'mock_permissions_all';
