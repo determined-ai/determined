@@ -3,7 +3,6 @@ import React, { ReactNode } from 'react';
 
 interface BreadcrumbProps {
   children?: ReactNode;
-  className?: string;
   separator?: ReactNode;
 }
 

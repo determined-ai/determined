@@ -469,7 +469,7 @@ const SearchboxesSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default Searchbox</strong>
-        <Input.Search placeholder="input search text" style={{ width: 200 }} />
+        <Input.Search placeholder="input search text" />
         <strong>Guiding principles</strong>
         <ul>
           <li>A user should always be able to cancel/clear out a search</li>
@@ -477,8 +477,8 @@ const SearchboxesSection: React.FC = () => {
           <li>Input box experience is from input box component</li>
         </ul>
         <strong>Variations</strong>
-        <Input.Search allowClear enterButton style={{ width: 200 }} value="Active search box" />
-        <Input.Search disabled placeholder="disabled search box" style={{ width: 200 }} />
+        <Input.Search allowClear enterButton value="Active search box" />
+        <Input.Search disabled placeholder="disabled search box" />
         <hr />
         <strong>In-table Searchbox</strong>
         <p>Not implemented</p>

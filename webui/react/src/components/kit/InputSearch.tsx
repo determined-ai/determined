@@ -1,12 +1,11 @@
 import { Input } from 'antd';
-import React, { CSSProperties } from 'react';
+import React from 'react';
 
 interface InputSearchProps {
   allowClear?: boolean;
   disabled?: boolean;
   enterButton?: boolean;
   placeholder?: string;
-  style: CSSProperties;
   value?: string;
 }
 

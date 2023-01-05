@@ -3,7 +3,6 @@ import React, { CSSProperties, MouseEvent, ReactNode } from 'react';
 
 interface ButtonProps {
   children?: ReactNode;
-  className?: string;
   danger?: boolean;
   disabled?: boolean;
   ghost?: boolean;
@@ -12,6 +11,7 @@ interface ButtonProps {
   onClick?: (event: MouseEvent) => void;
   shape?: 'circle' | 'default' | 'round';
   size?: 'large' | 'middle' | 'small';
+  // TODO: remove style prop after adding iconic button support to component
   style?: CSSProperties;
   type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
 }

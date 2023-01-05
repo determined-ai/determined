@@ -1,5 +1,5 @@
 import { Tabs } from 'antd';
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 export type TabItem = {
   children?: ReactNode;
@@ -9,14 +9,12 @@ export type TabItem = {
 
 interface PivotProps {
   activeKey?: string;
-  className?: string;
   defaultActiveKey?: string;
   destroyInactiveTabPane?: boolean;
   items?: TabItem[];
   onChange?: () => void;
   onTabClick?: () => void;
   tabBarExtraContent?: ReactNode;
-  tabBarStyle?: CSSProperties;
   type?: 'line' | 'card' | 'editable-card';
 }
 
