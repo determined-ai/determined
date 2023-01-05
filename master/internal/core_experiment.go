@@ -459,11 +459,13 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
-			return nil, nil, false, nil, terr
+			return nil, nil, false, nil, errors.Wrapf(terr, "TemplateByName(%q)", *params.Template)
 		}
 		var tc expconf.ExperimentConfig
 		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, nil, false, nil, yerr
+			return nil, nil, false, nil, errors.Wrapf(
+				terr, "yaml.Unmarshal(template=%q)", *params.Template,
+			)
 		}
 		// Merge the template into the config.
 		config = schemas.Merge(config, tc)

@@ -1,16 +1,17 @@
 import base64
 import distutils.util
-import io
 import json
 import numbers
 import pathlib
 import sys
+import time
 from argparse import FileType, Namespace
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 import tabulate
+import termcolor
 
 import determined as det
 import determined.experimental
@@ -19,7 +20,7 @@ from determined import cli
 from determined.cli import checkpoint, render
 from determined.cli.command import CONFIG_DESC, parse_config_overrides
 from determined.common import api, context, set_logger, util, yaml
-from determined.common.api import authentication, bindings
+from determined.common.api import authentication, bindings, logs
 from determined.common.declarative_argparse import Arg, Cmd, Group
 from determined.experimental import client
 
@@ -32,26 +33,28 @@ from .trial import logs_args_description
 FLUSH = False
 
 
-def patch_experiment(args: Namespace, verb: str, patch_doc: Dict[str, Any]) -> None:
-    api.patch_experiment(args.master, args.experiment_id, patch_doc)
+def patch_experiment(args: Namespace, patch_doc: Dict[str, Any]) -> None:
+    path = f"experiments/{args.experiment_id}"
+    headers = {"Content-Type": "application/merge-patch+json"}
+    cli.setup_session(args).patch(path, json=patch_doc, headers=headers)
 
 
 @authentication.required
 def activate(args: Namespace) -> None:
     bindings.post_ActivateExperiment(cli.setup_session(args), id=args.experiment_id)
-    print("Activated experiment {}".format(args.experiment_id))
+    print(f"Activated experiment {args.experiment_id}")
 
 
 @authentication.required
 def archive(args: Namespace) -> None:
     bindings.post_ArchiveExperiment(cli.setup_session(args), id=args.experiment_id)
-    print("Archived experiment {}".format(args.experiment_id))
+    print(f"Archived experiment {args.experiment_id}")
 
 
 @authentication.required
 def cancel(args: Namespace) -> None:
     bindings.post_CancelExperiment(cli.setup_session(args), id=args.experiment_id)
-    print("Canceled experiment {}".format(args.experiment_id))
+    print(f"Canceled experiment {args.experiment_id}")
 
 
 def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]:
@@ -62,7 +65,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
     try:
         from git import Repo
     except ImportError as e:  # pragma: no cover
-        print("Error: Please verify that git is installed correctly: {}".format(e))
+        print(f"Error: Please verify that git is installed correctly: {e}")
         sys.exit(1)
 
     if model_def_path.is_dir():
@@ -72,16 +75,16 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
 
     if not repo_path.joinpath(".git").is_dir():
         print(
-            "Error: No git directory found at {}. Please "
+            f"Error: No git directory found at {repo_path}. Please "
             "initialize a git repository or refrain from "
-            "using the --git feature.".format(repo_path)
+            "using the --git feature."
         )
         sys.exit(1)
 
     try:
         repo = Repo(str(repo_path))
     except Exception as e:
-        print("Failed to initialize git repository at ", "{}: {}".format(repo_path, e))
+        print(f"Failed to initialize git repository at {repo_path}: {e}")
         sys.exit(1)
 
     if repo.is_dirty():
@@ -95,7 +98,7 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
 
     commit = repo.commit()
     commit_hash = commit.hexsha
-    committer = "{} <{}>".format(commit.committer.name, commit.committer.email)
+    committer = f"{commit.committer.name} <{commit.committer.email}>"
     commit_date = commit.committed_datetime.isoformat()
 
     # To get the upstream remote URL:
@@ -107,8 +110,8 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
     try:
         upstream_branch = repo.git.rev_parse("@{u}", abbrev_ref=True, symbolic_full_name=True)
         remote_name = upstream_branch.split("/", 1)[0]
-        remote_url = repo.git.config("remote.{}.url".format(remote_name), get=True)
-        print("Using remote URL '{}' from upstream branch '{}'".format(remote_url, upstream_branch))
+        remote_url = repo.git.config(f"remote.{remote_name}.url", get=True)
+        print(f"Using remote URL '{remote_url}' from upstream branch '{upstream_branch}'")
     except Exception as e:
         print("Failed to find the upstream branch: ", e)
         sys.exit(1)
@@ -116,12 +119,13 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
     return (remote_url, commit_hash, committer, commit_date)
 
 
-def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterable[str]) -> Dict:
-    experiment_config = util.safe_load_yaml_with_exceptions(config_file)
+def _parse_config_text_or_exit(
+    config_text: str, path: str, config_overrides: Iterable[str]
+) -> Dict:
+    experiment_config = util.safe_load_yaml_with_exceptions(config_text)
 
-    config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):
-        print("Error: invalid experiment config file {!r}".format(config_file.name))
+        print(f"Error: invalid experiment config file {path}", path)
         sys.exit(1)
 
     parse_config_overrides(experiment_config, config_overrides)
@@ -129,44 +133,153 @@ def _parse_config_file_or_exit(config_file: io.FileIO, config_overrides: Iterabl
     return experiment_config
 
 
+def _follow_experiment_logs(sess: api.Session, exp_id: int) -> None:
+    # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
+    print("Waiting for first trial to begin...")
+    while True:
+        trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
+        if len(trials) > 0:
+            break
+        else:
+            time.sleep(0.1)
+
+    first_trial_id = sorted(t_id.id for t_id in trials)[0]
+    print(f"Following first trial with ID {first_trial_id}")
+    tlogs = logs.trial_logs(sess, first_trial_id, follow=True)
+    logs.pprint_trial_logs(first_trial_id, tlogs)
+
+
+def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
+    def print_progress(active_stage: int, ended: bool) -> None:
+        # There are four sequential stages of verification. Track the
+        # current stage with an index into this list.
+        stages = [
+            "Scheduling task",
+            "Testing training",
+            "Testing validation",
+            "Testing checkpointing",
+        ]
+
+        for idx, stage in enumerate(stages):
+            if active_stage > idx:
+                color = "green"
+                checkbox = "✔"
+            elif active_stage == idx:
+                color = "red" if ended else "yellow"
+                checkbox = "✗" if ended else " "
+            else:
+                color = "white"
+                checkbox = " "
+            print(termcolor.colored(stage + (25 - len(stage)) * ".", color), end="")
+            print(termcolor.colored(" [" + checkbox + "]", color), end="")
+
+            if idx == len(stages) - 1:
+                print("\n" if ended else "\r", end="")
+            else:
+                print(", ", end="")
+
+    while True:
+        exp = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
+        trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
+
+        # Wait for experiment to start and initialize a trial.
+        runner_state = trials[0].runnerState if trials else None
+
+        # Update the active_stage by examining the experiment state and trial runner state.
+        if exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED:
+            active_stage = 4
+        elif runner_state == "checkpointing":
+            active_stage = 3
+        elif runner_state == "validating":
+            active_stage = 2
+        elif runner_state in (None, "UNSPECIFIED", "training"):
+            active_stage = 1
+        else:
+            active_stage = 0
+
+        # If the experiment is in a terminal state, output the appropriate
+        # message and exit. Otherwise, sleep and repeat.
+        if exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED:
+            print_progress(active_stage, ended=True)
+            print(termcolor.colored("Model definition test succeeded! 🎉", "green"))
+            return
+        elif exp.state == bindings.determinedexperimentv1State.STATE_CANCELED:
+            print_progress(active_stage, ended=True)
+            print(
+                termcolor.colored(
+                    f"Model definition test (ID: {exp_id}) canceled before "
+                    "model test could complete. Please re-run the command.",
+                    "yellow",
+                )
+            )
+            sys.exit(1)
+        elif exp.state == bindings.determinedexperimentv1State.STATE_ERROR:
+            print_progress(active_stage, ended=True)
+            trial_id = trials[0].id
+            tlogs = logs.trial_logs(sess, trial_id)
+            logs.pprint_trial_logs(trial_id, tlogs)
+            sys.exit(1)
+        else:
+            print_progress(active_stage, ended=False)
+            time.sleep(0.2)
+
+
 @authentication.required
 def submit_experiment(args: Namespace) -> None:
-    experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
-    model_context = context.read_legacy_context(args.model_def, args.include)
+    config_text = args.config_file.read()
+    args.config_file.close()
+    experiment_config = _parse_config_text_or_exit(config_text, args.config_file.name, args.config)
+    model_context = context.read_v1_context(args.model_def, args.include)
 
-    additional_body_fields = {}
+    if args.config:
+        # The user provided tweaks as cli args, so we have to reserialize the submitted experiment
+        # config.  This will unfortunately remove comments they had in the yaml, so we only do it
+        # when we have to.
+        yaml_dump = yaml.dump(experiment_config)
+        assert yaml_dump is not None
+        config_text = yaml_dump
+
+    sess = cli.setup_session(args)
+
+    req = bindings.v1CreateExperimentRequest(
+        activate=not args.paused,
+        config=config_text,
+        modelDefinition=model_context,
+        parentId=None,
+        projectId=args.project_id,
+        template=args.template,
+        validateOnly=bool(args.test_mode),
+    )
+
     if args.git:
-        (
-            additional_body_fields["git_remote"],
-            additional_body_fields["git_commit"],
-            additional_body_fields["git_committer"],
-            additional_body_fields["git_commit_date"],
-        ) = read_git_metadata(args.model_def)
-
-    if args.project_id:
-        sess = cli.setup_session(args)
-        p = bindings.get_GetProject(sess, id=args.project_id).project
-        experiment_config["project"] = p.name
-        experiment_config["workspace"] = p.workspaceName
+        req.gitRemote, req.gitCommit, req.gitCommitter, req.gitCommitDate = read_git_metadata(
+            args.model_def
+        )
 
     if args.test_mode:
-        api.experiment.create_test_experiment_and_follow_logs(
-            args.master,
-            experiment_config,
-            model_context,
-            template=args.template if args.template else None,
-            additional_body_fields=additional_body_fields,
-        )
+        print(termcolor.colored("Validating experiment configuration...", "yellow"), end="\r")
+        bindings.post_CreateExperiment(sess, body=req)
+        print(termcolor.colored("Experiment configuration validation succeeded! 🎉", "green"))
+
+        print(termcolor.colored("Creating test experiment...", "yellow"), end="\r")
+        req.validateOnly = False
+        test_config = det._make_test_experiment_config(experiment_config)
+        req.config = yaml.dump(test_config)
+        resp = bindings.post_CreateExperiment(sess, body=req)
+        print(termcolor.colored(f"Created test experiment {resp.experiment.id}", "green"))
+
+        _follow_test_experiment_logs(sess, resp.experiment.id)
+
     else:
-        api.experiment.create_experiment_and_follow_logs(
-            master_url=args.master,
-            config=experiment_config,
-            model_context=model_context,
-            template=args.template if args.template else None,
-            additional_body_fields=additional_body_fields,
-            activate=not args.paused,
-            follow_first_trial_logs=args.follow_first_trial,
-        )
+        resp = bindings.post_CreateExperiment(sess, body=req)
+
+        print(f"Created experiment {resp.experiment.id}")
+
+        if resp.warnings:
+            cli.print_warnings(resp.warnings)
+
+        if not args.paused and args.follow_first_trial:
+            _follow_experiment_logs(sess, resp.experiment.id)
 
 
 def local_experiment(args: Namespace) -> None:
@@ -177,7 +290,9 @@ def local_experiment(args: Namespace) -> None:
             "the --local flag."
         )
 
-    experiment_config = _parse_config_file_or_exit(args.config_file, args.config)
+    config_text = args.config_file.read()
+    args.config_file.close()
+    experiment_config = _parse_config_text_or_exit(config_text, args.config_file.name, args.config)
     entrypoint = experiment_config["entrypoint"]
 
     # --local --test mode only makes sense for the legacy trial entrypoints.  Otherwise the user
@@ -213,7 +328,7 @@ def delete_experiment(args: Namespace) -> None:
         "wish to proceed?"
     ):
         bindings.delete_DeleteExperiment(cli.setup_session(args), experimentId=args.experiment_id)
-        print("Deletion of experiment {} is in progress".format(args.experiment_id))
+        print(f"Deletion of experiment {args.experiment_id} is in progress")
     else:
         print("Aborting experiment deletion.")
 
@@ -332,9 +447,9 @@ def describe(args: Namespace) -> None:
             t_metrics_names += scalar_training_metrics_names(sample_workloads)
             v_metrics_names += scalar_validation_metrics_names(sample_workloads)
         t_metrics_names = sorted(set(t_metrics_names))
-        t_metrics_headers = ["Training Metric: {}".format(name) for name in t_metrics_names]
+        t_metrics_headers = [f"Training Metric: {name}" for name in t_metrics_names]
         v_metrics_names = sorted(set(v_metrics_names))
-        v_metrics_headers = ["Validation Metric: {}".format(name) for name in v_metrics_names]
+        v_metrics_headers = [f"Validation Metric: {name}" for name in v_metrics_names]
 
     headers = (
         ["Trial ID", "# of Batches", "State", "Report Time"]
@@ -521,7 +636,7 @@ def download(args: Namespace) -> None:
 @authentication.required
 def kill_experiment(args: Namespace) -> None:
     bindings.post_KillExperiment(cli.setup_session(args), id=args.experiment_id)
-    print("Killed experiment {}".format(args.experiment_id))
+    print(f"Killed experiment {args.experiment_id}")
 
 
 @authentication.required
@@ -658,7 +773,7 @@ def list_trials(args: Namespace) -> None:
 @authentication.required
 def pause(args: Namespace) -> None:
     bindings.post_PauseExperiment(cli.setup_session(args), id=args.experiment_id)
-    print("Paused experiment {}".format(args.experiment_id))
+    print(f"Paused experiment {args.experiment_id}")
 
 
 @authentication.required
@@ -668,7 +783,7 @@ def set_description(args: Namespace) -> None:
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
     exp_patch.description = args.description
     bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
-    print("Set description of experiment {} to '{}'".format(args.experiment_id, args.description))
+    print(f"Set description of experiment {args.experiment_id} to '{args.description}'")
 
 
 @authentication.required
@@ -678,7 +793,7 @@ def set_name(args: Namespace) -> None:
     exp_patch = bindings.v1PatchExperiment.from_json(exp.to_json())
     exp_patch.name = args.name
     bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
-    print("Set name of experiment {} to '{}'".format(args.experiment_id, args.name))
+    print(f"Set name of experiment {args.experiment_id} to '{args.name}'")
 
 
 @authentication.required
@@ -691,7 +806,7 @@ def add_label(args: Namespace) -> None:
     if args.label not in exp_patch.labels:
         exp_patch.labels = list(exp_patch.labels) + [args.label]
         bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
-    print("Added label '{}' to experiment {}".format(args.label, args.experiment_id))
+    print(f"Added label '{args.label}' to experiment {args.experiment_id}")
 
 
 @authentication.required
@@ -702,25 +817,25 @@ def remove_label(args: Namespace) -> None:
     if (exp_patch.labels) and (args.label in exp_patch.labels):
         exp_patch.labels = [label for label in exp_patch.labels if label != args.label]
         bindings.patch_PatchExperiment(session, body=exp_patch, experiment_id=args.experiment_id)
-    print("Removed label '{}' from experiment {}".format(args.label, args.experiment_id))
+    print(f"Removed label '{args.label}' from experiment {args.experiment_id}")
 
 
 @authentication.required
 def set_max_slots(args: Namespace) -> None:
-    patch_experiment(args, "change `max_slots` of", {"resources": {"max_slots": args.max_slots}})
-    print("Set `max_slots` of experiment {} to {}".format(args.experiment_id, args.max_slots))
+    patch_experiment(args, {"resources": {"max_slots": args.max_slots}})
+    print(f"Set `max_slots` of experiment {args.experiment_id} to {args.max_slots}")
 
 
 @authentication.required
 def set_weight(args: Namespace) -> None:
-    patch_experiment(args, "change `weight` of", {"resources": {"weight": args.weight}})
-    print("Set `weight` of experiment {} to {}".format(args.experiment_id, args.weight))
+    patch_experiment(args, {"resources": {"weight": args.weight}})
+    print(f"Set `weight` of experiment {args.experiment_id} to {args.weight}")
 
 
 @authentication.required
 def set_priority(args: Namespace) -> None:
-    patch_experiment(args, "change `priority` of", {"resources": {"priority": args.priority}})
-    print("Set `priority` of experiment {} to {}".format(args.experiment_id, args.priority))
+    patch_experiment(args, {"resources": {"priority": args.priority}})
+    print(f"Set `priority` of experiment {args.experiment_id} to {args.priority}")
 
 
 @authentication.required
@@ -732,9 +847,7 @@ def set_gc_policy(args: Namespace) -> None:
     }
 
     if not args.yes:
-        r = api.get(
-            args.master, "experiments/{}/preview_gc".format(args.experiment_id), params=policy
-        )
+        r = api.get(args.master, f"experiments/{args.experiment_id}/preview_gc", params=policy)
         response = r.json()
         checkpoints = response["checkpoints"]
         metric_name = response["metric_name"]
@@ -743,7 +856,7 @@ def set_gc_policy(args: Namespace) -> None:
             "Trial ID",
             "# of Batches",
             "State",
-            "Validation Metric\n({})".format(metric_name),
+            f"Validation Metric\n({metric_name})",
             "UUID",
             "Resources",
         ]
@@ -769,10 +882,8 @@ def set_gc_policy(args: Namespace) -> None:
             )
             print(tabulate.tabulate(values, headers, tablefmt="presto"), flush=FLUSH)
         print(
-            "This policy will delete {} checkpoints with "
-            "validations and {} checkpoints without validations.".format(
-                len(values), len(checkpoints) - len(values)
-            )
+            f"This policy will delete {len(values)} checkpoints with "
+            f"validations and {len(checkpoints) - len(values)} checkpoints without validations."
         )
 
     if args.yes or render.yes_or_no(
@@ -781,8 +892,8 @@ def set_gc_policy(args: Namespace) -> None:
         "in the unrecoverable deletion of checkpoints.  Do you wish to "
         "proceed?"
     ):
-        patch_experiment(args, "change gc policy of", {"checkpoint_storage": policy})
-        print("Set GC policy of experiment {} to\n{}".format(args.experiment_id, pformat(policy)))
+        patch_experiment(args, {"checkpoint_storage": policy})
+        print(f"Set GC policy of experiment {args.experiment_id} to\n{pformat(policy)}")
     else:
         print("Aborting operations.")
 
@@ -790,7 +901,7 @@ def set_gc_policy(args: Namespace) -> None:
 @authentication.required
 def unarchive(args: Namespace) -> None:
     bindings.post_UnarchiveExperiment(cli.setup_session(args), id=args.experiment_id)
-    print("Unarchived experiment {}".format(args.experiment_id))
+    print(f"Unarchived experiment {args.experiment_id}")
 
 
 @authentication.required
