@@ -69,35 +69,38 @@ const useModalManageGroups = ({ groups, user }: ModalProps): ModalHooks => {
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
 
-  const handleOk = useCallback(async (userGroupIds?: (number | undefined)[]) => {
-    await form.validateFields();
+  const handleOk = useCallback(
+    async (userGroupIds?: (number | undefined)[]) => {
+      await form.validateFields();
 
-    const formData = form.getFieldsValue();
+      const formData = form.getFieldsValue();
 
-    try {
-      if (user) {
-        const uid = user?.id;
-        if (uid) {
-          (formData[FIELD_NAME] as number[]).forEach(async (gid) => {
-            if (!userGroupIds?.includes(gid)) {
-              await updateGroup({ addUsers: [uid], groupId: gid });
-            }
-          });
-          (userGroupIds as number[])?.forEach(async (gid) => {
-            if (!formData[FIELD_NAME].includes(gid)) {
-              await updateGroup({ groupId: gid, removeUsers: [uid] });
-            }
-          });
+      try {
+        if (user) {
+          const uid = user?.id;
+          if (uid) {
+            (formData[FIELD_NAME] as number[]).forEach(async (gid) => {
+              if (!userGroupIds?.includes(gid)) {
+                await updateGroup({ addUsers: [uid], groupId: gid });
+              }
+            });
+            (userGroupIds as number[])?.forEach(async (gid) => {
+              if (!formData[FIELD_NAME].includes(gid)) {
+                await updateGroup({ groupId: gid, removeUsers: [uid] });
+              }
+            });
+          }
         }
-      }
-    } catch (e) {
-      message.error('Error adding user to groups');
-      handleError(e, { silent: true, type: ErrorType.Input });
+      } catch (e) {
+        message.error('Error adding user to groups');
+        handleError(e, { silent: true, type: ErrorType.Input });
 
-      // Re-throw error to prevent modal from getting dismissed.
-      throw e;
-    }
-  }, [form, user]);
+        // Re-throw error to prevent modal from getting dismissed.
+        throw e;
+      }
+    },
+    [form, user],
+  );
 
   const fetchUserGroups = useCallback(async () => {
     try {
@@ -120,11 +123,7 @@ const useModalManageGroups = ({ groups, user }: ModalProps): ModalHooks => {
       title: <h5>Manage Groups</h5>,
       width: 520,
     });
-  }, [form,
-    handleOk,
-    openOrUpdate,
-    fetchUserGroups,
-    groups]);
+  }, [form, handleOk, openOrUpdate, fetchUserGroups, groups]);
   return { modalOpen, ...modalHook };
 };
 
