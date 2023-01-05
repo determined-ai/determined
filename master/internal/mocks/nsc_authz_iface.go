@@ -15,6 +15,29 @@ type NSCAuthZ struct {
 	mock.Mock
 }
 
+// AccessibleScopes provides a mock function with given fields: ctx, curUser, requestedScope
+func (_m *NSCAuthZ) AccessibleScopes(ctx context.Context, curUser model.User, requestedScope model.AccessScopeID) (*map[model.AccessScopeID]bool, error) {
+	ret := _m.Called(ctx, curUser, requestedScope)
+
+	var r0 *map[model.AccessScopeID]bool
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) *map[model.AccessScopeID]bool); ok {
+		r0 = rf(ctx, curUser, requestedScope)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*map[model.AccessScopeID]bool)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, model.AccessScopeID) error); ok {
+		r1 = rf(ctx, curUser, requestedScope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CanCreateNSC provides a mock function with given fields: ctx, curUser, workspaceID
 func (_m *NSCAuthZ) CanCreateNSC(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID) error {
 	ret := _m.Called(ctx, curUser, workspaceID)
