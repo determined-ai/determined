@@ -172,8 +172,6 @@ def init(
         hparams = hparams or {}
         trial_seed = _generate_local_seed()
         exp_conf = {}
-        num_gpus = 0
-        slots_per_trial = 0
         aggregation_frequency = 1
         fp16_compression = False
         average_aggregated_gradients = False
@@ -191,8 +189,6 @@ def init(
         hparams = cluster_info.trial.hparams
         trial_seed = cluster_info.trial.trial_seed
         exp_conf = cluster_info.trial._config
-        num_gpus = len(cluster_info.gpu_uuids)
-        slots_per_trial = int(exp_conf["resources"]["slots_per_trial"])
         aggregation_frequency = int(exp_conf["optimizations"]["aggregation_frequency"])
         fp16_compression = bool(exp_conf["optimizations"]["gradient_compression"])
         average_aggregated_gradients = bool(
@@ -213,8 +209,8 @@ def init(
             core_context=core_context,
             trial_seed=trial_seed,
             hparams=hparams,
-            slots_per_trial=slots_per_trial,
-            num_gpus=num_gpus,
+            slots_per_trial=core_context.distributed.get_size(),
+            num_gpus=core_context.distributed.get_num_agents(),
             exp_conf=exp_conf,
             aggregation_frequency=aggregation_frequency,
             fp16_compression=fp16_compression,
