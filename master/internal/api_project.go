@@ -380,10 +380,9 @@ func (a *apiServer) GetProjectsByUserActivity(
 		AND pe.state = 'ACTIVE' then 1 else 0 end) AS num_active_experiments,
 	  MAX(case when pe.project_id = p.id then pe.start_time else NULL end) 
 	  AS last_experiment_started_at
-	FROM p
+	FROM pe, p
 	  LEFT JOIN users as u ON u.id = p.user_id
 	  LEFT JOIN workspaces AS w on w.id = p.workspace_id
-	  LEFT JOIN pe on pe.project_id = p.id 
 	GROUP BY p.user_id, p.id, p.name, p.workspace_id, p.description, 
 	p.immutable, p.notes, p.state, p.error_message,  u.username, w.name, p.activity_time
 	ORDER BY p.activity_time DESC;`, curUser.ID, limit).
