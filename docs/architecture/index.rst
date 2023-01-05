@@ -62,7 +62,7 @@ reporting the states of **trial runner** to the master.
 
 .. code::
 
-   ┌─Agent-Cluster-Node─────────────────────────────┐            x  xxx   xxxxxx
+   ┌─Agent-Cluster-Node(s)──────────────────────────┐            x  xxx   xxxxxx
    │                                                │          xxxxxx  xxx  xx  xxxx
    │                      ┌──────────────────┐      │        xxxx    x          x  xx
    │                      │                  │      │      xxx                   xxxx
@@ -71,7 +71,7 @@ reporting the states of **trial runner** to the master.
    │        │             └──────────────────┘      │    xx           &          xxxxx
    │        │                                       │     xxx      Storage        x
    │        ▼                                       │       xxx                  xx
-   │ ┌───────────┐    ┌─Task-Container────────────┐ │        x   x          x     xx
+   │ ┌───────────┐    ┌─Task-Container(s)─────────┐ │        x   x          x     xx
    │ │           │    │                           │ │        xxxxx      x    xxxxxx
    │ │ Container │◄──►│ ┌─Worker────────────────┐ │ │            xxxx xxxxxxx
    │ │  Runtime  │    │ │                       │ │ │               xxx
