@@ -1,5 +1,5 @@
 import { Button as AntdButton } from 'antd';
-import React, { CSSProperties, MouseEvent, ReactNode } from 'react';
+import React, { MouseEvent, ReactNode } from 'react';
 
 interface ButtonProps {
   children?: ReactNode;
@@ -11,8 +11,6 @@ interface ButtonProps {
   onClick?: (event: MouseEvent) => void;
   shape?: 'circle' | 'default' | 'round';
   size?: 'large' | 'middle' | 'small';
-  // TODO: remove style prop after adding iconic button support to component
-  style?: CSSProperties;
   type?: 'primary' | 'link' | 'text' | 'ghost' | 'default' | 'dashed';
 }
 

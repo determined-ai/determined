@@ -10,6 +10,7 @@ import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -26,7 +27,6 @@ import UserAvatar from 'components/UserAvatar'; //TODO: Rename?
 import resourcePools from 'fixtures/responses/cluster/resource-pools.json';
 import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
-import Icon from 'shared/components/Icon';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
@@ -180,44 +180,9 @@ const ButtonsSection: React.FC = () => {
         <hr />
         <strong>Large iconic buttons</strong>
         <Space>
-          <Button
-            style={{
-              height: '100%',
-              padding: '16px',
-              paddingBottom: '8px',
-              width: '120px',
-            }}
-            type="primary">
-            <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-              <Icon name="searcher-grid" />
-              <p>Iconic button</p>
-            </div>
-          </Button>
-          <Button
-            style={{
-              height: '100%',
-              padding: '16px',
-              paddingBottom: '8px',
-              width: '120px',
-            }}>
-            <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-              <Icon name="searcher-grid" />
-              <p>Iconic button</p>
-            </div>
-          </Button>
-          <Button
-            disabled
-            style={{
-              height: '100%',
-              padding: '16px',
-              paddingBottom: '8px',
-              width: '120px',
-            }}>
-            <div style={{ alignItems: 'center', display: 'flex', flexDirection: 'column' }}>
-              <Icon name="searcher-grid" />
-              <p>Iconic button</p>
-            </div>
-          </Button>
+          <IconicButton iconName="searcher-grid" text="Iconic button" type="primary" />
+          <IconicButton iconName="searcher-grid" text="Iconic button" />
+          <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
         </Space>
         <strong>Guiding principles</strong>
         <ul>
