@@ -43,6 +43,7 @@ func (a *NSCAuthZBasic) CanSetNSCsPriority(
 	return nil
 }
 
+// AccessibleScopes returns the same scopes it is given.
 func (a *NSCAuthZBasic) AccessibleScopes(
 	ctx context.Context, curUser model.User, scopes map[model.AccessScopeID]bool,
 ) (map[model.AccessScopeID]bool, error) {
