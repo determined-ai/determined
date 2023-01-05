@@ -95,6 +95,8 @@ class GCSStorageManager(storage.CloudStorageManager):
         for blob in self.bucket.list_blobs(prefix=path):
             found = True
             relname = os.path.relpath(blob.name, path)
+            if blob.name.endswith("/"):
+                relname = os.path.join(relname, "")
             if selector is not None and not selector(relname):
                 continue
             _dst = os.path.join(dst, relname)

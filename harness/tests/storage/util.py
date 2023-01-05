@@ -142,7 +142,7 @@ def run_storage_lifecycle_test(
     }
 
     def selector(x: str) -> bool:
-        return x in ["subdir", "subdir/file1.txt", "empty_dir"]
+        return x in ["subdir/file1.txt", "empty_dir/"]
 
     # Test restore_path with selector
     # clear logs collected up to this point

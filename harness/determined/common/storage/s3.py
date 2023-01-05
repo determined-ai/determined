@@ -113,6 +113,9 @@ class S3StorageManager(storage.CloudStorageManager):
             for obj in self.bucket.objects.filter(Prefix=prefix):
                 found = True
                 relname = os.path.relpath(obj.key, prefix)
+                if obj.key.endswith("/"):
+                    relname = os.path.join(relname, "")
+
                 if selector is not None and not selector(relname):
                     continue
                 _dst = os.path.join(dst, relname)
