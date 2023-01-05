@@ -41,8 +41,8 @@ import settingsConfig, {
 } from './UserManagement.settings';
 
 export const USER_TITLE = 'Users';
-export const CREATE_USER = 'New User';
-export const CREAT_USER_LABEL = 'new_user';
+export const CREATE_USER = 'Add User';
+export const CREATE_USER_LABEL = 'add_user';
 
 interface DropdownProps {
   fetchUsers: () => void;
@@ -279,7 +279,7 @@ const UserManagement: React.FC = () => {
       options={
         <Space>
           <Button
-            aria-label={CREAT_USER_LABEL}
+            aria-label={CREATE_USER_LABEL}
             disabled={!canModifyUsers}
             onClick={onClickCreateUser}>
             {CREATE_USER}
