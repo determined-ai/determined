@@ -127,7 +127,7 @@ if python_version.major == 3 and python_version.minor <= 7:
             dirs_exist_ok=dirs_exist_ok,
         )
 
-    # END VENDORED CODE FROM PYTORCH
+    # END VENDORED CODE FROM SHUTIL
 
 else:
     copytree = shutil.copytree
@@ -256,17 +256,23 @@ class SharedFSStorageManager(storage.StorageManager):
 
                 for name in names:
                     # ckpt_path would be "subdir/file"
-                    ckpt_path = os.path.join(rel_dir, name)
-                    if selector(ckpt_path):
-                        # The user wants this file or directory.
-                        continue
+                    path = os.path.join(rel_dir, name)
+
                     # src_path would be "/determined_shared_fs/UUID/subdir/file"
                     src_path = os.path.join(ign_dir, name)
+                    if os.path.isdir(src_path):
+                        # shutil removes '/' from dir names; we will add it manually.
+                        path = os.path.join(path, "")
+
+                    if selector(path):
+                        # The user wants this file or directory.
+                        continue
+
                     if os.path.isdir(src_path):
                         # The user does not want this directory, but we don't yet know if there
                         # might be a subfile or subdirectory which they do want.  Let copytree
                         # continue and revisit this later.
-                        maybe_dangling.append(ckpt_path)
+                        maybe_dangling.append(path)
                         continue
                     out.append(name)
                 return out
