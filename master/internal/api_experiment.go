@@ -1103,10 +1103,21 @@ func (a *apiServer) CreateExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	var commitDate *time.Time
+	pt, err := protoutils.ToTime(req.GitCommitDate)
+	if err == nil {
+		commitDate = &pt
+	}
+
 	detParams := CreateExperimentParams{
-		ConfigBytes:  req.Config,
-		ModelDef:     filesToArchive(req.ModelDefinition),
-		ValidateOnly: req.ValidateOnly,
+		ConfigBytes:   req.Config,
+		ModelDef:      filesToArchive(req.ModelDefinition),
+		ValidateOnly:  req.ValidateOnly,
+		Template:      req.Template,
+		GitRemote:     req.GitRemote,
+		GitCommit:     req.GitCommit,
+		GitCommitter:  req.GitCommitter,
+		GitCommitDate: commitDate,
 	}
 	if req.ParentId != 0 {
 		detParams.ParentID = ptrs.Ptr(int(req.ParentId))
@@ -1148,7 +1159,9 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if validateOnly {
-		return &apiv1.CreateExperimentResponse{}, nil
+		return &apiv1.CreateExperimentResponse{
+			Experiment: &experimentv1.Experiment{},
+		}, nil
 	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.

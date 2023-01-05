@@ -896,27 +896,27 @@ class PyTorchTrial(det.Trial):
 
     * **Define models, optimizers, and LR schedulers**.
 
-       In the :meth:`__init__` method, initialize models, optimizers, and LR schedulers
-       and wrap them with ``wrap_model``, ``wrap_optimizer``, ``wrap_lr_scheduler``
-       provided by :class:`~determined.pytorch.PyTorchTrialContext`.
+      In the :meth:`__init__` method, initialize models, optimizers, and LR schedulers
+      and wrap them with ``wrap_model``, ``wrap_optimizer``, ``wrap_lr_scheduler``
+      provided by :class:`~determined.pytorch.PyTorchTrialContext`.
 
     * **Run forward and backward passes**.
 
-       In :meth:`train_batch`, call ``backward`` and ``step_optimizer`` provided by
-       :class:`~determined.pytorch.PyTorchTrialContext`.
-       We support arbitrary numbers of models, optimizers, and LR schedulers
-       and arbitrary orders of running forward and backward passes.
+      In :meth:`train_batch`, call ``backward`` and ``step_optimizer`` provided by
+      :class:`~determined.pytorch.PyTorchTrialContext`.
+      We support arbitrary numbers of models, optimizers, and LR schedulers
+      and arbitrary orders of running forward and backward passes.
 
     * **Configure automatic mixed precision**.
 
-       In the :meth:`__init__` method, call ``configure_apex_amp`` provided by
-       :class:`~determined.pytorch.PyTorchTrialContext`.
+      In the :meth:`__init__` method, call ``configure_apex_amp`` provided by
+      :class:`~determined.pytorch.PyTorchTrialContext`.
 
     * **Clip gradients**.
 
-       In :meth:`train_batch`, pass a function into
-       ``step_optimizer(optimizer, clip_grads=...)`` provided by
-       :class:`~determined.pytorch.PyTorchTrialContext`.
+      In :meth:`train_batch`, pass a function into
+      ``step_optimizer(optimizer, clip_grads=...)`` provided by
+      :class:`~determined.pytorch.PyTorchTrialContext`.
     """
 
     trial_controller_class = PyTorchTrialController

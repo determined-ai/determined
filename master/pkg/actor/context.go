@@ -72,6 +72,15 @@ func (c *Context) ActorOf(id interface{}, actor Actor) (*Ref, bool) {
 	return c.recipient.createChild(c.recipient.address.Child(id), actor)
 }
 
+// MustActorOf adds the actor with the provided address. It panics if a new actor was not created.
+func (c *Context) MustActorOf(id interface{}, actor Actor) *Ref {
+	ref, created := c.ActorOf(id, actor)
+	if !created {
+		panic("actor was not created")
+	}
+	return ref
+}
+
 // ActorOfFromFactory behaves the same as ActorOf but will only create the actor instance if it's
 // needed. It is intended for cases where an actor needs to be looked up many times safely but
 // usually exists.
