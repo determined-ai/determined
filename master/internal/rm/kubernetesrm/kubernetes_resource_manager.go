@@ -230,9 +230,8 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.MasterPort,
 		)
 
-		k.pools[KubernetesDummyResourcePool] = ctx.Self().System().MustActorOf(
-			actor.Addr(KubernetesDummyResourcePool),
-			newResourcePool(k.config, k.podsActor),
+		k.pools[KubernetesDummyResourcePool] = ctx.MustActorOf(
+			KubernetesDummyResourcePool, newResourcePool(k.config, k.podsActor),
 		)
 
 	case
