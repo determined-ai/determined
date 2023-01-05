@@ -622,7 +622,15 @@ func (a *Allocation) ResourcesStateChanged(
 			}))
 			a.Exit(ctx, "resources were killed")
 		case msg.ResourcesStopped.Failure != nil:
-			a.Error(ctx, *msg.ResourcesStopped.Failure)
+			// Avoid erroring out if we have killed our daemons gracefully.
+			// This occurs in the case of an early stop in dtrain. One resource
+			// will exit with a 0 exit code and kill the rest of the resources sending
+			// failed messages for these resources.
+			if a.killedDaemonsGracefully {
+				a.Exit(ctx, "remaining resources terminated")
+			} else {
+				a.Error(ctx, *msg.ResourcesStopped.Failure)
+			}
 		default:
 			a.logger.Insert(ctx, a.enrichLog(model.TaskLog{
 				ContainerID: msg.ContainerIDStr(),
