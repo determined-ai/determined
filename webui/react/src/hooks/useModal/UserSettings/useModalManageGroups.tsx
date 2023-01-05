@@ -1,6 +1,6 @@
 import { Form, message, Select } from 'antd';
 import { FormInstance } from 'antd/lib/form/hooks/useForm';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { getGroups, updateGroup } from 'services/api';
