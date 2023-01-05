@@ -75,7 +75,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: () => void;
 }
 
-const useModalCreateUser = ({ user, onClose }: ModalProps): ModalHooks => {
+const useModalConfigureAgent = ({ user, onClose }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
@@ -119,4 +119,4 @@ const useModalCreateUser = ({ user, onClose }: ModalProps): ModalHooks => {
   return { modalOpen, ...modalHook };
 };
 
-export default useModalCreateUser;
+export default useModalConfigureAgent;

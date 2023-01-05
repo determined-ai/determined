@@ -16,9 +16,9 @@ import {
 } from 'components/Table/Table';
 import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
-import useModalAddToGroup from 'hooks/useModal/UserSettings/useModalAddToGroup';
 import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
+import useModalManageGroups from 'hooks/useModal/UserSettings/useModalManageGroups';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
@@ -53,8 +53,8 @@ interface DropdownProps {
 const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
     useModalCreateUser({ onClose: fetchUsers, user });
-  const { modalOpen: openAddToGroupsModal, contextHolder: modalAddToGroupsContextHolder } =
-    useModalAddToGroup({ groups, user });
+  const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
+    useModalManageGroups({ groups, user });
   const { modalOpen: openConfigureAgentModal, contextHolder: modalConfigureAgentContextHolder } =
     useModalConfigureAgent({ onClose: fetchUsers, user });
 
@@ -67,9 +67,9 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   };
 
   const MenuKey = {
-    Add: 'add',
-    Configure: 'configure',
+    Agent: 'agent',
     Edit: 'edit',
+    Groups: 'groups',
     State: 'state',
     View: 'view',
   } as const;
@@ -84,10 +84,10 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     [MenuKey.View]: () => {
       openEditUserModal(true);
     },
-    [MenuKey.Add]: () => {
-      openAddToGroupsModal();
+    [MenuKey.Groups]: () => {
+      openManageGroupsModal();
     },
-    [MenuKey.Configure]: () => {
+    [MenuKey.Agent]: () => {
       openConfigureAgentModal();
     },
   };
@@ -98,13 +98,12 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 
   const menuItems: MenuProps['items'] = canModifyUsers
     ? [
-        { key: MenuKey.View, label: 'View Profile' },
-        { key: MenuKey.Edit, label: 'Edit' },
-        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-        { key: MenuKey.Add, label: 'Add to Groups' },
-        { key: MenuKey.Configure, label: 'Configure Agent' },
-      ]
-    : [{ key: MenuKey.View, label: 'View Profile' }];
+      { key: MenuKey.Edit, label: 'Edit User' },
+      { key: MenuKey.Groups, label: 'Manage Groups' },
+      { key: MenuKey.Agent, label: 'Configure Agent' },
+      { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+    ]
+    : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
     <div className={dropdownCss.base}>
@@ -117,7 +116,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
         </Button>
       </Dropdown>
       {modalEditUserContextHolder}
-      {modalAddToGroupsContextHolder}
+      {modalManageGroupsContextHolder}
       {modalConfigureAgentContextHolder}
     </div>
   );

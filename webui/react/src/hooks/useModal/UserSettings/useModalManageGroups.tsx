@@ -64,7 +64,7 @@ interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
   modalOpen: () => void;
 }
 
-const useModalCreateUser = ({ groups, user }: ModalProps): ModalHooks => {
+const useModalManageGroups = ({ groups, user }: ModalProps): ModalHooks => {
   const [form] = Form.useForm();
 
   const { modalOpen: openOrUpdate, ...modalHook } = useModal();
@@ -117,7 +117,7 @@ const useModalCreateUser = ({ groups, user }: ModalProps): ModalHooks => {
       icon: null,
       okText: 'Save',
       onOk: () => handleOk(userGroupIds),
-      title: <h5>Add to Groups</h5>,
+      title: <h5>Manage Groups</h5>,
       width: 520,
     });
   }, [form,
@@ -128,4 +128,4 @@ const useModalCreateUser = ({ groups, user }: ModalProps): ModalHooks => {
   return { modalOpen, ...modalHook };
 };
 
-export default useModalCreateUser;
+export default useModalManageGroups;
