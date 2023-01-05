@@ -105,8 +105,11 @@ class DetCallback(TrainerCallback):
             "trial_id": info.trial.trial_id,
         }
 
+        def selector(x: str) -> bool:
+            return x.startswith((f"checkpoint-{state.global_step}/", "runs/"))
+
         self.core_context.checkpoint.upload(
-            args.output_dir, metadata=det_checkpoint_metadata, shard=True
+            args.output_dir, metadata=det_checkpoint_metadata, shard=True, selector=selector
         )
 
         if self.core_context.preempt.should_preempt():

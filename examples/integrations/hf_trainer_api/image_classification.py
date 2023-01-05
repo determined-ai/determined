@@ -407,7 +407,12 @@ def main(model_args, data_args, training_args):
         data_collator=collate_fn,
     )
 
-    user_data = {"model_args": model_args, "training_args": training_args, "data_args": data_args}
+    user_data = {
+        "finetuned_from": model_args.model_name_or_path,
+        "tasks": "image-classification",
+        "dataset": data_args.dataset_name,
+        "tags": ["image-classification", "vision"],
+    }
 
     det_callback = DetCallback(
         core_context, training_args, filter_metrics=["loss", "accuracy"], user_data=user_data
