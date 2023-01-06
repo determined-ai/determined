@@ -6,6 +6,7 @@ import Clusters from 'pages/Clusters';
 import Dashboard from 'pages/Dashboard';
 import DefaultRoute from 'pages/DefaultRoute';
 import Deprecated from 'pages/Deprecated';
+import DesignKit from 'pages/DesignKit';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
@@ -36,6 +37,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   clusters: <Clusters />,
   dashboard: <Dashboard />,
   default: <DefaultRoute />,
+  designKit: <DesignKit />,
   experimentDetails: <ExperimentDetails />,
   interactive: <InteractiveTask />,
   jobs: <Deprecated />,
