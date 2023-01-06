@@ -72,10 +72,10 @@ func (a *apiServer) filterTensorboards(
 	ctx context.Context,
 	curUser model.User,
 	tensorboards []*tensorboardv1.Tensorboard,
-	workspaceId int32,
+	workspaceID int32,
 ) ([]*tensorboardv1.Tensorboard, error) {
 	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
-		ctx, curUser, model.AccessScopeID(workspaceId))
+		ctx, curUser, model.AccessScopeID(workspaceID))
 	if err != nil {
 		return nil, err
 	}
