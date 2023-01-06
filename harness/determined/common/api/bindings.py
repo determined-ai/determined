@@ -4357,6 +4357,7 @@ class v1GetTensorboardsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetTensorboardsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -5542,6 +5543,7 @@ class v1LaunchTensorboardRequest:
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     templateName: "typing.Optional[str]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5551,6 +5553,7 @@ class v1LaunchTensorboardRequest:
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5562,6 +5565,8 @@ class v1LaunchTensorboardRequest:
             self.templateName = templateName
         if not isinstance(trialIds, Unset):
             self.trialIds = trialIds
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchTensorboardRequest":
@@ -5577,6 +5582,8 @@ class v1LaunchTensorboardRequest:
             kwargs["templateName"] = obj["templateName"]
         if "trialIds" in obj:
             kwargs["trialIds"] = obj["trialIds"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5592,6 +5599,8 @@ class v1LaunchTensorboardRequest:
             out["templateName"] = self.templateName
         if not omit_unset or "trialIds" in vars(self):
             out["trialIds"] = self.trialIds
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchTensorboardResponse:
@@ -10062,6 +10071,7 @@ class v1Tensorboard:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
+        workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         exitStatus: "typing.Union[str, None, Unset]" = _unset,
@@ -10077,6 +10087,7 @@ class v1Tensorboard:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(container, Unset):
             self.container = container
         if not isinstance(displayName, Unset):
@@ -10102,6 +10113,7 @@ class v1Tensorboard:
             "startTime": obj["startTime"],
             "state": determinedtaskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "container" in obj:
             kwargs["container"] = v1Container.from_json(obj["container"]) if obj["container"] is not None else None
@@ -10128,6 +10140,7 @@ class v1Tensorboard:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "container" in vars(self):
             out["container"] = None if self.container is None else self.container.to_json(omit_unset)
@@ -12645,7 +12658,7 @@ def get_GetCommands(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetCommandsResponse":
@@ -13288,7 +13301,7 @@ def get_GetNotebooks(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetNotebooksResponse":
@@ -13482,7 +13495,7 @@ def get_GetShells(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetShellsResponse":
@@ -13666,6 +13679,7 @@ def get_GetTensorboards(
     sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetTensorboardsResponse":
     _params = {
         "limit": limit,
@@ -13674,6 +13688,7 @@ def get_GetTensorboards(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",

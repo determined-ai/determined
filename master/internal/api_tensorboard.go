@@ -68,6 +68,29 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 	return filesArchive
 }
 
+func (a *apiServer) filterTensorboards(
+	ctx context.Context,
+	curUser model.User,
+	tensorboards []*tensorboardv1.Tensorboard,
+	workspaceId int32,
+) ([]*tensorboardv1.Tensorboard, error) {
+	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, curUser, model.AccessScopeID(workspaceId))
+	if err != nil {
+		return nil, err
+	}
+
+	var filteredTensorboards []*tensorboardv1.Tensorboard
+
+	for _, tb := range tensorboards {
+		if _, ok := filteredScopes[model.AccessScopeID(tb.WorkspaceId)]; ok {
+			filteredTensorboards = append(filteredTensorboards, tb)
+		}
+	}
+
+	return filteredTensorboards, nil
+}
+
 func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
@@ -80,20 +103,13 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
-	a.filter(&resp.Tensorboards, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, model.UserID(resp.Tensorboards[i].UserId), command.PlaceHolderWorkspace)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
-	})
+	filteredTensorboards, err := a.filterTensorboards(ctx, *curUser, resp.Tensorboards,
+		req.WorkspaceId)
 	if err != nil {
 		return nil, err
 	}
+	
+	resp.Tensorboards = filteredTensorboards
 
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Tensorboards, req.Offset, req.Limit)
@@ -112,8 +128,9 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, model.UserID(resp.Tensorboard.UserId), command.PlaceHolderWorkspace); err != nil {
+	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+		ctx, *curUser, model.UserID(resp.Tensorboard.UserId),
+		model.AccessScopeID(resp.Tensorboard.WorkspaceId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -124,8 +141,20 @@ func (a *apiServer) GetTensorboard(
 func (a *apiServer) KillTensorboard(
 	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
-	if _, err := a.GetTensorboard(ctx,
-		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+	getResponse, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanTerminateNSC(
+		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId))
+	if err != nil {
 		return nil, err
 	}
 
@@ -135,8 +164,20 @@ func (a *apiServer) KillTensorboard(
 func (a *apiServer) SetTensorboardPriority(
 	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
-	if _, err := a.GetTensorboard(ctx,
-		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId}); err != nil {
+	getResponse, err := a.GetTensorboard(ctx,
+		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId), int(req.Priority))
+	if err != nil {
 		return nil, err
 	}
 
