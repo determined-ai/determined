@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
 import UserBadge from 'components/UserBadge';
-import useFeature from 'hooks/useFeature';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
@@ -41,30 +40,9 @@ const useModalWorkspaceAddMember = ({
   onClose,
   workspaceId,
 }: Props): ModalHooks => {
-  let knownRoles = rolesAssignableToScope;
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
-
-  knownRoles = useMemo(
-    () =>
-      mockWorkspaceMembers
-        ? [
-            {
-              name: 'Editor',
-              permissions: [],
-              roleId: 1,
-            },
-            {
-              name: 'Viewer',
-              permissions: [],
-              roleId: 2,
-            },
-          ]
-        : knownRoles,
-    [knownRoles, mockWorkspaceMembers],
-  );
 
   const handleFilter = useCallback(
     (search: string, option?: SearchProp): boolean => {
