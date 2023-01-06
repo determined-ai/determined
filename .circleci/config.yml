@@ -939,6 +939,14 @@ commands:
           background: true
 
 jobs:
+  danh-testing-circleci-runner-job:
+    docker:
+      - image: cimg/base:current
+    resource_class: determined-ai/container-runner
+    steps:
+      - run: echo "Hi I'm on a Container Runner!"
+      - run: echo $HOST
+
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2086,6 +2094,10 @@ jobs:
           channel: <<parameters.slack-channel>>
 
 workflows:
+  danh-testing-circleci-runner:
+    jobs:
+      - danh-testing-circleci-runner-job
+
   lint:
     jobs:
       - build-proto
