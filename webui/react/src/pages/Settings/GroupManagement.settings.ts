@@ -47,7 +47,7 @@ const config: SettingsConfig<GroupManagementSettings> = {
       type: number,
     },
   },
-  storagePath: 'group-management',
+  storageKey: 'group-management',
 };
 
 export default config;

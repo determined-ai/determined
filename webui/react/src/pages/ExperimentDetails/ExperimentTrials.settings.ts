@@ -160,7 +160,7 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'experiment-trials-list',
+  storageKey: 'experiment-trials-list',
 };
 
 export default config;
