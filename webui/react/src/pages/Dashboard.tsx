@@ -175,24 +175,32 @@ const Dashboard: React.FC = () => {
 
   return (
     <Page options={<JupyterLabButton />} title="Home">
-      <Section title="Recent projects">
-        <Spinner spinning={projectsLoading}>
-          <Grid
-            count={projects.length}
-            gap={ShirtSize.Medium}
-            minItemWidth={250}
-            mode={GridMode.ScrollableRow}>
-            {projects.map((project) => (
-              <ProjectCard
-                curUser={currentUser}
-                fetchProjects={fetchProjects}
-                key={project.id}
-                project={project}
-              />
-            ))}
-          </Grid>
-        </Spinner>
-      </Section>
+      {projectsLoading ? (
+        <Section>
+          <Spinner center />
+        </Section>
+      ) : (
+        <>
+          {projects.length > 0 ? (
+            <Section title="Recent projects">
+              <Grid
+                count={projects.length}
+                gap={ShirtSize.Medium}
+                minItemWidth={250}
+                mode={GridMode.ScrollableRow}>
+                {projects.map((project) => (
+                  <ProjectCard
+                    curUser={currentUser}
+                    fetchProjects={fetchProjects}
+                    key={project.id}
+                    project={project}
+                  />
+                ))}
+              </Grid>
+            </Section>
+          ) : null}
+        </>
+      )}
       <Section title="Recently submitted">
         <ResponsiveTable<Submission>
           className={css.table}
