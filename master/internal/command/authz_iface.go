@@ -9,6 +9,7 @@ import (
 
 // NSCAuthZ describes authz methods for Notebooks, Shells, and Commands.
 type NSCAuthZ interface {
+	// NSC functions
 	// GET /api/v1/NSCs/:nsc_id
 	// GET /tasks
 	CanGetNSC(
@@ -29,8 +30,25 @@ type NSCAuthZ interface {
 	) error
 
 	// PATCH /NSCs/:nsc_id
+	// POST /api/v1/tensorboards/:tb_id/set_priority
 	CanSetNSCsPriority(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
+	) error
+
+	// GET /api/v1/NSCs
+	AccessibleScopes(
+		ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
+	) (model.AccessScopeSet, error)
+
+	// Tensorboard functions
+	// GET /api/v1/tensorboards/:tb_id
+	CanGetTensorboard(
+		ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID,
+	) (canGetTensorboard bool, serverError error)
+
+	// POST /api/v1/tensorboards/:tb_id/kill
+	CanTerminateTensorboard(
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
 }
 
