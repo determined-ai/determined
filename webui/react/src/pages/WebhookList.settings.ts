@@ -56,7 +56,7 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'webhook-list',
+  storageKey: 'webhook-list',
 };
 
 export default config;

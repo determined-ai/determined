@@ -166,7 +166,7 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, array(string)]),
     },
   },
-  storagePath: 'task-list',
+  storageKey: 'task-list',
 };
 
 export default config;
