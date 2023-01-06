@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"github.com/determined-ai/determined/master/internal/db"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
@@ -43,11 +44,26 @@ func (a *NSCAuthZBasic) CanSetNSCsPriority(
 	return nil
 }
 
-// AccessibleScopes returns the same scopes it is given.
+// AccessibleScopes returns the set of scopes that the user should be limited to.
 func (a *NSCAuthZBasic) AccessibleScopes(
-	ctx context.Context, curUser model.User, scopes map[model.AccessScopeID]bool,
-) (map[model.AccessScopeID]bool, error) {
-	return scopes, nil
+	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
+) (*model.AccessScopeSet, error) {
+	var ids []int
+	returnScope := model.AccessScopeSet{}
+	
+	if requestedScope == 0 {
+		err := db.Bun().NewSelect().Table("workspaces").Column("id").Scan(ctx, &ids)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, id := range ids {
+			returnScope[model.AccessScopeID(id)] = true
+		}
+
+		return &returnScope, nil
+	}
+	return &model.AccessScopeSet{requestedScope: true}, nil
 }
 
 // CanGetTensorboard returns true and nil error unless the developer master config option
@@ -61,7 +77,7 @@ func (a *NSCAuthZBasic) CanGetTensorboard(
 
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZBasic) CanTerminateTensorboard(
-	ctx context.Context, curUser model.User, tb *tensorboardv1.Tensorboard,
+	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) error {
 	return nil
 }

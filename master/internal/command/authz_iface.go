@@ -5,7 +5,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 // NSCAuthZ describes authz methods for Notebooks, Shells, and Commands.
@@ -36,9 +35,10 @@ type NSCAuthZ interface {
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 	) error
 
+	// GET /api/v1/NSCs
 	AccessibleScopes(
-		ctx context.Context, curUser model.User, scopes map[model.AccessScopeID]bool,
-	) (map[model.AccessScopeID]bool, error)
+		ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
+	) (*model.AccessScopeSet, error)
 
 	// Tensorboard functions
 	// GET /api/v1/tensorboards/:tb_id
@@ -48,7 +48,7 @@ type NSCAuthZ interface {
 
 	// POST /api/v1/tensorboards/:tb_id/kill
 	CanTerminateTensorboard(
-		ctx context.Context, curUser model.User, tb *tensorboardv1.Tensorboard,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
 }
 
