@@ -51,7 +51,7 @@ const settingsConfig: SettingsConfig<JupyterLabOptions> = {
       type: union([string, undefinedType]),
     },
   },
-  storagePath: STORAGE_PATH,
+  storageKey: STORAGE_PATH,
 };
 
 interface FullConfigProps {
