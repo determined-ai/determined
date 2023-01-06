@@ -1,7 +1,7 @@
 import { Input } from 'antd';
 import React from 'react';
 
-interface InputSearchProps {
+interface SearchInputProps {
   allowClear?: boolean;
   disabled?: boolean;
   enterButton?: boolean;
@@ -9,8 +9,8 @@ interface InputSearchProps {
   value?: string;
 }
 
-const InputSearch: React.FC<InputSearchProps> = (props: InputSearchProps) => {
+const SearchInput: React.FC<SearchInputProps> = (props: SearchInputProps) => {
   return <Input.Search {...props} />;
 };
 
-export default InputSearch;
+export default SearchInput;

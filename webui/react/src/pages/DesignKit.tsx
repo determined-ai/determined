@@ -12,8 +12,10 @@ import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
+import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
+import SearchInput from 'components/kit/SearchInput';
 import Tooltip from 'components/kit/Tooltip';
 import Logo from 'components/Logo'; //TODO: Move to components/kit? Add section to DesignKit page?
 import LogViewer from 'components/LogViewer/LogViewer'; //TODO: Move to components/kit?
@@ -399,7 +401,7 @@ const SearchboxesSection: React.FC = () => {
     <ComponentSection id="Searchboxes" title="Searchboxes">
       <Card>
         <p>
-          A search box (<code>{'<Input.Search>'}</code>) provides an input field for searching
+          A search box (<code>{'<SearchInput>'}</code>) provides an input field for searching
           content within a site or app to find specific items.
         </p>
       </Card>
@@ -434,7 +436,7 @@ const SearchboxesSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default Searchbox</strong>
-        <Input.Search placeholder="input search text" />
+        <SearchInput placeholder="input search text" />
         <strong>Guiding principles</strong>
         <ul>
           <li>A user should always be able to cancel/clear out a search</li>
@@ -442,8 +444,8 @@ const SearchboxesSection: React.FC = () => {
           <li>Input box experience is from input box component</li>
         </ul>
         <strong>Variations</strong>
-        <Input.Search allowClear enterButton value="Active search box" />
-        <Input.Search disabled placeholder="disabled search box" />
+        <SearchInput allowClear enterButton value="Active search box" />
+        <SearchInput disabled placeholder="disabled search box" />
         <hr />
         <strong>In-table Searchbox</strong>
         <p>Not implemented</p>
@@ -477,7 +479,7 @@ const SpinbuttonsSection: React.FC = () => {
     <ComponentSection id="Spinbuttons" title="Spinbuttons">
       <Card>
         <p>
-          A spin button (<code>{'<Input.Number>'}</code>) allows someone to incrementally adjust a
+          A spin button (<code>{'<NumberInput>'}</code>) allows someone to incrementally adjust a
           value in small steps. It&apos;s mainly used for numeric values, but other values are
           supported too.
         </p>
@@ -502,7 +504,7 @@ const SpinbuttonsSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default spin button</strong>
-        <Input.Number defaultValue={3} />
+        <NumberInput defaultValue={3} />
         <strong>Guiding principles</strong>
         <ul>
           <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
@@ -511,7 +513,7 @@ const SpinbuttonsSection: React.FC = () => {
         </ul>
         <hr />
         <strong>Variations and states of spin buttons</strong>
-        <Input.Number disabled />
+        <NumberInput disabled />
       </Card>
     </ComponentSection>
   );
