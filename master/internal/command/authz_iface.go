@@ -16,11 +16,6 @@ type NSCAuthZ interface {
 	) (canGetNsc bool, serverError error)
 
 	// GET /api/v1/NSCs
-	FilterNSCWorkspaces( // DELETEME.
-		ctx context.Context, curUser model.User, workspaceSet model.AccessScopeSet,
-	) (model.AccessScopeSet, error)
-
-	// GET /api/v1/NSCs
 	AccessibleScopes(
 		ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
 	) (*model.AccessScopeSet, error)

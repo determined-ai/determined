@@ -115,29 +115,6 @@ func (_m *NSCAuthZ) CanTerminateNSC(ctx context.Context, curUser model.User, wor
 	return r0
 }
 
-// FilterNSCWorkspaces provides a mock function with given fields: ctx, curUser, workspaceSet
-func (_m *NSCAuthZ) FilterNSCWorkspaces(ctx context.Context, curUser model.User, workspaceSet map[model.AccessScopeID]bool) (map[model.AccessScopeID]bool, error) {
-	ret := _m.Called(ctx, curUser, workspaceSet)
-
-	var r0 map[model.AccessScopeID]bool
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, map[model.AccessScopeID]bool) map[model.AccessScopeID]bool); ok {
-		r0 = rf(ctx, curUser, workspaceSet)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[model.AccessScopeID]bool)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, map[model.AccessScopeID]bool) error); ok {
-		r1 = rf(ctx, curUser, workspaceSet)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 type mockConstructorTestingTNewNSCAuthZ interface {
 	mock.TestingT
 	Cleanup(func())
