@@ -128,7 +128,7 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, array(string)]),
     },
   },
-  storagePath: 'model-registry',
+  storageKey: 'model-registry',
 };
 
 export default config;

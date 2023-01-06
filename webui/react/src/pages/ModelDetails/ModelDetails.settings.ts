@@ -94,7 +94,7 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storagePath: 'model-details',
+  storageKey: 'model-details',
 };
 
 export default config;

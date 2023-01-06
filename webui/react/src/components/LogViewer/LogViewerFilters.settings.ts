@@ -65,5 +65,5 @@ const settingsConfigForLogs = (id: number | string): SettingsConfig<Settings> =>
       type: union([undefinedType, string]),
     },
   },
-  storagePath: 'log-viewer-filters',
+  storageKey: `log-viewer-filters-${id}`,
 });
