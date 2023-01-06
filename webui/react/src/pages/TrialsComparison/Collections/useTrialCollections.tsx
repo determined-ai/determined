@@ -44,7 +44,7 @@ const configForProject = (projectId: string): SettingsConfig<{ collection: strin
       type: string,
     },
   },
-  storagePath: collectionStoragePath(projectId),
+  storageKey: collectionStoragePath(projectId),
 });
 
 const comparableStringification = (filters?: TrialFilters, sorter?: TrialSorter): string =>
