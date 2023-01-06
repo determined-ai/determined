@@ -108,7 +108,7 @@ func (a *apiServer) GetTensorboards(
 	if err != nil {
 		return nil, err
 	}
-	
+
 	resp.Tensorboards = filteredTensorboards
 
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
