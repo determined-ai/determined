@@ -69,15 +69,13 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 }
 
 func (a *apiServer) filterTensorboards(
-	ctx context.Context, curUser model.User, tensorboards []*tensorboardv1.Tensorboard,
+	ctx context.Context,
+	curUser model.User,
+	tensorboards []*tensorboardv1.Tensorboard,
+	workspaceId int32,
 ) ([]*tensorboardv1.Tensorboard, error) {
-	scopes := map[model.AccessScopeID]bool{}
-	for _, tb := range tensorboards {
-		scopes[model.AccessScopeID(tb.WorkspaceId)] = true
-	}
-
 	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
-		ctx, curUser, scopes)
+		ctx, curUser, model.AccessScopeID(workspaceId))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +103,8 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
-	filteredTensorboards, err := a.filterTensorboards(ctx, *curUser, resp.Tensorboards)
+	filteredTensorboards, err := a.filterTensorboards(ctx, *curUser, resp.Tensorboards,
+		req.WorkspaceId)
 	resp.Tensorboards = filteredTensorboards
 
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)

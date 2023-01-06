@@ -38,7 +38,7 @@ type NSCAuthZ interface {
 	// GET /api/v1/NSCs
 	AccessibleScopes(
 		ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
-	) (*model.AccessScopeSet, error)
+	) (model.AccessScopeSet, error)
 
 	// Tensorboard functions
 	// GET /api/v1/tensorboards/:tb_id

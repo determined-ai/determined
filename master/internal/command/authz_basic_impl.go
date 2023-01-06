@@ -2,10 +2,9 @@ package command
 
 import (
 	"context"
-	"github.com/determined-ai/determined/master/internal/db"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 // NSCAuthZBasic is basic OSS controls.
@@ -47,10 +46,10 @@ func (a *NSCAuthZBasic) CanSetNSCsPriority(
 // AccessibleScopes returns the set of scopes that the user should be limited to.
 func (a *NSCAuthZBasic) AccessibleScopes(
 	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
-) (*model.AccessScopeSet, error) {
+) (model.AccessScopeSet, error) {
 	var ids []int
 	returnScope := model.AccessScopeSet{}
-	
+
 	if requestedScope == 0 {
 		err := db.Bun().NewSelect().Table("workspaces").Column("id").Scan(ctx, &ids)
 		if err != nil {
@@ -61,9 +60,9 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 			returnScope[model.AccessScopeID(id)] = true
 		}
 
-		return &returnScope, nil
+		return returnScope, nil
 	}
-	return &model.AccessScopeSet{requestedScope: true}, nil
+	return model.AccessScopeSet{requestedScope: true}, nil
 }
 
 // CanGetTensorboard returns true and nil error unless the developer master config option
