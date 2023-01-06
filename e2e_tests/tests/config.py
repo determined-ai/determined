@@ -202,6 +202,5 @@ def set_environment_variables(
     config: Dict[Any, Any], environment_variables: List[str]
 ) -> Dict[Any, Any]:
     config = config.copy()
-    config["environment"] = config.get("environment", {})
     config["environment"]["environment_variables"] = environment_variables
     return config
