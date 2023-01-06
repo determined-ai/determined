@@ -142,8 +142,7 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 
 	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
-		// TODO(DET-8781): replace this with a call to the tensorboard authz method.
-		ok, err = AuthZProvider.Get().CanGetNSC(
+		ok, err = AuthZProvider.Get().CanGetTensorboard(
 			reqCtx, curUser, spec.Base.Owner.ID, spec.Metadata.WorkspaceID)
 	} else {
 		ok, err = AuthZProvider.Get().CanGetNSC(

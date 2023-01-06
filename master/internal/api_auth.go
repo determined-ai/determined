@@ -140,8 +140,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 
 	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
-		// TODO(DET-8781): replace this with a call to the tensorboard authz method.
-		ok, err = command.AuthZProvider.Get().CanGetNSC(
+		ok, err = command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, spec.Base.Owner.ID, spec.Metadata.WorkspaceID)
 	} else {
 		ok, err = command.AuthZProvider.Get().CanGetNSC(
