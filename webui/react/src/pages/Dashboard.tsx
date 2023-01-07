@@ -176,7 +176,13 @@ const Dashboard: React.FC = () => {
     return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
   };
 
-  if (projectsLoading && tableLoading) return <Spinner center />;
+  if (projectsLoading && tableLoading) {
+    return (
+      <Page options={<JupyterLabButton />} title="Home">
+        <Spinner center />
+      </Page>
+    );
+  }
 
   return (
     <Page options={<JupyterLabButton />} title="Home">
