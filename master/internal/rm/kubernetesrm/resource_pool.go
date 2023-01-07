@@ -21,11 +21,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
+// getResourceSummary is a message to request a summary of the resources used by the
+// resource pool (agents, slots, cpu containers).
+type getResourceSummary struct{}
+
 type kubernetesResourcePool struct {
-	config *config.KubernetesResourceManagerConfig
+	config     *config.KubernetesResourceManagerConfig
+	poolConfig *config.ResourcePoolConfig
 
 	reqList           *tasklist.TaskList
 	groups            map[*actor.Ref]*tasklist.Group
@@ -43,11 +47,14 @@ type kubernetesResourcePool struct {
 	reschedule     bool
 }
 
-func newResourcePool(rmConfig *config.KubernetesResourceManagerConfig,
+func newResourcePool(
+	rmConfig *config.KubernetesResourceManagerConfig,
+	poolConfig *config.ResourcePoolConfig,
 	podsActor *actor.Ref,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
 		config:            rmConfig,
+		poolConfig:        poolConfig,
 		reqList:           tasklist.New(),
 		groups:            map[*actor.Ref]*tasklist.Group{},
 		addrToContainerID: map[*actor.Ref]cproto.ID{},
@@ -116,6 +123,25 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(k.reqList.TaskSummaries(k.groups, kubernetesScheduler))
 
+	case getResourceSummary:
+		slotsUsed := 0
+		for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
+			slotsUsed += slotsUsedByGroup
+		}
+		pods, err := k.summarizePods(ctx)
+		if err != nil {
+			return err
+		}
+
+		ctx.Respond(resourceSummary{
+			numAgents:              pods.NumAgents,
+			numTotalSlots:          pods.SlotsAvailable,
+			numActiveSlots:         slotsUsed,
+			maxNumAuxContainers:    1,
+			numActiveAuxContainers: 0,
+			slotType:               "",
+		})
+
 	case SchedulerTick:
 		if k.reschedule {
 			k.schedulePendingTasks(ctx)
@@ -124,12 +150,9 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		actors.NotifyAfter(ctx, ActionCoolDown, SchedulerTick{})
 
-	case *apiv1.GetResourcePoolsRequest:
-		if summary, err := k.summarizeResourcePool(ctx); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(summary)
-		}
+	case sproto.ValidateCommandResourcesRequest:
+		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
+		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
 
 	default:
 		reschedule = false
@@ -138,48 +161,6 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
-}
-
-func (k *kubernetesResourcePool) summarizeResourcePool(
-	ctx *actor.Context,
-) (*resourcepoolv1.ResourcePool, error) {
-	slotsUsed := 0
-	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
-		slotsUsed += slotsUsedByGroup
-	}
-
-	pods, err := k.summarizePods(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Expose a fake number of zero slots here just to signal to the UI
-	// that this RP does support the aux containers.
-
-	return &resourcepoolv1.ResourcePool{
-		Name:                         KubernetesDummyResourcePool,
-		Description:                  "Kubernetes-managed pool of resources",
-		Type:                         resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S,
-		NumAgents:                    int32(pods.NumAgents),
-		SlotType:                     k.config.SlotType.Proto(),
-		SlotsAvailable:               int32(pods.SlotsAvailable),
-		SlotsUsed:                    int32(slotsUsed),
-		AuxContainerCapacity:         int32(1),
-		AuxContainersRunning:         int32(0),
-		DefaultComputePool:           true,
-		DefaultAuxPool:               true,
-		Preemptible:                  k.config.GetPreemption(),
-		MinAgents:                    0,
-		MaxAgents:                    0,
-		SlotsPerAgent:                int32(k.config.MaxSlotsPerPod),
-		AuxContainerCapacityPerAgent: int32(1),
-		SchedulerType:                resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES,
-		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
-		Location:                     "kubernetes",
-		ImageId:                      "",
-		InstanceType:                 "kubernetes",
-		Details:                      &resourcepoolv1.ResourcePoolDetail{},
-	}, nil
 }
 
 func (k *kubernetesResourcePool) summarizePods(
@@ -290,7 +271,7 @@ func (k *kubernetesResourcePool) receiveJobQueueMsg(ctx *actor.Context) error {
 		}
 		resp.Results = append(resp.Results, &apiv1.RPQueueStat{
 			Stats:        tasklist.JobStats(k.reqList),
-			ResourcePool: KubernetesDummyResourcePool,
+			ResourcePool: k.poolConfig.PoolName,
 		},
 		)
 		ctx.Respond(resp)
@@ -720,4 +701,14 @@ func (p k8sPodResources) Kill(ctx *actor.Context, _ logger.Context) {
 
 func (p k8sPodResources) Persist() error {
 	return nil
+}
+
+// resourceSummary is a summary of the resource available/used by a resource pool.
+type resourceSummary struct {
+	numAgents              int
+	numTotalSlots          int
+	numActiveSlots         int
+	maxNumAuxContainers    int
+	numActiveAuxContainers int
+	slotType               device.Type
 }
