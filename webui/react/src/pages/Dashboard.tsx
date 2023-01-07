@@ -133,6 +133,7 @@ const Dashboard: React.FC = () => {
         },
       );
       setProjects(projects);
+      setProjectsLoading(false);
     } catch (e) {
       handleError(e, {
         publicSubject: 'Error fetching projects for dashboard',
@@ -142,14 +143,16 @@ const Dashboard: React.FC = () => {
     }
   }, [canceler]);
 
-  const fetchAll = useCallback(async () => {
-    await fetchProjects();
-    setProjectsLoading(false);
+  const fetchSubmissions = useCallback(async () => {
     if (!currentUser) return;
-    await fetchExperiments(currentUser);
-    await fetchTasks(currentUser);
+    await Promise.allSettled([fetchExperiments(currentUser), fetchTasks(currentUser)]);
     setTableLoading(false);
-  }, [currentUser, fetchExperiments, fetchTasks, fetchProjects]);
+  }, [currentUser, fetchExperiments, fetchTasks]);
+
+  const fetchAll = useCallback(() => {
+    fetchProjects();
+    fetchSubmissions();
+  }, [fetchSubmissions, fetchProjects]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
@@ -173,107 +176,124 @@ const Dashboard: React.FC = () => {
     return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
   };
 
+  if (projectsLoading && tableLoading) return <Spinner center />;
+
   return (
     <Page options={<JupyterLabButton />} title="Home">
-      {projectsLoading ? (
+      {projectsLoading && !tableLoading ? (
         <Section>
           <Spinner center />
         </Section>
+      ) : projects.length > 0 ? (
+        <Section title="Recent projects">
+          <Grid
+            count={projects.length}
+            gap={ShirtSize.Medium}
+            minItemWidth={250}
+            mode={GridMode.ScrollableRow}>
+            {projects.map((project) => (
+              <ProjectCard
+                curUser={currentUser}
+                fetchProjects={fetchProjects}
+                key={project.id}
+                project={project}
+              />
+            ))}
+          </Grid>
+        </Section>
+      ) : null}
+      {tableLoading && !projectsLoading ? (
+        <Section>
+          <Spinner center />
+        </Section>
+      ) : submissions.length > 0 ? (
+        <Section title="Recently submitted">
+          <ResponsiveTable<Submission>
+            className={css.table}
+            columns={[
+              {
+                dataIndex: 'state',
+                render: (state) => {
+                  return <ExperimentIcons state={state} />;
+                },
+                width: 1,
+              },
+              {
+                dataIndex: 'projectId',
+                render: (projectId, row, index) => {
+                  if (projectId) {
+                    return <Icon name="experiment" title="Experiment" />;
+                  } else {
+                    return taskTypeRenderer(row.type, row, index);
+                  }
+                },
+                width: 1,
+              },
+              {
+                dataIndex: 'name',
+                render: (name, row, index) => {
+                  if (row.projectId) {
+                    // only for Experiments, not Tasks:
+                    return experimentNameRenderer(name, row);
+                  } else {
+                    return taskNameRenderer(row.id, row, index);
+                  }
+                },
+              },
+              {
+                dataIndex: 'projectId',
+                render: (projectId, row) => {
+                  if (row.workspaceId && row.projectId !== 1) {
+                    return (
+                      <Breadcrumb>
+                        <Breadcrumb.Item>
+                          <Link path={paths.workspaceDetails(row.workspaceId)}>
+                            {row.workspaceName}
+                          </Link>
+                        </Breadcrumb.Item>
+                        <Breadcrumb.Item>
+                          <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
+                        </Breadcrumb.Item>
+                      </Breadcrumb>
+                    );
+                  }
+                  if (row.projectName) {
+                    return (
+                      <Breadcrumb>
+                        <Breadcrumb.Item>
+                          <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
+                        </Breadcrumb.Item>
+                      </Breadcrumb>
+                    );
+                  }
+                },
+              },
+              {
+                dataIndex: 'startTime',
+                render: relativeTimeRenderer,
+              },
+            ]}
+            dataSource={submissions}
+            loading={tableLoading}
+            pagination={false}
+            rowKey="id"
+            showHeader={false}
+          />
+        </Section>
       ) : (
-        <>
-          {projects.length > 0 ? (
-            <Section title="Recent projects">
-              <Grid
-                count={projects.length}
-                gap={ShirtSize.Medium}
-                minItemWidth={250}
-                mode={GridMode.ScrollableRow}>
-                {projects.map((project) => (
-                  <ProjectCard
-                    curUser={currentUser}
-                    fetchProjects={fetchProjects}
-                    key={project.id}
-                    project={project}
-                  />
-                ))}
-              </Grid>
-            </Section>
-          ) : null}
-        </>
+        <div className={css.emptyBase}>
+          <div className={css.icon}>
+            <Icon name="dashboard" size="mega" />
+          </div>
+          <h4>No submissions</h4>
+          <p className={css.description}>
+            Your recent experiments and tasks will show up here.&nbsp;
+            <Link external path={paths.docs('/quickstart-mdldev.html')}>
+              Get started
+            </Link>
+          </p>
+        </div>
       )}
-      <Section title="Recently submitted">
-        <ResponsiveTable<Submission>
-          className={css.table}
-          columns={[
-            {
-              dataIndex: 'state',
-              render: (state) => {
-                return <ExperimentIcons state={state} />;
-              },
-              width: 1,
-            },
-            {
-              dataIndex: 'projectId',
-              render: (projectId, row, index) => {
-                if (projectId) {
-                  return <Icon name="experiment" title="Experiment" />;
-                } else {
-                  return taskTypeRenderer(row.type, row, index);
-                }
-              },
-              width: 1,
-            },
-            {
-              dataIndex: 'name',
-              render: (name, row, index) => {
-                if (row.projectId) {
-                  // only for Experiments, not Tasks:
-                  return experimentNameRenderer(name, row);
-                } else {
-                  return taskNameRenderer(row.id, row, index);
-                }
-              },
-            },
-            {
-              dataIndex: 'projectId',
-              render: (projectId, row) => {
-                if (row.workspaceId && row.projectId !== 1) {
-                  return (
-                    <Breadcrumb>
-                      <Breadcrumb.Item>
-                        <Link path={paths.workspaceDetails(row.workspaceId)}>
-                          {row.workspaceName}
-                        </Link>
-                      </Breadcrumb.Item>
-                      <Breadcrumb.Item>
-                        <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
-                      </Breadcrumb.Item>
-                    </Breadcrumb>
-                  );
-                }
-                if (row.projectName) {
-                  return (
-                    <Breadcrumb>
-                      <Breadcrumb.Item>
-                        <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
-                      </Breadcrumb.Item>
-                    </Breadcrumb>
-                  );
-                }
-              },
-            },
-            {
-              dataIndex: 'startTime',
-              render: relativeTimeRenderer,
-            },
-          ]}
-          dataSource={submissions}
-          loading={tableLoading}
-          pagination={false}
-          rowKey="id"
-          showHeader={false}
-        />
-      </Section>
       {modalJupyterLabContextHolder}
     </Page>
   );
