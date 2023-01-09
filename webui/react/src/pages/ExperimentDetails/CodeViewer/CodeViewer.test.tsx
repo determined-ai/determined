@@ -13,10 +13,11 @@ import { paths } from 'routes/utils';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { useCurrentUser, UsersProvider, useUpdateCurrentUser } from 'stores/users';
-import { DetailedUser } from 'types';
+import { UsersProvider, useUpdateCurrentUser } from 'stores/users';
 
 import CodeViewer, { Props } from './CodeViewer';
+
+jest.useRealTimers();
 
 const MonacoEditorMock: React.FC = () => <></>;
 const hashedFileMock =
@@ -96,7 +97,7 @@ jest.mock('hooks/useSettings', () => {
   return {
     __esModule: true,
     ...actualModule,
-    default: useSettings,
+    useSettings,
   };
 });
 
