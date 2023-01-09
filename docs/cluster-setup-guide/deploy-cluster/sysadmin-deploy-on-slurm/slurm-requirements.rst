@@ -229,30 +229,85 @@ may be required in your ``$HOME/.config/containers/storage.conf`` file:
    ``/etc/containers/storage.conf`` on all compute nodes.
 
 #. PodMan utilizes the directory specified by the environment variable ``XDG_RUNTIME_DIR``.
-   Normally, this is provided by the login process. Slurm and PBS, however, do not provide this
-   variable when launching jobs on compute nodes. When ``XDG_RUNTIME_DIR`` is not defined, PodMan
-   attempts to create the directory ``/run/user/$UID`` for this purpose. If ``/run/user`` is not
-   writable by a non-root user, then PodMan commands will fail with a permission error. To avoid
-   this problem, configure the ``runroot`` option in your ``storage.conf`` to a writeable local
-   directory available on all compute nodes. Alternatively, you can request your system
-   administrator to configure the ``/run/user`` to be user-writable on all compute nodes.
+   Normally, ``XDG_RUNTIME_DIR`` is set to ``/run/user/$UID`` by the login process. However, Slurm
+   and PBS do not provide this variable when launching jobs on compute nodes. Even if
+   ``XDG_RUNTIME_DIR`` is not set, podman will automatically attempt to create the
+   ``/run/user/$UID`` directory, but will fail with a permission error because ``/run/user`` is not
+   writable by a non-root user. Furthermore, if ``XDG_RUNTIME_DIR`` is not set, podman may fail to
+   clean up its processes when a job is cancelled, leaving the container in a running or corrupted
+   state that may require a ``podman system migrate`` to fix. For Slurm versions older than 22, it
+   may also cause Slurm to place the node in the ``drain`` state, thereby preventing other jobs from
+   being run on that node.
 
-Create or update ``$HOME/.config/containers/storage.conf`` as required to resolve the issues above.
-The example ``storage.conf`` file below uses the file system ``/tmp``, but there may be a more
-appropriate file system on your HPC cluster that you should specify for this purpose.
+   To avoid this problem, the System Administrator can create the ``/run/user/$UID`` directory for
+   each user on all compute nodes, with permissions 700, and ownership and group set to the username
+   and group. The System Administrator must also set the ``XDG_RUNTIME_DIR`` environment variable in
+   the ``/etc/determined/master.yaml``, as shown below.
 
-   .. code:: docker
+      .. code:: yaml
 
-      [storage]
-      driver = "overlay"
-      graphroot = "/tmp/$USER/storage"
-      runroot = "/tmp/$USER/run"
+         task_container_defaults:
+            environment_variables:
+               - XDG_RUNTIME_DIR=/run/user/$(id -u)
 
-Any changes to your ``storage.conf`` should be applied using the command:
+   After modifying ``/etc/determined/master.yaml``, restart the Determined master with
+   ``systemctl restart determined-master``.
 
-   .. code:: bash
+#. PodMan creates several processes when running a container, such as ``podman``, ``conmon``, and
+   ``catatonit``. The ``catatonit`` process forwards signals to the spawned child, tears down the
+   container when the spawned child exists, and cleans up exited processes. When Slurm is configured
+   to use ``ProctrackType=proctrack/cgroup``, cancelling a job may fail to terminate the processes
+   running inside the container, leaving the container in a running or corrupted state that may
+   require a ``podman system migrate`` to fix. This is because when a job is cancelled, Slurm will
+   send a SIGTERM to all processes that are part of the ``cgroup``, including ``catatonit``, which
+   is the processes responsible for tearing down the container. For Slurm versions older than 22, it
+   may also cause Slurm to place the node in the ``drain`` state, thereby preventing other jobs from
+   being run on that node.
 
-      podman system migrate
+   It should be noted that once the ``catatonit`` process is started, if the container is allowed to
+   run until completion without being terminated, the ``catatonit`` process will remain running
+   after all other podman related processes have terminated. In this case, running another job that
+   starts a podman container, and then cancelling that job, will not cause the problem described
+   above to occur, because the existing ``catatonit`` process is not part of the same ``cgroup`` as
+   the new podman processes.
+
+   To ensure that the problem described above will never occur, create a Task Epilog script that
+   will send a SIGTERM to any process in the cgroup that Slurm did not send a SIGTERM to. This will
+   allow those processes that are still running after the job has been cancelled to properly clean
+   up and tear down the container before Slurm sends them a final SIGKILL.
+
+   Set the Task Epilog script in the ``slurm.conf`` file, as shown below, to point to a script that
+   resides in a shared filesystem that is accessible from all compute nodes.
+
+      .. code::
+
+         TaskEpilog=/path/to/task_epilog.sh
+
+   Set the contents of the Task Epilog script as shown below. Ensure that the ``/sys/fs/cgroup/...``
+   path is appropriate for your particular Operating System.
+
+      .. code:: bash
+
+         #!/usr/bin/env bash
+
+         # Send a SIGTERM to any process still active in the cgroup before Slurm sends it a SIGKILL.
+         for pid in $(cat /sys/fs/cgroup/freezer/slurm/uid_$(id -u)/job_${SLURM_JOBID}/step_0/cgroup.procs)
+         do
+            # Check if the process is still active, as it may have already been terminatd as a
+            # result of killing one of the other processes.
+            if [ -e /proc/${pid} ]
+            then
+               echo "$(date):$0: Killing $(readlink /proc/${pid}/exe) (${pid})" 1>&2
+
+               kill -SIGTERM ${pid}
+
+               # Wait 15 seconds for the process to terminate to avoid having Slurm send it
+               # a SIGKILL before the process gets a chance to clean up.
+               timeout -k 15s 15s bash -c "while ps -p ${pid} > /dev/null 2>&1; do sleep 1; done"
+            fi
+         done
+
+   Restart ``slurmd`` on all the compute nodes after making the change.
 
 .. _enroot-config-requirements:
 
