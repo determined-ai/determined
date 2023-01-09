@@ -16,15 +16,15 @@ type NSCAuthZ struct {
 }
 
 // AccessibleScopes provides a mock function with given fields: ctx, curUser, requestedScope
-func (_m *NSCAuthZ) AccessibleScopes(ctx context.Context, curUser model.User, requestedScope model.AccessScopeID) (*map[model.AccessScopeID]bool, error) {
+func (_m *NSCAuthZ) AccessibleScopes(ctx context.Context, curUser model.User, requestedScope model.AccessScopeID) (map[model.AccessScopeID]bool, error) {
 	ret := _m.Called(ctx, curUser, requestedScope)
 
-	var r0 *map[model.AccessScopeID]bool
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) *map[model.AccessScopeID]bool); ok {
+	var r0 map[model.AccessScopeID]bool
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) map[model.AccessScopeID]bool); ok {
 		r0 = rf(ctx, curUser, requestedScope)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*map[model.AccessScopeID]bool)
+			r0 = ret.Get(0).(map[model.AccessScopeID]bool)
 		}
 	}
 
@@ -87,6 +87,27 @@ func (_m *NSCAuthZ) CanGetNSC(ctx context.Context, curUser model.User, workspace
 	return r0, r1
 }
 
+// CanGetTensorboard provides a mock function with given fields: ctx, curUser, ownerID, workspaceID
+func (_m *NSCAuthZ) CanGetTensorboard(ctx context.Context, curUser model.User, ownerID model.UserID, workspaceID model.AccessScopeID) (bool, error) {
+	ret := _m.Called(ctx, curUser, ownerID, workspaceID)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.UserID, model.AccessScopeID) bool); ok {
+		r0 = rf(ctx, curUser, ownerID, workspaceID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, model.UserID, model.AccessScopeID) error); ok {
+		r1 = rf(ctx, curUser, ownerID, workspaceID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CanSetNSCsPriority provides a mock function with given fields: ctx, curUser, workspaceID, priority
 func (_m *NSCAuthZ) CanSetNSCsPriority(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int) error {
 	ret := _m.Called(ctx, curUser, workspaceID, priority)
@@ -103,6 +124,20 @@ func (_m *NSCAuthZ) CanSetNSCsPriority(ctx context.Context, curUser model.User, 
 
 // CanTerminateNSC provides a mock function with given fields: ctx, curUser, workspaceID
 func (_m *NSCAuthZ) CanTerminateNSC(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID) error {
+	ret := _m.Called(ctx, curUser, workspaceID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) error); ok {
+		r0 = rf(ctx, curUser, workspaceID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanTerminateTensorboard provides a mock function with given fields: ctx, curUser, workspaceID
+func (_m *NSCAuthZ) CanTerminateTensorboard(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID) error {
 	ret := _m.Called(ctx, curUser, workspaceID)
 
 	var r0 error
