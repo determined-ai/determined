@@ -129,8 +129,7 @@ func (a *apiServer) GetTensorboard(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-		ctx, *curUser, model.UserID(resp.Tensorboard.UserId),
-		model.AccessScopeID(resp.Tensorboard.WorkspaceId)); err != nil {
+		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
