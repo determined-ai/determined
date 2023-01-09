@@ -1,4 +1,5 @@
 import { Checkbox as AntdCheckbox } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import React, { ReactNode } from 'react';
 
 interface CheckboxProps {
@@ -6,7 +7,7 @@ interface CheckboxProps {
   children?: ReactNode;
   disabled?: boolean;
   indeterminate?: boolean;
-  onChange?: () => void;
+  onChange?: (event: CheckboxChangeEvent) => void;
 }
 
 const Checkbox: React.FC<CheckboxProps> = (props: CheckboxProps) => {
