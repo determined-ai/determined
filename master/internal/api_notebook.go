@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"strconv"
 
 	"google.golang.org/grpc/codes"
@@ -44,6 +45,28 @@ const (
 
 var notebooksAddr = actor.Addr("notebooks")
 
+func (a *apiServer) filterNotebooks(
+	ctx context.Context,
+	curUser model.User,
+	notebooks []*notebookv1.Notebook,
+	workspaceID int32,
+) ([]*notebookv1.Notebook, error) {
+	var filteredNotebooks []*notebookv1.Notebook
+	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, curUser, model.AccessScopeID(command.PlaceHolderWorkspace))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, notebook := range notebooks {
+		if _, ok := filteredScopes[model.AccessScopeID(notebook.WorkspaceId)]; ok {
+			filteredNotebooks = append(filteredNotebooks, notebook)
+		}
+	}
+
+	return filteredNotebooks, nil
+}
+
 func (a *apiServer) GetNotebooks(
 	ctx context.Context, req *apiv1.GetNotebooksRequest,
 ) (resp *apiv1.GetNotebooksResponse, err error) {
@@ -55,6 +78,14 @@ func (a *apiServer) GetNotebooks(
 	if err = a.ask(notebooksAddr, req, &resp); err != nil {
 		return nil, err
 	}
+
+	// TODO: replace with actual command workspaces when they land.
+	filteredNotebooks, err := a.filterNotebooks(ctx, *curUser, resp.Notebooks, command.PlaceHolderWorkspace)
+	if err != nil {
+		return nil, err
+	}
+	resp.Notebooks = filteredNotebooks
+
 
 	a.filter(&resp.Notebooks, func(i int) bool {
 		if err != nil {
