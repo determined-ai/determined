@@ -1,10 +1,11 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Space, Tabs } from 'antd';
+import { Space } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import Tooltip from 'components/kit/Tooltip';
+import Pivot from 'components/kit/Pivot';
 import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import { paths } from 'routes/utils';
@@ -119,7 +120,7 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
         project={project}
         type="project"
       />
-      <Tabs
+      <Pivot
         activeKey={sentenceToCamelCase(activeTab.title)}
         defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
         items={tabItems}

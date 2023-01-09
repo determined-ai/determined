@@ -1,10 +1,10 @@
 import { Tabs } from 'antd';
-import React, { ReactNode } from 'react';
+import React, { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 export type TabItem = {
   children?: ReactNode;
   key: string;
-  label: string;
+  label: ReactNode;
 };
 
 interface PivotProps {
@@ -12,9 +12,10 @@ interface PivotProps {
   defaultActiveKey?: string;
   destroyInactiveTabPane?: boolean;
   items?: TabItem[];
-  onChange?: () => void;
-  onTabClick?: () => void;
+  onChange?: (activeKey: string) => void;
+  onTabClick?: (key: string, event: MouseEvent | KeyboardEvent) => void;
   tabBarExtraContent?: ReactNode;
+  tabBarStyle?: CSSProperties;
   type?: 'line' | 'card' | 'editable-card';
 }
 
