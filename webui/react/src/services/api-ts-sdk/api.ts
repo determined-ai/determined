@@ -3442,7 +3442,7 @@ export interface V1GetNotebookResponse {
      * @type {V1Notebook}
      * @memberof V1GetNotebookResponse
      */
-    notebook?: V1Notebook;
+    notebook: V1Notebook;
     /**
      * The notebook config.
      * @type {any}
@@ -3474,13 +3474,13 @@ export interface V1GetNotebooksResponse {
      * @type {Array<V1Notebook>}
      * @memberof V1GetNotebooksResponse
      */
-    notebooks?: Array<V1Notebook>;
+    notebooks: Array<V1Notebook>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetNotebooksResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**

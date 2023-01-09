@@ -3832,36 +3832,32 @@ class v1GetModelsResponse:
 
 class v1GetNotebookResponse:
     config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    notebook: "typing.Optional[v1Notebook]" = None
 
     def __init__(
         self,
         *,
+        notebook: "v1Notebook",
         config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        notebook: "typing.Union[v1Notebook, None, Unset]" = _unset,
     ):
+        self.notebook = notebook
         if not isinstance(config, Unset):
             self.config = config
-        if not isinstance(notebook, Unset):
-            self.notebook = notebook
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetNotebookResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "notebook": v1Notebook.from_json(obj["notebook"]),
         }
         if "config" in obj:
             kwargs["config"] = obj["config"]
-        if "notebook" in obj:
-            kwargs["notebook"] = v1Notebook.from_json(obj["notebook"]) if obj["notebook"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "notebook": self.notebook.to_json(omit_unset),
         }
         if not omit_unset or "config" in vars(self):
             out["config"] = self.config
-        if not omit_unset or "notebook" in vars(self):
-            out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
 class v1GetNotebooksRequestSortBy(enum.Enum):
@@ -3871,37 +3867,29 @@ class v1GetNotebooksRequestSortBy(enum.Enum):
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
 
 class v1GetNotebooksResponse:
-    notebooks: "typing.Optional[typing.Sequence[v1Notebook]]" = None
-    pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
-        notebooks: "typing.Union[typing.Sequence[v1Notebook], None, Unset]" = _unset,
-        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
+        notebooks: "typing.Sequence[v1Notebook]",
+        pagination: "v1Pagination",
     ):
-        if not isinstance(notebooks, Unset):
-            self.notebooks = notebooks
-        if not isinstance(pagination, Unset):
-            self.pagination = pagination
+        self.notebooks = notebooks
+        self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetNotebooksResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "notebooks": [v1Notebook.from_json(x) for x in obj["notebooks"]],
+            "pagination": v1Pagination.from_json(obj["pagination"]),
         }
-        if "notebooks" in obj:
-            kwargs["notebooks"] = [v1Notebook.from_json(x) for x in obj["notebooks"]] if obj["notebooks"] is not None else None
-        if "pagination" in obj:
-            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "notebooks": [x.to_json(omit_unset) for x in self.notebooks],
+            "pagination": self.pagination.to_json(omit_unset),
         }
-        if not omit_unset or "notebooks" in vars(self):
-            out["notebooks"] = None if self.notebooks is None else [x.to_json(omit_unset) for x in self.notebooks]
-        if not omit_unset or "pagination" in vars(self):
-            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
 class v1GetPermissionsSummaryResponse:
