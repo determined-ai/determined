@@ -72,10 +72,10 @@ func (a *apiServer) filterTensorboards(
 	ctx context.Context,
 	curUser model.User,
 	tensorboards []*tensorboardv1.Tensorboard,
-	workspaceId int32,
+	workspaceID int32,
 ) ([]*tensorboardv1.Tensorboard, error) {
 	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
-		ctx, curUser, model.AccessScopeID(workspaceId))
+		ctx, curUser, model.AccessScopeID(workspaceID))
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (a *apiServer) GetTensorboards(
 	if err != nil {
 		return nil, err
 	}
-	
+
 	resp.Tensorboards = filteredTensorboards
 
 	a.sort(resp.Tensorboards, req.OrderBy, req.SortBy, apiv1.GetTensorboardsRequest_SORT_BY_ID)
@@ -231,6 +231,12 @@ func (a *apiServer) LaunchTensorboard(
 	port := getRandomPort(minTensorBoardPort, maxTensorBoardPort)
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"tensorboard": port}
+
+	workspaceID := model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		workspaceID = int(req.WorkspaceId)
+	}
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 
 	spec.Metadata.ExperimentIDs = req.ExperimentIds
 	spec.Metadata.TrialIDs = req.TrialIds

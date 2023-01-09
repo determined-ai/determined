@@ -48,7 +48,7 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
 ) (model.AccessScopeSet, error) {
 	var ids []int
-	returnScope := model.AccessScopeSet{}
+	returnScope := model.AccessScopeSet{requestedScope: true}
 
 	if requestedScope == 0 {
 		err := db.Bun().NewSelect().Table("workspaces").Column("id").Scan(ctx, &ids)
@@ -62,7 +62,7 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 
 		return returnScope, nil
 	}
-	return model.AccessScopeSet{requestedScope: true}, nil
+	return returnScope, nil
 }
 
 // CanGetTensorboard returns true and nil error unless the developer master config option
