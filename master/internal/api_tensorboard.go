@@ -189,6 +189,11 @@ func (a *apiServer) LaunchTensorboard(
 ) (*apiv1.LaunchTensorboardResponse, error) {
 	var err error
 
+	workspaceID := model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		workspaceID = int(req.WorkspaceId)
+	}
+
 	// Validate the request.
 	if len(req.ExperimentIds) == 0 && len(req.TrialIds) == 0 {
 		err = errors.New("must set experiment or trial ids")
@@ -234,6 +239,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	spec.Metadata.ExperimentIDs = req.ExperimentIds
 	spec.Metadata.TrialIDs = req.TrialIds
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 
 	logDirs := make([]string, 0)
 	uniqMounts := map[string]model.BindMount{}
