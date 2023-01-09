@@ -669,7 +669,8 @@ func (t *trial) maybeRestoreAllocation(ctx *actor.Context) (*model.Allocation, e
 	var allocations []model.Allocation
 	selectQuery := db.Bun().NewSelect().Model(&allocations).
 		Where("task_id = ?", t.taskID).
-		Where("end_time IS NULL")
+		Where("end_time IS NULL").
+		Where("state != ?", model.AllocationStateTerminated)
 
 	if t.rm.IsReattachableOnlyAfterStarted(ctx) {
 		selectQuery.Where("start_time IS NOT NULL")

@@ -120,6 +120,8 @@ type (
 	SetAllocationProxyAddress struct {
 		ProxyAddress string
 	}
+	// IsAllocationRestoring asks the allocation if it is in the middle of a restore.
+	IsAllocationRestoring struct{}
 )
 
 const (
@@ -133,6 +135,9 @@ func NewAllocation(
 	logCtx detLogger.Context, req sproto.AllocateRequest, db db.DB, rm rm.ResourceManager,
 	logger *Logger,
 ) actor.Actor {
+	req.LogContext = detLogger.MergeContexts(logCtx, detLogger.Context{
+		"allocation-id": req.AllocationID,
+	})
 	return &Allocation{
 		db:     db,
 		rm:     rm,
@@ -149,9 +154,7 @@ func NewAllocation(
 
 		resources: resourcesList{},
 
-		logCtx: detLogger.MergeContexts(logCtx, detLogger.Context{
-			"allocation-id": req.AllocationID,
-		}),
+		logCtx: req.LogContext,
 	}
 }
 
@@ -184,6 +187,10 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 		if err := a.RequestResources(ctx); err != nil {
 			a.Error(ctx, err)
 		}
+
+	case IsAllocationRestoring:
+		ctx.Respond(a.req.Restore && !a.restored)
+
 	case sproto.ResourcesAllocated:
 		if err := a.ResourcesAllocated(ctx, msg); err != nil {
 			a.Error(ctx, err)
@@ -479,6 +486,7 @@ func (a *Allocation) ResourcesAllocated(ctx *actor.Context, msg sproto.Resources
 		}
 	}
 
+	a.restored = a.req.Restore
 	a.resourcesStarted = true
 	a.sendEvent(ctx, sproto.Event{AssignedEvent: &msg})
 	return nil
