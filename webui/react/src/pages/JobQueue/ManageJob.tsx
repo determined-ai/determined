@@ -95,7 +95,7 @@ const ManageJob: React.FC<Props> = ({
 
     tableKeys.forEach((td) => {
       const col = columns.find((col) => col.key === td);
-      if (!col || !col.render) return;
+      if (!col?.render) return;
       tableDetails[td] = { label: <>{col.title}</>, value: <>col.render(undefined, job, 0)</> };
     });
 
