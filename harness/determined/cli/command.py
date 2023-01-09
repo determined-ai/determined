@@ -224,12 +224,8 @@ def list_tasks(args: Namespace) -> None:
         if "workspaceId" in item:
             wId = item["workspaceId"]
             del item["workspaceId"]
-            # TODO: come up with a better fix that can convey workspace name?
-            assert wId == 0 or wId in w_names, f"workspace id {wId} is not found"
-            if wId == 0:
-                item["workspaceName"] = "all workspaces"
-            else:
-                item["workspaceName"] = w_names[wId]
+            assert wId in w_names, f"workspace id {wId} is not found"
+            item["workspaceName"] = w_names[wId]
 
     if getattr(args, "json", None):
         print(json.dumps(res, indent=4))
