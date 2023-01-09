@@ -202,7 +202,7 @@ func (a *apiServer) GetCommands(
 			return false
 		}
 		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, model.UserID(resp.Commands[i].UserId), command.PlaceHolderWorkspace)
+			ctx, *curUser, command.PlaceHolderWorkspace)
 		if serverError != nil {
 			err = serverError
 		}
@@ -230,7 +230,7 @@ func (a *apiServer) GetCommand(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, model.UserID(resp.Command.UserId), command.PlaceHolderWorkspace); err != nil {
+		ctx, *curUser, command.PlaceHolderWorkspace); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)

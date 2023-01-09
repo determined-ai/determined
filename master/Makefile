@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := build
 GENERATED := packaging/LICENSE
 GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
-MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go
+MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go
 
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on

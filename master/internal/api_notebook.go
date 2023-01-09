@@ -56,22 +56,22 @@ func (a *apiServer) GetNotebooks(
 		return nil, err
 	}
 
-	a.filter(&resp.Notebooks, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, model.UserID(resp.Notebooks[i].UserId),
-			model.AccessScopeID(resp.Notebooks[i].WorkspaceId),
-		)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
-	})
+	/*
+		Expected behavior:
+		- If the user doesn't specify a workspace ID we return
+		all the permitted notebooks for the user.
+		- If they have no NSC access to any workspace we return an empty list.
+		- If the user requests a workspace that they don't have access to we respond with a 404.
+	*/
+	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
+	)
 	if err != nil {
-		return nil, err
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
+	a.filter(&resp.Notebooks, func(i int) bool {
+		return limitedScopes[model.AccessScopeID(resp.Notebooks[i].WorkspaceId)]
+	})
 
 	a.sort(resp.Notebooks, req.OrderBy, req.SortBy, apiv1.GetNotebooksRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Notebooks, req.Offset, req.Limit)
@@ -91,8 +91,7 @@ func (a *apiServer) GetNotebook(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, model.UserID(resp.Notebook.UserId),
-		model.AccessScopeID(resp.Notebook.WorkspaceId),
+		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
 	); err != nil {
 		return nil, err
 	} else if !ok { // permission denied.

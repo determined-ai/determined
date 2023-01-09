@@ -23,6 +23,8 @@ message GetNotebooksRequest {
     SORT_BY_DESCRIPTION = 2;
     // Return notebooks sorted by start time.
     SORT_BY_START_TIME = 4;
+    // Return notebooks sorted by workspace_id
+    SORT_BY_WORKSPACE_ID = 5;
   }
   // Sort notebooks by the given field.
   SortBy sort_by = 1;
@@ -39,10 +41,9 @@ message GetNotebooksRequest {
   // Limit notebooks to those that are owned by users with the specified
   // userIds.
   repeated int32 user_ids = 6;
-  /* TODO(DET-8680): addressed with rbac ntsc api ticket */
   // Limit to those within a specified workspace, or 0 for all
   // accessible workspaces.
-  /* int32 workspace_id = 12; */
+  int32 workspace_id = 12;
 }
 // Response to GetNotebooksRequest.
 message GetNotebooksResponse {
