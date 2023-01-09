@@ -11,13 +11,13 @@ import {
   RadioChangeEvent,
   Select,
   Space,
-  Tooltip,
   Typography,
 } from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import { maxPoolSlotCapacity } from 'pages/Clusters/ClustersOverview';

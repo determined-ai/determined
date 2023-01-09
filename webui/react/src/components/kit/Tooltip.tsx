@@ -17,7 +17,7 @@ interface TooltipProps {
     | 'leftBottom'
     | 'rightTop'
     | 'rightBottom';
-  title?: string;
+  title?: ReactNode;
   trigger?: 'hover' | 'focus' | 'click' | 'contextMenu' | Array<string>;
 }
 

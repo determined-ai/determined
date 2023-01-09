@@ -1,4 +1,4 @@
-import { Button, notification, Space, Tooltip } from 'antd';
+import { Button, notification, Space } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
@@ -11,6 +11,7 @@ import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Section from 'components/Section';
 import useGetCharMeasureInContainer from 'hooks/useGetCharMeasureInContainer';
