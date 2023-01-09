@@ -1,10 +1,11 @@
 import * as t from 'io-ts';
 import queryString from 'query-string';
-import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
 import { UpdateUserSettingParams } from 'services/types';
+import usePrevious from 'shared/hooks/usePrevious';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
@@ -31,7 +32,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
   userId: number;
 }
 
-export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => Promise<void>;
+export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => void;
 export type ResetSettings = (settings?: string[]) => void;
 type SettingsRecord<T> = { [K in keyof T]: T[K] };
 
@@ -147,6 +148,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     () => config.applicableRoutespace && !pathname.endsWith(config.applicableRoutespace),
     [config.applicableRoutespace, pathname],
   );
+  const [shouldPush, setShouldPush] = useState(false);
 
   // parse navigation url to state
   useEffect(() => {
@@ -161,9 +163,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       stateSettings[setting] = settings[setting];
     });
 
-    update(config.storagePath, stateSettings, true);
+    update(config.storageKey, () => stateSettings, true);
   }, [config, querySettings, state, update, shouldSkipUpdates]);
 
+  const stateEntry = useMemo(() => state.get(config.storageKey), [state, config.storageKey]);
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
@@ -171,6 +174,12 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       } as SettingsRecord<T>),
     [config, state],
   );
+  const prevSettings: SettingsRecord<T> | undefined = usePrevious(settings, undefined);
+  const returnedSettings: SettingsRecord<T> = useMemo(() => {
+    if (prevSettings && isEqual(settings, prevSettings)) return prevSettings;
+
+    return settings;
+  }, [settings, prevSettings]);
 
   for (const key in config.settings) {
     const setting = config.settings[key];
@@ -186,7 +195,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const mappedSettings = settingsToQuery(config, settings as Settings);
     const url = `?${mappedSettings}`;
 
-    if (mappedSettings && url !== window.location.search) navigate(url, { replace: true });
+    if (mappedSettings && url !== window.location.search) {
+      navigate(url, { replace: true });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -280,7 +291,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting as keyof T] = defaultSetting.defaultValue;
       });
 
-      update(config.storagePath, newSettings);
+      update(config.storageKey, () => newSettings);
 
       await updateDB(newSettings);
 
@@ -290,38 +301,48 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   const updateSettings = useCallback(
-    async (updates: Settings, shouldPush = false) => {
-      if (!settings || shouldSkipUpdates) return;
+    (updates: Settings, shouldPushUpdate = false) => {
+      if (shouldSkipUpdates) return;
 
-      const newSettings = { ...settings, ...updates };
+      update(config.storageKey, (settings) => {
+        if (!settings) return updates;
 
-      if (isEqual(newSettings, settings)) return;
+        return { ...settings, ...updates };
+      });
 
-      update(config.storagePath, newSettings);
+      setShouldPush((prevState) => {
+        if (prevState !== shouldPushUpdate) return shouldPushUpdate;
 
-      await updateDB(newSettings);
-
-      if (
-        (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
-          (setting) => !!setting.skipUrlEncoding,
-        )
-      ) {
-        return;
-      }
-
-      const mappedSettings = settingsToQuery(config, newSettings);
-      const url = `?${mappedSettings}`;
-
-      shouldPush ? navigate(url) : navigate(url, { replace: true });
+        return prevState;
+      });
     },
-    [config, settings, navigate, update, updateDB, shouldSkipUpdates],
+    [config, update, shouldSkipUpdates],
   );
+
+  useEffect(() => {
+    if (!settings) return;
+
+    if (settings !== prevSettings) updateDB(settings);
+
+    if (
+      (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
+        (setting) => !!setting.skipUrlEncoding,
+      )
+    ) {
+      return;
+    }
+
+    const mappedSettings = settingsToQuery(config, settings);
+    const url = `?${mappedSettings}`;
+
+    shouldPush ? navigate(url) : navigate(url, { replace: true });
+  }, [shouldPush, prevSettings, settings, navigate, updateDB, config]);
 
   return {
     activeSettings,
     isLoading,
     resetSettings,
-    settings,
+    settings: returnedSettings,
     updateSettings,
   };
 };

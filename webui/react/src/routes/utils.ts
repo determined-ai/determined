@@ -206,6 +206,8 @@ export const handlePath = (
 
   const href = options.path ? linkPath(options.path, options.external) : undefined;
 
+  if (href === window.location.pathname) return; // avoid runing all logic again if clicked on a link to the current location
+
   if (options.onClick) {
     options.onClick(event);
   } else if (href) {
