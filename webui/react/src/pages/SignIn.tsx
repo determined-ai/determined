@@ -144,7 +144,7 @@ const SignIn: React.FC = () => {
                 key={key}
                 size="large"
                 type="primary">
-                Sign in with {logo} {capitalize(key)}
+                Sign in with {logo} {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
               </Button>
             );
           })}
