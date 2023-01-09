@@ -642,6 +642,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 

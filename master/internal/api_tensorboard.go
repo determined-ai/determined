@@ -237,6 +237,12 @@ func (a *apiServer) LaunchTensorboard(
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"tensorboard": port}
 
+	workspaceID := model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		workspaceID = int(req.WorkspaceId)
+	}
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
+
 	spec.Metadata.ExperimentIDs = req.ExperimentIds
 	spec.Metadata.TrialIDs = req.TrialIds
 	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
