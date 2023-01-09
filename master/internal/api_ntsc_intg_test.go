@@ -125,7 +125,7 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 
-func TestAuthZCanSetNSCsPriority(t *testing.T) {
+func TestAuthZCanSetNTSCsPriority(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 	nbID := setupMockNBActor(t, api.m)
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
@@ -133,14 +133,14 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	)
 
 	// check permission errors are returned with permission denied status.
-	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
+	authz.On("CanSetNTSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Once()
 	_, err := api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: string(nbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// check other errors are not returned with permission denied status.
-	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
+	authz.On("CanSetNTSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		errors.New("other error"),
 	).Once()
 	_, err = api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: string(nbID)})
@@ -148,18 +148,18 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }
 
-func TestAuthZCanCreateNSC(t *testing.T) {
+func TestAuthZCanCreateNTSC(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 
 	// check permission errors are returned with permission denied status.
-	authz.On("CanCreateNSC", mock.Anything, curUser, mock.Anything).Return(
+	authz.On("CanCreateNTSC", mock.Anything, curUser, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Once()
 	_, err := api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// check other errors are not returned with permission denied status.
-	authz.On("CanCreateNSC", mock.Anything, curUser, mock.Anything).Return(
+	authz.On("CanCreateNTSC", mock.Anything, curUser, mock.Anything).Return(
 		errors.New("other error"),
 	).Once()
 	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})

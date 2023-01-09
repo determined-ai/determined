@@ -175,7 +175,7 @@ func (a *apiServer) SetTensorboardPriority(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+	err = command.AuthZProvider.Get().CanSetNTSCsPriority(
 		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId), int(req.Priority))
 	if err != nil {
 		return nil, err

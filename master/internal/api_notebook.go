@@ -151,7 +151,7 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+	err = command.AuthZProvider.Get().CanSetNTSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), int(req.Priority),
 	)
 	if err != nil {
@@ -180,7 +180,7 @@ func (a *apiServer) LaunchNotebook(
 	if req.WorkspaceId != 0 {
 		workspaceID = int(req.WorkspaceId)
 	}
-	if err = command.AuthZProvider.Get().CanCreateNSC(
+	if err = command.AuthZProvider.Get().CanCreateNTSC(
 		ctx, *user, model.AccessScopeID(workspaceID),
 	); err != nil {
 		return nil, apiutils.MapAndFilterErrors(err, nil, nil)

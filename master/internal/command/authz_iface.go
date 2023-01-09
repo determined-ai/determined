@@ -25,13 +25,13 @@ type NSCAuthZ interface {
 	) error
 
 	// POST /api/v1/NSCs
-	CanCreateNSC(
+	CanCreateNTSC(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 	) error
 
 	// PATCH /NSCs/:nsc_id
 	// POST /api/v1/tensorboards/:tb_id/set_priority
-	CanSetNSCsPriority(
+	CanSetNTSCsPriority(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 	) error
 

@@ -30,14 +30,14 @@ func (a *NSCAuthZBasic) CanTerminateNSC(
 }
 
 // CanCreateNSC always returns a nil error.
-func (a *NSCAuthZBasic) CanCreateNSC(
+func (a *NSCAuthZBasic) CanCreateNTSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) error {
 	return nil
 }
 
 // CanSetNSCsPriority always returns a nil error.
-func (a *NSCAuthZBasic) CanSetNSCsPriority(
+func (a *NSCAuthZBasic) CanSetNTSCsPriority(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID, priority int,
 ) error {
 	return nil
