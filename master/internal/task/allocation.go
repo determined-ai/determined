@@ -120,8 +120,8 @@ type (
 	SetAllocationProxyAddress struct {
 		ProxyAddress string
 	}
-	// AllocationNotRestoring asks the allocation if it is in the middle of a restore.
-	AllocationNotRestoring struct{}
+	// IsAllocationRestoring asks the allocation if it is in the middle of a restore.
+	IsAllocationRestoring struct{}
 )
 
 const (
@@ -188,12 +188,8 @@ func (a *Allocation) Receive(ctx *actor.Context) error {
 			a.Error(ctx, err)
 		}
 
-	case AllocationNotRestoring:
-		if a.req.Restore && !a.restored {
-			ctx.Respond(ErrAllocationStillRestoring{})
-		} else {
-			ctx.Respond(true)
-		}
+	case IsAllocationRestoring:
+		ctx.Respond(a.req.Restore && !a.restored)
 
 	case sproto.ResourcesAllocated:
 		if err := a.ResourcesAllocated(ctx, msg); err != nil {

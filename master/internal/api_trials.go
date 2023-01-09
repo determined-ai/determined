@@ -931,18 +931,17 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 
 func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *actor.Ref) error {
 	for i := 0; i < 60; i++ {
-		err := a.ask(handler.Address(), task.AllocationNotRestoring{}, nil)
-		if err == nil {
-			return nil
+		var restoring bool
+		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
+			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
 		}
-		if _, ok := err.(task.ErrAllocationStillRestoring); !ok {
-			return err
+		if !restoring {
+			return nil
 		}
 
 		time.Sleep(time.Second)
 	}
-	return errors.Wrap(task.ErrAllocationStillRestoring{},
-		"allocation stuck restoring after one minute of retrying")
+	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
 }
 
 func (a *apiServer) AllocationPreemptionSignal(
