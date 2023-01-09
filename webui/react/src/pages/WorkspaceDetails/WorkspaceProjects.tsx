@@ -102,13 +102,22 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, id, workspace, settings]);
+  }, [canceler.signal, id, workspace?.archived, settings]);
 
   useEffect(() => {
     setIsLoading(true);
     fetchProjects().then(() => setIsLoading(false));
+  }, [fetchProjects]);
+
+  useEffect(() => {
+    /**
+     * as we don't unmount this component whenever we change from workspace to workspace
+     * this effect simply "re-runs" the settings to verify all applied settings and checks
+     * like setting active settings into the url, etc
+     */
+    updateSettings({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id]);
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();
@@ -127,7 +136,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       updateSettings({
         sortDesc:
           value === V1GetWorkspaceProjectsRequestSortBy.NAME ||
-          value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
+            value === V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME
             ? false
             : true,
         sortKey: value as V1GetWorkspaceProjectsRequestSortBy | undefined,
@@ -385,10 +394,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     user,
     workspace?.archived,
   ]);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
 
   useEffect(() => {
     return () => canceler.abort();

@@ -23,7 +23,11 @@ type UserSettingsContext = {
   isLoading: boolean;
   querySettings: string;
   state: UserSettingsState;
-  update: (key: string, value: Settings, clearQuerySettings?: boolean) => void;
+  update: (
+    key: string,
+    cb: (currentSettings?: Settings) => Settings,
+    clearQuerySettings?: boolean,
+  ) => void;
 };
 
 export const UserSettings = createContext<UserSettingsContext>({
@@ -89,8 +93,16 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     querySettings.current = url;
   }, []);
 
-  const update = (key: string, value: Settings, clearQuerySettings = false) => {
-    setSettingsState((currentState) => currentState.set(key, value));
+  const update = (
+    key: string,
+    cb: (currentSettings?: Settings) => Settings,
+    clearQuerySettings = false,
+  ) => {
+    setSettingsState((currentState) => {
+      const currentSettings = currentState.get(key);
+
+      return currentState.set(key, cb(currentSettings));
+    });
 
     if (clearQuerySettings) querySettings.current = '';
   };
