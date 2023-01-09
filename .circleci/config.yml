@@ -947,6 +947,16 @@ jobs:
       - run: echo "Hi I'm on a Container Runner!"
       - run: echo $HOST
 
+  danh-testing-circleci-runner-gpu-job:
+    docker:
+      - image: cimg/base:current
+    resource_class: determined-ai/container-runner-gpu
+    steps:
+      - run: echo "Hi I'm on a GPU Container Runner!"
+      - run: echo $HOST
+      - run: ls -R /usr/local/nvidia
+      - run: LD_LIBRARY_PATH=/usr/local/nvidia/lib64 /usr/local/nvidia/bin/nvidia-smi
+
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2097,6 +2107,7 @@ workflows:
   danh-testing-circleci-runner:
     jobs:
       - danh-testing-circleci-runner-job
+      - danh-testing-circleci-runner-gpu-job
 
   lint:
     jobs:
