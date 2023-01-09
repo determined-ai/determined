@@ -153,7 +153,7 @@ export const useEnsureUsersFetched = (canceler: AbortController): (() => Promise
   );
 };
 
-export const useUsers = (cfg?: FetchUsersConfig): Loadable<UserPage> => {
+export const useUsers = (cfg?: FetchUsersConfig): Loadable<Readonly<UserPage>> => {
   const context = useContext(UsersContext);
 
   if (context === null) {
@@ -164,7 +164,7 @@ export const useUsers = (cfg?: FetchUsersConfig): Loadable<UserPage> => {
 
   if (!usersPagination) return NotLoaded;
 
-  const userPage = {
+  const userPage: UserPage = {
     pagination: usersPagination.pagination,
     users: usersPagination.users.flatMap((userId) => {
       const user = context.users.get(userId);
