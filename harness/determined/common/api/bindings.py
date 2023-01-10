@@ -3815,33 +3815,29 @@ class v1GetModelsResponse:
         return out
 
 class v1GetNotebookResponse:
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
         *,
+        config: "typing.Dict[str, typing.Any]",
         notebook: "v1Notebook",
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
+        self.config = config
         self.notebook = notebook
-        if not isinstance(config, Unset):
-            self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetNotebookResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
             "notebook": v1Notebook.from_json(obj["notebook"]),
         }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
             "notebook": self.notebook.to_json(omit_unset),
         }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
         return out
 
 class v1GetNotebooksRequestSortBy(enum.Enum):
@@ -4341,33 +4337,29 @@ class v1GetTemplatesResponse:
         return out
 
 class v1GetTensorboardResponse:
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
         *,
+        config: "typing.Dict[str, typing.Any]",
         tensorboard: "v1Tensorboard",
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
+        self.config = config
         self.tensorboard = tensorboard
-        if not isinstance(config, Unset):
-            self.config = config
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTensorboardResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "config": obj["config"],
             "tensorboard": v1Tensorboard.from_json(obj["tensorboard"]),
         }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "config": self.config,
             "tensorboard": self.tensorboard.to_json(omit_unset),
         }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
         return out
 
 class v1GetTensorboardsRequestSortBy(enum.Enum):

@@ -3448,7 +3448,7 @@ export interface V1GetNotebookResponse {
      * @type {any}
      * @memberof V1GetNotebookResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
@@ -3802,7 +3802,7 @@ export interface V1GetTensorboardResponse {
      * @type {any}
      * @memberof V1GetTensorboardResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
