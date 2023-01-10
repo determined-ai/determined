@@ -5,6 +5,7 @@ from determined.pytorch.deepspeed._mpu import (
 )
 from determined.pytorch.deepspeed._deepspeed_context import (
     DeepSpeedTrialContext,
+    ModelInfo,
     overwrite_deepspeed_config,
 )
 from determined.pytorch.deepspeed._deepspeed_trial import DeepSpeedTrial, DeepSpeedTrialController
