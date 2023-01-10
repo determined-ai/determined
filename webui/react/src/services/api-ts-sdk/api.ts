@@ -2776,13 +2776,13 @@ export interface V1GetCommandResponse {
      * @type {V1Command}
      * @memberof V1GetCommandResponse
      */
-    command?: V1Command;
+    command: V1Command;
     /**
      * The command config.
      * @type {any}
      * @memberof V1GetCommandResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
@@ -2808,7 +2808,7 @@ export interface V1GetCommandsResponse {
      * @type {Array<V1Command>}
      * @memberof V1GetCommandsResponse
      */
-    commands?: Array<V1Command>;
+    commands: Array<V1Command>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
@@ -3442,13 +3442,13 @@ export interface V1GetNotebookResponse {
      * @type {V1Notebook}
      * @memberof V1GetNotebookResponse
      */
-    notebook?: V1Notebook;
+    notebook: V1Notebook;
     /**
      * The notebook config.
      * @type {any}
      * @memberof V1GetNotebookResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
@@ -3474,7 +3474,7 @@ export interface V1GetNotebooksResponse {
      * @type {Array<V1Notebook>}
      * @memberof V1GetNotebooksResponse
      */
-    notebooks?: Array<V1Notebook>;
+    notebooks: Array<V1Notebook>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
@@ -3638,13 +3638,13 @@ export interface V1GetShellResponse {
      * @type {V1Shell}
      * @memberof V1GetShellResponse
      */
-    shell?: V1Shell;
+    shell: V1Shell;
     /**
      * The shell config.
      * @type {any}
      * @memberof V1GetShellResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
@@ -3670,7 +3670,7 @@ export interface V1GetShellsResponse {
      * @type {Array<V1Shell>}
      * @memberof V1GetShellsResponse
      */
-    shells?: Array<V1Shell>;
+    shells: Array<V1Shell>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
@@ -3796,13 +3796,13 @@ export interface V1GetTensorboardResponse {
      * @type {V1Tensorboard}
      * @memberof V1GetTensorboardResponse
      */
-    tensorboard?: V1Tensorboard;
+    tensorboard: V1Tensorboard;
     /**
      * 
      * @type {any}
      * @memberof V1GetTensorboardResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
@@ -3828,7 +3828,7 @@ export interface V1GetTensorboardsResponse {
      * @type {Array<V1Tensorboard>}
      * @memberof V1GetTensorboardsResponse
      */
-    tensorboards?: Array<V1Tensorboard>;
+    tensorboards: Array<V1Tensorboard>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}

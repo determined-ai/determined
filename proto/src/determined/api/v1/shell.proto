@@ -40,6 +40,9 @@ message GetShellsRequest {
 }
 // Response to GetShellsRequest.
 message GetShellsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "shells" ] }
+  };
   // The list of returned shells.
   repeated determined.shell.v1.Shell shells = 1;
   // Pagination information of the full dataset.
@@ -53,6 +56,9 @@ message GetShellRequest {
 }
 // Response to GetShellRequest.
 message GetShellResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "shell", "config" ] }
+  };
   // The requested shell.
   determined.shell.v1.Shell shell = 1;
   // The shell config.

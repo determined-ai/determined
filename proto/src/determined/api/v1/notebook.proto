@@ -42,6 +42,9 @@ message GetNotebooksRequest {
 }
 // Response to GetNotebooksRequest.
 message GetNotebooksResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notebooks" ] }
+  };
   // The list of returned notebooks.
   repeated determined.notebook.v1.Notebook notebooks = 1;
   // Pagination information of the full dataset.
@@ -55,6 +58,9 @@ message GetNotebookRequest {
 }
 // Response to GetNotebookRequest.
 message GetNotebookResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "notebook", "config" ] }
+  };
   // The requested notebook.
   determined.notebook.v1.Notebook notebook = 1;
   // The notebook config.
