@@ -4,11 +4,11 @@ import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
-import Tooltip from 'components/kit/Tooltip';
 import Pivot from 'components/kit/Pivot';
-import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import { paths } from 'routes/utils';
+import Tooltip from 'components/kit/Tooltip';
+import Section from 'components/Section';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
@@ -81,14 +81,9 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
   if (project.immutable) {
     const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
     return (
-      <div className={css.base}>
-        <PageHeader
-          className={css.header}
-          options={experimentsTab?.options}
-          title="Uncategorized"
-        />
+      <Section options={experimentsTab?.options} title="Uncategorized">
         {experimentsTab?.body}
-      </div>
+      </Section>
     );
   }
 

@@ -92,7 +92,10 @@ const Markdown: React.FC<Props> = ({
   return (
     <div aria-label="markdown-editor" className={css.base} tabIndex={0}>
       {editing && !disabled ? (
-        <Pivot items={tabItems} />
+        // TODO: Clean up once we standardize page layouts
+        <div style={{ height: '100%', padding: 16 }}>
+          <Pivot items={tabItems} />
+        </div>
       ) : (
         <MarkdownRender
           markdown={markdown}

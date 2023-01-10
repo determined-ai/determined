@@ -1020,7 +1020,7 @@ const ProjectDetails: React.FC = () => {
     return [
       {
         body: (
-          <div className={css.experimentTab}>
+          <div>
             <TableBatch
               actions={batchActions.map((action) => ({
                 disabled: !availableBatchActions.includes(action),
@@ -1129,7 +1129,7 @@ const ProjectDetails: React.FC = () => {
 
   return (
     <Page
-      bodyNoPadding
+      bodyNoPadding={id !== 1}
       containerRef={pageRef}
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}

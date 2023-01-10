@@ -131,7 +131,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     delete mainSection.details;
     delete mainSection.stats;
     return (
-      <Page>
+      <Page bodyNoPadding>
         <Json alternateBackground json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
