@@ -1,6 +1,6 @@
-import { Tooltip } from 'antd';
 import React from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import { CommonProps } from 'shared/types';
 import { humanReadableNumber } from 'shared/utils/number';
 

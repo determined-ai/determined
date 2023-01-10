@@ -1,4 +1,4 @@
-import { Button, Menu, MenuProps, Tooltip, Typography } from 'antd';
+import { Button, Menu, MenuProps, Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { CSSTransition } from 'react-transition-group';
 
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
+import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import useFeature from 'hooks/useFeature';

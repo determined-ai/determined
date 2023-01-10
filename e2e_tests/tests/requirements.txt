@@ -11,3 +11,4 @@ pandas
 pyyaml
 docker
 python-dateutil
+kubernetes

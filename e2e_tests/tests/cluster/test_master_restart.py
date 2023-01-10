@@ -14,7 +14,8 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import det_spawn
 
-from .managed_cluster import ManagedCluster, get_agent_data
+from .managed_cluster import Cluster, ManagedCluster, get_agent_data
+from .managed_cluster_k8s import ManagedK8sCluster
 from .test_groups import det_cmd_json
 from .utils import (
     command_succeeded,
@@ -51,40 +52,64 @@ def restartable_managed_cluster(
 
 @pytest.mark.managed_devcluster
 def test_master_restart_ok(managed_cluster_restarts: ManagedCluster) -> None:
+    _sanity_check(managed_cluster_restarts)
+    _test_master_restart_ok(managed_cluster_restarts)
+    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)
+    _sanity_check(managed_cluster_restarts)
+
+
+@pytest.mark.e2e_k8s
+def test_master_restart_ok_k8s(k8s_managed_cluster: ManagedK8sCluster) -> None:
+    _test_master_restart_ok(k8s_managed_cluster)
+
+
+def _test_master_restart_ok(managed_cluster: Cluster) -> None:
     # - Kill master
     # - Restart master
     # - Schedule something.
     # Do it twice to ensure nothing gets stuck.
-    _sanity_check(managed_cluster_restarts)
-
     try:
         for i in range(3):
             print("test_master_restart_ok stage %s start" % i)
             cmd_ids = [run_command(1, slots) for slots in [0, 1]]
 
             for cmd_id in cmd_ids:
-                wait_for_command_state(cmd_id, "TERMINATED", 10)
+                wait_for_command_state(cmd_id, "TERMINATED", 20)
                 assert command_succeeded(cmd_id)
 
-            managed_cluster_restarts.kill_master()
-            managed_cluster_restarts.restart_master()
+            managed_cluster.kill_master()
+            managed_cluster.restart_master()
 
             print("test_master_restart_ok stage %s done" % i)
     except Exception:
-        managed_cluster_restarts.restart_master()
-        managed_cluster_restarts.restart_agent()
+        managed_cluster.restart_master()
+        managed_cluster.restart_agent()
         raise
-    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)
-    _sanity_check(managed_cluster_restarts)
 
 
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [0, 20, 60])
 def test_master_restart_reattach_recover_experiment(
-    managed_cluster_restarts: ManagedCluster, downtime: int
+    managed_cluster_restarts: ManagedCluster,
+    downtime: int,
 ) -> None:
     _sanity_check(managed_cluster_restarts)
+    _test_master_restart_reattach_recover_experiment(managed_cluster_restarts, downtime)
 
+
+@pytest.mark.e2e_k8s
+@pytest.mark.parametrize("downtime", [0, 20, 60])
+def test_master_restart_reattach_recover_experiment_k8s(
+    k8s_managed_cluster: ManagedK8sCluster,
+    downtime: int,
+) -> None:
+    _test_master_restart_reattach_recover_experiment(k8s_managed_cluster, downtime)
+
+
+@pytest.mark.managed_devcluster
+def _test_master_restart_reattach_recover_experiment(
+    managed_cluster_restarts: Cluster, downtime: int
+) -> None:
     try:
         exp_id = exp.create_experiment(
             conf.fixtures_path("no_op/single-medium-train-step.yaml"),
@@ -115,9 +140,21 @@ def test_master_restart_reattach_recover_experiment(
 
 
 @pytest.mark.managed_devcluster
-def test_master_restart_kill_works(managed_cluster_restarts: ManagedCluster) -> None:
+def test_master_restart_kill_works_experiment(
+    managed_cluster_restarts: ManagedCluster,
+) -> None:
     _sanity_check(managed_cluster_restarts)
+    _test_master_restart_kill_works(managed_cluster_restarts)
 
+
+@pytest.mark.e2e_k8s
+def test_master_restart_kill_works_k8s(
+    k8s_managed_cluster: ManagedK8sCluster,
+) -> None:
+    _test_master_restart_kill_works(k8s_managed_cluster)
+
+
+def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
     try:
         exp_id = exp.create_experiment(
             conf.fixtures_path("no_op/single-many-long-steps.yaml"),
@@ -134,7 +171,7 @@ def test_master_restart_kill_works(managed_cluster_restarts: ManagedCluster) -> 
         command = ["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)]
         subprocess.check_call(command)
 
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=10)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=20)
 
         managed_cluster_restarts.ensure_agent_ok()
     except Exception:
@@ -148,10 +185,21 @@ def test_master_restart_kill_works(managed_cluster_restarts: ManagedCluster) -> 
 def test_master_restart_cmd(
     restartable_managed_cluster: ManagedCluster, slots: int, downtime: int
 ) -> None:
-    managed_cluster = restartable_managed_cluster
+    _test_master_restart_cmd(restartable_managed_cluster, slots, downtime)
 
+
+@pytest.mark.e2e_k8s
+@pytest.mark.parametrize("slots", [0, 1])
+@pytest.mark.parametrize("downtime", [0, 20, 60])
+def test_master_restart_cmd_k8s(
+    k8s_managed_cluster: ManagedK8sCluster, slots: int, downtime: int
+) -> None:
+    _test_master_restart_cmd(k8s_managed_cluster, slots, downtime)
+
+
+def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
     command_id = run_command(30, slots=slots)
-    wait_for_command_state(command_id, "RUNNING", 10)
+    wait_for_command_state(command_id, "RUNNING", 20)
 
     if downtime >= 0:
         managed_cluster.kill_master()
@@ -166,8 +214,16 @@ def test_master_restart_cmd(
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [5])
 def test_master_restart_shell(restartable_managed_cluster: ManagedCluster, downtime: int) -> None:
-    managed_cluster = restartable_managed_cluster
+    _test_master_restart_shell(restartable_managed_cluster, downtime)
 
+
+@pytest.mark.e2e_k8s
+@pytest.mark.parametrize("downtime", [5])
+def test_master_restart_shell_k8s(k8s_managed_cluster: ManagedK8sCluster, downtime: int) -> None:
+    _test_master_restart_shell(k8s_managed_cluster, downtime)
+
+
+def _test_master_restart_shell(managed_cluster: Cluster, downtime: int) -> None:
     with cmd.interactive_command("shell", "start", "--detach") as shell:
         task_id = shell.task_id
 
@@ -206,7 +262,7 @@ def _get_auth_token_for_curl() -> str:
 def _check_web_url(url: str, name: str) -> None:
     token = _get_auth_token_for_curl()
     bad_status_codes = []
-    for _ in range(10):
+    for _ in range(30):
         r = requests.get(url, headers={"Authorization": f"Bearer {token}"}, allow_redirects=True)
         # Sometimes the TB/JL take a bit of time to stand up, returning 502.
         # Sometimes it takes a bit of time for master to register the proxy, returning 404.
@@ -236,7 +292,16 @@ def _check_tb_url(url: str) -> None:
 def test_master_restart_notebook(
     restartable_managed_cluster: ManagedCluster, downtime: int
 ) -> None:
-    managed_cluster = restartable_managed_cluster
+    return _test_master_restart_notebook(restartable_managed_cluster, downtime)
+
+
+@pytest.mark.e2e_k8s
+@pytest.mark.parametrize("downtime", [5])
+def test_master_restart_notebook_k8s(k8s_managed_cluster: ManagedK8sCluster, downtime: int) -> None:
+    return _test_master_restart_notebook(k8s_managed_cluster, downtime)
+
+
+def _test_master_restart_notebook(managed_cluster: Cluster, downtime: int) -> None:
     with cmd.interactive_command("notebook", "start", "--detach") as notebook:
         task_id = notebook.task_id
         assert task_id is not None
@@ -259,10 +324,20 @@ def test_master_restart_notebook(
 def test_master_restart_tensorboard(
     restartable_managed_cluster: ManagedCluster, downtime: int
 ) -> None:
-    managed_cluster = restartable_managed_cluster
+    return _test_master_restart_tensorboard(restartable_managed_cluster, downtime)
 
+
+@pytest.mark.e2e_k8s
+@pytest.mark.parametrize("downtime", [5])
+def test_master_restart_tensorboard_k8s(
+    k8s_managed_cluster: ManagedK8sCluster, downtime: int
+) -> None:
+    return _test_master_restart_tensorboard(k8s_managed_cluster, downtime)
+
+
+def _test_master_restart_tensorboard(managed_cluster: Cluster, downtime: int) -> None:
     exp_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single.yaml"),
+        conf.fixtures_path("no_op/single-default-ckpt.yaml"),
         conf.fixtures_path("no_op"),
         None,
     )
@@ -306,3 +381,33 @@ def test_agent_devices_change(restartable_managed_cluster: ManagedCluster) -> No
     finally:
         managed_cluster.dc.kill_stage("agent10")
         managed_cluster.restart_agent()
+
+
+@pytest.mark.e2e_k8s
+def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> None:
+    agent_data = get_agent_data(conf.make_master_url())
+    slots = sum([a["num_slots"] for a in agent_data])
+
+    running_command_id = run_command(60, slots)
+    queued_command_id = run_command(60, slots)
+
+    wait_for_command_state(running_command_id, "RUNNING", 25)
+    wait_for_command_state(queued_command_id, "QUEUED", 25)
+
+    job_list = det_cmd_json(["job", "list", "--json"])["jobs"]
+
+    k8s_managed_cluster.kill_master()
+    k8s_managed_cluster.restart_master()
+
+    post_restart_job_list = det_cmd_json(["job", "list", "--json"])["jobs"]
+
+    # TODO(DET-8776): command submission times get overwritten to master start currently.
+    assert len(job_list) == len(post_restart_job_list)
+    for pre, post in zip(job_list, post_restart_job_list):
+        post["submissionTime"] = pre["submissionTime"]
+
+    assert job_list == post_restart_job_list
+
+    for cmd_id in [running_command_id, queued_command_id]:
+        wait_for_command_state(cmd_id, "TERMINATED", 60)
+        assert "success" in get_command_info(cmd_id)["exitStatus"]

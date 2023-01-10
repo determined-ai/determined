@@ -268,6 +268,7 @@ export const getGroups: DetApi<
     detApi.Internal.getGroups({
       limit: params.limit || 10,
       offset: params.offset,
+      userId: params.userId,
     }),
 };
 

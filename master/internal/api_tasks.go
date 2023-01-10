@@ -175,6 +175,9 @@ func (a *apiServer) AllocationReady(
 	if err != nil {
 		return nil, err
 	}
+	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
+		return nil, err
+	}
 
 	if err := a.ask(resp.Address(), task.AllocationReady{}, nil); err != nil {
 		return nil, err
@@ -194,6 +197,9 @@ func (a *apiServer) AllocationWaiting(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
 		return nil, err
 	}
 
@@ -218,6 +224,9 @@ func (a *apiServer) AllocationAllGather(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -262,6 +271,9 @@ func (a *apiServer) PostAllocationProxyAddress(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 

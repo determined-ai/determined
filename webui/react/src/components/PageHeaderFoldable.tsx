@@ -1,7 +1,8 @@
-import { Button, Dropdown, Tooltip } from 'antd';
+import { Button, Dropdown } from 'antd';
 import type { DropdownProps, MenuProps } from 'antd';
 import React, { useState } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import Icon from 'shared/components/Icon/Icon';
 import { isMouseEvent } from 'shared/utils/routes';
 

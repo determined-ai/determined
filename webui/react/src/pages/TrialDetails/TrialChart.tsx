@@ -78,7 +78,7 @@ const TrialChart: React.FC<Props> = ({
       const mWrapper = trialSumm.find(
         (mContainer) => mContainer.name === metric.name && mContainer.type === metric.type,
       );
-      if (!mWrapper || !mWrapper.data) {
+      if (!mWrapper?.data) {
         return;
       }
 

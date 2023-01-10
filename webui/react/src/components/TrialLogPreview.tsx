@@ -1,7 +1,7 @@
-import { Tooltip } from 'antd';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import LogViewerEntry, {
   DATETIME_FORMAT,
   LogEntry,

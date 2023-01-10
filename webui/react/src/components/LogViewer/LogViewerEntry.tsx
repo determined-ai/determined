@@ -1,6 +1,6 @@
-import { Tooltip } from 'antd';
 import React from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import Icon from 'shared/components/Icon/Icon';
 import { ansiToHtml } from 'shared/utils/dom';
 import { capitalize } from 'shared/utils/string';

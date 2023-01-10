@@ -704,6 +704,9 @@ commands:
         type: env_var_name
       environment-image:
         type: string
+      accel-node-taints:
+        type: string
+        default: ""
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -743,7 +746,7 @@ commands:
           steps:
             - run:
                 command: |
-                  echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>"' >> "$BASH_ENV"
+                  echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>,_reattachResources=true,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].effect=NoSchedule,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].effect=NoSchedule"' >> "$BASH_ENV"
                 name: CPU setup helm overrides
       - when:
           condition: <<parameters.environment-image>>
@@ -766,13 +769,13 @@ commands:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
-                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
                 name: Create GPU node pool
       - unless:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
-                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
                 name: Create CPU node pool
 
   generate-tls-cert:
@@ -1892,6 +1895,9 @@ jobs:
       environment-image:
         default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10
         type: string
+      accel-node-taints:
+        type: string
+        default: ""
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
@@ -1921,6 +1927,7 @@ jobs:
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
           environment-image: <<parameters.environment-image>>
+          accel-node-taints: <<parameters.accel-node-taints>>
       - set-google-application-credentials
       - when:
           condition: <<parameters.environment-image>>
@@ -2428,6 +2435,27 @@ workflows:
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
 
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach
+          context: gcp
+          filters:
+            branches:
+              only: master
+          requires:
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
+
       - test-stress:
           name: test-stress
           filters: *any-upstream
@@ -2608,6 +2636,26 @@ workflows:
               environment-gpu-enabled: ["0"]
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
 
       # Nightly distributed tests
       - request-gpu-distributed-nightly:

@@ -20,7 +20,7 @@ export const isAbsolutePath = (url: string): boolean => {
   return regex.test(url);
 };
 export const locationToPath = (location?: Location): string | null => {
-  if (!location || !location.pathname) return null;
+  if (!location?.pathname) return null;
   return location.pathname + location.search + location.hash;
 };
 export const windowOpenFeatures = ['noopener', 'noreferrer'];

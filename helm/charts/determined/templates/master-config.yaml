@@ -122,6 +122,9 @@ data:
       fluent:
         {{- toYaml .Values.fluent | nindent 8}}
       {{- end }}
+      {{- if .Values._reattachResources }}
+      _reattach_resources: {{ .Values._reattachResources }}
+      {{- end }}
 
     {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0")._1}}
     {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0")._1 -}}

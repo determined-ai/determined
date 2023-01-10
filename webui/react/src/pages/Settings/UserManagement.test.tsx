@@ -6,6 +6,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
+import { MODAL_HEADER_LABEL_CREATE } from 'hooks/useModal/UserSettings/useModalCreateUser';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
@@ -15,7 +16,7 @@ import { UserRolesProvider } from 'stores/userRoles';
 import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
-import UserManagement, { CREAT_USER_LABEL, CREATE_USER, USER_TITLE } from './UserManagement';
+import UserManagement, { CREATE_USER, CREATE_USER_LABEL, USER_TITLE } from './UserManagement';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
@@ -120,7 +121,7 @@ describe('UserManagement', () => {
 
   it('should render modal for create user when click the button', async () => {
     setup();
-    await user.click(await screen.findByLabelText(CREAT_USER_LABEL));
-    expect(screen.getAllByText('New User')).toHaveLength(1);
+    await user.click(await screen.findByLabelText(CREATE_USER_LABEL));
+    expect(screen.getByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).toBeInTheDocument();
   });
 });
