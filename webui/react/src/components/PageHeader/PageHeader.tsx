@@ -1,6 +1,7 @@
-import { Breadcrumb, Tooltip } from 'antd';
+import { Breadcrumb } from 'antd';
 import React from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import { BreadCrumbRoute } from 'shared/components/Page';
 import { CommonProps } from 'shared/types';
 

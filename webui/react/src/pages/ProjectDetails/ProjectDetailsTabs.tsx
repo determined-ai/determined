@@ -1,9 +1,10 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Space, Tabs, Tooltip } from 'antd';
+import { Space, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import Tooltip from 'components/kit/Tooltip';
 import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
 import { getWorkspace } from 'services/api';

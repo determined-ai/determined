@@ -1,10 +1,11 @@
-import { Space, Tooltip, Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TimeAgo from 'components/TimeAgo';

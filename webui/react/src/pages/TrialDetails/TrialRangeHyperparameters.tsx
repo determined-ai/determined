@@ -1,7 +1,8 @@
-import { Tooltip, Typography } from 'antd';
+import { Typography } from 'antd';
 import React, { useMemo } from 'react';
 
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Tooltip from 'components/kit/Tooltip';
 import Section from 'components/Section';
 import { unflattenObject } from 'shared/utils/data';
 import { clamp } from 'shared/utils/number';
