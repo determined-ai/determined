@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
 import { UpdateUserSettingParams } from 'services/types';
-import usePrevious from 'shared/hooks/usePrevious';
 import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
@@ -166,7 +165,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     update(config.storageKey, () => stateSettings, true);
   }, [config, querySettings, state, update, shouldSkipUpdates]);
 
-  const stateEntry = useMemo(() => state.get(config.storageKey), [state, config.storageKey]);
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
@@ -174,12 +172,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       } as SettingsRecord<T>),
     [config, state],
   );
-  const prevSettings: SettingsRecord<T> | undefined = usePrevious(settings, undefined);
-  const returnedSettings: SettingsRecord<T> = useMemo(() => {
-    if (prevSettings && isEqual(settings, prevSettings)) return prevSettings;
-
-    return settings;
-  }, [settings, prevSettings]);
+  const [returnedSettings, setReturnedSettings] = useState<SettingsRecord<T>>(settings);
 
   for (const key in config.settings) {
     const setting = config.settings[key];
@@ -310,11 +303,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return { ...settings, ...updates };
       });
 
-      setShouldPush((prevState) => {
-        if (prevState !== shouldPushUpdate) return shouldPushUpdate;
-
-        return prevState;
-      });
+      setShouldPush(shouldPushUpdate);
     },
     [config, update, shouldSkipUpdates],
   );
@@ -322,7 +311,13 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   useEffect(() => {
     if (!settings) return;
 
-    if (settings !== prevSettings) updateDB(settings);
+    setReturnedSettings((prevState) => {
+      if (isEqual(prevState, settings)) return prevState;
+
+      updateDB(settings);
+
+      return settings;
+    });
 
     if (
       (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
@@ -336,7 +331,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const url = `?${mappedSettings}`;
 
     shouldPush ? navigate(url) : navigate(url, { replace: true });
-  }, [shouldPush, prevSettings, settings, navigate, updateDB, config]);
+  }, [shouldPush, settings, navigate, updateDB, config]);
 
   return {
     activeSettings,
