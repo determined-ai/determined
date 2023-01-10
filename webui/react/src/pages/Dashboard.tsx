@@ -211,7 +211,9 @@ const Dashboard: React.FC = () => {
       ) : null}
       {/* show Recently Submitted header even when empty: */}
       <Section title="Recently Submitted">
-        {submissionsLoading ? <Spinner center /> : submissions.length > 0 ? (
+        {submissionsLoading ? (
+          <Spinner center />
+        ) : submissions.length > 0 ? (
           <ResponsiveTable<Submission>
             className={css.table}
             columns={[
@@ -283,7 +285,9 @@ const Dashboard: React.FC = () => {
             rowKey="id"
             showHeader={false}
           />
-        ) : <Empty description="No Submissions" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+        ) : (
+          <Empty description="No Submissions" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
       </Section>
       {modalJupyterLabContextHolder}
     </Page>
