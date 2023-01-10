@@ -120,14 +120,16 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
         project={project}
         type="project"
       />
-      <Pivot
-        activeKey={sentenceToCamelCase(activeTab.title)}
-        defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
-        items={tabItems}
-        tabBarExtraContent={activeTab.options}
-        tabBarStyle={{ height: 50, paddingLeft: 16 }}
-        onChange={handleTabSwitch}
-      />
+      {/* TODO: Clean up once we standardize page layouts */}
+      <div style={{ padding: 16 }}>
+        <Pivot
+          activeKey={sentenceToCamelCase(activeTab.title)}
+          defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
+          items={tabItems}
+          tabBarExtraContent={activeTab.options}
+          onChange={handleTabSwitch}
+        />
+      </div>
     </>
   );
 };

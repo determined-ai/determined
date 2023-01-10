@@ -326,12 +326,10 @@ const ModelVersionDetails: React.FC = () => {
         />
       }
       id="modelDetails">
-      <Pivot
-        activeKey={tabKey}
-        items={tabItems}
-        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
-        onChange={handleTabChange}
-      />
+      {/* TODO: Clean up once we standardize page layouts */}
+      <div style={{ padding: 16 }}>
+        <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />
+      </div>
     </Page>
   );
 };

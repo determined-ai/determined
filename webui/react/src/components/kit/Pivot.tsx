@@ -1,5 +1,5 @@
 import { Tabs } from 'antd';
-import React, { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from 'react';
+import React, { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 export type TabItem = {
   children?: ReactNode;
@@ -15,7 +15,6 @@ interface PivotProps {
   onChange?: (activeKey: string) => void;
   onTabClick?: (key: string, event: MouseEvent | KeyboardEvent) => void;
   tabBarExtraContent?: ReactNode;
-  tabBarStyle?: CSSProperties;
   type?: 'line' | 'card' | 'editable-card';
 }
 

@@ -312,7 +312,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             </div>
           ) : undefined
         }
-        tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}
       />
       {modalHyperparameterSearchContextHolder}
