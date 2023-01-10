@@ -1,4 +1,4 @@
-import { Breadcrumb, Button } from 'antd';
+import { Breadcrumb, Button, Empty } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [canceler] = useState(new AbortController());
-  const [tableLoading, setTableLoading] = useState<boolean>(true);
+  const [submissionsLoading, setSubmissionsLoading] = useState<boolean>(true);
   const [projectsLoading, setProjectsLoading] = useState<boolean>(true);
   const loadableCurrentUser = useCurrentUser();
   const currentUser = Loadable.match(loadableCurrentUser, {
@@ -146,7 +146,7 @@ const Dashboard: React.FC = () => {
   const fetchSubmissions = useCallback(async () => {
     if (!currentUser) return;
     await Promise.allSettled([fetchExperiments(currentUser), fetchTasks(currentUser)]);
-    setTableLoading(false);
+    setSubmissionsLoading(false);
   }, [currentUser, fetchExperiments, fetchTasks]);
 
   const fetchAll = useCallback(() => {
@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
     return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
   };
 
-  if (projectsLoading && tableLoading) {
+  if (projectsLoading && submissionsLoading) {
     return (
       <Page options={<JupyterLabButton />} title="Home">
         <Spinner center />
@@ -186,12 +186,13 @@ const Dashboard: React.FC = () => {
 
   return (
     <Page options={<JupyterLabButton />} title="Home">
-      {projectsLoading && !tableLoading ? (
+      {projectsLoading ? (
         <Section>
           <Spinner center />
         </Section>
       ) : projects.length > 0 ? (
-        <Section title="Recent projects">
+        // hide Recent Projects header when empty:
+        <Section title="Recent Projects">
           <Grid
             count={projects.length}
             gap={ShirtSize.Medium}
@@ -208,12 +209,9 @@ const Dashboard: React.FC = () => {
           </Grid>
         </Section>
       ) : null}
-      {tableLoading && !projectsLoading ? (
-        <Section>
-          <Spinner center />
-        </Section>
-      ) : submissions.length > 0 ? (
-        <Section title="Recently submitted">
+      {/* show Recently Submitted header even when empty: */}
+      <Section title="Recently Submitted">
+        {submissionsLoading ? <Spinner center /> : submissions.length > 0 ? (
           <ResponsiveTable<Submission>
             className={css.table}
             columns={[
@@ -280,26 +278,13 @@ const Dashboard: React.FC = () => {
               },
             ]}
             dataSource={submissions}
-            loading={tableLoading}
+            loading={submissionsLoading}
             pagination={false}
             rowKey="id"
             showHeader={false}
           />
-        </Section>
-      ) : (
-        <div className={css.emptyBase}>
-          <div className={css.icon}>
-            <Icon name="dashboard" size="mega" />
-          </div>
-          <h4>No submissions</h4>
-          <p className={css.description}>
-            Your recent experiments and tasks will show up here.&nbsp;
-            <Link external path={paths.docs('/quickstart-mdldev.html')}>
-              Get started
-            </Link>
-          </p>
-        </div>
-      )}
+        ) : <Empty description="No Submissions" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+      </Section>
       {modalJupyterLabContextHolder}
     </Page>
   );
