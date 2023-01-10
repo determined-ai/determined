@@ -306,11 +306,28 @@ class DeepSpeedTrialController(det.TrialController):
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     action = "training"
-                    metrics = self._train_for_step(
-                        w.step_id,
-                        w.num_batches,
-                        w.total_batches_processed,
-                    )
+                    try:
+                        metrics = self._train_for_step(
+                            w.step_id,
+                            w.num_batches,
+                            w.total_batches_processed,
+                        )
+                    except SystemExit as se:
+                        logging.exception("Exception in _train_for_step")
+                        if not self.context._is_model_info_trial():
+                            raise se
+                        if self.is_chief:
+                            path = pathlib.Path("profile_model_info/model_info.json")
+                            with path.open("r") as f:
+                                model_info_dict = json.load(f)
+                                self.context.model_info = det_ds.ModelInfo(
+                                    num_params=model_info_dict["num_params"],
+                                    trainable_num_params=model_info_dict["trainable_num_params"],
+                                    activation_mem_per_gpu=model_info_dict[
+                                        "activation_mem_per_gpu",
+                                    ],
+                                )
+                        metrics = {}
                     response = {
                         "metrics": metrics,
                         "stop_requested": self.context.get_stop_requested(),
@@ -541,7 +558,9 @@ class DeepSpeedTrialController(det.TrialController):
                 searcher_metric_name = self.env.experiment_config["searcher"]["metric"]
                 return {
                     "num_inputs": 0,
-                    "validation_metrics": {searcher_metric_name: self.context._activation_mem},
+                    "validation_metrics": {
+                        searcher_metric_name: self.context.model_info.activation_mem_per_gpu,
+                    },
                 }
             return {}
 

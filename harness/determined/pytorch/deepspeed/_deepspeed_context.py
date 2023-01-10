@@ -1,8 +1,8 @@
 import contextlib
+import dataclasses
 import importlib.util
 import json
 import logging
-import types
 from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union, cast
 
 import deepspeed
@@ -52,6 +52,13 @@ def overwrite_deepspeed_config(
             raise TypeError("Expected string or dict for base_ds_config argument.")
 
     return merge_dicts(cast(Dict[str, Any], base_ds_config), source_ds_dict)
+
+
+@dataclasses.dataclass
+class ModelInfo:
+    num_params: int
+    trainable_num_params: int
+    activation_mem_per_gpu: int
 
 
 class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
@@ -115,6 +122,7 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._manual_grad_accumulation = False
 
         self._activation_mem = None
+        self._model_info = None  # type: Optional[ModelInfo]
 
         self._check_experiment_config_optimizations()
 
@@ -274,11 +282,12 @@ class DeepSpeedTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
                         ] = self._activation_mem
             return False
 
-        function_type = types.MethodType
-        model.autotuning_profile_model_info = function_type(
-            alt_autotuning_profile_model_info,
-            model,
-        )
+        # Try keeping deepspeed engine as is
+        # function_type = types.MethodType
+        # model.autotuning_profile_model_info = function_type(
+        #     alt_autotuning_profile_model_info,
+        #     model,
+        # )
 
         self.models.append(model)
         return model
