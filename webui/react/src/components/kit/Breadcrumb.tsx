@@ -19,11 +19,7 @@ type Breadcrumb = React.FC<BreadcrumbProps> & {
 
 const Breadcrumb: Breadcrumb = AntdBreadcrumb;
 
-const BreadcrumbItem: BreadcrumbItem = AntdBreadcrumb.Item;
-
-const BreadcrumbSeparator: BreadcrumbSeparator = AntdBreadcrumb.Separator;
-
-Breadcrumb.Item = BreadcrumbItem;
-Breadcrumb.Separator = BreadcrumbSeparator;
+Breadcrumb.Item = AntdBreadcrumb.Item;
+Breadcrumb.Separator = AntdBreadcrumb.Separator;
 
 export default Breadcrumb;
