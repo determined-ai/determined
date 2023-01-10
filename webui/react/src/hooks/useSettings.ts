@@ -66,12 +66,12 @@ const queryParamToType = <T>(
 ): Primitive | undefined => {
   if (param === null || param === undefined) return undefined;
   if (type.is(false)) return param === 'true';
-  if (type.is(0)) {
+  if (type.is(0) || type.is([0])) {
     const value = Number(param);
     return !isNaN(value) ? value : undefined;
   }
   if (type.is({})) return JSON.parse(param);
-  if (type.is('')) return param;
+  if (type.is('') || type.is([''])) return param;
   return undefined;
 };
 
@@ -149,22 +149,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
   const [shouldPush, setShouldPush] = useState(false);
 
-  // parse navigation url to state
-  useEffect(() => {
-    if (!querySettings || shouldSkipUpdates) return;
-
-    const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state.get(config.storagePath) ?? {};
-
-    if (isEqual(settings, stateSettings)) return;
-
-    Object.keys(settings).forEach((setting) => {
-      stateSettings[setting] = settings[setting];
-    });
-
-    update(config.storageKey, () => stateSettings, true);
-  }, [config, querySettings, state, update, shouldSkipUpdates]);
-
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
@@ -181,6 +165,20 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       settings[setting.storageKey as keyof T] = setting.defaultValue;
     }
   }
+  // parse navigation url to state
+  useEffect(() => {
+    if (!querySettings || shouldSkipUpdates) return;
+
+    const settingsFromQuery = queryToSettings<T>(config, querySettings);
+
+    if (isEqual(settingsFromQuery, settings)) return;
+
+    Object.keys(settingsFromQuery).forEach((setting) => {
+      settings[setting as keyof T] = settingsFromQuery[setting];
+    });
+
+    update(config.storageKey, () => settings, true);
+  }, [config, querySettings, settings, update, shouldSkipUpdates]);
 
   useEffect(() => {
     if (shouldSkipUpdates) return;
@@ -312,7 +310,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     if (!settings) return;
 
     setReturnedSettings((prevState) => {
-      if (isEqual(prevState, settings)) return prevState;
+      if (isEqual(prevState, settings)) {
+        return prevState;
+      }
 
       updateDB(settings);
 

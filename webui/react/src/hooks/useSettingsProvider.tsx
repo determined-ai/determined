@@ -85,7 +85,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     }
 
     return () => canceler.abort();
-  }, [canceler, user?.id, settingsState]);
+  }, [canceler, user?.id]);
 
   useEffect(() => {
     const url = window.location.search.substr(/^\?/.test(location.search) ? 1 : 0);
@@ -93,18 +93,20 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     querySettings.current = url;
   }, []);
 
-  const update = (
+  const update = async (
     key: string,
     cb: (currentSettings?: Settings) => Settings,
     clearQuerySettings = false,
   ) => {
-    setSettingsState((currentState) => {
+    await setSettingsState((currentState) => {
       const currentSettings = currentState.get(key);
 
       return currentState.set(key, cb(currentSettings));
     });
 
-    if (clearQuerySettings) querySettings.current = '';
+    if (clearQuerySettings) {
+      querySettings.current = '';
+    }
   };
 
   if (isLoading && !(checked && !user)) return <Spinner spinning />;
