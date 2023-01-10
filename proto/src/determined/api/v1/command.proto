@@ -40,6 +40,9 @@ message GetCommandsRequest {
 }
 // Response to GetCommandsRequest.
 message GetCommandsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "commands", "pagination" ] }
+  };
   // The list of returned commands.
   repeated determined.command.v1.Command commands = 1;
   // Pagination information of the full dataset.
@@ -53,6 +56,9 @@ message GetCommandRequest {
 }
 // Response to GetCommandRequest.
 message GetCommandResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "command", "config" ] }
+  };
   // The requested command.
   determined.command.v1.Command command = 1;
   // The command config.
