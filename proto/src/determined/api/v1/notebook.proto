@@ -43,7 +43,7 @@ message GetNotebooksRequest {
 // Response to GetNotebooksRequest.
 message GetNotebooksResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "notebooks", "pagination" ] }
+    json_schema: { required: [ "notebooks" ] }
   };
   // The list of returned notebooks.
   repeated determined.notebook.v1.Notebook notebooks = 1;

@@ -41,7 +41,7 @@ message GetCommandsRequest {
 // Response to GetCommandsRequest.
 message GetCommandsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "commands", "pagination" ] }
+    json_schema: { required: [ "commands" ] }
   };
   // The list of returned commands.
   repeated determined.command.v1.Command commands = 1;

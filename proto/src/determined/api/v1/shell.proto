@@ -41,7 +41,7 @@ message GetShellsRequest {
 // Response to GetShellsRequest.
 message GetShellsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "shells", "pagination" ] }
+    json_schema: { required: [ "shells" ] }
   };
   // The list of returned shells.
   repeated determined.shell.v1.Shell shells = 1;

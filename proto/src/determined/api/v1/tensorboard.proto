@@ -44,7 +44,7 @@ message GetTensorboardsRequest {
 // Response to GetTensorboardsRequest.
 message GetTensorboardsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "tensorboards", "pagination" ] }
+    json_schema: { required: [ "tensorboards" ] }
   };
   // The list of returned tensorboards.
   repeated determined.tensorboard.v1.Tensorboard tensorboards = 1;
