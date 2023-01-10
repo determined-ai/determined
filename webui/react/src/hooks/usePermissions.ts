@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
@@ -99,18 +99,6 @@ const usePermissions = (): PermissionsHook => {
     NotLoaded: () => [],
   });
 
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    if (
-      !Loadable.isLoading(loadableCurrentUser) &&
-      !Loadable.isLoading(loadableUserAssignments) &&
-      !Loadable.isLoading(loadableUserRoles)
-    ) {
-      setLoading(false);
-    }
-  }, [loadableUserAssignments, loadableUserRoles, loadableCurrentUser]);
-
   const rbacOpts = useMemo(
     () => ({
       rbacAllPermission,
@@ -172,9 +160,12 @@ const usePermissions = (): PermissionsHook => {
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
-      loading,
+      loading:
+        Loadable.isLoading(loadableCurrentUser) ||
+        Loadable.isLoading(loadableUserAssignments) ||
+        Loadable.isLoading(loadableUserRoles),
     }),
-    [rbacOpts, loading],
+    [rbacOpts, loadableUserAssignments, loadableUserRoles, loadableCurrentUser],
   );
 
   return permissions;
