@@ -213,10 +213,11 @@ class CheckpointContext:
 
         When ``shard=True``, ``upload()`` becomes a synchronization point between workers, so all
         workers must call upload().  Those workers with nothing to upload may pass
-        ``ckpt_dir=None``. Each worker may optionally provide a ``selector`` that accepts a path
-        relative to the checkpoint root, and returns True for paths that should be uploaded.
-        The final checkpoint stored in checkpoint storage will contain a union
+        ``ckpt_dir=None``. The final checkpoint stored in checkpoint storage will contain a union
         of the contents from each ckpt_dir.
+
+        Each worker may optionally provide a ``selector`` that accepts a path
+        relative to the checkpoint root, and returns True for paths that should be uploaded.
 
         Returns:  The ``storage_id`` for this checkpoint.
 
@@ -292,49 +293,35 @@ class CheckpointContext:
                 "cannot call .upload(ckpt_dir=None, shard=True), from all ranks; "
                 "at least one rank must have a valid ckpt_dir"
             )
+        if selector is not None and ckpt_dir is None:
+            raise RuntimeError("ckpt_dir has to be provided if selector is not None")
 
-        # Deconflict locally-shared directories; if every worker uploads /tmp/ckpt, then only
-        # the lowest rank on each node will actually upload this directory.
+        # Deconflict locally-shared directories; if multiple ranks (with no selectors) want to
+        # upload \tmp\ckpt then only the lowest rank on each node will actually upload this directory.
+        # If multiple ranks (with selectors) want to upload selected files from \tmp\ckpt, then
+        # each rank will upload its selected files.
         if ckpt_dir is None:
             file_uid = None
         else:
             st = os.stat(ckpt_dir)
             file_uid = (st.st_dev, st.st_ino)
+
         all_file_uids = self._dist.allgather(file_uid)
-        # Decide if our rank is the lowest rank trying to upload this ckpt_dir.
-        want_upload = file_uid and all_file_uids.index(file_uid) == self._dist.rank
 
-        # Decide what we are going to upload; get all files in the ckpt_dir to the
-        # uploading rank and filter them based on the selectors set for local ranks.
-        # For detailed description see download().
+        # Rank uploads resources only if (1) it has a selector; or
+        # (2) it is the lowest local rank requested to upload this ckpt_dir.
+        want_upload = selector is not None or (
+            file_uid and all_file_uids.index(file_uid) == self._dist.rank
+        )
+
+        # Collect and filter resources for all uploading ranks.
         if want_upload:
-            assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
-
-            def _selector(path: str) -> bool:
-                if not selector:
-                    return True
-
-                _ = self._dist.broadcast_local(path)
-                upload_path = self._dist.gather_local(
-                    selector(path) if selector is not None else True
-                )
-                assert upload_path
-                return any(upload_path)
-
-            resources = {key: resources[key] for key in resources if _selector(key)}
-            self._dist.broadcast_local(None)
-
+            if selector:
+                resources = {key: resources[key] for key in resources if selector(key)}
         else:
-            while True:
-                name = self._dist.broadcast_local(None)
-                if name is None:
-                    break
-                _ = self._dist.gather_local(selector(name) if selector is not None else True)
-
             resources = {}
 
-        # Merge resources, detect conflicts.
         all_resources = self._dist.allgather(resources)
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
@@ -344,8 +331,7 @@ class CheckpointContext:
         # after pausing and unpausing experiment.
         all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
 
-        if want_upload:
-            assert ckpt_dir
+        if ckpt_dir:
             # If there is a conflict (two files with the same name have different content hashes)
             # then exception is thrown from _try_resolving_conflicts().
             # If we are here, there may still be multiple ranks having the same version of the file.
