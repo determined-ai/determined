@@ -2814,7 +2814,7 @@ export interface V1GetCommandsResponse {
      * @type {V1Pagination}
      * @memberof V1GetCommandsResponse
      */
-    pagination: V1Pagination;
+    pagination?: V1Pagination;
 }
 
 /**
@@ -3480,7 +3480,7 @@ export interface V1GetNotebooksResponse {
      * @type {V1Pagination}
      * @memberof V1GetNotebooksResponse
      */
-    pagination: V1Pagination;
+    pagination?: V1Pagination;
 }
 
 /**
@@ -3676,7 +3676,7 @@ export interface V1GetShellsResponse {
      * @type {V1Pagination}
      * @memberof V1GetShellsResponse
      */
-    pagination: V1Pagination;
+    pagination?: V1Pagination;
 }
 
 /**
@@ -3834,7 +3834,7 @@ export interface V1GetTensorboardsResponse {
      * @type {V1Pagination}
      * @memberof V1GetTensorboardsResponse
      */
-    pagination: V1Pagination;
+    pagination?: V1Pagination;
 }
 
 /**

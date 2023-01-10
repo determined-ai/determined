@@ -2965,29 +2965,33 @@ class v1GetCommandsRequestSortBy(enum.Enum):
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
 
 class v1GetCommandsResponse:
+    pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
         commands: "typing.Sequence[v1Command]",
-        pagination: "v1Pagination",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
         self.commands = commands
-        self.pagination = pagination
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetCommandsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "commands": [v1Command.from_json(x) for x in obj["commands"]],
-            "pagination": v1Pagination.from_json(obj["pagination"]),
         }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "commands": [x.to_json(omit_unset) for x in self.commands],
-            "pagination": self.pagination.to_json(omit_unset),
         }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
 class v1GetCurrentTrialSearcherOperationResponse:
@@ -3847,29 +3851,33 @@ class v1GetNotebooksRequestSortBy(enum.Enum):
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
 
 class v1GetNotebooksResponse:
+    pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
         notebooks: "typing.Sequence[v1Notebook]",
-        pagination: "v1Pagination",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
         self.notebooks = notebooks
-        self.pagination = pagination
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetNotebooksResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "notebooks": [v1Notebook.from_json(x) for x in obj["notebooks"]],
-            "pagination": v1Pagination.from_json(obj["pagination"]),
         }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "notebooks": [x.to_json(omit_unset) for x in self.notebooks],
-            "pagination": self.pagination.to_json(omit_unset),
         }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
 class v1GetPermissionsSummaryResponse:
@@ -4139,29 +4147,33 @@ class v1GetShellsRequestSortBy(enum.Enum):
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
 
 class v1GetShellsResponse:
+    pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
-        pagination: "v1Pagination",
         shells: "typing.Sequence[v1Shell]",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
-        self.pagination = pagination
         self.shells = shells
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetShellsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "pagination": v1Pagination.from_json(obj["pagination"]),
             "shells": [v1Shell.from_json(x) for x in obj["shells"]],
         }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "pagination": self.pagination.to_json(omit_unset),
             "shells": [x.to_json(omit_unset) for x in self.shells],
         }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
 class v1GetSlotResponse:
@@ -4369,29 +4381,33 @@ class v1GetTensorboardsRequestSortBy(enum.Enum):
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
 
 class v1GetTensorboardsResponse:
+    pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
-        pagination: "v1Pagination",
         tensorboards: "typing.Sequence[v1Tensorboard]",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
-        self.pagination = pagination
         self.tensorboards = tensorboards
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetTensorboardsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "pagination": v1Pagination.from_json(obj["pagination"]),
             "tensorboards": [v1Tensorboard.from_json(x) for x in obj["tensorboards"]],
         }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "pagination": self.pagination.to_json(omit_unset),
             "tensorboards": [x.to_json(omit_unset) for x in self.tensorboards],
         }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
 class v1GetTrialCheckpointsRequestSortBy(enum.Enum):
