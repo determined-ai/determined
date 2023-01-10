@@ -8,7 +8,7 @@ interface PaginationProps {
     type: 'page' | 'prev' | 'next' | 'jump-prev' | 'jump-next',
     originalElement: ReactNode,
   ) => ReactNode;
-  onChange?: (page: number) => void;
+  onChange?: (page: number, pageSize: number) => void;
   pageSize?: number;
   showSizeChanger?: boolean;
   total: number;
