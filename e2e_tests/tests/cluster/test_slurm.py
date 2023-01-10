@@ -63,14 +63,15 @@ def test_docker_image() -> None:
     # Creates an experiment with a bad docker image file that will error
     errors = [
         # Singularity message
-        "FATAL:   Unable to handle docker://missing.image uri: "
-        + "failed to get checksum for docker://missing.image",
+        "FATAL:   Unable to handle docker://docker.io/badhost/missing.image uri: "
+        + "failed to get checksum for docker://docker.io/badhost/missing.image",
         # PodMan message
-        "Error: initializing source docker://missing.image:latest:",
+        "Error: initializing source docker://badhost/missing.image:latest",
         # Enroot message is:
-        # `No such file or directory: /home/launcher/.local/share/enroot/missing.image`
+        # `No such file or directory:
+        # /home/launcher/.local/share/enroot/docker.io+badhost+missing.image`
         # But error message does not support patterning, so just match the partial file name.
-        ".local/share/enroot/missing.image",
+        ".local/share/enroot/docker.io+badhost+missing.image",
     ]
 
     run_failure_test_multiple(

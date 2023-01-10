@@ -1,6 +1,6 @@
 description: An experiment with a bad docker image file that will error
 environment:
-  image: missing.image
+  image: docker.io/badhost/missing.image
 searcher:
   name: single
   metric: error
