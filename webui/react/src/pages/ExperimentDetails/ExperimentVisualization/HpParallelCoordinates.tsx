@@ -238,7 +238,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       (event) => {
-        if (!event || !event.trials || !Array.isArray(event.trials)) return;
+        if (!event?.trials || !Array.isArray(event.trials)) return;
 
         const data: Record<string, Primitive[]> = {};
         let trialMetricRange: Range<number> = defaultNumericRange(true);

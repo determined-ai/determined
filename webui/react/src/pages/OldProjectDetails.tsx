@@ -702,7 +702,7 @@ const ProjectDetails: React.FC = () => {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
       if (action === Action.Move) {
-        if (!settings || !settings.row.length) return;
+        if (!settings?.row?.length) return;
         return openMoveModal({
           experimentIds: settings.row.filter(
             (id) =>

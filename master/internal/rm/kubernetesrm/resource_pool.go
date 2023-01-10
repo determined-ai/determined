@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -43,7 +44,8 @@ type kubernetesResourcePool struct {
 }
 
 func newResourcePool(rmConfig *config.KubernetesResourceManagerConfig,
-	podsActor *actor.Ref) *kubernetesResourcePool {
+	podsActor *actor.Ref,
+) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
 		config:            rmConfig,
 		reqList:           tasklist.New(),
@@ -95,7 +97,13 @@ func (k *kubernetesResourcePool) Receive(ctx *actor.Context) error {
 
 	case sproto.GetAllocationHandler:
 		reschedule = false
-		ctx.Respond(k.reqList.TaskHandler(msg.ID))
+
+		handler := k.reqList.TaskHandler(msg.ID)
+		if handler == nil {
+			ctx.Respond(fmt.Errorf("allocation handler for allocation ID %s not found", msg.ID))
+			return nil
+		}
+		ctx.Respond(handler)
 
 	case sproto.GetAllocationSummary:
 		if resp := k.reqList.TaskSummary(
@@ -478,30 +486,96 @@ func (k *kubernetesResourcePool) assignResources(
 
 	k.slotsUsedPerGroup[k.groups[req.Group]] += req.SlotsNeeded
 
-	allocations := sproto.ResourceList{}
-	for pod := 0; pod < numPods; pod++ {
-		containerID := cproto.NewID()
-		rs := &k8sPodResources{
-			req:             req,
-			podsActor:       k.podsActor,
-			containerID:     containerID,
-			slots:           slotsPerPod,
-			group:           k.groups[req.Group],
-			initialPosition: k.queuePositions[k.addrToJobID[req.AllocationRef]],
+	var resources []*k8sPodResources
+	if req.Restore {
+		var err error
+		resources, err = k.restoreResources(ctx, req, slotsPerPod, numPods)
+		if err != nil {
+			ctx.Log().
+				WithField("allocation-id", req.AllocationID).
+				WithError(err).Error("unable to restore allocation")
+			unknownExit := sproto.ExitCode(-1)
+			ctx.Tell(req.AllocationRef, sproto.ResourcesFailure{
+				FailureType: sproto.ResourcesMissing,
+				ErrMsg:      errors.Wrap(err, "unable to restore allocation").Error(),
+				ExitCode:    &unknownExit,
+			})
+			return
 		}
+	} else {
+		resources = k.createResources(ctx, req, slotsPerPod, numPods)
+	}
+
+	allocations := sproto.ResourceList{}
+	for _, rs := range resources {
 		allocations[rs.Summary().ResourcesID] = rs
-		k.addrToContainerID[req.AllocationRef] = containerID
-		k.containerIDtoAddr[containerID.String()] = req.AllocationRef
+		k.addrToContainerID[req.AllocationRef] = rs.containerID
+		k.containerIDtoAddr[rs.containerID.String()] = req.AllocationRef
 	}
 
 	assigned := sproto.ResourcesAllocated{ID: req.AllocationID, Resources: allocations}
 	k.reqList.AddAllocationRaw(req.AllocationRef, &assigned)
 	req.AllocationRef.System().Tell(req.AllocationRef, assigned.Clone())
 
-	ctx.Log().
-		WithField("allocation-id", req.AllocationID).
-		WithField("task-handler", req.AllocationRef.Address()).
-		Infof("resources assigned with %d pods", numPods)
+	if req.Restore {
+		ctx.Log().
+			WithField("allocation-id", req.AllocationID).
+			WithField("task-handler", req.AllocationRef.Address()).
+			Infof("resources restored with %d pods", numPods)
+	} else {
+		ctx.Log().
+			WithField("allocation-id", req.AllocationID).
+			WithField("task-handler", req.AllocationRef.Address()).
+			Infof("resources assigned with %d pods", numPods)
+	}
+}
+
+func (k *kubernetesResourcePool) createResources(
+	ctx *actor.Context, req *sproto.AllocateRequest, slotsPerPod, numPods int,
+) []*k8sPodResources {
+	var resources []*k8sPodResources
+	for pod := 0; pod < numPods; pod++ {
+		resources = append(resources, &k8sPodResources{
+			req:             req,
+			podsActor:       k.podsActor,
+			containerID:     cproto.NewID(),
+			slots:           slotsPerPod,
+			group:           k.groups[req.Group],
+			initialPosition: k.queuePositions[k.addrToJobID[req.AllocationRef]],
+		})
+	}
+	return resources
+}
+
+func (k *kubernetesResourcePool) restoreResources(
+	ctx *actor.Context, req *sproto.AllocateRequest, slotsPerPod, numPods int,
+) ([]*k8sPodResources, error) {
+	resp := ctx.Ask(k.podsActor, reattachAllocationPods{
+		allocationID: req.AllocationID,
+		numPods:      numPods,
+		taskActor:    req.AllocationRef,
+		slots:        slotsPerPod,
+		logContext:   req.LogContext,
+	})
+	if err := resp.Error(); err != nil {
+		return nil, err
+	}
+	restoreResponses := resp.Get().([]reattachPodResponse)
+
+	var resources []*k8sPodResources
+	for _, restoreResponse := range restoreResponses {
+		resources = append(resources, &k8sPodResources{
+			req:             req,
+			podsActor:       k.podsActor,
+			containerID:     cproto.ID(restoreResponse.containerID),
+			slots:           slotsPerPod,
+			group:           k.groups[req.Group],
+			initialPosition: k.queuePositions[k.addrToJobID[req.AllocationRef]],
+			started:         restoreResponse.started,
+		})
+	}
+
+	return resources, nil
 }
 
 func (k *kubernetesResourcePool) resourcesReleased(
@@ -578,6 +652,8 @@ type k8sPodResources struct {
 	containerID     cproto.ID
 	slots           int
 	initialPosition decimal.Decimal
+
+	started *sproto.ResourcesStarted
 }
 
 // Summary summarizes a container allocation.
@@ -592,6 +668,7 @@ func (p k8sPodResources) Summary() sproto.ResourcesSummary {
 		},
 
 		ContainerID: &p.containerID,
+		Started:     p.started,
 	}
 }
 

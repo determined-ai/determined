@@ -14,6 +14,7 @@ import { UsersProvider } from 'stores/users';
 import useModalCreateUser, {
   ADMIN_LABEL,
   API_SUCCESS_MESSAGE_CREATE,
+  BUTTON_NAME,
   DISPLAY_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
@@ -35,7 +36,7 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 const Container: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalCreateUser({ groups: [] });
+  const { contextHolder, modalOpen } = useModalCreateUser({});
 
   return (
     <div>
@@ -109,7 +110,7 @@ describe('useModalCreateUser', () => {
   it('should validate the create user request', async () => {
     await setup();
 
-    await user.click(screen.getByRole('button', { name: 'Create User' }));
+    await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
 
     await waitFor(() => {
       expect(screen.getAllByRole('alert')).toHaveLength(1);
@@ -120,7 +121,7 @@ describe('useModalCreateUser', () => {
     await setup();
 
     await user.type(screen.getByLabelText(USER_NAME_LABEL), USERNAME);
-    await user.click(screen.getByRole('button', { name: 'Create User' }));
+    await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
 
     // Check for successful toast message.
     await waitFor(() => {

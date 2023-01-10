@@ -152,7 +152,7 @@ const ScatterPlots: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       (event) => {
-        if (!event || !event.trials || !Array.isArray(event.trials)) return;
+        if (!event?.trials || !Array.isArray(event.trials)) return;
 
         const hpMetricMap: Record<string, (number | null)[]> = {};
         const hpValueMap: Record<string, number[]> = {};

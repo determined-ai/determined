@@ -929,6 +929,21 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	return &apiv1.PostTrialProfilerMetricsBatchResponse{}, errs.ErrorOrNil()
 }
 
+func (a *apiServer) waitForAllocationToBeRestored(ctx context.Context, handler *actor.Ref) error {
+	for i := 0; i < 60; i++ {
+		var restoring bool
+		if err := a.ask(handler.Address(), task.IsAllocationRestoring{}, &restoring); err != nil {
+			return errors.Wrap(err, "failed to ask allocation actor about restoring status")
+		}
+		if !restoring {
+			return nil
+		}
+
+		time.Sleep(time.Second)
+	}
+	return fmt.Errorf("allocation stuck restoring after one minute of retrying")
+}
+
 func (a *apiServer) AllocationPreemptionSignal(
 	ctx context.Context,
 	req *apiv1.AllocationPreemptionSignalRequest,
@@ -943,6 +958,9 @@ func (a *apiServer) AllocationPreemptionSignal(
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -978,6 +996,9 @@ func (a *apiServer) AckAllocationPreemptionSignal(
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -1043,6 +1064,9 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -1253,6 +1277,9 @@ func (a *apiServer) AllocationRendezvousInfo(
 		sproto.GetAllocationHandler{ID: allocationID},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 

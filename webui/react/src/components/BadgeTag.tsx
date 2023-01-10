@@ -1,5 +1,6 @@
-import { Tooltip } from 'antd';
 import React from 'react';
+
+import Tooltip from 'components/kit/Tooltip';
 
 import Badge, { BadgeProps } from './Badge';
 import css from './BadgeTag.module.scss';

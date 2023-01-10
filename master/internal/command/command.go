@@ -148,6 +148,7 @@ func remakeCommandsByType(
 		Relation("Task").
 		Relation("Task.Job").
 		Where("allocation.end_time IS NULL").
+		Where("allocation.state != ?", model.AllocationStateTerminated).
 		Where("task.task_type = ?", taskType).
 		Scan(context.TODO())
 	if err != nil {
