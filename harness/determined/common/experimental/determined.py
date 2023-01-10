@@ -318,7 +318,7 @@ class Determined:
                 userIds=None,
                 users=None,
                 workspaceName=workspace_name,
-                workspaceId=workspaceId
+                workspaceId=workspaceId,
             )
 
         resps = api.read_paginated(get_with_offset)
