@@ -2776,13 +2776,13 @@ export interface V1GetCommandResponse {
      * @type {V1Command}
      * @memberof V1GetCommandResponse
      */
-    command?: V1Command;
+    command: V1Command;
     /**
      * The command config.
      * @type {any}
      * @memberof V1GetCommandResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
@@ -2808,13 +2808,13 @@ export interface V1GetCommandsResponse {
      * @type {Array<V1Command>}
      * @memberof V1GetCommandsResponse
      */
-    commands?: Array<V1Command>;
+    commands: Array<V1Command>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetCommandsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -3638,13 +3638,13 @@ export interface V1GetShellResponse {
      * @type {V1Shell}
      * @memberof V1GetShellResponse
      */
-    shell?: V1Shell;
+    shell: V1Shell;
     /**
      * The shell config.
      * @type {any}
      * @memberof V1GetShellResponse
      */
-    config?: any;
+    config: any;
 }
 
 /**
@@ -3670,13 +3670,13 @@ export interface V1GetShellsResponse {
      * @type {Array<V1Shell>}
      * @memberof V1GetShellsResponse
      */
-    shells?: Array<V1Shell>;
+    shells: Array<V1Shell>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetShellsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
@@ -3796,7 +3796,7 @@ export interface V1GetTensorboardResponse {
      * @type {V1Tensorboard}
      * @memberof V1GetTensorboardResponse
      */
-    tensorboard?: V1Tensorboard;
+    tensorboard: V1Tensorboard;
     /**
      * 
      * @type {any}
@@ -3828,13 +3828,13 @@ export interface V1GetTensorboardsResponse {
      * @type {Array<V1Tensorboard>}
      * @memberof V1GetTensorboardsResponse
      */
-    tensorboards?: Array<V1Tensorboard>;
+    tensorboards: Array<V1Tensorboard>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetTensorboardsResponse
      */
-    pagination?: V1Pagination;
+    pagination: V1Pagination;
 }
 
 /**
