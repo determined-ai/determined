@@ -211,6 +211,22 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
+	workspaceID := model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		workspaceID = int(req.WorkspaceId)
+	}
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId)); err != nil  || !ok {
+		return nil, err
+	}
+
 	spec.WatchProxyIdleTimeout = true
 
 	// Postprocess the spec.
@@ -230,12 +246,6 @@ func (a *apiServer) LaunchTensorboard(
 	port := getRandomPort(minTensorBoardPort, maxTensorBoardPort)
 	spec.Port = &port
 	spec.Config.Environment.Ports = map[string]int{"tensorboard": port}
-
-	workspaceID := model.DefaultWorkspaceID
-	if req.WorkspaceId != 0 {
-		workspaceID = int(req.WorkspaceId)
-	}
-	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 
 	spec.Metadata.ExperimentIDs = req.ExperimentIds
 	spec.Metadata.TrialIDs = req.TrialIds
