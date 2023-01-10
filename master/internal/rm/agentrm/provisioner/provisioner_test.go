@@ -37,7 +37,7 @@ func newInstanceIDSet(instanceIDs []string) map[string]bool {
 type mockConfig struct {
 	*Config
 	maxDisconnectPeriod time.Duration
-	instanceType        instanceType
+	instanceType        model.InstanceType
 	initInstances       []*model.Instance
 }
 
@@ -89,7 +89,7 @@ func newMockFuncCall(name string, parameters ...interface{}) mockFuncCall {
 // mockProvider implements a cluster that accepts requests from the provisioner and responds
 // with mock results. It has pre-programmed behavior, which simulates a real provider.
 type mockProvider struct {
-	mockInstanceType instanceType
+	mockInstanceType model.InstanceType
 	maxInstances     int
 	instances        map[string]*model.Instance
 	history          []mockFuncCall
@@ -108,7 +108,7 @@ func newMockProvider(config *mockConfig) (*mockProvider, error) {
 	return cluster, nil
 }
 
-func (c *mockProvider) instanceType() instanceType {
+func (c *mockProvider) instanceType() model.InstanceType {
 	return c.mockInstanceType
 }
 

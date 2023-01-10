@@ -116,7 +116,7 @@ func newGCPCluster(
 	return cluster, nil
 }
 
-func (c *gcpCluster) instanceType() instanceType {
+func (c *gcpCluster) instanceType() model.InstanceType {
 	return c.InstanceType
 }
 

@@ -130,7 +130,7 @@ func newAWSCluster(
 	return cluster, nil
 }
 
-func (c *awsCluster) instanceType() instanceType {
+func (c *awsCluster) instanceType() model.InstanceType {
 	return c.InstanceType
 }
 

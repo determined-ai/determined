@@ -64,7 +64,7 @@ type Instance struct {
 	State               InstanceState
 }
 
-// instanceType describes an instance type.
+// InstanceType describes an instance type.
 type InstanceType interface {
 	Name() string
 	Slots() int
@@ -77,11 +77,13 @@ func (inst Instance) String() string {
 	return fmt.Sprintf("%s (%s)", inst.ID, inst.State)
 }
 
+// Equals checks if this instance is the same resource as instance `other`.
 func (inst Instance) Equals(other Instance) bool {
 	return inst.ID == other.ID && inst.LaunchTime.Equal(other.LaunchTime) &&
 		inst.AgentName == other.AgentName && inst.State == other.State
 }
 
+// FmtInstances formats instance ids and states to print.
 func FmtInstances(instances []*Instance) string {
 	instanceIDs := make([]string, 0, len(instances))
 	for _, inst := range instances {

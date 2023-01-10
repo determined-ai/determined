@@ -3,7 +3,6 @@ package provisioner
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"strings"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -399,7 +399,8 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 
 // Convert c.spot.trackedReqs to a list of Instances. For the requests that have
 // been fulfilled, this requires querying the EC2 API to find the instance state.
-func (c *awsCluster) buildInstanceListFromTrackedReqs(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *awsCluster) buildInstanceListFromTrackedReqs(
+	ctx *actor.Context) ([]*model.Instance, error) {
 	runningSpotInstanceIds := newSetOfStrings()
 	pendingSpotRequestsAsInstances := make([]*model.Instance, 0)
 
