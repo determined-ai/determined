@@ -283,6 +283,7 @@ class Determined:
         description: Optional[str] = None,
         model_id: Optional[int] = None,
         workspace_name: Optional[str] = None,
+        workspaceId: Optional[str] = None,
     ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
@@ -317,6 +318,7 @@ class Determined:
                 userIds=None,
                 users=None,
                 workspaceName=workspace_name,
+                workspaceId=workspaceId
             )
 
         resps = api.read_paginated(get_with_offset)

@@ -119,7 +119,9 @@ func (a *apiServer) GetModels(
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
 	// Nikita: TODO User filter expression.
-	if req.WorkspaceName != nil {
+	if req.WorkspaceId != nil { // default is to use workspace ID
+		workspaceIDFilterExpr = int(*req.WorkspaceId)
+	} else if req.WorkspaceName != nil {
 		// Nikita TODO: User permissions to View models here
 		// Get workspace id using Sql to get id of workspace with filter workspace name.
 		w := workspacev1.Workspace{}
