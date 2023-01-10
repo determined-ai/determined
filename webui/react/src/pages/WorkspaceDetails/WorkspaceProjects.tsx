@@ -104,6 +104,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     }
   }, [canceler.signal, id, workspace?.archived, settings]);
 
+  const previousId = usePrevious(id, undefined);
+
   useEffect(() => {
     setIsLoading(true);
     fetchProjects().then(() => setIsLoading(false));
@@ -115,7 +117,8 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
      * this effect simply "re-runs" the settings to verify all applied settings and checks
      * like setting active settings into the url, etc
      */
-    updateSettings({});
+
+    if (previousId !== undefined && id !== previousId) updateSettings({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
