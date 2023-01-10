@@ -283,7 +283,7 @@ class Determined:
         description: Optional[str] = None,
         model_id: Optional[int] = None,
         workspace_name: Optional[str] = None,
-        workspaceId: Optional[str] = None,
+        workspaceId: Optional[int] = None,
     ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.

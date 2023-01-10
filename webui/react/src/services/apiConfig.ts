@@ -1017,6 +1017,7 @@ export const getModels: DetApi<
       params.archived,
       undefined,
       undefined,
+      undefined,
       getUserIds(params.users),
     ),
 };
