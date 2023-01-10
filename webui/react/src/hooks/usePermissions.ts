@@ -161,9 +161,10 @@ const usePermissions = (): PermissionsHook => {
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
       loading:
-        Loadable.isLoading(loadableCurrentUser) ||
-        Loadable.isLoading(loadableUserAssignments) ||
-        Loadable.isLoading(loadableUserRoles),
+        rbacOpts.rbacEnabled &&
+        (Loadable.isLoading(loadableCurrentUser) ||
+          Loadable.isLoading(loadableUserAssignments) ||
+          Loadable.isLoading(loadableUserRoles)),
     }),
     [rbacOpts, loadableUserAssignments, loadableUserRoles, loadableCurrentUser],
   );

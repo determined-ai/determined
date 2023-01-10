@@ -2,7 +2,6 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import PageHeader from 'components/PageHeader';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import BasePage, { Props as BasePageProps } from 'shared/components/Page';
 import Spinner from 'shared/components/Spinner';
@@ -27,7 +26,6 @@ const getFullDocTitle = (branding: string, title?: string, clusterName?: string)
 };
 
 const Page: React.FC<Props> = (props: Props) => {
-  const rbacEnabled = useFeature().isOn('rbac');
   const { loading: loadingPermissions } = usePermissions();
 
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
@@ -48,7 +46,7 @@ const Page: React.FC<Props> = (props: Props) => {
           </>
         )}
       </Helmet>
-      {!props.ignorePermissions && rbacEnabled && loadingPermissions ? (
+      {!props.ignorePermissions && loadingPermissions ? (
         <Spinner center />
       ) : (
         <BasePage
