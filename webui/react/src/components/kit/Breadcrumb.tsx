@@ -17,17 +17,11 @@ type Breadcrumb = React.FC<BreadcrumbProps> & {
   Separator: typeof BreadcrumbSeparator;
 };
 
-const Breadcrumb: Breadcrumb = ({ separator = '/', ...props }: BreadcrumbProps): JSX.Element => {
-  return <AntdBreadcrumb separator={separator} {...props} />;
-};
+const Breadcrumb: Breadcrumb = AntdBreadcrumb;
 
-const BreadcrumbItem: BreadcrumbItem = (props: BreadcrumbItemProps) => {
-  return <AntdBreadcrumb.Item {...props} />;
-};
+const BreadcrumbItem: BreadcrumbItem = AntdBreadcrumb.Item;
 
-const BreadcrumbSeparator: BreadcrumbSeparator = () => {
-  return <AntdBreadcrumb.Separator />;
-};
+const BreadcrumbSeparator: BreadcrumbSeparator = AntdBreadcrumb.Separator;
 
 Breadcrumb.Item = BreadcrumbItem;
 Breadcrumb.Separator = BreadcrumbSeparator;
