@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -38,10 +39,10 @@ type Provisioner struct {
 }
 
 type provider interface {
-	instanceType() instanceType
+	instanceType() model.InstanceType
 	slotsPerInstance() int
 	prestart(ctx *actor.Context)
-	list(ctx *actor.Context) ([]*Instance, error)
+	list(ctx *actor.Context) ([]*model.Instance, error)
 	launch(ctx *actor.Context, instanceNum int)
 	terminate(ctx *actor.Context, instanceIDs []string)
 }
@@ -122,7 +123,7 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	updated := p.scaleDecider.updateInstanceSnapshot(instances)
 	if updated {
 		ctx.Log().Infof("found state changes in %d instances: %s",
-			len(instances), fmtInstances(instances))
+			len(instances), model.FmtInstances(instances))
 	}
 
 	p.scaleDecider.calculateInstanceStates()
@@ -151,38 +152,6 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 
 	telemetry.ReportProvisionerTick(ctx.Self().System(),
-		createInstanceTelemetry(instances),
+		instances,
 		p.InstanceType())
-}
-
-// createInstanceTelemetry converts provisioner.Instance structs
-// to telemetry.Instance structs to avoid import cycle.
-func createInstanceTelemetry(instances []*Instance) []*telemetry.Instance {
-	tInstances := make([]*telemetry.Instance, 0, len(instances))
-	for _, inst := range instances {
-		telemetrized := &telemetry.Instance{
-			ID:                  inst.ID,
-			LaunchTime:          inst.LaunchTime,
-			LastStateChangeTime: inst.LastStateChangeTime,
-			AgentName:           inst.AgentName,
-		}
-		switch inst.State {
-		case Unknown:
-			telemetrized.State = telemetry.Unknown
-		case Starting:
-			telemetrized.State = telemetry.Starting
-		case Running:
-			telemetrized.State = telemetry.Running
-		case Stopping:
-			telemetrized.State = telemetry.Stopping
-		case Stopped:
-			telemetrized.State = telemetry.Stopped
-		case Terminating:
-			telemetrized.State = telemetry.Terminating
-		case SpotRequestPendingAWS:
-			telemetrized.State = telemetry.SpotRequestPendingAWS
-		}
-		tInstances = append(tInstances, telemetrized)
-	}
-	return tInstances
 }

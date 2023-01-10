@@ -69,7 +69,7 @@ func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
 
 // ReportProvisionerTick reports the state of all provision requests by a provisioner.
 func ReportProvisionerTick(
-	system *actor.System, instances []*Instance, instanceType string) {
+	system *actor.System, instances []*model.Instance, instanceType string) {
 	system.TellAt(
 		actor.Addr("telemetry"),
 		analytics.Track{

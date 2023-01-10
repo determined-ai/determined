@@ -38,7 +38,7 @@ type mockConfig struct {
 	*Config
 	maxDisconnectPeriod time.Duration
 	instanceType        instanceType
-	initInstances       []*Instance
+	initInstances       []*model.Instance
 }
 
 type mockEnvironment struct {
@@ -91,12 +91,12 @@ func newMockFuncCall(name string, parameters ...interface{}) mockFuncCall {
 type mockProvider struct {
 	mockInstanceType instanceType
 	maxInstances     int
-	instances        map[string]*Instance
+	instances        map[string]*model.Instance
 	history          []mockFuncCall
 }
 
 func newMockProvider(config *mockConfig) (*mockProvider, error) {
-	instMap := make(map[string]*Instance, len(config.initInstances))
+	instMap := make(map[string]*model.Instance, len(config.initInstances))
 	for _, inst := range config.initInstances {
 		instMap[inst.ID] = inst
 	}
@@ -116,9 +116,9 @@ func (c *mockProvider) slotsPerInstance() int {
 	return c.mockInstanceType.Slots()
 }
 
-func (c *mockProvider) list(ctx *actor.Context) ([]*Instance, error) {
+func (c *mockProvider) list(ctx *actor.Context) ([]*model.Instance, error) {
 	c.history = append(c.history, newMockFuncCall("list"))
-	instances := make([]*Instance, 0, len(c.instances))
+	instances := make([]*model.Instance, 0, len(c.instances))
 	for _, inst := range c.instances {
 		instCopy := *inst
 		instances = append(instances, &instCopy)
@@ -132,11 +132,11 @@ func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
 	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
 		name := uuid.New().String()
-		inst := Instance{
+		inst := model.Instance{
 			ID:         name,
 			AgentName:  name,
 			LaunchTime: time.Now(),
-			State:      Running,
+			State:      model.Running,
 		}
 		c.instances[inst.ID] = &inst
 	}
@@ -159,7 +159,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 		Config: &Config{
 			MaxInstances: 100,
 		},
-		initInstances: []*Instance{},
+		initInstances: []*model.Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
@@ -184,7 +184,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 		Config: &Config{
 			MaxInstances: 1,
 		},
-		initInstances: []*Instance{},
+		initInstances: []*model.Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 3}).Get()
@@ -210,18 +210,18 @@ func TestProvisionerScaleDown(t *testing.T) {
 			MaxIdleAgentPeriod: model.Duration(50 * time.Millisecond),
 			MaxInstances:       100,
 		},
-		initInstances: []*Instance{
+		initInstances: []*model.Instance{
 			{
 				ID:         "instance1",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      Running,
+				State:      model.Running,
 			},
 			{
 				ID:         "instance2",
 				LaunchTime: time.Now().Add(-time.Minute),
 				AgentName:  "agent2",
-				State:      Running,
+				State:      model.Running,
 			},
 		},
 	}
@@ -263,18 +263,18 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 			MaxIdleAgentPeriod: model.Duration(1 * time.Hour),
 			MaxInstances:       100,
 		},
-		initInstances: []*Instance{
+		initInstances: []*model.Instance{
 			{
 				ID:         "instance1",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      Running,
+				State:      model.Running,
 			},
 			{
 				ID:         "instance2",
 				LaunchTime: time.Now().Add(-time.Minute),
 				AgentName:  "agent2",
-				State:      Running,
+				State:      model.Running,
 			},
 		},
 	}
@@ -333,18 +333,18 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 			MaxIdleAgentPeriod:     model.Duration(50 * time.Millisecond),
 			MaxInstances:           100,
 		},
-		initInstances: []*Instance{
+		initInstances: []*model.Instance{
 			{
 				ID:         "disconnectedInstance",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      Running,
+				State:      model.Running,
 			},
 			{
 				ID:         "startingInstance",
 				LaunchTime: time.Now().Add(-time.Minute),
 				AgentName:  "agent2",
-				State:      Running,
+				State:      model.Running,
 			},
 		},
 	}

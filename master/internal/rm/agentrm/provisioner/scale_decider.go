@@ -34,12 +34,12 @@ type scaleDecider struct {
 	minInstanceNum      int
 	maxInstanceNum      int
 
-	instanceSnapshot       map[string]*Instance
+	instanceSnapshot       map[string]*model.Instance
 	connectedAgentSnapshot map[string]sproto.AgentSummary
 	idleAgentSnapshot      map[string]sproto.AgentSummary
 	desiredNewInstances    int
 
-	instances        map[string]*Instance
+	instances        map[string]*model.Instance
 	pending          map[string]bool
 	recentlyLaunched map[string]bool
 	stopped          map[string]bool
@@ -66,10 +66,10 @@ func newScaleDecider(
 		maxDisconnectPeriod:    maxDisconnectPeriod,
 		minInstanceNum:         minInstanceNum,
 		maxInstanceNum:         maxInstanceNum,
-		instanceSnapshot:       make(map[string]*Instance),
+		instanceSnapshot:       make(map[string]*model.Instance),
 		connectedAgentSnapshot: make(map[string]sproto.AgentSummary),
 		idleAgentSnapshot:      make(map[string]sproto.AgentSummary),
-		instances:              make(map[string]*Instance),
+		instances:              make(map[string]*model.Instance),
 		pending:                make(map[string]bool),
 		recentlyLaunched:       make(map[string]bool),
 		stopped:                make(map[string]bool),
@@ -94,11 +94,11 @@ func (s *scaleDecider) updateScalingInfo(info *sproto.ScalingInfo) {
 	}
 }
 
-func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
+func (s *scaleDecider) updateInstanceSnapshot(instances []*model.Instance) bool {
 	updateSnapshot := func() {
 		now := time.Now()
 		pastSnapshot := s.instanceSnapshot
-		s.instanceSnapshot = make(map[string]*Instance, len(instances))
+		s.instanceSnapshot = make(map[string]*model.Instance, len(instances))
 		for _, inst := range instances {
 			if pastInst, ok := pastSnapshot[inst.ID]; !ok || pastInst.State != inst.State {
 				inst.LastStateChangeTime = now
@@ -113,7 +113,7 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 		return true
 	}
 	for _, inst := range instances {
-		if other, ok := s.instanceSnapshot[inst.ID]; !ok || !inst.equals(*other) {
+		if other, ok := s.instanceSnapshot[inst.ID]; !ok || !inst.Equals(*other) {
 			updateSnapshot()
 			return true
 		}
@@ -181,7 +181,7 @@ func (s *scaleDecider) calculateInstanceStates() {
 	now := time.Now()
 	pastDisconnected := s.disconnected
 	pastIdle := s.idle
-	s.instances = make(map[string]*Instance)
+	s.instances = make(map[string]*model.Instance)
 	s.pending = make(map[string]bool)
 	s.recentlyLaunched = make(map[string]bool)
 	s.stopped = make(map[string]bool)
@@ -191,12 +191,12 @@ func (s *scaleDecider) calculateInstanceStates() {
 	s.longIdle = make(map[string]bool)
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
-		case SpotRequestPendingAWS:
+		case model.SpotRequestPendingAWS:
 			s.instances[inst.ID] = inst
 			s.pending[inst.ID] = true
 			s.recentlyLaunched[inst.ID] = true
 
-		case Starting, Running:
+		case model.Starting, model.Running:
 			s.instances[inst.ID] = inst
 
 			// Connected agent instances.
@@ -230,7 +230,7 @@ func (s *scaleDecider) calculateInstanceStates() {
 			} else {
 				s.disconnected[inst.ID] = now
 			}
-		case Stopped:
+		case model.Stopped:
 			s.stopped[inst.ID] = true
 		}
 	}
@@ -288,7 +288,7 @@ func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
 			break
 		}
 	}
-	instances := make([]*Instance, 0, len(s.instances))
+	instances := make([]*model.Instance, 0, len(s.instances))
 	for _, inst := range s.instances {
 		instances = append(instances, inst)
 	}
