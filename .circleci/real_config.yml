@@ -604,7 +604,7 @@ commands:
             # Remove prior test results
             rm -f "<<parameters.junit-path>>"
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
-            pytest --capture=tee-sys -vv -s \
+            pytest --capture=tee-sys -vv \
             -m '<<parameters.mark>>' \
             --durations=0 \
             --master-scheme="<<parameters.master-scheme>>" \
@@ -2141,6 +2141,15 @@ jobs:
             sudo cp ./master.yaml /etc/determined/master.yaml
             sudo systemctl daemon-reload
             sudo systemctl start determined-master
+            # Show if there are any drained nodes
+            sinfo -R
+            # Resume any drained nodes due to problems killing podman processes.
+            # This will return an error if all nodes do not require a resume (ignore status)
+            sudo scontrol update nodename=znode5[0-1,3-4] state=resume || true
+            sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 mkdir -p /tmp/launcher_podman" || true
+            # Cleanup podman state from any issues in prior runs
+            sudo su - launcher -c "pdsh -R ssh -w znode50,znode51,znode53,znode54 XDG_RUNTIME_DIR=/tmp/launcher_podman podman system migrate" || true
+            sinfo -R
 
       - wait-for-master:
           host: localhost
@@ -3105,6 +3114,49 @@ workflows:
           name: test-e2e-slurm
           requires:
             - package-and-push-system-local
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-podman
+          requires:
+            - package-and-push-system-local
+          master_config: |
+            task_container_defaults:
+              image:
+                cpu: oci-archive:/lustre/hdd/foundation_engineering/images/podman/py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+                cuda: oci-archive:/lustre/hdd/foundation_engineering/images/podman/cuda-11.3-pytorch-1.10-tf-2.8-gpu
+              environment_variables:
+                  # Some ports are not working, disable them so distributed jobs work.
+                  - NCCL_IB_HCA=mlx6_0:0
+                  - XDG_RUNTIME_DIR=/tmp/launcher_podman
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: launcher
+            resource_manager:
+              type: slurm
+              master_host: $HOSTNAME
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              container_run_type: podman
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
