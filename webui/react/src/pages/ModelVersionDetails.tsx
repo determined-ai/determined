@@ -1,9 +1,10 @@
-import { Breadcrumb, Card, Tabs } from 'antd';
+import { Card, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
+import Breadcrumb from 'components/kit/Breadcrumb';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
@@ -209,7 +210,7 @@ const ModelVersionDetails: React.FC = () => {
     return [
       {
         content: hasExperiment ? (
-          <Breadcrumb className={css.link}>
+          <Breadcrumb>
             <Breadcrumb.Item>
               <Link path={paths.experimentDetails(modelVersion.checkpoint.experimentId || '')}>
                 Experiment {modelVersion.checkpoint.experimentId}

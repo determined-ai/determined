@@ -13,8 +13,8 @@ interface BreadcrumbItemProps {
 type BreadcrumbItem = React.FC<BreadcrumbItemProps>;
 type BreadcrumbSeparator = React.FC;
 type Breadcrumb = React.FC<BreadcrumbProps> & {
-  Item: typeof BreadcrumbItem;
-  Separator: typeof BreadcrumbSeparator;
+  Item: BreadcrumbItem;
+  Separator: BreadcrumbSeparator;
 };
 
 const Breadcrumb: Breadcrumb = AntdBreadcrumb;
