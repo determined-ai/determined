@@ -1,9 +1,10 @@
 package provisioner
 
 import (
-	"golang.org/x/time/rate"
 	"testing"
 	"time"
+
+	"golang.org/x/time/rate"
 
 	"github.com/google/uuid"
 	"gotest.tools/assert"
