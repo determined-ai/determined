@@ -1,6 +1,6 @@
-import { Breadcrumb } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Breadcrumb from 'components/kit/Breadcrumb';
 import Tooltip from 'components/kit/Tooltip';
 import { paths } from 'routes/utils';
 import { getExperimentDetails, getProject, getTrialDetails, getWorkspace } from 'services/api';
