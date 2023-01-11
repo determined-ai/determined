@@ -22,7 +22,7 @@ export interface SettingsConfigProp<A> {
 }
 
 export interface SettingsConfig<T> {
-  applicableRoutespace: string;
+  applicableRoutespace?: string;
   settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
   storagePath: string;
 }
@@ -144,8 +144,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const navigate = useNavigate();
   const pathname = window.location.pathname;
   const shouldSkipUpdates = useMemo(
-    () =>
-      config.applicableRoutespace.includes('/') && !pathname.endsWith(config.applicableRoutespace),
+    () => config.applicableRoutespace && !pathname.endsWith(config.applicableRoutespace),
     [config.applicableRoutespace, pathname],
   );
 

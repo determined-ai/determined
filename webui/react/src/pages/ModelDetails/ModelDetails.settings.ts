@@ -43,7 +43,6 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config = (modelId: string | number): SettingsConfig<Settings> => ({
-  applicableRoutespace: 'model-details',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
