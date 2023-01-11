@@ -52,7 +52,7 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
 .. _python-api-reference:
 
 **********************
- Python API Reference
+ Python SDK Reference
 **********************
 
 ``Client``

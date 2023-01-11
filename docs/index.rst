@@ -41,7 +41,7 @@
    :caption: Reference
    :hidden:
 
-   Python API <reference/python-api>
+   Python SDK <reference/python-api>
    REST API <reference/rest-api>
    Training Reference <reference/reference-training/index>
    Model Hub Reference <reference/reference-model-hub/index>

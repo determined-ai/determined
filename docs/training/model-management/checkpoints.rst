@@ -181,7 +181,7 @@ trackable objects (see documentation for `tf.compat.v1.saved_model.load_v2
  User-Defined Checkpoint Metadata
 **********************************
 
-You can add arbitrary user-defined metadata to a checkpoint via the Python API. This feature is
+You can add arbitrary user-defined metadata to a checkpoint via the Python SDK. This feature is
 useful for storing post-training metrics, labels, information related to deployment, etc.
 
 .. code:: python
@@ -323,7 +323,7 @@ The ``--latest`` and ``--uuid`` options are used as follows:
    det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
 Finally, the ``det experiment download`` command provides a similar experience to using the
-:class:`~determined.experimental.client.ExperimentReference` Python API.
+:class:`~determined.experimental.client.ExperimentReference` Python SDK.
 
 .. code:: bash
 
