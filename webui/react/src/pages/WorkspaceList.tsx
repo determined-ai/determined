@@ -340,7 +340,7 @@ const WorkspaceList: React.FC = () => {
       id="workspaces"
       options={
         <Button disabled={!canCreateWorkspace} onClick={handleWorkspaceCreateClick}>
-          {canCreateWorkspace ? 'New Workspace' : 'User lacks permission to create workspace'}
+          New Workspace
         </Button>
       }
       title="Workspaces">
