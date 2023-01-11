@@ -2,6 +2,8 @@ package command
 
 import "github.com/determined-ai/determined/master/pkg/actor"
 
+// MessageNTSC sends a msg to all ntsc managers.
+// CHECK: Tell(diff semantics?) or Ask
 func MessageNTSC(system *actor.System, msg interface{}) actor.Responses {
 	// CHAT: this could also accept an *actor.Context.
 	refs := []*actor.Ref{
@@ -10,6 +12,8 @@ func MessageNTSC(system *actor.System, msg interface{}) actor.Responses {
 		system.Get(actor.Addr(TensorboardActorPath)),
 		system.Get(actor.Addr(ShellActorPath)),
 	}
+
+	// CHECK: can we message "notebooks/*" ?
 
 	// filter out nil refs
 	refs = refs[:0]

@@ -103,7 +103,7 @@ func (a *apiServer) GetNotebook(
 	return resp, nil
 }
 
-func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID string) error {
+func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID string) error {
 	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: notebookID})
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID stri
 func (a *apiServer) IdleNotebook(
 	ctx context.Context, req *apiv1.IdleNotebookRequest,
 ) (resp *apiv1.IdleNotebookResponse, err error) {
-	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	err = a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (a *apiServer) IdleNotebook(
 func (a *apiServer) KillNotebook(
 	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
-	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	err = a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
