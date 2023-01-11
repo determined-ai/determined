@@ -7,6 +7,7 @@ import { isEqual } from 'shared/utils/data';
 
 interface DynamicTabBarProps extends Omit<TabsProps, 'activeKey'> {
   basePath: string;
+  type?: 'line' | 'card';
 }
 
 type TabBarUpdater = (node?: JSX.Element) => void;
