@@ -81,18 +81,12 @@
     height: 32px;
     width: 206px;
 
-    .launchIcon {
-      align-items: center;
-      background-color: transparent;
-      border-color: var(--theme-stage-border);
-      border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
-      border-style: solid;
-      border-width: var(--theme-stroke-width);
-      color: var(--theme-stage-on);
+    .launchButton {
       display: flex;
-      flex-shrink: 0;
+      flex-grow: 1;
+      flex-shrink: 1;
       justify-content: center;
-      width: 32px;
+      overflow: hidden;
     }
   }
   .launchBlock:hover {

@@ -1,4 +1,4 @@
-import { Button, Menu, MenuProps, Typography } from 'antd';
+import { Menu, MenuProps, Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { CSSTransition } from 'react-transition-group';
 
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
@@ -254,16 +255,14 @@ const NavigationSideBar: React.FC = () => {
           <section className={css.launch}>
             <div className={css.launchBlock}>
               <div className={css.launchButton}>
-                <Button size="middle" type="ghost" onClick={() => openJupyterLabModal()}>
+                <Button type="ghost" onClick={() => openJupyterLabModal()}>
                   Launch JupyterLab
                 </Button>
               </div>
               {settings.navbarCollapsed ? (
-                <div className={css.launchIcon}>
-                  <Button onClick={() => openJupyterLabModal()}>
-                    <Icon name="jupyter-lab" />
-                  </Button>
-                </div>
+                <Button onClick={() => openJupyterLabModal()}>
+                  <Icon name="jupyter-lab" />
+                </Button>
               ) : null}
             </div>
           </section>
