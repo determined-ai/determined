@@ -1,6 +1,7 @@
 package provisioner
 
 import (
+	"golang.org/x/time/rate"
 	"testing"
 	"time"
 
@@ -62,6 +63,7 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 			setup.MaxInstances,
 			nil,
 		),
+		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
 	assert.Assert(t, created)

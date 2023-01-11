@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	actionCooldown = 5 * time.Second
-	secureScheme   = "https"
+	actionCooldown    = 5 * time.Second
+	telemetryCooldown = 90 * time.Second
+	secureScheme      = "https"
 )
 
 // provisionerTick periodically triggers the provisioner to act.
@@ -84,7 +85,7 @@ func New(
 			config.MaxInstances,
 			db,
 		),
-		telemetryLimiter: rate.NewLimiter(rate.Every(time.Second*90), 1),
+		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 	}, nil
 }
 
