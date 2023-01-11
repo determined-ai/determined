@@ -200,6 +200,8 @@ Some constraints are due to differences in behavior between Docker and Singulari
 
             eval ${podman_container_stop_command}
 
+      Restart the ``slurmd`` deamon on all compute nodes.
+
 *********************
  Enroot Known Issues
 *********************
