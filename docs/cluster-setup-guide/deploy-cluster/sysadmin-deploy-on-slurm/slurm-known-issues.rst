@@ -158,7 +158,17 @@ Some constraints are due to differences in behavior between Docker and Singulari
             environment_variables:
               - INHERITED_ENV_VAR=
 
-   -  Podman creates several processes when running a container, such as podman, conmon, and
+   -  Terminating a Determined AI job may cause the following conditions to occur:
+
+      -  Compute nodes go into drain state.
+
+      -  Processes inside the container continue to run.
+
+      -  An attempt to run another job results in ``Running a job gets the error level=error
+         msg="invalid internal status, try resetting the pause process with \"/usr/local/bin/podman
+         system migrate\": could not find any running process: no such process"``.
+
+      Podman creates several processes when running a container, such as podman, conmon, and
       catatonit. When a Determined AI job is terminated by the user, Slurm will send a SIGTERM to
       the podman processes. However, sometimes the container will continue running, even after the
       SIGTERM has been sent. On Slurm versions prior to version 22, Slurm will place the node in the
