@@ -60,10 +60,11 @@ func expNotFoundErr(expID int) error {
 
 var authZExp *mocks.ExperimentAuthZ
 
-func setupExpAuthTest(t *testing.T) (
+// pgdb can be nil to use the singleton database for testing.
+func setupExpAuthTest(t *testing.T, pgdb *db.PgDB) (
 	*apiServer, *mocks.ExperimentAuthZ, *mocks.ProjectAuthZ, model.User, context.Context,
 ) {
-	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t)
+	api, projectAuthZ, _, user, ctx := setupProjectAuthZTest(t, pgdb)
 	if authZExp == nil {
 		authZExp = &mocks.ExperimentAuthZ{}
 		expauth.AuthZProvider.Register("mock", authZExp)
@@ -105,7 +106,7 @@ var minExpConfig = expconf.ExperimentConfig{
 }
 
 func TestGetExperimentLabels(t *testing.T) {
-	api, curUser, ctx := setupAPITest(t)
+	api, curUser, ctx := setupAPITest(t, nil)
 	_, p0 := createProjectAndWorkspace(ctx, t, api)
 	_, p1 := createProjectAndWorkspace(ctx, t, api)
 
@@ -148,7 +149,7 @@ func TestGetExperimentLabels(t *testing.T) {
 
 //nolint: exhaustivestruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
-	api, _, ctx := setupAPITest(t)
+	api, _, ctx := setupAPITest(t, nil)
 	api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
 	defer func() {
 		api.m.config.CheckpointStorage = expconf.CheckpointStorageConfig{}
@@ -248,7 +249,7 @@ checkpoint_storage:
 //nolint: exhaustivestruct
 func TestGetExperiments(t *testing.T) {
 	// Setup.
-	api, _, ctx := setupAPITest(t)
+	api, _, ctx := setupAPITest(t, nil)
 
 	workResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name: uuid.New().String(),
@@ -530,7 +531,7 @@ func benchmarkGetExperiments(b *testing.B, n int) {
 	// benchmark won't run when integration tests run
 	// (since it needs the -bench flag) so if this breaks in the
 	// future it won't cause any issues.
-	api, _, ctx := setupAPITest((*testing.T)(unsafe.Pointer(b))) //nolint: gosec
+	api, _, ctx := setupAPITest((*testing.T)(unsafe.Pointer(b)), nil) //nolint: gosec
 
 	// Create n records in the database from the new user we created.
 	userResp, err := api.PostUser(ctx, &apiv1.PostUserRequest{
@@ -631,7 +632,7 @@ func createTestExpWithProjectID(
 }
 
 func TestAuthZGetExperiment(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	exp := createTestExp(t, api, curUser)
 
 	// Not found returns same as permission denied.
@@ -657,7 +658,7 @@ func TestAuthZGetExperiment(t *testing.T) {
 }
 
 func TestAuthZGetExperiments(t *testing.T) {
-	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t, nil)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 	exp0 := createTestExpWithProjectID(t, api, curUser, projectID)
 	createTestExpWithProjectID(t, api, curUser, projectID, uuid.New().String())
@@ -691,7 +692,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 }
 
 func TestAuthZPreviewHPSearch(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 
 	// Can't preview hp search returns error with PermissionDenied
 	expectedErr := status.Errorf(codes.PermissionDenied, "canPreviewHPSearchError")
@@ -702,7 +703,7 @@ func TestAuthZPreviewHPSearch(t *testing.T) {
 }
 
 func TestAuthZGetExperimentLabels(t *testing.T) {
-	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, authZProject, curUser, ctx := setupExpAuthTest(t, nil)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 	exp0Label := uuid.New().String()
 	exp0 := createTestExpWithProjectID(t, api, curUser, projectID, exp0Label)
@@ -738,7 +739,7 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 }
 
 func TestAuthZCreateExperiment(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	forkFrom := createTestExp(t, api, curUser)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
@@ -809,7 +810,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 }
 
 func TestAuthZExpCompareTrialsSample(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 
 	exp0 := createTestExp(t, api, curUser)
 	exp1 := createTestExp(t, api, curUser)
@@ -839,7 +840,7 @@ func TestAuthZExpCompareTrialsSample(t *testing.T) {
 }
 
 func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	exp := createTestExp(t, api, curUser)
 
 	cases := []struct {

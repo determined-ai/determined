@@ -147,7 +147,7 @@ func createCheckpoint(t *testing.T, pgDB *db.PgDB) (string, error) {
 func setupCheckpointTestEcho(t *testing.T) (
 	*apiServer, echo.Context, *httptest.ResponseRecorder,
 ) {
-	api, _, _ := setupAPITest(t)
+	api, _, _ := setupAPITest(t, nil)
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	ctx := &detContext.DetContext{Context: e.NewContext(nil, rec)}
@@ -161,7 +161,7 @@ func setupCheckpointTestEcho(t *testing.T) (
 
 func TestGetCheckpointEcho(t *testing.T) {
 	gitBranch := os.Getenv("CIRCLE_BRANCH")
-	if strings.HasPrefix(gitBranch, "pull/") {
+	if gitBranch == "" || strings.HasPrefix(gitBranch, "pull/") {
 		t.Skipf("skipping test %s in a forked repo (branch: %s) due to lack of credentials",
 			t.Name(), gitBranch)
 	}
@@ -250,7 +250,8 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 }
 
 func TestAuthZCheckpointsEcho(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTestEcho(t)
+	api, authZExp, _, curUser, _ := setupExpAuthTest(t, nil)
+	ctx := newTestEchoContext(curUser)
 
 	checkpointUUID := uuid.New()
 	checkpointID := checkpointUUID.String()

@@ -4,6 +4,7 @@
 package internal
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/context"
-	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -25,37 +25,32 @@ func expNotFoundErrEcho(id int) error {
 	return echo.NewHTTPError(http.StatusNotFound, "experiment not found: %d", id)
 }
 
-func setupExpAuthTestEcho(t *testing.T) (
-	*apiServer, *mocks.ExperimentAuthZ, *mocks.ProjectAuthZ, model.User, echo.Context,
-) {
-	api, authZExp, projectAuthZ, user, _ := setupExpAuthTest(t)
-
+func newTestEchoContext(user model.User) echo.Context {
 	e := echo.New()
 	c := e.NewContext(nil, nil)
 	ctx := &context.DetContext{Context: c}
 	ctx.SetUser(user)
-
-	return api, authZExp, projectAuthZ, user, ctx
+	return ctx
 }
 
 func echoPostExperiment(
 	ctx echo.Context, api *apiServer, t *testing.T, params CreateExperimentParams,
 ) error {
-	bytes, err := json.Marshal(params)
+	byts, err := json.Marshal(params)
 	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPatch, "/",
-		strings.NewReader(string(bytes)))
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(byts))
 	ctx.SetRequest(req)
 	_, err = api.m.postExperiment(ctx)
 	return err
 }
 
 func TestAuthZPostExperimentEcho(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTestEcho(t)
+	api, authZExp, _, curUser, grpcCtx := setupExpAuthTest(t, nil)
 
-	_, _, _, _, grpcCtx := setupExpAuthTest(t) //nolint: dogsled
 	_, projectID := createProjectAndWorkspace(grpcCtx, t, api)
+
+	ctx := newTestEchoContext(curUser)
 
 	// Can't view project passed in.
 	pAuthZ.On("CanGetProject", mock.Anything, curUser, mock.Anything).Return(false, nil).Once()
@@ -106,7 +101,7 @@ func TestAuthZPostExperimentEcho(t *testing.T) {
 }
 
 func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
-	api, authZExp, _, curUser, _ := setupExpAuthTestEcho(t)
+	api, authZExp, _, curUser, _ := setupExpAuthTest(t, nil)
 	exp := createTestExp(t, api, curUser)
 
 	cases := []struct {
@@ -115,21 +110,21 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 		Params       []any
 	}{
 		{"CanGetExperimentArtifacts", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost, "/", nil))
 			return api.m.getExperimentModelDefinition(ctx)
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost, "/?path=rootPath", nil))
 			return api.m.getExperimentModelFile(ctx)
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetExperimentArtifacts", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost,
@@ -139,7 +134,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanSetExperimentsMaxSlots", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			req := httptest.NewRequest(http.MethodPatch, "/",
@@ -150,7 +145,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything, 5}},
 		{"CanSetExperimentsWeight", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			req := httptest.NewRequest(http.MethodPatch, "/",
@@ -161,7 +156,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything, 2.5}},
 		{"CanSetExperimentsPriority", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			req := httptest.NewRequest(http.MethodPatch, "/",
@@ -172,7 +167,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything, 3}},
 		{"CanSetExperimentsCheckpointGCPolicy", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
 			ctx.SetParamValues(fmt.Sprintf("%d", id))
 			req := httptest.NewRequest(http.MethodPatch, "/",
@@ -184,7 +179,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 			return err
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanForkFromExperiment", func(id int) error {
-			_, _, _, _, ctx := setupExpAuthTestEcho(t)
+			ctx := newTestEchoContext(curUser)
 			return echoPostExperiment(ctx, api, t, CreateExperimentParams{
 				ConfigBytes: minExpConfToYaml(t),
 				ParentID:    &id,
