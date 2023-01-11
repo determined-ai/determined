@@ -140,7 +140,7 @@ const SignIn: React.FC = () => {
             const logo = logoConfig[key] ? <img alt={key} src={logoConfig[key]} /> : '';
             return (
               <Button key={key} size="large" type="primary">
-                <a href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}>
+                <a className={css.ssoButton} href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}>
                   Sign in with {logo}{' '}
                   {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
                 </a>
