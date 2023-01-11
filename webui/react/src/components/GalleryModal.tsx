@@ -67,22 +67,25 @@ const GalleryModal: React.FC<Props> = ({
     <Modal centered footer={null} open width={width} {...props}>
       <div className={css.base} style={{ minHeight }}>
         {children}
-        <IconButton
-          className={css.prev}
-          icon="arrow-left"
-          iconSize="small"
-          label="Previous"
-          tooltipPlacement="right"
-          onClick={handlePrevious}
-        />
-        <IconButton
-          className={css.next}
-          icon="arrow-right"
-          iconSize="small"
-          label="Next"
-          tooltipPlacement="left"
-          onClick={handleNext}
-        />
+        <div className={css.prev}>
+          <IconButton
+            icon="arrow-left"
+            iconSize="small"
+            label="Previous"
+            tooltipPlacement="right"
+            onClick={handlePrevious}
+          />
+        </div>
+        <div className={css.next}>
+          <IconButton
+            className={css.next}
+            icon="arrow-right"
+            iconSize="small"
+            label="Next"
+            tooltipPlacement="left"
+            onClick={handleNext}
+          />
+        </div>
       </div>
     </Modal>
   );

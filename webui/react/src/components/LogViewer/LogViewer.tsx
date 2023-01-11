@@ -1,4 +1,4 @@
-import { Button, notification, Space } from 'antd';
+import { notification, Space } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
@@ -11,6 +11,7 @@ import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Section from 'components/Section';
@@ -600,7 +601,6 @@ const LogViewer: React.FC<Props> = ({
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
             <Button
               aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
-              className={css.scrollToOldest}
               icon={<Icon name="arrow-up" />}
               onClick={handleScrollToOldest}
             />
@@ -610,7 +610,6 @@ const LogViewer: React.FC<Props> = ({
             title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}>
             <Button
               aria-label={ARIA_LABEL_ENABLE_TAILING}
-              className={enableTailingClasses.join(' ')}
               icon={<Icon name="arrow-down" />}
               onClick={handleEnableTailing}
             />

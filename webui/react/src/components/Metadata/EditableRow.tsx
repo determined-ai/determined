@@ -1,8 +1,9 @@
 import type { DropDownProps, MenuProps } from 'antd';
-import { Button, Dropdown, Form, Input } from 'antd';
+import { Dropdown, Form, Input } from 'antd';
 import { FormListFieldData } from 'antd/lib/form/FormList';
 import React, { useMemo } from 'react';
 
+import Button from 'components/kit/Button';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 

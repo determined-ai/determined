@@ -1,8 +1,9 @@
-import { Button, Select, Space } from 'antd';
+import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
@@ -338,12 +339,8 @@ const WorkspaceList: React.FC = () => {
       containerRef={pageRef}
       id="workspaces"
       options={
-        <Button
-          className={css.disableOverride}
-          disabled={!canCreateWorkspace}
-          title={canCreateWorkspace ? undefined : 'User lacks permission to create workspace'}
-          onClick={handleWorkspaceCreateClick}>
-          New Workspace
+        <Button disabled={!canCreateWorkspace} onClick={handleWorkspaceCreateClick}>
+          {canCreateWorkspace ? 'New Workspace' : 'User lacks permission to create workspace'}
         </Button>
       }
       title="Workspaces">

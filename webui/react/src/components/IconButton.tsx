@@ -1,8 +1,8 @@
-import { Button } from 'antd';
 import { ButtonType } from 'antd/es/button';
 import { TooltipPlacement } from 'antd/es/tooltip';
 import React, { useCallback } from 'react';
 
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
 
@@ -17,7 +17,6 @@ interface Props {
 }
 
 const IconButton: React.FC<Props> = ({
-  className,
   icon,
   iconSize = 'medium',
   label,
@@ -29,12 +28,7 @@ const IconButton: React.FC<Props> = ({
 
   return (
     <Tooltip placement={tooltipPlacement} title={label}>
-      <Button
-        aria-label={label}
-        className={className}
-        style={{ height: 'fit-content', paddingBottom: 0 }}
-        type={type}
-        onClick={handleClick}>
+      <Button aria-label={label} type={type} onClick={handleClick}>
         <Icon name={icon} size={iconSize} />
       </Button>
     </Tooltip>

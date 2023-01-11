@@ -1,8 +1,9 @@
-import { Button, Dropdown, message, Space, Table } from 'antd';
+import { Dropdown, message, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
+import Button from 'components/kit/Button';
 import Page from 'components/Page';
 import InteractiveTable, {
   InteractiveTableSettings,
@@ -85,8 +86,10 @@ const GroupActionDropdown = ({
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button className={css.overflow} type="text">
-          <Icon name="overflow-vertical" />
+        <Button type="text">
+          <div className={css.overflow}>
+            <Icon name="overflow-vertical" />
+          </div>
         </Button>
       </Dropdown>
       {modalEditGroupContextHolder}

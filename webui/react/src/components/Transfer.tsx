@@ -1,7 +1,8 @@
-import { Button, Input } from 'antd';
+import { Input } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+import Button from 'components/kit/Button';
 import { isEqual } from 'shared/utils/data';
 import { camelCaseToSentence } from 'shared/utils/string';
 

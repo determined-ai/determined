@@ -1,10 +1,11 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Alert, Breadcrumb, Button, Dropdown, Space } from 'antd';
+import { Alert, Breadcrumb, Dropdown, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';

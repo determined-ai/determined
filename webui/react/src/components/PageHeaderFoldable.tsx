@@ -1,7 +1,8 @@
-import { Button, Dropdown } from 'antd';
+import { Dropdown } from 'antd';
 import type { DropdownProps, MenuProps } from 'antd';
 import React, { useState } from 'react';
 
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Icon from 'shared/components/Icon/Icon';
 import { isMouseEvent } from 'shared/utils/routes';
@@ -38,13 +39,8 @@ const renderOptionLabel = (option: Option): React.ReactNode => {
 const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, options }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const dropdownClasses = [css.optionsDropdown];
   let dropdownOptions: DropdownProps['menu'] = {};
   if (options && options.length > 0) {
-    if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
-    if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
-    if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
-
     const onItemClick: MenuProps['onClick'] = (e) => {
       const opt = options.find((opt) => opt.key === e.key) as Option;
       if (isMouseEvent(e.domEvent)) {
@@ -79,7 +75,6 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) => (
               <Button
-                className={css.optionsMainButton}
                 disabled={option.disabled || !option.onClick}
                 ghost
                 icon={option?.icon}
@@ -92,11 +87,7 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
           </div>
           {dropdownOptions && (
             <Dropdown menu={dropdownOptions} placement="bottomRight" trigger={['click']}>
-              <Button
-                className={dropdownClasses.join(' ')}
-                ghost
-                icon={<Icon name="overflow-vertical" />}
-              />
+              <Button ghost icon={<Icon name="overflow-vertical" />} />
             </Dropdown>
           )}
         </div>

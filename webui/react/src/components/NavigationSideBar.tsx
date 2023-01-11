@@ -253,13 +253,17 @@ const NavigationSideBar: React.FC = () => {
         <main>
           <section className={css.launch}>
             <div className={css.launchBlock}>
-              <Button className={css.launchButton} onClick={() => openJupyterLabModal()}>
-                Launch JupyterLab
-              </Button>
-              {settings.navbarCollapsed ? (
-                <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
-                  <Icon name="jupyter-lab" />
+              <div className={css.launchButton}>
+                <Button size="middle" type="ghost" onClick={() => openJupyterLabModal()}>
+                  Launch JupyterLab
                 </Button>
+              </div>
+              {settings.navbarCollapsed ? (
+                <div className={css.launchIcon}>
+                  <Button onClick={() => openJupyterLabModal()}>
+                    <Icon name="jupyter-lab" />
+                  </Button>
+                </div>
               ) : null}
             </div>
           </section>
