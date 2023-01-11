@@ -371,7 +371,13 @@ func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType d
 		resources.SetInstances(map[string]int32{"per-node": 1})
 		resources.SetGpus(map[string]int32{"total": int32(numSlots)})
 		if !isPbsLauncher && haveSlotsPerNode {
-			customArgs = append(customArgs, fmt.Sprintf("--gpus-per-task=%d", effectiveSlotsPerNode))
+			gpuTypePrefix := ""
+			if t.SlurmConfig.GpuType() != nil {
+				gpuTypePrefix = *t.SlurmConfig.GpuType() + ":"
+			}
+			// TODO: Better if this was handled by the launcher
+			customArgs = append(customArgs, fmt.Sprintf("--gpus-per-task=%s%d",
+				gpuTypePrefix, effectiveSlotsPerNode))
 		}
 	case gresSupported:
 		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
