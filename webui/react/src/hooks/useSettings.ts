@@ -154,7 +154,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       ({
         ...(state.get(config.storagePath) ?? {}),
       } as SettingsRecord<T>),
-    [config, state],
+    [config.storagePath, state],
   );
   const [returnedSettings, setReturnedSettings] = useState<SettingsRecord<T>>(settings);
 
