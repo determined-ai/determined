@@ -6,9 +6,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import Tooltip from 'components/kit/Tooltip';
 import PageHeader from 'components/PageHeader';
-import ProjectActionDropdown from 'pages/WorkspaceDetails/ProjectActionDropdown';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
+import { paths } from 'routes/utils';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { sentenceToCamelCase } from 'shared/utils/string';
 import { DetailedUser, Project, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -47,6 +49,10 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
     },
     [tabs],
   );
+
+  const onProjectDelete = useCallback(() => {
+    routeToReactUrl(paths.workspaceDetails(project.workspaceId));
+  }, [project.workspaceId]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     return tabs.map((tabInfo) => ({
@@ -101,7 +107,8 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
               showChildrenIfEmpty={false}
               trigger={['click']}
               workspaceArchived={workspace?.archived}
-              onComplete={fetchProject}>
+              onComplete={fetchProject}
+              onDelete={onProjectDelete}>
               <div style={{ cursor: 'pointer' }}>
                 <Icon name="arrow-down" size="tiny" />
               </div>

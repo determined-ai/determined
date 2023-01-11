@@ -1,7 +1,7 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Space } from 'antd';
 import type { TabsProps } from 'antd';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
@@ -9,14 +9,17 @@ import DynamicTabs from 'components/DynamicTabs';
 import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getProject, getWorkspace } from 'services/api';
+import { getProject, getWorkspace, postUserActivity } from 'services/api';
+import { V1ActivityType, V1EntityType } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { isEqual, isNumber } from 'shared/utils/data';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { isNotFound } from 'shared/utils/service';
 import { useCurrentUser } from 'stores/users';
 import { Project, Workspace } from 'types';
@@ -28,7 +31,6 @@ import NoPermissions from './NoPermissions';
 import css from './ProjectDetails.module.scss';
 import ProjectNotes from './ProjectNotes';
 import TrialsComparison from './TrialsComparison/TrialsComparison';
-import ProjectActionDropdown from './WorkspaceDetails/ProjectActionDropdown';
 
 type Params = {
   projectId: string;
@@ -52,6 +54,14 @@ const ProjectDetails: React.FC = () => {
   const [workspace, setWorkspace] = useState<Workspace>();
 
   const id = parseInt(projectId ?? '1');
+
+  const postActivity = useCallback(() => {
+    postUserActivity({
+      activityType: V1ActivityType.GET,
+      entityId: id,
+      entityType: V1EntityType.PROJECT,
+    });
+  }, [id]);
 
   const fetchWorkspace = useCallback(async () => {
     const workspaceId = project?.workspaceId;
@@ -127,6 +137,14 @@ const ProjectDetails: React.FC = () => {
   usePolling(fetchProject, { rerunOnNewFn: true });
   usePolling(fetchWorkspace, { rerunOnNewFn: true });
 
+  useEffect(() => {
+    postActivity();
+  }, [postActivity]);
+
+  const onProjectDelete = useCallback(() => {
+    if (project) routeToReactUrl(paths.workspaceDetails(project.workspaceId));
+  }, [project]);
+
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
   } else if (!permissions.canViewWorkspaces) {
@@ -160,7 +178,8 @@ const ProjectDetails: React.FC = () => {
                 showChildrenIfEmpty={false}
                 trigger={['click']}
                 workspaceArchived={workspace?.archived}
-                onComplete={fetchProject}>
+                onComplete={fetchProject}
+                onDelete={onProjectDelete}>
                 <div style={{ cursor: 'pointer' }}>
                   <Icon name="arrow-down" size="tiny" />
                 </div>

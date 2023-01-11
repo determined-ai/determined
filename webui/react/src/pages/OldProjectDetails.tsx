@@ -55,10 +55,16 @@ import {
   openOrCreateTensorBoard,
   patchExperiment,
   pauseExperiment,
+  postUserActivity,
   setProjectNotes,
   unarchiveExperiment,
 } from 'services/api';
-import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import {
+  Determinedexperimentv1State,
+  V1ActivityType,
+  V1EntityType,
+  V1GetExperimentsRequestSortBy,
+} from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
@@ -144,6 +150,14 @@ const ProjectDetails: React.FC = () => {
   const expPermissions = usePermissions();
 
   const id = parseInt(projectId ?? '1');
+
+  const postActivity = useCallback(() => {
+    postUserActivity({
+      activityType: V1ActivityType.GET,
+      entityId: id,
+      entityType: V1EntityType.PROJECT,
+    });
+  }, [id]);
 
   const settingsConfig = useMemo(() => settingsConfigForProject(id), [id]);
 
@@ -1092,6 +1106,10 @@ const ProjectDetails: React.FC = () => {
     handleNewNotesPage,
     handleSaveNotes,
   ]);
+
+  useEffect(() => {
+    postActivity();
+  }, [postActivity]);
 
   if (isNaN(id)) {
     return <Message title={`Invalid Project ID ${projectId}`} />;
