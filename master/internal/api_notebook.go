@@ -44,7 +44,7 @@ const (
 	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
-var notebooksAddr = actor.Addr("notebooks")
+var notebooksAddr = actor.Addr(command.NotebookActorPath)
 
 func (a *apiServer) GetNotebooks(
 	ctx context.Context, req *apiv1.GetNotebooksRequest,
