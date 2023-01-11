@@ -59,7 +59,7 @@ export const settingsConfig: SettingsConfig<{ ids: number[] }> = {
       type: array(number),
     },
   },
-  storageKey: 'trials-selection',
+  storagePath: 'trials-selection',
 };
 
 const useTrialActions = ({

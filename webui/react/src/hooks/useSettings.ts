@@ -24,7 +24,7 @@ export interface SettingsConfigProp<A> {
 export interface SettingsConfig<T> {
   applicableRoutespace: string;
   settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
-  storageKey: string;
+  storagePath: string;
 }
 
 interface UserSettingUpdate extends UpdateUserSettingParams {
@@ -154,7 +154,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     if (!querySettings || shouldSkipUpdates) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state.get(config.storageKey) ?? {};
+    const stateSettings = state.get(config.storagePath) ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
@@ -162,13 +162,13 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       stateSettings[setting] = settings[setting];
     });
 
-    update(config.storageKey, stateSettings, true);
+    update(config.storagePath, stateSettings, true);
   }, [config, querySettings, state, update, shouldSkipUpdates]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
-        ...(state.get(config.storageKey) ?? {}),
+        ...(state.get(config.storagePath) ?? {}),
       } as SettingsRecord<T>),
     [config, state],
   );
@@ -224,10 +224,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
           acc.push({
             setting: {
               key: setting,
-              storagePath: config.storageKey,
+              storagePath: config.storagePath,
               value: JSON.stringify(newSettings[setting]),
             },
-            storagePath: config.storageKey,
+            storagePath: config.storagePath,
             userId: user.id,
           });
         }
@@ -254,7 +254,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         }
       }
     },
-    [user?.id, config.storageKey, settings],
+    [user?.id, config.storagePath, settings],
   );
 
   const resetSettings = useCallback(
@@ -281,7 +281,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting as keyof T] = defaultSetting.defaultValue;
       });
 
-      update(config.storageKey, newSettings);
+      update(config.storagePath, newSettings);
 
       await updateDB(newSettings);
 
@@ -298,7 +298,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       if (isEqual(newSettings, settings)) return;
 
-      update(config.storageKey, newSettings);
+      update(config.storagePath, newSettings);
 
       await updateDB(newSettings);
 

@@ -37,7 +37,7 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, string]),
     },
   },
-  storageKey: 'profiler-filters',
+  storagePath: 'profiler-filters',
 };
 
 const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {

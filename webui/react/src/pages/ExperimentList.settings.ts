@@ -206,5 +206,5 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
       type: union([undefinedType, array(string)]),
     },
   },
-  storageKey: `project-details-${id}`,
+  storagePath: `project-details-${id}`,
 });

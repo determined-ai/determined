@@ -123,7 +123,7 @@ const config: SettingsConfig<WorkspaceListSettings> = {
       ]),
     },
   },
-  storageKey: 'workspace-list',
+  storagePath: 'workspace-list',
 };
 
 export default config;

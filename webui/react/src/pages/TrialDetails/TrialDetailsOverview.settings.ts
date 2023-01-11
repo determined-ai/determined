@@ -52,7 +52,7 @@ const config: SettingsConfig<Settings> = {
       type: number,
     },
   },
-  storageKey: 'trial-detail',
+  storagePath: 'trial-detail',
 };
 
 export default config;
