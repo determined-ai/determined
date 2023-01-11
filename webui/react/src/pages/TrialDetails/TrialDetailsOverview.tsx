@@ -11,7 +11,7 @@ import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'type
 import handleError from 'utils/error';
 
 import TrialChart from './TrialChart';
-import settingsConfig, { Settings } from './TrialDetailsOverview.settings';
+import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
 import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 
 export interface Props {
@@ -21,6 +21,7 @@ export interface Props {
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
+  const settingsConfig = useMemo(() => settingsConfigForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(
     Object.assign(settingsConfig, { storagePath }),
   );
