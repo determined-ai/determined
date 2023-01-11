@@ -12,6 +12,7 @@ import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
+import LineChart from 'components/kit/LineChart';
 import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -42,6 +43,7 @@ const Components = {
   ActionBar: 'ActionBar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
+  Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
@@ -75,6 +77,7 @@ const componentOrder: ComponentIds[] = [
   'DataCards',
   'LogViewer',
   'Tooltips',
+  'Charts',
 ];
 
 interface Props {
@@ -326,6 +329,43 @@ const DropdownsSection: React.FC = () => {
             selected” (and NOT a list of all the selections made)
           </li>
         </ul>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const ChartsSection: React.FC = () => {
+  const line1 = [
+    [0, 0],
+    [4, 15],
+    [19, 89],
+  ];
+  const line2 = [
+    [1, 15],
+    [2, 10],
+  ];
+  return (
+    <ComponentSection id="Charts" title="Charts">
+      <Card>
+        <p>
+          Line Charts (<code>{'<LineChart>'}</code>) are a universal component to create charts for
+          learning curve, metrics, cluster history, etc. We currently use the uPlot library.
+        </p>
+      </Card>
+      <Card title="Label options">
+        <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
+        <LineChart
+          data={[line1, line2]}
+          height={100}
+          showLegend={true}
+          title="Title"
+          xLabel="X Label"
+          yLabel="Y Label"
+        />
+      </Card>
+      <Card title="Tooltip options">
+        <p>A chart with a tooltip.</p>
+        <LineChart data={[line1, line2]} height={100} showTooltip={true} />
       </Card>
     </ComponentSection>
   );
@@ -1204,6 +1244,7 @@ const DesignKit: React.FC = () => {
           <DataCardsSection />
           <LogViewerSection />
           <TooltipsSection />
+          <ChartsSection />
         </main>
       </div>
     </Page>

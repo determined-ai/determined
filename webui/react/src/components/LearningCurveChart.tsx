@@ -10,11 +10,11 @@ import { metricToStr } from 'utils/metric';
 
 interface Props {
   data: (number | null)[][];
-  focusedSeries?: number;
-  onSeriesSelect?: (event: MouseEvent, trialId: number) => void;
-  onSeriesHover?: (trialId: number | null) => void;
+  focusedTrialId?: number;
+  onTrialClick?: (event: MouseEvent, trialId: number) => void;
+  onTrialFocus?: (trialId: number | null) => void;
+  selectedMetric: Metric;
   selectedScale: Scale;
-  selectedSeries: string[];
   selectedTrialIds: number[];
   trialIds: number[];
   xValues: number[];
