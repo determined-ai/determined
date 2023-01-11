@@ -45,7 +45,7 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, union([boolean, number, string])]),
     },
   },
-  storageKey: 'trial-hyperparameters',
+  storagePath: 'trial-hyperparameters',
 };
 
 export default config;
