@@ -1,7 +1,7 @@
-import { Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 
 import Breadcrumb from 'components/kit/Breadcrumb';
+import Tooltip from 'components/kit/Tooltip';
 import { BreadCrumbRoute } from 'shared/components/Page';
 import { CommonProps } from 'shared/types';
 
