@@ -90,7 +90,7 @@ const config = (jobState: Determinedjobv1State): SettingsConfig<Settings> => ({
       type: number,
     },
   },
-  storageKey: `job-queue-${jobState}`,
+  storagePath: `job-queue-${jobState}`,
 });
 
 export default config;
