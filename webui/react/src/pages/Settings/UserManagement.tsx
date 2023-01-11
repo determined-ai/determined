@@ -3,6 +3,7 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Page from 'components/Page';
+import Section from 'components/Section';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
@@ -16,7 +17,9 @@ import {
 } from 'components/Table/Table';
 import UserBadge from 'components/UserBadge';
 import useFeature from 'hooks/useFeature';
+import useModalConfigureAgent from 'hooks/useModal/UserSettings/useModalConfigureAgent';
 import useModalCreateUser from 'hooks/useModal/UserSettings/useModalCreateUser';
+import useModalManageGroups from 'hooks/useModal/UserSettings/useModalManageGroups';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getGroups, patchUser } from 'services/api';
@@ -39,8 +42,8 @@ import settingsConfig, {
 } from './UserManagement.settings';
 
 export const USER_TITLE = 'Users';
-export const CREATE_USER = 'New User';
-export const CREAT_USER_LABEL = 'new_user';
+export const CREATE_USER = 'Add User';
+export const CREATE_USER_LABEL = 'add_user';
 
 interface DropdownProps {
   fetchUsers: () => void;
@@ -50,7 +53,11 @@ interface DropdownProps {
 
 const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   const { modalOpen: openEditUserModal, contextHolder: modalEditUserContextHolder } =
-    useModalCreateUser({ groups, onClose: fetchUsers, user });
+    useModalCreateUser({ onClose: fetchUsers, user });
+  const { modalOpen: openManageGroupsModal, contextHolder: modalManageGroupsContextHolder } =
+    useModalManageGroups({ groups, user });
+  const { modalOpen: openConfigureAgentModal, contextHolder: modalConfigureAgentContextHolder } =
+    useModalConfigureAgent({ onClose: fetchUsers, user });
 
   const { canModifyUsers } = usePermissions();
 
@@ -61,7 +68,9 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
   };
 
   const MenuKey = {
+    Agent: 'agent',
     Edit: 'edit',
+    Groups: 'groups',
     State: 'state',
     View: 'view',
   } as const;
@@ -76,6 +85,12 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
     [MenuKey.View]: () => {
       openEditUserModal(true);
     },
+    [MenuKey.Groups]: () => {
+      openManageGroupsModal();
+    },
+    [MenuKey.Agent]: () => {
+      openConfigureAgentModal();
+    },
   };
 
   const onItemClick: MenuProps['onClick'] = (e) => {
@@ -84,11 +99,12 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
 
   const menuItems: MenuProps['items'] = canModifyUsers
     ? [
-        { key: MenuKey.View, label: 'View Profile' },
-        { key: MenuKey.Edit, label: 'Edit' },
+        { key: MenuKey.Edit, label: 'Edit User' },
+        { key: MenuKey.Groups, label: 'Manage Groups' },
+        { key: MenuKey.Agent, label: 'Configure Agent' },
         { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
       ]
-    : [{ key: MenuKey.View, label: 'View Profile' }];
+    : [{ key: MenuKey.View, label: 'View User' }];
 
   return (
     <div className={dropdownCss.base}>
@@ -101,6 +117,8 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
         </Button>
       </Dropdown>
       {modalEditUserContextHolder}
+      {modalManageGroupsContextHolder}
+      {modalConfigureAgentContextHolder}
     </div>
   );
 };
@@ -169,7 +187,7 @@ const UserManagement: React.FC = () => {
   }, [fetchKnownRoles, rbacEnabled]);
 
   const { modalOpen: openCreateUserModal, contextHolder: modalCreateUserContextHolder } =
-    useModalCreateUser({ groups, onClose: fetchUsers });
+    useModalCreateUser({ onClose: fetchUsers });
 
   const onClickCreateUser = useCallback(() => {
     openCreateUserModal();
@@ -257,20 +275,22 @@ const UserManagement: React.FC = () => {
     );
   }, [users, loadableUser, settings, columns, total, updateSettings]);
   return (
-    <Page
-      containerRef={pageRef}
-      options={
-        <Space>
-          <Button
-            aria-label={CREAT_USER_LABEL}
-            disabled={!canModifyUsers}
-            onClick={onClickCreateUser}>
-            {CREATE_USER}
-          </Button>
-        </Space>
-      }
-      title={USER_TITLE}>
-      <div className={css.usersTable}>{table}</div>
+    <Page bodyNoPadding containerRef={pageRef}>
+      <Section
+        className={css.usersTable}
+        options={
+          <Space>
+            <Button
+              aria-label={CREATE_USER_LABEL}
+              disabled={!canModifyUsers}
+              onClick={onClickCreateUser}>
+              {CREATE_USER}
+            </Button>
+          </Space>
+        }
+        title={USER_TITLE}>
+        {table}
+      </Section>
       {modalCreateUserContextHolder}
     </Page>
   );

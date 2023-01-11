@@ -1,6 +1,7 @@
-import { Button, Tooltip } from 'antd';
+import { Button } from 'antd';
 import React, { useCallback } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import useModalCheckpoint from 'hooks/useModal/Checkpoint/useModalCheckpoint';
 import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckpointRegister';
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';

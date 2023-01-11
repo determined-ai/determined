@@ -122,7 +122,7 @@ const Dropdown: React.FC<Props> = ({
 
   const handleClick = useCallback(
     (event: Event) => {
-      if (!event || !event.target) return;
+      if (!event?.target) return;
 
       event.stopPropagation();
 

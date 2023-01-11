@@ -1,8 +1,9 @@
-import { Button, Tooltip } from 'antd';
+import { Button } from 'antd';
 import { ButtonType } from 'antd/es/button';
 import { TooltipPlacement } from 'antd/es/tooltip';
 import React, { useCallback } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
 
 interface Props {

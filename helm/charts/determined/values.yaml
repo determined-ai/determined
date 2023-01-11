@@ -250,8 +250,16 @@ telemetry:
 ## scheduling with preemption
 # defaultScheduler: preemption
 
+# Experimental feature flag to enable support for reattaching resources if master goes down.
+# _reattachResources: true
+
 ## Configure settings about how Determined launches the Fluent Bit sidecar.
 # fluent:
 #   image: fluent/fluent-bit:1.6
 #   uid: 0
 #   gid: 0
+
+## Configure the resource pools in the Determined cluster.
+# resourcePools: null
+# defaultAuxResourcePool: default
+# defaultComputeResourcePool: default

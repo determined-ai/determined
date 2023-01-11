@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 project = "Determined"
 html_title = "Determined AI Documentation"
-copyright = "2022, Determined AI"
+copyright = "2023, Determined AI"
 author = "hello@determined.ai"
 version = pathlib.Path(__file__).parents[1].joinpath("VERSION").read_text()
 release = version

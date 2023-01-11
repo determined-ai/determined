@@ -1,8 +1,9 @@
-import { Button, Dropdown, Select, Tooltip } from 'antd';
+import { Button, Dropdown, Select } from 'antd';
 import { string } from 'io-ts';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
 import useStorage from 'hooks/useStorage';

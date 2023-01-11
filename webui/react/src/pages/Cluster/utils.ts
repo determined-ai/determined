@@ -17,9 +17,9 @@ export interface ResourceAllocationChartSeries {
 }
 
 export const mapResourceAllocationApiToChartSeries = (
-  apiRes: Array<V1ResourceAllocationAggregatedEntry>,
+  apiRes: Readonly<V1ResourceAllocationAggregatedEntry[]>,
   grouping: GroupBy,
-  users: DetailedUser[],
+  users: Readonly<DetailedUser[]>,
 ): ResourceAllocationChartSeries => {
   return {
     groupedBy: grouping,
@@ -37,8 +37,8 @@ export const mapResourceAllocationApiToChartSeries = (
 };
 
 const mapPeriodToDisplayNames = (
-  period: Record<string, number>,
-  users: DetailedUser[],
+  period: Readonly<Record<string, number>>,
+  users: Readonly<DetailedUser[]>,
 ): Record<string, number> => {
   const result: Record<string, number> = {};
   Object.keys(period).forEach((key) => {

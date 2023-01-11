@@ -1,9 +1,10 @@
 import { DownOutlined, PushpinOutlined } from '@ant-design/icons';
-import { Button, Space, Tooltip } from 'antd';
+import { Button, Space } from 'antd';
 import React, { useCallback } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
+import Tooltip from 'components/kit/Tooltip';
 import useFeature from 'hooks/useFeature';
 import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';

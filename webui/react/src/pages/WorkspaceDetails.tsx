@@ -1,8 +1,8 @@
-import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import useFeature from 'hooks/useFeature';
@@ -250,7 +250,7 @@ const WorkspaceDetails: React.FC = () => {
       }
       id="workspaceDetails">
       {rbacEnabled ? (
-        <Tabs
+        <Pivot
           activeKey={tabKey}
           destroyInactiveTabPane
           items={tabItems}

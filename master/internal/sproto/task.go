@@ -46,6 +46,9 @@ type (
 		ProxyPort    *ProxyPortConfig
 		StreamEvents *EventStreamConfig
 		Restore      bool
+
+		// Logging context of the allocation actor.
+		LogContext logger.Context
 	}
 
 	// IdleTimeoutConfig configures how idle timeouts should behave.

@@ -124,7 +124,7 @@ const LearningCurve: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       (event) => {
-        if (!event || !event.trials || !Array.isArray(event.trials)) return;
+        if (!event?.trials || !Array.isArray(event.trials)) return;
 
         /*
          * Cache trial ids, hparams, batches and metric values into easily searchable

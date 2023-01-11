@@ -369,7 +369,9 @@ export interface RemoveRolesFromUserParams {
   userId: number;
 }
 
-export type GetGroupsParams = PaginationParams;
+export type GetGroupsParams = PaginationParams & {
+  userId?: number;
+};
 
 export interface AssignRolesToGroupParams {
   groupId: number;
@@ -473,4 +475,8 @@ export interface SearchRolesAssignableToScopeParams {
   limit?: number;
   offset?: number;
   workspaceId: number;
+}
+
+export interface GetProjectsByUserActivityParams {
+  limit?: number;
 }

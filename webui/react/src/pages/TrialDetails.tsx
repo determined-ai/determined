@@ -1,8 +1,8 @@
-import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import RoutePagination from 'components/RoutePagination';
@@ -198,7 +198,6 @@ const TrialDetailsComp: React.FC = () => {
 
   return (
     <Page
-      bodyNoPadding
       containerRef={pageRef}
       headerComponent={
         <TrialDetailsHeader
@@ -214,9 +213,8 @@ const TrialDetailsComp: React.FC = () => {
         trial={trial}
         onViewLogs={handleViewLogs}>
         <Spinner spinning={isFetching}>
-          <Tabs
+          <Pivot
             activeKey={tabKey}
-            className="no-padding"
             items={tabItems}
             tabBarExtraContent={
               <RoutePagination
