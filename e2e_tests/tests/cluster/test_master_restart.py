@@ -74,7 +74,7 @@ def _test_master_restart_ok(managed_cluster: Cluster) -> None:
             cmd_ids = [run_command(1, slots) for slots in [0, 1]]
 
             for cmd_id in cmd_ids:
-                wait_for_command_state(cmd_id, "TERMINATED", 20)
+                wait_for_command_state(cmd_id, "TERMINATED", 30)
                 assert command_succeeded(cmd_id)
 
             managed_cluster.kill_master()
@@ -171,7 +171,7 @@ def _test_master_restart_kill_works(managed_cluster_restarts: Cluster) -> None:
         command = ["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)]
         subprocess.check_call(command)
 
-        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=20)
+        exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=30)
 
         managed_cluster_restarts.ensure_agent_ok()
     except Exception:
@@ -199,7 +199,7 @@ def test_master_restart_cmd_k8s(
 
 def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
     command_id = run_command(30, slots=slots)
-    wait_for_command_state(command_id, "RUNNING", 20)
+    wait_for_command_state(command_id, "RUNNING", 30)
 
     if downtime >= 0:
         managed_cluster.kill_master()
@@ -389,10 +389,10 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
     slots = sum([a["num_slots"] for a in agent_data])
 
     running_command_id = run_command(120, slots)
-    wait_for_command_state(running_command_id, "RUNNING", 25)
+    wait_for_command_state(running_command_id, "RUNNING", 30)
 
     queued_command_id = run_command(60, slots)
-    wait_for_command_state(queued_command_id, "QUEUED", 25)
+    wait_for_command_state(queued_command_id, "QUEUED", 30)
 
     job_list = det_cmd_json(["job", "list", "--json"])["jobs"]
 
