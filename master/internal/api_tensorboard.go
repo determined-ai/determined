@@ -223,7 +223,7 @@ func (a *apiServer) LaunchTensorboard(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-		ctx, *curUser, model.AccessScopeID(req.WorkspaceId)); err != nil  || !ok {
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId)); err != nil || !ok {
 		return nil, err
 	}
 

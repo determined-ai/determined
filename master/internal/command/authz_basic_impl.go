@@ -66,7 +66,10 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 }
 
 // AccessibleScopesTB returns the set of scopes of tensorboards that the user should be limited to.
-func (a *NSCAuthZBasic) AccessibleScopesTB(ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
+func (a *NSCAuthZBasic) AccessibleScopesTB(
+	ctx context.Context,
+	curUser model.User,
+	requestedScope model.AccessScopeID,
 ) (model.AccessScopeSet, error) {
 	return a.AccessibleScopes(ctx, curUser, requestedScope)
 }
