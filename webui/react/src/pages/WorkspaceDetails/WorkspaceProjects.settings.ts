@@ -137,7 +137,7 @@ const config: SettingsConfig<WorkspaceDetailsSettings> = {
       ]),
     },
   },
-  storageKey: 'workspace-details',
+  storagePath: 'workspace-details',
 };
 
 export default config;

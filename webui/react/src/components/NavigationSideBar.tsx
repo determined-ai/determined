@@ -58,7 +58,7 @@ const settingsConfig: SettingsConfig<Settings> = {
       type: boolean,
     },
   },
-  storageKey: 'navigation',
+  storagePath: 'navigation',
 };
 
 export const NavigationItem: React.FC<ItemProps> = ({

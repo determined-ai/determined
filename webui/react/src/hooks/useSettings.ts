@@ -24,7 +24,7 @@ export interface SettingsConfigProp<A> {
 export interface SettingsConfig<T> {
   applicableRoutespace?: string;
   settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
-  storageKey: string;
+  storagePath: string;
 }
 
 interface UserSettingUpdate extends UpdateUserSettingParams {

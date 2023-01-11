@@ -156,7 +156,7 @@ const CodeViewer: React.FC<Props> = ({
         type: string,
       },
     },
-    storageKey: `selected-file-${experimentId}`,
+    storagePath: `selected-file-${experimentId}`,
   });
 
   const { settings, updateSettings } = useSettings<{ filePath: string }>(
