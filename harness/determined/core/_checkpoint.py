@@ -287,17 +287,19 @@ class CheckpointContext:
         *,
         selector: Optional[Callable[[str], bool]] = None,
     ) -> str:
+
+        if selector is not None and ckpt_dir is None:
+            raise RuntimeError("ckpt_dir has to be provided if selector is not None")
+
         ckpt_dir_mask = self._dist.allgather(ckpt_dir is not None)
         if not any(ckpt_dir_mask):
             raise RuntimeError(
                 "cannot call .upload(ckpt_dir=None, shard=True), from all ranks; "
                 "at least one rank must have a valid ckpt_dir"
             )
-        if selector is not None and ckpt_dir is None:
-            raise RuntimeError("ckpt_dir has to be provided if selector is not None")
 
-        # Deconflict locally-shared directories; if multiple ranks (with no selectors) want to
-        # upload \tmp\ckpt then only the lowest rank on each node will actually upload this directory.
+        # Deconflict locally-shared directories; if multiple ranks (with no selectors) upload
+        # \tmp\ckpt then only the lowest rank on each node will actually upload this directory.
         # If multiple ranks (with selectors) want to upload selected files from \tmp\ckpt, then
         # each rank will upload its selected files.
         if ckpt_dir is None:
@@ -313,7 +315,6 @@ class CheckpointContext:
         want_upload = selector is not None or (
             file_uid and all_file_uids.index(file_uid) == self._dist.rank
         )
-
         # Collect and filter resources for all uploading ranks.
         if want_upload:
             resources = self._storage_manager._list_directory(ckpt_dir)
@@ -325,15 +326,15 @@ class CheckpointContext:
         all_resources = self._dist.allgather(resources)
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            self._try_resolving_conflicts(ckpt_dir, conflicts)
-
+            self._resolve_conflicts(ckpt_dir, conflicts)
         # Merge and save merged metadata locally for each rank to avoid conflicts
         # after pausing and unpausing experiment.
         all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
 
-        if ckpt_dir:
+        if want_upload:
+            assert ckpt_dir
             # If there is a conflict (two files with the same name have different content hashes)
-            # then exception is thrown from _try_resolving_conflicts().
+            # then exception is thrown from _resolve_conflicts().
             # If we are here, there may still be multiple ranks having the same version of the file.
             # To avoid uploading the same file multiple times, we use the smallest rank to upload.
             paths = list(
@@ -348,14 +349,12 @@ class CheckpointContext:
 
         # Synchronize workers.
         _ = self._dist.allgather(None)
+
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)
-
         return storage_id
 
-    def _try_resolving_conflicts(
-        self, ckpt_dir: Optional[str], conflicts: Dict[str, List[int]]
-    ) -> None:
+    def _resolve_conflicts(self, ckpt_dir: Optional[str], conflicts: Dict[str, List[int]]) -> None:
         all_conflicts = conflicts.copy()
 
         for fname in conflicts:
@@ -374,9 +373,9 @@ class CheckpointContext:
                 all_conflicts.pop(fname)
 
         if len(all_conflicts) > 0:
-            self._print_conflict_error(all_conflicts, "files")
+            self._raise_conflict_error(all_conflicts, "files")
 
-    def _print_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
+    def _raise_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
         # Try to keep the logs easier to read; print the whole failure only on the chief.
         if self._dist.rank > 0:
             raise RuntimeError(f"refusing to upload with {conflict_dtype} conflicts: {conflicts}")
@@ -549,7 +548,7 @@ class CheckpointContext:
 
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
-            self._try_resolving_conflicts(ckpt_dir, conflicts)
+            self._resolve_conflicts(ckpt_dir, conflicts)
 
         # Merge and save merged metadata locally for each rank to avoid conflicts
         # after pausing and unpausing experiment.
@@ -577,7 +576,7 @@ class CheckpointContext:
         # Merge metadata and report errors when the same keys have different values.
         merged_metadata, conflicts = merge_metadata(all_metadata)
         if conflicts:
-            self._print_conflict_error(conflicts, "metadata")
+            self._raise_conflict_error(conflicts, "metadata")
         if ckpt_dir is not None and self._dist.local_rank == 0:
             self._write_metadata_file(ckpt_dir, merged_metadata)
         return merged_metadata

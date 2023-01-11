@@ -114,7 +114,7 @@ def test_checkpoint_sharded_upload_download(
     tmp_path: Path, manager: storage.SharedFSStorageManager
 ) -> None:
 
-    with parallel.Execution(2) as pex:
+    with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run
         def do_test() -> None:
@@ -123,7 +123,7 @@ def test_checkpoint_sharded_upload_download(
 
 def test_checkpoint_sharded_store_restore(manager: storage.SharedFSStorageManager) -> None:
 
-    with parallel.Execution(2) as pex:
+    with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run
         def do_test() -> None:

@@ -3,134 +3,115 @@ import logging
 import os
 import pathlib
 import shutil
-import sys
-import typing
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Union
 
 from determined import errors
 from determined.common import check, storage
 
-python_version = sys.version_info
-if python_version.major == 3 and python_version.minor <= 7:
-    # Copied from shutil (Python 3.8) to support copytree(dirs_exist_ok) function.
-    # Should be dropped when support for Python 3.7 is removed.
-    # BEGIN VENDORED CODE FROM SHUTIL
-    import stat
+# Based on shutil.copytree and shutil._copytree (for Python 3.8). Compared to the original
+# implementation this code delays creating new directories during traversal, such that dir
+# is created only when (1) selector(dir)==True or (2) selector(dir/subdir/path)==True.
+# The code is simplified to rely on default values for:
+# symlinks=False,
+# ignore=None,
+# copy_function=shutil.copy2,
+# ignore_dangling_symlinks=False.
 
-    @typing.no_type_check
-    def _copytree(
-        entries,
-        src,
-        dst,
-        symlinks,
-        ignore,
-        copy_function,
-        ignore_dangling_symlinks,
-        dirs_exist_ok=False,
-    ):
-        if ignore is not None:
-            ignored_names = ignore(os.fspath(src), [x.name for x in entries])
-        else:
-            ignored_names = set()
 
-        os.makedirs(dst, exist_ok=dirs_exist_ok)
-        errors = []
-        use_srcentry = copy_function is shutil.copy2 or copy_function is shutil.copy
-
-        for srcentry in entries:
-            if srcentry.name in ignored_names:
-                continue
-            srcname = os.path.join(src, srcentry.name)
-            dstname = os.path.join(dst, srcentry.name)
-            srcobj = srcentry if use_srcentry else srcname
-            try:
-                is_symlink = srcentry.is_symlink()
-                if is_symlink and os.name == "nt":
-                    # Special check for directory junctions, which appear as
-                    # symlinks but we want to recurse.
-                    lstat = srcentry.stat(follow_symlinks=False)
-                    if lstat.st_reparse_tag == stat.IO_REPARSE_TAG_MOUNT_POINT:
-                        is_symlink = False
-                if is_symlink:
-                    linkto = os.readlink(srcname)
-                    if symlinks:
-                        # We can't just leave it to `copy_function` because legacy
-                        # code with a custom `copy_function` may rely on copytree
-                        # doing the right thing.
-                        os.symlink(linkto, dstname)
-                        shutil.copystat(srcobj, dstname, follow_symlinks=not symlinks)
-                    else:
-                        # ignore dangling symlink if the flag is on
-                        if not os.path.exists(linkto) and ignore_dangling_symlinks:
-                            continue
-                        # otherwise let the copy occur. copy2 will raise an error
-                        if srcentry.is_dir():
-                            copytree(
-                                srcobj,
-                                dstname,
-                                symlinks,
-                                ignore,
-                                copy_function,
-                                dirs_exist_ok=dirs_exist_ok,
-                            )
-                        else:
-                            copy_function(srcobj, dstname)
-                elif srcentry.is_dir():
+def _copytree(
+    entries: List,
+    src: str,
+    dst: str,
+    base_path: str,
+    selector: Optional[Callable[[str], bool]],
+    dirs_exist_ok=False,
+):
+    errors = []
+    have_copied = False
+    for srcobj in entries:
+        srcname = os.path.join(src, srcobj.name)
+        dstname = os.path.join(dst, srcobj.name)
+        src_relpath = os.path.relpath(srcname, base_path)
+        try:
+            is_symlink = srcobj.is_symlink()
+            if is_symlink:
+                if srcobj.is_dir():
+                    # Directories are created here only if they are specified
+                    # in the selector. If a directory is not specified in
+                    # the selector, and it is required by any nested files,
+                    # the directory will be created then.
+                    if selector is None or selector(src_relpath + "/"):
+                        os.makedirs(dstname, exist_ok=True)
+                        have_copied = True
                     copytree(
                         srcobj,
                         dstname,
-                        symlinks,
-                        ignore,
-                        copy_function,
+                        base_path,
+                        selector,
                         dirs_exist_ok=dirs_exist_ok,
                     )
                 else:
-                    # Will raise a SpecialFileError for unsupported file types
-                    copy_function(srcobj, dstname)
-            # catch the Error from the recursive copytree so that we can
-            # continue with other files
-            except shutil.Error as err:
-                errors.extend(err.args[0])
-            except OSError as why:
-                errors.append((srcname, dstname, str(why)))
+                    # If selector is None all files are copied; if selector is not None
+                    # then files are copied according to the selector. Before files
+                    # are copied all top directory structure is created. This ensures
+                    # that copied dirs are not dangling.
+                    if selector is None or selector(src_relpath):
+                        have_copied = True
+                        os.makedirs(dst, exist_ok=True)
+                        shutil.copy2(srcobj, dstname)
+            elif srcobj.is_dir():
+                if selector is None or selector(src_relpath + "/"):
+                    have_copied = True
+                    os.makedirs(dstname, exist_ok=True)
+                copytree(
+                    srcobj,
+                    dstname,
+                    base_path,
+                    selector,
+                    dirs_exist_ok=dirs_exist_ok,
+                )
+            else:
+                # Will raise a SpecialFileError for unsupported file types.
+                if selector is None or selector(src_relpath):
+                    have_copied = True
+                    os.makedirs(dst, exist_ok=True)
+                    shutil.copy2(srcobj, dstname)
+        # catch the Error from the recursive copytree so that we can
+        # continue with other files
+        except shutil.Error as err:
+            errors.extend(err.args[0])
+        except OSError as why:
+            errors.append((srcname, dstname, str(why)))
+    if have_copied:
         try:
             shutil.copystat(src, dst)
         except OSError as why:
             # Copying file access times may fail on Windows
             if getattr(why, "winerror", None) is None:
                 errors.append((src, dst, str(why)))
-        if errors:
-            raise shutil.Error(errors)
-        return dst
+    if errors:
+        raise shutil.Error(errors)
+    return dst
 
-    @typing.no_type_check
-    def copytree(
-        src,
-        dst,
-        symlinks=False,
-        ignore=None,
-        copy_function=shutil.copy2,
-        ignore_dangling_symlinks=False,
-        dirs_exist_ok=False,
-    ):
 
-        with os.scandir(src) as itr:
-            entries = list(itr)
-        return _copytree(
-            entries=entries,
-            src=src,
-            dst=dst,
-            symlinks=symlinks,
-            ignore=ignore,
-            copy_function=copy_function,
-            ignore_dangling_symlinks=ignore_dangling_symlinks,
-            dirs_exist_ok=dirs_exist_ok,
-        )
+def copytree(
+    src: str,
+    dst: str,
+    base_path: str,
+    selector=None,
+    dirs_exist_ok=False,
+) -> str:
 
-    # END VENDORED CODE FROM SHUTIL
-
-else:
-    copytree = shutil.copytree
+    with os.scandir(src) as itr:
+        entries = list(itr)
+    return _copytree(
+        entries=entries,
+        src=src,
+        dst=dst,
+        base_path=base_path,
+        selector=selector,
+        dirs_exist_ok=dirs_exist_ok,
+    )
 
 
 def _full_storage_path(
@@ -225,25 +206,15 @@ class SharedFSStorageManager(storage.StorageManager):
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
     ) -> None:
         src = os.fspath(src)
-        maybe_dangling = []
-
         if paths is None:
-            ignore = None
+            selector = None
         else:
-            paths_set = set(paths)
 
-            def ignore(ign_dir: str, names: List[str]) -> List[str]:
-                def selector(x: str) -> bool:
-                    return x in paths_set
-
-                out, local_maybe_dangling = self._ignore_files(ign_dir, names, src, selector)
-                maybe_dangling.extend(local_maybe_dangling)
-                return out
+            def selector(x: str) -> bool:
+                return x in paths
 
         dst = os.path.join(self._base_path, dst)
-        copytree(src, dst, ignore=ignore, dirs_exist_ok=True)
-
-        self._cleanup_dangling_dirs(dst, maybe_dangling)
+        copytree(src, dst, base_path=src, selector=selector, dirs_exist_ok=True)
 
     def download(
         self,
@@ -252,77 +223,11 @@ class SharedFSStorageManager(storage.StorageManager):
         selector: Optional[storage.Selector] = None,
     ) -> None:
         dst = os.fspath(dst)
-        maybe_dangling = []
-
-        if selector is None:
-            ignore = None
-        else:
-
-            def ignore(ign_dir: str, names: List[str]) -> List[str]:
-                assert selector
-                out, local_maybe_dangling = self._ignore_files(ign_dir, names, src, selector)
-                maybe_dangling.extend(local_maybe_dangling)
-                return out
 
         try:
-            shutil.copytree(os.path.join(self._base_path, src), dst, ignore=ignore)
+            src = os.path.join(self._base_path, src)
+            copytree(src, dst, base_path=src, selector=selector, dirs_exist_ok=True)
         except FileNotFoundError:
             raise errors.CheckpointNotFound(
                 f"Did not find checkpoint {src} in shared_fs storage"
             ) from None
-
-        self._cleanup_dangling_dirs(dst, maybe_dangling)
-
-    def _ignore_files(
-        self,
-        ign_dir: str,
-        names: List[str],
-        src: Union[str, os.PathLike],
-        selector: storage.Selector,
-    ) -> Tuple[List[str], List[str]]:
-        out: List[str] = []
-        maybe_dangling: List[str] = []
-        start_path = os.path.join(self._base_path, src)
-
-        # rel_dir would be "subdir" instead of "/determined_shared_fs/UUID/subdir"
-        rel_dir = os.path.relpath(ign_dir, start_path)
-
-        # rel_dir == "." happens only for the top dir.
-        # Since users provide selector with respect to the current dir (w/o using "."),
-        # let's convert "." to empty path.
-        if rel_dir == ".":
-            rel_dir = ""
-
-        for name in names:
-            # ckpt_path would be "subdir/file"
-            path = os.path.join(rel_dir, name)
-
-            # src_path would be "/determined_shared_fs/UUID/subdir/file"
-            src_path = os.path.join(ign_dir, name)
-            if os.path.isdir(src_path):
-                # shutil removes '/' from dir names; we will add it manually.
-                path = os.path.join(path, "")
-
-            if selector(path):
-                # The user wants this file or directory.
-                continue
-
-            if os.path.isdir(src_path):
-                # The user does not want this directory, but we don't yet know if there
-                # might be a subfile or subdirectory which they do want.  Let copytree
-                # continue and revisit this later.
-                maybe_dangling.append(path)
-                continue
-            out.append(name)
-
-        return out, maybe_dangling
-
-    def _cleanup_dangling_dirs(self, dst: str, maybe_dangling: List[str]) -> None:
-        # Any directory which was not wanted (but which we had to recurse into anyway), we now
-        # attempt to remove.  By traversing the list in reverse order, any terminal maybe_dangling
-        # directories will be removed, and the others will raise OSErrors, which we can ignore.
-        for dangling in reversed(maybe_dangling):
-            try:
-                os.rmdir(os.path.join(dst, dangling))
-            except OSError:
-                pass
