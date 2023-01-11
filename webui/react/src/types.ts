@@ -28,7 +28,6 @@ export interface DetailedUserList extends WithPagination {
 export interface Auth {
   isAuthenticated: boolean;
   token?: string;
-  user?: DetailedUser;
 }
 
 export interface SsoProvider {
@@ -228,11 +227,6 @@ interface CheckpointStorage {
   type?: CheckpointStorageType;
 }
 
-interface DataLayer {
-  containerStoragePath?: string;
-  type: string;
-}
-
 export type HpImportance = Record<string, number>;
 export type HpImportanceMetricMap = Record<string, HpImportance>;
 export type HpImportanceMap = { [key in MetricType]: HpImportanceMetricMap };
@@ -294,7 +288,6 @@ export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
-  dataLayer?: DataLayer;
   description?: string;
   hyperparameters: Hyperparameters;
   labels?: string[];
@@ -312,6 +305,7 @@ export interface ExperimentConfig {
     metric: string;
     name: ExperimentSearcherName;
     smallerIsBetter: boolean;
+    sourceTrialId?: number;
   };
 }
 
@@ -818,6 +812,7 @@ export interface Workspace {
   numExperiments: number;
   numProjects: number;
   pinned: boolean;
+  pinnedAt?: Date;
   state: WorkspaceState;
   userId: number;
 }

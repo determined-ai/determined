@@ -2,6 +2,7 @@ import { Button, Dropdown, message, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import GroupAvatar from 'components/GroupAvatar';
 import Page from 'components/Page';
 import InteractiveTable, {
   InteractiveTableSettings,
@@ -10,7 +11,6 @@ import InteractiveTable, {
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import useFeature from 'hooks/useFeature';
-import { useFetchKnownRoles } from 'hooks/useFetch';
 import useModalCreateGroup from 'hooks/useModal/UserSettings/useModalCreateGroup';
 import useModalDeleteGroup from 'hooks/useModal/UserSettings/useModalDeleteGroup';
 import usePermissions from 'hooks/usePermissions';
@@ -22,6 +22,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
+import { useFetchKnownRoles } from 'stores/knowRoles';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 
@@ -109,8 +110,7 @@ const GroupManagement: React.FC = () => {
   const { canModifyGroups, canViewGroups } = usePermissions();
 
   const fetchGroups = useCallback(async (): Promise<void> => {
-    if (!settings.tableLimit || !settings.tableOffset) return;
-
+    if (!('tableLimit' in settings) || !('tableOffset' in settings)) return;
     try {
       const response = await getGroups(
         {
@@ -130,7 +130,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, settings.tableLimit, settings.tableOffset]);
+  }, [canceler.signal, settings]);
 
   const fetchKnownRoles = useFetchKnownRoles(canceler);
 
@@ -269,8 +269,8 @@ const GroupManagement: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: 'name',
         onCell: onRightClickableCell,
-        render: (_: string, r: V1GroupSearchResult) => r.group.name,
-        title: 'Group Name',
+        render: (_: string, r: V1GroupSearchResult) => <GroupAvatar groupName={r.group.name} />,
+        title: 'Group',
       },
       {
         dataIndex: 'users',

@@ -1,13 +1,16 @@
-import { Tooltip, Typography } from 'antd';
+import { Typography } from 'antd';
 import React, { useCallback } from 'react';
 
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';
+import { useUsers } from 'stores/users';
 import { DetailedUser, Project } from 'types';
+import { Loadable } from 'utils/loadable';
 
 import ProjectActionDropdown from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
@@ -29,6 +32,11 @@ const ProjectCard: React.FC<Props> = ({
     routeToReactUrl(paths.projectDetails(project.id));
   }, [project.id]);
 
+  const users = Loadable.match(useUsers(), {
+    Loaded: (usersPagination) => usersPagination.users,
+    NotLoaded: () => [],
+  });
+  const user = users.find((user) => user.id === project.userId);
   return (
     <ProjectActionDropdown
       curUser={curUser}
@@ -84,7 +92,7 @@ const ProjectCard: React.FC<Props> = ({
           )}
         </div>
         <div className={css.avatar}>
-          <Avatar userId={project.userId} />
+          <Avatar user={user} />
         </div>
       </div>
     </ProjectActionDropdown>

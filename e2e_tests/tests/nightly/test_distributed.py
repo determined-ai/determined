@@ -17,6 +17,12 @@ def test_mnist_pytorch_distributed() -> None:
 
 
 @pytest.mark.distributed
+def test_mnist_pytorch_set_stop_requested_distributed() -> None:
+    config = conf.load_config(conf.fixtures_path("mnist_pytorch/distributed-stop-requested.yaml"))
+    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("mnist_pytorch"), 1)
+
+
+@pytest.mark.distributed
 def test_fashion_mnist_tf_keras_distributed() -> None:
     config = conf.load_config(conf.tutorials_path("fashion_mnist_tf_keras/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
@@ -209,16 +215,10 @@ def test_gpt_neox_zero1() -> None:
     config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero1.yaml"))
     config = conf.set_max_length(config, {"batches": 100})
     config = conf.set_min_validation_period(config, {"batches": 100})
-
-    exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt_neox"), 1)
-
-
-@pytest.mark.deepspeed
-@pytest.mark.gpu_required
-def test_gpt_neox_zero3() -> None:
-    config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero3.yaml"))
-    config = conf.set_max_length(config, {"batches": 100})
-    config = conf.set_min_validation_period(config, {"batches": 100})
+    # Changing to satisfy cluter size and gpu mem limitations.
+    config = conf.set_slots_per_trial(config, 8)
+    config["hyperparameters"]["conf_file"] = ["350M.yml", "determined_cluster.yml"]
+    config["hyperparameters"]["overwrite_values"]["train_batch_size"] = 32
 
     exp.run_basic_test_with_temp_config(config, conf.deepspeed_examples_path("gpt_neox"), 1)
 

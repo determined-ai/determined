@@ -49,7 +49,8 @@ def start_notebook(args: Namespace) -> None:
         print(nb.id)
         return
 
-    request.handle_warnings(resp.warnings)
+    if resp.warnings:
+        cli.print_warnings(resp.warnings)
     currentSlotsExceeded = (resp.warnings is not None) and (
         bindings.v1LaunchWarning.LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED in resp.warnings
     )

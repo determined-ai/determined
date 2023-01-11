@@ -540,17 +540,8 @@ class EstimatorTrialController(det.TrialController):
         def wrapper(*args: Any, **kwargs: Any) -> tf.data.Dataset:
             ds = f(*args, **kwargs)
 
-            if self.context.experimental.get_train_cacheable().is_decorator_used():
-                check.false(
-                    self.context.dataset_initialized,
-                    "Please do not use: `context.wrap_dataset(dataset)` if using "
-                    "`@context.experimental.cache_train_dataset(dataset_name, dataset_version)` "
-                    "and `@context.experimental.cache_validation_dataset(dataset_name, "
-                    "dataset_version)`.",
-                )
-            else:
-                check.true(
-                    self.context.dataset_initialized,
+            if not self.context.dataset_initialized:
+                raise RuntimeError(
                     "Please pass your datasets (train and test) into "
                     "`context.wrap_dataset(dataset)` right after creating them.",
                 )
@@ -828,7 +819,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4``).
+    (e.g. ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

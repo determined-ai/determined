@@ -1,10 +1,11 @@
-import { Space, Tooltip, Typography } from 'antd';
+import { Space, Typography } from 'antd';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TimeAgo from 'components/TimeAgo';
@@ -13,12 +14,14 @@ import UserAvatar from 'components/UserAvatar';
 import { commandTypeToLabel } from 'constants/states';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
+import Spinner from 'shared/components/Spinner';
 import { Pagination } from 'shared/types';
 import { getDuration } from 'shared/utils/datetime';
 import { StateOfUnion } from 'themes';
 import {
   CommandTask,
   CommandType,
+  DetailedUser,
   ExperimentItem,
   ModelItem,
   ModelVersion,
@@ -105,11 +108,13 @@ export const tooltipRenderer: Renderer = (text) => (
   </Tooltip>
 );
 
-export const userRenderer: Renderer<{ userId: number }> = (_, record) => (
-  <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-    <UserAvatar userId={record.userId} />
-  </div>
-);
+export const userRenderer: React.FC<DetailedUser | undefined> = (user) => {
+  return (
+    <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+      {user ? <UserAvatar user={user} /> : <Spinner />}
+    </div>
+  );
+};
 
 /* Command Task Table Column Renderers */
 

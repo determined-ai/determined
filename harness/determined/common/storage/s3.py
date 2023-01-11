@@ -96,7 +96,12 @@ class S3StorageManager(storage.CloudStorageManager):
                 self.bucket.upload_file(abs_path, key_name)
 
     @util.preserve_random_state
-    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+    def download(
+        self,
+        src: str,
+        dst: Union[str, os.PathLike],
+        selector: Optional[storage.Selector] = None,
+    ) -> None:
         import botocore
 
         dst = os.fspath(dst)
@@ -107,7 +112,13 @@ class S3StorageManager(storage.CloudStorageManager):
         try:
             for obj in self.bucket.objects.filter(Prefix=prefix):
                 found = True
-                _dst = os.path.join(dst, os.path.relpath(obj.key, prefix))
+                relname = os.path.relpath(obj.key, prefix)
+                if obj.key.endswith("/"):
+                    relname = os.path.join(relname, "")
+
+                if selector is not None and not selector(relname):
+                    continue
+                _dst = os.path.join(dst, relname)
                 dst_dir = os.path.dirname(_dst)
                 os.makedirs(dst_dir, exist_ok=True)
 

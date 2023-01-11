@@ -79,7 +79,12 @@ class GCSStorageManager(storage.CloudStorageManager):
                 retry_network_errors(blob.upload_from_filename)(abs_path)
 
     @util.preserve_random_state
-    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+    def download(
+        self,
+        src: str,
+        dst: Union[str, os.PathLike],
+        selector: Optional[storage.Selector] = None,
+    ) -> None:
         dst = os.fspath(dst)
         path = self.get_storage_prefix(src)
         logging.info(f"Downloading {path} from GCS")
@@ -89,7 +94,12 @@ class GCSStorageManager(storage.CloudStorageManager):
         # directory-like blob.
         for blob in self.bucket.list_blobs(prefix=path):
             found = True
-            _dst = os.path.join(dst, os.path.relpath(blob.name, path))
+            relname = os.path.relpath(blob.name, path)
+            if blob.name.endswith("/"):
+                relname = os.path.join(relname, "")
+            if selector is not None and not selector(relname):
+                continue
+            _dst = os.path.join(dst, relname)
             dst_dir = os.path.dirname(_dst)
             if not os.path.exists(dst_dir):
                 os.makedirs(dst_dir, exist_ok=True)

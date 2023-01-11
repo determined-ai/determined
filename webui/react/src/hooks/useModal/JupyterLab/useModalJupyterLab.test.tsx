@@ -4,8 +4,8 @@ import { Button } from 'antd';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser, ResourcePool } from 'types';
@@ -25,11 +25,6 @@ jest.mock('services/api', () => ({
   getUsers: () => Promise.resolve({ users: [] }),
   getUserSetting: () => Promise.resolve({ settings: [] }),
   launchJupyterLab: () => Promise.resolve({ config: '' }),
-}));
-jest.mock('contexts/Store', () => ({
-  __esModule: true,
-  ...jest.requireActual('contexts/Store'),
-  useStore: () => ({ auth: { user: { id: 1 } as DetailedUser } }),
 }));
 
 jest.mock('stores/resourcePools', () => ({
@@ -53,7 +48,7 @@ const ModalTrigger: React.FC = () => {
   const { contextHolder, modalOpen } = useModalJupyterLab();
 
   useEffect(() => {
-    setAuth({ isAuthenticated: true });
+    setAuth({ isAuthenticated: true, user: { id: 1 } as DetailedUser });
     setAuthCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -73,13 +68,13 @@ const setup = async () => {
 
   render(
     <BrowserRouter>
-      <StoreProvider>
+      <UIProvider>
         <UsersProvider>
           <AuthProvider>
             <ModalTrigger />
           </AuthProvider>
         </UsersProvider>
-      </StoreProvider>
+      </UIProvider>
     </BrowserRouter>,
   );
 

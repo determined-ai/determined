@@ -24,7 +24,6 @@ import (
 
 	"github.com/coreos/go-systemd/activation"
 	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -97,15 +96,14 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs          *logger.LogBuffer
-	system        *actor.System
-	echo          *echo.Echo
-	rwCoordinator *actor.Ref
-	db            *db.PgDB
-	rm            rm.ResourceManager
-	proxy         *actor.Ref
-	taskLogger    *task.Logger
-	hpImportance  *actor.Ref
+	logs         *logger.LogBuffer
+	system       *actor.System
+	echo         *echo.Echo
+	db           *db.PgDB
+	rm           rm.ResourceManager
+	proxy        *actor.Ref
+	taskLogger   *task.Logger
+	hpImportance *actor.Ref
 
 	trialLogBackend TrialLogBackend
 	taskLogBackend  task.LogBackend
@@ -647,45 +645,6 @@ func convertDBErrorsToNotFound(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) error {
-	c.Logger().Infof(
-		"new connection for RW Coordinator from: %v, %s",
-		socket.RemoteAddr(),
-		c.Request().URL,
-	)
-
-	resourceName := c.Request().URL.Path
-	query := c.Request().URL.Query()
-
-	readLockString, ok := query["read_lock"]
-	if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("Received request without specifying read_lock: %v", c.Request().URL))
-	}
-
-	var readLock bool
-	if strings.EqualFold(readLockString[0], "True") {
-		readLock = true
-	} else {
-		if !strings.EqualFold(readLockString[0], "false") {
-			return echo.NewHTTPError(http.StatusBadRequest,
-				fmt.Sprintf("Received request with invalid read_lock: %v", c.Request().URL))
-		}
-		readLock = false
-	}
-
-	socketActor := m.system.AskAt(actor.Addr("rwCoordinator"),
-		resourceRequest{resourceName, readLock, socket})
-	actorRef, ok := socketActor.Get().(*actor.Ref)
-	if !ok {
-		c.Logger().Error("failed to get websocket actor")
-		return nil
-	}
-
-	// Wait for the websocket actor to terminate.
-	return actorRef.AwaitTermination()
-}
-
 func updateClusterHeartbeat(ctx context.Context, db *db.PgDB) {
 	t := time.NewTicker(10 * time.Minute)
 	defer t.Stop()
@@ -762,7 +721,6 @@ func (m *Master) Run(ctx context.Context) error {
 	//         +- Provisioner (provisioner.Provisioner: provisioner)
 	// +- KubernetesResourceManager (scheduler.KubernetesResourceManager: kubernetesRM)
 	// +- Service Proxy (proxy.Proxy: proxy)
-	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetry: telemetry)
 	// +- TrialLogger (internal.trialLogger: trialLogger)
 	// +- Experiments (actors.Group: experiments)
@@ -861,6 +819,7 @@ func (m *Master) Run(ctx context.Context) error {
 		m.echo.Use(otelecho.Middleware("determined-master"))
 	}
 
+	m.echo.Use(authzAuditLogMiddleware())
 	m.echo.Use(userService.ProcessAuthentication)
 
 	m.echo.Logger = logger.New()
@@ -889,10 +848,6 @@ func (m *Master) Run(ctx context.Context) error {
 	)
 	tasksGroup := m.echo.Group("/tasks")
 	tasksGroup.GET("", api.Route(m.getTasks))
-
-	// Distributed lock server.
-	rwCoordinator := newRWCoordinator()
-	m.rwCoordinator, _ = m.system.ActorOf(actor.Addr("rwCoordinator"), rwCoordinator)
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 	m.system.ActorOf(sproto.JobsActorAddr, job.NewJobs(m.rm))
@@ -991,7 +946,7 @@ func (m *Master) Run(ctx context.Context) error {
 		return c.File(reactIndex)
 	})
 
-	m.echo.Static("/api/v1/api.swagger.json",
+	m.echo.File("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
 	m.echo.GET("/config", api.Route(m.getConfig))
@@ -1020,11 +975,6 @@ func (m *Master) Run(ctx context.Context) error {
 	resourcesGroup.GET("/allocation/aggregated", m.getAggregatedResourceAllocation)
 
 	m.echo.POST("/task-logs", api.Route(m.postTaskLogs))
-
-	// used in as a part of the data layer API (to be removed) in harness/determined/_data_layer
-	// see https://docs.determined.ai/latest/training-apis/data-layer.html#using-the-data-layer-api
-	m.echo.GET("/ws/data-layer/*",
-		api.WebSocketRoute(m.rwCoordinatorWebSocket))
 
 	m.echo.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
 	m.echo.Any(

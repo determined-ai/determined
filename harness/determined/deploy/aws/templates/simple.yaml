@@ -5,35 +5,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-09b18720cb71042df
-      Agent: ami-0f9f90f487608fe99
+      Agent: ami-0e869a96e81e4c106
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-07d16c043aa8e5153
-    #   Agent: ami-07d607bacc01685db
+    #   Agent: ami-03bd3b100feb865bb
     # ap-southeast-1:
     #   Master: ami-00e912d13fbb4f225
-    #   Agent: ami-00a7448716c007550
+    #   Agent: ami-0f3517aae74b1acae
     # ap-southeast-2:
     #   Master: ami-055166f8a8041fbf1
-    #   Agent: ami-0d21deaec03b109ed
+    #   Agent: ami-09ff97700ee2396b5
     eu-central-1:
       Master: ami-06148e0e81e5187c8
-      Agent: ami-00b8e14625cfffff7
+      Agent: ami-03f98ed935d6413bb
     eu-west-1:
       Master: ami-0fd8802f94ed1c969
-      Agent: ami-0d9b2638b858a0451
+      Agent: ami-0486dbd675e5d21fc
     # eu-west-2:
     #   Master: ami-04842bc62789b682e
-    #   Agent: ami-08c2f17a10d4b052e
+    #   Agent: ami-0ba5e33f4b5a82550
     us-east-1:
       Master: ami-0149b2da6ceec4bb0
-      Agent: ami-0b2014aa470f13435
+      Agent: ami-02aa57541c622dde4
     us-east-2:
       Master: ami-0d5bf08bc8017c83b
-      Agent: ami-003178452b1145c22
+      Agent: ami-06b2144e6efc0145e
     us-west-2:
       Master: ami-0c09c7eb16d3e8e70
-      Agent: ami-0c41987fab4c81bc3
+      Agent: ami-0a3fcac423fda2fd1
 
 Parameters:
   Keypair:
@@ -187,7 +187,6 @@ Parameters:
     Description: Contents of the agent config file
     Default: ''
 
-
   CpuEnvImage:
     Type: String
     Description: Docker image for CPU tasks
@@ -207,6 +206,11 @@ Parameters:
     Type: String
     Description: Whether to retain CloudWatch log group after the stack is deleted
     Default: false
+
+  NotebookTimeout:
+    Type: Number
+    Description: Specifies the duration in seconds before idle notebook instances are automatically terminated.
+    Default: 0
 
   MasterConfigTemplate:
     Type: String
@@ -276,6 +280,10 @@ Parameters:
           cpu: {{ .cpu_env_image }}
           gpu: {{ .gpu_env_image }}
         {{- end }}
+      {{ end }}
+
+      {{ if ne .notebook_timeout 0.0 }}
+      notebook_timeout: {{ .notebook_timeout }}
       {{ end }}
 ### END INJECT CODE
 
@@ -706,6 +714,7 @@ Resources:
             scheme: $scheme
             cpu_env_image: ${CpuEnvImage}
             gpu_env_image: ${GpuEnvImage}
+            notebook_timeout: ${NotebookTimeout}
             EOF
 
             apt-get remove docker docker-engine docker.io containerd runc

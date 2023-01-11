@@ -1,4 +1,4 @@
-import { Button, Dropdown, Space, Typography } from 'antd';
+import { Button, Dropdown, Input, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import {
   FilterDropdownProps,
@@ -9,7 +9,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import FilterCounter from 'components/FilterCounter';
-import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -42,8 +41,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { alphaNumericSorter } from 'shared/utils/sort';
-import { useAuth } from 'stores/auth';
-import { useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ModelItem } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -60,10 +58,13 @@ import settingsConfig, {
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description'];
 
 const ModelRegistry: React.FC = () => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
+  const loadableCurrentUser = useCurrentUser();
+  const user = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [models, setModels] = useState<ModelItem[]>([]);
@@ -374,11 +375,21 @@ const ModelRegistry: React.FC = () => {
     );
 
     const descriptionRenderer = (value: string, record: ModelItem) => (
-      <InlineEditor
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={value}
         disabled={record.archived}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
-        value={value}
-        onSave={(newDescription: string) => saveModelDescription(record.name, newDescription)}
+        title={record.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveModelDescription(record.name, newDesc);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 
@@ -449,7 +460,7 @@ const ModelRegistry: React.FC = () => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {

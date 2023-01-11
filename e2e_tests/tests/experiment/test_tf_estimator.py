@@ -77,18 +77,6 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     assert trials[0].trial.warmStartCheckpointUuid == first_checkpoint_uuid
 
 
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize(
-    "tf2",
-    [
-        pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
-        pytest.param(False, marks=pytest.mark.tensorflow1_cpu),
-    ],
-)
-def test_mnist_estimator_data_layer_lfs(tf2: bool) -> None:
-    run_mnist_estimator_data_layer_test(tf2, "lfs")
-
-
 @pytest.mark.parallel
 @pytest.mark.tensorflow2
 @pytest.mark.parametrize("tf2", [True, False])
@@ -109,54 +97,6 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
     label_sum = 2 * sum(range(16))
     assert metrics["label_sum_fn"] == label_sum
     assert metrics["label_sum_cls"] == label_sum
-
-
-@pytest.mark.e2e_gpu
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize("tf2", [True, False])
-@pytest.mark.parametrize("storage_type", ["s3"])
-def test_mnist_estimator_data_layer_s3(
-    tf2: bool, storage_type: str, secrets: Dict[str, str]
-) -> None:
-    run_mnist_estimator_data_layer_test(tf2, storage_type)
-
-
-def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
-    config = conf.load_config(conf.fixtures_path("data_layer_estimator/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    if storage_type == "lfs":
-        config = conf.set_shared_fs_data_layer(config)
-    else:
-        config = conf.set_s3_data_layer(config)
-
-    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("data_layer_estimator"), 1)
-
-
-@pytest.mark.parallel
-@pytest.mark.tensorflow2
-@pytest.mark.parametrize("storage_type", ["lfs", "s3"])
-def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[str, str]) -> None:
-    config = conf.load_config(conf.fixtures_path("data_layer_estimator/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_tf1_image(config)
-    if storage_type == "lfs":
-        config = conf.set_shared_fs_data_layer(config)
-    else:
-        config = conf.set_s3_data_layer(config)
-
-    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("data_layer_estimator"), 1)
-
-
-@pytest.mark.e2e_gpu
-@pytest.mark.tensorflow2
-def test_mnist_estimator_adaptive_with_data_layer() -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/adaptive.yaml"))
-    config = conf.set_tf2_image(config)
-    config = conf.set_shared_fs_data_layer(config)
-
-    exp.run_basic_test_with_temp_config(config, conf.fixtures_path("data_layer_estimator"), None)
 
 
 @pytest.mark.parallel

@@ -32,10 +32,7 @@ const useModalColumnsCustomize = ({
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     initialVisibleColumns ?? defaultVisibleColumns,
   );
-
-  const handleSave = useCallback(() => {
-    onSave?.(visibleColumns);
-  }, [onSave, visibleColumns]);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const modalContent = useMemo((): React.ReactNode => {
     return (
@@ -58,13 +55,17 @@ const useModalColumnsCustomize = ({
       icon: null,
       maskClosable: true,
       okText: 'Save',
-      onOk: handleSave,
+      onOk: () => {
+        onSave?.(visibleColumns);
+        setModalVisible(false);
+      },
       title: 'Customize Columns',
     };
-  }, [modalContent, handleSave]);
+  }, [modalContent, onSave, visibleColumns]);
 
   const modalOpen = useCallback(
     ({ initialModalProps }: ShowModalProps) => {
+      setModalVisible(true);
       openOrUpdate({ ...modalProps, ...initialModalProps });
     },
     [modalProps, openOrUpdate],
@@ -76,12 +77,8 @@ const useModalColumnsCustomize = ({
    */
   useEffect(() => {
     const modal = modalRef.current;
-    if (modal) openOrUpdate(modalProps);
-
-    return () => {
-      if (modal) modalRef.current = undefined;
-    };
-  }, [modalProps, modalRef, openOrUpdate]);
+    if (modal && modalVisible) openOrUpdate(modalProps);
+  }, [modalProps, modalRef, modalVisible, openOrUpdate]);
 
   return { modalOpen, modalRef, ...modalHook };
 };

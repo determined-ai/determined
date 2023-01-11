@@ -29,7 +29,7 @@ const useModalWorkspaceRemoveMember = ({
   userOrGroupId,
 }: Props): ModalHooks => {
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const modalContent = useMemo(() => {
     return (

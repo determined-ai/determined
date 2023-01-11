@@ -26,7 +26,7 @@ def main(train_entrypoint: str) -> int:
     assert info is not None, "must be run on-cluster"
     assert info.task_type == "TRIAL", f'must be run with task_type="TRIAL", not "{info.task_type}"'
 
-    # TODO: refactor data_layer, and profiling to to not use the cli_cert.
+    # TODO: refactor profiling to to not use the cli_cert.
     certs.cli_cert = certs.default_load(info.master_url)
 
     # TODO: Don't include EnvContext object in the future high-level APIs for PyTorch or Keras.

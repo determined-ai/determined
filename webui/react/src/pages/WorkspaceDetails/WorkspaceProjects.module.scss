@@ -12,6 +12,14 @@
     gap: 12px;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
+  .descriptionRenderer {
+    border: 1px solid transparent;
+
+    &:focus,
+    &:hover {
+      border: 1px solid var(--theme-status-active);
+    }
+  }
 }
 
 @media only screen and (max-width: $breakpoint-mobile) {

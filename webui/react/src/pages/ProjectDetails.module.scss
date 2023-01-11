@@ -45,11 +45,11 @@
 }
 
 .descriptionRenderer {
-  border: hidden !important;
+  border: 1px solid transparent !important;
 }
 .descriptionRenderer:focus,
 .descriptionRenderer:hover {
-  border: solid 1px var(--theme-status-active) !important;
+  border: 1px solid var(--theme-status-active) !important;
 }
 .tagsRenderer {
   :global([aria-label='new-tag-trigger']) {

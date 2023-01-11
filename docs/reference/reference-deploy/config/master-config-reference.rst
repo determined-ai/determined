@@ -55,9 +55,9 @@ The master supports the following configuration settings:
       ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks
       using the ``rocm`` key. Default values:
 
-      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4`` for NVIDIA GPUs.
-      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.4`` for ROCm.
-      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.4`` for CPUs.
+      -  ``determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10`` for NVIDIA GPUs.
+      -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.19.10`` for ROCm.
+      -  ``determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-0.19.10`` for CPUs.
 
    -  ``environment_variables``: A list of environment variables that will be set in every task
       container. Each element of the list should be a string of the form ``NAME=VALUE``. See
@@ -118,6 +118,14 @@ The master supports the following configuration settings:
 -  ``tensorboard_timeout``: Specifies the duration in seconds before idle TensorBoard instances are
    automatically terminated. A TensorBoard instance is considered to be idle if it does not receive
    any HTTP traffic. The default timeout is ``300`` (5 minutes).
+
+.. _master-config-notebook-timeout:
+
+-  ``notebook_timeout``: Specifies the duration in seconds before idle notebook instances are
+   automatically terminated. A notebook instance is considered to be idle if it is not receiving any
+   HTTP traffic and it is not otherwise active (as defined by the ``notebook_idle_type`` option in
+   the :ref:`task configuration <command-notebook-configuration>`). Defaults to ``null``, i.e.
+   disabled.
 
 -  ``resource_manager``: The resource manager to use to acquire resources. Defaults to ``agent``.
 
@@ -232,7 +240,7 @@ The master supports the following configuration settings:
 
       -  ``protocol``: The protocol for communicating with the Launcher.
 
-      -  ``security``: Security-related configiruation settings for communicating with the Launcher.
+      -  ``security``: Security-related configuration settings for communicating with the Launcher.
 
             -  ``tls``: TLS-related configuration settings.
 
@@ -334,6 +342,26 @@ The master supports the following configuration settings:
       -  ``default_compute_resource_pool``: The default resource pool to use for tasks that require
          compute resources, e.g. GPUs or dedicated CPUs. Defaults to the Slurm/PBS default partition
          if it has GPU resources and if no resource pool is specified.
+
+      -  ``job_project_source``: Configures labelling of jobs on the HPC cluster (via Slurm
+         ``--wckey`` or PBS ``-P``). Allowed values are:
+
+         -  ``project``: Use the project name of the experiment (this is the default, if no project
+            nothing is passed to workload manager).
+
+         -  ``workspace``: Use the workspace name of the project (if no workspace, nothing is passed
+            to workload manager).
+
+         -  ``label`` [:``prefix``]: Use the value from the experiment configuration tags list (if
+            no matching tags, nothing is passed to workload manager). If a tag begins with the
+            specified ``prefix``, remove the prefix and use the remainder as the value for the
+            WCKey/Project. If multiple tag values begin with ``prefix``, the remainders are
+            concatenated with a comma (,) separator on Slurm or underscore (_) with PBS. If a
+            ``prefix`` is not specified or empty, all tags will be matched (and therefore
+            concatenated). Workload managers do not generally support multiple WCKey/Project values
+            so it is recommended that ``prefix`` is configured to match a single label to enable use
+            of the workload manager reporting tools that summarize usage by each WCKey/Project
+            value.
 
 -  ``resource_pools``: A list of resource pools. A resource pool is a collection of identical
    computational resources. Users can specify which resource pool a job should be assigned to when

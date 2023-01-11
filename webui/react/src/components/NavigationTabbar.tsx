@@ -6,6 +6,8 @@ import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
+import usePermissions from 'hooks/usePermissions';
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
@@ -16,6 +18,7 @@ import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
+import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -52,8 +55,9 @@ const NavigationTabbar: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const authUser = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const loadableCurrentUser = useCurrentUser();
+  const authUser = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const loadableResourcePools = useResourcePools();
@@ -72,6 +76,13 @@ const NavigationTabbar: React.FC = () => {
     useModalJupyterLab();
 
   const showNavigation = isAuthenticated && ui.showChrome;
+
+  const { canCreateWorkspace } = usePermissions();
+  const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
+    useModalWorkspaceCreate();
+  const handleCreateWorkspace = useCallback(() => {
+    openWorkspaceCreateModal();
+  }, [openWorkspaceCreateModal]);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
   const handleOverflowOpen = useCallback(() => setIsShowingOverflow(true), []);
@@ -118,13 +129,22 @@ const NavigationTabbar: React.FC = () => {
             path: paths.workspaceList(),
           },
           ...Loadable.match(pinnedWorkspaces, {
-            Loaded: (workspaces) =>
-              workspaces.map((workspace) => ({
+            Loaded: (workspaces) => {
+              const workspaceIcons = workspaces.map((workspace) => ({
                 icon: <DynamicIcon name={workspace.name} size={24} style={{ color: 'black' }} />,
                 label: workspace.name,
                 onClick: (e: AnyMouseEvent) =>
                   handlePathUpdate(e, paths.workspaceDetails(workspace.id)),
-              })),
+              }));
+              if (canCreateWorkspace) {
+                workspaceIcons.push({
+                  icon: <Icon name="add-small" size="large" />,
+                  label: 'New Workspace',
+                  onClick: handleCreateWorkspace,
+                });
+              }
+              return workspaceIcons;
+            },
             NotLoaded: () => [
               {
                 icon: <Spinner />,
@@ -194,6 +214,7 @@ const NavigationTabbar: React.FC = () => {
         onCancel={handleActionSheetCancel}
       />
       {modalJupyterLabContextHolder}
+      {modalWorkspaceCreateContextHolder}
     </nav>
   );
 };

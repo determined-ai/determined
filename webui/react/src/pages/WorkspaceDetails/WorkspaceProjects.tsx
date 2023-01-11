@@ -1,9 +1,8 @@
-import { Select, Space } from 'antd';
+import { Input, Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import InlineEditor from 'components/InlineEditor';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
@@ -26,11 +25,11 @@ import { getWorkspaceProjects, patchProject } from 'services/api';
 import { V1GetWorkspaceProjectsRequestSortBy } from 'services/api-ts-sdk';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
+import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
-import { useAuth } from 'stores/auth';
-import { useUsers } from 'stores/users';
+import { useCurrentUser, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
@@ -56,10 +55,13 @@ interface Props {
 }
 
 const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
-  const loadableAuth = useAuth();
-  const user = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
+  const loadableCurrentUser = useCurrentUser();
+  const user = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const [projects, setProjects] = useState<Project[]>([]);
@@ -100,12 +102,14 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   }, [canceler.signal, id, workspace, settings]);
 
   useEffect(() => {
-    fetchProjects();
+    setIsLoading(true);
+    fetchProjects().then(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
+      setIsLoading(true);
       updateSettings({ whose: value as WhoseProjects | undefined });
     },
     [updateSettings],
@@ -132,21 +136,22 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     [updateSettings],
   );
 
+  const prevWhose = usePrevious(settings.whose, undefined);
   useEffect(() => {
-    if (!settings.whose) return;
+    if (settings.whose === prevWhose || !settings.whose) return;
 
     switch (settings.whose) {
       case WhoseProjects.All:
         updateSettings({ user: undefined });
         break;
       case WhoseProjects.Mine:
-        updateSettings({ user: user ? [user.username] : undefined });
+        updateSettings({ user: user ? [user.id] : undefined });
         break;
       case WhoseProjects.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.username) });
+        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
         break;
     }
-  }, [settings.whose, updateSettings, user, users]);
+  }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const saveProjectDescription = useCallback(async (newDescription: string, projectId: number) => {
     try {
@@ -177,11 +182,21 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     );
 
     const descriptionRenderer = (value: string, record: Project) => (
-      <InlineEditor
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={value}
         disabled={record.archived}
         placeholder={record.archived ? 'Archived' : 'Add description...'}
-        value={value}
-        onSave={(newDescription: string) => saveProjectDescription(newDescription, record.id)}
+        title={record.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveProjectDescription(newDesc, record.id);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 
@@ -219,7 +234,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       {
         dataIndex: 'userId',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['userId'],
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -247,7 +262,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [fetchProjects, saveProjectDescription, user, workspace?.archived]);
+  }, [fetchProjects, saveProjectDescription, user, workspace?.archived, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {

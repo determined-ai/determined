@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
+	"github.com/determined-ai/determined/proto/pkg/userv1"
 )
 
 var pAuthZ *mocks.ProjectAuthZ
@@ -317,4 +318,25 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 		err = curCase.IDToReqCall(projectID)
 		require.Equal(t, expectedErr.Error(), err.Error())
 	}
+}
+
+func TestGetProjectByActivity(t *testing.T) {
+	api, _, ctx := setupAPITest(t)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
+		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
+		EntityType:   userv1.EntityType_ENTITY_TYPE_PROJECT,
+		EntityId:     int32(projectID),
+	})
+
+	require.NoError(t, err)
+
+	resp, err := api.GetProjectsByUserActivity(ctx, &apiv1.GetProjectsByUserActivityRequest{
+		Limit: 1,
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, err)
+	require.Equal(t, 1, len(resp.Projects))
 }

@@ -48,6 +48,9 @@ message GetTensorboardsRequest {
 }
 // Response to GetTensorboardsRequest.
 message GetTensorboardsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "tensorboards" ] }
+  };
   // The list of returned tensorboards.
   repeated determined.tensorboard.v1.Tensorboard tensorboards = 1;
   // Pagination information of the full dataset.
@@ -61,6 +64,9 @@ message GetTensorboardRequest {
 }
 // Response to GetTensorboardRequest.
 message GetTensorboardResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "tensorboard", "config" ] }
+  };
   // The requested tensorboard.
   determined.tensorboard.v1.Tensorboard tensorboard = 1;
   // The config;

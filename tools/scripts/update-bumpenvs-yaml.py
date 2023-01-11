@@ -40,14 +40,10 @@ JOB_SUFFIXES = [
     "tf1-cpu",
     "tf2-cpu",
     "tf24-cpu",
-    "tf25-cpu",
-    "tf26-cpu",
     "tf27-cpu",
     "tf1-gpu",
     "tf2-gpu",
     "tf24-gpu",
-    "tf25-gpu",
-    "tf26-gpu",
     "tf27-gpu",
 ]
 
@@ -99,7 +95,7 @@ class Build:
 def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Build]:
     # Get all the recent jobs.
     print("fetching recent jobs", file=sys.stderr)
-    req = requests.get(BASE_URL, params={"limit": "50", "filter": "completed"})
+    req = requests.get(BASE_URL, params={"limit": "100", "filter": "completed"})
     req.raise_for_status()
 
     # Get all the build numbers matching this commit.

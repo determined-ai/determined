@@ -1,9 +1,8 @@
-import { Typography } from 'antd';
+import { Input, Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import InlineEditor from 'components/InlineEditor';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
@@ -38,8 +37,10 @@ import usePolling from 'shared/hooks/usePolling';
 import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound, validateDetApiEnum } from 'shared/utils/service';
+import { useUsers } from 'stores/users';
 import { Metadata, ModelVersion, ModelVersions } from 'types';
 import handleError from 'utils/error';
+import { Loadable } from 'utils/loadable';
 
 import css from './ModelDetails.module.scss';
 import settingsConfig, {
@@ -61,6 +62,10 @@ const ModelDetails: React.FC = () => {
   const [pageError, setPageError] = useState<Error>();
   const [total, setTotal] = useState(0);
   const pageRef = useRef<HTMLElement>(null);
+  const users = Loadable.match(useUsers(), {
+    Loaded: (usersPagination) => usersPagination.users,
+    NotLoaded: () => [],
+  });
 
   const {
     settings,
@@ -179,17 +184,28 @@ const ModelDetails: React.FC = () => {
 
     const actionRenderer = (_: string, record: ModelVersion) => (
       <ModelVersionActionDropdown
+        version={record}
         onDelete={() => deleteModelVersion(record)}
         onDownload={() => downloadModel(record)}
       />
     );
 
     const descriptionRenderer = (value: string, record: ModelVersion) => (
-      <InlineEditor
+      <Input
+        className={css.descriptionRenderer}
+        defaultValue={record.comment ?? ''}
         disabled={record.model.archived}
         placeholder={record.model.archived ? 'Archived' : 'Add description...'}
-        value={record.comment ?? ''}
-        onSave={(newDescription: string) => saveVersionDescription(newDescription, record.version)}
+        title={record.model.archived ? 'Archived description' : 'Edit description'}
+        onBlur={(e) => {
+          const newDesc = e.currentTarget.value;
+          saveVersionDescription(newDesc, record.version);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
+          e.currentTarget.blur();
+        }}
       />
     );
 
@@ -225,7 +241,7 @@ const ModelDetails: React.FC = () => {
         dataIndex: 'user',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         key: 'user',
-        render: userRenderer,
+        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
       },
       {
@@ -241,7 +257,7 @@ const ModelDetails: React.FC = () => {
         title: '',
       },
     ] as ColumnDef<ModelVersion>[];
-  }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription]);
+  }, [deleteModelVersion, downloadModel, saveModelVersionTags, saveVersionDescription, users]);
 
   const handleTableChange = useCallback(
     (
@@ -397,6 +413,7 @@ const ModelDetails: React.FC = () => {
     }) => (
       <ModelVersionActionDropdown
         trigger={['contextMenu']}
+        version={record}
         onDelete={() => deleteModelVersion(record)}
         onDownload={() => downloadModel(record)}
         onVisibleChange={onVisibleChange}>

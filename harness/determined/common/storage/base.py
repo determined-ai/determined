@@ -2,7 +2,12 @@ import abc
 import contextlib
 import os
 import pathlib
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Callable, Dict, Iterator, Optional, Union
+
+# Selector accepts a path relative to the checkpoint root, and returns a boolean indicating if the
+# path should be downloaded. For every path selected, all parent directories are also selected
+# (even if the selector returns False for them).
+Selector = Callable[[str], bool]
 
 
 class StorageManager(metaclass=abc.ABCMeta):
@@ -37,16 +42,7 @@ class StorageManager(metaclass=abc.ABCMeta):
         """from_config() just calls __init__() unless it is overridden in a subclass."""
         return cls(**config)
 
-    @abc.abstractmethod
-    def post_store_path(self, src: str, dst: str) -> None:
-        """
-        post_store_path is a hook that will be called after store_path(). Subclasess of
-        StorageManager should override this in order to customize the behavior of store_path().
-        """
-        pass
-
-    @contextlib.contextmanager
-    def store_path(self, dst: str) -> Iterator[pathlib.Path]:
+    def pre_store_path(self, dst: str) -> pathlib.Path:
         """
         Prepare a local directory to be written to the storage backend.
 
@@ -59,23 +55,47 @@ class StorageManager(metaclass=abc.ABCMeta):
         # create new checkpoints. Administrators wishing to control the permissions more
         # specifically should just create the storage path themselves; this will not interfere.
         old_umask = os.umask(0)
-        os.makedirs(self._base_path, exist_ok=True, mode=0o777)
-        # Restore the original umask.
-        os.umask(old_umask)
+        try:
+            os.makedirs(self._base_path, exist_ok=True, mode=0o777)
+        finally:
+            # Restore the original umask.
+            os.umask(old_umask)
 
         storage_dir = os.path.join(self._base_path, dst)
         os.makedirs(storage_dir, exist_ok=True)
 
-        yield pathlib.Path(storage_dir)
+        return pathlib.Path(storage_dir)
 
-        if not os.listdir(storage_dir):
-            raise RuntimeError("no checkpoint files were written")
+    @abc.abstractmethod
+    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+        """
+        Subclasses typically push to persistent storage if necessary, then delete the src directory,
+        if necessary.
+        """
+        pass
 
-        self.post_store_path(storage_dir, dst)
+    @contextlib.contextmanager
+    def store_path(self, dst: str) -> Iterator[pathlib.Path]:
+        """
+        Prepare a local directory to be written to the storage backend.
+        """
+
+        path = self.pre_store_path(dst)
+        yield path
+        self.post_store_path(path, dst)
+
+    @abc.abstractmethod
+    def store_path_is_direct_access(self) -> bool:
+        """
+        Direct access means sharded uploads can't detect upload conflicts.
+
+        Presently only shared_fs has direct access.
+        """
+        pass
 
     @abc.abstractmethod
     @contextlib.contextmanager
-    def restore_path(self, storage_id: str) -> Iterator[pathlib.Path]:
+    def restore_path(self, src: str, selector: Optional[Selector] = None) -> Iterator[pathlib.Path]:
         """
         restore_path should prepare a checkpoint, yield the path to the checkpoint, and do any
         necessary cleanup afterwards. Subclasess of StorageManager must implement this.
@@ -87,7 +107,17 @@ class StorageManager(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def download(self, src: str, dst: Union[str, os.PathLike]) -> None:
+    def download(
+        self,
+        src: str,
+        dst: Union[str, os.PathLike],
+        selector: Optional[Selector] = None,
+    ) -> None:
+        """
+        `selector` should be a callable accepting a string parameter, ending in an os.sep if it is a
+        directory, and should return True for files/directories that should be downloaded;
+        False otherwise.
+        """
         pass
 
     @abc.abstractmethod

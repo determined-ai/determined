@@ -237,7 +237,7 @@ const HpHeatMaps: React.FC<Props> = ({
         { signal: canceler.signal },
       ),
       (event) => {
-        if (!event || !event.trials || !Array.isArray(event.trials)) return;
+        if (!event?.trials || !Array.isArray(event.trials)) return;
 
         const hpLogScaleMap: Record<string, boolean> = {};
         const hpMetrics: Record<string, (number | null)[]> = {};

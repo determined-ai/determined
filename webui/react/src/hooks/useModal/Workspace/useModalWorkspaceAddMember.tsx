@@ -2,15 +2,15 @@ import { Form, message, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import useFeature from 'hooks/useFeature';
+import GroupAvatar from 'components/GroupAvatar';
+import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon/Icon';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
 import handleError from 'utils/error';
-import { getIdFromUserOrGroup, getName, isUser } from 'utils/user';
+import { getIdFromUserOrGroup, getName, isUser, UserNameFields } from 'utils/user';
 
 import css from './useModalWorkspaceAddMember.module.scss';
 
@@ -25,48 +25,40 @@ interface FormInputs {
   userOrGroupId: string;
 }
 
+interface SearchProp {
+  label: {
+    props: {
+      groupName?: string;
+      user?: User;
+    };
+  };
+}
+
 const useModalWorkspaceAddMember = ({
   addableUsersAndGroups,
   rolesAssignableToScope,
   onClose,
   workspaceId,
 }: Props): ModalHooks => {
-  let knownRoles = rolesAssignableToScope;
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [selectedOption, setSelectedOption] = useState<UserOrGroup>();
   const [form] = Form.useForm<FormInputs>();
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
-
-  knownRoles = useMemo(
-    () =>
-      mockWorkspaceMembers
-        ? [
-            {
-              name: 'Editor',
-              permissions: [],
-              roleId: 1,
-            },
-            {
-              name: 'Viewer',
-              permissions: [],
-              roleId: 2,
-            },
-          ]
-        : knownRoles,
-    [knownRoles, mockWorkspaceMembers],
-  );
 
   const handleFilter = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (search: string, option: any): boolean => {
-      const label = option.label as string;
+    (search: string, option?: SearchProp): boolean => {
+      if (!option) return false;
+      const label = option.label;
       const userOrGroup = addableUsersAndGroups.find((u) => {
-        if (isUser(u)) {
+        if (isUser(u) && !!label.props.user) {
           const user = u as User;
-          return user?.displayName === label || user?.username === label;
-        } else {
+          return (
+            user?.displayName === label.props.user.displayName ||
+            user?.username === label.props.user.username
+          );
+        }
+        if (!isUser(u) && !!label.props.groupName) {
           const group = u as V1Group;
-          return group.name === label;
+          return group.name === label.props.groupName;
         }
       });
       if (!userOrGroup) return false;
@@ -150,17 +142,15 @@ const useModalWorkspaceAddMember = ({
               filterOption={handleFilter}
               options={addableUsersAndGroups.map((option) => ({
                 label: isUser(option) ? (
-                  getName(option)
+                  <UserBadge compact user={option as UserNameFields} />
                 ) : (
-                  <span>
-                    {getName(option)}&nbsp;&nbsp;
-                    <Icon name="group" />
-                  </span>
+                  <GroupAvatar groupName={getName(option)} />
                 ),
                 value: (isUser(option) ? 'u_' : 'g_') + getIdFromUserOrGroup(option),
               }))}
               placeholder="Find user or group by display name or username"
               showSearch
+              size="large"
               onSelect={handleSelect}
             />
           </Form.Item>

@@ -2,9 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Button } from 'antd';
 import React from 'react';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import StoreProvider from 'contexts/Store';
 import { PostUserParams } from 'services/types';
+import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
+import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
@@ -12,6 +14,7 @@ import { UsersProvider } from 'stores/users';
 import useModalCreateUser, {
   ADMIN_LABEL,
   API_SUCCESS_MESSAGE_CREATE,
+  BUTTON_NAME,
   DISPLAY_NAME_LABEL,
   MODAL_HEADER_LABEL_CREATE,
   USER_NAME_LABEL,
@@ -33,7 +36,7 @@ const USERNAME = 'test_username1';
 const user = userEvent.setup();
 
 const Container: React.FC = () => {
-  const { contextHolder, modalOpen } = useModalCreateUser({ groups: [] });
+  const { contextHolder, modalOpen } = useModalCreateUser({});
 
   return (
     <div>
@@ -45,15 +48,17 @@ const Container: React.FC = () => {
 
 const setup = async () => {
   const view = render(
-    <StoreProvider>
+    <UIProvider>
       <UsersProvider>
         <AuthProvider>
           <UserRolesProvider>
-            <Container />
+            <HistoryRouter history={history}>
+              <Container />
+            </HistoryRouter>
           </UserRolesProvider>
         </AuthProvider>
       </UsersProvider>
-    </StoreProvider>,
+    </UIProvider>,
   );
 
   await user.click(await view.findByText(OPEN_MODAL_TEXT));
@@ -105,7 +110,7 @@ describe('useModalCreateUser', () => {
   it('should validate the create user request', async () => {
     await setup();
 
-    await user.click(screen.getByRole('button', { name: 'Create User' }));
+    await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
 
     await waitFor(() => {
       expect(screen.getAllByRole('alert')).toHaveLength(1);
@@ -116,7 +121,7 @@ describe('useModalCreateUser', () => {
     await setup();
 
     await user.type(screen.getByLabelText(USER_NAME_LABEL), USERNAME);
-    await user.click(screen.getByRole('button', { name: 'Create User' }));
+    await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
 
     // Check for successful toast message.
     await waitFor(() => {

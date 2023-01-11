@@ -356,12 +356,6 @@ export const ioToExperimentConfig = (
           type: (io.checkpoint_storage.type as types.CheckpointStorageType) || undefined,
         }
       : undefined,
-    dataLayer: io.data_layer
-      ? {
-          containerStoragePath: io.data_layer.container_storage_path || undefined,
-          type: io.data_layer.type,
-        }
-      : undefined,
     description: io.description || undefined,
     hyperparameters: ioToHyperparametereters(io.hyperparameters),
     labels: io.labels || undefined,
@@ -373,6 +367,7 @@ export const ioToExperimentConfig = (
       ...io.searcher,
       name: io.searcher.name as types.ExperimentSearcherName,
       smallerIsBetter: io.searcher.smaller_is_better,
+      sourceTrialId: io.searcher.source_trial_id ?? undefined,
     },
   };
   if (io.resources.max_slots != null) config.resources.maxSlots = io.resources.max_slots;
@@ -750,6 +745,7 @@ export const mapV1DeviceType = (data: Sdk.Determineddevicev1Type): types.Resourc
 export const mapV1Workspace = (data: Sdk.V1Workspace): types.Workspace => {
   return {
     ...data,
+    pinnedAt: new Date(data.pinnedAt || 0),
     state: mapWorkspaceState(data.state),
   };
 };
@@ -771,18 +767,8 @@ export const mapWorkspaceState = (state: Sdk.V1WorkspaceState): types.WorkspaceS
 
 export const mapV1Project = (data: Sdk.V1Project): types.Project => {
   return {
-    archived: data.archived,
-    description: data.description,
-    id: data.id,
-    immutable: data.immutable,
-    lastExperimentStartedAt: data.lastExperimentStartedAt,
-    name: data.name,
-    notes: data.notes,
-    numActiveExperiments: data.numActiveExperiments,
-    numExperiments: data.numExperiments,
+    ...data,
     state: mapWorkspaceState(data.state),
-    userId: data.userId,
-    workspaceId: data.workspaceId,
     workspaceName: data.workspaceName ?? '',
   };
 };

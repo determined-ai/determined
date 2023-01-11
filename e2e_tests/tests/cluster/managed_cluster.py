@@ -1,3 +1,4 @@
+import abc
 import json
 import os
 import subprocess
@@ -13,6 +14,29 @@ from tests import config as conf
 from .test_users import ADMIN_CREDENTIALS, logged_in_user
 from .utils import get_master_port
 
+
+class Cluster(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def __init__(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def kill_master(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def restart_master(self) -> None:
+        pass
+
+    @abc.abstractmethod
+    def restart_agent(self, wait_for_amnesia: bool = True, wait_for_agent: bool = True) -> None:
+        pass
+
+    @abc.abstractmethod
+    def ensure_agent_ok(self) -> None:
+        pass
+
+
 DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devcluster")
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
@@ -27,7 +51,7 @@ def get_agent_data(master_url: str) -> List[Dict[str, Any]]:
     return agent_data
 
 
-class ManagedCluster:
+class ManagedCluster(Cluster):
     # This utility wrapper uses double agent yaml configurations,
     # but provides helpers to run/kill a single agent setup.
 

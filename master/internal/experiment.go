@@ -549,7 +549,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	case *apiv1.KillExperimentRequest:
 		switch {
-		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
+		case e.State == model.StoppingKilledState || model.TerminalStates[e.State]:
 			ctx.Respond(&apiv1.KillExperimentResponse{})
 		default:
 			switch ok := e.updateState(ctx, model.StateWithReason{

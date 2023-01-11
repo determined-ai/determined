@@ -197,74 +197,6 @@ def _parse_length_or_int(value: Any, prevalidated: bool) -> Any:
 schemas.register_custom_parser(Union[int, LengthV0], _parse_length_or_int)
 
 
-class DataLayerConfigV0(schemas.UnionBase):
-    _id = "http://determined.ai/schemas/expconf/v0/data-layer.json"
-    _union_key = "type"
-
-
-@DataLayerConfigV0.member("shared_fs")
-class SharedFSDataLayerConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/data-layer-shared-fs.json"
-    container_storage_path: Optional[str] = None
-    host_storage_path: Optional[str] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        container_storage_path: Optional[str] = None,
-        host_storage_path: Optional[str] = None,
-    ) -> None:
-        pass
-
-
-@DataLayerConfigV0.member("s3")
-class S3DataLayerConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/data-layer-s3.json"
-    bucket: str
-    bucket_directory_path: str
-    local_cache_container_path: Optional[str] = None
-    local_cache_host_path: Optional[str] = None
-    access_key: Optional[str] = None
-    secret_key: Optional[str] = None
-    endpoint_url: Optional[str] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        bucket: str,
-        bucket_directory_path: str,
-        local_cache_container_path: Optional[str] = None,
-        local_cache_host_path: Optional[str] = None,
-        access_key: Optional[str] = None,
-        secret_key: Optional[str] = None,
-        endpoint_url: Optional[str] = None,
-    ) -> None:
-        pass
-
-
-@DataLayerConfigV0.member("gcs")
-class GCSDataLayerConfigV0(schemas.SchemaBase):
-    _id = "http://determined.ai/schemas/expconf/v0/data-layer-gcs.json"
-    bucket: str
-    bucket_directory_path: str
-    local_cache_container_path: Optional[str] = None
-    local_cache_host_path: Optional[str] = None
-
-    @schemas.auto_init
-    def __init__(
-        self,
-        bucket: str,
-        bucket_directory_path: str,
-        local_cache_container_path: Optional[str] = None,
-        local_cache_host_path: Optional[str] = None,
-    ) -> None:
-        pass
-
-
-DataLayerConfigV0_Type = Union[SharedFSDataLayerConfigV0, S3DataLayerConfigV0, GCSDataLayerConfigV0]
-DataLayerConfigV0.finalize(DataLayerConfigV0_Type)
-
-
 class EnvironmentImageV0(schemas.SchemaBase):
     _id = "http://determined.ai/schemas/expconf/v0/environment-image.json"
     cpu: Optional[str] = None
@@ -293,12 +225,12 @@ class EnvironmentImageV0(schemas.SchemaBase):
 
     def runtime_defaults(self) -> None:
         if self.cpu is None:
-            self.cpu = "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730"
+            self.cpu = "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0"
         if self.rocm is None:
-            self.rocm = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-096d730"
+            self.rocm = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0"
 
         if self.cuda is None:
-            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-096d730"
+            self.cuda = "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0"
 
 
 class EnvironmentVariablesV0(schemas.SchemaBase):
@@ -926,7 +858,6 @@ class ExperimentConfigV0(schemas.SchemaBase):
     bind_mounts: Optional[List[BindMountV0]] = None
     checkpoint_policy: Optional[str] = None
     checkpoint_storage: Optional[CheckpointStorageConfigV0_Type] = None
-    data_layer: Optional[DataLayerConfigV0_Type] = None
     data: Optional[Dict[str, Any]] = None
     debug: Optional[bool] = None
     description: Optional[str] = None
@@ -959,7 +890,6 @@ class ExperimentConfigV0(schemas.SchemaBase):
         bind_mounts: Optional[List[BindMountV0]] = None,
         checkpoint_policy: Optional[str] = None,
         checkpoint_storage: Optional[CheckpointStorageConfigV0_Type] = None,
-        data_layer: Optional[DataLayerConfigV0_Type] = None,
         data: Optional[Dict[str, Any]] = None,
         debug: Optional[bool] = None,
         description: Optional[str] = None,

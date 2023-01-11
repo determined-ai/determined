@@ -142,6 +142,8 @@ def create_deepspeed_env_file() -> None:
         "DET_CHIEF_IP",
         "DET_MANUAL_INIT_DISTRIBUTED",
         "DET_DEEPSPEED_HOSTFILE_PATH",
+        "DET_MASTER_CERT_FILE",
+        "DET_MASTER_CERT_NAME",
     ]
     with open(DEEPSPEED_ENVIRONMENT_NAME, "w") as f:
         environ = os.environ.copy()
@@ -199,7 +201,7 @@ def main(script: List[str]) -> int:
     resources_id = os.environ.get("DET_RESOURCES_ID")
     assert resources_id is not None, "Unable to run with DET_RESOURCES_ID unset"
 
-    # TODO: refactor websocket, data_layer, and profiling to to not use the cli_cert.
+    # TODO: refactor websocket and profiling to to not use the cli_cert.
     cert = certs.default_load(info.master_url)
     certs.cli_cert = cert
 

@@ -8,7 +8,6 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
-import StoreProvider from 'contexts/Store';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
@@ -25,7 +24,7 @@ import usePolling from 'shared/hooks/usePolling';
 import { StoreContext } from 'stores';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
-import { useFetchUsers } from 'stores/users';
+import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
 
@@ -38,11 +37,12 @@ const AppView: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
+  const loadableUser = useCurrentUser();
   const infoLoadable = useDeterminedInfo();
   const info = Loadable.getOrElse(initInfo, infoLoadable);
   const [canceler] = useState(new AbortController());
   const { updateTelemetry } = useTelemetry();
-  const checkAuth = useAuthCheck(canceler);
+  const checkAuth = useAuthCheck();
 
   const isServerReachable = useMemo(() => {
     return Loadable.match(infoLoadable, {
@@ -53,6 +53,7 @@ const AppView: React.FC = () => {
 
   const fetchInfo = useEnsureInfoFetched(canceler);
   const fetchUsers = useFetchUsers(canceler);
+  const fetchCurrentUser = useEnsureCurrentUserFetched(canceler);
 
   useEffect(() => {
     if (isServerReachable) checkAuth();
@@ -69,8 +70,9 @@ const AppView: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchUsers();
+      fetchCurrentUser();
     }
-  }, [isAuthenticated, fetchUsers]);
+  }, [isAuthenticated, fetchCurrentUser, fetchUsers]);
 
   useEffect(() => {
     /*
@@ -107,8 +109,8 @@ const AppView: React.FC = () => {
 
   // Detect telemetry settings changes and update telemetry library.
   useEffect(() => {
-    updateTelemetry(auth, info);
-  }, [auth, info, updateTelemetry]);
+    updateTelemetry(auth, loadableUser, info);
+  }, [auth, loadableUser, info, updateTelemetry]);
 
   // Abort cancel signal when app unmounts.
   useEffect(() => {
@@ -148,13 +150,11 @@ const AppView: React.FC = () => {
 const App: React.FC = () => {
   return (
     <HelmetProvider>
-      <StoreProvider>
-        <StoreContext>
-          <DndProvider backend={HTML5Backend}>
-            <AppView />
-          </DndProvider>
-        </StoreContext>
-      </StoreProvider>
+      <StoreContext>
+        <DndProvider backend={HTML5Backend}>
+          <AppView />
+        </DndProvider>
+      </StoreContext>
     </HelmetProvider>
   );
 };

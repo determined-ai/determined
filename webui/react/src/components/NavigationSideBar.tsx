@@ -1,4 +1,4 @@
-import { Button, Menu, Tooltip, Typography } from 'antd';
+import { Button, Menu, MenuProps, Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { CSSTransition } from 'react-transition-group';
 
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
+import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
@@ -16,13 +17,14 @@ import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
-import Icon from 'shared/components/Icon/Icon';
+import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useResourcePools } from 'stores/resourcePools';
+import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -34,6 +36,7 @@ interface ItemProps extends LinkProps {
   action?: React.ReactNode;
   badge?: number;
   icon: string | React.ReactNode;
+  iconSize?: IconSize;
   label: string;
   labelRender?: React.ReactNode;
   status?: string;
@@ -83,7 +86,7 @@ export const NavigationItem: React.FC<ItemProps> = ({
       <Link className={classes.join(' ')} path={path} {...props}>
         {typeof props.icon === 'string' ? (
           <div className={css.icon}>
-            <Icon name={props.icon} size="large" />
+            <Icon name={props.icon} size={props.iconSize ?? 'large'} />
           </div>
         ) : (
           <div className={css.icon}>{props.icon}</div>
@@ -119,8 +122,9 @@ const NavigationSideBar: React.FC = () => {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
   });
-  const authUser = Loadable.match(loadableAuth.auth, {
-    Loaded: (auth) => auth.user,
+  const loadableCurrentUser = useCurrentUser();
+  const currentUser = Loadable.match(loadableCurrentUser, {
+    Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
   const loadableResourcePools = useResourcePools();
@@ -196,6 +200,25 @@ const NavigationSideBar: React.FC = () => {
   }, [openWorkspaceCreateModal]);
 
   const pinnedWorkspaces = useWorkspaces({ pinned: true });
+  const { canAdministrateUsers } = usePermissions();
+
+  const menuItems: MenuProps['items'] = useMemo(() => {
+    const items = [
+      {
+        key: 'settings',
+        label: <Link path={paths.settings('account')}>Settings</Link>,
+      },
+      { key: 'theme-toggle', label: <ThemeToggle /> },
+      { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+    ];
+    if (canAdministrateUsers) {
+      items.unshift({
+        key: 'admin',
+        label: <Link path={paths.admin()}>Admin</Link>,
+      });
+    }
+    return items;
+  }, [canAdministrateUsers]);
 
   if (!showNavigation) return null;
 
@@ -219,22 +242,12 @@ const NavigationSideBar: React.FC = () => {
       <nav className={css.base} ref={nodeRef}>
         <header>
           <Dropdown
-            content={
-              <Menu
-                items={[
-                  { key: 'theme-toggle', label: <ThemeToggle /> },
-                  {
-                    key: 'settings',
-                    label: <Link path={paths.settings('account')}>Settings</Link>,
-                  },
-                  { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
-                ]}
-                selectable={false}
-              />
-            }
+            content={<Menu items={menuItems} selectable={false} />}
             offset={settings.navbarCollapsed ? { x: -8, y: 16 } : { x: 16, y: -8 }}
             placement={settings.navbarCollapsed ? Placement.RightTop : Placement.BottomLeft}>
-            <AvatarCard className={css.user} darkLight={ui.darkLight} user={authUser} />
+            {currentUser ? (
+              <AvatarCard className={css.user} darkLight={ui.darkLight} user={currentUser} />
+            ) : null}
           </Dropdown>
         </header>
         <main>
@@ -269,11 +282,6 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
-                  {canCreateWorkspace ? (
-                    <Button type="text" onClick={handleCreateWorkspace}>
-                      <Icon name="add-small" size="tiny" />
-                    </Button>
-                  ) : null}
                 </div>
               }
               icon="workspaces"
@@ -283,14 +291,14 @@ const NavigationSideBar: React.FC = () => {
               tooltip={settings.navbarCollapsed}
             />
             {Loadable.match(pinnedWorkspaces, {
-              Loaded: (workspaces) =>
-                workspaces.length === 0 ? (
-                  <p className={css.noWorkspaces}>No pinned workspaces</p>
-                ) : (
-                  <ul className={css.pinnedWorkspaces} role="list">
-                    {workspaces.map((workspace) => (
+              Loaded: (workspaces) => (
+                <ul className={css.pinnedWorkspaces} role="list">
+                  {workspaces
+                    .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
+                    .map((workspace) => (
                       <WorkspaceActionDropdown
                         key={workspace.id}
+                        returnIndexOnDelete={false}
                         trigger={['contextMenu']}
                         workspace={workspace}>
                         <li>
@@ -307,8 +315,26 @@ const NavigationSideBar: React.FC = () => {
                         </li>
                       </WorkspaceActionDropdown>
                     ))}
-                  </ul>
-                ),
+                  {canCreateWorkspace ? (
+                    <li>
+                      <NavigationItem
+                        icon="add-small"
+                        iconSize="tiny"
+                        label="New Workspace"
+                        labelRender={
+                          <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                            New Workspace
+                          </Typography.Paragraph>
+                        }
+                        tooltip={settings.navbarCollapsed}
+                        onClick={handleCreateWorkspace}
+                      />
+                    </li>
+                  ) : workspaces.length === 0 ? (
+                    <div className={css.noWorkspaces}>No pinned workspaces</div>
+                  ) : null}
+                </ul>
+              ),
               NotLoaded: () => <Spinner />,
             })}
           </section>

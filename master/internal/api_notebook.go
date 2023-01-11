@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
@@ -189,6 +191,10 @@ func (a *apiServer) LaunchNotebook(
 	spec.WatchRunnerIdleTimeout = true
 
 	// Postprocess the spec.
+	if spec.Config.IdleTimeout == nil && a.m.config.NotebookTimeout != nil {
+		spec.Config.IdleTimeout = ptrs.Ptr(model.Duration(
+			time.Second * time.Duration(*a.m.config.NotebookTimeout)))
+	}
 	if spec.Config.Description == "" {
 		petName := petname.Generate(expconf.TaskNameGeneratorWords, expconf.TaskNameGeneratorSep)
 		spec.Config.Description = fmt.Sprintf("JupyterLab (%s)", petName)

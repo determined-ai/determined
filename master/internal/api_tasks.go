@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -176,6 +177,9 @@ func (a *apiServer) AllocationReady(
 	if err != nil {
 		return nil, err
 	}
+	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
+		return nil, err
+	}
 
 	if err := a.ask(resp.Address(), task.AllocationReady{}, nil); err != nil {
 		return nil, err
@@ -195,6 +199,9 @@ func (a *apiServer) AllocationWaiting(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, resp); err != nil {
 		return nil, err
 	}
 
@@ -219,6 +226,9 @@ func (a *apiServer) AllocationAllGather(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -263,6 +273,9 @@ func (a *apiServer) PostAllocationProxyAddress(
 		sproto.GetAllocationHandler{ID: model.AllocationID(req.AllocationId)},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if err := a.waitForAllocationToBeRestored(ctx, handler); err != nil {
 		return nil, err
 	}
 
@@ -431,10 +444,24 @@ func constructTaskLogsFilters(req *apiv1.TaskLogsRequest) ([]api.Filter, error) 
 		}
 	}
 
+	// Allow a value in a list of numbers, or a NULL represented as -1.
+	addNullInclusiveFilter := func(field string, values []int32) {
+		if values == nil || !slices.Contains(values, -1) {
+			addInFilter(field, values, len(values))
+			return
+		}
+		filters = append(filters, api.Filter{
+			Field:     field,
+			Operation: api.FilterOperationInOrNull,
+			Values:    values,
+		})
+	}
+
+	addNullInclusiveFilter("rank_id", req.RankIds)
+
 	addInFilter("allocation_id", req.AllocationIds, len(req.AllocationIds))
 	addInFilter("agent_id", req.AgentIds, len(req.AgentIds))
 	addInFilter("container_id", req.ContainerIds, len(req.ContainerIds))
-	addInFilter("rank_id", req.RankIds, len(req.RankIds))
 	addInFilter("stdtype", req.Stdtypes, len(req.Stdtypes))
 	addInFilter("source", req.Sources, len(req.Sources))
 	addInFilter("level", func() interface{} {

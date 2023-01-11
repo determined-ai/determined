@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest.mock
 import uuid
 from pathlib import Path
@@ -9,6 +10,7 @@ import pytest
 from determined.common import check, storage
 from determined.common.storage import shared
 from determined.tensorboard.fetchers.shared import SharedFSFetcher
+from tests import parallel
 from tests.storage import util
 
 
@@ -49,11 +51,11 @@ def test_full_storage_path() -> None:
         shared._full_storage_path("/host_path", storage_path="../test")
 
 
-def test_checkpoint_lifecycle(manager: storage.SharedFSStorageManager) -> None:
+def test_checkpoint_lifecycle(caplog: Any, manager: storage.SharedFSStorageManager) -> None:
     def post_delete_cb(storage_id: str) -> None:
         assert storage_id not in os.listdir(manager._base_path)
 
-    util.run_storage_lifecycle_test(manager, post_delete_cb)
+    util.run_storage_lifecycle_test(manager, post_delete_cb, caplog)
 
 
 def test_validate(manager: storage.SharedFSStorageManager) -> None:
@@ -101,3 +103,28 @@ def test_tensorboard_fetcher_shared(require_secrets: bool, tmp_path: Path) -> No
             os.remove(full_path)
 
     util.run_tensorboard_fetcher_test(local_sync_dir, fetcher, storage_relpath, put_files, rm_files)
+
+
+def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None:
+    shutil.rmtree(os.path.join(storage_manager._base_path, storage_id))
+    assert storage_id not in os.listdir(storage_manager._base_path)
+
+
+def test_checkpoint_sharded_upload_download(
+    tmp_path: Path, manager: storage.SharedFSStorageManager
+) -> None:
+
+    with parallel.Execution(2) as pex:
+
+        @pex.run
+        def do_test() -> None:
+            util.run_storage_upload_download_sharded_test(pex, manager, tmp_path, clean_up)
+
+
+def test_checkpoint_sharded_store_restore(manager: storage.SharedFSStorageManager) -> None:
+
+    with parallel.Execution(2) as pex:
+
+        @pex.run
+        def do_test() -> None:
+            util.run_storage_store_restore_sharded_test(pex, manager, clean_up)

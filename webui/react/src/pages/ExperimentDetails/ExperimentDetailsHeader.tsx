@@ -458,6 +458,24 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 onSave={handleDescriptionUpdate}
               />
             </div>
+            {experiment.forkedFrom && experiment.config.searcher.sourceTrialId && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Continued from:</span>
+                <Link
+                  className={css.link}
+                  path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
+                  Trial {experiment.config.searcher.sourceTrialId}
+                </Link>
+              </div>
+            )}
+            {experiment.forkedFrom && !experiment.config.searcher.sourceTrialId && (
+              <div className={css.foldableItem}>
+                <span className={css.foldableItemLabel}>Forked from:</span>
+                <Link className={css.link} path={paths.experimentDetails(experiment.forkedFrom)}>
+                  Experiment {experiment.forkedFrom}
+                </Link>
+              </div>
+            )}
             <div className={css.foldableItem}>
               <span className={css.foldableItemLabel}>Started:</span>
               <TimeAgo datetime={experiment.startTime} long />

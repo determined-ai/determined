@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/command.proto";
@@ -308,7 +309,18 @@ message CreateExperimentRequest {
   bool activate = 5;
   // Project id to contain the experiment.
   int32 project_id = 6;
+  // Template to use for the experiment.
+  optional string template = 7;
+  // Git remote at submission time.
+  optional string git_remote = 8;
+  // Git commit at submission time.
+  optional string git_commit = 9;
+  // Git committer at submission time.
+  optional string git_committer = 10;
+  // Git commit date at submission time.
+  google.protobuf.Timestamp git_commit_date = 11;
 }
+
 // Response to CreateExperimentRequest.
 message CreateExperimentResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

@@ -92,6 +92,14 @@ Some constraints are due to differences in behavior between Docker and Singulari
    | ``environment.registry_auth.email``  | No equivalent setting in Singularity.                |
    +--------------------------------------+------------------------------------------------------+
 
+**************************
+ Singularity Known Issues
+**************************
+
+   Launching a PBS jobs with an experiment configuration which includes an embedded double quote
+   character (") may cause the job to fail with the json.decoder.JSONDecodeError unless you have
+   Singularity 3.10 or greater or Apptainer 1.1 or greater.
+
 *********************
  PodMan Known Issues
 *********************
@@ -170,6 +178,42 @@ Some constraints are due to differences in behavior between Docker and Singulari
    -  Enroot does not provide a mechanism for sharing containers. Each user must create any
       containers needed by their Determined experiments prior to creating the experiment.
 
+********************
+ Slurm Known Issues
+********************
+
+   -  A Determined experiment remains ``QUEUEUED`` for an extended period of time:
+
+      Inspect the details of your queued jobs using the Slurm ``scontrol show jobs`` command. If the
+      Slurm job is ``PENDING`` review the ``Reason`` code provided. See `JOB REASON CODES
+      <https://slurm.schedmd.com/squeue.html#SECTION_JOB-REASON-CODES>`__. Some common reasons are:
+
+      -  ``Resources``: Expected when resources are in use by other jobs. Otherwise, verify you have
+         not requested more resources (gpus, cpus, nodes, memory) than are available in your
+         cluster.
+
+      -  ``PartitionNodeLimit``: Ensure that the job is not requesting more nodes than ``MaxNodes``
+         of the partition.
+
+         Ensure that the ``MaxNodes`` setting for the partition is at least as high as the number of
+         GPUs in the partition. The ``MaxNodes`` value for a partition can be viewed in the
+         ``JOBS_SIZE`` column of the command:
+
+            .. code:: bash
+
+               sinfo -O Partition,Size,Gres,OverSubscribe,NodeList,StateComplete,Reason
+               PARTITION  JOB_SIZE    GRES         OVERSUBSCRIBE NODELIST STATECOMPLETE REASON
+               defq*      1-infinite  gpu:tesla:4  NO            node002  idle          none
+
+         Until scheduled, the job's ``NumNodes`` is shown as the range 1-``slots_per_trial``. Ensure
+         the ``slots_per_trial`` shown is not larger than the value shown in the ``JOB_SIZE`` column
+         for the partition.
+
+         A second potential cause of ``PartitionNodeLimit`` is submitting CPU experiments (or when
+         the Determined cluster is configured with ``gres_supported: false`` ), without specifying
+         ``slurm.slots_per_node`` to enable multiple CPUs to be used on each node. Without
+         ``slurm.slots_per_node`` the job will request ``slots_per_trial`` nodes.
+
 ***********************
  AMD/ROCm Known Issues
 ***********************
@@ -215,9 +259,9 @@ the GPUs used for the experiment to be evenly distributed among the compute node
  Additional Known issues
 *************************
 
--  The Determined master may fail to show Slurm cluster information and report ``Failed to
-   communicate with launcher due to error:`` in the ``Master Logs`` tab of the Determined UI. If so,
-   verify the following:
+-  The Determined master may fail to show HPC cluster information and report ``Failed to communicate
+   with launcher due to error:`` in the ``Master Logs`` tab of the Determined UI. If so, verify the
+   following:
 
    #. Ensure that the launcher service is up and running.
 

@@ -37,17 +37,21 @@ const ModelHeader: React.FC<Props> = ({
   onSwitchArchive,
   onUpdateTags,
 }: Props) => {
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
   const { canDeleteModel } = usePermissions();
   const { contextHolder, modalOpen } = useModalModelDelete();
 
   const infoRows: InfoRow[] = useMemo(() => {
+    const user = users.find((user) => user.id === model.userId);
     return [
       {
         content: (
           <Space>
-            <Avatar userId={model.userId} />
-            {`${getDisplayName(users.find((user) => user.id === model.userId))} on
+            <Avatar user={user} />
+            {`${getDisplayName(user)} on
           ${formatDatetime(model.creationTime, { format: 'MMM D, YYYY' })}`}
           </Space>
         ),

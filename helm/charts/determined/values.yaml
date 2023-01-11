@@ -205,10 +205,14 @@ telemetry:
 # clusterName: Dev
 
 ## Specifies the duration in seconds before idle
-# TensorBoard instances are automatically terminated.
-# A TensorBoard instance is considered to be idle if
-# it does not receive any HTTP traffic. The default timeout is 300 seconds (5 minutes).
+## TensorBoard instances are automatically terminated.
+## A TensorBoard instance is considered to be idle if
+## it does not receive any HTTP traffic. The default timeout is 300 seconds (5 minutes).
 # tensorboardTimeout: 300
+
+## Specifies the duration in seconds before idle notebook instances are automatically terminated.
+## This behavior is disabled by default.
+# notebookTimeout: 1800
 
 # defaultPassword sets the password for the admin and determined user accounts.
 # defaultPassword:
@@ -246,8 +250,16 @@ telemetry:
 ## scheduling with preemption
 # defaultScheduler: preemption
 
+# Experimental feature flag to enable support for reattaching resources if master goes down.
+# _reattachResources: true
+
 ## Configure settings about how Determined launches the Fluent Bit sidecar.
 # fluent:
 #   image: fluent/fluent-bit:1.6
 #   uid: 0
 #   gid: 0
+
+## Configure the resource pools in the Determined cluster.
+# resourcePools: null
+# defaultAuxResourcePool: default
+# defaultComputeResourcePool: default

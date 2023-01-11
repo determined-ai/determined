@@ -182,11 +182,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-096d730
+            - run: docker pull determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-24586f0
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-096d730
+            - run: docker pull determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0
 
   login-docker:
     parameters:
@@ -479,9 +479,9 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             <<parameters.extra-pytest-flags>> \
             $(< /tmp/tests-to-run)
-      #- upload-test-job:
-      #    only_on_branch: master
-      #    test_results_path: <<parameters.junit-path>>
+      - upload-test-job:
+          only_on_branch: master
+          test_results_path: <<parameters.junit-path>>
 
   run-det-deploy-tests:
     parameters:
@@ -539,6 +539,9 @@ commands:
       reattach-enabled:
         type: boolean
         default: false
+      deployment-type:
+        type: string
+        default: simple
     steps:
       - run:
           name: Initialize extra arguments
@@ -568,7 +571,7 @@ commands:
           steps:
             - run:
                 name: set reattach-enabled
-                command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents >> /tmp/det-deploy-extra-args
+                command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents --notebook-timeout 1800 >> /tmp/det-deploy-extra-args
       - run:
           name: Deploy AWS cluster
           command: |
@@ -583,6 +586,7 @@ commands:
               --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
               --max-dynamic-agents <<parameters.max-dynamic-agents>> \
               --keypair <<parameters.keypair>> \
+              --deployment-type <<parameters.deployment-type>> \
               --yes
 
   terminate-aws-cluster:
@@ -619,6 +623,9 @@ commands:
         type: string
       master-cert-name:
         type: string
+      deployment-type:
+        type: string
+        default: simple
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -633,6 +640,7 @@ commands:
           master-cert-name: <<parameters.master-cert-name>>
           log-group-prefix: determined-ci
           retain-log-group: true
+          deployment-type: <<parameters.deployment-type>>
       - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
           master-tls-cert: <<parameters.master-tls-cert>>
@@ -696,6 +704,9 @@ commands:
         type: env_var_name
       environment-image:
         type: string
+      accel-node-taints:
+        type: string
+        default: ""
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -735,7 +746,7 @@ commands:
           steps:
             - run:
                 command: |
-                  echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>"' >> "$BASH_ENV"
+                  echo 'export HELM_VALUES="${HELM_VALUES},slotType=<<parameters.slot-type>>,slotResourceRequests.cpu=<<parameters.slot-resource-requests-cpu>>,_reattachResources=true,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.gpuPodSpec.spec.tolerations[0].effect=NoSchedule,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].key=accel,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].operator=Equal,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].value=truth,taskContainerDefaults.cpuPodSpec.spec.tolerations[0].effect=NoSchedule"' >> "$BASH_ENV"
                 name: CPU setup helm overrides
       - when:
           condition: <<parameters.environment-image>>
@@ -758,13 +769,13 @@ commands:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
-                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
                 name: Create GPU node pool
       - unless:
           condition: <<parameters.gpus-per-machine>>
           steps:
             - run:
-                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform
+                command: gcloud container node-pools create accel --cluster ${CLUSTER_ID} --region <<parameters.region>> --num-nodes <<parameters.num-machines>> --machine-type=<<parameters.machine-type>> --scopes cloud-platform --node-taints=<<parameters.accel-node-taints>>
                 name: Create CPU node pool
 
   generate-tls-cert:
@@ -785,8 +796,6 @@ commands:
       - run: |
           MASTER_HOST=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> DeterminedAddress)
           echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
-
-      - run: |
           if [ -n "<<parameters.master-tls-cert>>" ] && [ -n "<<parameters.master-tls-key>>" ]; then
             echo "export MASTER_PORT=8443" >> $BASH_ENV
             echo "export MASTER_SCHEME=https" >> $BASH_ENV
@@ -1026,7 +1035,7 @@ jobs:
       - image: cimg/go:1.18
         environment:
           GO111MODULE: "on"
-    resource_class: <<pipeline.parameters.master-build-resource-class>>
+    resource_class: xlarge
     steps:
       - checkout
       - attach_workspace:
@@ -1055,10 +1064,9 @@ jobs:
                 make -C model_hub build-docker-dev
                 make -C model_hub publish-docker-dev
             fi
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
-          path: master/dist/
-      - store_artifacts:
-          path: agent/dist/
+          path: /tmp/pkgs
 
   package-and-push-system-rc:
     docker:
@@ -1085,10 +1093,9 @@ jobs:
       - run: make -C agent publish
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
-          path: master/dist/
-      - store_artifacts:
-          path: agent/dist/
+          path: /tmp/pkgs
 
   package-and-push-system-release:
     docker:
@@ -1114,10 +1121,9 @@ jobs:
       - run: make -C agent release
       - run: make -C model_hub build-docker
       - run: make -C model_hub publish-docker
+      - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
-          path: master/dist/
-      - store_artifacts:
-          path: agent/dist/
+          path: /tmp/pkgs
 
   publish-helm:
     docker:
@@ -1597,9 +1603,9 @@ jobs:
           extra-requirements-file: "examples/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: pytest -vv -s --junit-xml="/tmp/test-results/examples.xml" --durations=0 examples/tests
-      #- upload-test-job:
-      #    only_on_branch: master
-      #    test_results_path: /tmp/test-results/examples.xml
+      - upload-test-job:
+          only_on_branch: master
+          test_results_path: /tmp/test-results/examples.xml
 
   test-cli:
     parameters:
@@ -1887,8 +1893,11 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.4
+        default: determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-0.19.10
         type: string
+      accel-node-taints:
+        type: string
+        default: ""
     environment:
       DET_TEST_GPU_ENABLED: <<parameters.environment-gpu-enabled>>
     docker:
@@ -1918,6 +1927,7 @@ jobs:
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
           environment-image: <<parameters.environment-image>>
+          accel-node-taints: <<parameters.accel-node-taints>>
       - set-google-application-credentials
       - when:
           condition: <<parameters.environment-image>>
@@ -2007,6 +2017,80 @@ jobs:
       - run-det-deploy-tests:
           mark: <<parameters.mark>>
           det-version: <<parameters.det-version>>
+
+  test-aws-fs:
+    parameters:
+      cluster-id-prefix:
+        type: string
+      deployment-type:
+        type: string
+      compute-agent-instance-type:
+        type: string
+        default: p2.xlarge
+      aux-agent-instance-type:
+        type: string
+        default: m5.large
+      max-dynamic-agents:
+        type: integer
+        default: 1
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    steps:
+      - checkout
+      - skip-if-docs-only
+      - skip-if-webui-only
+      - set-slack-user-id
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: <<pipeline.parameters.docker-image>>
+      - setup-aws-cluster:
+          cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          det-version: ${CIRCLE_SHA1}
+          aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
+          compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
+          max-dynamic-agents: <<parameters.max-dynamic-agents>>
+          master-tls-cert: ${MASTER_TLS_CERT}
+          master-tls-key: ${MASTER_TLS_KEY}
+          master-cert-name: ${MASTER_CERT_NAME}
+          deployment-type: <<parameters.deployment-type>>
+      - run:
+          name: Set DET_MASTER for further action.
+          command: |
+            echo "export DET_MASTER=${MASTER_SCHEME:-http}://${MASTER_HOST}:${MASTER_PORT:-8080}" >> "$BASH_ENV"
+      - when:
+          condition:
+            equal: [<<parameters.deployment-type>>, "fsx"]
+          steps:
+            - run:
+                name: Test FSx/Lustre
+                command: |
+                  det cmd run --config resources.slots=1 'mount | grep lustre && echo MARKER' | grep MARKER
+      - when:
+          condition:
+            equal: [<<parameters.deployment-type>>, "efs"]
+          steps:
+            - run:
+                name: Test EFS
+                command: |
+                  det cmd run --config resources.slots=1 'mount | grep efs && echo MARKER' | grep MARKER
+      - locate-cloudwatch-logs:
+          cluster-id: ${CLUSTER_ID}
+      - terminate-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+      - slack/status:
+          fail_only: True
+          only_for_branches: master
+          failure_message: ':thisisfine: AWS FS \`<<parameters.deployment-type>>\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<parameters.slack-channel>>
 
 workflows:
   lint:
@@ -2298,7 +2382,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
@@ -2318,7 +2402,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
@@ -2339,6 +2423,27 @@ workflows:
               environment-gpu-enabled: ["0"]
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach
+          context: gcp
+          filters:
+            branches:
+              only: master
+          requires:
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
 
       - test-stress:
           name: test-stress
@@ -2476,7 +2581,7 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       - test-e2e-gke:
           name: test-e2e-gke-parallel-tfonly
@@ -2495,7 +2600,7 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.4
+                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       # K8s CPU tests
       - request-k8-tests-cpu:
@@ -2520,6 +2625,26 @@ workflows:
               environment-gpu-enabled: ["0"]
               slot-type: ["cpu"]
               slot-resource-requests-cpu: [7]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-k8s-reattach
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests-cpu
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-k8s"]
+              mark: ["e2e_k8s"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-8"]
+              gpus-per-machine: [0]
+              environment-gpu-enabled: ["0"]
+              slot-type: ["cpu"]
+              slot-resource-requests-cpu: [7]
+              accel-node-taints: ["accel=truth:NoSchedule"]
 
       # Nightly distributed tests
       - request-gpu-distributed-nightly:
@@ -2653,6 +2778,33 @@ workflows:
               slack-mentions: ["${SLACK_USER_ID}"]
               max-dynamic-agents: [2]
 
+      # Request AWS FS tests
+      - request-aws-fs-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-aws-fs:
+          name: test-aws-fs-fsx
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-aws-fs-tests
+            - package-and-push-system-dev
+          cluster-id-prefix: aws-fs-fsx
+          deployment-type: fsx
+          slack-mentions: "${SLACK_USER_ID}"
+
+      - test-aws-fs:
+          name: test-aws-fs-efs
+          context: aws
+          filters: *upstream-feature-branch
+          requires:
+            - request-aws-fs-tests
+            - package-and-push-system-dev
+          cluster-id-prefix: aws-fs-efs
+          deployment-type: efs
+          slack-mentions: "${SLACK_USER_ID}"
+
   nightly:
     triggers:
       - schedule:
@@ -2732,6 +2884,19 @@ workflows:
               environment-gpu-enabled: ["0"]
               aux-agent-instance-type: ["m5.large"]
               max-dynamic-agents: [16]
+      - test-aws-fs:
+          name: test-aws-fs-fsx
+          context: aws
+          cluster-id-prefix: aws-fs-fsx
+          deployment-type: fsx
+          slack-mentions: "${SLACK_USER_ID}"
+
+      - test-aws-fs:
+          name: test-aws-fs-efs
+          context: aws
+          cluster-id-prefix: aws-fs-efs
+          deployment-type: efs
+          slack-mentions: "${SLACK_USER_ID}"
 
   release:
     jobs:

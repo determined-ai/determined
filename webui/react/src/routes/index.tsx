@@ -1,8 +1,10 @@
 import React from 'react';
 
+import Admin from 'pages/Admin';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
 import Deprecated from 'pages/Deprecated';
+import DesignKit from 'pages/DesignKit';
 import ExperimentDetails from 'pages/ExperimentDetails';
 import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
@@ -26,10 +28,12 @@ import { RouteConfig } from 'shared/types';
 import Routes from './routes';
 
 const routeComponentMap: Record<string, React.ReactNode> = {
+  admin: <Admin />,
   cluster: <Deprecated />,
   clusterHistorical: <Deprecated />,
   clusterLogs: <ClusterLogs />,
   clusters: <Clusters />,
+  designKit: <DesignKit />,
   experimentDetails: <ExperimentDetails />,
   interactive: <InteractiveTask />,
   jobs: <Deprecated />,

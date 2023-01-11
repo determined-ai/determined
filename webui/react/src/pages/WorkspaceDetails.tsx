@@ -45,9 +45,11 @@ export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
 
 const WorkspaceDetails: React.FC = () => {
   const rbacEnabled = useFeature().isOn('rbac');
-  const mockWorkspaceMembers = useFeature().isOn('mock_workspace_members');
 
-  const users = Loadable.getOrElse([], useUsers()); // TODO: handle loading state
+  const users = Loadable.match(useUsers(), {
+    Loaded: (cUser) => cUser.users,
+    NotLoaded: () => [],
+  }); // TODO: handle loading state
   const { tab, workspaceId: workspaceID } = useParams<Params>();
   const [workspace, setWorkspace] = useState<Workspace>();
   const [groups, setGroups] = useState<V1GroupSearchResult[]>();
@@ -99,9 +101,7 @@ const WorkspaceDetails: React.FC = () => {
   }, [canceler.signal]);
 
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async () => {
-    if (!rbacEnabled || mockWorkspaceMembers) {
-      return;
-    }
+    if (!rbacEnabled) return;
 
     const response = await getWorkspaceMembers({ nameFilter, workspaceId: id });
     const newGroupIds = new Set<number>();
@@ -115,7 +115,7 @@ const WorkspaceDetails: React.FC = () => {
     });
     setGroupsAssignedDirectlyIds(newGroupIds);
     setWorkspaceAssignments(response.assignments);
-  }, [id, mockWorkspaceMembers, nameFilter, rbacEnabled]);
+  }, [id, nameFilter, rbacEnabled]);
 
   const fetchRolesAssignableToScope = useCallback(async (): Promise<void> => {
     // Only fetch roles if rbac is enabled.

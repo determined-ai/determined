@@ -66,7 +66,7 @@ const SignIn: React.FC = () => {
    * their previous app. We don't run immediately because the router also
    * performs an auth check there as well upon the first page load.
    */
-  usePolling(useAuthCheck(canceler), { interval: 1000, runImmediately: false });
+  usePolling(useAuthCheck(), { interval: 1000, runImmediately: false });
 
   /*
    * Check for when `isAuthenticated` becomes true and redirect
@@ -144,7 +144,7 @@ const SignIn: React.FC = () => {
                 key={key}
                 size="large"
                 type="primary">
-                Sign in with {logo} {capitalize(key)}
+                Sign in with {logo} {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
               </Button>
             );
           })}
