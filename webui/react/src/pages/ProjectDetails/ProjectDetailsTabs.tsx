@@ -5,10 +5,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
 import Pivot from 'components/kit/Pivot';
-import ProjectActionDropdown from 'components/ProjectActionDropdown';
-import { paths } from 'routes/utils';
 import Tooltip from 'components/kit/Tooltip';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
 import Section from 'components/Section';
+import { paths } from 'routes/utils';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import { routeToReactUrl } from 'shared/utils/routes';

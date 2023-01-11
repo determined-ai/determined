@@ -21,11 +21,7 @@ interface PivotProps {
 }
 
 const Pivot: React.FC<PivotProps> = ({ type = 'line', ...props }: PivotProps) => {
-  return (
-    <div className={css.base}>
-      <Tabs type={type} {...props} />
-    </div>
-  );
+  return <Tabs className={css.base} type={type} {...props} />;
 };
 
 export default Pivot;
