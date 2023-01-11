@@ -71,7 +71,7 @@ const queryParamToType = <T>(
     return !isNaN(value) ? value : undefined;
   }
   if (type.is({})) return JSON.parse(param);
-  if (type.is('') || type.is([''])) return param;
+  if (type.is('') || type.is(['']) || type.name.includes('"')) return param;
   return undefined;
 };
 
@@ -169,19 +169,20 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   useEffect(() => {
     if (!querySettings || shouldSkipUpdates) return;
 
+    const settings = state.get(config.storagePath) ?? {};
     const settingsFromQuery = queryToSettings<T>(config, querySettings);
 
     if (isEqual(settingsFromQuery, settings)) return;
 
     Object.keys(settingsFromQuery).forEach((setting) => {
-      settings[setting as keyof T] = settingsFromQuery[setting];
+      settings[setting] = settingsFromQuery[setting];
     });
 
-    update(config.storagePath, () => settings, true);
-  }, [config, querySettings, settings, update, shouldSkipUpdates]);
+    update(config.storagePath, (stateSettings) => ({ ...stateSettings, ...settings }), true);
+  }, [config, querySettings, state, update, shouldSkipUpdates]);
 
   useEffect(() => {
-    if (shouldSkipUpdates) return;
+    if (querySettings || shouldSkipUpdates) return; // prevent changing the settings state if getting it from querrySettings or if it shouldSkipUpdates
 
     const mappedSettings = settingsToQuery(config, settings as Settings);
     const url = `?${mappedSettings}`;
@@ -293,7 +294,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateSettings = useCallback(
     (updates: Settings, shouldPushUpdate = false) => {
-      if (shouldSkipUpdates) return;
+      if (querySettings || shouldSkipUpdates) return; // prevent changing the settings state if getting it from querrySettings or if it shouldSkipUpdates
 
       update(config.storagePath, (settings) => {
         if (!settings) return updates;
@@ -303,11 +304,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       setShouldPush(shouldPushUpdate);
     },
-    [config, update, shouldSkipUpdates],
+    [config, update, shouldSkipUpdates, querySettings],
   );
 
   useEffect(() => {
-    if (!settings) return;
+    if (!settings || querySettings) return;
 
     setReturnedSettings((prevState) => {
       if (isEqual(prevState, settings)) {
@@ -331,7 +332,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const url = `?${mappedSettings}`;
 
     shouldPush ? navigate(url) : navigate(url, { replace: true });
-  }, [shouldPush, settings, navigate, updateDB, config]);
+  }, [shouldPush, settings, navigate, updateDB, config, querySettings]);
 
   return {
     activeSettings,

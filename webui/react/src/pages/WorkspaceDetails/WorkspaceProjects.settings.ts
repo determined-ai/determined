@@ -117,6 +117,7 @@ const config: SettingsConfig<WorkspaceDetailsSettings> = {
     },
     user: {
       defaultValue: undefined,
+      skipUrlEncoding: true,
       storageKey: 'user',
       type: union([undefinedType, array(string)]),
     },
@@ -127,8 +128,7 @@ const config: SettingsConfig<WorkspaceDetailsSettings> = {
       type: union([literal(GridListView.Grid), literal(GridListView.List)]),
     },
     whose: {
-      defaultValue: WhoseProjects.All,
-      skipUrlEncoding: true,
+      defaultValue: WhoseProjects.All, // had to remove the skipURLEncoding to fix the url sharing settings
       storageKey: 'whose',
       type: union([
         literal(WhoseProjects.All),
