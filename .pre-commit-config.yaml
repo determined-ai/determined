@@ -51,12 +51,9 @@ repos:
       - id: check-github-workflows
 
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 22.12.0
     hooks:
       - id: black
-        # known issue fixed in a newer version:
-        # https://github.com/psf/black/issues/2964#issuecomment-1080974737
-        additional_dependencies: ['click==8.0.4']
         exclude: ^(harness/determined/common/api/bindings.py)
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
