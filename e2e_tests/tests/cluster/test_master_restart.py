@@ -388,10 +388,10 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
     agent_data = get_agent_data(conf.make_master_url())
     slots = sum([a["num_slots"] for a in agent_data])
 
-    running_command_id = run_command(60, slots)
-    queued_command_id = run_command(60, slots)
-
+    running_command_id = run_command(120, slots)
     wait_for_command_state(running_command_id, "RUNNING", 25)
+
+    queued_command_id = run_command(60, slots)
     wait_for_command_state(queued_command_id, "QUEUED", 25)
 
     job_list = det_cmd_json(["job", "list", "--json"])["jobs"]
@@ -400,11 +400,6 @@ def test_master_restart_with_queued(k8s_managed_cluster: ManagedK8sCluster) -> N
     k8s_managed_cluster.restart_master()
 
     post_restart_job_list = det_cmd_json(["job", "list", "--json"])["jobs"]
-
-    # TODO(DET-8776): command submission times get overwritten to master start currently.
-    assert len(job_list) == len(post_restart_job_list)
-    for pre, post in zip(job_list, post_restart_job_list):
-        post["submissionTime"] = pre["submissionTime"]
 
     assert job_list == post_restart_job_list
 
