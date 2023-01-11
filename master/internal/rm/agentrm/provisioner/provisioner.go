@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"time"
 
+	"golang.org/x/time/rate"
+
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
@@ -24,7 +26,8 @@ const (
 type provisionerTick struct{}
 
 // Provisioner implements an actor to provision and terminate agent instances.
-// It is composed of three parts: a provisioner actor, a scaling decision maker, and a provider.
+// It is composed of four parts: a provisioner actor, a scaling decision maker,
+// a provider, and a rate limiter.
 //  1. The provisioner actor accepts actor messages with pending tasks and idle agents.
 //     1.1. `Scheduler` pushes an immutable view of agents and tasks to `Provisioner`. `Provisioner`
 //     pulls instance data from instance providers.
@@ -33,9 +36,11 @@ type provisionerTick struct{}
 //     2.1 It terminates instances if they stay idle for more than `maxIdleAgentPeriod` time.
 //     2.2 It checks recently launched instances and avoids provisioning more than needed.
 //  3. The instance providers take actions to launch/terminate instances.
+//  4. The rate limiter ensures telemetry does not get sent more frequently than every 90sec.
 type Provisioner struct {
-	provider     provider
-	scaleDecider *scaleDecider
+	provider         provider
+	scaleDecider     *scaleDecider
+	telemetryLimiter *rate.Limiter
 }
 
 type provider interface {
@@ -79,6 +84,7 @@ func New(
 			config.MaxInstances,
 			db,
 		),
+		telemetryLimiter: rate.NewLimiter(rate.Every(time.Second*90), 1),
 	}, nil
 }
 
@@ -151,7 +157,9 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 		p.provider.launch(ctx, numToLaunch)
 	}
 
-	telemetry.ReportProvisionerTick(ctx.Self().System(),
-		instances,
-		p.InstanceType())
+	if p.telemetryLimiter.Allow() {
+		telemetry.ReportProvisionerTick(ctx.Self().System(),
+			instances,
+			p.InstanceType())
+	}
 }
