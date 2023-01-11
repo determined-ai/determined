@@ -43,5 +43,5 @@ export const trialsTableSettingsConfig: SettingsConfig<InteractiveTableSettings>
       type: number,
     },
   },
-  storageKey: 'trial-table',
+  storagePath: 'trial-table',
 };

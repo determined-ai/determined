@@ -24,7 +24,7 @@ export interface SettingsConfigProp<A> {
 export interface SettingsConfig<T> {
   applicableRoutespace?: string;
   settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
-  storageKey: string;
+  storagePath: string;
 }
 
 interface UserSettingUpdate extends UpdateUserSettingParams {
@@ -177,7 +177,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       settings[setting as keyof T] = settingsFromQuery[setting];
     });
 
-    update(config.storageKey, () => settings, true);
+    update(config.storagePath, () => settings, true);
   }, [config, querySettings, settings, update, shouldSkipUpdates]);
 
   useEffect(() => {
@@ -282,7 +282,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting as keyof T] = defaultSetting.defaultValue;
       });
 
-      update(config.storageKey, () => newSettings);
+      update(config.storagePath, () => newSettings);
 
       await updateDB(newSettings);
 
@@ -295,7 +295,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     (updates: Settings, shouldPushUpdate = false) => {
       if (shouldSkipUpdates) return;
 
-      update(config.storageKey, (settings) => {
+      update(config.storagePath, (settings) => {
         if (!settings) return updates;
 
         return { ...settings, ...updates };

@@ -74,7 +74,7 @@ const config: SettingsConfig<UserManagementSettings> = {
       type: number,
     },
   },
-  storageKey: 'user-management',
+  storagePath: 'user-management',
 };
 
 export default config;

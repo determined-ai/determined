@@ -66,7 +66,7 @@ const config: SettingsConfig<WorkspaceMembersSettings> = {
       type: number,
     },
   },
-  storageKey: 'workspace-members',
+  storagePath: 'workspace-members',
 };
 
 export default config;
