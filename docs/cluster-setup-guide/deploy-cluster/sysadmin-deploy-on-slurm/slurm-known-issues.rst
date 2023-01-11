@@ -183,8 +183,8 @@ Some constraints are due to differences in behavior between Docker and Singulari
 
             slurm_job_name_suffix=$(echo ${SLURM_JOB_NAME} | sed 's/^\S\+-\([a-z0-9]\+-[a-z0-9]\+\)$/\1/')
 
-            podman_container_stop_command="podman container stop --filter
-            name='.+-${slurm_job_name_suffix}'"
+            podman_container_stop_command="podman container stop \
+               --filter name='.+-${slurm_job_name_suffix}'"
 
             echo "$(date):$0: Running \"${podman_container_stop_command}\"" 1>&2
 
