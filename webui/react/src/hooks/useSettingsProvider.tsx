@@ -69,7 +69,10 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
               if (!entry) {
                 state.set(key, { [setting.key]: value });
               } else {
-                state.set(key, Object.assign(entry, { [setting.key]: value }));
+                if (!entry[setting.key]) {
+                  // this way, if we have current settings grabbed by URL, it would persist in the state
+                  state.set(key, Object.assign(entry, { [setting.key]: value }));
+                }
               }
             });
           });

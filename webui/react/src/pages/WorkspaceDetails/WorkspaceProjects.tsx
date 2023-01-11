@@ -159,17 +159,13 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   useEffect(() => {
     if (settings.whose === prevWhose || !settings.whose) return;
 
-    switch (settings.whose) {
-      case WhoseProjects.All:
-        updateSettings({ user: undefined });
-        break;
-      case WhoseProjects.Mine:
-        updateSettings({ user: user ? [user.id] : undefined });
-        break;
-      case WhoseProjects.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
-        break;
-    }
+    const whoseUsersDictionary = {
+      [WhoseProjects.All]: undefined,
+      [WhoseProjects.Mine]: user ? [user.id] : undefined,
+      [WhoseProjects.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
+    };
+
+    updateSettings({ user: whoseUsersDictionary[settings.whose] });
   }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const saveProjectDescription = useCallback(async (newDescription: string, projectId: number) => {
