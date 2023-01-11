@@ -3,6 +3,7 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Page from 'components/Page';
+import Section from 'components/Section';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
@@ -274,20 +275,22 @@ const UserManagement: React.FC = () => {
     );
   }, [users, loadableUser, settings, columns, total, updateSettings]);
   return (
-    <Page
-      containerRef={pageRef}
-      options={
-        <Space>
-          <Button
-            aria-label={CREATE_USER_LABEL}
-            disabled={!canModifyUsers}
-            onClick={onClickCreateUser}>
-            {CREATE_USER}
-          </Button>
-        </Space>
-      }
-      title={USER_TITLE}>
-      <div className={css.usersTable}>{table}</div>
+    <Page bodyNoPadding containerRef={pageRef}>
+      <Section
+        className={css.usersTable}
+        options={
+          <Space>
+            <Button
+              aria-label={CREATE_USER_LABEL}
+              disabled={!canModifyUsers}
+              onClick={onClickCreateUser}>
+              {CREATE_USER}
+            </Button>
+          </Space>
+        }
+        title={USER_TITLE}>
+        {table}
+      </Section>
       {modalCreateUserContextHolder}
     </Page>
   );

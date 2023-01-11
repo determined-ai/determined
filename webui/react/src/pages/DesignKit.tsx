@@ -835,18 +835,36 @@ const PivotSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Pivot</strong>
-        <Pivot
-          items={[
-            { key: 'Overview', label: 'Overview' },
-            { key: 'hyperparameters', label: 'Hyperparameters' },
-            { key: 'checkpoints', label: 'Checkpoints' },
-            { key: 'code', label: 'Code' },
-            { key: 'notes', label: 'Notes' },
-            { key: 'profiler', label: 'Profiler' },
-            { key: 'logs', label: 'Logs' },
-          ]}
-        />
+        <strong>Default Pivot</strong>
+        <Space>
+          <Pivot
+            items={[
+              { children: 'Overview', key: 'Overview', label: 'Overview' },
+              { children: 'Hyperparameters', key: 'hyperparameters', label: 'Hyperparameters' },
+              { children: 'Checkpoints', key: 'checkpoints', label: 'Checkpoints' },
+              { children: 'Code', key: 'code', label: 'Code' },
+              { children: 'Notes', key: 'notes', label: 'Notes' },
+              { children: 'Profiler', key: 'profiler', label: 'Profiler' },
+              { children: 'Logs', key: 'logs', label: 'Logs' },
+            ]}
+          />
+        </Space>
+        <hr />
+        <strong>Card Pivot</strong>
+        <Space>
+          <Pivot
+            items={[
+              { children: 'Overview', key: 'Overview', label: 'Overview' },
+              { children: 'Hyperparameters', key: 'hyperparameters', label: 'Hyperparameters' },
+              { children: 'Checkpoints', key: 'checkpoints', label: 'Checkpoints' },
+              { children: 'Code', key: 'code', label: 'Code' },
+              { children: 'Notes', key: 'notes', label: 'Notes' },
+              { children: 'Profiler', key: 'profiler', label: 'Profiler' },
+              { children: 'Logs', key: 'logs', label: 'Logs' },
+            ]}
+            type="card"
+          />
+        </Space>
       </Card>
     </ComponentSection>
   );

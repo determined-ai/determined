@@ -11,7 +11,6 @@ import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'type
 import handleError from 'utils/error';
 
 import TrialChart from './TrialChart';
-import css from './TrialDetailsOverview.module.scss';
 import settingsConfig, { Settings } from './TrialDetailsOverview.settings';
 import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 
@@ -69,7 +68,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   );
 
   return (
-    <div className={css.base}>
+    <>
       <TrialInfoBox experiment={experiment} trial={trial} />
       {showExperimentArtifacts ? (
         <>
@@ -96,7 +95,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           )}
         </>
       ) : null}
-    </div>
+    </>
   );
 };
 

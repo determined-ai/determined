@@ -1,6 +1,3 @@
-.experimentTab {
-  padding: 16px;
-}
 .base {
   flex: 1 1 auto;
   flex-grow: 1;
@@ -15,6 +12,8 @@
   flex-direction: column;
 }
 .tabOptions {
+  min-height: 36px;
+
   .actionOverflow {
     display: none;
   }

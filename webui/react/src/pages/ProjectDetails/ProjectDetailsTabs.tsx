@@ -1,12 +1,13 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Space, Tabs } from 'antd';
+import { Space } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BreadcrumbBar from 'components/BreadcrumbBar';
+import Pivot from 'components/kit/Pivot';
 import Tooltip from 'components/kit/Tooltip';
-import PageHeader from 'components/PageHeader';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
+import Section from 'components/Section';
 import { paths } from 'routes/utils';
 import { getWorkspace } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
@@ -80,14 +81,9 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
   if (project.immutable) {
     const experimentsTab = tabs.find((tab) => tab.title === 'Experiments');
     return (
-      <div className={css.base}>
-        <PageHeader
-          className={css.header}
-          options={experimentsTab?.options}
-          title="Uncategorized"
-        />
+      <Section options={experimentsTab?.options} title="Uncategorized">
         {experimentsTab?.body}
-      </div>
+      </Section>
     );
   }
 
@@ -119,14 +115,16 @@ const ProjectDetailsTabs: React.FC<Props> = ({ project, tabs, fetchProject, curU
         project={project}
         type="project"
       />
-      <Tabs
-        activeKey={sentenceToCamelCase(activeTab.title)}
-        defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
-        items={tabItems}
-        tabBarExtraContent={activeTab.options}
-        tabBarStyle={{ height: 50, paddingLeft: 16 }}
-        onChange={handleTabSwitch}
-      />
+      {/* TODO: Clean up once we standardize page layouts */}
+      <div style={{ padding: 16 }}>
+        <Pivot
+          activeKey={sentenceToCamelCase(activeTab.title)}
+          defaultActiveKey={sentenceToCamelCase(tabs[0].title)}
+          items={tabItems}
+          tabBarExtraContent={activeTab.options}
+          onChange={handleTabSwitch}
+        />
+      </div>
     </>
   );
 };

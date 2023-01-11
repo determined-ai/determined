@@ -1,10 +1,11 @@
-import { Card, Tabs } from 'antd';
+import { Card } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import InfoBox from 'components/InfoBox';
 import Breadcrumb from 'components/kit/Breadcrumb';
+import Pivot from 'components/kit/Pivot';
 import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
@@ -325,12 +326,10 @@ const ModelVersionDetails: React.FC = () => {
         />
       }
       id="modelDetails">
-      <Tabs
-        activeKey={tabKey}
-        items={tabItems}
-        tabBarStyle={{ backgroundColor: 'var(--theme-colors-monochrome-17)', paddingLeft: 24 }}
-        onChange={handleTabChange}
-      />
+      {/* TODO: Clean up once we standardize page layouts */}
+      <div style={{ padding: 16 }}>
+        <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />
+      </div>
     </Page>
   );
 };

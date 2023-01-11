@@ -191,12 +191,14 @@ const ProjectDetails: React.FC = () => {
         project={project}
         type="project"
       />
-      <DynamicTabs
-        basePath={paths.projectDetailsBasePath(id)}
-        destroyInactiveTabPane
-        items={tabItems}
-        tabBarStyle={{ height: 50, paddingLeft: 16 }}
-      />
+      {/* TODO: Clean up once we standardize page layouts */}
+      <div style={{ padding: 16 }}>
+        <DynamicTabs
+          basePath={paths.projectDetailsBasePath(id)}
+          destroyInactiveTabPane
+          items={tabItems}
+        />
+      </div>
     </Page>
   );
 };

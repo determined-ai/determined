@@ -1,8 +1,8 @@
-import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -93,13 +93,8 @@ const Clusters: React.FC = () => {
   }, [canAdministrateUsers, rbacEnabled]);
 
   return (
-    <Page bodyNoPadding id="cluster" title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
-      <Tabs
-        className="no-padding"
-        defaultActiveKey={tabKey}
-        items={tabItems}
-        onChange={handleTabChange}
-      />
+    <Page id="cluster" title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
+      <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
     </Page>
   );
 };
