@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/set"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -58,6 +59,7 @@ type podMetadata struct {
 type pods struct {
 	cluster                  *actor.Ref
 	namespace                string
+	poolNamespaces           set.Set[string]
 	masterServiceName        string
 	leaveKubernetesResources bool
 	scheduler                string
@@ -79,6 +81,7 @@ type pods struct {
 	preemptionListener           *actor.Ref
 	resourceRequestQueue         *actor.Ref
 	podNameToPodHandler          map[string]*actor.Ref
+	podNameToResourcePool        map[string]string
 	containerIDToPodName         map[string]string
 	containerIDToSchedulingState map[string]sproto.SchedulingState
 	podNameToContainerID         map[string]string
@@ -87,8 +90,8 @@ type pods struct {
 
 	currentNodes map[string]*k8sV1.Node
 
-	podInterface       typedV1.PodInterface
-	configMapInterface typedV1.ConfigMapInterface
+	podInterfaces       map[string]typedV1.PodInterface
+	configMapInterfaces map[string]typedV1.ConfigMapInterface
 }
 
 // PodsInfo contains information for pods.
@@ -113,12 +116,13 @@ type reattachPodResponse struct {
 	started     *sproto.ResourcesStarted
 }
 
-// Initialize creates a new global agent actor.
+// Initialize creates a new global pods actor.
 func Initialize(
 	s *actor.System,
 	e *echo.Echo,
 	c *actor.Ref,
 	namespace string,
+	poolNamespaces set.Set[string],
 	masterServiceName string,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
@@ -139,12 +143,14 @@ func Initialize(
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                      c,
 		namespace:                    namespace,
+		poolNamespaces:               poolNamespaces,
 		masterServiceName:            masterServiceName,
 		masterTLSConfig:              masterTLSConfig,
 		scheduler:                    scheduler,
 		loggingTLSConfig:             loggingTLSConfig,
 		loggingConfig:                loggingConfig,
 		podNameToPodHandler:          make(map[string]*actor.Ref),
+		podNameToResourcePool:        make(map[string]string),
 		containerIDToPodName:         make(map[string]string),
 		containerIDToSchedulingState: make(map[string]sproto.SchedulingState),
 		podNameToContainerID:         make(map[string]string),
@@ -158,6 +164,8 @@ func Initialize(
 		masterPort:                   masterPort,
 		currentNodes:                 make(map[string]*k8sV1.Node),
 		nodeToSystemResourceRequests: make(map[string]int64),
+		podInterfaces:                make(map[string]typedV1.PodInterface),
+		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
@@ -325,8 +333,16 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
 	}
 
-	p.podInterface = p.clientSet.CoreV1().Pods(p.namespace)
-	p.configMapInterface = p.clientSet.CoreV1().ConfigMaps(p.namespace)
+	for ns := range p.poolNamespaces {
+		p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
+		p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
+	}
+	for _, ns := range []string{metaV1.NamespaceAll, p.namespace} {
+		if !p.poolNamespaces.Contains(ns) {
+			p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
+			p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
+		}
+	}
 
 	ctx.Log().Infof("kubernetes clientSet initialized")
 	return nil
@@ -350,7 +366,7 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 }
 
 func (p *pods) getSystemResourceRequests(ctx *actor.Context) error {
-	systemPods, err := p.podInterface.List(
+	systemPods, err := p.podInterfaces[p.namespace].List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedSystemLabel})
 	if err != nil {
 		return errors.Wrap(err, "failed to get system pods")
@@ -370,12 +386,12 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, msg.allocationID),
 	}
 
-	pods, err := p.podInterface.List(context.TODO(), listOptions)
+	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing pods checking if they can be restored")
 	}
 
-	configMaps, err := p.configMapInterface.List(context.TODO(), listOptions)
+	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing config maps checking if they can be restored")
 	}
@@ -387,11 +403,14 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	var containerIDs []string
 	var k8sPods []*k8sV1.Pod
 	var ports [][]int
+	var resourcePool string
 	for _, pod := range pods.Items {
-		found := false
+		foundID := false
+		foundPool := false
 		for _, container := range pod.Spec.Containers {
 			for _, env := range container.Env {
-				if env.Name == "DET_CONTAINER_ID" {
+				switch env.Name {
+				case "DET_CONTAINER_ID":
 					if !existingConfigMaps[pod.Name] {
 						p.deleteKubernetesResources(ctx, pods, configMaps)
 						ctx.Respond(fmt.Errorf("pod missing config map %s", pod.Name))
@@ -408,11 +427,13 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 					}
 					ports = append(ports, podPorts)
 
-					found = true
-					break
+					foundID = true
+				case resourcePoolEnvVar:
+					resourcePool = env.Value
+					foundPool = true
 				}
 			}
-			if found {
+			if foundID && foundPool {
 				break
 			}
 		}
@@ -427,7 +448,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
-		resp, err := p.reattachPod(ctx, msg.taskActor, containerID,
+		resp, err := p.reattachPod(ctx, msg.taskActor, resourcePool, containerID,
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {
 			p.deleteKubernetesResources(ctx, pods, configMaps)
@@ -445,6 +466,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 func (p *pods) reattachPod(
 	ctx *actor.Context,
 	taskActor *actor.Ref,
+	resourcePool string,
 	containerID string,
 	pod *k8sV1.Pod,
 	ports []int,
@@ -456,8 +478,9 @@ func (p *pods) reattachPod(
 		Spec: tasks.TaskSpec{
 			ContainerID: containerID,
 		},
-		Slots:      slots,
-		LogContext: logContext,
+		Slots:        slots,
+		ResourcePool: resourcePool,
+		LogContext:   logContext,
 	}
 
 	newPodHandler := newPod(
@@ -465,14 +488,14 @@ func (p *pods) reattachPod(
 		p.cluster,
 		startMsg.Spec.ClusterID,
 		p.clientSet,
-		p.namespace,
+		pod.Namespace,
 		p.masterIP,
 		p.masterPort,
 		p.masterTLSConfig,
 		p.loggingTLSConfig,
 		p.loggingConfig,
-		p.podInterface,
-		p.configMapInterface,
+		p.podInterfaces[resourcePool],
+		p.configMapInterfaces[resourcePool],
 		p.resourceRequestQueue,
 		p.leaveKubernetesResources,
 		p.slotType,
@@ -512,6 +535,7 @@ func (p *pods) reattachPod(
 	}
 
 	p.podNameToPodHandler[pod.Name] = ref
+	p.podNameToResourcePool[pod.Name] = resourcePool
 	p.containerIDToPodName[containerID] = pod.Name
 	p.podNameToContainerID[pod.Name] = containerID
 	p.containerIDToSchedulingState[containerID] = sproto.SchedulingStateQueued
@@ -522,7 +546,7 @@ func (p *pods) reattachPod(
 
 	// Send a podStatusUpdate for any missed updates between master going up
 	// and the pod being reattached.
-	updated, err := p.podInterface.Get(context.TODO(), pod.Name, metaV1.GetOptions{})
+	updated, err := p.podInterfaces[resourcePool].Get(context.TODO(), pod.Name, metaV1.GetOptions{})
 	if err != nil {
 		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
 	}
@@ -535,36 +559,26 @@ func (p *pods) deleteKubernetesResources(
 	ctx *actor.Context, pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
 ) {
 	for _, pod := range pods.Items {
-		// TODO once we do multiple namespaces this will need to be updated.
-		if pod.Namespace != p.namespace {
-			continue
-		}
-
 		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
-			handler: ctx.Self(), podName: pod.Name,
+			handler: ctx.Self(), namespace: pod.Namespace, podName: pod.Name,
 		})
 	}
 
 	for _, configMap := range configMaps.Items {
-		// TODO once we do multiple namespaces this will need to be updated.
-		if configMap.Namespace != p.namespace {
-			continue
-		}
-
 		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
-			handler: ctx.Self(), configMapName: configMap.Name,
+			handler: ctx.Self(), namespace: configMap.Namespace, configMapName: configMap.Name,
 		})
 	}
 }
 
 func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
-	configMaps, err := p.configMapInterface.List(context.TODO(), listOptions)
+	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing config maps")
 	}
 
-	pods, err := p.podInterface.List(context.TODO(), listOptions)
+	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing pod")
 	}
@@ -586,7 +600,7 @@ func (p *pods) deleteResourcesWithEndedAllocation(ctx *actor.Context) error {
 	}
 
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
-	configMaps, err := p.configMapInterface.List(context.TODO(), listOptions)
+	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing config maps")
 	}
@@ -600,7 +614,7 @@ func (p *pods) deleteResourcesWithEndedAllocation(ctx *actor.Context) error {
 		}
 	}
 
-	pods, err := p.podInterface.List(context.TODO(), listOptions)
+	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing pod")
 	}
@@ -621,7 +635,7 @@ func (p *pods) deleteResourcesWithEndedAllocation(ctx *actor.Context) error {
 func (p *pods) startPodInformer(ctx *actor.Context) {
 	p.informer, _ = ctx.ActorOf(
 		"pod-informer",
-		newInformer(p.podInterface, p.namespace, ctx.Self()),
+		newInformer(p.podInterfaces[metaV1.NamespaceAll], ctx.Self()),
 	)
 }
 
@@ -631,35 +645,36 @@ func (p *pods) startNodeInformer(ctx *actor.Context) {
 
 func (p *pods) startEventListener(ctx *actor.Context) {
 	p.eventListener, _ = ctx.ActorOf(
-		"event-listener", newEventListener(p.clientSet, p.namespace, ctx.Self()))
+		"event-listener", newEventListener(p.clientSet, ctx.Self()))
 }
 
 func (p *pods) startPreemptionListener(ctx *actor.Context) {
 	p.preemptionListener, _ = ctx.ActorOf(
-		"preemption-listener", newPreemptionListener(p.clientSet, p.namespace, ctx.Self()))
+		"preemption-listener", newPreemptionListener(p.clientSet, ctx.Self()))
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 	p.resourceRequestQueue, _ = ctx.ActorOf(
 		"kubernetes-resource-request-queue",
-		newRequestQueue(p.podInterface, p.configMapInterface),
+		newRequestQueue(p.podInterfaces, p.configMapInterfaces),
 	)
 }
 
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
+	fmt.Println(2, msg.Namespace)
 	newPodHandler := newPod(
 		msg,
 		p.cluster,
 		msg.Spec.ClusterID,
 		p.clientSet,
-		p.namespace,
+		msg.Namespace,
 		p.masterIP,
 		p.masterPort,
 		p.masterTLSConfig,
 		p.loggingTLSConfig,
 		p.loggingConfig,
-		p.podInterface,
-		p.configMapInterface,
+		p.podInterfaces[msg.Namespace],
+		p.configMapInterfaces[msg.Namespace],
 		p.resourceRequestQueue,
 		p.leaveKubernetesResources,
 		p.slotType,
@@ -681,6 +696,7 @@ func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
 	}
 
 	p.podNameToPodHandler[newPodHandler.podName] = ref
+	p.podNameToResourcePool[newPodHandler.podName] = msg.ResourcePool
 	p.containerIDToPodName[msg.Spec.ContainerID] = newPodHandler.podName
 	p.podNameToContainerID[newPodHandler.podName] = msg.Spec.ContainerID
 	p.containerIDToSchedulingState[msg.Spec.ContainerID] = sproto.SchedulingStateQueued
@@ -832,6 +848,7 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	ctx.Log().WithField("pod", podInfo.podName).WithField(
 		"handler", podHandler.Address()).Infof("de-registering pod handler")
 	delete(p.podNameToPodHandler, podInfo.podName)
+	delete(p.podNameToResourcePool, podInfo.podName)
 	delete(p.podNameToContainerID, podInfo.podName)
 	delete(p.containerIDToPodName, podInfo.containerID)
 	delete(p.containerIDToSchedulingState, podInfo.containerID)

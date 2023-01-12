@@ -16,6 +16,8 @@ func defaultRPConfig() ResourcePoolConfig {
 		MaxCPUContainersPerAgent: -1,
 		AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
 		AgentReattachEnabled:     false,
+
+		KubernetesNamespace: "default",
 	}
 }
 
@@ -34,6 +36,8 @@ type ResourcePoolConfig struct {
 	// before abandoning it.
 	AgentReconnectWait model.Duration `json:"agent_reconnect_wait"`
 
+	KubernetesNamespace string `json:"kubernetes_namespace"`
+
 	// Deprecated: Use MaxAuxContainersPerAgent instead.
 	MaxCPUContainersPerAgent int `json:"max_cpu_containers_per_agent,omitempty"`
 }
@@ -48,6 +52,10 @@ func (r *ResourcePoolConfig) UnmarshalJSON(data []byte) error {
 
 	if r.MaxCPUContainersPerAgent != -1 {
 		r.MaxAuxContainersPerAgent = r.MaxCPUContainersPerAgent
+	}
+
+	if r.KubernetesNamespace == "" {
+		r.KubernetesNamespace = "default"
 	}
 
 	r.MaxCPUContainersPerAgent = 0

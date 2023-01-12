@@ -23,6 +23,8 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
+const resourcePoolEnvVar = "DET_K8S_RESOURCE_POOL"
+
 // getResourceSummary is a message to request a summary of the resources used by the
 // resource pool (agents, slots, cpu containers).
 type getResourceSummary struct{}
@@ -523,6 +525,7 @@ func (k *kubernetesResourcePool) createResources(
 			slots:           slotsPerPod,
 			group:           k.groups[req.Group],
 			initialPosition: k.queuePositions[k.addrToJobID[req.AllocationRef]],
+			namespace:       k.poolConfig.KubernetesNamespace,
 		})
 	}
 	return resources
@@ -552,7 +555,9 @@ func (k *kubernetesResourcePool) restoreResources(
 			slots:           slotsPerPod,
 			group:           k.groups[req.Group],
 			initialPosition: k.queuePositions[k.addrToJobID[req.AllocationRef]],
-			started:         restoreResponse.started,
+			namespace:       k.poolConfig.KubernetesNamespace,
+
+			started: restoreResponse.started,
 		})
 	}
 
@@ -633,6 +638,7 @@ type k8sPodResources struct {
 	containerID     cproto.ID
 	slots           int
 	initialPosition decimal.Decimal
+	namespace       string
 
 	started *sproto.ResourcesStarted
 }
@@ -671,11 +677,13 @@ func (p k8sPodResources) Start(
 	spec.LoggingFields["allocation_id"] = spec.AllocationID
 	spec.LoggingFields["task_id"] = spec.TaskID
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sPod)
+	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
 	return ctx.Ask(p.podsActor, StartTaskPod{
 		TaskActor:  p.req.AllocationRef,
 		Spec:       spec,
 		Slots:      p.slots,
 		Rank:       rri.AgentRank,
+		Namespace:  p.namespace,
 		LogContext: logCtx,
 	}).Error()
 }

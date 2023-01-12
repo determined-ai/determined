@@ -20,18 +20,15 @@ type startPreemptionListener struct{}
 
 type preemptionListener struct {
 	clientSet   *k8sClient.Clientset
-	namespace   string
 	podsHandler *actor.Ref
 }
 
 func newPreemptionListener(
 	clientSet *k8sClient.Clientset,
-	namespace string,
 	podsHandler *actor.Ref,
 ) *preemptionListener {
 	return &preemptionListener{
 		clientSet:   clientSet,
-		namespace:   namespace,
 		podsHandler: podsHandler,
 	}
 }
@@ -56,7 +53,7 @@ func (p *preemptionListener) Receive(ctx *actor.Context) error {
 
 func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	// check if there are pods to preempt on startup
-	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
+	pods, err := p.clientSet.CoreV1().Pods(metaV1.NamespaceAll).List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf(
@@ -72,7 +69,7 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return p.clientSet.CoreV1().Pods(p.namespace).Watch(
+			return p.clientSet.CoreV1().Pods(metaV1.NamespaceAll).Watch(
 				context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 		},
 	})

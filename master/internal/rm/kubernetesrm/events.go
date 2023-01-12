@@ -30,18 +30,15 @@ type (
 
 type eventListener struct {
 	clientSet   *k8sClient.Clientset
-	namespace   string
 	podsHandler *actor.Ref
 }
 
 func newEventListener(
 	clientSet *k8sClient.Clientset,
-	namespace string,
 	podsHandler *actor.Ref,
 ) *eventListener {
 	return &eventListener{
 		clientSet:   clientSet,
-		namespace:   namespace,
 		podsHandler: podsHandler,
 	}
 }
@@ -65,7 +62,7 @@ func (e *eventListener) Receive(ctx *actor.Context) error {
 }
 
 func (e *eventListener) startEventListener(ctx *actor.Context) {
-	events, err := e.clientSet.CoreV1().Events(e.namespace).List(
+	events, err := e.clientSet.CoreV1().Events(metaV1.NamespaceAll).List(
 		context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
@@ -75,7 +72,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(events.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return e.clientSet.CoreV1().Events(e.namespace).Watch(
+			return e.clientSet.CoreV1().Events(metaV1.NamespaceAll).Watch(
 				context.TODO(), metaV1.ListOptions{})
 		},
 	})
