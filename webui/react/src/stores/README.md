@@ -15,7 +15,7 @@ should:
 
 we would like to have a store to be able to have a single, reliable, developer friendly source of truth for application state.
 
-honing on state a bit, there are broadly 4 different kinds of state in our webui:
+honing in on state a bit, there are broadly 4 different kinds of state in our webui:
   - "small" server state: ✅ goes in store  
     (basically everything in our current store contexts)  
     - how many agents are connected  
