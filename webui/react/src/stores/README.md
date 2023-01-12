@@ -53,7 +53,7 @@ lets say you just wanted to do a state store for agents and resource pools. in t
     ResourceType.CUDA : {allocation: 39, available: 1: total: 40}
 }
 ```
- - `clusterStatus`, a percentage string representing the allocation of the cluster, which is dervived from agents, resource pools, AND cluster overview. in mobx, we could implement such a store like this:
+ - `clusterStatus`, a percentage string representing the allocation of the cluster, which is derived from agents, resource pools, AND cluster overview. in `mobx`, we could implement such a store like this:
 
 ```tsx
 class StoreService {
@@ -82,7 +82,7 @@ class StoreService {
 export const storeService = new StoreService()
 ```
 
-at this point `storeService` is our store. you can think of it like a JS object where you can subscribe to changes for the individual keys. what this 'subscribing' looks like can vary, but here is an example for a react component, like  `<Cluster />` 
+basically you have a class where your base data are class attributes, and your derived data are JS `getters`. then you call `makeAutoObservable` in the constructor, and it turns everything into observables, both the base data and the derived data. so now `storeService` is a JS object where you can 'subscribe' to changes to the individual attributes. this `StoreService` could grow to encompass *everything* mentioned above for inclusion in the store, along with all the user settings. what 'subscribing' looks like can vary, but here is an example for a react component, like  `<Cluster />` 
 
 ```tsx
 import { storeService } from './store'
@@ -105,9 +105,11 @@ export const Cluster = observer(() => {
   )
 })
 ```
-wrapping a react component in the `observer` functioncauses the component to 'observe' all the observables it accessed, and re-render whenever they change- no props or dependency arrays needed! (at least for this simple case).
 
-the really cool thing though is that, even though `get clusterOverview()` is a function, it is NOT evaluated every time you do `store.clusterOverview`, only ONCE for every time the observables it accesses change. in this way all the data is available just as easily as it would be if you were eagerly computing everything all of the time, while actually having zero redundancy in the computations. likewise if you never `get clusterOverview()`, the function is never called.
+
+wrapping a react component in the `observer` function causes the component to 'observe' that are accessed inside of it, and re-render whenever they change- no props or dependency arrays needed! (at least for this simple case).
+
+the really cool thing though is that, even though `get clusterOverview()` is a function, it is NOT evaluated every time you do `store.clusterOverview`, only ONCE for every time the observables it accesses change. in this way all the data is available just as easily as it would be if you were eagerly computing everything all of the time, while actually having zero redundancy in the computations. additionally, if you never `get clusterOverview()`, the function is never called.
 
 the mobx docs describe the strategy like this:
 >	Make sure that everything that can be derived from the application state, will be derived. Automatically.
@@ -161,12 +163,9 @@ export const Cluster = observer(() => {
 
 this has the advantage that if you forget to `useObservable`, it breaks in an obvious, type-enforced way: if you say `const agents = storeService.agents`, typescript will tell you "I do not think it means what you think it means," whereas `mobx` will simply not re-render your component if you don't wrap in in `observer` (the `mobx` docs claim that is the number one cause of expected re-renders not happening)
 
-there are more filled out versions of each of these stores here in the repo. the `micro-observable` one is currently active. to switch to the `mobx` store, just do a find and replace for `stores/micro-observables` -> `stores/mobx`. to test things out, you can go to and from the cluster page and resource pool details/job queue
+## evaluation
 
-
-this `StoreService` could grow to encompass *everything* mentioned above for inclusion in the store, along with all the user settings. having 
-
-
+there are more filled out versions of each of these stores here in the repo. see [mobx store](./mobx.tsx) and [micro-observables store](./micro-observables.tsx). the `micro-observable` is the one currently being used. to switch to the `mobx` store, just do a find and replace for `stores/micro-observables` -> `stores/mobx`. to test things out, you can go to and from the cluster page and resource pool details/job queue.
 
 on balance, my recommendation would be to use `micro-observables` as i believe it is more explicit and less error prone. 
 
