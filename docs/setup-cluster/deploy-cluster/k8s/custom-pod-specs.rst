@@ -128,8 +128,10 @@ Example of configuring default pod specs in ``values.yaml``:
 ********************
 
 In addition to default pod specs, it is also possible to configure custom pod specs for individual
-tasks. When defining a custom pod spec for a task, it will override the default pod spec if one is
-defined. Pod specs for individual tasks can be configured under the ``environment`` field in the
+tasks. When defining a custom pod spec for a task, it will merge with the default pod spec if one is
+defined according to Kubernetes `strategic merge patch
+<https://github.com/kubernetes/community/blob/master/contributors/devel/sig-api-machinery/strategic-merge-patch.md>`__.
+Pod specs for individual tasks can be configured under the ``environment`` field in the
 :ref:`experiment config <exp-environment>` (for experiments) or the :ref:`task configuration
 <command-notebook-configuration>` (for other tasks).
 
