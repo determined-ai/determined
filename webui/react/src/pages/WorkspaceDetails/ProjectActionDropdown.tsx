@@ -2,6 +2,7 @@ import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
 import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
 import useModalProjectMove from 'hooks/useModal/Project/useModalProjectMove';
@@ -175,9 +176,9 @@ const ProjectActionDropdown: React.FC<Props> = ({
         menu={menuProps}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
-        <button onClick={stopPropagation}>
+        <Button ghost={true} type="text" onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
-        </button>
+        </Button>
       </Dropdown>
       {contextHolders}
     </div>

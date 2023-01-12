@@ -112,7 +112,7 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
         menu={{ items: menuItems, onClick: onItemClick }}
         placement="bottomRight"
         trigger={['click']}>
-        <Button type="text">
+        <Button ghost type="text">
           <div className={css.overflow}>
             <Icon name="overflow-vertical" />
           </div>

@@ -2,6 +2,7 @@ import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
 import usePermissions from 'hooks/usePermissions';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
 import Icon from 'shared/components/Icon';
@@ -81,9 +82,9 @@ const ModelVersionActionDropdown: React.FC<Props> = ({
         menu={ModelVersionActionMenu}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
-        <button onClick={stopPropagation}>
+        <Button ghost={true} type="text" onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
-        </button>
+        </Button>
       </Dropdown>
     </div>
   );
