@@ -472,9 +472,13 @@ def test_workspace_delete_notebook() -> None:
         bindings.determinedtaskv1State.STATE_TERMINATING,
     ]
 
-    # check that the notebook is not returned in the list of notebooks
-    notebooks_resp = bindings.get_GetNotebooks(
-        admin_session, workspaceId=workspace_resp.workspace.id
-    )
+    # check that the notebook is not returned in the list of notebooks by default.
+    notebooks_resp = bindings.get_GetNotebooks(admin_session)
     nb = next((nb for nb in notebooks_resp.notebooks if nb.id == created_resp.notebook.id), None)
     assert nb is None
+
+    # the api returns a 404
+    with pytest.raises(errors.APIException):
+        notebooks_resp = bindings.get_GetNotebooks(
+            admin_session, workspaceId=workspace_resp.workspace.id
+        )
