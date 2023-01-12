@@ -87,7 +87,7 @@ const GroupActionDropdown = ({
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button type="text">
+        <Button ghost type="text">
           <div className={css.overflow}>
             <Icon name="overflow-vertical" />
           </div>

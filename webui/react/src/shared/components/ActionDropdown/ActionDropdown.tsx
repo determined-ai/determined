@@ -162,7 +162,7 @@ const ActionDropdown = <T extends string>({
         placement="bottomRight"
         trigger={trigger ?? ['click']}
         onOpenChange={onVisibleChange}>
-        <Button type="text" onClick={stopPropagation}>
+        <Button ghost type="text" onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
         </Button>
       </Dropdown>
