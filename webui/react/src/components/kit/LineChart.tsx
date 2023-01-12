@@ -1,6 +1,7 @@
-import React, { MouseEvent, useMemo } from 'react';
+import React, { MouseEvent, ReactElement, useMemo } from 'react';
 import { AlignedData } from 'uplot';
 
+import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
@@ -24,10 +25,14 @@ interface Props {
   title?: string;
   width?: number;
   xLabel?: string;
+  xMax?: number;
+  xMin?: number;
   yLabel?: string;
+  // yMax?: number;
+  // yMin?: number;
 }
 
-const LineChart: React.FC<Props> = ({
+export const LineChart: React.FC<Props> = ({
   closestPoint = false,
   colors,
   data,
@@ -39,8 +44,12 @@ const LineChart: React.FC<Props> = ({
   showTooltip = false,
   title,
   xLabel,
+  xMin,
+  xMax,
   yLabel,
-}: Props) => {
+}: // yMin,
+// yMax,
+Props) => {
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
@@ -81,6 +90,7 @@ const LineChart: React.FC<Props> = ({
     if (showTooltip) {
       plugins.push(tooltipsPlugin({ isShownEmptyVal: false }));
     }
+
     return {
       axes: [
         {
@@ -99,7 +109,16 @@ const LineChart: React.FC<Props> = ({
       height,
       legend: { show: showLegend },
       plugins,
-      scales: { x: { time: false }, y: { distr: scale === Scale.Log ? 3 : 1 } },
+      scales: {
+        x: {
+          range: xMin || xMax ? [Number(xMin), Number(xMax)] : undefined,
+          time: false,
+        },
+        y: {
+          distr: scale === Scale.Log ? 3 : 1,
+          // range: yMin || yMax ? [Number(yMin), Number(yMax)] : undefined,
+        },
+      },
       series: [
         { label: xLabel || 'X' },
         ...data.map((series, idx) => {
@@ -122,6 +141,8 @@ const LineChart: React.FC<Props> = ({
     showLegend,
     showTooltip,
     xLabel,
+    xMax,
+    xMin,
     yLabel,
   ]);
 
@@ -133,4 +154,35 @@ const LineChart: React.FC<Props> = ({
   );
 };
 
-export default LineChart;
+interface GroupProps {
+  children: ReactElement[];
+  data: number[][][];
+}
+
+export const ChartGroup: React.FC<GroupProps> = ({ children, data }: GroupProps) => {
+  let xMin = Infinity,
+    xMax = -Infinity,
+    yMin = Infinity,
+    yMax = -Infinity;
+  data.forEach((series) => {
+    series.forEach((pt) => {
+      if (!isFinite(xMin) || xMin === undefined) {
+        xMin = pt[0];
+        xMax = pt[0];
+        yMin = pt[1];
+        yMax = pt[1];
+      } else {
+        xMin = Math.min(xMin, pt[0]);
+        xMax = Math.max(xMax, pt[0]);
+        yMin = Math.min(yMin, pt[1]);
+        yMax = Math.max(yMax, pt[1]);
+      }
+    });
+  });
+
+  return (
+    <SyncProvider>
+      {children.map((chart: ReactElement) => React.cloneElement(chart, { xMax, xMin, yMax, yMin }))}
+    </SyncProvider>
+  );
+};
