@@ -1,7 +1,7 @@
 import * as t from 'io-ts';
 import queryString from 'query-string';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { updateUserSetting } from 'services/api';
 import { UpdateUserSettingParams } from 'services/types';
@@ -142,7 +142,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   });
   const { isLoading, querySettings, state, update } = useContext(UserSettings);
   const navigate = useNavigate();
-  const pathname = window.location.pathname;
+  const location = useLocation();
+  const pathname = location.pathname;
   const shouldSkipUpdates = useMemo(
     () => config.applicableRoutespace && !pathname.endsWith(config.applicableRoutespace),
     [config.applicableRoutespace, pathname],
@@ -187,7 +188,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const mappedSettings = settingsToQuery(config, settings as Settings);
     const url = `?${mappedSettings}`;
 
-    if (mappedSettings && url !== window.location.search) {
+    if (mappedSettings && url !== location.search) {
       navigate(url, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -298,7 +299,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       update(config.storagePath, (settings) => {
         if (!settings) return updates;
-
         return { ...settings, ...updates };
       });
 
@@ -315,10 +315,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         return prevState;
       }
 
-      updateDB(settings);
-
       return settings;
     });
+
+    updateDB(settings);
 
     if (
       (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
