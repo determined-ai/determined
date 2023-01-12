@@ -7,7 +7,6 @@ import Tooltip from 'components/kit/Tooltip';
 import Icon from 'shared/components/Icon/Icon';
 import { isMouseEvent } from 'shared/utils/routes';
 
-import IconButton from './IconButton';
 import css from './PageHeaderFoldable.module.scss';
 
 export interface Option {
@@ -64,13 +63,11 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
         <div className={css.left}>{leftContent}</div>
         <div className={css.options}>
           {foldableContent && (
-            <IconButton
-              icon={isExpanded ? 'arrow-up' : 'arrow-down'}
-              iconSize="tiny"
-              label="Toggle"
-              type="text"
-              onClick={() => setIsExpanded((prev) => !prev)}
-            />
+            <Tooltip title="Toggle">
+              <Button type="text" onClick={() => setIsExpanded((prev) => !prev)}>
+                <Icon name={isExpanded ? 'arrow-up' : 'arrow-down'} size="tiny" />
+              </Button>
+            </Tooltip>
           )}
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) => (
