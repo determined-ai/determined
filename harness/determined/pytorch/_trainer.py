@@ -176,7 +176,7 @@ def init(
         fp16_compression = False
         average_aggregated_gradients = True
         steps_completed = 0
-        managed_training = False
+        managed_training = True
         debug_enabled = False
     else:
         assert cluster_info, "Unable to detect cluster info"
