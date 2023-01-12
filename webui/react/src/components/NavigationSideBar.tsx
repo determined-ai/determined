@@ -255,14 +255,16 @@ const NavigationSideBar: React.FC = () => {
           <section className={css.launch}>
             <div className={css.launchBlock}>
               <div className={css.launchButton}>
-                <Button type="ghost" onClick={() => openJupyterLabModal()}>
+                <Button type="text" onClick={() => openJupyterLabModal()}>
                   Launch JupyterLab
                 </Button>
               </div>
               {settings.navbarCollapsed ? (
-                <Button onClick={() => openJupyterLabModal()}>
-                  <Icon name="jupyter-lab" />
-                </Button>
+                <div className={css.launchIcon}>
+                  <Button type="text" onClick={() => openJupyterLabModal()}>
+                    <Icon name="jupyter-lab" />
+                  </Button>
+                </div>
               ) : null}
             </div>
           </section>

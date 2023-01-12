@@ -82,11 +82,30 @@
     width: 206px;
 
     .launchButton {
+      background-color: transparent;
+      border-color: var(--theme-stage-border);
+      border-radius: var(--theme-border-radius);
+      border-style: solid;
+      border-width: var(--theme-stroke-width);
+      color: var(--theme-stage-on);
       display: flex;
       flex-grow: 1;
       flex-shrink: 1;
       justify-content: center;
       overflow: hidden;
+    }
+    .launchIcon {
+      align-items: center;
+      background-color: transparent;
+      border-color: var(--theme-stage-border);
+      border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
+      border-style: solid;
+      border-width: var(--theme-stroke-width);
+      color: var(--theme-stage-on);
+      display: flex;
+      flex-shrink: 0;
+      justify-content: center;
+      width: 32px;
     }
   }
   .launchBlock:hover {
