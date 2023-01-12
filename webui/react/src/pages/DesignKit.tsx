@@ -356,7 +356,7 @@ const ChartsSection: React.FC = () => {
         <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
         <LineChart
           data={[line1, line2]}
-          height={100}
+          height={250}
           showLegend={true}
           title="Title"
           xLabel="X Label"
@@ -365,7 +365,7 @@ const ChartsSection: React.FC = () => {
       </Card>
       <Card title="Tooltip options">
         <p>A chart with a tooltip.</p>
-        <LineChart data={[line1, line2]} height={100} showTooltip={true} />
+        <LineChart data={[line1, line2]} height={250} showTooltip={true} />
       </Card>
     </ComponentSection>
   );

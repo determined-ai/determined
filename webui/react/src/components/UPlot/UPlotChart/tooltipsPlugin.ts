@@ -46,7 +46,7 @@ export const tooltipsPlugin = (
       const valueRaw = uPlot.data[i][idx];
 
       const cssClass = valueRaw !== null ? css.valueY : css.valueYEmpty;
-      if (isShownEmptyVal || valueRaw)
+      if (isShownEmptyVal || valueRaw || valueRaw === 0)
         html += `
           <div class="${cssClass}">
             <span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>
