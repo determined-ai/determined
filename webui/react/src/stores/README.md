@@ -197,7 +197,7 @@ maybe that is rare enough that we don't need to worry about it, but it is someth
 
 that said, one possible solution for the issue would be to replace polling with streaming. already the the polling we do amounts to a pretty significant amount of waste. and if we did streaming, we could simply merge the updates from the server with the updates from the client.
 
-in order for this to work, we would want to have a robust comprehensive approach to how we stream data from the backend. but there is some glimmer of support for that from backend team. one particular consideration is, since we might want to wait for updates from more than 6 "things" at a time (6 being the max concurrent network requests), we would want to look into either having an streaming API that multiple heterogeneous "things" can share, or doing some kind of connection multiplexing.
+in order for this to work, we would want to have a robust comprehensive approach to how we stream data from the backend. there is some interest on the part of backend team in doing more streaming though. one particular consideration is, since we might want to wait for updates from more than 6 "things" at a time (6 being the max concurrent network requests), we would want to look into either having an streaming API that multiple heterogeneous "things" can share, or doing some kind of connection multiplexing.
 
 
 
