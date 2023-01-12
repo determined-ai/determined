@@ -15,8 +15,8 @@ should:
 we would like to have a store to be able to have a single, reliable, developer friendly source of truth for application state.
 
 honing on state a bit, there are broadly 4 different kinds of state in our webui:
-  "small" server state: ✅ goes in store  
-    (basically everything in our current store contexts)  
+  - "small" server state: ✅ goes in store  
+    - (basically everything in our current store contexts)  
     - how many agents are connected  
     - how many resource pools are available  
     - active tasks  
@@ -24,14 +24,14 @@ honing on state a bit, there are broadly 4 different kinds of state in our webui
     - roles  
     - users  
     - tasks  
-  "large" server state: 🚫 doesn't go in store (but maybe could)  
+  - "large" server state: 🚫 doesn't go in store (but maybe could)  
     - all the possible combinations of Record<filters, experiments>  
     - all the metrics for all the experiments  
-  persisted ui state: ✅ goes in store  
+  - persisted ui state: ✅ goes in store  
     (basically, everything for which we currently useSettings)  
     - the filters/sorting a user has applied for a given project  
     - persisted user inputs (maybe), such as tags and descriptions a user adds to an experiment  
-  ephemeral ui state: 🚫 doesnt go in store  
+  - ephemeral ui state: 🚫 doesnt go in store  
     - this includes user inputs for a form, etc.  
 
 previously, we had all of the small server state in a single store context. but this caused peformance and ui issues because of the behavior of React context, where any changes to anything in the context would cause unnecessary rerenders in context consumers. we split the different aspects of the store out into separate contexts to avoid this issue. however, the current solution is not very ergonomic and requires some boilerplate to consume. furthermore, we have had lingering issues around application loading state and data inconsistency between pages.
