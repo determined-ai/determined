@@ -102,9 +102,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     clearQuerySettings = false,
   ) => {
     await setSettingsState((currentState) => {
-      const currentSettings = currentState.get(key);
-
-      return currentState.set(key, cb(currentSettings));
+      return currentState.update(key, cb);
     });
 
     if (clearQuerySettings) {

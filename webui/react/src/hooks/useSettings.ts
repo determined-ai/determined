@@ -182,7 +182,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   }, [config, querySettings, state, update, shouldSkipUpdates]);
 
   useEffect(() => {
-    if (querySettings || shouldSkipUpdates) return; // prevent changing the settings state if getting it from querrySettings or if it shouldSkipUpdates
+    if (shouldSkipUpdates) return;
 
     const mappedSettings = settingsToQuery(config, settings as Settings);
     const url = `?${mappedSettings}`;
@@ -294,7 +294,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateSettings = useCallback(
     (updates: Settings, shouldPushUpdate = false) => {
-      if (querySettings || shouldSkipUpdates) return; // prevent changing the settings state if getting it from querrySettings or if it shouldSkipUpdates
+      if (shouldSkipUpdates) return;
 
       update(config.storagePath, (settings) => {
         if (!settings) return updates;
@@ -304,11 +304,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       setShouldPush(shouldPushUpdate);
     },
-    [config, update, shouldSkipUpdates, querySettings],
+    [config, update, shouldSkipUpdates],
   );
 
   useEffect(() => {
-    if (!settings || querySettings) return;
+    if (!settings) return;
 
     setReturnedSettings((prevState) => {
       if (isEqual(prevState, settings)) {
@@ -332,7 +332,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const url = `?${mappedSettings}`;
 
     shouldPush ? navigate(url) : navigate(url, { replace: true });
-  }, [shouldPush, settings, navigate, updateDB, config, querySettings]);
+  }, [shouldPush, settings, navigate, updateDB, config]);
 
   return {
     activeSettings,
