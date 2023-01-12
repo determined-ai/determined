@@ -45,10 +45,15 @@ after an initial evaluation, there were two main candidates for the library:
 
 
 ## mobx
-lets say you just wanted to do a store for the state of agent and resource pools. in the webui, we have places where we use agents/resource pools directly, and we also have places where we use derived versions of the data, such as:
- - the clusterOverview
- - the clusterStatus
-in this case clusterOverview depends just on agents, but clusterStatus depends on both agents and resource pools. in mobx, we could implement such a store like this:
+lets say you just wanted to do a state store for agents and resource pools. in the webui, we have places where we use agents/resource pools directly, and we also have places where we use derived/computed data, such as:
+ - `clusterOverview`, which is derived from `agents` and looks something like:
+```tsx
+{ 
+    ResourceType.CPU : {allocation: 1, available: 1, total: 2},
+    ResourceType.CUDA : {allocation: 39, available: 1: total: 40}
+}
+```
+ - `clusterStatus`, a percentage string representing the allocation of the cluster, which is dervived from agents, resource pools, AND cluster overview. in mobx, we could implement such a store like this:
 
 ```tsx
 class StoreService {
