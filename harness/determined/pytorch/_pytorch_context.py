@@ -56,8 +56,6 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         num_gpus: int,
         exp_conf: Dict[str, Any],
         aggregation_frequency: int,
-        fp16_compression: bool,
-        average_aggregated_gradients: bool,
         steps_completed: int,
         managed_training: bool,
         debug_enabled: bool,
@@ -95,6 +93,9 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         # by torch DDP and apex to initialize in the correct order
         self._wrapped_models = {}  # type: Dict[nn.Module, nn.Module]
 
+        # Keep a map of optimizer configs set in wrap_optimizer which can differ per-optimizer
+        self._optimizer_configs = {}  # type: Dict[Any, Any]
+
         # Use a main model to contain all the models because when using horovod
         # to broadcast the states of models we want to avoid name conflicts for these
         # states, so we set all the models to be submodule of the main model with
@@ -115,8 +116,10 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._managed_training = managed_training
 
         self._aggregation_frequency = aggregation_frequency
-        self._fp16_compression = fp16_compression
-        self._average_aggregated_gradients = average_aggregated_gradients
+
+        # Initialized in wrap_optimizer or caller (to support legacy codepaths)
+        self._fp16_compression = None
+        self._average_aggregated_gradients = None
 
         self._stop_requested = False
 
@@ -262,6 +265,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self,
         optimizer: torch.optim.Optimizer,
         backward_passes_per_step: int = 1,
+        fp16_compression: bool = None,
+        average_aggregated_gradients: bool = None,
     ) -> torch.optim.Optimizer:
         """Returns a wrapped optimizer.
 
@@ -300,18 +305,28 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 )
 
             if self.distributed.size > 1 and self._distributed_backend.use_horovod():
+                # We always override default fp16_compression setting if passed in directly
+                if fp16_compression is None:
+                    fp16_compression = self._fp16_compression
+
                 optimizer = hvd.DistributedOptimizer(
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
                     backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
                     compression=hvd.Compression.fp16
-                    if self._fp16_compression
+                    if fp16_compression
                     else hvd.Compression.none,
                 )
                 logging.debug(
                     "Initialized optimizer for distributed and optimized parallel training."
                 )
 
+        if average_aggregated_gradients is None:
+            average_aggregated_gradients = self._average_aggregated_gradients
+
+        self._optimizer_configs[optimizer] = {
+            "average_aggregated_gradients": average_aggregated_gradients
+        }
         self.optimizers.append(optimizer)
         return optimizer
 
@@ -406,6 +421,12 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         else:
             device = torch.device("cpu")
         return device
+
+    def _set_gradient_compression(self, gradient_compression: bool) -> None:
+        self._fp16_compression = gradient_compression
+
+    def _set_average_aggregated_gradients(self, average_aggregated_gradients: bool) -> None:
+        self._average_aggregated_gradients = average_aggregated_gradients
 
     def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
         """Map generated data to the device allocated by the Determined cluster.

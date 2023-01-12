@@ -229,12 +229,12 @@ def create_trial_and_trial_controller(
             num_gpus=len(gpu_uuids),
             exp_conf=exp_config,
             aggregation_frequency=1,
-            fp16_compression=False,
-            average_aggregated_gradients=True,
             steps_completed=steps_completed,
             managed_training=False,
             debug_enabled=False,
         )
+        trial_context._set_gradient_compression(False)
+        trial_context._set_average_aggregated_gradients(True)
 
         trial_inst = trial_class(context=trial_context)
 

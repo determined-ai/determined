@@ -135,7 +135,7 @@ def main(train_entrypoint: str) -> int:
 
 
 def _run_pytorch_trial(
-    trial_class: Type[pytorch.PyTorchTrial],
+    trial_class: "Type[pytorch.PyTorchTrial]",
     info: det.ClusterInfo,
 ) -> int:
     det.common.set_logger(info.trial._debug)

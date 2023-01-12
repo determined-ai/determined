@@ -57,12 +57,13 @@ def context(mmdet_config_dir: str) -> det_torch.PyTorchTrialContext:
         num_gpus=1,
         exp_conf=config,
         aggregation_frequency=1,
-        fp16_compression=False,
-        average_aggregated_gradients=True,
         steps_completed=0,
         managed_training=False,
         debug_enabled=False,
     )
+    context._set_gradient_compression(False)
+    context._set_average_aggregated_gradients(True)
+
     return context
 
 

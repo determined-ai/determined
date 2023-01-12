@@ -133,6 +133,10 @@ def _load_pytorch_trial_for_checkpoint_export(
         )
         hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
         use_gpu, container_gpus, slot_ids = det._get_gpus(limit_gpus=False)
+        fp16_compression = bool(
+            config.get_optimizations_config().get("gradient_compression", False)
+        )
+        average_aggregated_gradients = bool(config.average_training_metrics_enabled())
 
         trial_context = pytorch.PyTorchTrialContext(
             core_context=core._dummy_init(),
@@ -144,13 +148,11 @@ def _load_pytorch_trial_for_checkpoint_export(
             aggregation_frequency=int(
                 config.get_optimizations_config().get("aggregation_frequency", 1)
             ),
-            fp16_compression=bool(
-                config.get_optimizations_config().get("gradient_compression", False)
-            ),
-            average_aggregated_gradients=bool(config.average_training_metrics_enabled()),
             steps_completed=0,
             managed_training=managed_training,
             debug_enabled=False,
         )
+        trial_context._set_gradient_compression(fp16_compression)
+        trial_context._set_average_aggregated_gradients(average_aggregated_gradients)
 
     return trial_class, trial_context

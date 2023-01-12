@@ -174,7 +174,7 @@ def init(
         exp_conf = {}
         aggregation_frequency = 1
         fp16_compression = False
-        average_aggregated_gradients = False
+        average_aggregated_gradients = True
         steps_completed = 0
         managed_training = False
         debug_enabled = False
@@ -213,10 +213,12 @@ def init(
             num_gpus=core_context.distributed.get_num_agents(),
             exp_conf=exp_conf,
             aggregation_frequency=aggregation_frequency,
-            fp16_compression=fp16_compression,
-            average_aggregated_gradients=average_aggregated_gradients,
             steps_completed=steps_completed,
             managed_training=managed_training,
             debug_enabled=debug_enabled,
         )
+
+        context._set_gradient_compression(fp16_compression)
+        context._set_average_aggregated_gradients(average_aggregated_gradients)
+
         yield context
