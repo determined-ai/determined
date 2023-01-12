@@ -951,6 +951,113 @@ commands:
           background: true
 
 jobs:
+  danh-test-det-deploy:
+    docker:
+      - image: <<pipeline.parameters.docker-image>>
+    parameters:
+      cluster-id:
+        type: string
+      det-version:
+        type: string
+      keypair:
+        type: string
+        default: "integrations-test"
+      enable-cors:
+        type: boolean
+        default: false
+      master-tls-cert:
+        type: string
+        default: ""
+      master-tls-key:
+        type: string
+        default: ""
+      master-cert-name:
+        type: string
+        default: ""
+      aux-agent-instance-type:
+        type: string
+        default: "m5.large"
+      compute-agent-instance-type:
+        type: string
+        default: "p2.xlarge"
+      max-dynamic-agents:
+        type: integer
+        default: 1
+      retain-log-group:
+        type: boolean
+        default: false
+      log-group-prefix:
+        type: string
+        default: ""
+      reattach-enabled:
+        type: boolean
+        default: false
+      deployment-type:
+        type: string
+        default: simple
+    steps:
+      - run:
+          name: Initialize extra arguments
+          command: touch /tmp/det-deploy-extra-args
+      - when:
+          condition:
+            equal: [true, << parameters.enable-cors >>]
+          steps:
+            - run:
+                name: Enable CORS
+                command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
+
+      - run:
+          name: Configure TLS arguments
+          command: |
+            if [ -n "<<parameters.master-tls-cert>>" ]; then echo "--master-tls-cert <<parameters.master-tls-cert>>" >> /tmp/det-deploy-extra-args; fi
+            if [ -n "<<parameters.master-tls-key>>" ]; then echo "--master-tls-key <<parameters.master-tls-key>>" >> /tmp/det-deploy-extra-args; fi
+            if [ -n "<<parameters.master-cert-name>>" ]; then echo "--master-cert-name <<parameters.master-cert-name>>" >> /tmp/det-deploy-extra-args; fi
+      - run:
+          name: Configure log group arguments
+          command: |
+            if <<parameters.retain-log-group>>; then echo "--retain-log-group" >> /tmp/det-deploy-extra-args; fi
+            if [ -n "<<parameters.log-group-prefix>>" ]; then echo "--log-group-prefix <<parameters.log-group-prefix>>" >> /tmp/det-deploy-extra-args; fi
+      - when:
+          condition:
+            equal: [true, <<parameters.reattach-enabled>>]
+          steps:
+            - run:
+                name: set reattach-enabled
+                command: echo --agent-reattach-enabled true --agent-reconnect-attempts 24 --no-update-terminate-agents --notebook-timeout 1800 >> /tmp/det-deploy-extra-args
+
+      - run:
+          name: Deploy AWS cluster
+          command: |
+            echo "-----BEGIN ARGS-----"
+            cat /tmp/det-deploy-extra-args
+            echo "-----END ARGS-----"
+            det deploy aws up \
+              $(< /tmp/det-deploy-extra-args) \
+              --cluster-id <<parameters.cluster-id>> \
+              --custom-tags danh-test-tag=im-right-here \
+              --det-version <<parameters.det-version>> \
+              --aux-agent-instance-type <<parameters.aux-agent-instance-type>> \
+              --compute-agent-instance-type <<parameters.compute-agent-instance-type>> \
+              --max-dynamic-agents <<parameters.max-dynamic-agents>> \
+              --keypair <<parameters.keypair>> \
+              --deployment-type <<parameters.deployment-type>> \
+              --yes
+
+      - run:
+          name: Daddle around
+          no_output_timeout: 20m
+          command: |
+            det deploy aws list
+
+      - run:
+          name: Terminate AWS Cluster
+          when: always
+          no_output_timeout: 20m
+          command: |
+            det deploy aws down \
+              --cluster-id <<parameters.cluster-id>> --yes
+
   build-helm:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2104,6 +2211,13 @@ jobs:
           channel: <<parameters.slack-channel>>
 
 workflows:
+  danh-test-det-deploy-wf:
+    jobs:
+      - danh-test-det-deploy:
+          context: aws
+          cluster-id: ${CLUSTER_ID}
+          det-version: ${CIRCLE_SHA1}
+
   lint:
     jobs:
       - build-proto
