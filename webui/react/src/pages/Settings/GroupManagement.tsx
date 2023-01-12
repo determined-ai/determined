@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import GroupAvatar from 'components/GroupAvatar';
 import Button from 'components/kit/Button';
 import Page from 'components/Page';
+import Section from 'components/Section';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
@@ -324,17 +325,18 @@ const GroupManagement: React.FC = () => {
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (
-    <Page
-      containerRef={pageRef}
-      options={
-        <Space>
-          <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
-            New Group
-          </Button>
-        </Space>
-      }
-      title="Groups">
-      {canViewGroups && <div className={css.usersTable}>{table}</div>}
+    <Page bodyNoPadding containerRef={pageRef}>
+      <Section
+        options={
+          <Space>
+            <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
+              New Group
+            </Button>
+          </Space>
+        }
+        title="Groups">
+        {canViewGroups && <div className={css.usersTable}>{table}</div>}
+      </Section>
       {modalCreateGroupContextHolder}
     </Page>
   );

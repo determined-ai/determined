@@ -21,7 +21,6 @@ import { User, UserOrGroup, Workspace } from 'types';
 import { getAssignedRole, getIdFromUserOrGroup, getName, isUser } from 'utils/user';
 
 import RoleRenderer from './RoleRenderer';
-import css from './WorkspaceMembers.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   WorkspaceMembersSettings,
@@ -223,7 +222,7 @@ const WorkspaceMembers: React.FC<Props> = ({
   ]);
 
   return (
-    <div className={css.membersContainer}>
+    <>
       {settings ? (
         <InteractiveTable
           columns={columns}
@@ -245,7 +244,7 @@ const WorkspaceMembers: React.FC<Props> = ({
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-    </div>
+    </>
   );
 };
 

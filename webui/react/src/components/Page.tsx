@@ -2,13 +2,16 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import PageHeader from 'components/PageHeader';
+import usePermissions from 'hooks/usePermissions';
 import BasePage, { Props as BasePageProps } from 'shared/components/Page';
+import Spinner from 'shared/components/Spinner';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
 
 export interface Props extends Omit<BasePageProps, 'pageHeader'> {
   docTitle?: string;
+  ignorePermissions?: boolean;
 }
 
 const getFullDocTitle = (branding: string, title?: string, clusterName?: string) => {
@@ -23,6 +26,8 @@ const getFullDocTitle = (branding: string, title?: string, clusterName?: string)
 };
 
 const Page: React.FC<Props> = (props: Props) => {
+  const { loading: loadingPermissions } = usePermissions();
+
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const branding = info.branding || BrandingType.Determined;
   const brandingPath = `${process.env.PUBLIC_URL}/${branding}`;
@@ -41,18 +46,22 @@ const Page: React.FC<Props> = (props: Props) => {
           </>
         )}
       </Helmet>
-      <BasePage
-        {...props}
-        pageHeader={
-          <PageHeader
-            breadcrumb={props.breadcrumb}
-            options={props.options}
-            sticky={props.stickyHeader}
-            subTitle={props.subTitle}
-            title={props.title}
-          />
-        }
-      />
+      {!props.ignorePermissions && loadingPermissions ? (
+        <Spinner center />
+      ) : (
+        <BasePage
+          {...props}
+          pageHeader={
+            <PageHeader
+              breadcrumb={props.breadcrumb}
+              options={props.options}
+              sticky={props.stickyHeader}
+              subTitle={props.subTitle}
+              title={props.title}
+            />
+          }
+        />
+      )}
     </>
   );
 };

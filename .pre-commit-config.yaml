@@ -51,7 +51,7 @@ repos:
       - id: check-github-workflows
 
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 21.7b0
     hooks:
       - id: black
         # known issue fixed in a newer version:

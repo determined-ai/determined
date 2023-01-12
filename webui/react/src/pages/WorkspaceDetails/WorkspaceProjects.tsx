@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Link from 'components/Link';
+import ProjectActionDropdown from 'components/ProjectActionDropdown';
+import ProjectCard from 'components/ProjectCard';
 import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
@@ -34,9 +36,6 @@ import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
-
-import ProjectActionDropdown from '../WorkspaceDetails/ProjectActionDropdown';
-import ProjectCard from '../WorkspaceDetails/ProjectCard';
 
 import css from './WorkspaceProjects.module.scss';
 import settingsConfig, {

@@ -67,6 +67,20 @@ func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
 	)
 }
 
+// ReportProvisionerTick reports the state of all provision requests by a provisioner.
+func ReportProvisionerTick(
+	system *actor.System, instances []*model.Instance, instanceType string) {
+	system.TellAt(
+		actor.Addr("telemetry"),
+		analytics.Track{
+			Event: "provisioner_tick",
+			Properties: map[string]interface{}{
+				"instance_type": instanceType,
+				"instances":     instances,
+			},
+		})
+}
+
 // ReportExperimentCreated reports that an experiment has been created.
 func ReportExperimentCreated(system *actor.System, e *model.Experiment) {
 	system.TellAt(

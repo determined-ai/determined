@@ -937,7 +937,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
-      <div className={css.experimentTab}>
+      <>
         <TableBatch
           actions={batchActions.map((action) => ({
             disabled: !availableBatchActions.includes(action),
@@ -976,7 +976,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           size="small"
           updateSettings={updateSettings as UpdateSettings}
         />
-      </div>
+      </>
       {modalColumnsCustomizeContextHolder}
       {modalExperimentMoveContextHolder}
     </Page>
