@@ -173,6 +173,8 @@ def init(
         trial_seed = _generate_local_seed()
         exp_conf = {}
         aggregation_frequency = 1
+        fp16_compression = False
+        average_aggregated_gradients = False
         steps_completed = 0
         managed_training = False
         debug_enabled = False
@@ -188,6 +190,10 @@ def init(
         trial_seed = cluster_info.trial.trial_seed
         exp_conf = cluster_info.trial._config
         aggregation_frequency = int(exp_conf["optimizations"]["aggregation_frequency"])
+        fp16_compression = bool(exp_conf["optimizations"]["gradient_compression"])
+        average_aggregated_gradients = bool(
+            exp_conf["optimizations"]["average_aggregated_gradients"]
+        )
         steps_completed = cluster_info.trial._steps_completed
         managed_training = True
         debug_enabled = cluster_info.trial._debug
@@ -203,8 +209,12 @@ def init(
             core_context=core_context,
             trial_seed=trial_seed,
             hparams=hparams,
+            slots_per_trial=core_context.distributed.get_size(),
+            num_gpus=core_context.distributed.get_num_agents(),
             exp_conf=exp_conf,
             aggregation_frequency=aggregation_frequency,
+            fp16_compression=fp16_compression,
+            average_aggregated_gradients=average_aggregated_gradients,
             steps_completed=steps_completed,
             managed_training=managed_training,
             debug_enabled=debug_enabled,
