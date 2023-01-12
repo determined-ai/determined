@@ -96,12 +96,12 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     querySettings.current = url;
   }, []);
 
-  const update = async (
+  const update = (
     key: string,
     cb: (currentSettings?: Settings) => Settings,
     clearQuerySettings = false,
   ) => {
-    await setSettingsState((currentState) => {
+    setSettingsState((currentState) => {
       return currentState.update(key, cb);
     });
 
