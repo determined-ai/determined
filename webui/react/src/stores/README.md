@@ -40,8 +40,8 @@ previously, we had all of the small server state in a single store context. but 
 there exist observable libraries that are specifically designed to provide a unified store that is well optimized for avoiding unnecessary re-renders, and simultaneously being very easy to use.
 
 after an initial evaluation, there were two main candidates for the library:
- - mobx
- - micro-observables
+ - `mobx`
+ - `micro-observables`
 
 
 ## mobx
