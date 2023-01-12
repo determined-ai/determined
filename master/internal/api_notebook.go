@@ -54,6 +54,14 @@ func (a *apiServer) GetNotebooks(
 		return nil, err
 	}
 
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err = a.ask(notebooksAddr, req, &resp); err != nil {
 		return nil, err
 	}
