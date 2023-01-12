@@ -28,8 +28,6 @@ interface Props {
   xMax?: number;
   xMin?: number;
   yLabel?: string;
-  // yMax?: number;
-  // yMin?: number;
 }
 
 export const LineChart: React.FC<Props> = ({
@@ -47,9 +45,7 @@ export const LineChart: React.FC<Props> = ({
   xMin,
   xMax,
   yLabel,
-}: // yMin,
-// yMax,
-Props) => {
+}: Props) => {
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
@@ -116,7 +112,6 @@ Props) => {
         },
         y: {
           distr: scale === Scale.Log ? 3 : 1,
-          // range: yMin || yMax ? [Number(yMin), Number(yMax)] : undefined,
         },
       },
       series: [
@@ -161,28 +156,22 @@ interface GroupProps {
 
 export const ChartGroup: React.FC<GroupProps> = ({ children, data }: GroupProps) => {
   let xMin = Infinity,
-    xMax = -Infinity,
-    yMin = Infinity,
-    yMax = -Infinity;
+    xMax = -Infinity;
   data.forEach((series) => {
     series.forEach((pt) => {
       if (!isFinite(xMin) || xMin === undefined) {
         xMin = pt[0];
         xMax = pt[0];
-        yMin = pt[1];
-        yMax = pt[1];
       } else {
         xMin = Math.min(xMin, pt[0]);
         xMax = Math.max(xMax, pt[0]);
-        yMin = Math.min(yMin, pt[1]);
-        yMax = Math.max(yMax, pt[1]);
       }
     });
   });
 
   return (
     <SyncProvider>
-      {children.map((chart: ReactElement) => React.cloneElement(chart, { xMax, xMin, yMax, yMin }))}
+      {children.map((chart: ReactElement) => React.cloneElement(chart, { xMax, xMin }))}
     </SyncProvider>
   );
 };
