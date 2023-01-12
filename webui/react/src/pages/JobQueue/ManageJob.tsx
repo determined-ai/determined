@@ -7,7 +7,7 @@ import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import { useResourcePools } from 'stores/resourcePools';
+import { useResourcePools } from 'stores/micro-observables';
 import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
@@ -81,8 +81,7 @@ const ManageJob: React.FC<Props> = ({
 }) => {
   const formRef = useRef<FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  const resourcePools = Loadable.getOrElse([], useResourcePools()); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 
   const details = useMemo(() => {

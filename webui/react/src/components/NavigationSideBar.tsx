@@ -1,5 +1,6 @@
 import { Button, Menu, MenuProps, Tooltip, Typography } from 'antd';
 import { boolean } from 'io-ts';
+import { observer } from 'mobx-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
@@ -12,17 +13,15 @@ import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
-import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import WorkspaceQuickSearch from 'pages/WorkspaceDetails/WorkspaceQuickSearch';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { paths } from 'routes/utils';
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
-import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useResourcePools } from 'stores/resourcePools';
+import { useClusterStatus } from 'stores/micro-observables';
 import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
@@ -112,9 +111,11 @@ export const NavigationItem: React.FC<ItemProps> = ({
   );
 };
 
-const NavigationSideBar: React.FC = () => {
+const NavigationSideBar: React.FC = observer(() => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
+
+  const clusterStatus = useClusterStatus();
 
   const loadableAuth = useAuth();
   const isAuthenticated = Loadable.match(loadableAuth.auth, {
@@ -126,16 +127,8 @@ const NavigationSideBar: React.FC = () => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();
-  const agents = useAgents();
-  const overview = useClusterOverview();
-  const clusterStatus = Loadable.match(Loadable.all([agents, overview]), {
-    Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
-    NotLoaded: () => undefined, // TODO show spinner when this is loading
-  });
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
@@ -365,6 +358,6 @@ const NavigationSideBar: React.FC = () => {
       </nav>
     </CSSTransition>
   );
-};
+});
 
 export default NavigationSideBar;

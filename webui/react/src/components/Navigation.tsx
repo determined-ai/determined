@@ -4,9 +4,8 @@ import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
-import { useClusterOverview, useFetchAgents } from 'stores/agents';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useFetchResourcePools } from 'stores/resourcePools';
+import { useClusterOverview } from 'stores/micro-observables';
 import { useFetchUserRolesAndAssignments } from 'stores/userRoles';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
@@ -25,22 +24,20 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const { ui } = useUI();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
-  const overview = useClusterOverview();
 
-  const fetchAgents = useFetchAgents(canceler);
-  const fetchResourcePools = useFetchResourcePools(canceler);
+  const clusterOverview = useClusterOverview();
+
   const fetchWorkspaces = useFetchWorkspaces(canceler);
   const fetchMyRoles = useFetchUserRolesAndAssignments(canceler);
 
-  usePolling(fetchAgents);
   usePolling(fetchWorkspaces);
 
   useEffect(() => {
     updateFaviconType(
-      Loadable.quickMatch(overview, false, (o) => o[ResourceType.ALL].allocation !== 0),
+      Loadable.quickMatch(clusterOverview, false, (o) => o[ResourceType.ALL].allocation !== 0),
       info.branding || BrandingType.Determined,
     );
-  }, [overview, info]);
+  }, [clusterOverview, info]);
 
   const rbacEnabled = useFeature().isOn('rbac');
   usePolling(
@@ -51,12 +48,6 @@ const Navigation: React.FC<Props> = ({ children }) => {
     },
     { interval: 120000 },
   );
-
-  useEffect(() => {
-    fetchResourcePools();
-
-    return () => canceler.abort();
-  }, [canceler, fetchResourcePools]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

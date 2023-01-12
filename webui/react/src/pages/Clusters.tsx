@@ -8,8 +8,7 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
-import { useAgents, useClusterOverview } from 'stores/agents';
-import { useResourcePools } from 'stores/resourcePools';
+import { useAgents, useClusterOverview, useClusterStatus, useResourcePools } from 'stores/micro-observables';
 import { Loadable } from 'utils/loadable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
@@ -38,17 +37,17 @@ const Clusters: React.FC = () => {
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
-  const overview = useClusterOverview();
+  const resourcePools = Loadable.getOrElse([], useResourcePools()); // TODO show spinner when this is loading
+
   const agents = useAgents();
+  const clusterOverview = useClusterOverview();
 
   const cluster = useMemo(() => {
-    return Loadable.match(Loadable.all([agents, overview]), {
+    return Loadable.match(Loadable.all([agents, clusterOverview]), {
       Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
       NotLoaded: () => undefined, // TODO show spinner when this is loading
     });
-  }, [overview, resourcePools, agents]);
+  }, [clusterOverview, resourcePools, agents]);
 
   const handleTabChange = useCallback(
     (key: string) => {

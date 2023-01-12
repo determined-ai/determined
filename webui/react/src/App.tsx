@@ -21,9 +21,9 @@ import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { StoreContext } from 'stores';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
+import { StoreProvider } from 'stores/micro-observables';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
@@ -150,11 +150,11 @@ const AppView: React.FC = () => {
 const App: React.FC = () => {
   return (
     <HelmetProvider>
-      <StoreContext>
+      <StoreProvider>
         <DndProvider backend={HTML5Backend}>
           <AppView />
         </DndProvider>
-      </StoreContext>
+      </StoreProvider>
     </HelmetProvider>
   );
 };

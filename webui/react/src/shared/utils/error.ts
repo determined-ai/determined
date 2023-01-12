@@ -57,7 +57,7 @@ const defaultErrOptions: DetErrorOptions = {
 };
 
 export const isError = (error: unknown): error is Error => {
-  return error instanceof Error;
+  return error instanceof Error || error instanceof TypeError;
 };
 
 export const isDetError = (error: unknown): error is DetError => {
@@ -94,6 +94,7 @@ export class DetError extends Error implements DetErrorOptions {
 
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   constructor(e?: any, options: DetErrorOptions = {}) {
+    // console.log(e);
     const defaultMessage = isError(e) ? e.message : isString(e) ? e : DEFAULT_ERROR_MESSAGE;
     const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);

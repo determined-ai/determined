@@ -9,8 +9,7 @@ import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
-import { useEnsureAgentsFetched } from 'stores/agents';
-import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
+import { useAgents, useClusterOverview, useClusterStatus, useResourcePools } from 'stores/micro-observables';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -85,24 +84,12 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+
+  const resourcePools = Loadable.getOrElse([], useResourcePools()); // TODO show spinner when this is loading
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
-  const [canceler] = useState(new AbortController());
-
-  const fetchAgents = useEnsureAgentsFetched(canceler);
-  const fetchResourcePools = useFetchResourcePools(canceler);
-
-  usePolling(fetchResourcePools, { interval: 10000 });
-
   const hideModal = useCallback(() => setRpDetail(undefined), []);
-
-  useEffect(() => {
-    fetchAgents();
-    return () => canceler.abort();
-  }, [canceler, fetchAgents]);
 
   return (
     <div className={css.base}>

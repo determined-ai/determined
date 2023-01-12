@@ -32,7 +32,7 @@ import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error'
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
-import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
+import { useAgents, useClusterOverview, useClusterStatus, useResourcePools } from 'stores/micro-observables';
 import {
   ExperimentItem,
   ExperimentSearcherName,
@@ -109,10 +109,8 @@ const useModalHyperparameterSearch = ({
     Object.values(SEARCH_METHODS).find((searcher) => searcher.name === experiment.searcherType) ??
       SEARCH_METHODS.ASHA,
   );
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const canceler = useRef<AbortController>(new AbortController());
-  const fetchResourcePools = useFetchResourcePools(canceler.current);
+  const resourcePools = Loadable.getOrElse([], useResourcePools());
   const [resourcePool, setResourcePool] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );
@@ -120,12 +118,6 @@ const useModalHyperparameterSearch = ({
   const [currentPage, setCurrentPage] = useState(0);
   const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
-
-  useEffect(() => {
-    if (resourcePools == null) {
-      fetchResourcePools();
-    }
-  }, [fetchResourcePools, resourcePools]);
 
   useEffect(() => {
     const cancelerTemp = canceler.current;

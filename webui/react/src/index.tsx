@@ -1,3 +1,4 @@
+import { configure } from 'mobx';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 /**
@@ -22,6 +23,10 @@ import 'dev';
 if (process.env.PUBLIC_URL && history.location.pathname === '/') {
   history.replace(process.env.PUBLIC_URL);
 }
+
+configure({
+  enforceActions: 'never',
+});
 
 const container = document.getElementById('root');
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

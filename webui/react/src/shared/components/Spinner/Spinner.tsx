@@ -1,28 +1,49 @@
 import { Spin } from 'antd';
 import type { SpinProps } from 'antd/es/spin';
-import React from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 
 import Icon, { IconSize } from 'shared/components/Icon/Icon';
+import { UnknownRecord } from 'shared/types';
+import { Loadable, Loaded } from 'utils/loadable';
 
 import css from './Spinner.module.scss';
 
-interface Props extends Omit<SpinProps, 'size'> {
+// import { ReactNode } from 'react';
+// import { Loadable } from 'utils/loadable';
+
+// interface Props<T> {
+//   loadables: { [K in keyof T]: Loadable<T[K]> };
+//   children: ReactNode;
+// }
+
+// type LoadableSpinner<T> = React.FC<Props<T>>
+
+// export const LoadingSpinner<T>: React.FC<Props<T>> = ({ loadables, children }) => {
+//   return <></>;
+
+// };
+
+interface Props<T> extends Omit<SpinProps, 'size'> {
   center?: boolean;
+  child?: React.FC<T>
   children?: React.ReactNode;
   conditionalRender?: boolean;
   inline?: boolean;
+  loadableProps?: { [K in keyof T]: Loadable<T[K]> };
   size?: IconSize;
 }
 
-const Spinner: React.FC<Props> = ({
+const Spinner = <T extends UnknownRecord>({
   center,
   className,
   conditionalRender,
   size,
   spinning,
   tip,
+  loadableProps,
+  child,
   ...props
-}: Props) => {
+}: Props<T>): ReactElement => {
   const classes = [css.base];
 
   if (className) classes.push(className);

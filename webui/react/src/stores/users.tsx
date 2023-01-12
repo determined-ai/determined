@@ -1,12 +1,12 @@
 import { Map } from 'immutable';
 import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
+import { encodeParams } from 'utils/store';
 
 import { getCurrentUser, getUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
 import { DetailedUser } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { encodeParams } from 'utils/store';
 
 type UsersPagination = {
   pagination: V1Pagination;
