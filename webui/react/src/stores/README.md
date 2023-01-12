@@ -170,14 +170,16 @@ this `StoreService` could grow to encompass *everything* mentioned above for inc
 
 on balance, my recommendation would be to use `micro-observables` as i believe it is more explicit and less error prone. 
 
-also, even though `mobx` has a large community and significant adoption, a lot of the examples you will online use the experimental decorators feature. this is because, as of the previous version of `mobx`, it looks like it was imminent that decorators would be a part of JS. however, the decorators proposal has stagnated and the future of it is unclear, so they are no longer permitted for the newest version of mobx. so this can make for some confusion, since most of the examples online are not valid javascript (and won't be anytime soon).
+also, even though `mobx` has a large community and significant adoption, a lot of the examples you online use the experimental decorators feature. this is because, as of the previous version of `mobx`, it looked like it was imminent that decorators would be a part of JS. however, the decorators proposal has stagnated and the future of it is unclear, and they are no longer permitted for the newest version of mobx. so this can make for some confusion, since most of the examples online are not valid javascript (and won't be anytime soon).
 
 overall, the
 - lack of explicitness
 - relative opaqueness/error-proneness compared to `micro-observables`
 - non-JSness of online examples
 
-offset the developer-friendliness that would otherwise come from a library with a large community following, hence the recommendation for `micro-observables`, or, as i like to call them.
+offset the developer-friendliness that would otherwise come from a library with a large community following, hence the recommendation for `micro-observables`.
+
+on top of that `micro-observables` is a super clean, super small codebase with an API you can easily wrap your head around in its entirety.
 
 ## alternatives considered
 
