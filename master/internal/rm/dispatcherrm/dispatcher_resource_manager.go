@@ -269,6 +269,7 @@ type dispatcherResourceManager struct {
 	wlmType                  string
 	launcherVersionIsOK      bool
 	poolProviderMap          map[string][]string
+	dispatchIDToHPCJobID     map[string]string
 }
 
 func newDispatcherResourceManager(
@@ -314,13 +315,14 @@ func newDispatcherResourceManager(
 		dispatchIDToAllocationID: make(map[string]model.AllocationID),
 		slotsUsedPerGroup:        make(map[*tasklist.Group]int),
 
-		masterTLSConfig:     masterTLSConfig,
-		loggingConfig:       loggingConfig,
-		jobWatcher:          newDispatchWatcher(apiClient, authToken, rmConfig.LauncherAuthFile),
-		authToken:           authToken,
-		launcherVersionIsOK: false,
-		poolConfig:          poolConfig,
-		poolProviderMap:     makeProvidedPoolsMap(poolConfig),
+		masterTLSConfig:      masterTLSConfig,
+		loggingConfig:        loggingConfig,
+		jobWatcher:           newDispatchWatcher(apiClient, authToken, rmConfig.LauncherAuthFile),
+		authToken:            authToken,
+		launcherVersionIsOK:  false,
+		poolConfig:           poolConfig,
+		poolProviderMap:      makeProvidedPoolsMap(poolConfig),
+		dispatchIDToHPCJobID: make(map[string]string),
 	}
 }
 
@@ -803,6 +805,16 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 			log.Warnf("allocation has malformed resources: %v", alloc)
 			return nil
 		}
+
+		_, exist := m.dispatchIDToHPCJobID[msg.DispatchID]
+		if !exist && msg.HPCJobID != "" {
+			hpcJobIDMsg := "HPC Job ID: " + msg.HPCJobID
+			ctx.Tell(task.AllocationRef, sproto.ContainerLog{
+				AuxMessage: &hpcJobIDMsg,
+			})
+			m.dispatchIDToHPCJobID[msg.DispatchID] = msg.HPCJobID
+		}
+
 		r := maps.Values(alloc.Resources)[0]
 		rID := r.Summary().ResourcesID
 
@@ -810,7 +822,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 		ctx.Tell(task.AllocationRef, sproto.ResourcesStateChanged{
 			ResourcesID:      rID,
 			ResourcesState:   resourcesStateFromDispatchState(msg.IsPullingImage, msg.State),
-			ResourcesStarted: &sproto.ResourcesStarted{HPCJobID: msg.HPCJobID},
+			ResourcesStarted: &sproto.ResourcesStarted{},
 		})
 
 	case DispatchExited:
@@ -895,6 +907,7 @@ func (m *dispatcherResourceManager) receiveRequestMsg(ctx *actor.Context) error 
 
 		// Remove the dispatch from mapping tables.
 		delete(m.dispatchIDToAllocationID, msg.DispatchID)
+		delete(m.dispatchIDToHPCJobID, msg.DispatchID)
 
 	case sproto.SetGroupMaxSlots:
 		m.getOrCreateGroup(ctx, msg.Handler).MaxSlots = msg.MaxSlots
