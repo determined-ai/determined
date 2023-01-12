@@ -314,7 +314,7 @@ class DeepSpeedTrialController(det.TrialController):
                             w.total_batches_processed,
                         )
                     except SystemExit as se:
-                        logging.exception("Exception in _train_for_step")
+                        logging.info("Trial exited from _train_for_step")
                         if not self.context._is_model_info_trial():
                             raise se
                         if self.is_chief:
@@ -325,7 +325,7 @@ class DeepSpeedTrialController(det.TrialController):
                                     num_params=model_info_dict["num_params"],
                                     trainable_num_params=model_info_dict["trainable_num_params"],
                                     activation_mem_per_gpu=model_info_dict[
-                                        "activation_mem_per_gpu",
+                                        "activation_mem_per_gpu"
                                     ],
                                 )
                         metrics = {}
@@ -990,20 +990,6 @@ class DeepSpeedTrial(det.Trial):
         """
         for i, m in enumerate(context.models):
             m.save_checkpoint(path, tag=f"model{i}")
-            self._append_autotuning_model_info(path, m)
-
-    def _append_autotuning_model_info(
-        self, path: pathlib.Path, model: deepspeed.DeepSpeedEngine
-    ) -> None:
-        if model.global_rank != 0:
-            return
-        try:
-            model_info = model.autotuning_model_info
-            with path.joinpath("model_info.json").open("w") as f:
-                json.dump(model_info, f, indent=2)
-        except AttributeError:
-            # no autotuning_model_info means we are not obtaining model info
-            pass
 
     def load(
         self,
