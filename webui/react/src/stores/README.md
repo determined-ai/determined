@@ -9,14 +9,15 @@ goal: to make it so that any data that is either
 should:
 - be easily accessible with minimal boilerplate
 - trigger re-renders when the data changes
-- not trigger re-renders when the data doesn't change
+- without triggering unnecessary re-renders
+- without causing redundant API calls
 
 
 we would like to have a store to be able to have a single, reliable, developer friendly source of truth for application state.
 
 honing on state a bit, there are broadly 4 different kinds of state in our webui:
   - "small" server state: ✅ goes in store  
-    - (basically everything in our current store contexts)  
+    (basically everything in our current store contexts)  
     - how many agents are connected  
     - how many resource pools are available  
     - active tasks  
@@ -160,6 +161,8 @@ there are more filled out versions of each of these stores here in the repo. the
 
 this `StoreService` could grow to encompass *everything* mentioned above for inclusion in the store, along with all the user settings. having 
 
+
+
 on balance, my recommendation would be to use `micro-observables` as i believe it is more explicit and less error prone. 
 
 also, even though `mobx` has a large community and significant adoption, a lot of the examples you will online use the experimental decorators feature. this is because, as of the previous version of `mobx`, it looks like it was imminent that decorators would be a part of JS. however, the decorators proposal has stagnated and the future of it is unclear, so they are no longer permitted for the newest version of mobx. so this can make for some confusion, since most of the examples online are not valid javascript (and won't be anytime soon).
@@ -176,3 +179,18 @@ offset the developer-friendliness that would otherwise come from a library with 
 rxjs is another library for observables, and is the most fully featured. but is a lot more opaque and complex, and it does not appear to offer anything that we would need in an initial version of an observable state store. on top of that, members of the team have used it before and found it lacking, so it would not be my recommendation. `micro-observables` replicates the most useful part of the `rxjs` API with a cleaner syntax, so if we started with `micro-observables`, we would be able to easily transition `rxjs` if we ever found its additional features necessary.
 
 recoil: is another library that has been floated as a candidate for our state management library, but it is currently in experimental status, and as such unsuitable as a foundation for our application.
+
+## topics for further consideration
+
+- what should be the proper boundary and interaction between server state and persisted UI state? 
+
+for example in the case of experiment descriptions and tags. when a user is typing it is UI state, then when they submit, it becomes server state. but that doesnt mean we should refresh the entire list of experiments every time a user adds a description. we can get by with actually going in and updating the experiment in the table. but there is a subtle race condition that could arise there with the current approach. since we are doing polling, there may already be a `fetchExperiments` response on its way back when the user submits the modification. so if we update the UI on submit, then update on the stale fetch, we would erroneously revert the update the user made.
+
+maybe that is rare enough that we don't need to worry about it, but it is something to keep in mind. there have been issues caused by stale API response cloberring valid state in the webui before.
+
+that said, one possible solution for the issue would be to replace polling with streaming. already the the polling we do amounts to a pretty significant amount of waste. and if we did streaming, we could simply merge the updates from the server with the updates from the client.
+
+in order for this to work, we would want to have a robust comprehensive approach to how we stream data from the backend. but there is some glimmer of support for that from backend team. one particular consideration is, since we might want to wait for updates from more than 6 "things" at a time (6 being the max concurrent network requests), we would want to look into either having an streaming API that multiple heterogeneous "things" can share, or doing some kind of connection multiplexing.
+
+
+
