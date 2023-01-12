@@ -308,15 +308,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   );
 
   useEffect(() => {
-    if (!settings) return;
+    if (!settings || isEqual(settings, returnedSettings)) return;
 
-    setReturnedSettings((prevState) => {
-      if (isEqual(prevState, settings)) {
-        return prevState;
-      }
-
-      return settings;
-    });
+    setReturnedSettings(settings);
 
     updateDB(settings);
 
@@ -332,7 +326,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const url = `?${mappedSettings}`;
 
     shouldPush ? navigate(url) : navigate(url, { replace: true });
-  }, [shouldPush, settings, navigate, updateDB, config]);
+  }, [shouldPush, settings, returnedSettings, navigate, updateDB, config]);
 
   return {
     activeSettings,
