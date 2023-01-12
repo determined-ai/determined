@@ -516,7 +516,7 @@ func (m *launcherMonitor) getDispatchStatus(
 		return launcher.DispatchInfo{}, false
 	}
 
-	ctx.Log().Infof("DispatchID %s state: %s", dispatchID, *resp.State)
+	ctx.Log().Debugf("DispatchID %s state: %s", dispatchID, *resp.State)
 	// We have details, need to process them
 	return resp, false
 }
