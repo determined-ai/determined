@@ -411,7 +411,7 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         num_losses: Optional[int] = 1,
         verbosity: Optional[int] = 1,
         min_loss_scale: Optional[float] = None,
-        max_loss_scale: Optional[float] = 2.0**24,
+        max_loss_scale: Optional[float] = 2.0 ** 24,
     ) -> Tuple:
         """
         Configure automatic mixed precision for your models and optimizers using NVIDIA's Apex
