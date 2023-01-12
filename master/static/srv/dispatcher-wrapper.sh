@@ -239,6 +239,15 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
     esac
 fi
 
+# The default "max locked memory" is 64, which is too low for IB
+# If we are getting the default value in the container, then raise it to
+# unlimited.   If it is set to some other value, leave it as-is to
+# allow a customer override.
+if [ $(ulimit -l) == 64 ]; then
+    log_debug "DEBUG: Setting (max locked memory) ulimit -l unlimited"
+    ulimit -l unlimited
+fi
+
 # When running under podman rootless, the default user on entry is root/uid=0 inside the
 # container, which maps to the launching user outside the container.  In this case,
 # rewrite the determined agent user uid/gid in /run/determined/etc/passwd to be

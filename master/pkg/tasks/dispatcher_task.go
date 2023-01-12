@@ -605,6 +605,11 @@ func getEnvVarsForLauncherManifest(
 	// On non-zero exit of any component/step of the sbatch job, terminate with an error
 	m["SLURM_KILL_BAD_EXIT"] = "1"
 
+	// If not provided by the user, set default MPI to pmi2
+	if _, ok := m["SLURM_MPI_TYPE"]; !ok {
+		m["SLURM_MPI_TYPE"] = "pmi2"
+	}
+
 	// Some in-container setup in slurm needs to know the slot type to set other envvars correctly.
 	m["DET_SLOT_TYPE"] = string(slotType)
 	// If slots_per_node is specified, generate a DET_SLOT_IDS value to enable use of the slots
