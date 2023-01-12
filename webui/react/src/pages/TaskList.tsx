@@ -318,7 +318,7 @@ const TaskList: React.FC = () => {
       return (
         <div className={css.sourceName}>
           {taskNameRenderer(_, record, index)}
-          <Button ghost={true} type="text" onClick={() => handleSourceShow(info)}>
+          <Button type="text" onClick={() => handleSourceShow(info)}>
             Show {info.sources.length} Source{info.plural}
           </Button>
         </div>

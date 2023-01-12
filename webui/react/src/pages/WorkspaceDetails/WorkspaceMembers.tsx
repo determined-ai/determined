@@ -89,7 +89,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   return (
     <div>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button ghost type="text">
+        <Button type="text">
           <Icon name="overflow-vertical" />
         </Button>
       </Dropdown>

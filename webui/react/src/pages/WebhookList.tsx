@@ -125,7 +125,7 @@ const WebhooksView: React.FC = () => {
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: Webhook) => (
       <Dropdown menu={WebhookActionMenu(record)} trigger={['click']}>
-        <Button ghost type="text">
+        <Button type="text">
           <div className={css.overflow}>
             <Icon name="overflow-vertical" />
           </div>
