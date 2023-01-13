@@ -4,7 +4,7 @@
   height: 100%;
   overflow: auto;
 
-  & nav {
+  & :global(nav:not(.ant-breadcrumb)) { // this was breaking the CSS for the Actionbar
     background-color: var(--theme-surface);
     box-shadow: var(--theme-elevation);
     display: flex;
