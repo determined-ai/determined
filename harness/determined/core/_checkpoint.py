@@ -134,8 +134,6 @@ def merge_resources(
       - a merged list of resources
       - a dict mapping conflicting files to ranks that would upload them
 
-    Note that we allow multiple ranks to upload directories, but only one rank may upload any
-    given file.
     """
     files: Set[str] = set()
     uploaders: Dict[str, List] = {}
@@ -319,6 +317,9 @@ class CheckpointContext:
             resources = self._storage_manager._list_directory(ckpt_dir)
             if selector is not None:
                 resources = {key: resources[key] for key in resources if selector(key)}
+
+            # Metadata.json is a special file that is created, merged and uploaded separately.
+            resources.pop("metadata.json", None)
         else:
             resources = {}
 
