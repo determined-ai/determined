@@ -4970,6 +4970,7 @@ class v1InitialOperations:
 class v1Int32FieldFilter:
     gt: "typing.Optional[int]" = None
     gte: "typing.Optional[int]" = None
+    h: "typing.Optional[int]" = None
     incl: "typing.Optional[typing.Sequence[int]]" = None
     lt: "typing.Optional[int]" = None
     lte: "typing.Optional[int]" = None
@@ -4980,6 +4981,7 @@ class v1Int32FieldFilter:
         *,
         gt: "typing.Union[int, None, Unset]" = _unset,
         gte: "typing.Union[int, None, Unset]" = _unset,
+        h: "typing.Union[int, None, Unset]" = _unset,
         incl: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
         lt: "typing.Union[int, None, Unset]" = _unset,
         lte: "typing.Union[int, None, Unset]" = _unset,
@@ -4989,6 +4991,8 @@ class v1Int32FieldFilter:
             self.gt = gt
         if not isinstance(gte, Unset):
             self.gte = gte
+        if not isinstance(h, Unset):
+            self.h = h
         if not isinstance(incl, Unset):
             self.incl = incl
         if not isinstance(lt, Unset):
@@ -5006,6 +5010,8 @@ class v1Int32FieldFilter:
             kwargs["gt"] = obj["gt"]
         if "gte" in obj:
             kwargs["gte"] = obj["gte"]
+        if "h" in obj:
+            kwargs["h"] = obj["h"]
         if "incl" in obj:
             kwargs["incl"] = obj["incl"]
         if "lt" in obj:
@@ -5023,6 +5029,8 @@ class v1Int32FieldFilter:
             out["gt"] = self.gt
         if not omit_unset or "gte" in vars(self):
             out["gte"] = self.gte
+        if not omit_unset or "h" in vars(self):
+            out["h"] = self.h
         if not omit_unset or "incl" in vars(self):
             out["incl"] = self.incl
         if not omit_unset or "lt" in vars(self):
@@ -12834,6 +12842,7 @@ def get_GetExperiments(
     description: "typing.Optional[str]" = None,
     experimentIdFilter_gt: "typing.Optional[int]" = None,
     experimentIdFilter_gte: "typing.Optional[int]" = None,
+    experimentIdFilter_h: "typing.Optional[int]" = None,
     experimentIdFilter_incl: "typing.Optional[typing.Sequence[int]]" = None,
     experimentIdFilter_lt: "typing.Optional[int]" = None,
     experimentIdFilter_lte: "typing.Optional[int]" = None,
@@ -12854,6 +12863,7 @@ def get_GetExperiments(
         "description": description,
         "experimentIdFilter.gt": experimentIdFilter_gt,
         "experimentIdFilter.gte": experimentIdFilter_gte,
+        "experimentIdFilter.h": experimentIdFilter_h,
         "experimentIdFilter.incl": experimentIdFilter_incl,
         "experimentIdFilter.lt": experimentIdFilter_lt,
         "experimentIdFilter.lte": experimentIdFilter_lte,
