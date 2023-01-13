@@ -8,6 +8,11 @@ import sys
 # TODO add option to run rules in parallel
 # TODO add option to pass in a git diff to check or git hash
 
+# check if PRECOMMIT_ENABLE_SLOW is set to true
+if os.environ.get("PRE_COMMIT_ENABLE_SLOW", "false") != "true":
+    print("Skipping slow checks.")
+    exit(0)
+
 PROJECT_NAME = "determined"
 root = Path(os.getenv("PROJECT_ROOT", os.getcwd())).absolute()
 if not str(root).endswith(PROJECT_NAME) and not str(root).endswith("saas"):  # FIXME
