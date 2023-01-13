@@ -211,10 +211,10 @@ class SharedFSStorageManager(storage.StorageManager):
         if paths is None:
             selector = None
         else:
+            paths_set = set(paths)
 
             def selector(x: str) -> bool:
-                assert paths is not None
-                return x in paths
+                return x in paths_set
 
         dst = os.path.join(self._base_path, dst)
         copytree(src, dst, selector=selector, dirs_exist_ok=True)
