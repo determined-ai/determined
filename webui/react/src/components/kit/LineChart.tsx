@@ -1,6 +1,7 @@
-import React, { MouseEvent, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
+import SelectFilter from 'components/SelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
@@ -17,7 +18,7 @@ interface Props {
   focusedSeries?: number;
   height?: number;
   onSeriesHover?: (seriesIdx: number | null) => void;
-  onSeriesSelect?: (event: MouseEvent, seriesIdx: number) => void;
+  onSeriesSelect?: (seriesIdx: number) => void;
   scale?: Scale;
   seriesNames?: string;
   showLegend?: boolean;
@@ -32,8 +33,9 @@ export const LineChart: React.FC<Props> = ({
   closestPoint = false,
   colors,
   data,
-  focusedSeries,
+  focusedSeries = -1,
   height = 400,
+  onSeriesSelect,
   scale = Scale.Linear,
   seriesNames,
   showLegend = false,
@@ -42,6 +44,8 @@ export const LineChart: React.FC<Props> = ({
   xLabel,
   yLabel,
 }: Props) => {
+  const [focusSeriesIdx, setFocusSeries] = useState<number>(focusedSeries);
+
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
@@ -68,8 +72,7 @@ export const LineChart: React.FC<Props> = ({
       plugins.push(
         closestPointPlugin({
           // onPointClick: (e, point) => {
-          // if (typeof onTrialClick !== 'function') return;
-          // onTrialClick(e, trialIds[point.seriesIdx - 1]);
+          //   console.log(point.seriesIdx);
           // },
           // onPointFocus: (point) => {
           // if (typeof onTrialFocus !== 'function') return;
@@ -137,7 +140,32 @@ export const LineChart: React.FC<Props> = ({
   return (
     <>
       {title && <h5 className={css.chartTitle}>{title}</h5>}
-      <UPlotChart data={chartData} focusIndex={focusedSeries} options={chartOptions} />
+      {data.length > 1 && (
+        <SelectFilter
+          defaultValue={focusSeriesIdx}
+          options={[
+            {
+              label: 'No metric selection',
+              value: -1,
+            },
+            ...data.map((series, idx) => ({
+              label: `Series ${idx}`,
+              value: idx,
+            })),
+          ]}
+          onSelect={(seriesKey) => {
+            if (onSeriesSelect) {
+              onSeriesSelect(focusSeriesIdx < 0 ? undefined : focusSeriesIdx);
+            }
+            setFocusSeries(Number(seriesKey));
+          }}
+        />
+      )}
+      <UPlotChart
+        data={chartData}
+        focusIndex={focusSeriesIdx < 0 ? undefined : focusSeriesIdx}
+        options={chartOptions}
+      />
     </>
   );
 };
