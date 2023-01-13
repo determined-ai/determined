@@ -601,6 +601,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
 		JobId:        c.jobID.String(),
+		WorkspaceId:  int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
