@@ -33,36 +33,14 @@ def _copytree(
         dstname = os.path.join(dst, srcobj.name)
         src_relpath = os.path.relpath(srcname, src_root)
         try:
-            is_symlink = srcobj.is_symlink()
-            if is_symlink:
-                if srcobj.is_dir():
-                    # Directories are created here only if they are specified
-                    # in the selector. If a directory is not specified in
-                    # the selector, and it is required by any nested files,
-                    # the directory will be created then.
-                    if selector is None or selector(src_relpath + "/"):
-                        os.makedirs(dstname, exist_ok=True)
-                        have_copied = True
-                    copytree(
-                        srcobj,
-                        dstname,
-                        selector,
-                        src_root,
-                        dirs_exist_ok=dirs_exist_ok,
-                    )
-                else:
-                    # If selector is None all files are copied; if selector is not None
-                    # then files are copied according to the selector. Before files
-                    # are copied all top directory structure is created. This ensures
-                    # that copied dirs are not dangling.
-                    if selector is None or selector(src_relpath):
-                        have_copied = True
-                        os.makedirs(dst, exist_ok=True)
-                        shutil.copy2(srcobj, dstname)
-            elif srcobj.is_dir():
+            if srcobj.is_dir():
+                # Directories are created here only if they are specified
+                # in the selector. If a directory is not specified in
+                # the selector, and it is required by any nested files,
+                # the directory will be created then.
                 if selector is None or selector(src_relpath + "/"):
-                    have_copied = True
                     os.makedirs(dstname, exist_ok=True)
+                    have_copied = True
                 copytree(
                     srcobj,
                     dstname,
@@ -71,7 +49,10 @@ def _copytree(
                     dirs_exist_ok=dirs_exist_ok,
                 )
             else:
-                # Will raise a SpecialFileError for unsupported file types.
+                # If selector is None all files are copied; if selector is not None
+                # then files are copied according to the selector. Before files
+                # are copied all top directory structure is created. This ensures
+                # that copied dirs are not dangling.
                 if selector is None or selector(src_relpath):
                     have_copied = True
                     os.makedirs(dst, exist_ok=True)

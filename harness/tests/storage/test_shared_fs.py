@@ -179,3 +179,29 @@ def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> No
     util.validate_checkpoint(
         dst_dir, expected_files={"subdir/file2.txt": "nested file 2", "subdir/": None}
     )
+
+    # Test copytree with symlinks.
+    src_dir1 = tmp_path.joinpath("src1")
+    util.create_checkpoint(src_dir1, {"file_1": "content 1"})
+
+    src_dir2 = tmp_path.joinpath("src2")
+    util.create_checkpoint(
+        src_dir2,
+        {"symlink_dir/": None, "symlink_dir/file_nested": "nested file", "file_2": "content 2"},
+    )
+
+    os.symlink(
+        src_dir2.joinpath("symlink_dir"), src_dir1.joinpath("subdir"), target_is_directory=True
+    )
+
+    dst_dir = tmp_path.joinpath("dst6")
+    shared.copytree(str(src_dir1), str(dst_dir))
+
+    util.validate_checkpoint(
+        dst_dir,
+        expected_files={
+            "file_1": "content 1",
+            "subdir/": None,
+            "subdir/file_nested": "nested file",
+        },
+    )
