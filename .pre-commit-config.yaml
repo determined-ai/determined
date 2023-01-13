@@ -35,8 +35,9 @@ repos:
       - id: hz-check
         name: Check.py Overall
         description: run all local checks and format pre-push based on the directories changed.
-        stages:
+        stages: # how do I just limit it to push
           - push
+          - commit
         entry: ./pre-commit/check.py
         language: python
 

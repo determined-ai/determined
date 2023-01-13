@@ -18,8 +18,6 @@ if not str(root).endswith(PROJECT_NAME) and not str(root).endswith("saas"):  # F
     exit(1)
 os.chdir(root)
 
-raise Exception("ran")
-
 rules: Dict[Path, Union[str, List[str]]] = {
     root
     / "harness": [
