@@ -82,3 +82,6 @@ fmt:
 .PHONY: check
 check:
 	git ls-files -z '*.rst' | xargs -0 rstfmt -w $(RSTFMT_WIDTH) --check
+
+test:
+	/bin/true
