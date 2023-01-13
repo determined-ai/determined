@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -30,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 const (
@@ -186,8 +188,19 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	if _, err = a.GetWorkspaceByID(ctx, int32(workspaceID), *user, true); err != nil {
-		return err
+	w := &workspacev1.Workspace{}
+	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
+	if err := a.m.db.QueryProto(
+		"get_workspace", w, workspaceID, user.ID,
+	); errors.Is(err, db.ErrNotFound) {
+		return notFoundErr
+	} else if err != nil {
+		return errors.Wrapf(err, "error fetching workspace (%d) from database", workspaceID)
+	}
+	if w.Archived {
+		// CHAT: we might want to use a.GetWorkspaceByID here instead.
+		// Do we allow you to launch into a workspace that you don't have view access to?
+		return notFoundErr
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
