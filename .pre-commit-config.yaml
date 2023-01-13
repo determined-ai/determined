@@ -32,6 +32,14 @@ repos:
         exclude_types:
           - zsh
         args: [-w, -s, -l, -i, '4', -ci, -bn]
+      - id: hz-check
+        name: Check.py Overall
+        description: run all local checks and format pre-push based on the directories changed.
+        stages:
+          - push
+        entry: ./pre-commit/check.py
+        language: python
+
 
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.28.0
