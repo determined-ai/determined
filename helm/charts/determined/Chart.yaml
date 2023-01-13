@@ -1,7 +1,7 @@
 apiVersion: v1
 name: determined
 description: An open source deep learning training platform with support for distributed training and hyperparameter search.
-version: "0.18.54"
+version: "0.18.56"
 icon: https://github.com/determined-ai/determined/blob/master/determined-logo.png?raw=true
 home: https://www.determined.ai/
 annotations:
