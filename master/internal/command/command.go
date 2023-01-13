@@ -481,16 +481,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(&apiv1.SetTensorboardPriorityResponse{Tensorboard: c.toTensorboard(ctx)})
 
-	case *apiv1.DeleteWorkspaceRequest:
-		if c.Metadata.WorkspaceID != model.AccessScopeID(msg.Id) {
-			// on workspace mismatch we silently ignore the request as these are sent out in batch.
-			return nil
-		}
-		ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
-			AllocationSignal:    sproto.KillAllocation,
-			InformationalReason: "user requested workspace delete",
-		})
-
 	case sproto.NotifyRMPriorityChange:
 		ctx.Respond(c.setPriority(ctx, msg.Priority, false))
 

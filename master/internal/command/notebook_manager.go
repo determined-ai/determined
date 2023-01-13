@@ -53,11 +53,6 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
-	case *apiv1.DeleteWorkspaceRequest:
-		// FIXME: TellAll?
-		// TODO: add to other managers
-		ctx.AskAll(msg, ctx.Children()...).GetAll()
-
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
