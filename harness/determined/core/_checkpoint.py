@@ -271,7 +271,6 @@ class CheckpointContext:
         if selector is not None:
             resources = {key: resources[key] for key in resources if selector(key)}
             paths = list(resources.keys())
-            paths.append("metadata.json")
         else:
             paths = []
 
@@ -318,7 +317,7 @@ class CheckpointContext:
         # Collect and filter resources for all uploading ranks.
         if want_upload:
             resources = self._storage_manager._list_directory(ckpt_dir)
-            if selector:
+            if selector is not None:
                 resources = {key: resources[key] for key in resources if selector(key)}
         else:
             resources = {}
@@ -327,9 +326,13 @@ class CheckpointContext:
         merged_resources, conflicts = merge_resources(all_resources)
         if conflicts:
             self._resolve_conflicts(ckpt_dir, conflicts)
-        # Merge and save merged metadata locally for each rank to avoid conflicts
-        # after pausing and unpausing experiment.
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
+
+        all_metadata = self._merge_metadata(metadata or {})
+        upload_mask = self._dist.allgather(want_upload)
+        metadata_writer_rank = upload_mask.index(True)
+        if self._dist.rank == metadata_writer_rank:
+            self._write_metadata_file(ckpt_dir, metadata)
+            self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=["metadata.json"])
 
         if want_upload:
             assert ckpt_dir
@@ -343,9 +346,8 @@ class CheckpointContext:
                     list(resources.keys()),
                 )
             )
-            # Since metadata is not counted among resources, append it manually.
-            paths.append("metadata.json")
-            self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
+            if len(paths) > 0:
+                self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
 
         # Synchronize workers.
         _ = self._dist.allgather(None)
@@ -518,12 +520,12 @@ class CheckpointContext:
             # Each rank saves files directly to ckpt_dir which means there is no conflict
             # detection on upload. Metadata still needs to be merged and saved,
             # and checkpoint has to be reported.
+            all_metadata = self._merge_metadata(metadata or {})
+
             if self._dist.rank == 0:
                 resources = self._storage_manager._list_directory(ckpt_dir)
 
-            all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
-
-            if self._dist.rank == 0:
+                self._write_metadata_file(os.fspath(path), all_metadata)
                 self._report_checkpoint(storage_id, resources, all_metadata)
 
             return
@@ -550,9 +552,8 @@ class CheckpointContext:
         if conflicts:
             self._resolve_conflicts(ckpt_dir, conflicts)
 
-        # Merge and save merged metadata locally for each rank to avoid conflicts
-        # after pausing and unpausing experiment.
-        all_metadata = self._merge_and_save_metadata(ckpt_dir, metadata=metadata or {})
+        all_metadata = self._merge_metadata(metadata or {})
+        self._write_metadata_file(os.fspath(path), all_metadata)
 
         if want_upload:
             # Use post_store_path to upload and clean up ckpt_dir after uploading.
@@ -566,19 +567,14 @@ class CheckpointContext:
 
         return storage_id
 
-    def _merge_and_save_metadata(
+    def _merge_metadata(
         self,
-        ckpt_dir: Optional[str],
         metadata: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        # Gather metadata across nodes.
         all_metadata = self._dist.allgather(metadata or {})
-        # Merge metadata and report errors when the same keys have different values.
         merged_metadata, conflicts = merge_metadata(all_metadata)
         if conflicts:
             self._raise_conflict_error(conflicts, "metadata")
-        if ckpt_dir is not None and self._dist.local_rank == 0:
-            self._write_metadata_file(ckpt_dir, merged_metadata)
         return merged_metadata
 
     @contextlib.contextmanager
