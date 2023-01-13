@@ -295,7 +295,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     [config, update, shouldSkipUpdates],
   );
 
-  useEffect(() => { // updates, if necessary, the returned settings
+  useEffect(() => {
+    // updates, if necessary, the returned settings
     if (!settings || isEqual(settings, returnedSettings)) return;
 
     setReturnedSettings(settings);
@@ -303,7 +304,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     updateDB(settings);
   }, [settings, returnedSettings, updateDB]);
 
-  useEffect(() => { // updates the query settings
+  useEffect(() => {
+    // updates the query settings
     if (shouldSkipUpdates) return;
 
     if (
