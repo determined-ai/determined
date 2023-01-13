@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -35,10 +36,11 @@ func projectNotFoundErr(id int) error {
 	return status.Errorf(codes.NotFound, fmt.Sprintf("project (%d) not found", id))
 }
 
+// pgdb can be nil to use the singleton database for testing.
 func setupProjectAuthZTest(
-	t *testing.T,
+	t *testing.T, pgdb *db.PgDB,
 ) (*apiServer, *mocks.ProjectAuthZ, *mocks.WorkspaceAuthZ, model.User, context.Context) {
-	api, workspaceAuthZ, curUser, ctx := setupWorkspaceAuthZTest(t)
+	api, workspaceAuthZ, curUser, ctx := setupWorkspaceAuthZTest(t, pgdb)
 
 	if pAuthZ == nil {
 		pAuthZ = &mocks.ProjectAuthZ{}
@@ -71,7 +73,7 @@ func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer
 }
 
 func TestAuthZCanCreateProject(t *testing.T) {
-	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t)
+	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t, nil)
 
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).
 		Return(nil).Once()
@@ -118,7 +120,7 @@ func TestAuthZCanCreateProject(t *testing.T) {
 }
 
 func TestAuthZGetProject(t *testing.T) {
-	api, projectAuthZ, _, _, ctx := setupProjectAuthZTest(t)
+	api, projectAuthZ, _, _, ctx := setupProjectAuthZTest(t, nil)
 
 	// Deny returns same as 404,
 	_, err := api.GetProject(ctx, &apiv1.GetProjectRequest{Id: -9999})
@@ -139,7 +141,7 @@ func TestAuthZGetProject(t *testing.T) {
 
 func TestAuthZCanMoveProject(t *testing.T) {
 	// Setup.
-	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t)
+	api, projectAuthZ, workspaceAuthZ, _, ctx := setupProjectAuthZTest(t, nil)
 
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Once()
@@ -192,7 +194,7 @@ func TestAuthZCanMoveProject(t *testing.T) {
 
 func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 	// Setup.
-	api, authZExp, projectAuthZ, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, projectAuthZ, curUser, ctx := setupExpAuthTest(t, nil)
 
 	_, srcProjectID := createProjectAndWorkspace(ctx, t, api)
 	_, destProjectID := createProjectAndWorkspace(ctx, t, api)
@@ -235,7 +237,7 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 }
 
 func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
-	api, projectAuthZ, _, _, ctx := setupProjectAuthZTest(t)
+	api, projectAuthZ, _, _, ctx := setupProjectAuthZTest(t, nil)
 
 	cases := []struct {
 		DenyFuncName string
@@ -321,7 +323,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 }
 
 func TestGetProjectByActivity(t *testing.T) {
-	api, _, ctx := setupAPITest(t)
+	api, _, ctx := setupAPITest(t, nil)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
 	_, err := api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
