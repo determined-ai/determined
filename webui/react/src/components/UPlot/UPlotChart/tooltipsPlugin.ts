@@ -40,23 +40,47 @@ export const tooltipsPlugin = (
         ${xSerie.label}: ${xValue}
       </div>`;
 
-    uPlot.series.forEach((serie, i) => {
+    const seriesValues = uPlot.series.map((serie, i) => {
       if (serie.scale === 'x' || !serie.show) return;
 
       const label = yLabels[i - 1] || null;
       const valueRaw = uPlot.data[i][idx];
-      const log = Math.log10(Math.abs(valueRaw));
-      const precision = log > -5 ? 6 - Math.max(0, Math.ceil(log)) : undefined;
 
       const cssClass = valueRaw !== null ? css.valueY : css.valueYEmpty;
-      if (isShownEmptyVal || valueRaw || valueRaw === 0)
-        html += `
+      if (isShownEmptyVal || valueRaw || valueRaw === 0) {
+        const log = Math.log10(Math.abs(valueRaw || 0));
+        const precision = log > -5 ? 6 - Math.max(0, Math.ceil(log)) : undefined;
+
+        return {
+          html: `
           <div class="${cssClass}">
             <span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>
             ${label ? label + '<br />' : ''}
             ${serie.label}: ${valueRaw != null ? humanReadableNumber(valueRaw, precision) : 'N/A'}
-          </div>`;
+          </div>`,
+          val: valueRaw,
+        };
+      }
+      return { val: null };
     });
+
+    html += seriesValues
+      .sort((a, b) => {
+        if (!a || !b) {
+          return 0;
+        }
+        if (a.val === null) {
+          if (b.val === null) {
+            return 0;
+          }
+          return 1;
+        } else if (b.val === null) {
+          return -1;
+        }
+        return (b.val || 0) - (a.val || 0);
+      })
+      .map((seriesValue) => seriesValue?.html || '')
+      .join('');
 
     return html;
   };
