@@ -313,7 +313,9 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     setReturnedSettings(settings);
 
     updateDB(settings);
+  }, [settings, returnedSettings, updateDB]);
 
+  useEffect(() => {
     if (
       (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
         (setting) => !!setting.skipUrlEncoding,
@@ -326,7 +328,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const url = `?${mappedSettings}`;
 
     shouldPush ? navigate(url) : navigate(url, { replace: true });
-  }, [shouldPush, settings, returnedSettings, navigate, updateDB, config]);
+  }, [shouldPush, settings, navigate, config]);
 
   return {
     activeSettings,
