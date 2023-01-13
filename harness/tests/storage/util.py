@@ -421,11 +421,11 @@ def run_storage_upload_download_sharded_test(
     # 5.Test downloading with selector excluding all files.
     download_dir = tmp_path.joinpath(f"test5_download_{pex.distributed.rank//2}")
 
-    def selector(x: str) -> bool:
+    def selector1(x: str) -> bool:
         return False
 
     try:
-        checkpoint_context.download(storage_id, download_dir, selector=selector)
+        checkpoint_context.download(storage_id, download_dir, selector=selector1)
         assert not download_dir.exists(), f"{download_dir} should not exist"
     finally:
         shutil.rmtree(download_dir, ignore_errors=True)

@@ -24,8 +24,8 @@ def _copytree(
     dst: str,
     base_path: str,
     selector: Optional[Callable[[str], bool]],
-    dirs_exist_ok=False,
-):
+    dirs_exist_ok: bool = False,
+) -> str:
     errors = []
     have_copied = False
     for srcobj in entries:
@@ -98,8 +98,8 @@ def copytree(
     src: str,
     dst: str,
     base_path: str,
-    selector=None,
-    dirs_exist_ok=False,
+    selector: Optional[Callable[[str], bool]] = None,
+    dirs_exist_ok: bool = False,
 ) -> str:
 
     with os.scandir(src) as itr:
@@ -206,11 +206,13 @@ class SharedFSStorageManager(storage.StorageManager):
         self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
     ) -> None:
         src = os.fspath(src)
+
         if paths is None:
             selector = None
         else:
 
             def selector(x: str) -> bool:
+                assert paths
                 return x in paths
 
         dst = os.path.join(self._base_path, dst)

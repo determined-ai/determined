@@ -314,6 +314,7 @@ class CheckpointContext:
         )
         # Collect and filter resources for all uploading ranks.
         if want_upload:
+            assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
             if selector is not None:
                 resources = {key: resources[key] for key in resources if selector(key)}
@@ -332,7 +333,8 @@ class CheckpointContext:
         upload_mask = self._dist.allgather(want_upload)
         metadata_writer_rank = upload_mask.index(True)
         if self._dist.rank == metadata_writer_rank:
-            self._write_metadata_file(ckpt_dir, metadata)
+            assert ckpt_dir
+            self._write_metadata_file(ckpt_dir, all_metadata)
             self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=["metadata.json"])
 
         if want_upload:
