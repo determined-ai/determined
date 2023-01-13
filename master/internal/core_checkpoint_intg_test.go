@@ -318,14 +318,14 @@ func mockExperimentS3(
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
-		Config:               cfg,
+		Config:               cfg.AsLegacy(),
 		ModelDefinitionBytes: db.ReadTestModelDefiniton(t, folderPath),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		ProjectID:            1,
 	}
-	err := pgDB.AddExperiment(&exp)
+	err := pgDB.AddExperiment(&exp, cfg)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
 }

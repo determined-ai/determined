@@ -230,14 +230,14 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
-		Config:               cfg,
+		Config:               cfg.AsLegacy(),
 		ModelDefinitionBytes: ReadTestModelDefiniton(t, DefaultTestSrcPath),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		ProjectID:            1,
 	}
-	err := db.AddExperiment(&exp)
+	err := db.AddExperiment(&exp, cfg)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
 }
