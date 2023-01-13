@@ -91,7 +91,6 @@ TaskType = Literal["command", "notebook", "tensorboard", "shell"]
 
 def get_task_info(task_type: TaskType, task_id: str) -> Dict[str, Any]:
     task = ["det", "-m", conf.make_master_url(), task_type, "list", "--json"]
-    print("THIS IS TASK: ", task)
     task_data = json.loads(subprocess.check_output(task).decode())
     return next((d for d in task_data if d["id"] == task_id), {})
 
@@ -107,9 +106,7 @@ def command_succeeded(command_id: str) -> bool:
 
 
 def wait_for_task_state(task_type: TaskType, task_id: str, state: str, ticks: int = 60) -> None:
-    print("inside waiting for task state")
     for _ in range(ticks):
-        print("looping")
         info = get_task_info(task_type, task_id)
         gotten_state = info.get("state")
         if gotten_state == state:
