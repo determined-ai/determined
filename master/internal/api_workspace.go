@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -516,6 +517,11 @@ func (a *apiServer) DeleteWorkspace(
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debugf("deleting workspace %d NTSC", req.Id)
+	// FIXME: this shouldn't block for long. do we need any err handling?
+	command.MessageNTSC(a.m.system, req).GetAll()
+
 	if len(projects) == 0 {
 		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
 		return &apiv1.DeleteWorkspaceResponse{Completed: (err == nil)},
@@ -537,6 +543,7 @@ func (a *apiServer) ArchiveWorkspace(
 	if err != nil {
 		return nil, err
 	}
+	// CHECK: we don't seem to touch experiments when archiving workspaces.
 
 	holder := &workspacev1.Workspace{}
 	if err = a.m.db.QueryProto("archive_workspace", holder, req.Id, true); err != nil {

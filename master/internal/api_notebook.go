@@ -45,7 +45,7 @@ const (
 	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
-var notebooksAddr = actor.Addr("notebooks")
+var notebooksAddr = actor.Addr(command.NotebookActorPath)
 
 func (a *apiServer) GetNotebooks(
 	ctx context.Context, req *apiv1.GetNotebooksRequest,
@@ -53,6 +53,14 @@ func (a *apiServer) GetNotebooks(
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err = a.ask(notebooksAddr, req, &resp); err != nil {
@@ -104,7 +112,7 @@ func (a *apiServer) GetNotebook(
 	return resp, nil
 }
 
-func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID string) error {
+func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID string) error {
 	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: notebookID})
 	if err != nil {
 		return err
@@ -123,7 +131,7 @@ func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID stri
 func (a *apiServer) IdleNotebook(
 	ctx context.Context, req *apiv1.IdleNotebookRequest,
 ) (resp *apiv1.IdleNotebookResponse, err error) {
-	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	err = a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +141,7 @@ func (a *apiServer) IdleNotebook(
 func (a *apiServer) KillNotebook(
 	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
-	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	err = a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
