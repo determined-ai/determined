@@ -13,7 +13,7 @@ import { Scale } from 'types';
 
 import css from './LineChart.module.scss';
 
-interface Series {
+interface Serie {
   color?: string;
   data: number[][];
   name?: string;
@@ -21,13 +21,13 @@ interface Series {
 
 interface Props {
   closestPoint?: boolean;
-  data: Series[];
   focusedSeries?: number;
   height?: number;
   onSeriesHover?: (seriesIdx: number | null) => void;
   onSeriesSelect?: (seriesIdx: number | null) => void;
   onXAxisSelect?: (axisName: string) => void;
   scale?: Scale;
+  series: Serie[];
   showLegend?: boolean;
   showTooltip?: boolean;
   title?: string;
@@ -39,12 +39,12 @@ interface Props {
 
 export const LineChart: React.FC<Props> = ({
   closestPoint = false,
-  data,
   focusedSeries = -1,
   height = 400,
   onSeriesSelect,
   onXAxisSelect,
   scale = Scale.Linear,
+  series,
   showLegend = false,
   showTooltip = false,
   title,
@@ -58,11 +58,11 @@ export const LineChart: React.FC<Props> = ({
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
 
-    data.forEach((series, seriesIndex) => {
-      yValues[seriesIndex] = {};
-      series.data.forEach((pt) => {
+    series.forEach((serie, serieIndex) => {
+      yValues[serieIndex] = {};
+      serie.data.forEach((pt) => {
         xValues.push(pt[0]);
-        yValues[seriesIndex][pt[0]] = Number.isFinite(pt[1]) ? pt[1] : null;
+        yValues[serieIndex][pt[0]] = Number.isFinite(pt[1]) ? pt[1] : null;
       });
     });
 
@@ -72,7 +72,7 @@ export const LineChart: React.FC<Props> = ({
     });
 
     return [xValues, ...yValuesArray];
-  }, [data]);
+  }, [series]);
 
   const chartOptions: Options = useMemo(() => {
     const plugins = [];
@@ -122,17 +122,17 @@ export const LineChart: React.FC<Props> = ({
       },
       series: [
         { label: xLabel || 'X' },
-        ...data.map((series, idx) => {
+        ...series.map((serie, idx) => {
           return {
-            label: series.name ?? `Series ${idx + 1}`,
+            label: serie.name ?? `Series ${idx + 1}`,
             scale: 'y',
             spanGaps: true,
-            stroke: series.color ?? glasbeyColor(idx),
+            stroke: serie.color ?? glasbeyColor(idx),
           };
         }),
       ],
     };
-  }, [closestPoint, data, height, scale, showLegend, showTooltip, xLabel, yLabel]);
+  }, [closestPoint, series, height, scale, showLegend, showTooltip, xLabel, yLabel]);
 
   return (
     <>
@@ -149,7 +149,7 @@ export const LineChart: React.FC<Props> = ({
           }}
         />
       )}
-      {data.length > 1 && (
+      {series.length > 1 && (
         <SelectFilter
           defaultValue={focusSeriesIdx}
           options={[
@@ -157,7 +157,7 @@ export const LineChart: React.FC<Props> = ({
               label: 'No metric selection',
               value: -1,
             },
-            ...data.map((series, idx) => ({
+            ...series.map((serie, idx) => ({
               label: `Series ${idx}`,
               value: idx,
             })),
@@ -181,21 +181,25 @@ export const LineChart: React.FC<Props> = ({
 
 interface GroupProps {
   chartsProps: Props[];
+  onXAxisSelect?: (axisName: string) => void;
   rowHeight?: number;
   showTooltip?: boolean;
+  xAxisOptions?: string[];
 }
 
 export const ChartGrid: React.FC<GroupProps> = ({
   chartsProps,
-  rowHeight,
+  onXAxisSelect,
+  rowHeight = 480,
   showTooltip,
+  xAxisOptions,
 }: GroupProps) => {
   // calculate xMin / xMax for shared group
   let xMin = Infinity,
     xMax = -Infinity;
   chartsProps.forEach((chartProp) => {
-    chartProp.data.forEach((series) => {
-      series.data.forEach((pt) => {
+    chartProp.series.forEach((serie) => {
+      serie.data.forEach((pt) => {
         if (!isFinite(xMin || 0)) {
           if (!isNaN(pt[0] * 1)) {
             xMin = pt[0];
@@ -218,7 +222,7 @@ export const ChartGrid: React.FC<GroupProps> = ({
             <FixedSizeGrid
               columnCount={columnCount}
               columnWidth={Math.floor(width / columnCount) - 10}
-              height={chartsProps.length > 1 ? 1000 : 500}
+              height={(chartsProps.length > columnCount ? 2.1 : 1.05) * (rowHeight ?? 480)}
               rowCount={Math.ceil(chartsProps.length / columnCount)}
               rowHeight={rowHeight ?? 480}
               width={width}>
@@ -231,6 +235,8 @@ export const ChartGrid: React.FC<GroupProps> = ({
                         {...chartsProps[cellIndex]}
                         height={rowHeight}
                         showTooltip={chartsProps[cellIndex].showTooltip ?? showTooltip}
+                        xAxisOptions={xAxisOptions}
+                        onXAxisSelect={onXAxisSelect}
                       />
                     )}
                   </div>

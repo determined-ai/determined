@@ -360,8 +360,8 @@ const ChartsSection: React.FC = () => {
       <Card title="Label options">
         <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
         <LineChart
-          data={[line1, line2]}
           height={250}
+          series={[line1, line2]}
           showLegend={true}
           title="Title"
           xLabel="X Label"
@@ -370,20 +370,20 @@ const ChartsSection: React.FC = () => {
       </Card>
       <Card title="Tooltip options">
         <p>A chart with a tooltip.</p>
-        <LineChart data={[line1, line2]} height={250} showTooltip={true} />
+        <LineChart height={250} series={[line1, line2]} showTooltip={true} />
       </Card>
       <Card title="Focus series">
         <p>Highlight a specific series in the chart.</p>
-        <LineChart data={[line1, line2]} focusedSeries={1} height={250} showTooltip={true} />
+        <LineChart focusedSeries={1} height={250} series={[line1, line2]} showTooltip={true} />
       </Card>
-      <Card title="Chart group">
+      <Card title="Chart Grid">
         <p>
-          A Chart Group (or similar concept in a component) can be used to sync the plot window and
-          cursor and x-axis.
+          A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
+          responsive grid. There is a sync for the plot window, cursor, and x-axis.
         </p>
         <div style={{ height: 300 }}>
           <ChartGrid
-            chartsProps={[{ data: [line1] }, { data: [line2] }]}
+            chartsProps={[{ series: [line1] }, { series: [line2] }]}
             rowHeight={250}
             showTooltip={true}
           />
