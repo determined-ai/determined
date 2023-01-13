@@ -168,8 +168,8 @@ func (a *apiServer) SetNotebookPriority(
 func (a *apiServer) isNTSCPermittedToLaunch(
 	ctx context.Context, spec *tasks.GenericCommandSpec,
 ) error {
-	workspaceId := spec.Metadata.WorkspaceID
-	if workspaceId == 0 {
+	workspaceID := spec.Metadata.WorkspaceID
+	if workspaceID == 0 {
 		panic("workspace ID must be set")
 	}
 
@@ -178,12 +178,19 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	// TODO separate tsb.
-	if err := command.AuthZProvider.Get().CanCreateNSC(
-		ctx, *user, workspaceId,
-	); err != nil {
-		return apiutils.MapAndFilterErrors(err, nil, nil)
+	if spec.TaskType == model.TaskTypeTensorboard {
+		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+			ctx, *user, workspaceID); err != nil || !ok {
+			return err
+		}
+	} else {
+		if err := command.AuthZProvider.Get().CanCreateNSC(
+			ctx, *user, workspaceID,
+		); err != nil {
+			return apiutils.MapAndFilterErrors(err, nil, nil)
+		}
 	}
+
 	return nil
 }
 
