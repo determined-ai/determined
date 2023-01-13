@@ -1,8 +1,8 @@
+import contextlib
 import os
 import tempfile
 import uuid
-from typing import List, Optional
-import contextlib
+from typing import Generator, List, Optional
 
 import pytest
 
@@ -430,7 +430,7 @@ def test_reset_workspace_checkpoint_storage_conf() -> None:
 
 
 @contextlib.contextmanager
-def setup_workspace(session: api.Session):
+def setup_workspace(session: api.Session) -> Generator[bindings.v1Workspace, None, None]:
     workspace_resp: Optional[bindings.v1PostWorkspaceResponse] = None
     try:
         # create a workspace
@@ -462,7 +462,7 @@ def test_launch_in_archived() -> None:
 
         # create a notebook inside the workspace
         with pytest.raises(errors.APIException) as e:
-            created_resp = bindings.post_LaunchNotebook(
+            bindings.post_LaunchNotebook(
                 admin_session,
                 body=bindings.v1LaunchNotebookRequest(workspaceId=workspace.id),
             )
