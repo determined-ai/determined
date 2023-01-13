@@ -2,14 +2,14 @@ import contextlib
 import logging
 import random
 import sys
-from typing import Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional
 
 import numpy as np
 import torch
 import torch.distributed as dist
 
 import determined as det
-from determined import core, horovod, profiler, pytorch
+from determined import core, gpu, horovod, profiler, pytorch
 from determined.horovod import hvd
 
 
@@ -156,7 +156,7 @@ def _generate_local_seed() -> int:
 
 @contextlib.contextmanager
 def init(
-    *, hparams: Optional[Dict] = None, distributed: Optional[core.DistributedContext] = None
+    *, local_config: Optional[Dict[str, Any]], distributed: Optional[core.DistributedContext] = None
 ) -> Iterator[pytorch.PyTorchTrialContext]:
     cluster_info = det.get_cluster_info()
     local_training = cluster_info is None or cluster_info.task_type != "TRIAL"
@@ -169,23 +169,24 @@ def init(
 
     # Initialize default values
     if local_training:
-        hparams = hparams or {}
+        if "hparams" not in local_config:
+            raise ValueError("hparams is a required config for local-training mode.")
+
+        default_local_config = {"optimizations": {"aggregation_frequency": 1}}
+        local_config = {**default_local_config, **local_config}
+
+        hparams = local_config["hparams"]
         trial_seed = _generate_local_seed()
         exp_conf = {}
-        aggregation_frequency = 1
+        aggregation_frequency = local_config["optimizations"]["aggregation_frequency"]
         fp16_compression = False
         average_aggregated_gradients = True
         steps_completed = 0
         managed_training = True
         debug_enabled = False
+        num_gpus = len(gpu.get_gpu_uuids())
     else:
         assert cluster_info, "Unable to detect cluster info"
-        if hparams and cluster_info.trial.hparams:
-            logging.warning(
-                "hparams are specified in Trainer and experiment config. "
-                "Trainer hparams will be ignored"
-            )
-
         hparams = cluster_info.trial.hparams
         trial_seed = cluster_info.trial.trial_seed
         exp_conf = cluster_info.trial._config
@@ -196,6 +197,7 @@ def init(
         )
         steps_completed = cluster_info.trial._steps_completed
         managed_training = True
+        num_gpus = len(cluster_info.gpu_uuids)
         debug_enabled = cluster_info.trial._debug
 
     _set_random_seeds(trial_seed)
@@ -210,7 +212,7 @@ def init(
             trial_seed=trial_seed,
             hparams=hparams,
             slots_per_trial=core_context.distributed.get_size(),
-            num_gpus=core_context.distributed.get_num_agents(),
+            num_gpus=num_gpus,
             exp_conf=exp_conf,
             aggregation_frequency=aggregation_frequency,
             steps_completed=steps_completed,
