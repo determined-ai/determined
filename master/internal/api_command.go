@@ -198,6 +198,8 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 
+	// TODO 404 on bad wid.
+
 	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
 		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
 	)
@@ -219,6 +221,8 @@ func (a *apiServer) GetCommand(
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO 404 on bad wid.
 
 	addr := commandsAddr.Child(req.CommandId)
 	if err := a.ask(addr, req, &resp); err != nil {

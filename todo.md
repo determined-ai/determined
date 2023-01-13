@@ -1,0 +1,6 @@
+- [x] add to proto
+- [ ] hook up the handlers
+- [ ] inmemory rep
+- [ ] logging.
+- [ ] 404 on missing or inaccessible workspaces
+- [ ] tests to check correct methods are called
