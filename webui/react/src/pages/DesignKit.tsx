@@ -335,15 +335,19 @@ const DropdownsSection: React.FC = () => {
 };
 
 const ChartsSection: React.FC = () => {
-  const line1 = [
-    [0, 0],
-    [4, 15],
-    [19, 89],
-  ];
-  const line2 = [
-    [1, 15],
-    [2, 10],
-  ];
+  const line1 = {
+    data: [
+      [0, 0],
+      [4, 15],
+      [19, 89],
+    ],
+  };
+  const line2 = {
+    data: [
+      [1, 15],
+      [2, 10],
+    ],
+  };
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
@@ -376,7 +380,11 @@ const ChartsSection: React.FC = () => {
           A Chart Group (or similar concept in a component) can be used to sync the plot window and
           cursor and x-axis.
         </p>
-        <ChartGrid data={[[line1], [line2]]} rowHeight={250} showTooltip={true} />
+        <ChartGrid
+          chartsProps={[{ data: [line1] }, { data: [line2] }]}
+          rowHeight={250}
+          showTooltip={true}
+        />
       </Card>
     </ComponentSection>
   );
