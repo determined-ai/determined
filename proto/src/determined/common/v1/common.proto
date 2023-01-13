@@ -18,7 +18,7 @@ message Metrics {
   repeated google.protobuf.Struct batch_metrics = 2;
 }
 
-// Double filters hhhh.
+// Double filters.
 message DoubleFieldFilter {
   // Less than.
   optional double lt = 2;
@@ -30,7 +30,7 @@ message DoubleFieldFilter {
   optional double gte = 5;
 }
 
-// Int32 filters hh.
+// Int32 filters.
 message Int32FieldFilter {
   // TODO(ilia): add `exact`.
   // Less than.
@@ -45,8 +45,6 @@ message Int32FieldFilter {
   repeated int32 incl = 6;
   // Not in a set.
   repeated int32 not_in = 7;
-  // hh
-  int32 h = 8;
 }
 
 // Timestamp filters.
