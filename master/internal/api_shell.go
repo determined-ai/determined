@@ -153,15 +153,12 @@ func (a *apiServer) LaunchShell(
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
-	workspaceID := model.DefaultWorkspaceID
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
 	if req.WorkspaceId != 0 {
-		workspaceID = int(req.WorkspaceId)
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
-	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
-	if err = command.AuthZProvider.Get().CanCreateNSC(
-		ctx, *curUser, model.AccessScopeID(workspaceID),
-	); err != nil {
-		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+		return nil, err
 	}
 
 	// Postprocess the spec.
