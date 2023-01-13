@@ -291,6 +291,8 @@ func (a *apiServer) SetCommandPriority(
 	case nil:
 		// do nothing
 	case authz.PermissionDeniedError:
+		// TODO: we'd want these to be not-found if user has no view perm but be the real error
+		// if they do.
 		return nil, errActorNotFound(commandsAddr.Child(req.CommandId))
 	default:
 		return nil, err
