@@ -182,18 +182,6 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     update(config.storagePath, (stateSettings) => ({ ...stateSettings, ...settings }), true);
   }, [config, querySettings, state, update, shouldSkipUpdates]);
 
-  useEffect(() => {
-    if (shouldSkipUpdates) return;
-
-    const mappedSettings = settingsToQuery(config, settings as Settings);
-    const url = `?${mappedSettings}`;
-
-    if (mappedSettings && url !== location.search) {
-      navigate(url, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   /*
    * A setting is considered active if it is set to a value and the
    * value is not equivalent to a default value (if applicable).
@@ -316,6 +304,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   }, [settings, returnedSettings, updateDB]);
 
   useEffect(() => {
+    if (shouldSkipUpdates) return;
+
     if (
       (Object.values(config.settings) as SettingsConfigProp<typeof config>[]).every(
         (setting) => !!setting.skipUrlEncoding,
@@ -328,7 +318,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const url = `?${mappedSettings}`;
 
     shouldPush ? navigate(url) : navigate(url, { replace: true });
-  }, [shouldPush, settings, navigate, config]);
+  }, [shouldPush, shouldSkipUpdates, settings, navigate, config]);
 
   return {
     activeSettings,
