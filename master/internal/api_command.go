@@ -19,6 +19,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -257,6 +258,15 @@ func (a *apiServer) KillCommand(
 	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId),
 	)
+	err = apiutils.MapAndFilterErrors(err, nil, nil)
+	switch err.(type) {
+	case nil:
+		// do nothing
+	case authz.PermissionDeniedError:
+		return nil, errActorNotFound(commandsAddr.Child(req.CommandId))
+	default:
+		return nil, err
+	}
 
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
