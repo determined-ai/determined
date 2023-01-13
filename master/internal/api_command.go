@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -197,20 +198,15 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 
-	a.filter(&resp.Commands, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, command.PlaceHolderWorkspace)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
-	})
+	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
+	)
 	if err != nil {
-		return nil, err
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
+	a.filter(&resp.Commands, func(i int) bool {
+		return limitedScopes[model.AccessScopeID(resp.Commands[i].WorkspaceId)]
+	})
 
 	a.sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Commands, req.Offset, req.Limit)
@@ -230,7 +226,7 @@ func (a *apiServer) GetCommand(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, command.PlaceHolderWorkspace); err != nil {
+		ctx, *curUser, model.AccessScopeID(resp.Command.WorkspaceId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -241,9 +237,18 @@ func (a *apiServer) GetCommand(
 func (a *apiServer) KillCommand(
 	ctx context.Context, req *apiv1.KillCommandRequest,
 ) (resp *apiv1.KillCommandResponse, err error) {
-	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
+	if err != nil {
 		return nil, err
 	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanTerminateNSC(
+		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId),
+	)
 
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
@@ -251,9 +256,18 @@ func (a *apiServer) KillCommand(
 func (a *apiServer) SetCommandPriority(
 	ctx context.Context, req *apiv1.SetCommandPriorityRequest,
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
-	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
+	if err != nil {
 		return nil, err
 	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId), int(req.Priority),
+	)
 
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
