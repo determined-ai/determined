@@ -38,6 +38,7 @@ import css from './UserManagement.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   DEFAULT_COLUMNS,
+  UserColumnName,
   UserManagementSettings,
 } from './UserManagement.settings';
 
@@ -265,7 +266,13 @@ const UserManagement: React.FC = () => {
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
-        settings={{ ...settings, columns: DEFAULT_COLUMNS } as InteractiveTableSettings}
+        settings={
+          {
+            ...settings,
+            columns: DEFAULT_COLUMNS,
+            columnWidths: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+          } as InteractiveTableSettings
+        }
         showSorterTooltip={false}
         size="small"
         updateSettings={updateSettings as UpdateSettings}
