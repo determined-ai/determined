@@ -178,6 +178,10 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
+	if _, err = a.GetWorkspaceByID(ctx, int32(workspaceID), *user, true); err != nil {
+		return err
+	}
+
 	if spec.TaskType == model.TaskTypeTensorboard {
 		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
 			ctx, *user, workspaceID); err != nil || !ok {
@@ -205,6 +209,8 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
+
+	// TODO test launching in archived workspace.
 
 	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
 	if req.WorkspaceId != 0 {
