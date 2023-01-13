@@ -157,6 +157,7 @@ func (a *apiServer) LaunchShell(
 	if req.WorkspaceId != 0 {
 		workspaceID = int(req.WorkspaceId)
 	}
+	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 	if err = command.AuthZProvider.Get().CanCreateNSC(
 		ctx, *curUser, model.AccessScopeID(workspaceID),
 	); err != nil {
