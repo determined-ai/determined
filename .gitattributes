@@ -1,0 +1,14 @@
+# https://git-scm.com/docs/gitattributes
+# https://github.com/github/linguist
+
+# ignore generated code for GitHub UIs.
+proto/pkg/**/*    linguist-generated=true
+master/pkg/schemas/**/*    linguist-generated=true
+webui/react/src/services/api-ts-sdk/**/*    linguist-generated=true
+harness/determined/common/api/bindings.py    linguist-generated=true
+
+# ignore generated code for cli diffs and merges. treat as binary.
+proto/pkg/**/*    -diff -merge
+master/pkg/schemas/**/*    -diff -merge
+webui/react/src/services/api-ts-sdk/**/*    -diff -merge
+harness/determined/common/api/bindings.py    -diff -merge
