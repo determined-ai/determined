@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -27,8 +28,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
 const (
@@ -44,7 +47,7 @@ const (
 	notebookDefaultPage = "/run/determined/workdir/README.ipynb"
 )
 
-var notebooksAddr = actor.Addr("notebooks")
+var notebooksAddr = actor.Addr(command.NotebookActorPath)
 
 func (a *apiServer) GetNotebooks(
 	ctx context.Context, req *apiv1.GetNotebooksRequest,
@@ -52,6 +55,14 @@ func (a *apiServer) GetNotebooks(
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err = a.ask(notebooksAddr, req, &resp); err != nil {
@@ -103,7 +114,7 @@ func (a *apiServer) GetNotebook(
 	return resp, nil
 }
 
-func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID string) error {
+func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID string) error {
 	targetNotebook, err := a.GetNotebook(ctx, &apiv1.GetNotebookRequest{NotebookId: notebookID})
 	if err != nil {
 		return err
@@ -122,7 +133,7 @@ func (a *apiServer) validateAndKillNotebook(ctx context.Context, notebookID stri
 func (a *apiServer) IdleNotebook(
 	ctx context.Context, req *apiv1.IdleNotebookRequest,
 ) (resp *apiv1.IdleNotebookResponse, err error) {
-	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	err = a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +143,7 @@ func (a *apiServer) IdleNotebook(
 func (a *apiServer) KillNotebook(
 	ctx context.Context, req *apiv1.KillNotebookRequest,
 ) (resp *apiv1.KillNotebookResponse, err error) {
-	err = a.validateAndKillNotebook(ctx, req.NotebookId)
+	err = a.validateToKillNotebook(ctx, req.NotebookId)
 	if err != nil {
 		return nil, err
 	}
@@ -162,13 +173,55 @@ func (a *apiServer) SetNotebookPriority(
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
+// isNTSCPermittedToLaunch checks authorization to launch in a given
+// workspace.
+func (a *apiServer) isNTSCPermittedToLaunch(
+	ctx context.Context, spec *tasks.GenericCommandSpec,
+) error {
+	workspaceID := spec.Metadata.WorkspaceID
+	if workspaceID == 0 {
+		panic("workspace ID must be set")
+	}
+
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	w := &workspacev1.Workspace{}
+	notFoundErr := status.Errorf(codes.NotFound, "workspace (%d) not found", workspaceID)
+	if err := a.m.db.QueryProto(
+		"get_workspace", w, workspaceID, user.ID,
+	); errors.Is(err, db.ErrNotFound) {
+		return notFoundErr
+	} else if err != nil {
+		return errors.Wrapf(err, "error fetching workspace (%d) from database", workspaceID)
+	}
+	if w.Archived {
+		// CHAT: we might want to use a.GetWorkspaceByID here instead.
+		// Do we allow you to launch into a workspace that you don't have view access to?
+		return notFoundErr
+	}
+
+	if spec.TaskType == model.TaskTypeTensorboard {
+		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
+			ctx, *user, workspaceID); err != nil || !ok {
+			return err
+		}
+	} else {
+		if err := command.AuthZProvider.Get().CanCreateNSC(
+			ctx, *user, workspaceID,
+		); err != nil {
+			return apiutils.MapAndFilterErrors(err, nil, nil)
+		}
+	}
+
+	return nil
+}
+
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -177,14 +230,15 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
-	workspaceID := model.DefaultWorkspaceID
+
+	// TODO test launching in archived workspace.
+
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
 	if req.WorkspaceId != 0 {
-		workspaceID = int(req.WorkspaceId)
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
-	if err = command.AuthZProvider.Get().CanCreateNSC(
-		ctx, *user, model.AccessScopeID(workspaceID),
-	); err != nil {
-		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+		return nil, err
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -259,8 +313,6 @@ func (a *apiServer) LaunchNotebook(
 			tar.TypeReg,
 		),
 	}
-
-	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 
 	// Launch a Notebook actor.
 	var notebookID model.TaskID

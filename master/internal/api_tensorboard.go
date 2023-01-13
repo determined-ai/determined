@@ -99,6 +99,14 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err = a.ask(tensorboardsAddr, req, &resp); err != nil {
 		return nil, err
 	}
@@ -211,19 +219,11 @@ func (a *apiServer) LaunchTensorboard(
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
-	workspaceID := model.DefaultWorkspaceID
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
 	if req.WorkspaceId != 0 {
-		workspaceID = int(req.WorkspaceId)
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
-	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
-
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-		ctx, *curUser, model.AccessScopeID(req.WorkspaceId)); err != nil || !ok {
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
 	}
 
