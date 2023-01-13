@@ -212,7 +212,7 @@ class SharedFSStorageManager(storage.StorageManager):
         else:
 
             def selector(x: str) -> bool:
-                assert paths
+                assert paths is not None
                 return x in paths
 
         dst = os.path.join(self._base_path, dst)

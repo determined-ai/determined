@@ -39,7 +39,8 @@ class AzureStorageManager(storage.CloudStorageManager):
     ) -> None:
         src = os.fspath(src)
         logging.info(f"Uploading to Azure Blob Storage: {dst}")
-        for rel_path in sorted(paths or self._list_directory(src)):
+        upload_paths = paths if paths is not None else self._list_directory(src)
+        for rel_path in sorted(upload_paths):
             # Use posixpath so that we always use forward slashes, even on Windows.
             container_blob = posixpath.join(self.container, dst, rel_path)
 

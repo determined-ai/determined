@@ -266,11 +266,12 @@ class CheckpointContext:
         # Add metadata pre-upload but without counting it among resources.
         self._write_metadata_file(ckpt_dir, metadata or {})
 
+        paths: Optional[List[str]]
         if selector is not None:
             resources = {key: resources[key] for key in resources if selector(key)}
             paths = list(resources.keys())
         else:
-            paths = []
+            paths = None
 
         self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
         self._report_checkpoint(storage_id, resources, metadata)
@@ -310,7 +311,7 @@ class CheckpointContext:
         # Rank uploads resources only if (1) it has a selector; or
         # (2) it is the lowest local rank requested to upload this ckpt_dir.
         want_upload = selector is not None or (
-            file_uid and all_file_uids.index(file_uid) == self._dist.rank
+            file_uid is not None and all_file_uids.index(file_uid) == self._dist.rank
         )
         # Collect and filter resources for all uploading ranks.
         if want_upload:
@@ -319,7 +320,7 @@ class CheckpointContext:
             if selector is not None:
                 resources = {key: resources[key] for key in resources if selector(key)}
 
-            # Metadata.json is a special file that is created, merged and uploaded separately.
+            # Metadata.json is a special file that is created and uploaded separately.
             resources.pop("metadata.json", None)
         else:
             resources = {}
@@ -329,7 +330,8 @@ class CheckpointContext:
         if conflicts:
             self._resolve_conflicts(ckpt_dir, conflicts)
 
-        all_metadata = self._merge_metadata(metadata or {})
+        # Merge and upload metadata.
+        all_metadata = self._merge_metadata(metadata)
         upload_mask = self._dist.allgather(want_upload)
         metadata_writer_rank = upload_mask.index(True)
         if self._dist.rank == metadata_writer_rank:
@@ -349,8 +351,7 @@ class CheckpointContext:
                     list(resources.keys()),
                 )
             )
-            if len(paths) > 0:
-                self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
+            self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
 
         # Synchronize workers.
         _ = self._dist.allgather(None)
@@ -523,7 +524,7 @@ class CheckpointContext:
             # Each rank saves files directly to ckpt_dir which means there is no conflict
             # detection on upload. Metadata still needs to be merged and saved,
             # and checkpoint has to be reported.
-            all_metadata = self._merge_metadata(metadata or {})
+            all_metadata = self._merge_metadata(metadata)
 
             if self._dist.rank == 0:
                 resources = self._storage_manager._list_directory(ckpt_dir)
@@ -545,6 +546,7 @@ class CheckpointContext:
         if want_upload:
             assert ckpt_dir
             resources = self._storage_manager._list_directory(ckpt_dir)
+            resources.pop("metadata.json", None)
         else:
             resources = {}
 
@@ -555,8 +557,9 @@ class CheckpointContext:
         if conflicts:
             self._resolve_conflicts(ckpt_dir, conflicts)
 
-        all_metadata = self._merge_metadata(metadata or {})
-        self._write_metadata_file(os.fspath(path), all_metadata)
+        all_metadata = self._merge_metadata(metadata)
+        if self._dist.rank == 0:
+            self._write_metadata_file(ckpt_dir, all_metadata)
 
         if want_upload:
             # Use post_store_path to upload and clean up ckpt_dir after uploading.
@@ -570,10 +573,7 @@ class CheckpointContext:
 
         return storage_id
 
-    def _merge_metadata(
-        self,
-        metadata: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+    def _merge_metadata(self, metadata: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         all_metadata = self._dist.allgather(metadata or {})
         merged_metadata, conflicts = merge_metadata(all_metadata)
         if conflicts:

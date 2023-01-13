@@ -77,7 +77,8 @@ class S3StorageManager(storage.CloudStorageManager):
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
         logging.info(f"Uploading to s3: {prefix}/{dst}")
-        for rel_path in sorted(paths or self._list_directory(src)):
+        upload_paths = paths if paths is not None else self._list_directory(src)
+        for rel_path in sorted(upload_paths):
             key_name = f"{prefix}/{rel_path}"
             logging.debug(f"Uploading {rel_path} to s3://{self.bucket_name}/{key_name}")
 
