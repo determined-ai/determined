@@ -261,6 +261,7 @@ func (a *apiServer) SetCommandPriority(
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
 ) (*apiv1.LaunchCommandResponse, error) {
+
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -268,6 +269,14 @@ func (a *apiServer) LaunchCommand(
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(err)
+	}
+
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	}
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+		return nil, err
 	}
 
 	// Postprocess the spec.
@@ -296,8 +305,6 @@ func (a *apiServer) LaunchCommand(
 		)
 	}
 	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCommand)}
-
-	// TODO(8676): add workspaceID to rest of ntsc.
 
 	// Launch a command actor.
 	var cmdID model.TaskID

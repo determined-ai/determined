@@ -27,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
@@ -162,13 +163,33 @@ func (a *apiServer) SetNotebookPriority(
 	return resp, a.ask(notebooksAddr.Child(req.NotebookId), req, &resp)
 }
 
+// isNTSCPermittedToLaunch checks authorization to launch in a given
+// workspace.
+func (a *apiServer) isNTSCPermittedToLaunch(
+	ctx context.Context, spec *tasks.GenericCommandSpec,
+) error {
+	workspaceId := spec.Metadata.WorkspaceID
+	if workspaceId == 0 {
+		panic("workspace ID must be set")
+	}
+
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	// TODO separate tsb.
+	if err := command.AuthZProvider.Get().CanCreateNSC(
+		ctx, *user, workspaceId,
+	); err != nil {
+		return apiutils.MapAndFilterErrors(err, nil, nil)
+	}
+	return nil
+}
+
 func (a *apiServer) LaunchNotebook(
 	ctx context.Context, req *apiv1.LaunchNotebookRequest,
 ) (*apiv1.LaunchNotebookResponse, error) {
-	user, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
-	}
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -177,14 +198,13 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
-	workspaceID := model.DefaultWorkspaceID
+
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
 	if req.WorkspaceId != 0 {
-		workspaceID = int(req.WorkspaceId)
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
-	if err = command.AuthZProvider.Get().CanCreateNSC(
-		ctx, *user, model.AccessScopeID(workspaceID),
-	); err != nil {
-		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+		return nil, err
 	}
 
 	spec.WatchProxyIdleTimeout = true
@@ -259,8 +279,6 @@ func (a *apiServer) LaunchNotebook(
 			tar.TypeReg,
 		),
 	}
-
-	spec.Metadata.WorkspaceID = model.AccessScopeID(workspaceID)
 
 	// Launch a Notebook actor.
 	var notebookID model.TaskID
