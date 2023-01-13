@@ -183,6 +183,7 @@ interface GroupProps {
   chartsProps: Props[];
   onXAxisSelect?: (axisName: string) => void;
   rowHeight?: number;
+  scale?: Scale;
   showTooltip?: boolean;
   xAxisOptions?: string[];
 }
@@ -191,6 +192,7 @@ export const ChartGrid: React.FC<GroupProps> = ({
   chartsProps,
   onXAxisSelect,
   rowHeight = 480,
+  scale = Scale.Linear,
   showTooltip,
   xAxisOptions,
 }: GroupProps) => {
@@ -234,6 +236,7 @@ export const ChartGrid: React.FC<GroupProps> = ({
                       <LineChart
                         {...chartsProps[cellIndex]}
                         height={rowHeight}
+                        scale={scale}
                         showTooltip={chartsProps[cellIndex].showTooltip ?? showTooltip}
                         xAxisOptions={xAxisOptions}
                         onXAxisSelect={onXAxisSelect}
