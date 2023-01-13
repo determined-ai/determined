@@ -198,7 +198,13 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 
-	// TODO 404 on bad wid.
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
 		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
@@ -221,8 +227,6 @@ func (a *apiServer) GetCommand(
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO 404 on bad wid.
 
 	addr := commandsAddr.Child(req.CommandId)
 	if err := a.ask(addr, req, &resp); err != nil {
