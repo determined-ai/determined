@@ -381,11 +381,13 @@ const ChartsSection: React.FC = () => {
           A Chart Group (or similar concept in a component) can be used to sync the plot window and
           cursor and x-axis.
         </p>
-        <ChartGrid
-          chartsProps={[{ data: [line1] }, { data: [line2] }]}
-          rowHeight={250}
-          showTooltip={true}
-        />
+        <div style={{ height: 300 }}>
+          <ChartGrid
+            chartsProps={[{ data: [line1] }, { data: [line2] }]}
+            rowHeight={250}
+            showTooltip={true}
+          />
+        </div>
       </Card>
     </ComponentSection>
   );

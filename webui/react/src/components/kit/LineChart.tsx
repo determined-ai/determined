@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { FixedSizeGrid } from 'react-window';
 import { AlignedData } from 'uplot';
 
 import SelectFilter from 'components/SelectFilter';
@@ -209,15 +211,35 @@ export const ChartGrid: React.FC<GroupProps> = ({
 
   return (
     <SyncProvider xMax={xMax} xMin={xMin}>
-      {chartsProps.map((chartProp, cidx) => (
-        <div key={cidx} style={{ width: '40%' }}>
-          <LineChart
-            {...chartProp}
-            height={rowHeight}
-            showTooltip={chartProp.showTooltip ?? showTooltip}
-          />
-        </div>
-      ))}
+      <AutoSizer>
+        {({ width }) => {
+          const columnCount = Math.max(1, Math.floor(width / 540));
+          return (
+            <FixedSizeGrid
+              columnCount={columnCount}
+              columnWidth={Math.floor(width / columnCount) - 10}
+              height={chartsProps.length > 1 ? 1000 : 500}
+              rowCount={Math.ceil(chartsProps.length / columnCount)}
+              rowHeight={rowHeight ?? 480}
+              width={width}>
+              {({ columnIndex, rowIndex, style }) => {
+                const cellIndex = rowIndex * columnCount + columnIndex;
+                return (
+                  <div key={cellIndex} style={style}>
+                    {cellIndex < chartsProps.length && (
+                      <LineChart
+                        {...chartsProps[cellIndex]}
+                        height={rowHeight}
+                        showTooltip={chartsProps[cellIndex].showTooltip ?? showTooltip}
+                      />
+                    )}
+                  </div>
+                );
+              }}
+            </FixedSizeGrid>
+          );
+        }}
+      </AutoSizer>
     </SyncProvider>
   );
 };
