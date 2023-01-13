@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -51,18 +52,16 @@ func (a *apiServer) GetShells(
 	if err = a.ask(shellsAddr, req, &resp); err != nil {
 		return nil, err
 	}
-
+	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
+	)
+	if err != nil {
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
+	}
 	a.filter(&resp.Shells, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, command.PlaceHolderWorkspace)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
+		return limitedScopes[model.AccessScopeID(resp.Shells[i].WorkspaceId)]
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +84,7 @@ func (a *apiServer) GetShell(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, command.PlaceHolderWorkspace); err != nil {
+		ctx, *curUser, model.AccessScopeID(resp.Shell.WorkspaceId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -96,7 +95,19 @@ func (a *apiServer) GetShell(
 func (a *apiServer) KillShell(
 	ctx context.Context, req *apiv1.KillShellRequest,
 ) (resp *apiv1.KillShellResponse, err error) {
-	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
+	getResponse, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanTerminateNSC(
+		ctx, *curUser, model.AccessScopeID(getResponse.Shell.WorkspaceId))
+	if err != nil {
 		return nil, err
 	}
 
@@ -106,7 +117,19 @@ func (a *apiServer) KillShell(
 func (a *apiServer) SetShellPriority(
 	ctx context.Context, req *apiv1.SetShellPriorityRequest,
 ) (resp *apiv1.SetShellPriorityResponse, err error) {
-	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
+	getResponse, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(getResponse.Shell.WorkspaceId), int(req.Priority))
+	if err != nil {
 		return nil, err
 	}
 
@@ -116,6 +139,11 @@ func (a *apiServer) SetShellPriority(
 func (a *apiServer) LaunchShell(
 	ctx context.Context, req *apiv1.LaunchShellRequest,
 ) (*apiv1.LaunchShellResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
@@ -123,6 +151,16 @@ func (a *apiServer) LaunchShell(
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+	}
+
+	workspaceID := model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		workspaceID = int(req.WorkspaceId)
+	}
+	if err = command.AuthZProvider.Get().CanCreateNSC(
+		ctx, *curUser, model.AccessScopeID(workspaceID),
+	); err != nil {
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
 	}
 
 	// Postprocess the spec.
