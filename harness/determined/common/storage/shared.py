@@ -22,8 +22,8 @@ def _copytree(
     entries: List,
     src: str,
     dst: str,
-    base_path: str,
     selector: Optional[Callable[[str], bool]],
+    src_root: str,
     dirs_exist_ok: bool = False,
 ) -> str:
     errors = []
@@ -31,7 +31,7 @@ def _copytree(
     for srcobj in entries:
         srcname = os.path.join(src, srcobj.name)
         dstname = os.path.join(dst, srcobj.name)
-        src_relpath = os.path.relpath(srcname, base_path)
+        src_relpath = os.path.relpath(srcname, src_root)
         try:
             is_symlink = srcobj.is_symlink()
             if is_symlink:
@@ -46,8 +46,8 @@ def _copytree(
                     copytree(
                         srcobj,
                         dstname,
-                        base_path,
                         selector,
+                        src_root,
                         dirs_exist_ok=dirs_exist_ok,
                     )
                 else:
@@ -66,8 +66,8 @@ def _copytree(
                 copytree(
                     srcobj,
                     dstname,
-                    base_path,
                     selector,
+                    src_root,
                     dirs_exist_ok=dirs_exist_ok,
                 )
             else:
@@ -97,19 +97,20 @@ def _copytree(
 def copytree(
     src: str,
     dst: str,
-    base_path: str,
     selector: Optional[Callable[[str], bool]] = None,
+    src_root: Optional[str] = None,
     dirs_exist_ok: bool = False,
 ) -> str:
-
+    if src_root is None:
+        src_root = src
     with os.scandir(src) as itr:
         entries = list(itr)
     return _copytree(
         entries=entries,
         src=src,
         dst=dst,
-        base_path=base_path,
         selector=selector,
+        src_root=src_root,
         dirs_exist_ok=dirs_exist_ok,
     )
 
@@ -216,7 +217,7 @@ class SharedFSStorageManager(storage.StorageManager):
                 return x in paths
 
         dst = os.path.join(self._base_path, dst)
-        copytree(src, dst, base_path=src, selector=selector, dirs_exist_ok=True)
+        copytree(src, dst, selector=selector, dirs_exist_ok=True)
 
     def download(
         self,
@@ -228,7 +229,7 @@ class SharedFSStorageManager(storage.StorageManager):
 
         try:
             src = os.path.join(self._base_path, src)
-            copytree(src, dst, base_path=src, selector=selector, dirs_exist_ok=True)
+            copytree(src, dst, selector=selector, dirs_exist_ok=True)
         except FileNotFoundError:
             raise errors.CheckpointNotFound(
                 f"Did not find checkpoint {src} in shared_fs storage"

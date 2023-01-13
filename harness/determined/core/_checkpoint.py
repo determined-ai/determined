@@ -297,8 +297,8 @@ class CheckpointContext:
             )
 
         # Deconflict locally-shared directories; if multiple ranks (with no selectors) upload
-        # \tmp\ckpt then only the lowest rank on each node will actually upload this directory.
-        # If multiple ranks (with selectors) want to upload selected files from \tmp\ckpt, then
+        # /tmp/ckpt then only the lowest rank on each node will actually upload this directory.
+        # If multiple ranks (with selectors) want to upload selected files from /tmp/ckpt, then
         # each rank will upload its selected files.
         if ckpt_dir is None:
             file_uid = None

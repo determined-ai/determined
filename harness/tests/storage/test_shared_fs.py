@@ -135,7 +135,7 @@ def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> No
     util.create_checkpoint(src_dir, util.EXPECTED_FILES)
 
     dst_dir = tmp_path.joinpath("dst0")
-    shared.copytree(str(src_dir), str(dst_dir), base_path=str(src_dir), selector=None)
+    shared.copytree(str(src_dir), str(dst_dir), selector=None)
     util.validate_checkpoint(dst_dir, expected_files=util.EXPECTED_FILES)
 
     dst_dir = tmp_path.joinpath("dst1")
@@ -143,7 +143,7 @@ def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> No
     def selector1(x: str) -> bool:
         return False
 
-    shared.copytree(str(src_dir), str(dst_dir), base_path=str(src_dir), selector=selector1)
+    shared.copytree(str(src_dir), str(dst_dir), selector=selector1)
     assert not dst_dir.exists()
 
     dst_dir = tmp_path.joinpath("dst2")
@@ -151,7 +151,7 @@ def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> No
     def selector2(x: str) -> bool:
         return True
 
-    shared.copytree(str(src_dir), str(dst_dir), base_path=str(src_dir), selector=selector2)
+    shared.copytree(str(src_dir), str(dst_dir), selector=selector2)
     util.validate_checkpoint(dst_dir, expected_files=util.EXPECTED_FILES)
 
     dst_dir = tmp_path.joinpath("dst3")
@@ -159,7 +159,7 @@ def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> No
     def selector3(x: str) -> bool:
         return x == "empty_dir/"
 
-    shared.copytree(str(src_dir), str(dst_dir), base_path=str(src_dir), selector=selector3)
+    shared.copytree(str(src_dir), str(dst_dir), selector=selector3)
     util.validate_checkpoint(dst_dir, expected_files={"empty_dir/": None})
 
     dst_dir = tmp_path.joinpath("dst4")
@@ -167,7 +167,7 @@ def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> No
     def selector4(x: str) -> bool:
         return x in ["root.txt", "subdir/"]
 
-    shared.copytree(str(src_dir), str(dst_dir), base_path=str(src_dir), selector=selector4)
+    shared.copytree(str(src_dir), str(dst_dir), selector=selector4)
     util.validate_checkpoint(dst_dir, expected_files={"root.txt": "root file", "subdir/": None})
 
     dst_dir = tmp_path.joinpath("dst5")
@@ -175,7 +175,7 @@ def test_copytree(tmp_path: Path, manager: storage.SharedFSStorageManager) -> No
     def selector5(x: str) -> bool:
         return x == "subdir/file2.txt"
 
-    shared.copytree(str(src_dir), str(dst_dir), base_path=str(src_dir), selector=selector5)
+    shared.copytree(str(src_dir), str(dst_dir), selector=selector5)
     util.validate_checkpoint(
         dst_dir, expected_files={"subdir/file2.txt": "nested file 2", "subdir/": None}
     )
