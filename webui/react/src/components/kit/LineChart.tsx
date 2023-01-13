@@ -1,4 +1,4 @@
-import React, { MouseEvent, ReactElement, useMemo } from 'react';
+import React, { MouseEvent, useMemo } from 'react';
 import { AlignedData } from 'uplot';
 
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
@@ -25,8 +25,6 @@ interface Props {
   title?: string;
   width?: number;
   xLabel?: string;
-  xMax?: number;
-  xMin?: number;
   yLabel?: string;
 }
 
@@ -42,8 +40,6 @@ export const LineChart: React.FC<Props> = ({
   showTooltip = false,
   title,
   xLabel,
-  xMin,
-  xMax,
   yLabel,
 }: Props) => {
   const chartData: AlignedData = useMemo(() => {
@@ -107,7 +103,6 @@ export const LineChart: React.FC<Props> = ({
       plugins,
       scales: {
         x: {
-          range: xMin || xMax ? [Number(xMin), Number(xMax)] : undefined,
           time: false,
         },
         y: {
@@ -136,8 +131,6 @@ export const LineChart: React.FC<Props> = ({
     showLegend,
     showTooltip,
     xLabel,
-    xMax,
-    xMin,
     yLabel,
   ]);
 
@@ -150,28 +143,38 @@ export const LineChart: React.FC<Props> = ({
 };
 
 interface GroupProps {
-  children: ReactElement[];
-  data: number[][][];
+  data: number[][][][];
+  rowHeight?: number;
+  showTooltip?: boolean;
 }
 
-export const ChartGroup: React.FC<GroupProps> = ({ children, data }: GroupProps) => {
+export const ChartGrid: React.FC<GroupProps> = ({ data, rowHeight, showTooltip }: GroupProps) => {
+  // calculate xMin / xMax for shared group
   let xMin = Infinity,
     xMax = -Infinity;
-  data.forEach((series) => {
-    series.forEach((pt) => {
-      if (!isFinite(xMin) || xMin === undefined) {
-        xMin = pt[0];
-        xMax = pt[0];
-      } else {
-        xMin = Math.min(xMin, pt[0]);
-        xMax = Math.max(xMax, pt[0]);
-      }
+  data.forEach((chartData) => {
+    chartData.forEach((series) => {
+      series.forEach((pt) => {
+        if (!isFinite(xMin || 0)) {
+          if (!isNaN(pt[0] * 1)) {
+            xMin = pt[0];
+            xMax = pt[0];
+          }
+        } else if (xMin !== undefined && xMax !== undefined) {
+          xMin = Math.min(xMin, pt[0]);
+          xMax = Math.max(xMax, pt[0]);
+        }
+      });
     });
   });
 
   return (
-    <SyncProvider>
-      {children.map((chart: ReactElement) => React.cloneElement(chart, { xMax, xMin }))}
+    <SyncProvider xMax={xMax} xMin={xMin}>
+      {data.map((chartData, cidx) => (
+        <div key={cidx} style={{ width: '40%' }}>
+          <LineChart data={chartData} height={rowHeight} showTooltip={showTooltip} />
+        </div>
+      ))}
     </SyncProvider>
   );
 };

@@ -12,7 +12,7 @@ import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
-import { ChartGroup, LineChart } from 'components/kit/LineChart';
+import { ChartGrid, LineChart } from 'components/kit/LineChart';
 import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -367,15 +367,16 @@ const ChartsSection: React.FC = () => {
         <p>A chart with a tooltip.</p>
         <LineChart data={[line1, line2]} height={250} showTooltip={true} />
       </Card>
+      <Card title="Focus series">
+        <p>Highlight a specific series in the chart.</p>
+        <LineChart data={[line1, line2]} focusedSeries={1} height={250} showTooltip={true} />
+      </Card>
       <Card title="Chart group">
         <p>
           A Chart Group (or similar concept in a component) can be used to sync the plot window and
-          x-axis.
+          cursor and x-axis.
         </p>
-        <ChartGroup data={[line1, line2]}>
-          <LineChart data={[line1]} height={250} showTooltip={true} />
-          <LineChart data={[line2]} height={250} showTooltip={true} />
-        </ChartGroup>
+        <ChartGrid data={[[line1], [line2]]} rowHeight={250} showTooltip={true} />
       </Card>
     </ComponentSection>
   );
