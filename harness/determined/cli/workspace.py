@@ -25,16 +25,18 @@ WORKSPACE_HEADERS = [
 workspace_arg: Arg = Arg("--workspace-name", type=str, help="workspace name")
 
 
-def get_workspace_id_from_args(args: Namespace) -> int:
+def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
     workspace_id = None
     if args.workspace_name:
         workspace = cli.workspace.get_workspace_by_name(
             cli.setup_session(args), args.workspace_name
         )
         if workspace is None:
-            return cli.report_cli_error(f'Workspace "{args.workspace_name}" not found')
+            cli.report_cli_error(f'Workspace "{args.workspace_name}" not found')
+            return None
         if workspace.archived:
-            return cli.report_cli_error(f'Workspace "{args.workspace_name}" is archived')
+            cli.report_cli_error(f'Workspace "{args.workspace_name}" is archived')
+            return None
         workspace_id = workspace.id
     return workspace_id
 
