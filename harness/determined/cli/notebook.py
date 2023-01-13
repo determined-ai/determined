@@ -19,16 +19,7 @@ def start_notebook(args: Namespace) -> None:
 
     files = context.read_v1_context(args.context, args.include)
 
-    workspace_id = None
-    if args.workspace_name:
-        workspace = cli.workspace.get_workspace_by_name(
-            cli.setup_session(args), args.workspace_name
-        )
-        if workspace is None:
-            return cli.report_cli_error(f'Workspace "{args.workspace_name}" not found')
-        if workspace.archived:
-            return cli.report_cli_error(f'Workspace "{args.workspace_name}" is archived')
-        workspace_id = workspace.id
+    workspace_id = cli.workspace.get_workspace_id_from_args(args)
 
     body = bindings.v1LaunchNotebookRequest(
         config=config,
