@@ -169,13 +169,13 @@ def init(
 
     # Initialize default values
     if local_training:
-        if "hparams" not in local_config:
+        if "hyperparameters" not in local_config:
             raise ValueError("hparams is a required config for local-training mode.")
 
         default_local_config = {"optimizations": {"aggregation_frequency": 1}}
         local_config = {**default_local_config, **local_config}
 
-        hparams = local_config["hparams"]
+        hparams = local_config["hyperparameters"]
         trial_seed = _generate_local_seed()
         exp_conf = {}
         aggregation_frequency = local_config["optimizations"]["aggregation_frequency"]
