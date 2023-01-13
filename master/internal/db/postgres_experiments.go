@@ -474,7 +474,16 @@ SELECT t.id FROM (
 	return trials, err
 }
 
-func scanMetricsSeries(metricSeries []lttb.Point, rows *sql.Rows) ([]lttb.Point, time.Time) {
+func timeToFloat(t time.Time) float64 {
+	// If time.Time is the empty value, UnixNano will return the farthest back
+	// timestamp a float can represent, which is some large negative value.
+	if t.IsZero() {
+		return 0
+	}
+	return float64(t.UnixNano()) / 1e9
+}
+
+func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch []lttb.Point, metricSeriesTime []lttb.Point) ([]lttb.Point, []lttb.Point, time.Time) {
 	var maxEndTime time.Time
 	for rows.Next() {
 		var batches uint
@@ -485,18 +494,19 @@ func scanMetricsSeries(metricSeries []lttb.Point, rows *sql.Rows) ([]lttb.Point,
 			// Could be a bad metric name, sparse metric, nested type, etc.
 			continue
 		}
-		metricSeries = append(metricSeries, lttb.Point{X: float64(batches), Y: value})
+		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
+		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
 		if endTime.After(maxEndTime) {
 			maxEndTime = endTime
 		}
 	}
-	return metricSeries, maxEndTime
+	return metricSeriesBatch, metricSeriesTime, maxEndTime
 }
 
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
+	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point, maxEndTime time.Time,
 	err error,
 ) {
 	rows, err := db.sql.Query(`
@@ -514,17 +524,17 @@ WHERE t.id=$2
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	defer rows.Close()
-	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
-	return metricSeries, maxEndTime, nil
+	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(rows, metricSeriesBatch, metricSeriesTime)
+	return metricSeriesBatch, metricSeriesTime, maxEndTime, nil
 }
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
+	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point, maxEndTime time.Time,
 	err error,
 ) {
 	rows, err := db.sql.Query(`
@@ -542,11 +552,11 @@ WHERE t.id=$2
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	defer rows.Close()
-	metricSeries, maxEndTime = scanMetricsSeries(metricSeries, rows)
-	return metricSeries, maxEndTime, nil
+	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(rows, metricSeriesBatch, metricSeriesTime)
+	return metricSeriesBatch, metricSeriesTime, maxEndTime, nil
 }
 
 type hpImportanceDataWrapper struct {

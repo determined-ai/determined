@@ -1585,10 +1585,10 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	default:
 		panic("Invalid metric type")
@@ -1643,10 +1643,10 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	default:
 		panic("Invalid metric type")

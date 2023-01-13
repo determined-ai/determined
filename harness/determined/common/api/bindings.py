@@ -2023,6 +2023,32 @@ class v1DataPoint:
         }
         return out
 
+class v1DataPointTime:
+
+    def __init__(
+        self,
+        *,
+        time: str,
+        value: float,
+    ):
+        self.time = time
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPointTime":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "time": obj["time"],
+            "value": float(obj["value"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "time": self.time,
+            "value": dump_float(self.value),
+        }
+        return out
+
 class v1DeleteCheckpointsRequest:
 
     def __init__(
@@ -9794,6 +9820,7 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1SummarizedMetric:
+    time: "typing.Optional[typing.Sequence[v1DataPointTime]]" = None
 
     def __init__(
         self,
@@ -9801,10 +9828,13 @@ class v1SummarizedMetric:
         data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
+        time: "typing.Union[typing.Sequence[v1DataPointTime], None, Unset]" = _unset,
     ):
         self.data = data
         self.name = name
         self.type = type
+        if not isinstance(time, Unset):
+            self.time = time
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
@@ -9813,6 +9843,8 @@ class v1SummarizedMetric:
             "name": obj["name"],
             "type": v1MetricType(obj["type"]),
         }
+        if "time" in obj:
+            kwargs["time"] = [v1DataPointTime.from_json(x) for x in obj["time"]] if obj["time"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9821,6 +9853,8 @@ class v1SummarizedMetric:
             "name": self.name,
             "type": self.type.value,
         }
+        if not omit_unset or "time" in vars(self):
+            out["time"] = None if self.time is None else [x.to_json(omit_unset) for x in self.time]
         return out
 
 class v1Task:

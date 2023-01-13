@@ -130,10 +130,10 @@ type DB interface {
 	TopTrialsByTrainingLength(experimentID int, maxTrials int, metric string,
 		smallerIsBetter bool) (trials []int32, err error)
 	TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-		startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
+		startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point, maxEndTime time.Time,
 		err error)
 	ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-		startBatches int, endBatches int) (metricSeries []lttb.Point, maxEndTime time.Time,
+		startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point, maxEndTime time.Time,
 		err error)
 	FetchHPImportanceTrainingData(experimentID int, metric string) (
 		map[int][]model.HPImportanceTrialData, error)

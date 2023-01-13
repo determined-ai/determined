@@ -2025,6 +2025,26 @@ export interface V1DataPoint {
 /**
  * 
  * @export
+ * @interface V1DataPointTime
+ */
+export interface V1DataPointTime {
+    /**
+     * Total batches processed by the time this measurement is taken.
+     * @type {Date}
+     * @memberof V1DataPointTime
+     */
+    time: Date;
+    /**
+     * Value of the requested metric at this point in the trial.
+     * @type {number}
+     * @memberof V1DataPointTime
+     */
+    value: number;
+}
+
+/**
+ * 
+ * @export
  * @interface V1DeleteCheckpointsRequest
  */
 export interface V1DeleteCheckpointsRequest {
@@ -8082,6 +8102,12 @@ export interface V1SummarizedMetric {
      * @memberof V1SummarizedMetric
      */
     data: Array<V1DataPoint>;
+    /**
+     * 
+     * @type {Array<V1DataPointTime>}
+     * @memberof V1SummarizedMetric
+     */
+    time?: Array<V1DataPointTime>;
     /**
      * Type of metrics (training, validation, or unset).
      * @type {V1MetricType}
