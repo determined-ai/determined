@@ -345,7 +345,7 @@ const ChartsSection: React.FC = () => {
   const line2 = {
     data: [
       [1, 15],
-      [2, 10],
+      [2, 10.123456789],
     ],
   };
   return (

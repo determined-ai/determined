@@ -24,11 +24,13 @@ interface Props {
   height?: number;
   onSeriesHover?: (seriesIdx: number | null) => void;
   onSeriesSelect?: (seriesIdx: number | null) => void;
+  onXAxisSelect?: (axisName: string) => void;
   scale?: Scale;
   showLegend?: boolean;
   showTooltip?: boolean;
   title?: string;
   width?: number;
+  xAxisOptions?: string[];
   xLabel?: string;
   yLabel?: string;
 }
@@ -39,10 +41,12 @@ export const LineChart: React.FC<Props> = ({
   focusedSeries = -1,
   height = 400,
   onSeriesSelect,
+  onXAxisSelect,
   scale = Scale.Linear,
   showLegend = false,
   showTooltip = false,
   title,
+  xAxisOptions = [],
   xLabel,
   yLabel,
 }: Props) => {
@@ -131,6 +135,18 @@ export const LineChart: React.FC<Props> = ({
   return (
     <>
       {title && <h5 className={css.chartTitle}>{title}</h5>}
+      {xAxisOptions && xAxisOptions.length > 1 && onXAxisSelect && (
+        <SelectFilter
+          defaultValue={xAxisOptions[0]}
+          options={xAxisOptions.map((axisName) => ({
+            label: axisName,
+            value: axisName,
+          }))}
+          onSelect={(axisName) => {
+            onXAxisSelect(String(axisName));
+          }}
+        />
+      )}
       {data.length > 1 && (
         <SelectFilter
           defaultValue={focusSeriesIdx}

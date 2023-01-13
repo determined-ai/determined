@@ -1,6 +1,7 @@
 import uPlot, { Plugin } from 'uplot';
 
 import { glasbeyColor } from 'shared/utils/color';
+import { humanReadableNumber } from 'shared/utils/number';
 
 import css from './tooltipsPlugin.module.scss';
 
@@ -44,6 +45,8 @@ export const tooltipsPlugin = (
 
       const label = yLabels[i - 1] || null;
       const valueRaw = uPlot.data[i][idx];
+      const log = Math.log10(Math.abs(valueRaw));
+      const precision = log > -5 ? 6 - Math.max(0, Math.ceil(log)) : undefined;
 
       const cssClass = valueRaw !== null ? css.valueY : css.valueYEmpty;
       if (isShownEmptyVal || valueRaw || valueRaw === 0)
@@ -51,7 +54,7 @@ export const tooltipsPlugin = (
           <div class="${cssClass}">
             <span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>
             ${label ? label + '<br />' : ''}
-            ${serie.label}: ${valueRaw != null ? valueRaw : 'N/A'}
+            ${serie.label}: ${valueRaw != null ? humanReadableNumber(valueRaw, precision) : 'N/A'}
           </div>`;
     });
 
