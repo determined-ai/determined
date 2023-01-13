@@ -25,6 +25,22 @@ WORKSPACE_HEADERS = [
 workspace_arg: Arg = Arg("--workspace-name", type=str, help="workspace name")
 
 
+def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
+    workspace_id = None
+    if args.workspace_name:
+        workspace = cli.workspace.get_workspace_by_name(
+            cli.setup_session(args), args.workspace_name
+        )
+        if workspace is None:
+            cli.report_cli_error(f'Workspace "{args.workspace_name}" not found')
+            return None
+        if workspace.archived:
+            cli.report_cli_error(f'Workspace "{args.workspace_name}" is archived')
+            return None
+        workspace_id = workspace.id
+    return workspace_id
+
+
 def get_workspace_names(session: api.Session) -> Dict[int, str]:
     """Get a mapping of workspace IDs to workspace names."""
     resp = bindings.get_GetWorkspaces(session)
