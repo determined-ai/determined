@@ -1,4 +1,3 @@
-import logging
 import os
 import pathlib
 import shutil
@@ -62,11 +61,8 @@ def create_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Optional[Dic
 
 def validate_checkpoint(checkpoint_dir: pathlib.Path, expected_files: Dict) -> None:
     """Make sure an existing checkpoint looks correct."""
-    logging.info(f"Checking {checkpoint_dir}")
     assert checkpoint_dir.exists(), f"{checkpoint_dir} should exists"
     files_found = set(storage.StorageManager._list_directory(checkpoint_dir))
-    logging.info(f"Files found={sorted(files_found)}")
-    logging.info(f"Files expec={sorted(expected_files.keys())}")
     assert files_found == set(expected_files.keys()), (files_found, expected_files)
     for found in files_found:
         path = checkpoint_dir.joinpath(found)
@@ -516,9 +512,7 @@ def run_storage_upload_download_sharded_test(
 
     storage_id = checkpoint_context.upload(ckpt_dir, metadata, shard=True, selector=selector_upload)
     download_dir = tmp_path.joinpath(f"test9_download_{pex.distributed.rank // 2}")
-    logging.info(f"Rank {pex.distributed.rank} done with uploading")
     checkpoint_context.download(storage_id, download_dir)
-    logging.info(f"Rank {pex.distributed.rank} done with downloading")
     validate_checkpoint(
         download_dir,
         expected_files={"metadata.json": '{\n  "steps_completed": 1\n}'},
