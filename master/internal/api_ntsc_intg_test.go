@@ -176,7 +176,6 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	api, authz, curUser, ctx := setupNTSCAuthzTest(t)
 	var err error
-	nbID := setupMockNBActor(t, api.m)
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		true, nil,
 	)
@@ -185,19 +184,25 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
 	).Times(2)
+
+	// Notebooks.
+	nbID := setupMockNBActor(t, api.m)
 	_, err = api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: string(nbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
-	_, err = api.SetCommandPriority(ctx, &apiv1.SetCommandPriorityRequest{CommandId: string(nbID)})
+
+	// Commands.
+	cmdID := setupMockCMDActor(t, api.m)
+	_, err = api.SetCommandPriority(ctx, &apiv1.SetCommandPriorityRequest{CommandId: string(cmdID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// check other errors are not returned with permission denied status.
 	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		errors.New("other error"),
-	).Once()
+	).Times(2)
 	_, err = api.SetNotebookPriority(ctx, &apiv1.SetNotebookPriorityRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
-	_, err = api.SetCommandPriority(ctx, &apiv1.SetCommandPriorityRequest{CommandId: string(nbID)})
+	_, err = api.SetCommandPriority(ctx, &apiv1.SetCommandPriorityRequest{CommandId: string(cmdID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }

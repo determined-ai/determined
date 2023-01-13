@@ -286,6 +286,15 @@ func (a *apiServer) SetCommandPriority(
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId), int(req.Priority),
 	)
+	err = apiutils.MapAndFilterErrors(err, nil, nil)
+	switch err.(type) {
+	case nil:
+		// do nothing
+	case authz.PermissionDeniedError:
+		return nil, errActorNotFound(commandsAddr.Child(req.CommandId))
+	default:
+		return nil, err
+	}
 
 	return resp, a.ask(commandsAddr.Child(req.CommandId), req, &resp)
 }
