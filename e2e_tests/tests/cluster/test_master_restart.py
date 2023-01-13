@@ -6,8 +6,8 @@ from typing import Iterator
 import pytest
 import requests
 
-from determined.common import constants
-from determined.common.api import authentication
+from determined.common import constants, api
+from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import determinedexperimentv1State as EXP_STATE
 from tests import command as cmd
 from tests import config as conf
@@ -236,7 +236,9 @@ def _test_master_restart_shell(managed_cluster: Cluster, downtime: int) -> None:
             time.sleep(downtime)
             managed_cluster.restart_master()
 
+        print("waiting for task state")
         wait_for_task_state("shell", task_id, "RUNNING")
+        print("finished waiting for task state")
         post_restart_queue = det_cmd_json(["job", "list", "--json"])
         assert pre_restart_queue == post_restart_queue
 
