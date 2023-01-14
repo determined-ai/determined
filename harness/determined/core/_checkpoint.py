@@ -325,8 +325,7 @@ class CheckpointContext:
 
         all_resources = self._dist.allgather(resources)
         merged_resources, conflicts = merge_resources(all_resources)
-        if conflicts:
-            self._resolve_conflicts(ckpt_dir, conflicts)
+        resources = self._resolve_conflicts(resources, conflicts, ckpt_dir)
 
         # Merge and upload metadata.
         all_metadata = self._merge_metadata(metadata)
@@ -339,16 +338,7 @@ class CheckpointContext:
 
         if want_upload:
             assert ckpt_dir
-            # If there is a conflict (two files with the same name have different content hashes)
-            # then exception is thrown from _resolve_conflicts().
-            # If we are here, there may still be multiple ranks having the same version of the file.
-            # To avoid uploading the same file multiple times, we use the smallest rank to upload.
-            paths = list(
-                filter(
-                    lambda x: x not in conflicts or min(conflicts[x]) == self._dist.rank,
-                    list(resources.keys()),
-                )
-            )
+            paths = list(resources.keys())
             self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
 
         # Synchronize workers.
@@ -358,7 +348,9 @@ class CheckpointContext:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)
         return storage_id
 
-    def _resolve_conflicts(self, ckpt_dir: Optional[str], conflicts: Dict[str, List[int]]) -> None:
+    def _resolve_conflicts(
+        self, resources: Dict[str, int], conflicts: Dict[str, List[int]], ckpt_dir: Optional[str]
+    ) -> Dict[str, int]:
         all_conflicts = conflicts.copy()
 
         for fname in conflicts:
@@ -378,6 +370,15 @@ class CheckpointContext:
 
         if len(all_conflicts) > 0:
             self._raise_conflict_error(all_conflicts, "files")
+
+        # There may still be multiple ranks having the same version of the file.
+        # To avoid uploading the same file multiple times, we use the smallest rank to upload.
+        filtered_resources = {
+            k: v
+            for k, v in resources.items()
+            if k not in conflicts or min(conflicts[k]) == self._dist.rank
+        }
+        return filtered_resources
 
     def _raise_conflict_error(self, conflicts: Dict[str, List], conflict_dtype: str) -> None:
         # Try to keep the logs easier to read; print the whole failure only on the chief.
@@ -552,8 +553,7 @@ class CheckpointContext:
         all_resources = self._dist.allgather(resources)
 
         merged_resources, conflicts = merge_resources(all_resources)
-        if conflicts:
-            self._resolve_conflicts(ckpt_dir, conflicts)
+        self._resolve_conflicts(resources, conflicts, ckpt_dir)
 
         all_metadata = self._merge_metadata(metadata)
         if self._dist.rank == 0:
