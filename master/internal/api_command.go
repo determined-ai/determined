@@ -19,7 +19,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
-	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -190,6 +189,9 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 func (a *apiServer) GetCommands(
 	ctx context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -211,7 +213,7 @@ func (a *apiServer) GetCommands(
 		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
 	)
 	if err != nil {
-		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
+		return nil, err
 	}
 	a.filter(&resp.Commands, func(i int) bool {
 		return limitedScopes[model.AccessScopeID(resp.Commands[i].WorkspaceId)]
@@ -224,6 +226,9 @@ func (a *apiServer) GetCommands(
 func (a *apiServer) GetCommand(
 	ctx context.Context, req *apiv1.GetCommandRequest,
 ) (resp *apiv1.GetCommandResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -246,6 +251,10 @@ func (a *apiServer) GetCommand(
 func (a *apiServer) KillCommand(
 	ctx context.Context, req *apiv1.KillCommandRequest,
 ) (resp *apiv1.KillCommandResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
 	if err != nil {
 		return nil, err
@@ -255,16 +264,9 @@ func (a *apiServer) KillCommand(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanTerminateNSC(
+	if err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId),
-	)
-	err = apiutils.MapAndFilterErrors(err, nil, nil)
-	switch err.(type) {
-	case nil:
-		// do nothing
-	case authz.PermissionDeniedError:
-		return nil, errActorNotFound(commandsAddr.Child(req.CommandId))
-	default:
+	); err != nil {
 		return nil, err
 	}
 
@@ -274,6 +276,9 @@ func (a *apiServer) KillCommand(
 func (a *apiServer) SetCommandPriority(
 	ctx context.Context, req *apiv1.SetCommandPriorityRequest,
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
 	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
 	if err != nil {
 		return nil, err
@@ -283,18 +288,9 @@ func (a *apiServer) SetCommandPriority(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+	if err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId), int(req.Priority),
-	)
-	err = apiutils.MapAndFilterErrors(err, nil, nil)
-	switch err.(type) {
-	case nil:
-		// do nothing
-	case authz.PermissionDeniedError:
-		// TODO: we'd want these to be not-found if user has no view perm but be the real error
-		// if they do.
-		return nil, errActorNotFound(commandsAddr.Child(req.CommandId))
-	default:
+	); err != nil {
 		return nil, err
 	}
 
@@ -303,7 +299,10 @@ func (a *apiServer) SetCommandPriority(
 
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
-) (*apiv1.LaunchCommandResponse, error) {
+) (resp *apiv1.LaunchCommandResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
