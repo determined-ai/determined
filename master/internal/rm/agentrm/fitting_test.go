@@ -351,7 +351,7 @@ func TestFindFits(t *testing.T) {
 				))
 			}
 			agentsByHandler, agentsByIndex := byHandler(agents...)
-			fits := findFits(&tc.Task, agentsByHandler, tc.FittingMethod)
+			fits := findFits(&tc.Task, agentsByHandler, tc.FittingMethod, false)
 			assert.Assert(t, len(fits) > 0)
 			assert.Equal(t, fits[0].Agent, agentsByIndex[tc.ExpectedAgentFit])
 		})
@@ -368,6 +368,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 		ExpectedAgentFit    []int
 		ExpectedLength      int
 		FittingRequirements sproto.FittingRequirements
+		HeterogenousFit     bool
 	}
 
 	testCases := []testCase{
@@ -405,6 +406,41 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 				SingleAgent: false,
 			},
 		},
+		{
+			Name:            "Heterogeneous fit - exact",
+			SlotsNeeded:     4,
+			AgentCapacities: []int{2, 1, 1},
+			ExpectedLength:  3,
+			HeterogenousFit: true,
+		},
+		{
+			Name:            "Heterogeneous fit - prefer homoegeneous fit",
+			SlotsNeeded:     4,
+			AgentCapacities: []int{2, 1, 1, 1, 1},
+			ExpectedLength:  4,
+			HeterogenousFit: true,
+		},
+		{
+			Name:            "Heterogeneous fit - extra slots not used",
+			SlotsNeeded:     4,
+			AgentCapacities: []int{2, 1, 1, 1},
+			ExpectedLength:  3,
+			HeterogenousFit: true,
+		},
+		{
+			Name:            "Heterogeneous fit - not enough consumes none",
+			SlotsNeeded:     8,
+			AgentCapacities: []int{2, 1, 1},
+			ExpectedLength:  0,
+			HeterogenousFit: true,
+		},
+		{
+			Name:            "Heterogeneous fit - one last test",
+			SlotsNeeded:     63,
+			AgentCapacities: []int{32, 32, 16, 16, 8, 8, 4, 4, 2, 2, 1, 1},
+			ExpectedLength:  6,
+			HeterogenousFit: true,
+		},
 	}
 
 	for idx := range testCases {
@@ -437,7 +473,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 				SlotsNeeded:         tc.SlotsNeeded,
 				FittingRequirements: tc.FittingRequirements,
 			}
-			fits := findDedicatedAgentFits(req, agents, WorstFit)
+			fits := findDedicatedAgentFits(req, agents, WorstFit, tc.HeterogenousFit)
 
 			var agentFit sort.IntSlice
 			for _, fit := range fits {
