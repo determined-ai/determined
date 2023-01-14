@@ -191,7 +191,7 @@ def run_storage_lifecycle_test(
         path = pathlib.Path(f"/tmp/storage_lifecycle_test-{storage_id}")
         try:
             create_checkpoint(path)
-            manager.upload(path, storage_id, paths=["subdir/file1.txt", "empty_dir/"])
+            manager.upload(path, storage_id, paths={"subdir/file1.txt", "empty_dir/"})
             checkpoints.append(storage_id)
         finally:
             shutil.rmtree(path, ignore_errors=True)

@@ -2,12 +2,12 @@ import abc
 import contextlib
 import os
 import pathlib
-from typing import Any, Callable, Dict, Iterator, List, Optional, Union
+from typing import Any, Callable, Dict, Iterator, Optional, Set, Union
 
 # Paths should be a sorted list of paths relative to the checkpoint root that indicate what paths
 # should be uploaded.  A directory should always appear in Paths if any subpath under that directory
 # appears in Paths.
-Paths = List[str]
+Paths = Set[str]
 
 
 # Selector accepts a path relative to the checkpoint root, and returns a boolean indicating if the
