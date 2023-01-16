@@ -49,7 +49,6 @@ interface Settings {
 }
 
 const settingsConfig: SettingsConfig<Settings> = {
-  applicableRoutespace: 'navigation',
   settings: {
     navbarCollapsed: {
       defaultValue: false,

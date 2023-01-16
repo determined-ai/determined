@@ -73,8 +73,6 @@ type ResourcesStarted struct {
 	Addresses []cproto.Address
 	// NativeResourcesID is the native Docker hex container ID of the Determined container.
 	NativeResourcesID string
-	// HPCJobID is the Slurm/PBS job ID.
-	HPCJobID string
 }
 
 // FromContainerStarted converts an aproto.ContainerStarted message to ResourcesStarted.

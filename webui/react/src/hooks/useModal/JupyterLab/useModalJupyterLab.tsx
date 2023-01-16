@@ -33,7 +33,6 @@ const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
 
 const settingsConfig: SettingsConfig<JupyterLabOptions> = {
-  applicableRoutespace: STORAGE_PATH,
   settings: {
     name: {
       defaultValue: '',
