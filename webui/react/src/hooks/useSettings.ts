@@ -316,7 +316,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       return;
     }
 
-    const mappedSettings = settingsToQuery(config, settings);
+    const mappedSettings = settingsToQuery(config, returnedSettings);
     const url = `?${mappedSettings}`;
 
     if (location.search !== url) {
@@ -326,7 +326,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         navigate(url, { replace: true });
       }
     }
-  }, [shouldPush, location, shouldSkipUpdates, settings, navigate, config]);
+  }, [shouldPush, location, returnedSettings, shouldSkipUpdates, navigate, config]);
 
   return {
     activeSettings,
