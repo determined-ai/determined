@@ -148,7 +148,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     () => config.applicableRoutespace && !pathname.endsWith(config.applicableRoutespace),
     [config.applicableRoutespace, pathname],
   );
-  const [shouldPush, setShouldPush] = useState(false);
+  const [shouldPush, setShouldPush] = useState(false); // internal state to manage navigation push property, see line 322
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
@@ -301,7 +301,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
     setReturnedSettings(settings);
 
-    updateDB(settings);
+    updateDB(settings); // no need to await for DB changes as we optimistically update stuff based on the provided values
   }, [settings, returnedSettings, updateDB]);
 
   useEffect(() => {
@@ -319,8 +319,14 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const mappedSettings = settingsToQuery(config, settings);
     const url = `?${mappedSettings}`;
 
-    shouldPush ? navigate(url) : navigate(url, { replace: true });
-  }, [shouldPush, shouldSkipUpdates, settings, navigate, config]);
+    if (location.search !== url) {
+      if (shouldPush) {
+        navigate(url);
+      } else {
+        navigate(url, { replace: true });
+      }
+    }
+  }, [shouldPush, location, shouldSkipUpdates, settings, navigate, config]);
 
   return {
     activeSettings,
