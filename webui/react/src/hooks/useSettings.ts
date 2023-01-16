@@ -319,7 +319,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const mappedSettings = settingsToQuery(config, returnedSettings);
     const url = `?${mappedSettings}`;
 
-    if (location.search !== url) {
+    if (mappedSettings && location.search !== url) {
       if (shouldPush) {
         navigate(url);
       } else {
