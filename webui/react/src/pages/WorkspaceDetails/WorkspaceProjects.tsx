@@ -108,7 +108,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchProjects().then(() => setIsLoading(false));
+    fetchProjects();
   }, [fetchProjects]);
 
   useEffect(() => {

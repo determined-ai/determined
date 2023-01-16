@@ -68,11 +68,9 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
 
               if (!entry) {
                 state.set(key, { [setting.key]: value });
-              } else {
-                if (!entry[setting.key]) {
-                  // this way, if we have current settings grabbed by URL, it would persist in the state
-                  state.set(key, Object.assign(entry, { [setting.key]: value }));
-                }
+              } else if (!entry[setting.key]) {
+                // this way, if we have current settings grabbed by URL, it would persist in the state
+                state.set(key, Object.assign(entry, { [setting.key]: value }));
               }
             });
           });
@@ -101,9 +99,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     cb: (currentSettings?: Settings) => Settings,
     clearQuerySettings = false,
   ) => {
-    setSettingsState((currentState) => {
-      return currentState.update(key, cb);
-    });
+    setSettingsState((currentState) => currentState.update(key, cb));
 
     if (clearQuerySettings) {
       querySettings.current = '';
