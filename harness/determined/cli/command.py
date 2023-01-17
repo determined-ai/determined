@@ -356,6 +356,7 @@ def launch_command(
     context_path: Optional[Path] = None,
     includes: Iterable[Path] = (),
     data: Optional[Dict[str, Any]] = None,
+    workspace_id: Optional[int] = None,
     preview: Optional[bool] = False,
     default_body: Optional[Dict[str, Any]] = None,
 ) -> Any:
@@ -380,6 +381,9 @@ def launch_command(
 
     if preview:
         body["preview"] = preview
+
+    if workspace_id is not None:
+        body["workspaceId"] = workspace_id
 
     return api.post(
         master,
