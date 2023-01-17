@@ -54,9 +54,19 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case *apiv1.DeleteWorkspaceRequest:
-		// FIXME: TellAll?
 		// TODO: add to other managers
-		ctx.AskAll(msg, ctx.Children()...).GetAll()
+		responses := ctx.AskAll(msg, ctx.Children()...).GetAll()
+		issues := make(map[*actor.Ref]error, 0)
+		// pick out the errors and report them
+		for ref, resp := range responses {
+			switch r := resp.(type) {
+			case error:
+				issues[ref] = r
+			}
+		}
+		if len(issues) > 0 {
+			ctx.Respond(issues)
+		}
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()

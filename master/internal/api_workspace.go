@@ -519,8 +519,18 @@ func (a *apiServer) DeleteWorkspace(
 	}
 
 	log.Debugf("deleting workspace %d NTSC", req.Id)
-	// FIXME: this shouldn't block for long. do we need any err handling?
-	command.MessageNTSC(a.m.system, req).GetAll()
+	responses := command.MessageNTSC(a.m.system, req).GetAll()
+	for _, response := range responses {
+		if response != nil {
+			switch response.(type) {
+			case error:
+				return nil, status.Errorf(
+					codes.Internal,
+					"failed to delete workspace: failed to kill associated NTSC.",
+				)
+			}
+		}
+	}
 
 	if len(projects) == 0 {
 		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
