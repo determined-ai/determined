@@ -4,7 +4,7 @@ import React, { forwardRef, ForwardRefExoticComponent, RefAttributes } from 'rea
 
 type Rules = FormItemProps['rules']; // https://github.com/ant-design/ant-design/issues/39466
 type LabelCol = {
-  span: number
+  span: number;
 };
 type TriggerEvent = 'onChange' | 'onSubmit';
 
@@ -32,7 +32,8 @@ const FormItemWrapper = (({
   max = 255,
   maxMessage,
   validateTrigger,
-  ...props }) => {
+  ...props
+}) => {
   const maxRule = { max, message: maxMessage || `${label} cannot exceed ${max} characters` };
   const itemRules = rules ? [...rules, maxRule] : [maxRule];
   if (required) itemRules.push({ message: requiredMessage || `${label} required`, required: true });
@@ -45,7 +46,8 @@ const FormItemWrapper = (({
       rules={itemRules}
       validateTrigger={validateTrigger}>
       <AntdInput ref={ref} {...props} />
-    </Form.Item>);
+    </Form.Item>
+  );
 }) as Input;
 
 const Input: Input = forwardRef<InputRef, InputProps>(({ noForm, ...props }: InputProps, ref) => {

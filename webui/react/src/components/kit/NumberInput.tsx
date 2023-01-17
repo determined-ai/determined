@@ -2,7 +2,7 @@ import { InputNumber as AntdInputNumber, Form } from 'antd';
 import React from 'react';
 
 type LabelCol = {
-  span: number
+  span: number;
 };
 
 interface NumberInputProps {
@@ -18,12 +18,15 @@ interface NumberInputProps {
   value?: number;
 }
 
-const NumberInput: React.FC<NumberInputProps> = ({ label, labelCol = { span: 24 }, ...props }: NumberInputProps) => {
+const NumberInput: React.FC<NumberInputProps> = ({
+  label,
+  labelCol = { span: 24 },
+  ...props
+}: NumberInputProps) => {
   return (
-    <Form.Item
-      label={label}
-      labelCol={labelCol}>
+    <Form.Item label={label} labelCol={labelCol}>
       <AntdInputNumber {...props} />
-    </Form.Item>);
+    </Form.Item>
+  );
 };
 export default NumberInput;
