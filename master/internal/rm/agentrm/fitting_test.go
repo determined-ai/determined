@@ -414,6 +414,13 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 			HeterogenousFit: true,
 		},
 		{
+			Name:            "Heterogeneous fit - not allowed",
+			SlotsNeeded:     4,
+			AgentCapacities: []int{2, 1, 1},
+			ExpectedLength:  0,
+			HeterogenousFit: false,
+		},
+		{
 			Name:            "Heterogeneous fit - prefer homoegeneous fit",
 			SlotsNeeded:     4,
 			AgentCapacities: []int{2, 1, 1, 1, 1},

@@ -71,7 +71,7 @@ func (c candidateList) Swap(i, j int) {
 
 func findFits(
 	req *sproto.AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
-	allowHeterogeneousAgentFits bool,
+	allowHeterogeneousFits bool,
 ) []*fittingState {
 	// TODO(DET-4035): Some of this code is duplicated in calculateDesiredNewAgentNum()
 	//    to prevent the provisioner from scaling up for jobs that can never be scheduled in
@@ -82,7 +82,12 @@ func findFits(
 	if req.FittingRequirements.SingleAgent || req.SlotsNeeded <= 1 {
 		return nil
 	}
-	if fits := findDedicatedAgentFits(req, agents, fittingMethod, true); len(fits) != 0 {
+	if fits := findDedicatedAgentFits(
+		req,
+		agents,
+		fittingMethod,
+		allowHeterogeneousFits,
+	); len(fits) != 0 {
 		return fits
 	}
 	return nil
@@ -101,16 +106,17 @@ func isViable(
 
 func findDedicatedAgentFits(
 	req *sproto.AllocateRequest, agentStates map[*actor.Ref]*agentState,
-	fittingMethod SoftConstraint, allowHeterogeneousAgentFits bool,
+	fittingMethod SoftConstraint, allowHeterogeneousFits bool,
 ) []*fittingState {
 	if len(agentStates) == 0 {
 		return nil
 	}
 
 	// Scheduling assumption(s):
-	// 1) Multi-agent tasks will receive the same number of slots on every agent. This is
-	//    a valid assumption, because the only multi-agent tasks are distributed experiments
-	//    which always want equal distribution across agents.
+	// 1) Multi-agent tasks will receive the same number of slots on every agent. This is a usually
+	//    a valid assumption, because the only multi-agent tasks are distributed experiments which
+	//    should prefer equal distribution across agents. allowHeterogeneousFits allows users to
+	//    invalidate this assumption.
 	// 2) Multi-agent tasks will receive all the slots on every agent they are scheduled on.
 	agentsByNumSlots := make(map[int][]*agentState)
 	for _, agent := range agentStates {
@@ -180,8 +186,8 @@ func findDedicatedAgentFits(
 		return group.candidateList[:numNodesNeeded]
 	}
 
-	// Then try to find a fit amoung agents with heterogeneous sizes.
-	if allowHeterogeneousAgentFits {
+	// Then try to find a fit among agents with heterogeneous sizes.
+	if allowHeterogeneousFits {
 		var fits []*fittingState
 
 		// Progressively fit against nodes from largest to smallest. This works when node sizes are
