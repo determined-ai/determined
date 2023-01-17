@@ -35,7 +35,7 @@ func (p PodSpec) Merge(other PodSpec) PodSpec {
 		panic(err)
 	}
 
-	// Recieiver should overwrite the value.
+	// Receiver should overwrite the value.
 	mergedBytes, err := strategicpatch.StrategicMergePatch(otherBytes, pBytes, p)
 	if err != nil {
 		panic(err)
