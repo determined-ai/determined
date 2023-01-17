@@ -38,8 +38,13 @@ const renderOptionLabel = (option: Option): React.ReactNode => {
 const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, options }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const dropdownClasses = [css.optionsDropdown];
+
   let dropdownOptions: DropdownProps['menu'] = {};
   if (options && options.length > 0) {
+    if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
+    if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
+    if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
     const onItemClick: MenuProps['onClick'] = (e) => {
       const opt = options.find((opt) => opt.key === e.key) as Option;
       if (isMouseEvent(e.domEvent)) {
@@ -71,20 +76,24 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
           )}
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) => (
-              <Button
-                disabled={option.disabled || !option.onClick}
-                ghost
-                icon={option?.icon}
-                key={option.key}
-                loading={option.isLoading}
-                onClick={option.onClick}>
-                {renderOptionLabel(option)}
-              </Button>
+              <div className={css.optionsMainButton} key={option.key}>
+                <Button
+                  disabled={option.disabled || !option.onClick}
+                  ghost
+                  icon={option?.icon}
+                  key={option.key}
+                  loading={option.isLoading}
+                  onClick={option.onClick}>
+                  {renderOptionLabel(option)}
+                </Button>
+              </div>
             ))}
           </div>
           {dropdownOptions && (
             <Dropdown menu={dropdownOptions} placement="bottomRight" trigger={['click']}>
-              <Button ghost icon={<Icon name="overflow-vertical" />} />
+              <div className={dropdownClasses.join(' ')}>
+                <Button ghost icon={<Icon name="overflow-vertical" />} />
+              </div>
             </Dropdown>
           )}
         </div>

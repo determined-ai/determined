@@ -87,6 +87,9 @@
   .optionsDropdownItem:nth-child(1) {
     display: none;
   }
+  .optionsDropdownOneChild {
+    display: none !important;
+  }
 }
 
 @media only screen and (min-width: $breakpoint-desktop-medium) {
@@ -96,6 +99,9 @@
   .optionsDropdownItem:nth-child(2) {
     display: none;
   }
+  .optionsDropdownTwoChild {
+    display: none !important;
+  }
 }
 
 @media only screen and (min-width: $breakpoint-desktop-large) {
@@ -104,5 +110,8 @@
   }
   .optionsDropdownItem:nth-child(3) {
     display: none;
+  }
+  .optionsDropdownThreeChild {
+    display: none !important;
   }
 }

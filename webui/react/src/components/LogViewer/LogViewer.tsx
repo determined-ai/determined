@@ -135,9 +135,6 @@ const LogViewer: React.FC<Props> = ({
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);
-  const enableTailingClasses = [css.enableTailing];
-
-  if (isTailing && fetchDirection === FetchDirection.Older) enableTailingClasses.push(css.enabled);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
