@@ -158,8 +158,11 @@ func remakeCommandsByType(
 
 	results := []*command{}
 	for i := range snapshots {
-		cmd := commandFromSnapshot(ctx, pgDB, rm, taskLogger, &snapshots[i])
-		results = append(results, cmd)
+		if rm.IsReattachEnabledForRP(ctx,
+			snapshots[i].GenericCommandSpec.Config.Resources.ResourcePool) {
+			cmd := commandFromSnapshot(ctx, pgDB, rm, taskLogger, &snapshots[i])
+			results = append(results, cmd)
+		}
 	}
 
 	return results, nil

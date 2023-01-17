@@ -189,12 +189,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		}
 		p.startResourceRequestQueue(ctx)
 
-		if config.GetMasterConfig().ResourceManager.KubernetesRM.ReattachResources {
-			if err := p.deleteResourcesWithEndedAllocation(ctx); err != nil {
-				return err
-			}
-		} else {
-			if err := p.deleteExistingKubernetesResources(ctx); err != nil {
+		if !p.leaveKubernetesResources {
+			if err := p.deleteDoomedKubernetesResources(ctx); err != nil {
 				return err
 			}
 		}
@@ -494,8 +490,8 @@ func (p *pods) reattachPod(
 		p.masterTLSConfig,
 		p.loggingTLSConfig,
 		p.loggingConfig,
-		p.podInterfaces[resourcePool],
-		p.configMapInterfaces[resourcePool],
+		p.podInterfaces[pod.Namespace],
+		p.configMapInterfaces[pod.Namespace],
 		p.resourceRequestQueue,
 		p.leaveKubernetesResources,
 		p.slotType,
@@ -546,7 +542,7 @@ func (p *pods) reattachPod(
 
 	// Send a podStatusUpdate for any missed updates between master going up
 	// and the pod being reattached.
-	updated, err := p.podInterfaces[resourcePool].Get(context.TODO(), pod.Name, metaV1.GetOptions{})
+	updated, err := p.podInterfaces[pod.Namespace].Get(context.TODO(), pod.Name, metaV1.GetOptions{})
 	if err != nil {
 		return reattachPodResponse{}, errors.Wrap(err, "error getting pod status update in restore")
 	}
@@ -571,23 +567,7 @@ func (p *pods) deleteKubernetesResources(
 	}
 }
 
-func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
-	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
-	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
-	if err != nil {
-		return errors.Wrap(err, "error listing existing config maps")
-	}
-
-	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
-	if err != nil {
-		return errors.Wrap(err, "error listing existing pod")
-	}
-
-	p.deleteKubernetesResources(ctx, pods, configMaps)
-	return nil
-}
-
-func (p *pods) deleteResourcesWithEndedAllocation(ctx *actor.Context) error {
+func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	var openAllocations []model.Allocation
 	if err := db.Bun().NewSelect().Model(&openAllocations).
 		Where("end_time IS NULL").
@@ -600,32 +580,65 @@ func (p *pods) deleteResourcesWithEndedAllocation(ctx *actor.Context) error {
 	}
 
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
+	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
+	if err != nil {
+		return errors.Wrap(err, "error listing existing pods")
+	}
+	toKillPods := &k8sV1.PodList{}
+	savedPodNames := make(map[string]bool)
+	for _, pod := range pods.Items {
+		var resourcePool string
+		foundEnv := false
+		for _, c := range pod.Spec.Containers {
+			for _, e := range c.Env {
+				if e.Name == resourcePoolEnvVar {
+					resourcePool = e.Value
+					foundEnv = true
+				}
+				if foundEnv {
+					break
+				}
+			}
+			if foundEnv {
+				break
+			}
+		}
+
+		if !foundEnv {
+			ctx.Log().Debugf("deleting pod '%s' without environment variable '%s'",
+				pod.Name, resourcePoolEnvVar)
+			toKillPods.Items = append(toKillPods.Items, pod)
+			continue
+		}
+		if !isReattachEnabledForRP(resourcePool) {
+			ctx.Log().Debugf("deleting pod '%s' in resource pool '%s' since "+
+				"agent_reattach_enabled is disabled", pod.Name, resourcePool)
+			toKillPods.Items = append(toKillPods.Items, pod)
+			continue
+		}
+
+		if !openAllocationIDs[model.AllocationID(pod.Labels[determinedLabel])] {
+			ctx.Log().Warnf("deleting pod '%s', did not find open allocation '%s'",
+				pod.Name, pod.Labels[determinedLabel])
+			toKillPods.Items = append(toKillPods.Items, pod)
+			continue
+		}
+		savedPodNames[pod.Name] = true
+	}
+
 	configMaps, err := p.configMapInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
 	if err != nil {
 		return errors.Wrap(err, "error listing existing config maps")
 	}
 	toKillConfigMaps := &k8sV1.ConfigMapList{}
 	for _, cm := range configMaps.Items {
-		if !openAllocationIDs[model.AllocationID(cm.Labels[determinedLabel])] {
-			ctx.Log().Warnf("Could not find open allocation for "+
-				"allocation ID '%s' for existig config map '%s', deleting config map",
-				cm.Labels[determinedLabel], cm.Name)
-			toKillConfigMaps.Items = append(toKillConfigMaps.Items, cm)
+		if savedPodNames[cm.Name] { // PodName is same as config map name.
+			continue
 		}
-	}
 
-	pods, err := p.podInterfaces[metaV1.NamespaceAll].List(context.TODO(), listOptions)
-	if err != nil {
-		return errors.Wrap(err, "error listing existing pod")
-	}
-	toKillPods := &k8sV1.PodList{}
-	for _, pod := range pods.Items {
-		if !openAllocationIDs[model.AllocationID(pod.Labels[determinedLabel])] {
-			ctx.Log().Warnf("Could not find open allocation for "+
-				"allocation ID '%s' for existig pod '%s', deleting pod",
-				pod.Labels[determinedLabel], pod.Name)
-			toKillPods.Items = append(toKillPods.Items, pod)
-		}
+		ctx.Log().Debugf("Deleting config map '%s' did not find a matching pod that will be restored",
+			cm.Name)
+		toKillConfigMaps.Items = append(toKillConfigMaps.Items, cm)
 	}
 
 	p.deleteKubernetesResources(ctx, toKillPods, toKillConfigMaps)
@@ -661,7 +674,6 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 }
 
 func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg StartTaskPod) error {
-	fmt.Println(2, msg.Namespace)
 	newPodHandler := newPod(
 		msg,
 		p.cluster,

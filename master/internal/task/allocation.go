@@ -674,6 +674,7 @@ func (a *Allocation) RestoreResourceFailure(
 	}
 
 	if a.req.Restore {
+		// TODO(DET-8822): This heartbeat can be nil.
 		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
 		case a.model.StartTime == nil:
 			break

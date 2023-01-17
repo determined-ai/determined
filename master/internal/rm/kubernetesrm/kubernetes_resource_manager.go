@@ -160,15 +160,32 @@ func (k ResourceManager) IsReattachableOnlyAfterStarted(ctx actor.Messenger) boo
 	return false
 }
 
-// IsReattachEnabled returns a boolean based on the k8s rm config _reattach_resources.
+// IsReattachEnabled is true if any RP is configured to support it.
 func (k ResourceManager) IsReattachEnabled(ctx actor.Messenger) bool {
-	return config.GetMasterConfig().ResourceManager.KubernetesRM.ReattachResources
+	config := config.GetMasterConfig()
+
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.AgentReattachEnabled {
+			return true
+		}
+	}
+	return false
 }
 
-// IsReattachEnabledForRP returns a boolean
-// based on the k8s rm config _reattach_resources.
+// IsReattachEnabledForRP returns true, if the specified RP has AgentReattachEnabled.
 func (k ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rp string) bool {
-	return k.IsReattachEnabled(ctx)
+	return isReattachEnabledForRP(rp)
+}
+
+func isReattachEnabledForRP(rp string) bool {
+	config := config.GetMasterConfig()
+
+	for _, rpConfig := range config.ResourcePools {
+		if rpConfig.PoolName == rp && rpConfig.AgentReattachEnabled {
+			return true
+		}
+	}
+	return false
 }
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
@@ -207,8 +224,12 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		poolNamespaces := set.Set[string]{}
-		for _, p := range k.poolsConfig {
-			poolNamespaces.Insert(p.KubernetesNamespace)
+		for i := range k.poolsConfig {
+			if k.poolsConfig[i].KubernetesNamespace == "" {
+				k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
+			}
+
+			poolNamespaces.Insert(k.poolsConfig[i].KubernetesNamespace)
 		}
 
 		k.podsActor = Initialize(
