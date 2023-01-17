@@ -1,7 +1,9 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import {
-  Card, //TODO: Move to components/kit? Add section to DesignKit page?
-  Space, //TODO: Move to components/kit? Add section to DesignKit page?
+  //TODO: Move these imports to components/kit? Add sections to DesignKit page?
+  Card,
+  Form,
+  Space,
 } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -504,7 +506,7 @@ const SpinbuttonsSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default spin button</strong>
-        <NumberInput defaultValue={3} />
+        <NumberInput defaultValue={3} label="Default" />
         <strong>Guiding principles</strong>
         <ul>
           <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
@@ -513,7 +515,7 @@ const SpinbuttonsSection: React.FC = () => {
         </ul>
         <hr />
         <strong>Variations and states of spin buttons</strong>
-        <NumberInput disabled />
+        <NumberInput disabled label="Disabled" />
       </Card>
     </ComponentSection>
   );
@@ -563,8 +565,12 @@ const TextfieldsSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Default input - text field</strong>
-        <Input />
+        <Form>
+          <strong>Default input</strong>
+          <Input label="Input" name="default" />
+          <strong>Required input</strong>
+          <Input label="Required input" name="required" required />
+        </Form>
       </Card>
     </ComponentSection>
   );
