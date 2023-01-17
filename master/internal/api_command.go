@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -197,16 +198,19 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 
-	if err = a.ask(commandsAddr, req, &resp); err != nil {
-		return nil, err
-	}
+	workspaceNotFoundErr := status.Errorf(codes.NotFound, "workspace %d not found", req.WorkspaceId)
 
 	if req.WorkspaceId != 0 {
 		// check if the workspace exists.
 		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
-		if err != nil {
+		if errors.Is(err, db.ErrNotFound) {
+			return nil, workspaceNotFoundErr
+		} else if err != nil {
 			return nil, err
 		}
+	}
+	if err = a.ask(commandsAddr, req, &resp); err != nil {
+		return nil, err
 	}
 
 	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
@@ -215,6 +219,12 @@ func (a *apiServer) GetCommands(
 	if err != nil {
 		return nil, err
 	}
+	if req.WorkspaceId != 0 && len(limitedScopes) == 0 {
+		// report missing permissions as a 404 on explicit
+		// workspace requests.
+		return nil, workspaceNotFoundErr
+	}
+
 	a.filter(&resp.Commands, func(i int) bool {
 		return limitedScopes[model.AccessScopeID(resp.Commands[i].WorkspaceId)]
 	})
