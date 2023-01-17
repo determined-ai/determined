@@ -43,6 +43,9 @@ func New(users *user.Service, db *db.PgDB) (*Service, error) {
 	manager.MapTokenStorage(s.tokenStore)
 	manager.MapClientStorage(s.clientStore)
 	// Increase the RefreshTokenExp to 3 months since Okta only refreshes on use and use is sparse.
+	manager.SetClientTokenCfg(&manage.Config{
+		AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 30 * 3, IsGenerateRefresh: true,
+	})
 	manager.SetAuthorizeCodeTokenCfg(&manage.Config{
 		AccessTokenExp: time.Hour * 2, RefreshTokenExp: time.Hour * 24 * 30 * 3, IsGenerateRefresh: true,
 	})

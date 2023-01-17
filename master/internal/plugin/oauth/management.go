@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/scrypt"
 
@@ -109,9 +110,11 @@ func (s *Service) ValidateRequest(c echo.Context) (bool, error) {
 	if bearer == authHeader {
 		return false, nil
 	}
-	token, err := s.tokenStore.GetByAccess(bearer)
+
+	token, err := s.server.Manager.LoadAccessToken(bearer)
 	if err != nil {
-		return false, err
+		logrus.WithError(err).Error("failed to load access token")
+		return false, nil
 	}
 	return token != nil, nil
 }
