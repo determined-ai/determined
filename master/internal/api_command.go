@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	mconfig "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -169,11 +170,23 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		config.WorkDir = nil
 	}
 
-	token, createSessionErr := a.m.db.StartUserSession(userModel)
-	if createSessionErr != nil {
-		return nil, launchWarnings, status.Errorf(codes.Internal,
-			errors.Wrapf(createSessionErr,
-				"unable to create user session inside task").Error())
+	extConfig := mconfig.GetMasterConfig().InternalConfig.ExternalSessions
+	var token string
+	if extConfig.JwtKey != "" {
+		token, err = grpcutil.GetUserExternalToken(ctx)
+		if err != nil {
+			return nil, launchWarnings, status.Errorf(codes.Internal,
+				errors.Wrapf(err,
+					"unable to get external user token").Error())
+		}
+		err = nil
+	} else {
+		token, err = a.m.db.StartUserSession(userModel)
+		if err != nil {
+			return nil, launchWarnings, status.Errorf(codes.Internal,
+				errors.Wrapf(err,
+					"unable to create user session inside task").Error())
+		}
 	}
 	taskSpec.UserSessionToken = token
 
