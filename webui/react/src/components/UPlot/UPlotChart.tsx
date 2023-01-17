@@ -101,12 +101,8 @@ const UPlotChart: React.FC<Props> = ({
     const extended: Partial<uPlot.Options> = uPlot.assign(
       {
         hooks: {
-          destroy: [() => setIsReady(false), () => !xMax && !xMin && setZoomed(false)],
+          destroy: [() => setIsReady(false), () => setZoomed(false)],
           ready: [() => setIsReady(true)],
-          // setScale: [(updated: uPlot.Options) => {
-          // }],
-          // setSelect: [(updated: uPlot.Options) => {
-          // }],
         },
         width: chartDivRef.current?.offsetWidth,
       },

@@ -6,7 +6,6 @@ import { AlignedData } from 'uplot';
 import SelectFilter from 'components/SelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { glasbeyColor } from 'shared/utils/color';
 import { Scale } from 'types';
@@ -20,7 +19,6 @@ interface Serie {
 }
 
 interface Props {
-  closestPoint?: boolean;
   focusedSeries?: number;
   height?: number;
   onSeriesHover?: (seriesIdx: number | null) => void;
@@ -29,6 +27,7 @@ interface Props {
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
+  showMetricSelection?: boolean;
   showTooltip?: boolean;
   title?: string;
   width?: number;
@@ -38,7 +37,6 @@ interface Props {
 }
 
 export const LineChart: React.FC<Props> = ({
-  closestPoint = false,
   focusedSeries = -1,
   height = 400,
   onSeriesSelect,
@@ -46,6 +44,7 @@ export const LineChart: React.FC<Props> = ({
   scale = Scale.Linear,
   series,
   showLegend = false,
+  showMetricSelection = false,
   showTooltip = false,
   title,
   xAxisOptions = [],
@@ -76,20 +75,6 @@ export const LineChart: React.FC<Props> = ({
 
   const chartOptions: Options = useMemo(() => {
     const plugins = [];
-    if (closestPoint) {
-      plugins.push(
-        closestPointPlugin({
-          // onPointClick: (e, point) => {
-          //   console.log(point.seriesIdx);
-          // },
-          // onPointFocus: (point) => {
-          // if (typeof onTrialFocus !== 'function') return;
-          // onTrialFocus(point ? trialIds[point.seriesIdx - 1] : null);
-          // },
-          yScale: 'y',
-        }),
-      );
-    }
     if (showTooltip) {
       plugins.push(tooltipsPlugin({ isShownEmptyVal: false }));
     }
@@ -132,12 +117,12 @@ export const LineChart: React.FC<Props> = ({
         }),
       ],
     };
-  }, [closestPoint, series, height, scale, showLegend, showTooltip, xLabel, yLabel]);
+  }, [series, height, scale, showLegend, showTooltip, xLabel, yLabel]);
 
   return (
     <>
       {title && <h5 className={css.chartTitle}>{title}</h5>}
-      {xAxisOptions && xAxisOptions.length > 1 && onXAxisSelect && (
+      {showMetricSelection && xAxisOptions && xAxisOptions.length > 1 && onXAxisSelect && (
         <SelectFilter
           defaultValue={xAxisOptions[0]}
           options={xAxisOptions.map((axisName) => ({
@@ -149,7 +134,7 @@ export const LineChart: React.FC<Props> = ({
           }}
         />
       )}
-      {series.length > 1 && (
+      {showMetricSelection && series.length > 1 && (
         <SelectFilter
           defaultValue={focusSeriesIdx}
           options={[
@@ -216,7 +201,7 @@ export const ChartGrid: React.FC<GroupProps> = ({
   });
 
   return (
-    <SyncProvider xMax={xMax} xMin={xMin}>
+    <SyncProvider>
       <AutoSizer>
         {({ width }) => {
           const columnCount = Math.max(1, Math.floor(width / 540));
