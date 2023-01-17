@@ -34,3 +34,7 @@ func (a *ModelAuthZBasic) CanCreateModel(ctx context.Context,
 ) error {
 	return nil
 }
+
+func init() {
+	AuthZProvider.Register("basic", &ModelAuthZBasic{})
+}
