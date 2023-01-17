@@ -467,3 +467,20 @@ def test_launch_in_archived() -> None:
                 body=bindings.v1LaunchNotebookRequest(workspaceId=workspace.id),
             )
         assert e.value.status_code == 404
+
+
+# tag: no_cli
+@pytest.mark.e2e_cpu
+def test_workspaceid_set() -> None:
+    admin_session = determined_test_session(admin=True)
+
+    with setup_workspace(admin_session) as workspace:
+        # create a command inside the workspace
+        cmd = bindings.post_LaunchCommand(
+            admin_session,
+            body=bindings.v1LaunchCommandRequest(workspaceId=workspace.id),
+        ).command
+        assert cmd.workspaceId == workspace.id
+
+        cmd = bindings.get_GetCommand(admin_session, commandId=cmd.id).command
+        assert cmd.workspaceId == workspace.id
