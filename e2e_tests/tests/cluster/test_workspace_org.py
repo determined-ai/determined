@@ -1,7 +1,8 @@
+import contextlib
 import os
 import tempfile
 import uuid
-from typing import List
+from typing import Generator, List, Optional
 
 import pytest
 
@@ -428,7 +429,26 @@ def test_reset_workspace_checkpoint_storage_conf() -> None:
         _delete_workspace_and_check(sess, resp_w.workspace)
 
 
-# tag: api-only
+@contextlib.contextmanager
+def setup_workspace(session: api.Session) -> Generator[bindings.v1Workspace, None, None]:
+    workspace_resp: Optional[bindings.v1PostWorkspaceResponse] = None
+    try:
+        # create a workspace
+        workspace_resp = bindings.post_PostWorkspace(
+            session,
+            body=bindings.v1PostWorkspaceRequest(
+                name=f"workspace_{uuid.uuid4().hex[:8]}",
+            ),
+        )
+        yield workspace_resp.workspace
+    finally:
+        # TODO check if it needs deleting.
+        if workspace_resp:
+            # delete the workspace
+            bindings.delete_DeleteWorkspace(session, id=workspace_resp.workspace.id)
+
+
+# tag: no-cli
 @pytest.mark.e2e_cpu
 def test_workspace_delete_notebook() -> None:
     admin_session = determined_test_session(admin=True)
@@ -482,3 +502,24 @@ def test_workspace_delete_notebook() -> None:
         notebooks_resp = bindings.get_GetNotebooks(
             admin_session, workspaceId=workspace_resp.workspace.id
         )
+
+
+# tag: no_cli
+@pytest.mark.e2e_cpu
+def test_launch_in_archived() -> None:
+    admin_session = determined_test_session(admin=True)
+
+    with setup_workspace(admin_session) as workspace:
+        # archive the workspace
+        bindings.post_ArchiveWorkspace(
+            admin_session,
+            id=workspace.id,
+        )
+
+        # create a notebook inside the workspace
+        with pytest.raises(errors.APIException) as e:
+            bindings.post_LaunchNotebook(
+                admin_session,
+                body=bindings.v1LaunchNotebookRequest(workspaceId=workspace.id),
+            )
+        assert e.value.status_code == 404
