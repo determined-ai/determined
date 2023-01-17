@@ -59,10 +59,10 @@ func (s *service) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return middleware.BasicAuth(s.validateBasicAuth)(next)(c)
 
 		case s.config.Auth.OAuthConfig != nil:
-			if oauthValid, _ := s.oauthService.ValidateRequest(c); oauthValid {
-				return next(c)
+			if oauthValid, _ := s.oauthService.ValidateRequest(c); !oauthValid {
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid OAuth credentials")
 			}
-			return echo.NewHTTPError(http.StatusBadRequest, "invalid OAuth credentials")
+			return next(c)
 		}
 		return echo.NewHTTPError(
 			http.StatusInternalServerError, "no authentication method configured for SCIM",
