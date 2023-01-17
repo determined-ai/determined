@@ -226,9 +226,6 @@ func (a *apiServer) GetCommands(
 func (a *apiServer) GetCommand(
 	ctx context.Context, req *apiv1.GetCommandRequest,
 ) (resp *apiv1.GetCommandResponse, err error) {
-	defer func() {
-		err = apiutils.MapAndFilterErrors(err, nil, nil)
-	}()
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
