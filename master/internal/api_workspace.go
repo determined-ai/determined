@@ -559,7 +559,6 @@ func (a *apiServer) ArchiveWorkspace(
 	if err != nil {
 		return nil, err
 	}
-	// CHECK: we don't seem to touch experiments when archiving workspaces.
 
 	holder := &workspacev1.Workspace{}
 	if err = a.m.db.QueryProto("archive_workspace", holder, req.Id, true); err != nil {
