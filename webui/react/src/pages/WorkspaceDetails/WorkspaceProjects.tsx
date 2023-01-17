@@ -120,7 +120,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
     if (previousId !== undefined && id !== previousId) updateSettings({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, updateSettings]);
 
   const handleProjectCreateClick = useCallback(() => {
     openProjectCreate();

@@ -148,7 +148,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     () => config.applicableRoutespace && !pathname.endsWith(config.applicableRoutespace),
     [config.applicableRoutespace, pathname],
   );
-  const [shouldPush, setShouldPush] = useState(false); // internal state to manage navigation push property, see line 322
+  const [shouldPush, setShouldPush] = useState(false); // internal state to manage navigation push property
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
@@ -320,11 +320,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     const url = `?${mappedSettings}`;
 
     if (mappedSettings && location.search !== url) {
-      if (shouldPush) {
-        navigate(url);
-      } else {
-        navigate(url, { replace: true });
-      }
+      navigate(url, { replace: !shouldPush });
     }
   }, [shouldPush, location, returnedSettings, shouldSkipUpdates, navigate, config]);
 
