@@ -282,5 +282,5 @@ The CLI equivalent is as follows:
  Next Steps
 ************
 
--  :ref:`python-api-reference`: The reference documentation for this API.
+-  :ref:`python-sdk-reference`: The reference documentation for this API.
 -  :ref:`use-trained-models`

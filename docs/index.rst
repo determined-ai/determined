@@ -41,7 +41,7 @@
    :caption: Reference
    :hidden:
 
-   Python SDK <reference/python-api>
+   Python SDK <reference/python-sdk>
    REST API <reference/rest-api>
    Training Reference <reference/reference-training/index>
    Model Hub Reference <reference/reference-model-hub/index>
@@ -140,7 +140,7 @@ so you can spend your time building models instead of managing infrastructure.
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="reference/python-api.html">
+             <a class="tile" href="reference/python-sdk.html">
                  <h2 class="tile-title">Reference</h2>
                  <p class="tile-description">Explore API libraries and configuration settings.</p>
              </a>
