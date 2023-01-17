@@ -1,10 +1,10 @@
-.. _python-api:
+.. _python-sdk:
 
 ############
- Python API
+ Python SDK
 ############
 
-You can interact with a Determined cluster with the Python API.
+You can interact with a Determined cluster with the Python SDK.
 
 The client module exposes many of the same capabilities as the det CLI tool directly to Python code
 with an object-oriented interface.
@@ -49,10 +49,10 @@ Now that the experiment has completed, you can grab the top-performing checkpoin
    best_checkpoint = exp.top_checkpoint()
    print(f"best checkpoint was {best_checkpoint.uuid}")
 
-.. _python-api-reference:
+.. _python-sdk-reference:
 
 **********************
- Python API Reference
+ Python SDK Reference
 **********************
 
 ``Client``
