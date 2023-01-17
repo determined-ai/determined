@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -522,8 +523,13 @@ func (a *apiServer) DeleteWorkspace(
 	responses := command.MessageNTSC(a.m.system, req).GetAll()
 	for _, response := range responses {
 		if response != nil {
-			switch response.(type) {
+			switch resp := response.(type) {
 			case error:
+				return nil, resp
+			case map[*actor.Ref]error:
+				if len(resp) == 0 {
+					continue
+				}
 				return nil, status.Errorf(
 					codes.Internal,
 					"failed to delete workspace: failed to kill associated NTSC.",

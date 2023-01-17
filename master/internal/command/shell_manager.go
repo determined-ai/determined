@@ -50,6 +50,9 @@ func (s *shellManager) Receive(ctx *actor.Context) error {
 		}
 		ctx.Respond(resp)
 
+	case *apiv1.DeleteWorkspaceRequest:
+		ctx.Respond(askChildren(ctx, msg))
+
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
 		jobID := model.NewJobID()
