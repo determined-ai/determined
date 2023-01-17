@@ -473,6 +473,20 @@ func (a *apiServer) GetModelVersion(
 	if err != nil {
 		return nil, err
 	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			curUser.Username, currModel.Name)
+	}
+
 	resp := &apiv1.GetModelVersionResponse{}
 	resp.ModelVersion = mv
 	return resp, err
@@ -484,6 +498,19 @@ func (a *apiServer) GetModelVersions(
 	parentModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
+		*parentModel.WorkspaceId); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			curUser.Username, parentModel.Name)
 	}
 
 	resp := &apiv1.GetModelVersionsResponse{Model: parentModel}
@@ -582,8 +609,12 @@ func (a *apiServer) PatchModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModelVersion.Model,
-		*currModelVersion.Model.WorkspaceId); err != nil {
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -678,10 +709,15 @@ func (a *apiServer) DeleteModelVersion(
 	if err != nil {
 		return nil, err
 	}
-	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, modelVersion.Model,
-		*modelVersion.Model.WorkspaceId); err != nil {
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if err != nil {
 		return nil, err
 	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
+		return nil, err
+	}
+
 	holder := &modelv1.ModelVersion{}
 	err = a.m.db.QueryProto("delete_model_version", holder, modelVersion.Id,
 		user.User.Id, user.User.Admin)
