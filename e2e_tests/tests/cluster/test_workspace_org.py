@@ -448,6 +448,12 @@ def setup_workspace(session: api.Session) -> Generator[bindings.v1Workspace, Non
             bindings.delete_DeleteWorkspace(session, id=workspace_resp.workspace.id)
 
 
+TERMINATING_STATES = [
+    bindings.determinedtaskv1State.STATE_TERMINATED,
+    bindings.determinedtaskv1State.STATE_TERMINATING,
+]
+
+
 # tag: no-cli
 @pytest.mark.e2e_cpu
 def test_workspace_delete_notebook() -> None:
@@ -468,12 +474,15 @@ def test_workspace_delete_notebook() -> None:
         body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_resp.workspace.id),
     )
 
+    # create a notebook inside another workspace
+    outside_notebook = bindings.post_LaunchNotebook(
+        admin_session,
+        body=bindings.v1LaunchNotebookRequest(workspaceId=1),  # default wid
+    ).notebook
+
     # check that the notebook exists
     notebook_resp = bindings.get_GetNotebook(admin_session, notebookId=created_resp.notebook.id)
-    assert notebook_resp.notebook.state not in [
-        bindings.determinedtaskv1State.STATE_TERMINATED,
-        bindings.determinedtaskv1State.STATE_TERMINATING,
-    ]
+    assert notebook_resp.notebook.state not in TERMINATING_STATES
 
     # check that the notebook is returned in the list of notebooks
     notebooks_resp = bindings.get_GetNotebooks(
@@ -487,10 +496,10 @@ def test_workspace_delete_notebook() -> None:
 
     # check that notebook is terminated or terminating.
     notebook_resp = bindings.get_GetNotebook(admin_session, notebookId=created_resp.notebook.id)
-    assert notebook_resp.notebook.state in [
-        bindings.determinedtaskv1State.STATE_TERMINATED,
-        bindings.determinedtaskv1State.STATE_TERMINATING,
-    ]
+    assert notebook_resp.notebook.state in TERMINATING_STATES
+
+    # check that the other notebook is not terminated
+    assert outside_notebook.state not in TERMINATING_STATES
 
     # check that the notebook is not returned in the list of notebooks by default.
     notebooks_resp = bindings.get_GetNotebooks(admin_session)
