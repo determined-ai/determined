@@ -18,13 +18,15 @@ func (a *ModelAuthZBasic) CanGetModels(ctx context.Context, curUser model.User, 
 
 // CanGetModel always returns true and a nil error.
 func (a *ModelAuthZBasic) CanGetModel(ctx context.Context, curUser model.User,
-	m *modelv1.Model, workspaceID int32) (canGetModel bool, serverError error) {
+	m *modelv1.Model, workspaceID int32,
+) (canGetModel bool, serverError error) {
 	return true, nil
 }
 
 // CanEditModel always returns true and a nil error.
 func (a *ModelAuthZBasic) CanEditModel(ctx context.Context, curUser model.User,
-	m *modelv1.Model, workspaceID int32) error {
+	m *modelv1.Model, workspaceID int32,
+) error {
 	return nil
 }
 
