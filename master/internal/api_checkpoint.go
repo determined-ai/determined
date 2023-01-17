@@ -73,6 +73,12 @@ func (m *Master) canDoActionOnCheckpoint(
 	return nil
 }
 
+/* func (m *Master) canDoActionOnCheckpointThroughModel(ctx context.Context, curUser model.User,
+	id string) error {
+
+	modelauth.AuthZProvider.Get().CanGetModel
+	return nil
+}. */
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
@@ -80,9 +86,13 @@ func (a *apiServer) GetCheckpoint(
 	if err != nil {
 		return nil, err
 	}
-	if err = a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		return nil, err
+	errE := a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+	// Nikita TODO: get model from checkpointUuid and then use CanGetModel
+	// errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid,)
+
+	if errE != nil { // && errM != nil { // allow downloading checkpoint through model of experiment
+		return nil, errE
 	}
 
 	resp := &apiv1.GetCheckpointResponse{}
