@@ -2,6 +2,7 @@ import { Button as AntdButton } from 'antd';
 import React, { MouseEvent, ReactNode } from 'react';
 
 interface ButtonProps {
+  block?: boolean;
   children?: ReactNode;
   danger?: boolean;
   disabled?: boolean;
