@@ -22,6 +22,7 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/master-config.yaml") . | sha256sum }}
     spec:
       serviceAccount: determined-master-{{ .Release.Name }}
+      enableServiceLinks: false
       containers:
       - name: determined-master-{{ .Release.Name }}
         {{ $image := "determined-master" }}

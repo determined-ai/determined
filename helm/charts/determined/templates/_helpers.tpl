@@ -9,6 +9,7 @@
 {{- define "determined.cpuPodSpec" -}}
 spec:
   priorityClassName: determined-system-priority
+  enableServiceLinks: false
   containers:
   - name: determined-container
     resources:
@@ -23,6 +24,7 @@ spec:
 {{- define "determined.gpuPodSpec" -}}
 spec:
   priorityClassName: determined-system-priority
+  enableServiceLinks: false
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
