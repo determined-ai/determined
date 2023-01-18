@@ -56,11 +56,6 @@ func enrichState(state model.AllocationState) taskv1.State {
 	return state.Proto()
 }
 
-const (
-	// PlaceHolderWorkspace is REMOVEME.
-	PlaceHolderWorkspace = 1
-)
-
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
