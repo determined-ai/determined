@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 import { AlignedData } from 'uplot';
 
-import SelectFilter from 'components/SelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
@@ -21,35 +20,24 @@ interface Serie {
 interface Props {
   focusedSeries?: number;
   height?: number;
-  onSeriesHover?: (seriesIdx: number | null) => void;
-  onSeriesSelect?: (seriesIdx: number | null) => void;
-  onXAxisSelect?: (axisName: string) => void;
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
-  showMetricSelection?: boolean;
   title?: string;
-  xAxisOptions?: string[];
   xLabel?: string;
   yLabel?: string;
 }
 
 export const LineChart: React.FC<Props> = ({
-  focusedSeries = -1,
+  focusedSeries,
   height = 400,
-  onSeriesSelect,
-  onXAxisSelect,
   scale = Scale.Linear,
   series,
   showLegend = false,
-  showMetricSelection = false,
   title,
-  xAxisOptions = [],
   xLabel,
   yLabel,
 }: Props) => {
-  const [focusSeriesIdx, setFocusSeries] = useState<number>(focusedSeries);
-
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
@@ -117,62 +105,21 @@ export const LineChart: React.FC<Props> = ({
   return (
     <>
       {title && <h5 className={css.chartTitle}>{title}</h5>}
-      {showMetricSelection && xAxisOptions && xAxisOptions.length > 1 && onXAxisSelect && (
-        <SelectFilter
-          defaultValue={xAxisOptions[0]}
-          options={xAxisOptions.map((axisName) => ({
-            label: axisName,
-            value: axisName,
-          }))}
-          onSelect={(axisName) => {
-            onXAxisSelect(String(axisName));
-          }}
-        />
-      )}
-      {showMetricSelection && series.length > 1 && (
-        <SelectFilter
-          defaultValue={focusSeriesIdx}
-          options={[
-            {
-              label: 'No metric selection',
-              value: -1,
-            },
-            ...series.map((serie, idx) => ({
-              label: `Series ${idx}`,
-              value: idx,
-            })),
-          ]}
-          onSelect={(seriesKey) => {
-            if (onSeriesSelect) {
-              onSeriesSelect(focusSeriesIdx < 0 ? null : focusSeriesIdx);
-            }
-            setFocusSeries(Number(seriesKey));
-          }}
-        />
-      )}
-      <UPlotChart
-        data={chartData}
-        focusIndex={focusSeriesIdx < 0 ? undefined : focusSeriesIdx}
-        options={chartOptions}
-      />
+      <UPlotChart data={chartData} focusIndex={focusedSeries} options={chartOptions} />
     </>
   );
 };
 
 interface GroupProps {
   chartsProps: Props[];
-  onXAxisSelect?: (axisName: string) => void;
   rowHeight?: number;
   scale?: Scale;
-  xAxisOptions?: string[];
 }
 
 export const ChartGrid: React.FC<GroupProps> = ({
   chartsProps,
-  onXAxisSelect,
   rowHeight = 480,
   scale = Scale.Linear,
-  xAxisOptions,
 }: GroupProps) => {
   // calculate xMin / xMax for shared group
   let xMin = Infinity,
@@ -211,13 +158,7 @@ export const ChartGrid: React.FC<GroupProps> = ({
                 return (
                   <div key={cellIndex} style={style}>
                     {cellIndex < chartsProps.length && (
-                      <LineChart
-                        {...chartsProps[cellIndex]}
-                        height={rowHeight}
-                        scale={scale}
-                        xAxisOptions={xAxisOptions}
-                        onXAxisSelect={onXAxisSelect}
-                      />
+                      <LineChart {...chartsProps[cellIndex]} height={rowHeight} scale={scale} />
                     )}
                   </div>
                 );
