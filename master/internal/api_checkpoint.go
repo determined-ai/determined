@@ -110,10 +110,8 @@ func (a *apiServer) GetCheckpoint(
 
 	if errE != nil && errM != nil {
 		// allow viewing checkpoint through any model associated with checkpoint.
-		return nil,
-			errors.Errorf(
-				"checkpoint access error with experiment: %v, error with model(s): %v.",
-				errE.Error(), errM.Error())
+		return nil, errE
+		// Nikita: TODO figure out a better format here to include errE and errM.
 	}
 
 	resp := &apiv1.GetCheckpointResponse{}
