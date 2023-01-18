@@ -69,13 +69,6 @@ func (a *apiServer) GetNotebooks(
 		return nil, err
 	}
 
-	/*
-		Expected behavior:
-		- If the user doesn't specify a workspace ID we return
-		all the permitted notebooks for the user.
-		- If they have no NSC access to any workspace we return an empty list.
-		- If the user requests a workspace that they don't have access to we respond with a 404.
-	*/
 	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
 		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
 	)
@@ -198,8 +191,6 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		return errors.Wrapf(err, "error fetching workspace (%d) from database", workspaceID)
 	}
 	if w.Archived {
-		// CHAT: we might want to use a.GetWorkspaceByID here instead.
-		// Do we allow you to launch into a workspace that you don't have view access to?
 		return notFoundErr
 	}
 
