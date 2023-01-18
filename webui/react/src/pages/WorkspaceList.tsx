@@ -28,7 +28,6 @@ import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import usePolling from 'shared/hooks/usePolling';
 import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
@@ -76,7 +75,6 @@ const WorkspaceList: React.FC = () => {
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
-
     try {
       const response = await getWorkspaces(
         {
@@ -102,8 +100,6 @@ const WorkspaceList: React.FC = () => {
       setIsLoading(false);
     }
   }, [canceler.signal, pageError, settings]);
-
-  usePolling(fetchWorkspaces);
 
   useEffect(() => {
     fetchWorkspaces();
