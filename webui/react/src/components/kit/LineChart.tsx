@@ -28,7 +28,6 @@ interface Props {
   series: Serie[];
   showLegend?: boolean;
   showMetricSelection?: boolean;
-  showTooltip?: boolean;
   title?: string;
   width?: number;
   xAxisOptions?: string[];
@@ -45,7 +44,6 @@ export const LineChart: React.FC<Props> = ({
   series,
   showLegend = false,
   showMetricSelection = false,
-  showTooltip = false,
   title,
   xAxisOptions = [],
   xLabel,
@@ -74,10 +72,7 @@ export const LineChart: React.FC<Props> = ({
   }, [series]);
 
   const chartOptions: Options = useMemo(() => {
-    const plugins = [];
-    if (showTooltip) {
-      plugins.push(tooltipsPlugin({ isShownEmptyVal: false }));
-    }
+    const plugins = [tooltipsPlugin({ isShownEmptyVal: false })];
 
     return {
       axes: [
@@ -117,7 +112,7 @@ export const LineChart: React.FC<Props> = ({
         }),
       ],
     };
-  }, [series, height, scale, showLegend, showTooltip, xLabel, yLabel]);
+  }, [series, height, scale, showLegend, xLabel, yLabel]);
 
   return (
     <>
@@ -169,7 +164,6 @@ interface GroupProps {
   onXAxisSelect?: (axisName: string) => void;
   rowHeight?: number;
   scale?: Scale;
-  showTooltip?: boolean;
   xAxisOptions?: string[];
 }
 
@@ -178,7 +172,6 @@ export const ChartGrid: React.FC<GroupProps> = ({
   onXAxisSelect,
   rowHeight = 480,
   scale = Scale.Linear,
-  showTooltip,
   xAxisOptions,
 }: GroupProps) => {
   // calculate xMin / xMax for shared group
@@ -222,7 +215,6 @@ export const ChartGrid: React.FC<GroupProps> = ({
                         {...chartsProps[cellIndex]}
                         height={rowHeight}
                         scale={scale}
-                        showTooltip={chartsProps[cellIndex].showTooltip ?? showTooltip}
                         xAxisOptions={xAxisOptions}
                         onXAxisSelect={onXAxisSelect}
                       />

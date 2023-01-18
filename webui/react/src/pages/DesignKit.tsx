@@ -368,13 +368,9 @@ const ChartsSection: React.FC = () => {
           yLabel="Y Label"
         />
       </Card>
-      <Card title="Tooltip options">
-        <p>A chart with a tooltip.</p>
-        <LineChart height={250} series={[line1, line2]} showTooltip={true} />
-      </Card>
       <Card title="Focus series">
         <p>Highlight a specific series in the chart.</p>
-        <LineChart focusedSeries={1} height={250} series={[line1, line2]} showTooltip={true} />
+        <LineChart focusedSeries={1} height={250} series={[line1, line2]} />
       </Card>
       <Card title="Chart Grid">
         <p>
@@ -382,11 +378,7 @@ const ChartsSection: React.FC = () => {
           responsive grid. There is a sync for the plot window, cursor, and x-axis.
         </p>
         <div style={{ height: 300 }}>
-          <ChartGrid
-            chartsProps={[{ series: [line1] }, { series: [line2] }]}
-            rowHeight={250}
-            showTooltip={true}
-          />
+          <ChartGrid chartsProps={[{ series: [line1] }, { series: [line2] }]} rowHeight={250} />
         </div>
       </Card>
     </ComponentSection>
