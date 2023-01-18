@@ -102,6 +102,7 @@ const config: SettingsConfig<WorkspaceListSettings> = {
     },
     user: {
       defaultValue: undefined,
+      skipUrlEncoding: true,
       storageKey: 'user',
       type: union([undefinedType, array(string)]),
     },
@@ -113,7 +114,6 @@ const config: SettingsConfig<WorkspaceListSettings> = {
     },
     whose: {
       defaultValue: WhoseWorkspaces.All,
-      skipUrlEncoding: true,
       storageKey: 'whose',
       type: union([
         literal(WhoseWorkspaces.All),
