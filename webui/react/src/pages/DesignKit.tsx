@@ -12,7 +12,7 @@ import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
-import { ChartGrid, LineChart } from 'components/kit/LineChart';
+import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
 import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -335,27 +335,39 @@ const DropdownsSection: React.FC = () => {
 };
 
 const ChartsSection: React.FC = () => {
-  const line1 = {
+  const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19] };
+  const line1: Serie = {
     data: [
-      [0, 0],
-      [2, Math.random() * 12],
-      [4, 15],
-      [6, Math.random() * 60],
-      [9, Math.random() * 40],
-      [10, Math.random() * 76],
-      [18, Math.random() * 80],
-      [19, 89],
+      0,
+      null,
+      Math.random() * 12,
+      null,
+      null,
+      null,
+      null,
+      15,
+      Math.random() * 60,
+      Math.random() * 40,
+      Math.random() * 76,
+      Math.random() * 80,
+      89,
     ],
   };
-  const line2 = {
+  const line2: Serie = {
     data: [
-      [1, 15],
-      [2, 10.123456789],
-      [2.5, Math.random() * 22],
-      [3, Math.random() * 18],
-      [3.25, Math.random() * 10 + 10],
-      [3.75, Math.random() * 12],
-      [4, 12],
+      null,
+      15,
+      10.123456789,
+      Math.random() * 22,
+      Math.random() * 18,
+      Math.random() * 10 + 10,
+      Math.random() * 12,
+      12,
+      null,
+      null,
+      null,
+      null,
+      null,
     ],
   };
   return (
@@ -370,7 +382,7 @@ const ChartsSection: React.FC = () => {
         <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
         <LineChart
           height={250}
-          series={[line1, line2]}
+          series={[xSeries, line1, line2]}
           showLegend={true}
           title="Title"
           xLabel="X Label"
@@ -379,7 +391,7 @@ const ChartsSection: React.FC = () => {
       </Card>
       <Card title="Focus series">
         <p>Highlight a specific series in the chart.</p>
-        <LineChart focusedSeries={1} height={250} series={[line1, line2]} />
+        <LineChart focusedSeries={1} height={250} series={[xSeries, line1, line2]} />
       </Card>
       <Card title="Chart Grid">
         <p>
@@ -388,7 +400,10 @@ const ChartsSection: React.FC = () => {
           x-axis range.
         </p>
         <div style={{ height: 300 }}>
-          <ChartGrid chartsProps={[{ series: [line1] }, { series: [line2] }]} rowHeight={250} />
+          <ChartGrid
+            chartsProps={[{ series: [xSeries, line1] }, { series: [xSeries, line2] }]}
+            rowHeight={250}
+          />
         </div>
       </Card>
     </ComponentSection>
