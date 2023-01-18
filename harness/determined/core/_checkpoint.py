@@ -330,11 +330,13 @@ class CheckpointContext:
         # Merge and upload metadata.
         all_metadata = self._merge_metadata(metadata)
         upload_mask = self._dist.allgather(want_upload)
-        metadata_writer_rank = upload_mask.index(True)
-        if self._dist.rank == metadata_writer_rank:
+        metadata_upload_rank = upload_mask.index(True)
+        if self._dist.rank == metadata_upload_rank:
             assert ckpt_dir
             self._write_metadata_file(ckpt_dir, all_metadata)
-            self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths={"metadata.json"})
+            # Include metadata in resources of the metadata uploading rank.
+            # Set value to 0 since it is not used anywhere.
+            resources["metadata.json"] = 0
 
         if want_upload:
             assert ckpt_dir
