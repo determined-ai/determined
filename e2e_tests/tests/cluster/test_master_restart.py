@@ -3,6 +3,7 @@ import subprocess
 import time
 from typing import Iterator
 
+import docker
 import pytest
 import requests
 
@@ -138,6 +139,47 @@ def _test_master_restart_reattach_recover_experiment(
         managed_cluster_restarts.restart_master()
         managed_cluster_restarts.restart_agent()
         raise
+
+
+@pytest.mark.managed_devcluster
+def test_master_restart_error_missing_docker_container(
+    managed_cluster_restarts: ManagedCluster,
+) -> None:
+    if not managed_cluster_restarts.reattach:
+        pytest.skip()
+
+    exp_id = exp.create_experiment(
+        conf.fixtures_path("core_api/sleep.yaml"),
+        conf.fixtures_path("core_api"),
+        None,
+    )
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_RUNNING)
+
+    client = docker.from_env()
+    containers = client.containers.list()
+
+    label = "ai.determined.container.description"
+    containers = [c for c in containers if f"/experiments/{exp_id}" in c.labels.get(label, "")]
+    assert len(containers) == 1
+
+    managed_cluster_restarts.kill_agent()
+    managed_cluster_restarts.kill_master()
+    containers[0].kill()
+    managed_cluster_restarts.restart_master()
+    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)  # BOTH?
+
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_ERROR)
+
+    task_list = det_cmd_json(["task", "list", "--json"])
+    assert task_list == {}
+
+    trials = exp.experiment_trials(exp_id)
+    trial_id = trials[0].trial.id
+    trial_logs = exp.trial_logs(trial_id)
+    assert (
+        "allocation failed due to restore error: RM failed to restore the allocation: "
+        + "container is gone on reattachment"
+    ) in "".join(trial_logs)
 
 
 @pytest.mark.managed_devcluster
