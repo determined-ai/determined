@@ -5,7 +5,7 @@ import { AlignedData } from 'uplot';
 
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
-import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
+import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import { glasbeyColor } from 'shared/utils/color';
 import { Scale } from 'types';
 
