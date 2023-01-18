@@ -624,6 +624,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Addresses:      toProto(allo.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 

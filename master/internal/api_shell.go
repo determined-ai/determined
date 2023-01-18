@@ -14,7 +14,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -43,26 +45,45 @@ var shellsAddr = actor.Addr("shells")
 func (a *apiServer) GetShells(
 	ctx context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	workspaceNotFoundErr := status.Errorf(codes.NotFound, "workspace %d not found", req.WorkspaceId)
+
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err = a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if errors.Is(err, db.ErrNotFound) {
+			return nil, workspaceNotFoundErr
+		} else if err != nil {
+			return nil, err
+		}
+	}
+
 	if err = a.ask(shellsAddr, req, &resp); err != nil {
 		return nil, err
 	}
+	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
+	)
+	if err != nil {
+		return nil, apiutils.MapAndFilterErrors(err, nil, nil)
+	}
+
+	if req.WorkspaceId != 0 && len(limitedScopes) == 0 {
+		return nil, workspaceNotFoundErr
+	}
 
 	a.filter(&resp.Shells, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, command.PlaceHolderWorkspace)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
+		return limitedScopes[model.AccessScopeID(resp.Shells[i].WorkspaceId)]
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +106,7 @@ func (a *apiServer) GetShell(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, command.PlaceHolderWorkspace); err != nil {
+		ctx, *curUser, model.AccessScopeID(resp.Shell.WorkspaceId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -96,7 +117,23 @@ func (a *apiServer) GetShell(
 func (a *apiServer) KillShell(
 	ctx context.Context, req *apiv1.KillShellRequest,
 ) (resp *apiv1.KillShellResponse, err error) {
-	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
+	getResponse, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanTerminateNSC(
+		ctx, *curUser, model.AccessScopeID(getResponse.Shell.WorkspaceId))
+	if err != nil {
 		return nil, err
 	}
 
@@ -106,7 +143,23 @@ func (a *apiServer) KillShell(
 func (a *apiServer) SetShellPriority(
 	ctx context.Context, req *apiv1.SetShellPriorityRequest,
 ) (resp *apiv1.SetShellPriorityResponse, err error) {
-	if _, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId}); err != nil {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
+	getResponse, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId})
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(getResponse.Shell.WorkspaceId), int(req.Priority))
+	if err != nil {
 		return nil, err
 	}
 
@@ -123,6 +176,14 @@ func (a *apiServer) LaunchShell(
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
+	}
+
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	}
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+		return nil, err
 	}
 
 	// Postprocess the spec.

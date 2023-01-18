@@ -4151,6 +4151,7 @@ class v1GetShellsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetShellsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -5491,6 +5492,7 @@ class v1LaunchShellRequest:
     data: "typing.Optional[str]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5499,6 +5501,7 @@ class v1LaunchShellRequest:
         data: "typing.Union[str, None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5508,6 +5511,8 @@ class v1LaunchShellRequest:
             self.files = files
         if not isinstance(templateName, Unset):
             self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchShellRequest":
@@ -5521,6 +5526,8 @@ class v1LaunchShellRequest:
             kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5534,6 +5541,8 @@ class v1LaunchShellRequest:
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchShellResponse:
@@ -9620,6 +9629,7 @@ class v1Shell:
     privateKey: "typing.Optional[str]" = None
     publicKey: "typing.Optional[str]" = None
     userId: "typing.Optional[int]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -9639,6 +9649,7 @@ class v1Shell:
         privateKey: "typing.Union[str, None, Unset]" = _unset,
         publicKey: "typing.Union[str, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.description = description
         self.id = id
@@ -9663,6 +9674,8 @@ class v1Shell:
             self.publicKey = publicKey
         if not isinstance(userId, Unset):
             self.userId = userId
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Shell":
@@ -9691,6 +9704,8 @@ class v1Shell:
             kwargs["publicKey"] = obj["publicKey"]
         if "userId" in obj:
             kwargs["userId"] = obj["userId"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9719,6 +9734,8 @@ class v1Shell:
             out["publicKey"] = self.publicKey
         if not omit_unset or "userId" in vars(self):
             out["userId"] = self.userId
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1ShutDownOperation:
@@ -13562,9 +13579,10 @@ def get_GetShells(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetShellsResponse":
     _params = {
         "limit": limit,
@@ -13573,6 +13591,7 @@ def get_GetShells(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
