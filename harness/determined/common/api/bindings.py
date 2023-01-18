@@ -8271,15 +8271,18 @@ class v1RendezvousInfo:
         *,
         addresses: "typing.Sequence[str]",
         rank: int,
+        slots: "typing.Sequence[int]",
     ):
         self.addresses = addresses
         self.rank = rank
+        self.slots = slots
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1RendezvousInfo":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "addresses": obj["addresses"],
             "rank": obj["rank"],
+            "slots": obj["slots"],
         }
         return cls(**kwargs)
 
@@ -8287,6 +8290,7 @@ class v1RendezvousInfo:
         out: "typing.Dict[str, typing.Any]" = {
             "addresses": self.addresses,
             "rank": self.rank,
+            "slots": self.slots,
         }
         return out
 

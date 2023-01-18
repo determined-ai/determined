@@ -6797,6 +6797,12 @@ export interface V1RendezvousInfo {
      * @memberof V1RendezvousInfo
      */
     rank: number;
+    /**
+     * The slots for each address, respectively.
+     * @type {Array<number>}
+     * @memberof V1RendezvousInfo
+     */
+    slots: Array<number>;
 }
 
 /**

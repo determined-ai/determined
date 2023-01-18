@@ -67,7 +67,7 @@ def test_horovod_chief(
     )
 
     hvd_cmd = horovod.create_run_command(
-        num_proc_per_machine=len(info.slot_ids),
+        num_proc_per_machine=info.container_slots,
         ip_addresses=info.container_addrs,
         inter_node_network_interface=info.trial._inter_node_network_interface,
         optimizations=experiment_config["optimizations"],

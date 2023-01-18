@@ -223,6 +223,15 @@ type ResourcesSummary struct {
 	Exited  *ResourcesStopped
 }
 
+// Slots returns slot count for the resources.
+func (s ResourcesSummary) Slots() int {
+	var res int
+	for _, devs := range s.AgentDevices {
+		res += len(devs)
+	}
+	return res
+}
+
 // Resources is an interface that provides function for task actors
 // to start tasks on assigned resources.
 type Resources interface {
