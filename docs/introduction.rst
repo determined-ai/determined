@@ -84,7 +84,7 @@ Model Registry
 The Model Registry is a way to group together conceptually related checkpoints (including ones
 across different experiments), storing metadata and longform notes about a model, and retrieving the
 latest version of a model for use or futher development. The Model Registry can be accessed through
-the WebUI, Python API, REST API, or CLI, though the WebUI has some features that the others are
+the WebUI, Python SDK, REST API, or CLI, though the WebUI has some features that the others are
 missing.
 
 The Model Registry is a top-level option in the navigation bar. This will take you to a page listing

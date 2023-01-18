@@ -3,6 +3,7 @@ import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Page from 'components/Page';
+import Section from 'components/Section';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
@@ -37,6 +38,8 @@ import { Loadable, NotLoaded } from 'utils/loadable';
 import css from './UserManagement.module.scss';
 import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
+  DEFAULT_COLUMNS,
+  UserColumnName,
   UserManagementSettings,
 } from './UserManagement.settings';
 
@@ -264,7 +267,13 @@ const UserManagement: React.FC = () => {
         )}
         rowClassName={defaultRowClassName({ clickable: false })}
         rowKey="id"
-        settings={settings as InteractiveTableSettings}
+        settings={
+          {
+            ...settings,
+            columns: DEFAULT_COLUMNS,
+            columnWidths: DEFAULT_COLUMNS.map((col: UserColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+          } as InteractiveTableSettings
+        }
         showSorterTooltip={false}
         size="small"
         updateSettings={updateSettings as UpdateSettings}
@@ -274,20 +283,22 @@ const UserManagement: React.FC = () => {
     );
   }, [users, loadableUser, settings, columns, total, updateSettings]);
   return (
-    <Page
-      containerRef={pageRef}
-      options={
-        <Space>
-          <Button
-            aria-label={CREATE_USER_LABEL}
-            disabled={!canModifyUsers}
-            onClick={onClickCreateUser}>
-            {CREATE_USER}
-          </Button>
-        </Space>
-      }
-      title={USER_TITLE}>
-      <div className={css.usersTable}>{table}</div>
+    <Page bodyNoPadding containerRef={pageRef}>
+      <Section
+        className={css.usersTable}
+        options={
+          <Space>
+            <Button
+              aria-label={CREATE_USER_LABEL}
+              disabled={!canModifyUsers}
+              onClick={onClickCreateUser}>
+              {CREATE_USER}
+            </Button>
+          </Space>
+        }
+        title={USER_TITLE}>
+        {table}
+      </Section>
       {modalCreateUserContextHolder}
     </Page>
   );

@@ -35,7 +35,7 @@ const config: SettingsConfig<Settings> = {
       type: union([literal(GroupBy.Day), literal(GroupBy.Month)]),
     },
   },
-  storagePath: 'cluster/historical-usage',
+  storagePath: 'cluster-historical-usage',
 };
 
 export default config;

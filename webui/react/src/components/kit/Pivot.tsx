@@ -1,10 +1,12 @@
 import { Tabs } from 'antd';
-import React, { ReactNode } from 'react';
+import React, { KeyboardEvent, MouseEvent, ReactNode } from 'react';
+
+import css from './Pivot.module.scss';
 
 export type TabItem = {
   children?: ReactNode;
   key: string;
-  label: string;
+  label: ReactNode;
 };
 
 interface PivotProps {
@@ -12,14 +14,14 @@ interface PivotProps {
   defaultActiveKey?: string;
   destroyInactiveTabPane?: boolean;
   items?: TabItem[];
-  onChange?: () => void;
-  onTabClick?: () => void;
+  onChange?: (activeKey: string) => void;
+  onTabClick?: (key: string, event: MouseEvent | KeyboardEvent) => void;
   tabBarExtraContent?: ReactNode;
-  type?: 'line' | 'card' | 'editable-card';
+  type?: 'line' | 'card';
 }
 
 const Pivot: React.FC<PivotProps> = ({ type = 'line', ...props }: PivotProps) => {
-  return <Tabs type={type} {...props} />;
+  return <Tabs className={css.base} type={type} {...props} />;
 };
 
 export default Pivot;

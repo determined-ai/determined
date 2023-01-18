@@ -310,10 +310,9 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 		return
 	}
 
-	config, err := m.db.ExperimentConfig(experimentID)
+	exp, err := m.db.ExperimentByID(experimentID)
 	if err != nil {
-		ctx.Log().Errorf("error reading config for experiment %d: %s", experimentID, err.Error())
-		return
+		ctx.Log().Errorf("error loading experiment %d: %s", experimentID, err.Error())
 	}
 
 	loss := "loss"
@@ -325,7 +324,7 @@ func (m *manager) triggerDefaultWork(ctx *actor.Context, experimentID int) {
 		hpi.SetMetricHPImportance(lossHpi, loss, model.TrainingMetric)
 	}
 
-	searcherMetric := config.Searcher().Metric()
+	searcherMetric := exp.Config.Searcher.Metric
 	triggerForSearcherMetric := false
 	searcherMetricHpi := hpi.GetMetricHPImportance(searcherMetric, model.ValidationMetric)
 	if !searcherMetricHpi.Pending {
