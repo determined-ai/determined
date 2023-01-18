@@ -428,9 +428,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         disabled={record.archived || !canEditExperiment}
         placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
-        onPressEnter={(e) => {
+        onBlur={(e) => {
           const newDesc = e.currentTarget.value;
           saveExperimentDescription(newDesc, record.id);
+        }}
+        onPressEnter={(e) => {
+          // when enter is pressed,
+          // input box gets blurred and then value will be saved in onBlur
           e.currentTarget.blur();
         }}
       />
@@ -673,6 +677,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
       if (action === Action.Move) {
+        if (!settings?.row?.length) return;
         return openMoveModal({
           experimentIds: settings.row.filter(
             (id) =>
