@@ -33,7 +33,6 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const fetchMyRoles = useFetchUserRolesAndAssignments(canceler);
 
   usePolling(fetchAgents);
-  usePolling(fetchWorkspaces);
 
   useEffect(() => {
     updateFaviconType(
@@ -57,6 +56,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
 
     return () => canceler.abort();
   }, [canceler, fetchResourcePools]);
+
+  useEffect(() => {
+    fetchWorkspaces();
+
+    return () => canceler.abort();
+  }, [canceler, fetchWorkspaces]);
 
   return (
     <Spinner spinning={ui.showSpinner}>

@@ -75,6 +75,7 @@ const WorkspaceList: React.FC = () => {
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
+
     try {
       const response = await getWorkspaces(
         {
@@ -99,7 +100,19 @@ const WorkspaceList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, pageError, settings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    canceler.signal,
+    pageError,
+    settings.archived,
+    settings.view,
+    settings.tableLimit,
+    settings.name,
+    settings.tableOffset,
+    settings.sortDesc,
+    settings.sortKey,
+    settings.user,
+  ]);
 
   useEffect(() => {
     fetchWorkspaces();
