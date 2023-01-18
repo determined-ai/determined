@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Button } from 'antd';
 import React, { useCallback } from 'react';
 
+import Button from 'components/kit/Button';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';

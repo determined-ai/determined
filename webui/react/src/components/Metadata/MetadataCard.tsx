@@ -1,7 +1,8 @@
 import { EditOutlined } from '@ant-design/icons';
-import { Button, Card, Space } from 'antd';
+import { Card, Space } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Spinner from 'shared/components/Spinner/Spinner';
 import { ErrorType } from 'shared/utils/error';
