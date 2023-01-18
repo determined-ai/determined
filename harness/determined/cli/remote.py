@@ -13,7 +13,6 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 @authentication.required
 def run_command(args: Namespace) -> None:
     config = command.parse_config(args.config_file, args.entrypoint, args.config, args.volume)
-    workspace_id = cli.workspace.get_workspace_id_from_args(args)
     resp = command.launch_command(
         args.master,
         "api/v1/commands",
@@ -21,7 +20,6 @@ def run_command(args: Namespace) -> None:
         args.template,
         context_path=args.context,
         includes=args.include,
-        workspace_id=workspace_id,
     )["command"]
 
     if args.detach:
@@ -39,7 +37,6 @@ args_description = [
         Cmd("list ls", partial(command.list_tasks), "list commands", [
             Arg("-q", "--quiet", action="store_true",
                 help="only display the IDs"),
-            cli.workspace.workspace_arg,
             Arg("--all", "-a", action="store_true",
                 help="show all commands (including other users')"),
             Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
@@ -64,7 +61,6 @@ args_description = [
                 type=Path,
                 help=command.INCLUDE_DESC
             ),
-            cli.workspace.workspace_arg,
             Arg("--config", action="append", default=[], help=command.CONFIG_DESC),
             Arg("--template", type=str,
                 help="name of template to apply to the command configuration"),

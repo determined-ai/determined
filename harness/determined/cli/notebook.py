@@ -18,15 +18,8 @@ def start_notebook(args: Namespace) -> None:
     config = command.parse_config(args.config_file, None, args.config, args.volume)
 
     files = context.read_v1_context(args.context, args.include)
-
-    workspace_id = cli.workspace.get_workspace_id_from_args(args)
-
     body = bindings.v1LaunchNotebookRequest(
-        config=config,
-        files=files,
-        preview=args.preview,
-        templateName=args.template,
-        workspaceId=workspace_id,
+        config=config, files=files, preview=args.preview, templateName=args.template
     )
     resp = bindings.post_LaunchNotebook(cli.setup_session(args), body=body)
 
@@ -92,7 +85,6 @@ args_description = [
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
                 help="show all notebooks (including other users')"),
-            cli.workspace.workspace_arg,
             Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
         ], is_default=True),
         Cmd("config", partial(command.config),
@@ -102,7 +94,6 @@ args_description = [
         Cmd("start", start_notebook, "start a new notebook", [
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
-            cli.workspace.workspace_arg,
             Arg("-v", "--volume", action="append", default=[],
                 help=command.VOLUME_DESC),
             Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),
