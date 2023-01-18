@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -95,6 +97,10 @@ func (a *apiServer) filterTensorboards(
 func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -149,6 +155,10 @@ func (a *apiServer) GetTensorboard(
 func (a *apiServer) KillTensorboard(
 	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	getResponse, err := a.GetTensorboard(ctx,
 		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
 	if err != nil {
@@ -172,6 +182,10 @@ func (a *apiServer) KillTensorboard(
 func (a *apiServer) SetTensorboardPriority(
 	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	getResponse, err := a.GetTensorboard(ctx,
 		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
 	if err != nil {
