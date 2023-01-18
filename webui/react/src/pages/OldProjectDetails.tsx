@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Input, Modal, Space, Typography } from 'antd';
+import { Dropdown, Input, Modal, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom';
 import Badge, { BadgeType } from 'components/Badge';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';

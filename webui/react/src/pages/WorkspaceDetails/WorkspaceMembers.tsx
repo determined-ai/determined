@@ -1,9 +1,10 @@
-import { Button, Dropdown } from 'antd';
+import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
+import Button from 'components/kit/Button';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
 import { getFullPaginationConfig } from 'components/Table/Table';
@@ -87,7 +88,7 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   return (
     <div>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button type="text">
+        <Button ghost type="text">
           <Icon name="overflow-vertical" />
         </Button>
       </Dropdown>
