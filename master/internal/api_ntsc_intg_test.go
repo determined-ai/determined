@@ -6,8 +6,9 @@ package internal
 import (
 	"context"
 	"fmt"
-	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 	"testing"
+
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
@@ -298,7 +299,8 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 
 	// Tensorboards.
 	tbID := setupMockTensorboardActor(t, api.m)
-	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{TensorboardId: string(tbID)})
+	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{
+		TensorboardId: string(tbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// check other errors are not returned with permission denied status.
@@ -317,7 +319,8 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
-	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{TensorboardId: string(tbID)})
+	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{
+		TensorboardId: string(tbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }

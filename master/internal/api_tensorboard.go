@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
