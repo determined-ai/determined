@@ -1,9 +1,26 @@
+# For HPC, we need do not specify the "checkpoint_storage" in this configuration
+# and, instead, use the "checkpoint_storage" specified in the "master.yaml" that
+# is used to run the HPC cluster tests.  This is because the "master.yaml" will
+# contain a "checkpoint_storage" whose "host_path" is set to a shared directory,
+# instead of "/tmp".  This is done when running tests on HPC clusters for the
+# following two reasons:
+#
+#    1. The "storage_path:" directory, which is set to
+#       "determined-integration-checkpoints" in the configuration file,
+#       disappears as soon as the experiment is paused. Don't know the
+#       reason why it disappears, but it only happens if "host_path" is
+#       set to "/tmp".  This causes the "activate" to fail, because it
+#       cannot find the checkpoints from the previously paused experiment.
+#
+#    2. On HPC clusters, there is no guarantee that when the experiment is
+#       "activated" after it has been paused, that the Workload Manager
+#       (e.g., Slurm, PBS) is going to pick the same node that the job
+#       previously ran on when it was paused.  If it picks a different node
+#       and "host_path" is not a shared directory, then the new node on
+#       which the job is restarted on will not have access to the checkpoint
+#       directory.  This will cause the experiment to fail, because it
+#       cannot find the checkpoints from the previously paused experiment.
 description: noop_single_hpc
-checkpoint_storage:
-  type: shared_fs
-  host_path: /tmp
-  storage_path: determined-integration-checkpoints
-  save_trial_best: 30
 hyperparameters:
   global_batch_size: 32
   metrics_progression: decreasing
@@ -14,7 +31,7 @@ searcher:
   smaller_is_better: true
   name: single
   max_length:
-    batches: 6000
+    batches: 12000
 reproducibility:
   experiment_seed: 999
 min_validation_period:

@@ -21,38 +21,10 @@ def test_noop_pause_hpc() -> None:
     # so we won't be able to activate (restart) it.
     config_file = conf.fixtures_path("no_op/single-hpc.yaml")
 
-    # For HPC, we need to remove the "checkpoint_storage" item from the
-    # configuration file, because it sets "host_path" to "/tmp", which is
-    # not desirable on HPC clusters for the following two reasons:
-    #
-    #    1. The "storage_path:" directory, which is set to
-    #       "determined-integration-checkpoints" in the configuration file,
-    #       disappears as soon as the experiment is paused. Don't know the
-    #       reason why it disappears, but it only happens if "host_path" is
-    #       set to "/tmp".  This causes the "activate" to fail, because it
-    #       cannot find the checkpoints from the previously paused experiment.
-    #
-    #    2. On HPC clusters, there is no guarantee that when the experiment is
-    #       "activated" after it has been paused, that the Workload Manager
-    #       (e.g., Slurm, PBS) is going to pick the same node that the job
-    #       previously ran on when it was paused.  If it picks a different node
-    #       and "host_path" is not a shared directory, then the new node on
-    #       which the job is restarted on will not have access to the checkpoint
-    #       directory.  This will cause the experiment to fail, because it
-    #       cannot find the checkpoints from the previously paused experiment.
-    #
-    # For e2e_tests targeted to HPC clusters, the "master.yaml" file will have
-    # a "checkpoint_storage' with a "host_path" that points to a shared
-    # directory on the cluster that is accessible by all the compute nodes.
-    # Therefore, by removing the "checkpoint_storage" item from experiment's
-    # configuration file, the test will use the "checkpoint_storage" item from
-    # the "master.yaml".
-    config_file_hpc = remove_item_from_yaml_file(config_file, "checkpoint_storage")
-
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
     """
-    experiment_id = exp.create_experiment(config_file_hpc, conf.fixtures_path("no_op"), None)
+    experiment_id = exp.create_experiment(config_file, conf.fixtures_path("no_op"), None)
     exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_RUNNING)
 
     # Wait for the only trial to get scheduled.
@@ -93,8 +65,6 @@ def test_noop_pause_hpc() -> None:
     exp.wait_for_experiment_state(
         experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
     )
-
-    os.remove(config_file_hpc)
 
 
 def remove_item_from_yaml_file(filename: str, item_name: str) -> str:
