@@ -14,9 +14,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/determined-ai/determined/proto/pkg/commandv1"
-	"github.com/determined-ai/determined/proto/pkg/notebookv1"
-
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/config"
