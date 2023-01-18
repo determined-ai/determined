@@ -4151,6 +4151,7 @@ class v1GetShellsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetShellsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -13578,7 +13579,7 @@ def get_GetShells(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
     workspaceId: "typing.Optional[int]" = None,
