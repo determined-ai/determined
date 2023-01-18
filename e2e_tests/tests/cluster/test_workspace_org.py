@@ -474,12 +474,6 @@ def test_workspace_delete_notebook() -> None:
         body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_resp.workspace.id),
     )
 
-    # create a notebook inside another workspace
-    outside_notebook = bindings.post_LaunchNotebook(
-        admin_session,
-        body=bindings.v1LaunchNotebookRequest(workspaceId=1),  # default wid
-    ).notebook
-
     # check that the notebook exists
     notebook_resp = bindings.get_GetNotebook(admin_session, notebookId=created_resp.notebook.id)
     assert notebook_resp.notebook.state not in TERMINATING_STATES
@@ -491,15 +485,22 @@ def test_workspace_delete_notebook() -> None:
     nb = next((nb for nb in notebooks_resp.notebooks if nb.id == created_resp.notebook.id), None)
     assert nb is not None
 
-    # delete the workspace
-    bindings.delete_DeleteWorkspace(admin_session, id=workspace_resp.workspace.id)
+    with setup_workspace(admin_session) as workspace2:
+        # create a notebook inside another workspace
+        outside_notebook = bindings.post_LaunchNotebook(
+            admin_session,
+            body=bindings.v1LaunchNotebookRequest(workspaceId=workspace2.id),
+        ).notebook
+
+        # delete the workspace
+        bindings.delete_DeleteWorkspace(admin_session, id=workspace_resp.workspace.id)
+
+        # check that the other notebook is not terminated
+        assert outside_notebook.state not in TERMINATING_STATES
 
     # check that notebook is terminated or terminating.
     notebook_resp = bindings.get_GetNotebook(admin_session, notebookId=created_resp.notebook.id)
     assert notebook_resp.notebook.state in TERMINATING_STATES
-
-    # check that the other notebook is not terminated
-    assert outside_notebook.state not in TERMINATING_STATES
 
     # check that the notebook is not returned in the list of notebooks by default.
     notebooks_resp = bindings.get_GetNotebooks(admin_session)
