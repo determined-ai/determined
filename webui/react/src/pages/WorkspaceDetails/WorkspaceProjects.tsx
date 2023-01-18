@@ -75,6 +75,12 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     if (!settings) return;
 
     try {
+      const whoseUsersDictionary = {
+        [WhoseProjects.All]: undefined,
+        [WhoseProjects.Mine]: user ? [String(user.id)] : undefined,
+        [WhoseProjects.Others]: users.filter((u) => u.id !== user?.id).map((u) => String(u.id)),
+      };
+
       const response = await getWorkspaceProjects(
         {
           archived: workspace?.archived ? undefined : settings.archived ? undefined : false,
@@ -84,7 +90,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetWorkspaceProjectsRequestSortBy, settings.sortKey),
-          users: settings.user,
+          users: whoseUsersDictionary[settings.whose],
         },
         { signal: canceler.signal },
       );
@@ -98,7 +104,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, id, workspace?.archived, settings]);
+  }, [canceler.signal, id, workspace?.archived, settings, user, users]);
 
   const previousId = usePrevious(id, undefined);
 
@@ -124,14 +130,15 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
       const whose = value as WhoseProjects;
 
-      const whoseUsersDictionary = {
-        [WhoseProjects.All]: undefined,
-        [WhoseProjects.Mine]: user ? [user.id] : undefined,
-        [WhoseProjects.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
-      };
-      updateSettings({ user: whoseUsersDictionary[whose], whose });
+      // const whoseUsersDictionary = {
+      //   [WhoseProjects.All]: undefined,
+      //   [WhoseProjects.Mine]: user ? [user.id] : undefined,
+      //   [WhoseProjects.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
+      // };
+      // updateSettings({ user: whoseUsersDictionary[whose], whose });
+      updateSettings({ whose });
     },
-    [updateSettings, user, users],
+    [updateSettings],
   );
 
   const handleSortSelect = useCallback(
