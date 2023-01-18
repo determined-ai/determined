@@ -235,7 +235,7 @@ def main(args, info, context):
         metrics = {"accuracy": accuracy}
         if distributed.rank == 0:
             context.train.report_validation_metrics(steps_completed=step, metrics=metrics)
-            op.report_completed(accuracy, metrics=metrics)
+            op.report_completed(accuracy)
 
 
 if __name__ == "__main__":
