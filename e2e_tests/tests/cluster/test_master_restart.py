@@ -14,7 +14,8 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import det_spawn
 
-from .managed_cluster import Cluster, ManagedCluster, get_agent_data
+from .abstract_cluster import Cluster
+from .managed_cluster import ManagedCluster, get_agent_data
 from .managed_cluster_k8s import ManagedK8sCluster
 from .test_groups import det_cmd_json
 from .utils import (
