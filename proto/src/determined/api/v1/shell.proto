@@ -23,6 +23,8 @@ message GetShellsRequest {
     SORT_BY_DESCRIPTION = 2;
     // Return shells sorted by start time.
     SORT_BY_START_TIME = 4;
+    // Return shells sorted by workspace_id.
+    SORT_BY_WORKSPACE_ID = 5;
   }
   // Sort shells by the given field.
   SortBy sort_by = 1;
