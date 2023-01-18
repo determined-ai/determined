@@ -28,7 +28,7 @@ import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-import usePrevious from 'shared/hooks/usePrevious';
+// import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
@@ -121,9 +121,17 @@ const WorkspaceList: React.FC = () => {
   const handleViewSelect = useCallback(
     (value: unknown) => {
       setIsLoading(true);
-      updateSettings({ whose: value as WhoseWorkspaces | undefined });
+
+      const whose = value as WhoseWorkspaces;
+
+      const whoseUsersDictionary = {
+        [WhoseWorkspaces.All]: undefined,
+        [WhoseWorkspaces.Mine]: user ? [user.id] : undefined,
+        [WhoseWorkspaces.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
+      };
+      updateSettings({ user: whoseUsersDictionary[whose], whose });
     },
-    [updateSettings],
+    [updateSettings, user, users],
   );
 
   const handleSortSelect = useCallback(
@@ -143,22 +151,22 @@ const WorkspaceList: React.FC = () => {
     [updateSettings],
   );
 
-  const prevWhose = usePrevious(settings.whose, undefined);
-  useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose) return;
+  // const prevWhose = usePrevious(settings.whose, undefined);
+  // useEffect(() => {
+  //   if (settings.whose === prevWhose || !settings.whose) return;
 
-    switch (settings.whose) {
-      case WhoseWorkspaces.All:
-        updateSettings({ user: undefined });
-        break;
-      case WhoseWorkspaces.Mine:
-        updateSettings({ user: user ? [user.id] : undefined });
-        break;
-      case WhoseWorkspaces.Others:
-        updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
-        break;
-    }
-  }, [prevWhose, settings.whose, updateSettings, user, users]);
+  //   switch (settings.whose) {
+  //     case WhoseWorkspaces.All:
+  //       updateSettings({ user: undefined });
+  //       break;
+  //     case WhoseWorkspaces.Mine:
+  //       updateSettings({ user: user ? [user.id] : undefined });
+  //       break;
+  //     case WhoseWorkspaces.Others:
+  //       updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
+  //       break;
+  //   }
+  // }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
