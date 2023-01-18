@@ -6,7 +6,7 @@ import pickle
 import random
 import sys
 import uuid
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union, Any
 
 from urllib3 import connectionpool
 
@@ -26,7 +26,11 @@ class SingleSearchMethod(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self,
+        _: searcher.SearcherState,
+        __: uuid.UUID,
+        ___: Union[float, Dict[str, Any]],
+        ____: int,
     ) -> List[searcher.Operation]:
         return []
 
@@ -95,7 +99,11 @@ class RandomSearchMethod(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self,
+        _: searcher.SearcherState,
+        __: uuid.UUID,
+        ___: Union[float, Dict[str, Any]],
+        ____: int,
     ) -> List[searcher.Operation]:
         self.raise_exception("on_validation_completed")
         return []
@@ -388,8 +396,13 @@ class ASHASearchMethod(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self,
+        _: searcher.SearcherState,
+        request_id: uuid.UUID,
+        metric: Union[float, Dict[str, Any]],
+        __: int,
     ) -> List[searcher.Operation]:
+        assert isinstance(metric, float)
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1

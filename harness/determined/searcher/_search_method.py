@@ -4,7 +4,7 @@ import pathlib
 import uuid
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from determined.common import experimental
 from determined.common.api import bindings
@@ -227,12 +227,18 @@ class SearchMethod:
 
     @abstractmethod
     def on_validation_completed(
-        self, searcher_state: SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self,
+        searcher_state: SearcherState,
+        request_id: uuid.UUID,
+        metric: Union[float, Dict[str, Any]],
+        train_length: int,
     ) -> List[Operation]:
         """
         Informs the searcher that the validation workload
         initiated by the same searcher has completed after training for ``train_length`` units.
         It returns any new operations as a result of this workload completing.
+        `metric` is either a scalar metric or a dictionary of metrics, depending on
+        the type of the argument passed into :py:meth:`~core.SearcherOperation.report_completed()`.
         """
         pass
 

@@ -38,7 +38,7 @@ import pickle
 import sys
 import uuid
 from pathlib import Path
-from typing import Callable, Dict, List, Set
+from typing import Callable, Dict, List, Set, Union, Any
 
 from determined import searcher
 
@@ -123,8 +123,13 @@ class ASHASearchMethod(searcher.SearchMethod):
     #    (3) close experiment if all trials are completed and maximum number of
     #        trials is reached.
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self,
+        _: searcher.SearcherState,
+        request_id: uuid.UUID,
+        metric: Union[float, Dict[str, Any]],
+        __: int,
     ) -> List[searcher.Operation]:
+        assert isinstance(metric, float)
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:
             metric *= -1

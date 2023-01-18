@@ -1,6 +1,6 @@
 import enum
 import logging
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional, Union
 
 import determined as det
 from determined import core
@@ -89,7 +89,7 @@ class SearcherOperation:
             data=det.util.json_encode(length),
         )
 
-    def report_completed(self, searcher_metric: float, metrics: Optional[Dict[str, Any]]) -> None:
+    def report_completed(self, metrics: Union[float, Dict[str, Any]]) -> None:
         """
         ``report_completed()`` is the final step of a train-validate-report cycle.
 
@@ -103,10 +103,10 @@ class SearcherOperation:
         self._completed = True
         body = {
             "op": {"length": self._length},
-            "searcherMetric": searcher_metric,
-            "allMetrics": {} if metrics is None else metrics,
+            "searcherMetric": metrics if isinstance(metrics, float) else None,
+            "allMetrics": metrics if isinstance(metrics, dict) else None,
         }
-        logger.debug(f"op.report_completed({searcher_metric})")
+        logger.debug(f"op.report_completed({metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/searcher/completed_operation",
             data=det.util.json_encode(body),
@@ -309,16 +309,13 @@ class DummySearcherOperation(SearcherOperation):
             raise RuntimeError("you must not call op.report_progress() after op.report_completed()")
         logger.info("progress report: {length}/{self._length}")
 
-    def report_completed(self, searcher_metric: float, metrics: Optional[Dict[str, Any]]) -> None:
+    def report_completed(self, metrics: Union[float, Dict[str, Any]]) -> None:
         if not self._is_chief:
             raise RuntimeError("you must only call op.report_completed() from the chief worker")
         if self._completed:
             raise RuntimeError("you may only call op.report_completed() once")
         self._completed = True
-        logger.info(
-            f"SearcherOperation Complete: searcher_metric={det.util.json_encode(searcher_metric)}"
-            f" all_metrics={det.util.json_encode(metrics)}"
-        )
+        logger.info(f"SearcherOperation Complete: metrics={det.util.json_encode(metrics)}")
 
 
 class DummySearcherContext(SearcherContext):

@@ -80,18 +80,28 @@ class SearchRunner:
             # duplicate completion accounting already performed by master
             logger.info(
                 f"validationCompleted({event.validationCompleted.requestId},"
-                f" {event.validationCompleted.metric})"
+                f" {event.validationCompleted.allMetrics})"
             )
             request_id = uuid.UUID(event.validationCompleted.requestId)
-            if event.validationCompleted.metric is None:
-                raise RuntimeError("validationCompleted event is invalid without a metric")
+            if event.validationCompleted.allMetrics is None:
+                if event.validationCompleted.metric is None:
+                    raise RuntimeError(
+                        "validationCompleted event must have a metric or " "a dictionary of metrics"
+                    )
+                operations = self.search_method.on_validation_completed(
+                    self.state,
+                    request_id,
+                    event.validationCompleted.metric,
+                    int(event.validationCompleted.validateAfterLength),
+                )
+            else:
+                operations = self.search_method.on_validation_completed(
+                    self.state,
+                    request_id,
+                    event.validationCompleted.allMetrics,
+                    int(event.validationCompleted.validateAfterLength),
+                )
 
-            operations = self.search_method.on_validation_completed(
-                self.state,
-                request_id,
-                event.validationCompleted.metric,
-                int(event.validationCompleted.validateAfterLength),
-            )
             # add progress operation
             progress = self.search_method.progress(self.state)
             operations.append(searcher.Progress(progress))
