@@ -319,7 +319,7 @@ func (a *apiServer) SetCommandPriority(
 
 func (a *apiServer) LaunchCommand(
 	ctx context.Context, req *apiv1.LaunchCommandRequest,
-) (resp *apiv1.LaunchCommandResponse, err error) {
+) (*apiv1.LaunchCommandResponse, error) {
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
 		Config:       req.Config,
