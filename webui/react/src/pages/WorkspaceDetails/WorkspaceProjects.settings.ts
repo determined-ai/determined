@@ -115,12 +115,12 @@ const config: SettingsConfig<WorkspaceDetailsSettings> = {
       storageKey: 'tableOffset',
       type: number,
     },
-    user: {
-      defaultValue: undefined,
-      skipUrlEncoding: true,
-      storageKey: 'user',
-      type: union([undefinedType, array(string)]),
-    },
+    // user: {
+    //   defaultValue: undefined,
+    //   skipUrlEncoding: true,
+    //   storageKey: 'user',
+    //   type: union([undefinedType, array(string)]),
+    // },
     view: {
       defaultValue: GridListView.Grid,
       skipUrlEncoding: true,
