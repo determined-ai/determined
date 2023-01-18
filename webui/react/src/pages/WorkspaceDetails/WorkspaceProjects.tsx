@@ -121,9 +121,17 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const handleViewSelect = useCallback(
     (value: unknown) => {
       setIsLoading(true);
-      updateSettings({ whose: value as WhoseProjects | undefined });
+
+      const whose = value as WhoseProjects;
+
+      const whoseUsersDictionary = {
+        [WhoseProjects.All]: undefined,
+        [WhoseProjects.Mine]: user ? [user.id] : undefined,
+        [WhoseProjects.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
+      };
+      updateSettings({ user: whoseUsersDictionary[whose], whose });
     },
-    [updateSettings],
+    [updateSettings, user, users],
   );
 
   const handleSortSelect = useCallback(
@@ -146,19 +154,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     },
     [updateSettings],
   );
-
-  const prevWhose = usePrevious(settings.whose, undefined);
-  useEffect(() => {
-    if (settings.whose === prevWhose || !settings.whose) return;
-
-    const whoseUsersDictionary = {
-      [WhoseProjects.All]: undefined,
-      [WhoseProjects.Mine]: user ? [user.id] : undefined,
-      [WhoseProjects.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
-    };
-
-    updateSettings({ user: whoseUsersDictionary[settings.whose] });
-  }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const saveProjectDescription = useCallback(async (newDescription: string, projectId: number) => {
     try {
