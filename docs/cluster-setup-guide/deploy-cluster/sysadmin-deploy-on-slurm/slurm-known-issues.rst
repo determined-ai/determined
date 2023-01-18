@@ -96,9 +96,24 @@ Some constraints are due to differences in behavior between Docker and Singulari
  Singularity Known Issues
 **************************
 
-   Launching a PBS jobs with an experiment configuration which includes an embedded double quote
-   character (") may cause the job to fail with the json.decoder.JSONDecodeError unless you have
-   Singularity 3.10 or greater or Apptainer 1.1 or greater.
+Launching a PBS jobs with an experiment configuration which includes an embedded double quote
+character (") may cause the job to fail with the json.decoder.JSONDecodeError unless you have
+Singularity 3.10 or greater or Apptainer 1.1 or greater.
+
+************************
+ Apptainer Known Issues
+************************
+
+Starting with Apptainer version 1.1.0 some changes may trigger permission problems inside of
+Determined containers for shells, tensorboards, and experiments. For example, a tensorboard log may
+contain ``ERROR: Could not install packages due to an OSError: [Errno 28] No space left on device``,
+or a shell may fail to function and the shell logs contain the message ``chown(/dev/pts/1, 63200, 5)
+failed: Invalid argument``, or an experiment may fail to launch due to ``FATAL: container creation
+failed: mount /var/tmp->/var/tmp error: while mounting /var/tmp: could not mount /var/tmp: operation
+not supported``. This likely indicates an installation or configuration error for unprivileged
+containers. Review the `Installing Apptainer
+<https://apptainer.org/docs/admin/main/installation.html>`_ documentation. These errors are
+sometimes resolved by additionally installing the ``apptainer-setuid`` package.
 
 *********************
  PodMan Known Issues
