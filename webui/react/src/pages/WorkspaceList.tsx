@@ -75,12 +75,6 @@ const WorkspaceList: React.FC = () => {
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
     try {
-      const whoseUsersDictionary = {
-        [WhoseWorkspaces.All]: undefined,
-        [WhoseWorkspaces.Mine]: user ? [String(user.id)] : undefined,
-        [WhoseWorkspaces.Others]: users.filter((u) => u.id !== user?.id).map((u) => String(u.id)),
-      };
-
       const response = await getWorkspaces(
         {
           archived: settings.archived ? undefined : false,
@@ -89,7 +83,7 @@ const WorkspaceList: React.FC = () => {
           offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
-          users: whoseUsersDictionary[settings.whose],
+          users: settings.user,
         },
         { signal: canceler.signal },
       );
@@ -104,7 +98,7 @@ const WorkspaceList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [canceler.signal, pageError, settings, user, users]);
+  }, [canceler.signal, pageError, settings]);
 
   useEffect(() => {
     fetchWorkspaces();
@@ -116,15 +110,14 @@ const WorkspaceList: React.FC = () => {
 
       const whose = value as WhoseWorkspaces;
 
-      // const whoseUsersDictionary = {
-      //   [WhoseWorkspaces.All]: undefined,
-      //   [WhoseWorkspaces.Mine]: user ? [user.id] : undefined,
-      //   [WhoseWorkspaces.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
-      // };
-      // updateSettings({ user: whoseUsersDictionary[whose], whose });
-      updateSettings({ whose });
+      const whoseUsersDictionary = {
+        [WhoseWorkspaces.All]: undefined,
+        [WhoseWorkspaces.Mine]: user ? [user.id] : undefined,
+        [WhoseWorkspaces.Others]: users.filter((u) => u.id !== user?.id).map((u) => u.id),
+      };
+      updateSettings({ user: whoseUsersDictionary[whose], whose });
     },
-    [updateSettings],
+    [updateSettings, user, users],
   );
 
   const handleSortSelect = useCallback(
