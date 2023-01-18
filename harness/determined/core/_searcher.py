@@ -101,7 +101,7 @@ class SearcherOperation:
         if self._completed:
             raise RuntimeError("you may only call op.report_completed() once")
         self._completed = True
-        body = {
+        body: Dict[str, Any] = {
             "op": {"length": self._length},
         }
         if isinstance(metrics, dict):
