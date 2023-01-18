@@ -44,6 +44,10 @@ var shellsAddr = actor.Addr("shells")
 func (a *apiServer) GetShells(
 	ctx context.Context, req *apiv1.GetShellsRequest,
 ) (resp *apiv1.GetShellsResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -95,6 +99,10 @@ func (a *apiServer) GetShell(
 func (a *apiServer) KillShell(
 	ctx context.Context, req *apiv1.KillShellRequest,
 ) (resp *apiv1.KillShellResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	getResponse, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId})
 	if err != nil {
 		return nil, err
@@ -117,6 +125,10 @@ func (a *apiServer) KillShell(
 func (a *apiServer) SetShellPriority(
 	ctx context.Context, req *apiv1.SetShellPriorityRequest,
 ) (resp *apiv1.SetShellPriorityResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	getResponse, err := a.GetShell(ctx, &apiv1.GetShellRequest{ShellId: req.ShellId})
 	if err != nil {
 		return nil, err
