@@ -61,17 +61,19 @@ const settingsToQuery = <T>(config: SettingsConfig<T>, settings: Settings) => {
 };
 
 const queryParamToType = <T>(
-  type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>,
-  param: string | null,
+  type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>, // type is refferent to each settign key
+  param: string | null, // is refering to the value entry, which can be an index of a setting key if said setting is an "array of something"
 ): Primitive | undefined => {
+  // TODO: add check for number literal - comming up in the future!
   if (param === null || param === undefined) return undefined;
-  if (type.is(false)) return param === 'true';
-  if (type.is(0) || type.is([0])) {
+  if (type.name === 'boolean') return param === 'true';
+  if (type.name === 'number' || type.name === 'Array<number>') {
     const value = Number(param);
     return !isNaN(value) ? value : undefined;
   }
   if (type.is({})) return JSON.parse(param);
-  if (type.is('') || type.is(['']) || type.name.includes('"')) return param;
+  if (type.name === 'string' || type.name === 'Array<string>' || type.name.includes('"'))
+    return param;
   return undefined;
 };
 
@@ -205,11 +207,11 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
   const updateDB = useCallback(
     async (newSettings: Settings) => {
-      if (!settings) return;
+      if (!returnedSettings) return;
 
       const dbUpdates = Object.keys(newSettings).reduce<UserSettingUpdate[]>((acc, setting) => {
         const newSetting = newSettings[setting];
-        const stateSetting = settings[setting as keyof T];
+        const stateSetting = returnedSettings[setting as keyof T];
 
         if (user?.id && !isEqual(newSetting, stateSetting)) {
           acc.push({
@@ -245,7 +247,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         }
       }
     },
-    [user?.id, config.storagePath, settings],
+    [user?.id, config.storagePath, returnedSettings],
   );
 
   const resetSettings = useCallback(

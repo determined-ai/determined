@@ -28,7 +28,6 @@ import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
 import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
-// import usePrevious from 'shared/hooks/usePrevious';
 import { isEqual } from 'shared/utils/data';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
@@ -75,7 +74,6 @@ const WorkspaceList: React.FC = () => {
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
-
     try {
       const response = await getWorkspaces(
         {
@@ -100,19 +98,7 @@ const WorkspaceList: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    canceler.signal,
-    pageError,
-    settings.archived,
-    settings.view,
-    settings.tableLimit,
-    settings.name,
-    settings.tableOffset,
-    settings.sortDesc,
-    settings.sortKey,
-    settings.user,
-  ]);
+  }, [canceler.signal, pageError, settings]);
 
   useEffect(() => {
     fetchWorkspaces();
@@ -150,23 +136,6 @@ const WorkspaceList: React.FC = () => {
     },
     [updateSettings],
   );
-
-  // const prevWhose = usePrevious(settings.whose, undefined);
-  // useEffect(() => {
-  //   if (settings.whose === prevWhose || !settings.whose) return;
-
-  //   switch (settings.whose) {
-  //     case WhoseWorkspaces.All:
-  //       updateSettings({ user: undefined });
-  //       break;
-  //     case WhoseWorkspaces.Mine:
-  //       updateSettings({ user: user ? [user.id] : undefined });
-  //       break;
-  //     case WhoseWorkspaces.Others:
-  //       updateSettings({ user: users.filter((u) => u.id !== user?.id).map((u) => u.id) });
-  //       break;
-  //   }
-  // }, [prevWhose, settings.whose, updateSettings, user, users]);
 
   const columns = useMemo(() => {
     const workspaceNameRenderer = (value: string, record: Workspace) => (
