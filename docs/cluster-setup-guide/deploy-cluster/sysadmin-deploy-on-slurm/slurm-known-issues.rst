@@ -158,6 +158,52 @@ Some constraints are due to differences in behavior between Docker and Singulari
             environment_variables:
               - INHERITED_ENV_VAR=
 
+   -  Terminating a Determined AI job may cause the following conditions to occur:
+
+      -  Compute nodes go into drain state.
+
+      -  Processes inside the container continue to run.
+
+      -  An attempt to run another job results in ``Running a job gets the error level=error
+         msg="invalid internal status, try resetting the pause process with \"/usr/local/bin/podman
+         system migrate\": could not find any running process: no such process"``.
+
+      Podman creates several processes when running a container, such as podman, conmon, and
+      catatonit. When a user terminates a Determined AI job, Slurm will send a SIGTERM to the podman
+      processes. However, sometimes the container will continue running, even after the SIGTERM has
+      been sent.
+
+      On Slurm versions prior to version 22, Slurm will place the node in the ``drain`` state,
+      requiring the use of the ``scontrol`` command to set the node back to the ``idle`` state. It
+      may also require ``podman system migrate`` to be run to clean up the running containers.
+
+      To ensure the container associated with the job is stopped when a Determined AI job is
+      terminated, create a Slurm task epilog script to stop the container.
+
+      Set the Task Epilog script in the ``slurm.conf`` file, as shown below, to point to a script
+      that resides in a shared filesystem accessible from all compute nodes.
+
+         .. code::
+
+            TaskEpilog=/path/to/task_epilog.sh
+
+      Set the contents of the Task Epilog script as shown below.
+
+         .. code:: bash
+
+            #!/usr/bin/env bash
+
+            slurm_job_name_suffix=$(echo ${SLURM_JOB_NAME} | sed 's/^\S\+-\([a-z0-9]\+-[a-z0-9]\+\)$/\1/')
+
+            podman_container_stop_command="podman container stop \
+               --filter name='.+-${slurm_job_name_suffix}'"
+
+            echo "$(date):$0: Running \"${podman_container_stop_command}\"" 1>&2
+
+            eval ${podman_container_stop_command}
+
+      Restart the ``slurmd`` daemon on all compute nodes.
+
 *********************
  Enroot Known Issues
 *********************
