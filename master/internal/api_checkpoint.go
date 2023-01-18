@@ -16,12 +16,14 @@ import (
 
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
 func errCheckpointNotFound(id string) error {
@@ -73,12 +75,24 @@ func (m *Master) canDoActionOnCheckpoint(
 	return nil
 }
 
-/* func (m *Master) canDoActionOnCheckpointThroughModel(ctx context.Context, curUser model.User,
-	id string) error {
+func (m *Master) canDoActionOnCheckpointThroughModel(ctx context.Context, curUser model.User,
+	id uuid.UUID) error {
+	modelIDs, err := m.db.GetModelIDsAssociatedWithCheckpoint(id)
+	if err != nil {
+		return err
+	}
+	for _, id := range modelIDs {
+		model := &modelv1.Model{}
+		_ = m.db.QueryProto("get_model_by_id", model, id)
+		ok, _ := modelauth.AuthZProvider.Get().CanGetModel(ctx, curUser, model, *model.WorkspaceId)
+		if ok {
+			return nil
+		}
+	}
 
-	modelauth.AuthZProvider.Get().CanGetModel
-	return nil
-}. */
+	return status.Error(codes.PermissionDenied,
+		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
+}
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
@@ -88,11 +102,18 @@ func (a *apiServer) GetCheckpoint(
 	}
 	errE := a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
-	// Nikita TODO: get model from checkpointUuid and then use CanGetModel
-	// errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, req.CheckpointUuid,)
+	ckptUUID, err := uuid.Parse(req.CheckpointUuid)
+	if err != nil {
+		return nil, err
+	}
+	errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
 
-	if errE != nil { // && errM != nil { // allow downloading checkpoint through model of experiment
-		return nil, errE
+	if errE != nil && errM != nil {
+		// allow viewing checkpoint through any model associated with checkpoint.
+		return nil,
+			errors.Errorf(
+				"checkpoint access error with experiment: %v, error with model(s): %v.",
+				errE.Error(), errM.Error())
 	}
 
 	resp := &apiv1.GetCheckpointResponse{}

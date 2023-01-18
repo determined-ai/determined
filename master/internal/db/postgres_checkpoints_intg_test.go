@@ -112,6 +112,11 @@ func TestDeleteCheckpoints(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, reqCheckpointUUIDs, dbCheckpointsUUIDs)
 
+	// Test GetModelIDsAssociatedWithCheckpoint
+	expmodelIDsCheckpoint := []int32{pmdl.Id}
+	modelIDsCheckpoint, err := db.GetModelIDsAssociatedWithCheckpoint(checkpoint1.UUID)
+	require.NoError(t, err)
+	require.Equal(t, expmodelIDsCheckpoint, modelIDsCheckpoint)
 	// Send a list of delete checkpoints uuids the user wants to delete and
 	// check if it's in model registry.
 	requestedDeleteCheckpoints := []uuid.UUID{checkpoint1.UUID, checkpoint3.UUID}
