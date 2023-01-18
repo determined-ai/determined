@@ -103,9 +103,11 @@ class SearcherOperation:
         self._completed = True
         body = {
             "op": {"length": self._length},
-            "searcherMetric": metrics if isinstance(metrics, float) else None,
-            "allMetrics": metrics if isinstance(metrics, dict) else None,
         }
+        if isinstance(metrics, dict):
+            body["allMetrics"] = metrics
+        else:
+            body["searcherMetric"] = metrics
         logger.debug(f"op.report_completed({metrics})")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/searcher/completed_operation",
