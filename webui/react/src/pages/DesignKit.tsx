@@ -338,7 +338,12 @@ const ChartsSection: React.FC = () => {
   const line1 = {
     data: [
       [0, 0],
+      [2, Math.random() * 12],
       [4, 15],
+      [6, Math.random() * 60],
+      [9, Math.random() * 40],
+      [10, Math.random() * 76],
+      [18, Math.random() * 80],
       [19, 89],
     ],
   };
@@ -346,6 +351,10 @@ const ChartsSection: React.FC = () => {
     data: [
       [1, 15],
       [2, 10.123456789],
+      [2.5, Math.random() * 22],
+      [3, Math.random() * 18],
+      [3.25, Math.random() * 10 + 10],
+      [3.75, Math.random() * 12],
       [4, 12],
     ],
   };
@@ -375,7 +384,8 @@ const ChartsSection: React.FC = () => {
       <Card title="Chart Grid">
         <p>
           A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
-          responsive grid. There is a sync for the plot window, cursor, and x-axis.
+          responsive grid. There is a sync for the plot window, cursor, and selection/zoom of an
+          x-axis range.
         </p>
         <div style={{ height: 300 }}>
           <ChartGrid chartsProps={[{ series: [line1] }, { series: [line2] }]} rowHeight={250} />

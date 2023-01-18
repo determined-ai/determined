@@ -29,7 +29,6 @@ interface Props {
   showLegend?: boolean;
   showMetricSelection?: boolean;
   title?: string;
-  width?: number;
   xAxisOptions?: string[];
   xLabel?: string;
   yLabel?: string;
@@ -89,6 +88,7 @@ export const LineChart: React.FC<Props> = ({
           side: 3,
         },
       ],
+      cursor: { drag: { x: true, y: false } },
       height,
       legend: { show: showLegend },
       plugins,
