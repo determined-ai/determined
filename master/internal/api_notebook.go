@@ -231,8 +231,6 @@ func (a *apiServer) LaunchNotebook(
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
 
-	// TODO test launching in archived workspace.
-
 	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
 	if req.WorkspaceId != 0 {
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)

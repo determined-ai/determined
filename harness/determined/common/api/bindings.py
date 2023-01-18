@@ -1503,6 +1503,7 @@ class v1Command:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
+        workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
         displayName: "typing.Union[str, None, Unset]" = _unset,
         exitStatus: "typing.Union[str, None, Unset]" = _unset,
@@ -1515,6 +1516,7 @@ class v1Command:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(container, Unset):
             self.container = container
         if not isinstance(displayName, Unset):
@@ -1534,6 +1536,7 @@ class v1Command:
             "startTime": obj["startTime"],
             "state": determinedtaskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "container" in obj:
             kwargs["container"] = v1Container.from_json(obj["container"]) if obj["container"] is not None else None
@@ -1554,6 +1557,7 @@ class v1Command:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "container" in vars(self):
             out["container"] = None if self.container is None else self.container.to_json(omit_unset)
@@ -2963,6 +2967,7 @@ class v1GetCommandsRequestSortBy(enum.Enum):
     SORT_BY_ID = "SORT_BY_ID"
     SORT_BY_DESCRIPTION = "SORT_BY_DESCRIPTION"
     SORT_BY_START_TIME = "SORT_BY_START_TIME"
+    SORT_BY_WORKSPACE_ID = "SORT_BY_WORKSPACE_ID"
 
 class v1GetCommandsResponse:
     pagination: "typing.Optional[v1Pagination]" = None
@@ -5302,6 +5307,7 @@ class v1LaunchCommandRequest:
     data: "typing.Optional[str]" = None
     files: "typing.Optional[typing.Sequence[v1File]]" = None
     templateName: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -5310,6 +5316,7 @@ class v1LaunchCommandRequest:
         data: "typing.Union[str, None, Unset]" = _unset,
         files: "typing.Union[typing.Sequence[v1File], None, Unset]" = _unset,
         templateName: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(config, Unset):
             self.config = config
@@ -5319,6 +5326,8 @@ class v1LaunchCommandRequest:
             self.files = files
         if not isinstance(templateName, Unset):
             self.templateName = templateName
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1LaunchCommandRequest":
@@ -5332,6 +5341,8 @@ class v1LaunchCommandRequest:
             kwargs["files"] = [v1File.from_json(x) for x in obj["files"]] if obj["files"] is not None else None
         if "templateName" in obj:
             kwargs["templateName"] = obj["templateName"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -5345,6 +5356,8 @@ class v1LaunchCommandRequest:
             out["files"] = None if self.files is None else [x.to_json(omit_unset) for x in self.files]
         if not omit_unset or "templateName" in vars(self):
             out["templateName"] = self.templateName
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1LaunchCommandResponse:
@@ -12702,9 +12715,10 @@ def get_GetCommands(
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetShellsRequestSortBy]" = None,
+    sortBy: "typing.Optional[v1GetTensorboardsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
 ) -> "v1GetCommandsResponse":
     _params = {
         "limit": limit,
@@ -12713,6 +12727,7 @@ def get_GetCommands(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
     }
     _resp = session._do_request(
         method="GET",
