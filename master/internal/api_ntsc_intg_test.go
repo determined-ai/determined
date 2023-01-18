@@ -34,7 +34,7 @@ A set of tests to ensure that the NTSC APIs call the expected AuthZ methods.
 func setupNTSCAuthzTest(t *testing.T) (
 	*apiServer, *mocks.NSCAuthZ, model.User, context.Context,
 ) {
-	api, curUser, ctx := setupAPITest(t)
+	api, curUser, ctx := setupAPITest(t, nil)
 	var master *Master = api.m
 	command.RegisterAPIHandler(
 		master.system,
