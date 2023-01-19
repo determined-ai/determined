@@ -625,7 +625,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           <HumanReadableNumber num={record.searcherMetricValue} />
         ),
         sorter: true,
-        title: 'Best Metric',
+        title: 'Searcher Metric Value',
         width: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
       },
     ] as ColumnDef<ExperimentItem>[];
