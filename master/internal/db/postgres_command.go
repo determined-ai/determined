@@ -35,7 +35,7 @@ func GetCommandOwnerID(ctx context.Context, taskID model.TaskID) (model.UserID, 
 type TaskMetadata struct {
 	bun.BaseModel `bun:"table:command_state"`
 	WorkspaceID   model.AccessScopeID `bun:"workspace_id"`
-	TaskType      model.TaskType      `bun:"TaskType"`
+	TaskType      model.TaskType      `bun:"task_type"`
 }
 
 // IdentifyTask returns the task metadata for a given task ID.
@@ -43,8 +43,8 @@ type TaskMetadata struct {
 func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error) {
 	metadata := TaskMetadata{}
 	if err := Bun().NewSelect().Model(&metadata).
-		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id'").
-		ColumnExpr("generic_command_spec->'TaskType'").
+		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id' AS workspace_id").
+		ColumnExpr("generic_command_spec->'TaskType' as task_type").
 		Where("task_id = ?", taskID).
 		Scan(ctx); err != nil {
 		if errors.Cause(err) == sql.ErrNoRows {
