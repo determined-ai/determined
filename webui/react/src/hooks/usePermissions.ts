@@ -49,6 +49,7 @@ interface PermissionsHook {
   canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateNSC: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
@@ -117,6 +118,7 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
+      canCreateNSC: (args: WorkspacePermissionsArgs) => canCreateNSC(rbacOpts, args.workspace),
       canCreateProject: (args: WorkspacePermissionsArgs) =>
         canCreateProject(rbacOpts, args.workspace),
       canCreateWorkspace: canCreateWorkspace(rbacOpts),
@@ -529,6 +531,17 @@ const canAssignRoles = (
     rbacAllPermission ||
     (!!user && !!workspace && user.id === workspace.userId) ||
     (!!user && (rbacEnabled ? permitted.has(V1PermissionType.ASSIGNROLES) : user.isAdmin))
+  );
+};
+
+const canCreateNSC = (
+  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    rbacAllPermission ||
+    (!!workspace && (!rbacEnabled || permitted.has(V1PermissionType.CREATENSC)))
   );
 };
 

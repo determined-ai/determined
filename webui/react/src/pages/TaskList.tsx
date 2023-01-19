@@ -33,7 +33,6 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
-import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -99,7 +98,6 @@ const TaskList: React.FC = () => {
     useModalJupyterLab();
   const { activeSettings, resetSettings, settings, updateSettings } =
     useSettings<Settings>(settingsConfig);
-  const dashboardEnabled = useFeature().isOn('dashboard');
 
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
@@ -558,7 +556,7 @@ const TaskList: React.FC = () => {
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
-          {dashboardEnabled ? <JupyterLabButton /> : null}
+          <JupyterLabButton />
         </Space>
       }
       title="Tasks">

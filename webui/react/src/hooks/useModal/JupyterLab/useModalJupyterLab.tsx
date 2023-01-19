@@ -13,6 +13,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
+import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
 import Spinner from 'shared/components/Spinner/Spinner';
@@ -20,7 +21,8 @@ import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
 import { useResourcePools } from 'stores/resourcePools';
-import { Template } from 'types';
+import { useWorkspaces } from 'stores/workspaces';
+import { Template, Workspace } from 'types';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 import { Loadable } from 'utils/loadable';
@@ -57,6 +59,12 @@ const settingsConfig: SettingsConfig<JupyterLabOptions> = {
       skipUrlEncoding: true,
       storageKey: 'template',
       type: union([string, undefinedType]),
+    },
+    workspace: {
+      defaultValue: undefined,
+      skipUrlEncoding: true,
+      storageKey: 'workspace',
+      type: union([number, undefinedType]),
     },
   },
   storagePath: STORAGE_PATH,
@@ -117,18 +125,22 @@ const useModalJupyterLab = (): ModalHooks => {
     setShowFullConfig((show) => !show);
   }, [showFullConfig]);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     const fields: JupyterLabOptions = form.getFieldsValue(true);
     updateDefaults(fields);
     if (showFullConfig) {
       launchJupyterLab({ config: yaml.load(config || '') as RawJson });
     } else {
-      launchJupyterLab({
-        name: fields?.name,
-        pool: fields?.pool,
-        slots: fields?.slots,
-        template: fields?.template,
-      });
+      const values = await form.validateFields();
+      if (values) {
+        launchJupyterLab({
+          name: fields?.name,
+          pool: fields?.pool,
+          slots: fields?.slots,
+          template: fields?.template,
+          workspace: fields.workspace,
+        });
+      }
     }
     modalClose();
     setVisible(false);
@@ -292,11 +304,15 @@ const JupyterLabForm: React.FC<{
   form: FormInstance<JupyterLabOptions>;
 }> = ({ form, defaults }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
-
+  const { canCreateNSC } = usePermissions();
   const loadableResourcePools = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
 
   const selectedPoolName = Form.useWatch('pool', form);
+
+  const validWorkspaces = Loadable.map(useWorkspaces(), (ws) =>
+    ws.filter((workspace) => canCreateNSC({ workspace })),
+  );
 
   const resourceInfo = useMemo(() => {
     const selectedPool = resourcePools.find((pool) => pool.name === selectedPoolName);
@@ -349,6 +365,19 @@ const JupyterLabForm: React.FC<{
 
   return (
     <Form className={css.form} form={form} initialValues={defaults}>
+      <Form.Item
+        className={css.line}
+        label="Workspace"
+        name="workspace"
+        rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
+        <Select allowClear placeholder="Workspace (required)">
+          {Loadable.getOrElse([], validWorkspaces).map((workspace: Workspace) => (
+            <Option key={workspace.id} value={workspace.id}>
+              {workspace.name}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
       <Form.Item className={css.line} label="Template" name="template">
         <Select allowClear placeholder="No template (optional)">
           {templates.map((temp) => (

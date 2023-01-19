@@ -10,6 +10,7 @@ export interface JupyterLabOptions {
   pool?: string;
   slots?: number;
   template?: string;
+  workspace?: number;
 }
 
 interface JupyterLabLaunchOptions extends JupyterLabOptions {
