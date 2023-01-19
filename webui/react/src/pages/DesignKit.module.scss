@@ -46,6 +46,7 @@
     gap: 8px;
     height: fit-content;
     padding: 8px;
+    min-width: $breakpoint-mobile;
 
     section {
       display: flex;
