@@ -450,6 +450,6 @@ UPDATE trials t
 SET best_validation_id = (SELECT bv.id FROM best_validation bv),
 searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv)
 WHERE t.id = $1;
-`, trialId, trialRunId, stepsCompleted)
-	return errors.Wrapf(err, "error updating best validation for trial %d", trialId)
+`, trialID, trialRunID, stepsCompleted)
+	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
 }
