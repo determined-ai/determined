@@ -2553,7 +2553,7 @@ export interface V1ExperimentSimulation {
 }
 
 /**
- * ExperimentTrial is trial-level data that is brought up to the experiment level.
+ * ExperimentTrial is trial-level data that is surfaced to the experiment level.
  * @export
  * @interface V1ExperimentTrial
  */

@@ -50,7 +50,7 @@ enum State {
   STATE_RUNNING = 16;
 }
 
-// ExperimentTrial is trial-level data that is brought up to the experiment
+// ExperimentTrial is trial-level data that is surfaced to the experiment
 // level.
 message ExperimentTrial {
   // the searcher metric value associated with the best_validation_id for the
