@@ -377,6 +377,19 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case actor.PostStop:
 		ctx.Log().Infof("agent disconnected")
 		if a.started {
+			// This normally will run on agent WebSocketConnected to populate
+			// agentState.containerAllocation. There is technically still race here
+			// (and also in calling this in WebSocketConnected). We have no synchronization
+			// between allocation actors starting and registering themselves in the
+			// allocationmap and the lookup of allocationmap in restoreContainersField().
+			// Though this will likely run after agentReconnectWait which should
+			// give enough time for this to be populated.
+			// TODO: add explicit synchronization here.
+			err := a.agentState.restoreContainersField()
+			if err != nil {
+				ctx.Log().WithError(err).Error("failed restoreContainersField in shutdown of agent")
+			}
+
 			for cid := range a.agentState.containerAllocation {
 				stopped := aproto.ContainerError(
 					aproto.AgentFailed, errors.New("agent closed with allocated containers"))

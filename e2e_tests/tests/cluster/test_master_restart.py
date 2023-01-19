@@ -142,8 +142,10 @@ def _test_master_restart_reattach_recover_experiment(
 
 
 @pytest.mark.managed_devcluster
+@pytest.mark.parametrize("wait_for_amnesia", [True, False])
 def test_master_restart_error_missing_docker_container(
     managed_cluster_restarts: ManagedCluster,
+    wait_for_amnesia: bool,
 ) -> None:
     if not managed_cluster_restarts.reattach:
         pytest.skip()
@@ -166,20 +168,26 @@ def test_master_restart_error_missing_docker_container(
     managed_cluster_restarts.kill_master()
     containers[0].kill()
     managed_cluster_restarts.restart_master()
-    managed_cluster_restarts.restart_agent(wait_for_amnesia=False)  # BOTH?
+    managed_cluster_restarts.restart_agent(wait_for_amnesia=wait_for_amnesia)
 
-    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_ERROR)
-
-    task_list = det_cmd_json(["task", "list", "--json"])
-    assert task_list == {}
-
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_RUNNING)
     trials = exp.experiment_trials(exp_id)
     trial_id = trials[0].trial.id
-    trial_logs = exp.trial_logs(trial_id)
-    assert (
-        "allocation failed due to restore error: RM failed to restore the allocation: "
-        + "container is gone on reattachment"
-    ) in "".join(trial_logs)
+    trial_logs = "\n".join(exp.trial_logs(trial_id))
+
+    if wait_for_amnesia:
+        assert (
+            "allocation failed due to agent failure: "
+            + "agent failed while the container was running: agent closed with allocated containers"
+        ) in trial_logs
+    else:
+        assert (
+            "allocation failed due to restore error: RM failed to restore the allocation: "
+            + "container is gone on reattachment"
+        ) in trial_logs
+
+    subprocess.check_call(["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)])
+    exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=20)
 
 
 @pytest.mark.managed_devcluster
