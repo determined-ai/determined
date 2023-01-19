@@ -2810,7 +2810,7 @@ Version 0.12.7
    :class:`determined.pytorch.ClipGradsL2Value`.
 
 -  Add a ``metadata`` field to checkpoints. Checkpoints can now have arbitrary key-value pairs
-   associated with them. Metadata can be added, queried, and removed via a :class:`Python API
+   associated with them. Metadata can be added, queried, and removed via the :class:`Python SDK
    <determined.experimental.Checkpoint>`.
 
 -  Add support for Keras callbacks that stop training early, including the `official EarlyStopping

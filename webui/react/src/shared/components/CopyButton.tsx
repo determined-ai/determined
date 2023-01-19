@@ -1,7 +1,7 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 
 type TextOptions = 'Copy to Clipboard' | 'Copied!';

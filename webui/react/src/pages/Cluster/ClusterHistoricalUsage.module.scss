@@ -1,10 +1,8 @@
 .base {
   display: flex;
   flex-direction: column;
-  padding: 16px;
 
   .filters {
     align-self: flex-end;
-    padding-bottom: 16px;
   }
 }

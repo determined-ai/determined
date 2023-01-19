@@ -54,13 +54,19 @@ const experimentSnapshotVersion = 5
 // the experiment snapshots them and re-sends them).
 func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	// Experiments which were trying to stop need to be marked as terminal in the database.
+	activeConfig, err := m.db.ActiveExperimentConfig(expModel.ID)
+	if err != nil {
+		return errors.Errorf("cannot restore experiment %d with unparsable config", expModel.ID)
+	}
 	if terminal, ok := model.StoppingToTerminalStates[expModel.State]; ok {
-		if err := m.db.TerminateExperimentInRestart(expModel.ID, terminal); err != nil {
+		if err = m.db.TerminateExperimentInRestart(expModel.ID, terminal); err != nil {
 			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
 		}
 		expModel.State = terminal
 		telemetry.ReportExperimentStateChanged(m.system, m.db, *expModel)
-		if err := webhooks.ReportExperimentStateChanged(context.TODO(), *expModel); err != nil {
+		if err := webhooks.ReportExperimentStateChanged(
+			context.TODO(), *expModel, activeConfig,
+		); err != nil {
 			log.WithError(err).Error("failed to send experiment state change webhook in restore")
 		}
 		return nil
@@ -68,7 +74,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 		return errors.Errorf(
 			"cannot restore experiment %d from state %v", expModel.ID, expModel.State,
 		)
-	} else if err := expModel.Config.Searcher().AssertCurrent(); err != nil {
+	} else if err = activeConfig.Searcher().AssertCurrent(); err != nil {
 		return errors.Errorf(
 			"cannot restore experiment %d with legacy searcher", expModel.ID,
 		)
@@ -76,8 +82,8 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system,
-		expModel.Config.Resources().ResourcePool(),
-		expModel.Config.Resources().SlotsPerTrial(),
+		activeConfig.Resources().ResourcePool(),
+		activeConfig.Resources().SlotsPerTrial(),
 	)
 	if err != nil {
 		return fmt.Errorf("invalid resource configuration: %w", err)
@@ -85,13 +91,13 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err = m.rm.ValidateResources(
 		m.system,
 		poolName,
-		expModel.Config.Resources().SlotsPerTrial(),
+		activeConfig.Resources().SlotsPerTrial(),
 		false); err != nil {
 		return fmt.Errorf("validating resources: %v", err)
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		m.system,
-		expModel.Config.Resources().ResourcePool(),
+		activeConfig.Resources().ResourcePool(),
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
@@ -110,7 +116,7 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to restore experiment %d", expModel.ID)
 	}
-	e, _, err := newExperiment(m, expModel, &taskSpec)
+	e, _, err := newExperiment(m, expModel, activeConfig, &taskSpec)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create experiment %d from model", expModel.ID)
 	}
@@ -167,7 +173,7 @@ func (e *experiment) restoreTrial(
 		return
 	}
 
-	config := schemas.Copy(e.Config)
+	config := schemas.Copy(e.activeConfig)
 	t := newTrial(
 		e.logCtx, trialTaskID(e.ID, searcher.Create.RequestID), e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.taskLogger, e.rm, e.db, config, ckpt, e.taskSpec, true,

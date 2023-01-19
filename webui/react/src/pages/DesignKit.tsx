@@ -14,6 +14,7 @@ import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
+import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
 import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -45,6 +46,7 @@ const Components = {
   ActionBar: 'ActionBar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
+  Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
@@ -62,23 +64,9 @@ const Components = {
 type ComponentNames = ValueOf<typeof Components>;
 type ComponentIds = keyof typeof Components;
 
-const componentOrder: ComponentIds[] = [
-  'Buttons',
-  'Dropdowns',
-  'Checkboxes',
-  'Searchboxes',
-  'Spinbuttons',
-  'Textfields',
-  'Lists',
-  'Breadcrumbs',
-  'Facepile',
-  'ActionBar',
-  'Pivot',
-  'Pagination',
-  'DataCards',
-  'LogViewer',
-  'Tooltips',
-];
+const componentOrder = Object.entries(Components)
+  .sort((pair1, pair2) => pair1[1].localeCompare(pair2[1]))
+  .map((pair) => pair[0] as keyof typeof Components);
 
 interface Props {
   children?: React.ReactNode;
@@ -156,13 +144,6 @@ const ButtonsSection: React.FC = () => {
           <Button loading>Loading</Button>
           <Button disabled>Disabled</Button>
         </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>15px inner horizontal padding</li>
-          <li>8px inner vertical padding</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <hr />
         <strong>Default Button with icon</strong>
         <Space>
@@ -174,14 +155,6 @@ const ButtonsSection: React.FC = () => {
             ButtonWithIcon
           </Button>
         </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>15px inner horizontal padding</li>
-          <li>8px inner vertical padding</li>
-          <li>8px padding between icon and text</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <hr />
         <strong>Large iconic buttons</strong>
         <Space>
@@ -189,12 +162,6 @@ const ButtonsSection: React.FC = () => {
           <IconicButton iconName="searcher-grid" text="Iconic button" />
           <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
         </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Component needs to be reviewed/looked at.</li>
-          <li>Missing distinguishing states</li>
-          <li>Visual density</li>
-        </ul>
       </Card>
     </ComponentSection>
   );
@@ -293,6 +260,82 @@ const DropdownsSection: React.FC = () => {
   );
 };
 
+const ChartsSection: React.FC = () => {
+  const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19] };
+  const line1: Serie = {
+    data: [
+      0,
+      null,
+      Math.random() * 12,
+      null,
+      null,
+      null,
+      null,
+      15,
+      Math.random() * 60,
+      Math.random() * 40,
+      Math.random() * 76,
+      Math.random() * 80,
+      89,
+    ],
+  };
+  const line2: Serie = {
+    data: [
+      null,
+      15,
+      10.123456789,
+      Math.random() * 22,
+      Math.random() * 18,
+      Math.random() * 10 + 10,
+      Math.random() * 12,
+      12,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ],
+  };
+  return (
+    <ComponentSection id="Charts" title="Charts">
+      <Card>
+        <p>
+          Line Charts (<code>{'<LineChart>'}</code>) are a universal component to create charts for
+          learning curve, metrics, cluster history, etc. We currently use the uPlot library.
+        </p>
+      </Card>
+      <Card title="Label options">
+        <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
+        <LineChart
+          height={250}
+          series={[xSeries, line1, line2]}
+          showLegend={true}
+          title="Title"
+          xLabel="X Label"
+          yLabel="Y Label"
+        />
+      </Card>
+      <Card title="Focus series">
+        <p>Highlight a specific series in the chart.</p>
+        <LineChart focusedSeries={1} height={250} series={[xSeries, line1, line2]} />
+      </Card>
+      <Card title="Chart Grid">
+        <p>
+          A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
+          responsive grid. There is a sync for the plot window, cursor, and selection/zoom of an
+          x-axis range.
+        </p>
+        <div style={{ height: 300 }}>
+          <ChartGrid
+            chartsProps={[{ series: [xSeries, line1] }, { series: [xSeries, line2] }]}
+            rowHeight={250}
+          />
+        </div>
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const CheckboxesSection: React.FC = () => {
   return (
     <ComponentSection id="Checkboxes" title="Checkboxes">
@@ -337,13 +380,6 @@ const CheckboxesSection: React.FC = () => {
       <Card title="Usage">
         <strong>Basic checkboxes</strong>
         <Checkbox>This is a basic checkbox.</Checkbox>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>8px right margin from the checkbox.</li>
-          <li>5px vertical margins above and below the checkbox</li>
-          <li>5px padding for mandatory and info icons</li>
-          <li>One style of checkboxes throughout the experience.</li>
-        </ul>
         <strong>Variations</strong>
         <Checkbox checked>Checked checkbox</Checkbox>
         <Checkbox checked={false}>Unchecked checkbox</Checkbox>
@@ -399,38 +435,15 @@ const SearchboxesSection: React.FC = () => {
       <Card title="Usage">
         <strong>Default Searchbox</strong>
         <SearchInput placeholder="input search text" />
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>A user should always be able to cancel/clear out a search</li>
-          <li>We need to provide feedback when a search is taking longer than expected</li>
-          <li>Input box experience is from input box component</li>
-        </ul>
         <strong>Variations</strong>
         <SearchInput allowClear enterButton value="Active search box" />
         <SearchInput disabled placeholder="disabled search box" />
         <hr />
         <strong>In-table Searchbox</strong>
         <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Search input box needs to be at least 30 characters long</li>
-          <li>
-            We need to provide feedback when a search is taking longer than expected (&gt;1.5 sec)
-            or when its a long running operation
-          </li>
-        </ul>
         <hr />
         <strong>Search box with scopes</strong>
         <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Search input box needs to be at least 30 characters long</li>
-          <li>
-            We need to provide feedback when a search is taking longer than expected (&gt;1.5 sec)
-            or when its a long running operation
-          </li>
-          <li>Dropdown component behavior is the same as the dropdown checkmark component</li>
-        </ul>
       </Card>
     </ComponentSection>
   );
@@ -686,12 +699,6 @@ const FacepileSection: React.FC = () => {
       <Card title="Usage">
         <strong>Facepile</strong>
         <UserAvatar />
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Each facepile item needs to have its own color</li>
-          <li>4px of space between faces</li>
-          <li>If more than 4 faces: add a “+ n” where the 5th face would be.</li>
-        </ul>
         <strong>Variations</strong>
         <ul>
           <li>Facepile with 8 people</li>
@@ -790,18 +797,36 @@ const PivotSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Pivot</strong>
-        <Pivot
-          items={[
-            { key: 'Overview', label: 'Overview' },
-            { key: 'hyperparameters', label: 'Hyperparameters' },
-            { key: 'checkpoints', label: 'Checkpoints' },
-            { key: 'code', label: 'Code' },
-            { key: 'notes', label: 'Notes' },
-            { key: 'profiler', label: 'Profiler' },
-            { key: 'logs', label: 'Logs' },
-          ]}
-        />
+        <strong>Default Pivot</strong>
+        <Space>
+          <Pivot
+            items={[
+              { children: 'Overview', key: 'Overview', label: 'Overview' },
+              { children: 'Hyperparameters', key: 'hyperparameters', label: 'Hyperparameters' },
+              { children: 'Checkpoints', key: 'checkpoints', label: 'Checkpoints' },
+              { children: 'Code', key: 'code', label: 'Code' },
+              { children: 'Notes', key: 'notes', label: 'Notes' },
+              { children: 'Profiler', key: 'profiler', label: 'Profiler' },
+              { children: 'Logs', key: 'logs', label: 'Logs' },
+            ]}
+          />
+        </Space>
+        <hr />
+        <strong>Card Pivot</strong>
+        <Space>
+          <Pivot
+            items={[
+              { children: 'Overview', key: 'Overview', label: 'Overview' },
+              { children: 'Hyperparameters', key: 'hyperparameters', label: 'Hyperparameters' },
+              { children: 'Checkpoints', key: 'checkpoints', label: 'Checkpoints' },
+              { children: 'Code', key: 'code', label: 'Code' },
+              { children: 'Notes', key: 'notes', label: 'Notes' },
+              { children: 'Profiler', key: 'profiler', label: 'Profiler' },
+              { children: 'Logs', key: 'logs', label: 'Logs' },
+            ]}
+            type="card"
+          />
+        </Space>
       </Card>
     </ComponentSection>
   );
@@ -1141,6 +1166,7 @@ const DesignKit: React.FC = () => {
           <DataCardsSection />
           <LogViewerSection />
           <TooltipsSection />
+          <ChartsSection />
         </main>
       </div>
     </Page>

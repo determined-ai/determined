@@ -1,9 +1,11 @@
-import { Button, Dropdown, message, Space, Table } from 'antd';
+import { Dropdown, message, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
+import Button from 'components/kit/Button';
 import Page from 'components/Page';
+import Section from 'components/Section';
 import InteractiveTable, {
   InteractiveTableSettings,
   onRightClickableCell,
@@ -85,8 +87,10 @@ const GroupActionDropdown = ({
   return (
     <div className={dropdownCss.base}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button className={css.overflow} type="text">
-          <Icon name="overflow-vertical" />
+        <Button ghost type="text">
+          <div className={css.overflow}>
+            <Icon name="overflow-vertical" />
+          </div>
         </Button>
       </Dropdown>
       {modalEditGroupContextHolder}
@@ -321,17 +325,18 @@ const GroupManagement: React.FC = () => {
   }, [groups, isLoading, settings, columns, total, updateSettings, expandedUserRender, onExpand]);
 
   return (
-    <Page
-      containerRef={pageRef}
-      options={
-        <Space>
-          <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
-            New Group
-          </Button>
-        </Space>
-      }
-      title="Groups">
-      {canViewGroups && <div className={css.usersTable}>{table}</div>}
+    <Page bodyNoPadding containerRef={pageRef}>
+      <Section
+        options={
+          <Space>
+            <Button disabled={!canModifyGroups} onClick={onClickCreateGroup}>
+              New Group
+            </Button>
+          </Space>
+        }
+        title="Groups">
+        {canViewGroups && <div className={css.usersTable}>{table}</div>}
+      </Section>
       {modalCreateGroupContextHolder}
     </Page>
   );
