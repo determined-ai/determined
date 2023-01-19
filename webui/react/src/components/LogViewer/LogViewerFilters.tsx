@@ -1,7 +1,8 @@
-import { Button, Input, Select, Space } from 'antd';
+import { Input, Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { LogLevelFromApi } from 'types';
 

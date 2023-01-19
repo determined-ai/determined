@@ -1,7 +1,8 @@
-import { Button, Dropdown, message, Space } from 'antd';
+import { Dropdown, message, Space } from 'antd';
 import type { MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from 'components/kit/Button';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import InteractiveTable, {
@@ -114,8 +115,10 @@ const UserActionDropdown = ({ fetchUsers, user, groups }: DropdownProps) => {
         menu={{ items: menuItems, onClick: onItemClick }}
         placement="bottomRight"
         trigger={['click']}>
-        <Button className={css.overflow} type="text">
-          <Icon name="overflow-vertical" />
+        <Button ghost type="text">
+          <div className={css.overflow}>
+            <Icon name="overflow-vertical" />
+          </div>
         </Button>
       </Dropdown>
       {modalEditUserContextHolder}

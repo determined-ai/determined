@@ -138,6 +138,8 @@ const BreadcrumbBar: React.FC<Props> = ({
     };
   }, [stopPolling]);
 
+  const projectName = project?.id === 1 ? 'Uncategorized Experiments' : project?.name ?? '...';
+
   return (
     <div className={css.base}>
       <Breadcrumb separator="">
@@ -173,7 +175,7 @@ const BreadcrumbBar: React.FC<Props> = ({
           <Link
             className={css.link}
             path={experiment ? paths.projectDetails(experiment.projectId) : undefined}>
-            {project?.name ?? '...'}
+            {projectName}
             {project?.archived && (
               <Tooltip title="Archived">
                 <div>

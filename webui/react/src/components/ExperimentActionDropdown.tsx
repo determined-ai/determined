@@ -4,6 +4,7 @@ import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo } from 'react';
 
+import Button from 'components/kit/Button';
 import useModalExperimentMove from 'hooks/useModal/Experiment/useModalExperimentMove';
 import useModalHyperparameterSearch from 'hooks/useModal/HyperparameterSearch/useModalHyperparameterSearch';
 import usePermissions from 'hooks/usePermissions';
@@ -217,9 +218,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     return (
       (children as JSX.Element) ?? (
         <div className={css.base} title="No actions available" onClick={stopPropagation}>
-          <button disabled>
+          <Button disabled ghost type="text">
             <Icon name="overflow-vertical" />
-          </button>
+          </Button>
         </div>
       )
     );
@@ -240,9 +241,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <button onClick={stopPropagation}>
+        <Button ghost type="text" onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
-        </button>
+        </Button>
       </Dropdown>
       {modalExperimentMoveContextHolder}
       {modalHyperparameterSearchContextHolder}

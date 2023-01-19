@@ -12,7 +12,7 @@ import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
-import ProjectDetailsWrapper from 'pages/ProjectDetailsWrapper';
+import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import Settings from 'pages/Settings';
@@ -44,7 +44,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   modelDetails: <ModelDetails />,
   models: <ModelRegistry />,
   modelVersionDetails: <ModelVersionDetails />,
-  projectDetails: <ProjectDetailsWrapper />,
+  projectDetails: <ProjectDetails />,
   reload: <Reload />,
   resourcepool: <ResourcepoolDetail />,
   settings: <Settings />,
@@ -53,7 +53,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   taskList: <TaskList />,
   taskLogs: <TaskLogsWrapper />,
   trialDetails: <TrialDetails />,
-  uncategorized: <ProjectDetailsWrapper />,
+  uncategorized: <ProjectDetails />,
   wait: <Wait />,
   webhooks: <Webhooks />,
   workspaceDetails: <WorkspaceDetails />,
