@@ -38,8 +38,22 @@ export const LineChart: React.FC<Props> = ({
   xLabel,
   yLabel,
 }: Props) => {
+  const seriesColors: string[] = useMemo(
+    () =>
+      series
+        .slice(1)
+        .map(
+          (s, idx) =>
+            s.color ||
+            (s.metricType === MetricType.Training && '#009BDE') ||
+            (s.metricType === MetricType.Validation && '#F77B21') ||
+            glasbeyColor(idx),
+        ),
+    [series],
+  );
+
   const chartOptions: Options = useMemo(() => {
-    const plugins = [tooltipsPlugin({ isShownEmptyVal: false })];
+    const plugins = [tooltipsPlugin({ isShownEmptyVal: false, seriesColors })];
 
     return {
       axes: [
@@ -80,18 +94,14 @@ export const LineChart: React.FC<Props> = ({
             points: { show: false },
             scale: 'y',
             spanGaps: true,
-            stroke:
-              serie.color ||
-              (serie.metricType === MetricType.Training && '#009BDE') ||
-              (serie.metricType === MetricType.Validation && '#F77B21') ||
-              glasbeyColor(idx),
+            stroke: seriesColors[idx],
             type: 'line',
             width: 2,
           };
         }),
       ],
     };
-  }, [series, height, metric.name, scale, xLabel, yLabel]);
+  }, [series, seriesColors, height, metric.name, scale, xLabel, yLabel]);
 
   return (
     <>
@@ -106,7 +116,7 @@ export const LineChart: React.FC<Props> = ({
         <div className={css.legendContainer}>
           {series.slice(1).map((s, idx) => (
             <li className={css.legendItem} key={idx}>
-              <span className={css.colorButton} style={{ color: s.color || glasbeyColor(idx) }}>
+              <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
                 &mdash;
               </span>
               {s.metricType}_{metric.name}
