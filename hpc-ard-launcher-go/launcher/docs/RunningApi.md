@@ -157,7 +157,7 @@ Name | Type | Description  | Notes
 
 ## GetUserInterfaces
 
-> []UserInterface GetUserInterfaces(ctx, owner, environment).Execute()
+> map[string][]UserInterface GetUserInterfaces(ctx, owner, environment).Execute()
 
 Gets the User Interfaces associated with the running environment launched by the given owner
 
@@ -184,7 +184,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.GetUserInterfaces``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `GetUserInterfaces`: []UserInterface
+    // response from `GetUserInterfaces`: map[string][]UserInterface
     fmt.Fprintf(os.Stdout, "Response from `RunningApi.GetUserInterfaces`: %v\n", resp)
 }
 ```
@@ -210,7 +210,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**[]UserInterface**](UserInterface.md)
+[**map[string][]UserInterface**](array.md)
 
 ### Authorization
 
@@ -228,7 +228,7 @@ Name | Type | Description  | Notes
 
 ## ListAllRunning
 
-> []DispatchInfo ListAllRunning(ctx).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+> map[string][]DispatchInfo ListAllRunning(ctx).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
 
 Gets all running environments that the user can view
 
@@ -258,7 +258,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.ListAllRunning``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `ListAllRunning`: []DispatchInfo
+    // response from `ListAllRunning`: map[string][]DispatchInfo
     fmt.Fprintf(os.Stdout, "Response from `RunningApi.ListAllRunning`: %v\n", resp)
 }
 ```
@@ -282,7 +282,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**[]DispatchInfo**](DispatchInfo.md)
+[**map[string][]DispatchInfo**](array.md)
 
 ### Authorization
 
@@ -300,7 +300,7 @@ Name | Type | Description  | Notes
 
 ## ListOwnedRunning
 
-> []DispatchInfo ListOwnedRunning(ctx, owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+> map[string][]DispatchInfo ListOwnedRunning(ctx, owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
 
 Gets all running environments launched by the given owner
 
@@ -331,7 +331,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `RunningApi.ListOwnedRunning``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `ListOwnedRunning`: []DispatchInfo
+    // response from `ListOwnedRunning`: map[string][]DispatchInfo
     fmt.Fprintf(os.Stdout, "Response from `RunningApi.ListOwnedRunning`: %v\n", resp)
 }
 ```
@@ -360,7 +360,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**[]DispatchInfo**](DispatchInfo.md)
+[**map[string][]DispatchInfo**](array.md)
 
 ### Authorization
 

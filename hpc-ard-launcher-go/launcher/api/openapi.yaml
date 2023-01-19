@@ -1,12 +1,12 @@
-openapi: 3.0.1
+openapi: 3.0.0
 info:
-  description: The Dispatch Centre API is the execution layer for the Capsules framework.  It
+  description: The Launcher API is the execution layer for the Capsules framework.  It
     handles all the details of launching and monitoring runtime environments.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: Dispatch Centre API
-  version: 2.7.12
+  title: Launcher API
+  version: 3.2.0
 servers:
 - url: /
 security:
@@ -284,7 +284,8 @@ paths:
     put:
       operationId: launch
       parameters:
-      - description: User to impersonate
+      - description: User to impersonate (user encoded in authorization token must
+          be configured as an administrator)
         explode: true
         in: query
         name: impersonate
@@ -295,9 +296,47 @@ paths:
       requestBody:
         content:
           application/json:
+            examples:
+              slurm-info:
+                summary: Example of the launch of a Slurm resources query
+                value: |
+                  {
+                    "manifestVersion": "v1",
+                    "clientMetadata": {
+                      "name": "x"
+                    },
+                    "payloads": [
+                      {
+                        "version": "latest",
+                        "name": "x",
+                        "id": "com.cray.analytics.capsules.hpc.resources",
+                        "launchParameters": {
+                          "mode": "interactive"
+                        },
+                        "carriers": [
+                          "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
+                        ]
+                      }
+                    ]
+                  }
             schema:
               $ref: '#/components/schemas/Manifest'
           application/yaml:
+            examples:
+              slurm-info:
+                summary: Example of the launch of a Slurm resources query
+                value:
+                  manifestVersion: v1
+                  clientMetadata:
+                    name: x
+                  payloads:
+                  - version: latest
+                    name: x
+                    id: com.cray.analytics.capsules.hpc.resources
+                    launchParameters:
+                      mode: interactive
+                    carriers:
+                    - com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources
             schema:
               $ref: '#/components/schemas/Manifest'
         description: The manifest to launch
@@ -339,7 +378,8 @@ paths:
     put:
       operationId: launchAsync
       parameters:
-      - description: User to impersonate
+      - description: User to impersonate (user encoded in authorization token must
+          be configured as an administrator)
         explode: true
         in: query
         name: impersonate
@@ -785,14 +825,18 @@ paths:
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/EnvironmentLogSource'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/EnvironmentLogSource'
+                  type: array
+                type: object
             application/yaml:
               schema:
-                items:
-                  $ref: '#/components/schemas/EnvironmentLogSource'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/EnvironmentLogSource'
+                  type: array
+                type: object
           description: List of log files
         "403":
           content:
@@ -801,7 +845,7 @@ paths:
                 $ref: '#/components/schemas/Problem'
           description: User does not have permission to view logs from environments
             with the given owner
-      summary: Gets the available log files for the environment
+      summary: Gets the content of a log file from the environment
       tags:
       - monitoring
   /monitoring/{owner}/environments/{environment}/logs/{log}:
@@ -1050,14 +1094,18 @@ paths:
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
             application/yaml:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
           description: List of running environments
         "403":
           content:
@@ -1178,14 +1226,18 @@ paths:
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
             application/yaml:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
           description: List of owned running environments
         "403":
           content:
@@ -1406,14 +1458,18 @@ paths:
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/UserInterface'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/UserInterface'
+                  type: array
+                type: object
             application/yaml:
               schema:
-                items:
-                  $ref: '#/components/schemas/UserInterface'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/UserInterface'
+                  type: array
+                type: object
           description: A list of user interfaces available in the running environment
         "301":
           description: The given environment has been terminated and can now be looked
@@ -1566,14 +1622,18 @@ paths:
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
             application/yaml:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
           description: List of terminated environments
         "403":
           content:
@@ -1680,14 +1740,18 @@ paths:
           content:
             application/json:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
             application/yaml:
               schema:
-                items:
-                  $ref: '#/components/schemas/DispatchInfo'
-                type: array
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/DispatchInfo'
+                  type: array
+                type: object
           description: List of owned terminated environments
         "403":
           content:
@@ -1981,7 +2045,8 @@ components:
         type: boolean
       style: form
     ImpersonateParam:
-      description: User to impersonate
+      description: User to impersonate (user encoded in authorization token must be
+        configured as an administrator)
       explode: true
       in: query
       name: impersonate
@@ -2224,6 +2289,8 @@ components:
           type: string
         additionalProperties:
           type: object
+      required:
+      - name
       type: object
       x-swagger-router-model: com.cray.analytics.capsules.model.ClientMetadata
     DispatchMetadata:
@@ -2249,6 +2316,7 @@ components:
       type: object
       x-swagger-router-model: com.cray.analytics.capsules.model.DispatchMetadata
     Manifest:
+      description: Describes the capsule to be launched
       example:
         manifestVersion: v1
         clientMetadata:
@@ -2532,12 +2600,6 @@ components:
       type: object
       x-swagger-router-model: com.cray.analytics.capsules.model.WarehouseMetadata
     EnvironmentLogSource:
-      example:
-        king: king
-        name: name
-        length: 0
-        lastModified: lastModified
-        additionalProperties: '{}'
       properties:
         name:
           type: string
@@ -2555,7 +2617,6 @@ components:
     Problem:
       properties:
         type:
-          default: about:blank
           description: |
             An absolute URI that identifies the problem type.  When dereferenced,
             it SHOULD provide human-readable documentation for the problem type
@@ -2647,5 +2708,6 @@ components:
       type: string
   securitySchemes:
     BearerAuth:
+      bearerFormat: A launcher-generated authorization token.
       scheme: Bearer
       type: http
