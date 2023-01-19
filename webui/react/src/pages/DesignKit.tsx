@@ -240,7 +240,7 @@ const ChartsSection: React.FC = () => {
   const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19], name: 'X' };
   const line1: Serie = {
     data: [
-      0,
+      -2,
       null,
       Math.random() * 12,
       null,
