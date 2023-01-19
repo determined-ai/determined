@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Modal, Space } from 'antd';
+import { Modal, Space } from 'antd';
 import {
   FilterDropdownProps,
   FilterValue,
@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -319,9 +320,9 @@ const TaskList: React.FC = () => {
       return (
         <div className={css.sourceName}>
           {taskNameRenderer(_, record, index)}
-          <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
+          <Button type="text" onClick={() => handleSourceShow(info)}>
             Show {info.sources.length} Source{info.plural}
-          </button>
+          </Button>
         </div>
       );
     };

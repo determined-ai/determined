@@ -4,6 +4,7 @@ import type { DropDownProps, MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
+import Button from 'components/kit/Button';
 import { paths } from 'routes/utils';
 import { killTask } from 'services/api';
 import css from 'shared/components/ActionDropdown/ActionDropdown.module.scss';
@@ -95,9 +96,9 @@ const TaskActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <button onClick={stopPropagation}>
+        <Button ghost type="text" onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
-        </button>
+        </Button>
       </Dropdown>
     </div>
   );

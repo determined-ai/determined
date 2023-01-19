@@ -1,9 +1,10 @@
-import { Button, notification } from 'antd';
+import { notification } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
