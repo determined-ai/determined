@@ -1,6 +1,6 @@
 Core API MNIST Tutorial
 
-This tutorial is structured similarly to the [Integer Incrementing Core API Tutorial](https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api) and integrates the [PyTorch MNIST training example](https://github.com/pytorch/examples/blob/main/mnist/main.py) into Determined.
+This tutorial integrates the [PyTorch MNIST training example](https://github.com/pytorch/examples/blob/main/mnist/main.py) into Determined.
 
 ## Files
 * **model_def.py**: The starting script (same as [main.py](https://github.com/pytorch/examples/blob/main/mnist/main.py) with no Determined integrations at all.
