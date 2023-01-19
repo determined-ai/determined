@@ -2,5 +2,5 @@
 shared-web:
   - webui/react/src/shared/**
 documentation:
-  - docs/**
+  - any: ['docs/**', '!docs/release-notes/*']
 

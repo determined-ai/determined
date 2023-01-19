@@ -6,6 +6,7 @@
 # team-specific repo segments
 /.github  @determined-ai/infrastructure
 /docs     @determined-ai/docs
+/docs/release-notes/
 
 ### individuals
 # Ilia cares about agent RM.
