@@ -1,0 +1,37 @@
+name: coreapi_mnist_tutorial_distributed
+entrypoint: >-
+   python -m determined.launch.torch_distributed
+   python3 model_def_distributed.py
+hyperparameters:
+  global_batch_size: 64
+  learning_rate:
+    type: double
+    minval: .0001
+    maxval: 1.0
+  n_filters1:
+    type: int
+    minval: 8
+    maxval: 64
+  n_filters2:
+    type: int
+    minval: 8
+    maxval: 72
+  dropout1:
+    type: double
+    minval: .2
+    maxval: .8
+  dropout2:
+    type: double
+    minval: .2
+    maxval: .8
+max_restarts: 0
+searcher:
+  name: adaptive_asha
+  metric: test_loss
+  smaller_is_better: true
+  max_trials: 16
+  max_length:
+    batches: 938 #60,000 training images with batch size 64
+resources:
+  slots_per_trial: 2
+

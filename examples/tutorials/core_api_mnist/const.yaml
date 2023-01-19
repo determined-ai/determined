@@ -1,0 +1,11 @@
+name: coreapi_mnist_tutorial
+entrypoint:  python3 model_def.py 
+max_restarts: 0
+searcher:
+   name: single
+   max_length: 1
+   metric: val_loss
+
+
+
+
