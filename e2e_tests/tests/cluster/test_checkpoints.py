@@ -337,6 +337,32 @@ def test_s3_no_creds(secrets: Dict[str, str]) -> None:
 
 
 @pytest.mark.e2e_cpu
+def test_delete_experiment_with_no_checkpoints() -> None:
+    # Experiment will intentionally fail.
+    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config["checkpoint_storage"] = {
+        "type": "s3",
+        "bucket": "dettestthisbucketdoesntexist",
+    }
+    config["max_restarts"] = 0
+    exp_id = exp.run_failure_test_with_temp_config(
+        config,
+        conf.fixtures_path("no_op"),
+        None,
+    )
+
+    # Still able to delete this since it will have no checkpoints meaning no checkpoint gc task.
+    test_session = exp.determined_test_session()
+    bindings.delete_DeleteExperiment(session=test_session, experimentId=exp_id)
+    for _ in range(60):
+        try:
+            print(f"experiment in state {exp.experiment_state(exp_id)} waiting for deleted")
+            time.sleep(1)
+        except api.errors.NotFoundException:
+            return
+
+
+@pytest.mark.e2e_cpu
 def test_fail_on_chechpoint_save() -> None:
     error_log = "failed on checkpoint save"
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
