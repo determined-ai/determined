@@ -530,7 +530,6 @@ type SearcherEvent struct {
 	// The concrete event.
 	//
 	// Types that are assignable to Event:
-	//
 	//	*SearcherEvent_InitialOperations
 	//	*SearcherEvent_TrialCreated
 	//	*SearcherEvent_ValidationCompleted
@@ -1022,7 +1021,6 @@ type SearcherOperation struct {
 	// A searcher operation is one of the following operations.
 	//
 	// Types that are assignable to Union:
-	//
 	//	*SearcherOperation_TrialOperation
 	//	*SearcherOperation_CreateTrial
 	//	*SearcherOperation_CloseTrial
@@ -1154,7 +1152,6 @@ type TrialOperation struct {
 	// A trial operation is one of the following operations.
 	//
 	// Types that are assignable to Union:
-	//
 	//	*TrialOperation_ValidateAfter
 	Union isTrialOperation_Union `protobuf_oneof:"union"`
 }
