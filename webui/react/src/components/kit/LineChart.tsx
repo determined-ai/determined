@@ -7,6 +7,7 @@ import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
+import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
@@ -25,6 +26,7 @@ import css from './LineChart.module.scss';
 export interface Serie {
   color?: string;
   data: Record<string, [number, number][]>;
+  key?: number;
   metricType?: MetricType;
   name?: string;
 }
@@ -45,6 +47,8 @@ export interface Serie {
 interface Props {
   focusedSeries?: number;
   height?: number;
+  onSeriesClick?: (event: MouseEvent, arg1: number) => void;
+  onSeriesFocus?: (arg0: number | null) => void;
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
@@ -57,6 +61,8 @@ interface Props {
 export const LineChart: React.FC<Props> = ({
   focusedSeries,
   height = 350,
+  onSeriesClick,
+  onSeriesFocus,
   scale = Scale.Linear,
   series,
   showLegend = false,
@@ -116,7 +122,29 @@ export const LineChart: React.FC<Props> = ({
   }, [series, xAxis]);
 
   const chartOptions: Options = useMemo(() => {
-    const plugins = [tooltipsPlugin({ isShownEmptyVal: false, seriesColors })];
+    const plugins = [
+      tooltipsPlugin({
+        isShownEmptyVal: false,
+        seriesColors: series.filter((s) => !s.xAxisRole).map((s) => s.color),
+      }),
+    ];
+    if (onSeriesClick || onSeriesFocus) {
+      plugins.push(
+        closestPointPlugin({
+          onPointClick: (e, point) => {
+            if (onSeriesClick) {
+              onSeriesClick(e, series[point.seriesIdx].key || point.seriesIdx - 1);
+            }
+          },
+          onPointFocus: (point) => {
+            if (onSeriesFocus) {
+              onSeriesFocus(point ? series[point.seriesIdx].key || point.seriesIdx : null);
+            }
+          },
+          yScale: 'y',
+        }),
+      );
+    }
 
     return {
       axes: [
@@ -166,7 +194,18 @@ export const LineChart: React.FC<Props> = ({
         }),
       ],
     };
-  }, [series, seriesColors, seriesNames, height, scale, xAxis, xLabel, yLabel]);
+  }, [
+    series,
+    seriesColors,
+    seriesNames,
+    height,
+    scale,
+    xAxis,
+    xLabel,
+    yLabel,
+    onSeriesClick,
+    onSeriesFocus,
+  ]);
 
   return (
     <>

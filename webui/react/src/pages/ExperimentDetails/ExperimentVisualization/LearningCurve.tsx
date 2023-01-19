@@ -5,7 +5,7 @@ import { LineChart, Serie } from 'components/kit/LineChart';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
-// import { paths } from 'routes/utils';
+import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -13,9 +13,10 @@ import { readStream } from 'services/utils';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
+import { glasbeyColor } from 'shared/utils/color';
 import { flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-// import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
+import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -73,18 +74,18 @@ const LearningCurve: React.FC<Props> = ({
     }, {} as Record<string, Hyperparameter>);
   }, [experiment.hyperparameters, fullHParams]);
 
-  // const handleTrialClick = useCallback(
-  //   (event: MouseEvent, trialId: number) => {
-  //     const href = paths.trialDetails(trialId, experiment.id);
-  //     if (isNewTabClickEvent(event)) openBlank(href);
-  //     else routeToReactUrl(href);
-  //   },
-  //   [experiment.id],
-  // );
+  const handleTrialClick = useCallback(
+    (event: MouseEvent, trialId: number) => {
+      const href = paths.trialDetails(trialId, experiment.id);
+      if (isNewTabClickEvent(event)) openBlank(href);
+      else routeToReactUrl(href);
+    },
+    [experiment.id],
+  );
 
-  // const handleTrialFocus = useCallback((trialId: number | null) => {
-  //   setHighlightedTrialId(trialId != null ? trialId : undefined);
-  // }, []);
+  const handleTrialFocus = useCallback((trialId: number | null) => {
+    setHighlightedTrialId(trialId != null ? trialId : undefined);
+  }, []);
 
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setHighlightedTrialId(record.id);
@@ -162,6 +163,8 @@ const LearningCurve: React.FC<Props> = ({
         const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
         setTrialHps(newTrialHps);
 
+        const newBatches = Object.values(batchesMap);
+
         const newChartData = [
           {
             data: newBatches,
@@ -169,6 +172,7 @@ const LearningCurve: React.FC<Props> = ({
           ...newTrialIds
             .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
             .map((trialId) => ({
+              color: glasbeyColor(trialId),
               data: newBatches.map((batch) => {
                 /**
                  * TODO: filtering NaN, +/- Infinity for now, but handle it later with
@@ -177,7 +181,7 @@ const LearningCurve: React.FC<Props> = ({
                 const value = metricsMap[trialId][batch];
                 return Number.isFinite(value) ? value : null;
               }),
-              // key: trialId,
+              key: trialId,
               name: `trial ${trialId}`,
             })),
         ];
@@ -265,10 +269,10 @@ const LearningCurve: React.FC<Props> = ({
               focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
               scale={selectedScale}
               series={chartData}
-              // onSeriesClick={handleTrialClick}
-              // onSeriesFocus={handleTrialFocus}
               xLabel="Batches Processed"
               yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
+              onSeriesClick={handleTrialClick}
+              onSeriesFocus={handleTrialFocus}
             />
           </div>
           <TableBatch
