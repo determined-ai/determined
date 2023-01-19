@@ -7,7 +7,7 @@ type LabelCol = {
   span: number;
 };
 
-interface NumberInputProps {
+interface InputNumberProps {
   defaultValue?: number;
   disabled?: boolean;
   label: string;
@@ -20,11 +20,11 @@ interface NumberInputProps {
   value?: number;
 }
 
-type WrappedNumberInputProps = WrapperProps & NumberInputProps;
-const NumberInput: React.FC<WrappedNumberInputProps> = ({
+type WrappedInputNumberProps = WrapperProps & InputNumberProps;
+const InputNumber: React.FC<WrappedInputNumberProps> = ({
   noForm,
   ...props
-}: WrappedNumberInputProps) => {
+}: WrappedInputNumberProps) => {
   if (noForm) {
     return (
       <Form>
@@ -41,4 +41,4 @@ const NumberInput: React.FC<WrappedNumberInputProps> = ({
     );
   }
 };
-export default NumberInput;
+export default InputNumber;

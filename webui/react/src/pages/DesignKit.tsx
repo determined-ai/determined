@@ -14,12 +14,12 @@ import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
+import InputSearch from 'components/kit/InputSearch';
+import InputSelect from 'components/kit/InputSelect';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
-import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
-import SearchInput from 'components/kit/SearchInput';
-import SelectInput from 'components/kit/SelectInput';
 import Tooltip from 'components/kit/Tooltip';
 import Logo from 'components/Logo'; //TODO: Move to components/kit? Add section to DesignKit page?
 import LogViewer from 'components/LogViewer/LogViewer'; //TODO: Move to components/kit?
@@ -51,13 +51,13 @@ const ComponentTitles = {
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Facepile: 'Facepile',
+  Input: 'Input',
+  InputNumber: 'InputNumber',
+  InputSearch: 'InputSearch',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
-  Searchboxes: 'Searchboxes',
-  Spinbuttons: 'Spinbuttons',
-  Textfields: 'Input - Textfields',
   Tooltips: 'Tooltips',
 } as const;
 
@@ -172,7 +172,7 @@ const DropdownsSection: React.FC = () => {
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <Card>
         <p>
-          A dropdown/combo box (<code>{'<SelectFilter>'}</code> or <code>{'<SelectInput>'}</code>) combines a text field and a
+          A dropdown/combo box (<code>{'<SelectFilter>'}</code> or <code>{'<InputSelect>'}</code>) combines a text field and a
           dropdown giving people a way to select an option from a list or enter their own choice.
         </p>
       </Card>
@@ -225,9 +225,9 @@ const DropdownsSection: React.FC = () => {
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
         <hr />
-        <strong>Form dropdown input <code>{'<SelectInput>'}</code></strong>
+        <strong>Form dropdown input <code>{'<InputSelect>'}</code></strong>
         <Form>
-          <SelectInput
+          <InputSelect
             defaultValue={1}
             label="Default dropdown"
             options={[
@@ -236,13 +236,13 @@ const DropdownsSection: React.FC = () => {
               { label: 'Option 3', value: 3 },
             ]}
           />
-          <SelectInput
+          <InputSelect
             defaultValue="disabled"
             disabled
             label="Disabled dropdown"
             options={[{ label: 'Disabled', value: 'disabled' }]}
           />
-          <SelectInput
+          <InputSelect
             defaultValue={1}
             label="Required dropdown"
             name="Required Select"
@@ -253,7 +253,7 @@ const DropdownsSection: React.FC = () => {
             ]}
             required
           />
-          <SelectInput label="Invalid dropdown" name="Invalid Select" validateMessage="Input validation error" validateStatus="error" />
+          <InputSelect label="Invalid dropdown" name="Invalid Select" validateMessage="Input validation error" validateStatus="error" />
         </Form>
       </Card>
     </ComponentSection>
@@ -394,12 +394,12 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
-const SearchboxesSection: React.FC = () => {
+const InputSearchSection: React.FC = () => {
   return (
-    <ComponentSection id="Searchboxes" title="Searchboxes">
+    <ComponentSection id="InputSearch" title="InputSearch">
       <Card>
         <p>
-          A search box (<code>{'<SearchInput>'}</code>) provides an input field for searching
+          A search box (<code>{'<InputSearch>'}</code>) provides an input field for searching
           content within a site or app to find specific items.
         </p>
       </Card>
@@ -434,10 +434,10 @@ const SearchboxesSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default Searchbox</strong>
-        <SearchInput placeholder="input search text" />
+        <InputSearch placeholder="input search text" />
         <strong>Variations</strong>
-        <SearchInput allowClear enterButton value="Active search box" />
-        <SearchInput disabled placeholder="disabled search box" />
+        <InputSearch allowClear enterButton value="Active search box" />
+        <InputSearch disabled placeholder="disabled search box" />
         <hr />
         <strong>In-table Searchbox</strong>
         <p>Not implemented</p>
@@ -449,12 +449,12 @@ const SearchboxesSection: React.FC = () => {
   );
 };
 
-const SpinbuttonsSection: React.FC = () => {
+const InputNumberSection: React.FC = () => {
   return (
-    <ComponentSection id="Spinbuttons" title="Spinbuttons">
+    <ComponentSection id="InputNumber" title="InputNumber">
       <Card>
         <p>
-          A spin button (<code>{'<NumberInput>'}</code>) allows someone to incrementally adjust a
+          A spin button (<code>{'<InputNumber>'}</code>) allows someone to incrementally adjust a
           value in small steps. It&apos;s mainly used for numeric values, but other values are
           supported too.
         </p>
@@ -477,18 +477,18 @@ const SpinbuttonsSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <NumberInput label="Default NumberInput" />
-        <NumberInput disabled label="Disabled NumberInput" />
-        <NumberInput label="Required NumberInput" name="number" required />
-        <NumberInput label="Invalid NumberInput" validateMessage="Input validation error" validateStatus="error" />
+        <InputNumber label="Default InputNumber" />
+        <InputNumber disabled label="Disabled InputNumber" />
+        <InputNumber label="Required InputNumber" name="number" required />
+        <InputNumber label="Invalid InputNumber" validateMessage="Input validation error" validateStatus="error" />
       </Card>
     </ComponentSection>
   );
 };
 
-const TextfieldsSection: React.FC = () => {
+const InputSection: React.FC = () => {
   return (
-    <ComponentSection id="Textfields" title="Input - Textfields">
+    <ComponentSection id="Input" title="Input">
       <Card>
         <p>
           Text fields (<code>{'<Input>'}</code>) give people a way to enter and edit text.
@@ -1134,13 +1134,13 @@ const Components = {
   DataCards: <DataCardsSection />,
   Dropdowns: <DropdownsSection />,
   Facepile: <FacepileSection />,
+  Input: <InputSection />,
+  InputNumber: <InputNumberSection />,
+  InputSearch: <InputSearchSection />,
   Lists: <ListsSection />,
   LogViewer: <LogViewerSection />,
   Pagination: <PaginationSection />,
   Pivot: <PivotSection />,
-  Searchboxes: <SearchboxesSection />,
-  Spinbuttons: <SpinbuttonsSection />,
-  Textfields: <TextfieldsSection />,
   Tooltips: <TooltipsSection />,
 };
 

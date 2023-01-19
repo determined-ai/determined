@@ -5,12 +5,12 @@ import SelectFilter, { Props as SelectProps } from 'components/SelectFilter';
 
 import { FormItemWrapper, WrapperProps } from './Input';
 
-type WrappedSelectInputProps = WrapperProps & SelectProps;
-const SelectInput: React.FC<WrappedSelectInputProps> = ({
+type WrappedInputSelectProps = WrapperProps & SelectProps;
+const InputSelect: React.FC<WrappedInputSelectProps> = ({
   label,
   noForm,
   ...props
-}: WrappedSelectInputProps) => {
+}: WrappedInputSelectProps) => {
   if (noForm) {
     return (
       <Form>
@@ -27,4 +27,4 @@ const SelectInput: React.FC<WrappedSelectInputProps> = ({
     );
   }
 };
-export default SelectInput;
+export default InputSelect;
