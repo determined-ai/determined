@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DownloadOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -236,6 +238,7 @@ const UPlotChart: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
+      <DownloadButton containerRef={chartDivRef} />
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
@@ -248,3 +251,40 @@ const UPlotChart: React.FC<Props> = ({
 };
 
 export default UPlotChart;
+
+const DownloadButton = ({ containerRef }: { containerRef: RefObject<HTMLDivElement> }) => {
+  const downloadUrl = useRef<string>();
+  const downloadNode = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
+    };
+  }, []);
+
+  const handleDownloadClick = useCallback(() => {
+    if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
+    const canvas = containerRef.current?.querySelector('canvas');
+    const url = canvas?.toDataURL('image/png');
+    if (url && downloadNode.current) {
+      downloadNode.current.href = url;
+      downloadNode.current.click();
+    }
+    downloadUrl.current = url;
+  }, [containerRef]);
+
+  return (
+    <Tooltip className={css.download} title="Download Chart">
+      <DownloadOutlined onClick={handleDownloadClick} />
+      {/* this is an invisible button to programatically download the image file */}
+      <a
+        aria-disabled
+        className={css.invisibleLink}
+        // TODO: add trial/exp id + metrics to filename
+        download="chart.png"
+        href={downloadUrl.current}
+        ref={downloadNode}
+      />
+    </Tooltip>
+  );
+};
