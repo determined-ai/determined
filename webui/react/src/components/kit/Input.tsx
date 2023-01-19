@@ -1,4 +1,10 @@
-import { Input as AntdInput, InputProps as AntdInputProps, Form, FormItemProps, InputRef } from 'antd';
+import {
+  Input as AntdInput,
+  InputProps as AntdInputProps,
+  Form,
+  FormItemProps,
+  InputRef,
+} from 'antd';
 import { PasswordProps as AntdPasswordProps } from 'antd/lib/input/Password';
 import { TextAreaProps as AntdTextAreaProps, TextAreaRef } from 'antd/lib/input/TextArea';
 import React, { forwardRef, ForwardRefExoticComponent, ReactNode, RefAttributes } from 'react';
@@ -25,7 +31,7 @@ export interface WrapperProps {
   validateTrigger?: TriggerEvent[];
 }
 
-export const FormItemWrapper: React.FC<WrapperProps> = (({
+export const FormItemWrapper: React.FC<WrapperProps> = ({
   children,
   label,
   labelCol = { span: 24 },
@@ -55,31 +61,35 @@ export const FormItemWrapper: React.FC<WrapperProps> = (({
       {children}
     </Form.Item>
   );
-});
+};
 
 type WrappedInputProps = AntdInputProps & WrapperProps;
-const Input: Input = forwardRef<InputRef, WrappedInputProps>(({ noForm, ...props }: WrappedInputProps, ref) => {
-  if (noForm) {
-    return (
-      <Form>
+const Input: Input = forwardRef<InputRef, WrappedInputProps>(
+  ({ noForm, ...props }: WrappedInputProps, ref) => {
+    if (noForm) {
+      return (
+        <Form>
+          <FormItemWrapper max={255} {...props}>
+            <AntdInput {...props} ref={ref} />
+          </FormItemWrapper>
+          ;
+        </Form>
+      );
+    } else {
+      return (
         <FormItemWrapper max={255} {...props}>
           <AntdInput {...props} ref={ref} />
-        </FormItemWrapper>;
-      </Form>
-    );
-  } else {
-    return (
-      <FormItemWrapper max={255} {...props}>
-        <AntdInput {...props} ref={ref} />
-      </FormItemWrapper>);
-  }
-}) as Input;
+        </FormItemWrapper>
+      );
+    }
+  },
+) as Input;
 
 type Input = ForwardRefExoticComponent<WrappedInputProps & RefAttributes<InputRef>> & {
   Group: typeof AntdInput.Group;
-  Password: ForwardRefExoticComponent<WrappedPasswordProps & RefAttributes<InputRef>>
-  TextArea: ForwardRefExoticComponent<WrappedTextAreaProps & RefAttributes<TextAreaRef>>
-}
+  Password: ForwardRefExoticComponent<WrappedPasswordProps & RefAttributes<InputRef>>;
+  TextArea: ForwardRefExoticComponent<WrappedTextAreaProps & RefAttributes<TextAreaRef>>;
+};
 
 Input.Group = AntdInput.Group;
 
@@ -91,12 +101,14 @@ Input.Password = React.forwardRef(({ noForm, ...props }: WrappedPasswordProps, r
         <FormItemWrapper max={255} {...props}>
           <AntdInput.Password {...props} ref={ref} />
         </FormItemWrapper>
-      </Form>);
+      </Form>
+    );
   } else {
     return (
       <FormItemWrapper max={255} {...props}>
         <AntdInput.Password {...props} ref={ref} />
-      </FormItemWrapper>);
+      </FormItemWrapper>
+    );
   }
 });
 
@@ -108,12 +120,14 @@ Input.TextArea = React.forwardRef(({ noForm, ...props }: WrappedTextAreaProps, r
         <FormItemWrapper max={255} {...props}>
           <AntdInput.TextArea {...props} ref={ref} />
         </FormItemWrapper>
-      </Form>);
+      </Form>
+    );
   } else {
     return (
       <FormItemWrapper max={255} {...props}>
         <AntdInput.TextArea {...props} ref={ref} />
-      </FormItemWrapper>);
+      </FormItemWrapper>
+    );
   }
 });
 

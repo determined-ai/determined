@@ -172,8 +172,9 @@ const DropdownsSection: React.FC = () => {
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <Card>
         <p>
-          A dropdown/combo box (<code>{'<SelectFilter>'}</code> or <code>{'<InputSelect>'}</code>) combines a text field and a
-          dropdown giving people a way to select an option from a list or enter their own choice.
+          A dropdown/combo box (<code>{'<SelectFilter>'}</code> or <code>{'<InputSelect>'}</code>)
+          combines a text field and a dropdown giving people a way to select an option from a list
+          or enter their own choice.
         </p>
       </Card>
       <Card title="Best practices">
@@ -208,7 +209,9 @@ const DropdownsSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Standalone dropdown <code>{'<SelectFilter>'}</code></strong>
+        <strong>
+          Standalone dropdown <code>{'<SelectFilter>'}</code>
+        </strong>
         <SelectFilter
           defaultValue={1}
           label="Default dropdown"
@@ -225,7 +228,9 @@ const DropdownsSection: React.FC = () => {
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
         <hr />
-        <strong>Form dropdown input <code>{'<InputSelect>'}</code></strong>
+        <strong>
+          Form dropdown input <code>{'<InputSelect>'}</code>
+        </strong>
         <Form>
           <InputSelect
             defaultValue={1}
@@ -253,7 +258,12 @@ const DropdownsSection: React.FC = () => {
             ]}
             required
           />
-          <InputSelect label="Invalid dropdown" name="Invalid Select" validateMessage="Input validation error" validateStatus="error" />
+          <InputSelect
+            label="Invalid dropdown"
+            name="Invalid Select"
+            validateMessage="Input validation error"
+            validateStatus="error"
+          />
         </Form>
       </Card>
     </ComponentSection>
@@ -480,7 +490,11 @@ const InputNumberSection: React.FC = () => {
         <InputNumber label="Default InputNumber" />
         <InputNumber disabled label="Disabled InputNumber" />
         <InputNumber label="Required InputNumber" name="number" required />
-        <InputNumber label="Invalid InputNumber" validateMessage="Input validation error" validateStatus="error" />
+        <InputNumber
+          label="Invalid InputNumber"
+          validateMessage="Input validation error"
+          validateStatus="error"
+        />
       </Card>
     </ComponentSection>
   );
@@ -511,27 +525,48 @@ const InputSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <Form>
-          <strong>Input <code>{'<Input>'}</code></strong>
+          <strong>
+            Input <code>{'<Input>'}</code>
+          </strong>
           <Input label="Default Input" name="default" />
           <Input disabled label="Disabled Input" name="disabled" />
           <Input label="Required input" name="required" required />
-          <Input label="Invalid input" name="invalid" validateMessage="Input validation error" validateStatus="error" />
+          <Input
+            label="Invalid input"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error"
+          />
         </Form>
         <hr />
         <Form>
-          <strong>TextArea <code>{'<Input.TextArea>'}</code></strong>
+          <strong>
+            TextArea <code>{'<Input.TextArea>'}</code>
+          </strong>
           <Input.TextArea label="Default TextArea" name="default" />
           <Input.TextArea disabled label="Disabled TextArea" name="disabled" />
           <Input.TextArea label="Required TextArea" name="required" required />
-          <Input.TextArea label="Invalid TextArea" name="invalid" validateMessage="Input validation error" validateStatus="error" />
+          <Input.TextArea
+            label="Invalid TextArea"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error"
+          />
         </Form>
         <hr />
         <Form>
-          <strong>Password <code>{'<Input.Password>'}</code></strong>
+          <strong>
+            Password <code>{'<Input.Password>'}</code>
+          </strong>
           <Input.Password label="Default Password" name="default" />
           <Input.Password disabled label="Disabled Password" name="disabled" />
           <Input.Password label="Required Password" name="required" required />
-          <Input.Password label="Invalid Password" name="invalid" validateMessage="Input validation error" validateStatus="error" />
+          <Input.Password
+            label="Invalid Password"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error"
+          />
         </Form>
       </Card>
     </ComponentSection>
@@ -1169,9 +1204,7 @@ const DesignKit: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <main>
-          {componentOrder.map((componentId) => Components[componentId])}
-        </main>
+        <main>{componentOrder.map((componentId) => Components[componentId])}</main>
       </div>
     </Page>
   );
