@@ -52,6 +52,10 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 			system = actor.NewSystem("mock")
 			ref, _ := system.ActorOf(sproto.K8sRMAddr, actor.ActorFunc(
 				func(context *actor.Context) error {
+					switch context.Message().(type) {
+					case sproto.DeleteJob:
+						context.Respond(sproto.EmptyDeleteJobResponse())
+					}
 					return nil
 				}))
 			mockRM = actorrm.Wrap(ref)
@@ -64,10 +68,11 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB) (*apiServer, model.User, context.
 
 	api := &apiServer{
 		m: &Master{
-			system:         system,
-			db:             pgdb,
-			taskLogBackend: pgdb,
-			rm:             mockRM,
+			trialLogBackend: pgdb,
+			system:          system,
+			db:              pgdb,
+			taskLogBackend:  pgdb,
+			rm:              mockRM,
 			config: &config.Config{
 				InternalConfig:        config.InternalConfig{},
 				TaskContainerDefaults: model.TaskContainerDefaultsConfig{},

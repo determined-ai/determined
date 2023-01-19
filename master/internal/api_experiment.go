@@ -366,15 +366,17 @@ func (a *apiServer) deleteExperiment(exp *model.Experiment, userModel *model.Use
 	if err != nil {
 		return err
 	}
-	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
-	jobSubmissionTime := exp.StartTime
-	taskID := model.NewTaskID()
-	ckptGCTask := newCheckpointGCTask(
-		a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
-		exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
-	)
-	if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
-		return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+	if len(checkpoints) > 0 {
+		addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
+		jobSubmissionTime := exp.StartTime
+		taskID := model.NewTaskID()
+		ckptGCTask := newCheckpointGCTask(
+			a.m.rm, a.m.db, a.m.taskLogger, taskID, exp.JobID, jobSubmissionTime, taskSpec, exp.ID,
+			exp.Config, checkpoints, true, agentUserGroup, userModel, nil,
+		)
+		if gcErr := a.m.system.MustActorOf(addr, ckptGCTask).AwaitTermination(); gcErr != nil {
+			return errors.Wrapf(gcErr, "failed to gc checkpoints for experiment")
+		}
 	}
 
 	resp, err := a.m.rm.DeleteJob(a.m.system, sproto.DeleteJob{
