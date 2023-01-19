@@ -11732,6 +11732,11 @@ class v1WorkspaceState(enum.Enum):
     WORKSPACE_STATE_DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
     WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
 
+class v1XAxis(enum.Enum):
+    X_AXIS_UNSPECIFIED = "X_AXIS_UNSPECIFIED"
+    X_AXIS_BATCH = "X_AXIS_BATCH"
+    X_AXIS_TIME = "X_AXIS_TIME"
+
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",
     *,
@@ -12052,6 +12057,7 @@ def get_CompareTrials(
     scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+    xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
         "endBatches": endBatches,
@@ -12061,6 +12067,7 @@ def get_CompareTrials(
         "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
         "trialIds": trialIds,
+        "xAxis": xAxis.value if xAxis is not None else None,
     }
     _resp = session._do_request(
         method="GET",

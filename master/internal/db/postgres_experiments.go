@@ -483,7 +483,8 @@ func timeToFloat(t time.Time) float64 {
 	return float64(t.UnixNano()) / 1e9
 }
 
-func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch []lttb.Point, metricSeriesTime []lttb.Point) ([]lttb.Point, []lttb.Point, time.Time) {
+func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch, metricSeriesTime []lttb.Point) (
+	[]lttb.Point, []lttb.Point, time.Time) {
 	var maxEndTime time.Time
 	for rows.Next() {
 		var batches uint
@@ -506,8 +507,8 @@ func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch []lttb.Point, metricSer
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point, maxEndTime time.Time,
-	err error,
+	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point,
+	maxEndTime time.Time, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
@@ -527,15 +528,16 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 		return nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	defer rows.Close()
-	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(rows, metricSeriesBatch, metricSeriesTime)
+	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(
+		rows, metricSeriesBatch, metricSeriesTime)
 	return metricSeriesBatch, metricSeriesTime, maxEndTime, nil
 }
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point, maxEndTime time.Time,
-	err error,
+	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point,
+	maxEndTime time.Time, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
@@ -555,7 +557,8 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 		return nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	defer rows.Close()
-	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(rows, metricSeriesBatch, metricSeriesTime)
+	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(
+		rows, metricSeriesBatch, metricSeriesTime)
 	return metricSeriesBatch, metricSeriesTime, maxEndTime, nil
 }
 
