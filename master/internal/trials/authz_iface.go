@@ -9,12 +9,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// TrialsAuthZ describes authz methods for experiments.
+// TrialAuthZ describes authz methods for experiments.
 type TrialAuthZ interface {
 
 	// POST /trial-comparison/collections
 	CanCreateTrialCollection(
-		ctx context.Context, curUser *model.User, projectId int32,
+		ctx context.Context, curUser *model.User, projectID int32,
 	) (canGetCollections bool, serverError error)
 
 	// POST /trial-comparison/query

@@ -12,7 +12,8 @@ import (
 // TrialAuthZBasic is basic OSS Determined authentication.
 type TrialAuthZBasic struct{}
 
-// GET /trial-comparison/collections.
+// AuthFilterCollectionsReadQuery filters a trials UpdateQuery to those
+// the user is authorized to read.
 func (a *TrialAuthZBasic) AuthFilterCollectionsReadQuery(
 	ctx context.Context,
 	curUser *model.User,
@@ -21,7 +22,8 @@ func (a *TrialAuthZBasic) AuthFilterCollectionsReadQuery(
 	return query, nil
 }
 
-// AuthFilterCollectionsUpdateQuery filters a trials UpdateQuery to those the user is authorized to update.
+// AuthFilterCollectionsUpdateQuery filters a trials UpdateQuery to those
+// the user is authorized to update.
 func (a *TrialAuthZBasic) AuthFilterCollectionsUpdateQuery(
 	ctx context.Context,
 	curUser *model.User,
@@ -30,12 +32,17 @@ func (a *TrialAuthZBasic) AuthFilterCollectionsUpdateQuery(
 	if curUser.Admin {
 		return query, nil
 	}
-	userProjectsQ := db.Bun().NewSelect().Column("id").Table("projects").Where("user_id = ?", curUser.ID)
+	userProjectsQ := db.Bun().
+		NewSelect().
+		Column("id").
+		Table("projects").
+		Where("user_id = ?", curUser.ID)
 	query.Where("(user_id = ? OR project_id in (?))", curUser.ID, userProjectsQ)
 	return query, nil
 }
 
-// AuthFilterCollectionsDeleteQuery filters a trials DeleteQuery to those the user is authorized to delete.
+// AuthFilterCollectionsDeleteQuery filters a trials DeleteQuery to those
+// the user is authorized to delete.
 func (a *TrialAuthZBasic) AuthFilterCollectionsDeleteQuery(
 	ctx context.Context,
 	curUser *model.User,
@@ -44,15 +51,18 @@ func (a *TrialAuthZBasic) AuthFilterCollectionsDeleteQuery(
 	if curUser.Admin {
 		return query, nil
 	}
-	userProjectsQ := db.Bun().NewSelect().Column("id").Table("projects").Where("user_id = ?", curUser.ID)
+	userProjectsQ := db.Bun().
+		NewSelect().
+		Column("id").
+		Table("projects").
+		Where("user_id = ?", curUser.ID)
 	query.Where("(user_id = ? OR project_id in (?))", curUser.ID, userProjectsQ)
 	return query, nil
-
 }
 
 // CanCreateTrialCollection indicates whether a user can create a collection in a project.
 func (a *TrialAuthZBasic) CanCreateTrialCollection(
-	ctx context.Context, curUser *model.User, projectId int32,
+	ctx context.Context, curUser *model.User, projectID int32,
 ) (canCreateTrialCollection bool, serverError error) {
 	return true, nil
 }
@@ -66,7 +76,6 @@ func (a *TrialAuthZBasic) AuthFilterTrialsQuery(
 		return query, nil
 	}
 	return query, nil
-
 }
 
 func init() {
