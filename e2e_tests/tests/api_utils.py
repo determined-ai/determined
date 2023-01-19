@@ -7,7 +7,9 @@ from tests import config as conf
 
 def determined_test_session(
     credentials: Optional[authentication.Credentials] = None,
+    admin: Optional[bool] = None,
 ) -> api.Session:
+    assert admin is None or credentials is None, "admin and credentials are mutually exclusive"
     credentials = credentials or authentication.Credentials("determined", "")
     murl = conf.make_master_url()
     certs.cli_cert = certs.default_load(murl)
