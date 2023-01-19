@@ -1,6 +1,7 @@
-import { Input as AntdInput, InputProps as AntdInputProps, Form, InputRef } from 'antd';
-import { FormItemProps } from 'antd';
-import React, { forwardRef, ForwardRefExoticComponent, RefAttributes } from 'react';
+import { Input as AntdInput, InputProps as AntdInputProps, Form, FormItemProps, InputRef } from 'antd';
+import { PasswordProps as AntdPasswordProps } from 'antd/lib/input/Password';
+import { TextAreaProps as AntdTextAreaProps, TextAreaRef } from 'antd/lib/input/TextArea';
+import React, { forwardRef, ForwardRefExoticComponent, ReactNode, RefAttributes } from 'react';
 
 type Rules = FormItemProps['rules']; // https://github.com/ant-design/ant-design/issues/39466
 type LabelCol = {
@@ -8,66 +9,112 @@ type LabelCol = {
 };
 type TriggerEvent = 'onChange' | 'onSubmit';
 
-interface InputProps extends AntdInputProps {
-  label: string;
+export interface WrapperProps {
+  children?: ReactNode;
+  label?: string;
   labelCol?: LabelCol; // https://ant.design/components/grid#col
   max?: number;
   maxMessage?: string;
-  name: string;
+  name?: string;
   noForm?: boolean; // if not wrapped in an antd <Form> component
   required?: boolean;
   requiredMessage?: string;
   rules?: Rules; // https://ant.design/components/form#rule
+  validateMessage?: string;
+  validateStatus?: '' | 'success' | 'warning' | 'error' | 'validating' | undefined;
   validateTrigger?: TriggerEvent[];
 }
 
-const FormItemWrapper = (({
+export const FormItemWrapper: React.FC<WrapperProps> = (({
+  children,
   label,
   labelCol = { span: 24 },
   name,
-  rules,
-  ref,
+  rules = [],
   required,
   requiredMessage,
-  max = 255,
+  max,
   maxMessage,
+  validateMessage,
   validateTrigger,
-  ...props
-}) => {
-  const maxRule = { max, message: maxMessage || `${label} cannot exceed ${max} characters` };
-  const itemRules = rules ? [...rules, maxRule] : [maxRule];
-  if (required) itemRules.push({ message: requiredMessage || `${label} required`, required: true });
+  validateStatus,
+}: WrapperProps) => {
+  if (required) rules.push({ message: requiredMessage || `${label} required`, required: true });
+  if (max) rules.push({ max, message: maxMessage || `${label} cannot exceed ${max} characters` });
+
   return (
     <Form.Item
+      help={validateMessage}
       label={label}
       labelCol={labelCol}
       name={name}
       required={required}
-      rules={itemRules}
+      rules={rules}
+      validateStatus={validateStatus}
       validateTrigger={validateTrigger}>
-      <AntdInput ref={ref} {...props} />
+      {children}
     </Form.Item>
   );
-}) as Input;
+});
 
-const Input: Input = forwardRef<InputRef, InputProps>(({ noForm, ...props }: InputProps, ref) => {
+type WrappedInputProps = AntdInputProps & WrapperProps;
+const Input: Input = forwardRef<InputRef, WrappedInputProps>(({ noForm, ...props }: WrappedInputProps, ref) => {
   if (noForm) {
     return (
       <Form>
-        <FormItemWrapper {...props} ref={ref} />;
+        <FormItemWrapper max={255} {...props}>
+          <AntdInput {...props} ref={ref} />
+        </FormItemWrapper>;
       </Form>
     );
   } else {
-    return <FormItemWrapper {...props} ref={ref} />;
+    return (
+      <FormItemWrapper max={255} {...props}>
+        <AntdInput {...props} ref={ref} />
+      </FormItemWrapper>);
   }
 }) as Input;
 
-type Input = ForwardRefExoticComponent<InputProps & RefAttributes<InputRef>> & {
+type Input = ForwardRefExoticComponent<WrappedInputProps & RefAttributes<InputRef>> & {
   Group: typeof AntdInput.Group;
-  Password: typeof AntdInput.Password;
-};
+  Password: ForwardRefExoticComponent<WrappedPasswordProps & RefAttributes<InputRef>>
+  TextArea: ForwardRefExoticComponent<WrappedTextAreaProps & RefAttributes<TextAreaRef>>
+}
 
 Input.Group = AntdInput.Group;
-Input.Password = AntdInput.Password;
+
+type WrappedPasswordProps = AntdPasswordProps & WrapperProps;
+Input.Password = React.forwardRef(({ noForm, ...props }: WrappedPasswordProps, ref) => {
+  if (noForm) {
+    return (
+      <Form>
+        <FormItemWrapper max={255} {...props}>
+          <AntdInput.Password {...props} ref={ref} />
+        </FormItemWrapper>
+      </Form>);
+  } else {
+    return (
+      <FormItemWrapper max={255} {...props}>
+        <AntdInput.Password {...props} ref={ref} />
+      </FormItemWrapper>);
+  }
+});
+
+type WrappedTextAreaProps = AntdTextAreaProps & WrapperProps;
+Input.TextArea = React.forwardRef(({ noForm, ...props }: WrappedTextAreaProps, ref) => {
+  if (noForm) {
+    return (
+      <Form>
+        <FormItemWrapper max={255} {...props}>
+          <AntdInput.TextArea {...props} ref={ref} />
+        </FormItemWrapper>
+      </Form>);
+  } else {
+    return (
+      <FormItemWrapper max={255} {...props}>
+        <AntdInput.TextArea {...props} ref={ref} />
+      </FormItemWrapper>);
+  }
+});
 
 export default Input;

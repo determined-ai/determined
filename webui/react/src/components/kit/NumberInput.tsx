@@ -1,6 +1,8 @@
 import { InputNumber as AntdInputNumber, Form } from 'antd';
 import React from 'react';
 
+import { FormItemWrapper, WrapperProps } from './Input';
+
 type LabelCol = {
   span: number;
 };
@@ -18,15 +20,25 @@ interface NumberInputProps {
   value?: number;
 }
 
-const NumberInput: React.FC<NumberInputProps> = ({
-  label,
-  labelCol = { span: 24 },
+type WrappedNumberInputProps = WrapperProps & NumberInputProps;
+const NumberInput: React.FC<WrappedNumberInputProps> = ({
+  noForm,
   ...props
-}: NumberInputProps) => {
-  return (
-    <Form.Item label={label} labelCol={labelCol}>
-      <AntdInputNumber {...props} />
-    </Form.Item>
-  );
+}: WrappedNumberInputProps) => {
+  if (noForm) {
+    return (
+      <Form>
+        <FormItemWrapper {...props}>
+          <AntdInputNumber {...props} />
+        </FormItemWrapper>
+      </Form>
+    );
+  } else {
+    return (
+      <FormItemWrapper {...props}>
+        <AntdInputNumber {...props} />
+      </FormItemWrapper>
+    );
+  }
 };
 export default NumberInput;

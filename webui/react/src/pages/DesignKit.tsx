@@ -18,13 +18,14 @@ import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import SearchInput from 'components/kit/SearchInput';
+import SelectInput from 'components/kit/SelectInput';
 import Tooltip from 'components/kit/Tooltip';
 import Logo from 'components/Logo'; //TODO: Move to components/kit? Add section to DesignKit page?
 import LogViewer from 'components/LogViewer/LogViewer'; //TODO: Move to components/kit?
 import OverviewStats from 'components/OverviewStats'; //TODO: Rename?
 import Page from 'components/Page'; //TODO: Move to components/kit? Add section to DesignKit page?
 import ResourcePoolCard from 'components/ResourcePoolCard'; //TODO: Rename?
-import SelectFilter from 'components/SelectFilter'; //TODO: Move to components/kit?
+import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable'; //TODO: Move to components/kit?
 import ThemeToggle from 'components/ThemeToggle'; //TODO: Move to components/kit? Add section to DesignKit page?
 import UserAvatar from 'components/UserAvatar'; //TODO: Rename?
@@ -204,7 +205,7 @@ const DropdownsSection: React.FC = () => {
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <Card>
         <p>
-          A dropdown/combo box (<code>{'<SelectFilter>'}</code>) combines a text field and a
+          A dropdown/combo box (<code>{'<SelectFilter>'}</code> or <code>{'<SelectInput>'}</code>) combines a text field and a
           dropdown giving people a way to select an option from a list or enter their own choice.
         </p>
       </Card>
@@ -240,94 +241,53 @@ const DropdownsSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Basic dropdown with inline options</strong>
-        <Space>
-          <SelectFilter
+        <strong>Standalone dropdown <code>{'<SelectFilter>'}</code></strong>
+        <SelectFilter
+          defaultValue={1}
+          label="Default dropdown"
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <SelectFilter
+          defaultValue="disabled"
+          disabled
+          label="Disabled dropdown"
+          options={[{ label: 'Disabled', value: 'disabled' }]}
+        />
+        <hr />
+        <strong>Form dropdown input <code>{'<SelectInput>'}</code></strong>
+        <Form>
+          <SelectInput
             defaultValue={1}
+            label="Default dropdown"
             options={[
               { label: 'Option 1', value: 1 },
               { label: 'Option 2', value: 2 },
               { label: 'Option 3', value: 3 },
             ]}
           />
-          <SelectFilter
+          <SelectInput
             defaultValue="disabled"
             disabled
+            label="Disabled dropdown"
             options={[{ label: 'Disabled', value: 'disabled' }]}
           />
-        </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>16px inner horizontal padding</li> <li>5px inner vertical padding</li>
-          <li>8px minimum inner horizontal padding</li> <li>8px external margins</li>
-          <li>4px for the start of the option items</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
-        <hr />
-        <strong>Dropdown menu items</strong>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Needs to be same width as dropdown box</li>
-          <li>Top item has rounded top corners</li>
-          <li>Middle items have no rounded corners</li>
-          <li>Bottom item has rounded bottom corners</li>
-          <li>12px inner horizontal padding</li>
-          <li>5px inner vertical padding</li>
-          <li>8px minimum inner horizontal padding</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
-        <strong>Menu items with checkmark</strong>
-        <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Needs to be same width as dropdown box</li>
-          <li>Preserve 12px right padding to checkmark</li>
-          <li>5px inner vertical padding</li>
-          <li>8px minimum inner horizontal padding</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
-        <hr />
-        <strong>Categorical menu items</strong>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>A parent category can never be without children.</li>
-          <li>
-            The parent cell has visually distinctive features to make it stand out in a multi-parent
-            list from children.
-          </li>
-          <li>Same padding as normal cells</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
-        <hr />
-        <strong>Categories with checkmarks</strong>
-        <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>The padding of the children is preserved and aligns nicely.</li>
-        </ul>
-        <hr />
-        <strong>Categories with checkmarks and icons</strong>
-        <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>The padding of the children is preserved and aligns nicely.</li>
-        </ul>
-        <hr />
-        <strong>Selecting all categories</strong>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>
-            When selecting the parent category is possible, it selects all the children below it.
-          </li>
-          <li>Behavior of the checkboxes is consistent with the checkbox component.</li>
-          <li>Parent categories cannot have icons (at this point)</li>
-          <li>
-            In the event multiple items are selected, the top dropdown will display “multiple
-            selected” (and NOT a list of all the selections made)
-          </li>
-        </ul>
+          <SelectInput
+            defaultValue={1}
+            label="Required dropdown"
+            name="Required Select"
+            options={[
+              { label: 'Option 1', value: 1 },
+              { label: 'Option 2', value: 2 },
+              { label: 'Option 3', value: 3 },
+            ]}
+            required
+          />
+          <SelectInput label="Invalid dropdown" name="Invalid Select" validateMessage="Input validation error" validateStatus="error" />
+        </Form>
       </Card>
     </ComponentSection>
   );
@@ -501,21 +461,13 @@ const SpinbuttonsSection: React.FC = () => {
           <li>Use a spin button when values are tied to a unit of measure.</li>
           <li>Don&apos;t use a spin button for binary settings.</li>
           <li>Don&apos;t use a spin button for a range of three values or less.</li>
-          <li>Include a label indicating what value the spin button changes.</li>
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Default spin button</strong>
-        <NumberInput defaultValue={3} label="Default" />
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
-          <li>Number/type input starts 12px from border. </li>
-          <li>When in focus, use arrow up/down of keyboard to facilitate spinning.</li>
-        </ul>
-        <hr />
-        <strong>Variations and states of spin buttons</strong>
-        <NumberInput disabled label="Disabled" />
+        <NumberInput label="Default NumberInput" />
+        <NumberInput disabled label="Disabled NumberInput" />
+        <NumberInput label="Required NumberInput" name="number" required />
+        <NumberInput label="Invalid NumberInput" validateMessage="Input validation error" validateStatus="error" />
       </Card>
     </ComponentSection>
   );
@@ -543,33 +495,30 @@ const TextfieldsSection: React.FC = () => {
           </li>
           <li>Format the text field for the expected entry.</li>
         </ul>
-        <strong>Content</strong>
-        <ul>
-          <li>
-            Include a short label above the text field to communicate what information should be
-            entered. Don&apos;t use placeholder text instead of a label. Placeholder text poses a
-            variety of accessibility issues (including possible problems with color/contrast, and
-            people thinking the form input is already filled out).
-          </li>
-          <li>
-            When part of a form, make it clear which fields are required vs. optional. If the input
-            is required, add an asterisk &quot;*&quot; to the label. For screen readers, make sure
-            the aria-required property is set to true.
-          </li>
-          <li>Use sentence-style capitalization—only capitalize the first word.</li>
-          <li>
-            ALL input fields need to have validation and limitations in-place (length of input
-            especially)
-          </li>
-          <li>Field validation errors need to be provided for every mandatory field. </li>
-        </ul>
       </Card>
       <Card title="Usage">
         <Form>
-          <strong>Default input</strong>
-          <Input label="Input" name="default" />
-          <strong>Required input</strong>
+          <strong>Input <code>{'<Input>'}</code></strong>
+          <Input label="Default Input" name="default" />
+          <Input disabled label="Disabled Input" name="disabled" />
           <Input label="Required input" name="required" required />
+          <Input label="Invalid input" name="invalid" validateMessage="Input validation error" validateStatus="error" />
+        </Form>
+        <hr />
+        <Form>
+          <strong>TextArea <code>{'<Input.TextArea>'}</code></strong>
+          <Input.TextArea label="Default TextArea" name="default" />
+          <Input.TextArea disabled label="Disabled TextArea" name="disabled" />
+          <Input.TextArea label="Required TextArea" name="required" required />
+          <Input.TextArea label="Invalid TextArea" name="invalid" validateMessage="Input validation error" validateStatus="error" />
+        </Form>
+        <hr />
+        <Form>
+          <strong>Password <code>{'<Input.Password>'}</code></strong>
+          <Input.Password label="Default Password" name="default" />
+          <Input.Password disabled label="Disabled Password" name="disabled" />
+          <Input.Password label="Required Password" name="required" required />
+          <Input.Password label="Invalid Password" name="invalid" validateMessage="Input validation error" validateStatus="error" />
         </Form>
       </Card>
     </ComponentSection>
