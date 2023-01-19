@@ -178,16 +178,15 @@ func (s *asyncHalvingSearch) validationCompleted(
 	ctx context, requestID model.RequestID, metrics Metrics, op ValidateAfter,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	switch metric := metrics.(type) {
-	case ScalarMetric:
+	metric, ok := metrics.(ScalarMetric)
+	if ok {
 		value := metric.Value
-		if !s.SmallerIsBetter {
+		if s.SmallerIsBetter {
 			value *= -1
 		}
 		return s.promoteAsync(ctx, requestID, value), nil
-	default:
-		panic(fmt.Sprintf("Unexpected metric type for ASHA built-in search method %v", metrics))
 	}
+	return nil, fmt.Errorf("unexpected metric type for ASHA built-in search method %v", metrics)
 }
 
 func (s *asyncHalvingSearch) promoteAsync(
