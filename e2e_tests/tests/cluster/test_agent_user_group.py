@@ -67,11 +67,7 @@ def _check_test_experiment(project_id: int) -> None:
 
 @pytest.mark.e2e_cpu
 def test_workspace_post_gid() -> None:
-<<<<<<< HEAD
     sess = api_utils.determined_test_session(admin=True)
-=======
-    sess = utils.determined_test_session(admin=True)
->>>>>>> 041abccc1 (pr changes)
 
     # Make project with workspace.
     resp_w = bindings.post_PostWorkspace(
@@ -101,11 +97,7 @@ def test_workspace_post_gid() -> None:
 
 @pytest.mark.e2e_cpu
 def test_workspace_patch_gid() -> None:
-<<<<<<< HEAD
     sess = api_utils.determined_test_session(admin=True)
-=======
-    sess = utils.determined_test_session(admin=True)
->>>>>>> 041abccc1 (pr changes)
 
     # Make project with workspace.
     resp_w = bindings.post_PostWorkspace(
@@ -145,11 +137,7 @@ def test_workspace_patch_gid() -> None:
 def test_workspace_partial_patch() -> None:
     # TODO(ilia): Implement better partial patch with fieldmasks.
     # This may need a changes to the way python bindings generate json payloads.
-<<<<<<< HEAD
     sess = api_utils.determined_test_session(admin=True)
-=======
-    sess = utils.determined_test_session(admin=True)
->>>>>>> 041abccc1 (pr changes)
 
     # Make project with workspace.
     resp_w = bindings.post_PostWorkspace(

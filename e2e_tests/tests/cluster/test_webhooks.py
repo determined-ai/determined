@@ -46,11 +46,7 @@ def test_slack_webhook() -> None:
     global request_to_webhook_endpoint
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
-<<<<<<< HEAD
     sess = api_utils.determined_test_session(admin=True)
-=======
-    sess = utils.determined_test_session(admin=True)
->>>>>>> 041abccc1 (pr changes)
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE,
