@@ -12,7 +12,7 @@ import (
 // TrialAuthZBasic is basic OSS Determined authentication.
 type TrialAuthZBasic struct{}
 
-// GET /trial-comparison/collections
+// GET /trial-comparison/collections.
 func (a *TrialAuthZBasic) AuthFilterCollectionsReadQuery(
 	ctx context.Context,
 	curUser *model.User,
@@ -21,7 +21,7 @@ func (a *TrialAuthZBasic) AuthFilterCollectionsReadQuery(
 	return query, nil
 }
 
-// PATCH /trial-comparison/collections
+// AuthFilterCollectionsUpdateQuery filters a trials UpdateQuery to those the user is authorized to update.
 func (a *TrialAuthZBasic) AuthFilterCollectionsUpdateQuery(
 	ctx context.Context,
 	curUser *model.User,
@@ -35,8 +35,7 @@ func (a *TrialAuthZBasic) AuthFilterCollectionsUpdateQuery(
 	return query, nil
 }
 
-// DELETE /trial-comparison/collections
-
+// AuthFilterCollectionsDeleteQuery filters a trials DeleteQuery to those the user is authorized to delete.
 func (a *TrialAuthZBasic) AuthFilterCollectionsDeleteQuery(
 	ctx context.Context,
 	curUser *model.User,
@@ -51,15 +50,14 @@ func (a *TrialAuthZBasic) AuthFilterCollectionsDeleteQuery(
 
 }
 
-// POST /trial-comparison/collections
+// CanCreateTrialCollection indicates whether a user can create a collection in a project.
 func (a *TrialAuthZBasic) CanCreateTrialCollection(
 	ctx context.Context, curUser *model.User, projectId int32,
 ) (canCreateTrialCollection bool, serverError error) {
 	return true, nil
 }
 
-// POST /trial-comparison/query
-// POST /trial-comparison/update-trial-tags
+// AuthFilterTrialsQuery filters a trials SelectQuery to those the user is authorized for.
 func (a *TrialAuthZBasic) AuthFilterTrialsQuery(
 	ctx context.Context, curUser *model.User, query *bun.SelectQuery, update bool,
 ) (*bun.SelectQuery, error) {
