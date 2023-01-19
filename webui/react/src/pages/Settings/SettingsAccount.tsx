@@ -1,7 +1,8 @@
-import { Button, Divider, message } from 'antd';
+import { Divider, message } from 'antd';
 import React, { useCallback } from 'react';
 
 import InlineEditor from 'components/InlineEditor';
+import Button from 'components/kit/Button';
 import Avatar from 'components/UserAvatar';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';

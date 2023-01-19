@@ -1,9 +1,10 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, ModalFuncProps } from 'antd';
+import { ModalFuncProps } from 'antd';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import HumanReadableNumber from 'components/HumanReadableNumber';
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { detApi } from 'services/apiConfig';

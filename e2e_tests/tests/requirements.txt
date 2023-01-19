@@ -12,3 +12,8 @@ pyyaml
 docker
 python-dateutil
 kubernetes
+# numby>1.20 and h5py==2.10 are incompatible, force newer versions of
+# of both to avoid AttributeError: module 'numpy' has no attribute 'typeDict'
+# when pytest executes e2e_tests.
+numpy>=1.20
+h5py>=3

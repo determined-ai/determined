@@ -12,6 +12,7 @@ import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
+import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
 import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -42,6 +43,7 @@ const Components = {
   ActionBar: 'ActionBar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
+  Charts: 'Charts',
   Checkboxes: 'Checkboxes',
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
@@ -233,6 +235,82 @@ const DropdownsSection: React.FC = () => {
         <p>Not implemented</p>
         <hr />
         <strong>Selecting all categories</strong>
+      </Card>
+    </ComponentSection>
+  );
+};
+
+const ChartsSection: React.FC = () => {
+  const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19] };
+  const line1: Serie = {
+    data: [
+      0,
+      null,
+      Math.random() * 12,
+      null,
+      null,
+      null,
+      null,
+      15,
+      Math.random() * 60,
+      Math.random() * 40,
+      Math.random() * 76,
+      Math.random() * 80,
+      89,
+    ],
+  };
+  const line2: Serie = {
+    data: [
+      null,
+      15,
+      10.123456789,
+      Math.random() * 22,
+      Math.random() * 18,
+      Math.random() * 10 + 10,
+      Math.random() * 12,
+      12,
+      null,
+      null,
+      null,
+      null,
+      null,
+    ],
+  };
+  return (
+    <ComponentSection id="Charts" title="Charts">
+      <Card>
+        <p>
+          Line Charts (<code>{'<LineChart>'}</code>) are a universal component to create charts for
+          learning curve, metrics, cluster history, etc. We currently use the uPlot library.
+        </p>
+      </Card>
+      <Card title="Label options">
+        <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
+        <LineChart
+          height={250}
+          series={[xSeries, line1, line2]}
+          showLegend={true}
+          title="Title"
+          xLabel="X Label"
+          yLabel="Y Label"
+        />
+      </Card>
+      <Card title="Focus series">
+        <p>Highlight a specific series in the chart.</p>
+        <LineChart focusedSeries={1} height={250} series={[xSeries, line1, line2]} />
+      </Card>
+      <Card title="Chart Grid">
+        <p>
+          A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
+          responsive grid. There is a sync for the plot window, cursor, and selection/zoom of an
+          x-axis range.
+        </p>
+        <div style={{ height: 300 }}>
+          <ChartGrid
+            chartsProps={[{ series: [xSeries, line1] }, { series: [xSeries, line2] }]}
+            rowHeight={250}
+          />
+        </div>
       </Card>
     </ComponentSection>
   );
@@ -1069,6 +1147,7 @@ const DesignKit: React.FC = () => {
           <DataCardsSection />
           <LogViewerSection />
           <TooltipsSection />
+          <ChartsSection />
         </main>
       </div>
     </Page>
