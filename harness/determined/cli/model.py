@@ -149,7 +149,7 @@ def create(args: Namespace) -> None:
 
 def move(args: Namespace) -> None:
     model = model_by_name(args)
-    model.move_model_to_workspace(args.workspace_name)
+    model.move_to_workspace(args.workspace_name)
 
 
 def describe(args: Namespace) -> None:
