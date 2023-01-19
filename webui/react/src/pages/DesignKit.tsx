@@ -42,7 +42,7 @@ import { BrandingType, ResourcePool } from 'types';
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
 
-const Components = {
+const ComponentTitles = {
   ActionBar: 'ActionBar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
@@ -61,12 +61,12 @@ const Components = {
   Tooltips: 'Tooltips',
 } as const;
 
-type ComponentNames = ValueOf<typeof Components>;
-type ComponentIds = keyof typeof Components;
+type ComponentNames = ValueOf<typeof ComponentTitles>;
+type ComponentIds = keyof typeof ComponentTitles;
 
-const componentOrder = Object.entries(Components)
+const componentOrder = Object.entries(ComponentTitles)
   .sort((pair1, pair2) => pair1[1].localeCompare(pair2[1]))
-  .map((pair) => pair[0] as keyof typeof Components);
+  .map((pair) => pair[0] as keyof typeof ComponentTitles);
 
 interface Props {
   children?: React.ReactNode;
@@ -1125,6 +1125,25 @@ const TooltipsSection: React.FC = () => {
   );
 };
 
+const Components = {
+  ActionBar: <ActionBarSection />,
+  Breadcrumbs: <BreadcrumbsSection />,
+  Buttons: <ButtonsSection />,
+  Charts: <ChartsSection />,
+  Checkboxes: <CheckboxesSection />,
+  DataCards: <DataCardsSection />,
+  Dropdowns: <DropdownsSection />,
+  Facepile: <FacepileSection />,
+  Lists: <ListsSection />,
+  LogViewer: <LogViewerSection />,
+  Pagination: <PaginationSection />,
+  Pivot: <PivotSection />,
+  Searchboxes: <SearchboxesSection />,
+  Spinbuttons: <SpinbuttonsSection />,
+  Textfields: <TextfieldsSection />,
+  Tooltips: <TooltipsSection />,
+};
+
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
 
@@ -1144,29 +1163,14 @@ const DesignKit: React.FC = () => {
             {componentOrder.map((componentId) => (
               <li key={componentId}>
                 <Link reloadDocument to={`#${componentId}`}>
-                  {Components[componentId]}
+                  {ComponentTitles[componentId]}
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
         <main>
-          <ButtonsSection />
-          <DropdownsSection />
-          <CheckboxesSection />
-          <SearchboxesSection />
-          <SpinbuttonsSection />
-          <TextfieldsSection />
-          <ListsSection />
-          <BreadcrumbsSection />
-          <FacepileSection />
-          <ActionBarSection />
-          <PivotSection />
-          <PaginationSection />
-          <DataCardsSection />
-          <LogViewerSection />
-          <TooltipsSection />
-          <ChartsSection />
+          {componentOrder.map((componentId) => Components[componentId])}
         </main>
       </div>
     </Page>
