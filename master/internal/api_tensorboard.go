@@ -143,6 +143,23 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
+	expIDsToWorkspaceIDs, err := a.m.db.ExperimentIDsToWorkspaceIDs(ctx, resp.Tensorboard.ExperimentIds)
+	if err != nil {
+		return nil, err
+	}
+
+	trialIDToWorkspaceID, err := a.m.db.TrialIDsToWorkspaceIDs(ctx, resp.Tensorboard.TrialIds)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range expIDsToWorkspaceIDs {
+		fmt.Printf("experiment %d : workspace %d\n", k, v)
+	}
+	for k, v := range trialIDToWorkspaceID {
+		fmt.Printf("trial %d : workspace %d\n", k, v)
+	}
+
 	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
 		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId)); err != nil {
 		return nil, err

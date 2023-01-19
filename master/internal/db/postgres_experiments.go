@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/uptrace/bun"
 	"reflect"
 	"time"
 
@@ -958,6 +959,78 @@ SELECT experiment_id FROM trials where id = $1
 		return 0, errors.Wrapf(err, "querying for experiment id for trial %v", trialID)
 	}
 	return experimentID, nil
+}
+
+func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs []int32) (
+	map[int]int, error) {
+	if len(experimentIDs) == 0 {
+		return map[int]int{}, nil
+	}
+
+	var rows []map[string]interface{}
+	err := Bun().NewSelect().TableExpr("workspaces AS w").
+		ColumnExpr("w.id AS workspace_id").
+		ColumnExpr("e.id AS exp_id").
+		Join("JOIN projects p ON w.id = p.workspace_id").
+		Join("JOIN experiments e ON p.id = e.project_id").
+		Where("e.id IN (?)", bun.In(experimentIDs)).
+		Scan(ctx, &rows)
+
+	if err != nil {
+		return nil, err
+	}
+
+	expIDToWorkspaceID := map[int]int{}
+
+	for _, row := range rows {
+		workspaceID, ok := row["workspace_id"].(int64)
+		if !ok {
+			return nil, fmt.Errorf("workspaceID is not an int64")
+		}
+		experimentID, ok := row["exp_id"].(int64)
+		if !ok {
+			return nil, fmt.Errorf("experimentID is not an int64")
+		}
+		expIDToWorkspaceID[int(experimentID)] = int(workspaceID)
+	}
+
+	return expIDToWorkspaceID, nil
+}
+
+func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) (map[int]int, error) {
+	if len(trialIDs) == 0 {
+		return map[int]int{}, nil
+	}
+
+	var rows []map[string]interface{}
+	err := Bun().NewSelect().TableExpr("workspaces AS w").
+		ColumnExpr("w.id AS workspace_id").
+		ColumnExpr("t.id AS trial_id").
+		Join("JOIN projects p ON w.id = p.workspace_id").
+		Join("JOIN experiments e ON p.id = e.project_id").
+		Join("JOIN trials t ON e.id = t.experiment_id").
+		Where("trial_id IN (?)", bun.In(trialIDs)).
+		Scan(ctx, &rows)
+
+	if err != nil {
+		return nil, err
+	}
+
+	trialIDToWorkspaceID := map[int]int{}
+
+	for _, row := range rows {
+		workspaceID, ok := row["workspace_id"].(int64)
+		if !ok {
+			return nil, fmt.Errorf("workspaceID is not an int64")
+		}
+		trialID, ok := row["trial_id"].(int64)
+		if !ok {
+			return nil, fmt.Errorf("trialID is not an int64")
+		}
+		trialIDToWorkspaceID[int(trialID)] = int(workspaceID)
+	}
+
+	return trialIDToWorkspaceID, nil
 }
 
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
