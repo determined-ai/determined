@@ -248,7 +248,10 @@ VALUES
 			return errors.Wrap(err, "inserting validation metrics")
 		}
 
-		if err := setTrialBestValidation(tx, int(m.TrialId), int(m.TrialRunId), int(m.StepsCompleted)); err != nil {
+		if err := setTrialBestValidation(
+			tx, int(m.TrialId),
+			int(m.TrialRunId),
+			int(m.StepsCompleted)); err != nil {
 			return errors.Wrap(err, "updating trial best validation")
 		}
 
@@ -414,7 +417,7 @@ WHERE id = $1
 
 // setTrialBestValidation sets `public.trials.best_validation_id` to the `id` of the row in
 // `public.validations` corresponding to the trial's best validation.
-func setTrialBestValidation(tx *sqlx.Tx, trialId int, trialRunId int, stepsCompleted int) error {
+func setTrialBestValidation(tx *sqlx.Tx, trialID int, trialRunID int, stepsCompleted int) error {
 	_, err := tx.Exec(`
 WITH const AS (
     SELECT t.id as trial_id,
