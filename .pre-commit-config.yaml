@@ -59,6 +59,15 @@ repos:
         additional_dependencies: ['click==8.0.4']
         exclude: ^(harness/determined/common/api/bindings.py)
 
+  - repo: https://github.com/dzhu/rstfmt
+    # TODO switch this to a tag after https://github.com/dzhu/rstfmt/issues/22
+    rev: master
+    hooks:
+      - id: rstfmt
+        args:
+          - -w
+          - '100'  # keep this annoyingly in sync with docs/Makefile
+
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0
   #   hooks:
