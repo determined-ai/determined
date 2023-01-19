@@ -171,8 +171,8 @@ import (
 )
 
 func main() {
-    manifest := *openapiclient.NewManifest("ManifestVersion_example", *openapiclient.NewClientMetadata()) // Manifest | The manifest to launch
-    impersonate := "impersonate_example" // string | User to impersonate (optional)
+    manifest := *openapiclient.NewManifest("ManifestVersion_example", *openapiclient.NewClientMetadata("Name_example")) // Manifest | The manifest to launch
+    impersonate := "impersonate_example" // string | User to impersonate (user encoded in authorization token must be configured as an administrator) (optional)
 
     configuration := openapiclient.NewConfiguration()
     api_client := openapiclient.NewAPIClient(configuration)
@@ -198,7 +198,7 @@ Other parameters are passed through a pointer to a apiLaunchRequest struct via t
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **manifest** | [**Manifest**](Manifest.md) | The manifest to launch | 
- **impersonate** | **string** | User to impersonate | 
+ **impersonate** | **string** | User to impersonate (user encoded in authorization token must be configured as an administrator) | 
 
 ### Return type
 
@@ -237,8 +237,8 @@ import (
 )
 
 func main() {
-    manifest := *openapiclient.NewManifest("ManifestVersion_example", *openapiclient.NewClientMetadata()) // Manifest | The manifest to launch
-    impersonate := "impersonate_example" // string | User to impersonate (optional)
+    manifest := *openapiclient.NewManifest("ManifestVersion_example", *openapiclient.NewClientMetadata("Name_example")) // Manifest | The manifest to launch
+    impersonate := "impersonate_example" // string | User to impersonate (user encoded in authorization token must be configured as an administrator) (optional)
 
     configuration := openapiclient.NewConfiguration()
     api_client := openapiclient.NewAPIClient(configuration)
@@ -264,7 +264,7 @@ Other parameters are passed through a pointer to a apiLaunchAsyncRequest struct 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **manifest** | [**Manifest**](Manifest.md) | The manifest to launch | 
- **impersonate** | **string** | User to impersonate | 
+ **impersonate** | **string** | User to impersonate (user encoded in authorization token must be configured as an administrator) | 
 
 ### Return type
 

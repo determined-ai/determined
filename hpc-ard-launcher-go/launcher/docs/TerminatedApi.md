@@ -290,7 +290,7 @@ Name | Type | Description  | Notes
 
 ## ListAllTerminated
 
-> []DispatchInfo ListAllTerminated(ctx).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+> map[string][]DispatchInfo ListAllTerminated(ctx).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
 
 Gets all terminated environments that the user can view
 
@@ -320,7 +320,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.ListAllTerminated``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `ListAllTerminated`: []DispatchInfo
+    // response from `ListAllTerminated`: map[string][]DispatchInfo
     fmt.Fprintf(os.Stdout, "Response from `TerminatedApi.ListAllTerminated`: %v\n", resp)
 }
 ```
@@ -344,7 +344,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**[]DispatchInfo**](DispatchInfo.md)
+[**map[string][]DispatchInfo**](array.md)
 
 ### Authorization
 
@@ -362,7 +362,7 @@ Name | Type | Description  | Notes
 
 ## ListOwnedTerminated
 
-> []DispatchInfo ListOwnedTerminated(ctx, owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
+> map[string][]DispatchInfo ListOwnedTerminated(ctx, owner).Limit(limit).Offset(offset).Reverse(reverse).EventLimit(eventLimit).State(state).Execute()
 
 Gets all terminated environments belonging to the given owner
 
@@ -393,7 +393,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `TerminatedApi.ListOwnedTerminated``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `ListOwnedTerminated`: []DispatchInfo
+    // response from `ListOwnedTerminated`: map[string][]DispatchInfo
     fmt.Fprintf(os.Stdout, "Response from `TerminatedApi.ListOwnedTerminated`: %v\n", resp)
 }
 ```
@@ -422,7 +422,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**[]DispatchInfo**](DispatchInfo.md)
+[**map[string][]DispatchInfo**](array.md)
 
 ### Authorization
 

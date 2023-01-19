@@ -10,7 +10,7 @@ Method | HTTP request | Description
 [**DeleteEnvironmentLogs**](MonitoringApi.md#DeleteEnvironmentLogs) | **Delete** /monitoring/{owner}/environments/{environment}/logs | Deletes all available log files for the environment
 [**GetEnvironmentDetails**](MonitoringApi.md#GetEnvironmentDetails) | **Get** /monitoring/{owner}/environments/{environment} | Gets the current details of the environment
 [**GetEnvironmentStatus**](MonitoringApi.md#GetEnvironmentStatus) | **Get** /monitoring/{owner}/environments/{environment}/status | Gets the status of an environment
-[**ListEnvironmentLogs**](MonitoringApi.md#ListEnvironmentLogs) | **Get** /monitoring/{owner}/environments/{environment}/logs | Gets the available log files for the environment
+[**ListEnvironmentLogs**](MonitoringApi.md#ListEnvironmentLogs) | **Get** /monitoring/{owner}/environments/{environment}/logs | Gets the content of a log file from the environment
 [**LoadEnvironmentLog**](MonitoringApi.md#LoadEnvironmentLog) | **Get** /monitoring/{owner}/environments/{environment}/logs/{log} | Gets the available log files for the environment
 
 
@@ -444,9 +444,9 @@ Name | Type | Description  | Notes
 
 ## ListEnvironmentLogs
 
-> []EnvironmentLogSource ListEnvironmentLogs(ctx, owner, environment).Execute()
+> map[string][]EnvironmentLogSource ListEnvironmentLogs(ctx, owner, environment).Execute()
 
-Gets the available log files for the environment
+Gets the content of a log file from the environment
 
 ### Example
 
@@ -471,7 +471,7 @@ func main() {
         fmt.Fprintf(os.Stderr, "Error when calling `MonitoringApi.ListEnvironmentLogs``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
     }
-    // response from `ListEnvironmentLogs`: []EnvironmentLogSource
+    // response from `ListEnvironmentLogs`: map[string][]EnvironmentLogSource
     fmt.Fprintf(os.Stdout, "Response from `MonitoringApi.ListEnvironmentLogs`: %v\n", resp)
 }
 ```
@@ -497,7 +497,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**[]EnvironmentLogSource**](EnvironmentLogSource.md)
+[**map[string][]EnvironmentLogSource**](array.md)
 
 ### Authorization
 
