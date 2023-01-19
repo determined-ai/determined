@@ -1,11 +1,11 @@
 import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import LearningCurveChart from 'components/LearningCurveChart';
+import { LineChart, Serie } from 'components/kit/LineChart';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
-import { paths } from 'routes/utils';
+// import { paths } from 'routes/utils';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSampleResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -15,7 +15,7 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { flattenObject } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
-import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
+// import { isNewTabClickEvent, openBlank, routeToReactUrl } from 'shared/utils/routes';
 import {
   ExperimentAction as Action,
   CommandResponse,
@@ -55,8 +55,7 @@ const LearningCurve: React.FC<Props> = ({
 }: Props) => {
   const { ui } = useUI();
   const [trialIds, setTrialIds] = useState<number[]>([]);
-  const [batches, setBatches] = useState<number[]>([]);
-  const [chartData, setChartData] = useState<(number | null)[][]>([]);
+  const [chartData, setChartData] = useState<Serie[]>([]);
   const [trialHps, setTrialHps] = useState<TrialHParams[]>([]);
   const [highlightedTrialId, setHighlightedTrialId] = useState<number>();
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -74,18 +73,18 @@ const LearningCurve: React.FC<Props> = ({
     }, {} as Record<string, Hyperparameter>);
   }, [experiment.hyperparameters, fullHParams]);
 
-  const handleTrialClick = useCallback(
-    (event: MouseEvent, trialId: number) => {
-      const href = paths.trialDetails(trialId, experiment.id);
-      if (isNewTabClickEvent(event)) openBlank(href);
-      else routeToReactUrl(href);
-    },
-    [experiment.id],
-  );
+  // const handleTrialClick = useCallback(
+  //   (event: MouseEvent, trialId: number) => {
+  //     const href = paths.trialDetails(trialId, experiment.id);
+  //     if (isNewTabClickEvent(event)) openBlank(href);
+  //     else routeToReactUrl(href);
+  //   },
+  //   [experiment.id],
+  // );
 
-  const handleTrialFocus = useCallback((trialId: number | null) => {
-    setHighlightedTrialId(trialId != null ? trialId : undefined);
-  }, []);
+  // const handleTrialFocus = useCallback((trialId: number | null) => {
+  //   setHighlightedTrialId(trialId != null ? trialId : undefined);
+  // }, []);
 
   const handleTableMouseEnter = useCallback((event: React.MouseEvent, record: TrialHParams) => {
     if (record.id) setHighlightedTrialId(record.id);
@@ -163,19 +162,25 @@ const LearningCurve: React.FC<Props> = ({
         const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
         setTrialHps(newTrialHps);
 
-        const newBatches = Object.values(batchesMap);
-        setBatches(newBatches);
-
-        const newChartData = newTrialIds.map((trialId) =>
-          newBatches.map((batch) => {
-            /**
-             * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-             * dynamic min/max ranges via uPlot.Scales.
-             */
-            const value = metricsMap[trialId][batch];
-            return Number.isFinite(value) ? value : null;
-          }),
-        );
+        const newChartData = [
+          {
+            data: newBatches,
+          },
+          ...newTrialIds
+            .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
+            .map((trialId) => ({
+              data: newBatches.map((batch) => {
+                /**
+                 * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+                 * dynamic min/max ranges via uPlot.Scales.
+                 */
+                const value = metricsMap[trialId][batch];
+                return Number.isFinite(value) ? value : null;
+              }),
+              // key: trialId,
+              name: `trial ${trialId}`,
+            })),
+        ];
         setChartData(newChartData);
 
         // One successful event as come through.
@@ -188,7 +193,7 @@ const LearningCurve: React.FC<Props> = ({
     );
 
     return () => canceler.abort();
-  }, [experiment.id, selectedMaxTrial, selectedMetric, ui.isPageHidden]);
+  }, [experiment.id, selectedMaxTrial, selectedMetric, selectedRowKeys, ui.isPageHidden]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {
@@ -256,16 +261,14 @@ const LearningCurve: React.FC<Props> = ({
       <Section bodyBorder bodyScroll filters={filters} loading={!hasLoaded}>
         <div className={css.container}>
           <div className={css.chart}>
-            <LearningCurveChart
-              data={chartData}
-              focusedTrialId={highlightedTrialId}
-              selectedMetric={selectedMetric}
-              selectedScale={selectedScale}
-              selectedTrialIds={selectedRowKeys}
-              trialIds={trialIds}
-              xValues={batches}
-              onTrialClick={handleTrialClick}
-              onTrialFocus={handleTrialFocus}
+            <LineChart
+              focusedSeries={highlightedTrialId && trialIds.indexOf(highlightedTrialId)}
+              scale={selectedScale}
+              series={chartData}
+              // onSeriesClick={handleTrialClick}
+              // onSeriesFocus={handleTrialFocus}
+              xLabel="Batches Processed"
+              yLabel={`[${selectedMetric.type[0].toUpperCase()}] ${selectedMetric.name}`}
             />
           </div>
           <TableBatch
