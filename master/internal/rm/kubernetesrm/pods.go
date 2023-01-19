@@ -587,24 +587,18 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	toKillPods := &k8sV1.PodList{}
 	savedPodNames := make(map[string]bool)
 	for _, pod := range pods.Items {
-		var resourcePool string
-		foundEnv := false
-		for _, c := range pod.Spec.Containers {
-			for _, e := range c.Env {
-				if e.Name == resourcePoolEnvVar {
-					resourcePool = e.Value
-					foundEnv = true
-				}
-				if foundEnv {
-					break
+		resourcePool := (func() string {
+			for _, c := range pod.Spec.Containers {
+				for _, e := range c.Env {
+					if e.Name == resourcePoolEnvVar {
+						return e.Value
+					}
 				}
 			}
-			if foundEnv {
-				break
-			}
-		}
+			return ""
+		})()
 
-		if !foundEnv {
+		if resourcePool == "" {
 			ctx.Log().Debugf("deleting pod '%s' without environment variable '%s'",
 				pod.Name, resourcePoolEnvVar)
 			toKillPods.Items = append(toKillPods.Items, pod)
