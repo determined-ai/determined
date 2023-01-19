@@ -178,10 +178,9 @@ func (s *asyncHalvingSearch) validationCompleted(
 	ctx context, requestID model.RequestID, metrics Metrics, op ValidateAfter,
 ) ([]Operation, error) {
 	s.PendingTrials--
-	metric, ok := metrics.(ScalarMetric)
-	if ok {
+	if metric, ok := metrics.(ScalarMetric); ok {
 		value := metric.Value
-		if s.SmallerIsBetter {
+		if !s.SmallerIsBetter {
 			value *= -1
 		}
 		return s.promoteAsync(ctx, requestID, value), nil
