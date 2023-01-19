@@ -130,7 +130,11 @@ def test_run_random_searcher_exp_core_api(
         config, conf.fixtures_path("custom_searcher"), 1
     )
 
+<<<<<<< HEAD
     session = api_utils.determined_test_session()
+=======
+    session = utils.determined_test_session()
+>>>>>>> 041abccc1 (pr changes)
 
     # searcher experiment
     searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment
@@ -201,18 +205,30 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
 
     # searcher experiment
     searcher_exp = bindings.get_GetExperiment(
+<<<<<<< HEAD
         api_utils.determined_test_session(), experimentId=searcher_exp_id
+=======
+        utils.determined_test_session(), experimentId=searcher_exp_id
+>>>>>>> 041abccc1 (pr changes)
     ).experiment
     assert searcher_exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED
 
     # actual experiment
     experiment = bindings.get_GetExperiment(
+<<<<<<< HEAD
         api_utils.determined_test_session(), experimentId=multi_trial_exp_id
+=======
+        utils.determined_test_session(), experimentId=multi_trial_exp_id
+>>>>>>> 041abccc1 (pr changes)
     ).experiment
     assert experiment.numTrials == 5
 
     trials = bindings.get_GetExperimentTrials(
+<<<<<<< HEAD
         api_utils.determined_test_session(), experimentId=experiment.id
+=======
+        utils.determined_test_session(), experimentId=experiment.id
+>>>>>>> 041abccc1 (pr changes)
     ).trials
     for trial in trials:
         assert trial.state == bindings.determinedexperimentv1State.STATE_COMPLETED
@@ -390,7 +406,11 @@ def test_run_asha_searcher_exp_core_api(
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.fixtures_path("custom_searcher"), 1
     )
+<<<<<<< HEAD
     session = api_utils.determined_test_session()
+=======
+    session = utils.determined_test_session()
+>>>>>>> 041abccc1 (pr changes)
 
     # searcher experiment
     searcher_exp = bindings.get_GetExperiment(session, experimentId=experiment_id).experiment

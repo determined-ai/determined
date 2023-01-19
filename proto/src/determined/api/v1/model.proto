@@ -124,6 +124,8 @@ message PostModelRequest {
   repeated string labels = 4;
   // The name of the workspace associated with this model.
   optional string workspace_name = 5;
+  // The id of the workspace associated with this model. 
+  optional int32 workspace_id = 7; 
   // Notes associated with this model.
   string notes = 6;
 }

@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	modelauth "github.com/determined-ai/determined/master/internal/model"
@@ -75,16 +76,23 @@ func (m *Master) canDoActionOnCheckpoint(
 	return nil
 }
 
-func (m *Master) canDoActionOnCheckpointThroughModel(ctx context.Context, curUser model.User,
-	id uuid.UUID) error {
-	modelIDs, err := m.db.GetModelIDsAssociatedWithCheckpoint(id)
+func (m *Master) canDoActionOnCheckpointThroughModel(
+	ctx context.Context, curUser model.User, id uuid.UUID,
+) error {
+	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, id)
 	if err != nil {
 		return err
 	}
 	for _, id := range modelIDs {
 		model := &modelv1.Model{}
-		_ = m.db.QueryProto("get_model_by_id", model, id)
-		ok, _ := modelauth.AuthZProvider.Get().CanGetModel(ctx, curUser, model, *model.WorkspaceId)
+		err = m.db.QueryProto("get_model_by_id", model, id)
+		if !errors.Is(err, db.ErrNotFound) {
+			return err
+		}
+		ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, curUser, model, *model.WorkspaceId)
+		if err != nil {
+			return err
+		}
 		if ok {
 			return nil
 		}
@@ -93,6 +101,7 @@ func (m *Master) canDoActionOnCheckpointThroughModel(ctx context.Context, curUse
 	return status.Error(codes.PermissionDenied,
 		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
 }
+
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
@@ -102,16 +111,16 @@ func (a *apiServer) GetCheckpoint(
 	}
 	errE := a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
-	ckptUUID, err := uuid.Parse(req.CheckpointUuid)
-	if err != nil {
-		return nil, err
-	}
-	errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
 
-	if errE != nil && errM != nil {
-		// allow viewing checkpoint through any model associated with checkpoint.
-		return nil, errE
-		// Nikita: TODO figure out a better format here to include errE and errM.
+	if errE != nil {
+		ckptUUID, err := uuid.Parse(req.CheckpointUuid)
+		if err != nil {
+			return nil, err
+		}
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
+		if errM != nil {
+			return nil, errE // Nikita TODO: Format this to give info about models too?.
+		}
 	}
 
 	resp := &apiv1.GetCheckpointResponse{}

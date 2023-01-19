@@ -307,7 +307,7 @@ class Model:
         req = bindings.v1PatchModel(metadata=self.metadata)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 
-    def move_model_to_workspace(self, workspace_name: str) -> None:
+    def move_to_workspace(self, workspace_name: str) -> None:
         req = bindings.v1PatchModel(workspaceName=workspace_name)
         bindings.patch_PatchModel(self._session, body=req, modelName=self.name)
 

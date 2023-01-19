@@ -64,12 +64,20 @@ def activate_experiment(experiment_id: int) -> None:
 
 
 def cancel_experiment(experiment_id: int) -> None:
+<<<<<<< HEAD
     bindings.post_CancelExperiment(api_utils.determined_test_session(), id=experiment_id)
+=======
+    bindings.post_CancelExperiment(utils.determined_test_session(), id=experiment_id)
+>>>>>>> 041abccc1 (pr changes)
     wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_CANCELED)
 
 
 def cancel_trial(trial_id: int) -> None:
+<<<<<<< HEAD
     bindings.post_KillTrial(api_utils.determined_test_session(), id=trial_id)
+=======
+    bindings.post_KillTrial(utils.determined_test_session(), id=trial_id)
+>>>>>>> 041abccc1 (pr changes)
     wait_for_trial_state(trial_id, determinedexperimentv1State.STATE_CANCELED)
 
 
@@ -82,7 +90,11 @@ def wait_for_experiment_by_name_is_active(
     for seconds_waited in range(max_wait_secs):
         try:
             response = bindings.get_GetExperiments(
+<<<<<<< HEAD
                 api_utils.determined_test_session(), name=experiment_name
+=======
+                utils.determined_test_session(), name=experiment_name
+>>>>>>> 041abccc1 (pr changes)
             ).experiments
             if len(response) == 0:
                 time.sleep(1)
@@ -311,7 +323,11 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
 
 
 def experiment_first_trial(exp_id: int) -> int:
+<<<<<<< HEAD
     session = api_utils.determined_test_session()
+=======
+    session = utils.determined_test_session()
+>>>>>>> 041abccc1 (pr changes)
     trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials
 
     assert len(trials) > 0
@@ -321,18 +337,30 @@ def experiment_first_trial(exp_id: int) -> int:
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
+<<<<<<< HEAD
     r = bindings.get_GetExperiment(api_utils.determined_test_session(), experimentId=experiment_id)
+=======
+    r = bindings.get_GetExperiment(utils.determined_test_session(), experimentId=experiment_id)
+>>>>>>> 041abccc1 (pr changes)
     assert r.experiment and r.experiment.config
     return r.experiment.config
 
 
 def experiment_state(experiment_id: int) -> determinedexperimentv1State:
+<<<<<<< HEAD
     r = bindings.get_GetExperiment(api_utils.determined_test_session(), experimentId=experiment_id)
+=======
+    r = bindings.get_GetExperiment(utils.determined_test_session(), experimentId=experiment_id)
+>>>>>>> 041abccc1 (pr changes)
     return r.experiment.state
 
 
 def trial_state(trial_id: int) -> determinedexperimentv1State:
+<<<<<<< HEAD
     r = bindings.get_GetTrial(api_utils.determined_test_session(), trialId=trial_id)
+=======
+    r = bindings.get_GetTrial(utils.determined_test_session(), trialId=trial_id)
+>>>>>>> 041abccc1 (pr changes)
     return r.trial.state
 
 
@@ -345,7 +373,11 @@ class TrialPlusWorkload:
 
 
 def experiment_trials(experiment_id: int) -> List[TrialPlusWorkload]:
+<<<<<<< HEAD
     sess = api_utils.determined_test_session()
+=======
+    sess = utils.determined_test_session()
+>>>>>>> 041abccc1 (pr changes)
     r1 = bindings.get_GetExperimentTrials(sess, experimentId=experiment_id)
     src_trials = r1.trials
     trials = []
@@ -411,7 +443,11 @@ def num_error_trials(experiment_id: int) -> int:
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     return [
         tl.message
+<<<<<<< HEAD
         for tl in api.trial_logs(api_utils.determined_test_session(), trial_id, follow=follow)
+=======
+        for tl in api.trial_logs(utils.determined_test_session(), trial_id, follow=follow)
+>>>>>>> 041abccc1 (pr changes)
     ]
 
 

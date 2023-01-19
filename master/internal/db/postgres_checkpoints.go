@@ -37,20 +37,15 @@ func (db *PgDB) CheckpointByUUIDs(ckptUUIDs []uuid.UUID) ([]model.Checkpoint, er
 
 // GetModelIDsAssociatedWithCheckpoint returns the model ids associated with a checkpoint,
 // returning nil if error.
-func (db *PgDB) GetModelIDsAssociatedWithCheckpoint(ckptUUID uuid.UUID) ([]int32, error) {
-	var modelIDRows []struct {
-		ID int32
-	}
-	if err := db.queryRows(`
+func GetModelIDsAssociatedWithCheckpoint(ctx context.Context, ckptUUID uuid.UUID) ([]int32, error) {
+	var modelIDs []int32
+	if err := Bun().NewRaw(`
 	SELECT DISTINCT(model_id) as ID FROM model_versions m INNER JOIN checkpoints_view c
-	ON m.checkpoint_uuid = c.uuid WHERE c.uuid = $1`, &modelIDRows, ckptUUID.String()); err != nil {
+	ON m.checkpoint_uuid = c.uuid WHERE c.uuid = ?`,
+		ckptUUID.String()).Scan(ctx, &modelIDs); err != nil {
 		return nil, fmt.Errorf("getting model ids associated with checkpoint uuid: %w", err)
 	}
 
-	var modelIDs []int32
-	for _, mRow := range modelIDRows {
-		modelIDs = append(modelIDs, mRow.ID)
-	}
 	return modelIDs, nil
 }
 

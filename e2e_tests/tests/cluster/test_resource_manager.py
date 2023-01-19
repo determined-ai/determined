@@ -96,12 +96,20 @@ def test_allocation_resources_incremental_release() -> None:
 
     finally:
         for exp_id in cleanup_exp_ids:
+<<<<<<< HEAD
             bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
+=======
+            bindings.post_KillExperiment(utils.determined_test_session(), id=exp_id)
+>>>>>>> 041abccc1 (pr changes)
             exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_CANCELED)
 
 
 def list_free_agents() -> List[bindings.v1Agent]:
+<<<<<<< HEAD
     agents = bindings.get_GetAgents(api_utils.determined_test_session())
+=======
+    agents = bindings.get_GetAgents(utils.determined_test_session())
+>>>>>>> 041abccc1 (pr changes)
     if not agents.agents:
         pytest.fail(f"missing agents: {agents}")
 

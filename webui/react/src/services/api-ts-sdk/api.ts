@@ -5607,6 +5607,12 @@ export interface V1PatchModel {
      * @memberof V1PatchModel
      */
     workspaceName?: string;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    workspaceId?: string;
 }
 
 /**
@@ -6035,6 +6041,12 @@ export interface V1PostModelRequest {
      * @memberof V1PostModelRequest
      */
     workspaceName?: string;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {number}
+     * @memberof V1PostModelRequest
+     */
+    workspaceId?: number;
     /**
      * Notes associated with this model.
      * @type {string}

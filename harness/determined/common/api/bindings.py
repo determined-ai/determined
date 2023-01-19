@@ -6636,6 +6636,7 @@ class v1PatchModel:
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     name: "typing.Optional[str]" = None
     notes: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[str]" = None
     workspaceName: "typing.Optional[str]" = None
 
     def __init__(
@@ -6646,6 +6647,7 @@ class v1PatchModel:
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[str, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(description, Unset):
@@ -6658,6 +6660,8 @@ class v1PatchModel:
             self.name = name
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
         if not isinstance(workspaceName, Unset):
             self.workspaceName = workspaceName
 
@@ -6675,6 +6679,8 @@ class v1PatchModel:
             kwargs["name"] = obj["name"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         if "workspaceName" in obj:
             kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
@@ -6692,6 +6698,8 @@ class v1PatchModel:
             out["name"] = self.name
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         if not omit_unset or "workspaceName" in vars(self):
             out["workspaceName"] = self.workspaceName
         return out
@@ -7253,6 +7261,7 @@ class v1PostModelRequest:
     labels: "typing.Optional[typing.Sequence[str]]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     notes: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
     workspaceName: "typing.Optional[str]" = None
 
     def __init__(
@@ -7263,6 +7272,7 @@ class v1PostModelRequest:
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
         workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
@@ -7274,6 +7284,8 @@ class v1PostModelRequest:
             self.metadata = metadata
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
         if not isinstance(workspaceName, Unset):
             self.workspaceName = workspaceName
 
@@ -7290,6 +7302,8 @@ class v1PostModelRequest:
             kwargs["metadata"] = obj["metadata"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         if "workspaceName" in obj:
             kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
@@ -7306,6 +7320,8 @@ class v1PostModelRequest:
             out["metadata"] = self.metadata
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         if not omit_unset or "workspaceName" in vars(self):
             out["workspaceName"] = self.workspaceName
         return out

@@ -371,7 +371,11 @@ def test_workspace_org() -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("file_type", ["json", "yaml"])
 def test_workspace_checkpoint_storage_file(file_type: str) -> None:
+<<<<<<< HEAD
     sess = api_utils.determined_test_session(admin=True)
+=======
+    sess = utils.determined_test_session(admin=True)
+>>>>>>> 041abccc1 (pr changes)
     w_name = uuid.uuid4().hex[:8]
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "config")
@@ -401,7 +405,11 @@ host_path: /tmp/yaml"""
 
 @pytest.mark.e2e_cpu
 def test_reset_workspace_checkpoint_storage_conf() -> None:
+<<<<<<< HEAD
     sess = api_utils.determined_test_session(admin=True)
+=======
+    sess = utils.determined_test_session(admin=True)
+>>>>>>> 041abccc1 (pr changes)
 
     # Make project with checkpoint storage config.
     resp_w = bindings.post_PostWorkspace(

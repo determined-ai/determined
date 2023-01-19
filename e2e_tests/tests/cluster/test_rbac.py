@@ -1,7 +1,11 @@
 import pytest
 
 from determined.cli.user_groups import group_name_to_group_id, usernames_to_user_ids
+<<<<<<< HEAD
 from tests import api_utils
+=======
+from tests import api_utils as utils
+>>>>>>> 041abccc1 (pr changes)
 
 from .test_groups import det_cmd, det_cmd_expect_error, det_cmd_json
 from .test_users import (
@@ -454,7 +458,11 @@ def test_rbac_describe_role() -> None:
             check=True,
         )
 
+<<<<<<< HEAD
         sess = api_utils.determined_test_session()
+=======
+        sess = utils.determined_test_session()
+>>>>>>> 041abccc1 (pr changes)
         user_id = usernames_to_user_ids(sess, [test_user_creds.username])[0]
         group_id = group_name_to_group_id(sess, group_name)
 

@@ -232,7 +232,9 @@ func (a *apiServer) PostModel(
 		return nil, err
 	}
 	workspaceID := 1
-	if req.WorkspaceName != nil {
+	if req.WorkspaceId != nil { // default is to use workspace ID
+		workspaceID = int(*req.WorkspaceId)
+	} else if req.WorkspaceName != nil {
 		w := workspacev1.Workspace{}
 		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
 		if err != nil {
@@ -334,11 +336,18 @@ func (a *apiServer) PatchModel(
 	}
 
 	currWorkspaceID := *(currModel.WorkspaceId)
-	if req.Model.WorkspaceName != nil {
+	if req.Model.WorkspaceId != nil || req.Model.WorkspaceName != nil {
 		w := workspacev1.Workspace{}
-		err := a.m.db.Query("get_workspace_from_name", &w, *req.Model.WorkspaceName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.Model.WorkspaceName)
+		if req.Model.WorkspaceId != nil { // default
+			err := a.m.db.Query("get_workspace", &w, *req.Model.WorkspaceId)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to get workspace with id %v", *req.Model.WorkspaceId)
+			}
+		} else {
+			err := a.m.db.Query("get_workspace_from_name", &w, *req.Model.WorkspaceName)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to get workspace %v", *req.Model.WorkspaceName)
+			}
 		}
 
 		newWorkspaceID := w.Id
