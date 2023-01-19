@@ -1,5 +1,7 @@
-import { Button, Form, Input, Modal } from 'antd';
+import { Form, Input, Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
+
+import Button from 'components/kit/Button';
 
 import css from './TextEditorModal.module.scss';
 

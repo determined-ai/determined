@@ -137,6 +137,23 @@ const WorkspaceDetails: React.FC = () => {
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
+  // Users and Groups that are not already a part of the workspace
+  const addableGroups: V1Group[] = useMemo(
+    () =>
+      groups
+        ? groups
+            .map((groupDetails) => groupDetails.group)
+            .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
+        : [],
+    [groups, groupsAssignedDirectlyIds],
+  );
+
+  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
+  const addableUsersAndGroups = useMemo(
+    () => [...addableGroups, ...addableUsers],
+    [addableGroups, addableUsers],
+  );
+
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!workspace) {
       return [];
@@ -151,6 +168,7 @@ const WorkspaceDetails: React.FC = () => {
       {
         children: (
           <WorkspaceMembers
+            addableUsersAndGroups={addableUsersAndGroups}
             assignments={workspaceAssignments}
             fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
             groupsAssignedDirectly={groupsAssignedDirectly}
@@ -166,6 +184,7 @@ const WorkspaceDetails: React.FC = () => {
       },
     ];
   }, [
+    addableUsersAndGroups,
     fetchGroupsAndUsersAssignedToWorkspace,
     groupsAssignedDirectly,
     id,
@@ -208,15 +227,6 @@ const WorkspaceDetails: React.FC = () => {
     navigate(paths.workspaceDetails(workspaceId, tab), { replace: true });
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
-
-  // Users and Groups that are not already a part of the workspace
-  const addableGroups: V1Group[] = groups
-    ? groups
-        .map((groupDetails) => groupDetails.group)
-        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
-    : [];
-  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
-  const addableUsersAndGroups = [...addableGroups, ...addableUsers];
 
   useEffect(() => {
     return () => canceler.abort();

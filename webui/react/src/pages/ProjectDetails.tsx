@@ -10,6 +10,7 @@ import Tooltip from 'components/kit/Tooltip';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import ProjectActionDropdown from 'components/ProjectActionDropdown';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getProject, getWorkspace, postUserActivity } from 'services/api';
@@ -43,6 +44,7 @@ const ProjectDetails: React.FC = () => {
     NotLoaded: () => undefined,
   });
   const { projectId } = useParams<Params>();
+  const trialsComparisonEnabled = useFeature().isOn('trials_comparison');
 
   const [project, setProject] = useState<Project>();
 
@@ -118,21 +120,23 @@ const ProjectDetails: React.FC = () => {
         key: 'notes',
         label: 'Notes',
       });
-      items.push({
-        children: (
-          <div className={css.tabPane}>
-            <div className={css.base}>
-              <TrialsComparison projectId={projectId} />
+      if (trialsComparisonEnabled) {
+        items.push({
+          children: (
+            <div className={css.tabPane}>
+              <div className={css.base}>
+                <TrialsComparison projectId={projectId} />
+              </div>
             </div>
-          </div>
-        ),
-        key: 'trials',
-        label: 'Trials',
-      });
+          ),
+          key: 'trials',
+          label: 'Trials',
+        });
+      }
     }
 
     return items;
-  }, [fetchProject, id, project, projectId]);
+  }, [fetchProject, id, project, trialsComparisonEnabled, projectId]);
 
   usePolling(fetchProject, { rerunOnNewFn: true });
   usePolling(fetchWorkspace, { rerunOnNewFn: true });
@@ -192,7 +196,7 @@ const ProjectDetails: React.FC = () => {
         type="project"
       />
       {/* TODO: Clean up once we standardize page layouts */}
-      <div style={{ padding: 16 }}>
+      <div style={{ height: '100%', padding: 16 }}>
         <DynamicTabs
           basePath={paths.projectDetailsBasePath(id)}
           destroyInactiveTabPane
