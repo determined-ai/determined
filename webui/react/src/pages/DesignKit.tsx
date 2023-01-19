@@ -61,24 +61,9 @@ const Components = {
 type ComponentNames = ValueOf<typeof Components>;
 type ComponentIds = keyof typeof Components;
 
-const componentOrder: ComponentIds[] = [
-  'Buttons',
-  'Dropdowns',
-  'Checkboxes',
-  'Searchboxes',
-  'Spinbuttons',
-  'Textfields',
-  'Lists',
-  'Breadcrumbs',
-  'Facepile',
-  'ActionBar',
-  'Pivot',
-  'Pagination',
-  'DataCards',
-  'LogViewer',
-  'Tooltips',
-  'Charts',
-];
+const componentOrder = Object.entries(Components)
+  .sort((pair1, pair2) => pair1[1].localeCompare(pair2[1]))
+  .map((pair) => pair[0] as keyof typeof Components);
 
 interface Props {
   children?: React.ReactNode;
@@ -156,13 +141,6 @@ const ButtonsSection: React.FC = () => {
           <Button loading>Loading</Button>
           <Button disabled>Disabled</Button>
         </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>15px inner horizontal padding</li>
-          <li>8px inner vertical padding</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <hr />
         <strong>Default Button with icon</strong>
         <Space>
@@ -174,14 +152,6 @@ const ButtonsSection: React.FC = () => {
             ButtonWithIcon
           </Button>
         </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>15px inner horizontal padding</li>
-          <li>8px inner vertical padding</li>
-          <li>8px padding between icon and text</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <hr />
         <strong>Large iconic buttons</strong>
         <Space>
@@ -189,12 +159,6 @@ const ButtonsSection: React.FC = () => {
           <IconicButton iconName="searcher-grid" text="Iconic button" />
           <IconicButton disabled iconName="searcher-grid" text="Iconic button" />
         </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Component needs to be reviewed/looked at.</li>
-          <li>Missing distinguishing states</li>
-          <li>Visual density</li>
-        </ul>
       </Card>
     </ComponentSection>
   );
@@ -257,78 +221,20 @@ const DropdownsSection: React.FC = () => {
             options={[{ label: 'Disabled', value: 'disabled' }]}
           />
         </Space>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>16px inner horizontal padding</li> <li>5px inner vertical padding</li>
-          <li>8px minimum inner horizontal padding</li> <li>8px external margins</li>
-          <li>4px for the start of the option items</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <hr />
         <strong>Dropdown menu items</strong>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Needs to be same width as dropdown box</li>
-          <li>Top item has rounded top corners</li>
-          <li>Middle items have no rounded corners</li>
-          <li>Bottom item has rounded bottom corners</li>
-          <li>12px inner horizontal padding</li>
-          <li>5px inner vertical padding</li>
-          <li>8px minimum inner horizontal padding</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <strong>Menu items with checkmark</strong>
         <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Needs to be same width as dropdown box</li>
-          <li>Preserve 12px right padding to checkmark</li>
-          <li>5px inner vertical padding</li>
-          <li>8px minimum inner horizontal padding</li>
-          <li>8px external margins</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <hr />
         <strong>Categorical menu items</strong>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>A parent category can never be without children.</li>
-          <li>
-            The parent cell has visually distinctive features to make it stand out in a multi-parent
-            list from children.
-          </li>
-          <li>Same padding as normal cells</li>
-          <li className={css.warning}>Colors do not meet accessibility guidelines</li>
-        </ul>
         <hr />
         <strong>Categories with checkmarks</strong>
         <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>The padding of the children is preserved and aligns nicely.</li>
-        </ul>
         <hr />
         <strong>Categories with checkmarks and icons</strong>
         <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>The padding of the children is preserved and aligns nicely.</li>
-        </ul>
         <hr />
         <strong>Selecting all categories</strong>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>
-            When selecting the parent category is possible, it selects all the children below it.
-          </li>
-          <li>Behavior of the checkboxes is consistent with the checkbox component.</li>
-          <li>Parent categories cannot have icons (at this point)</li>
-          <li>
-            In the event multiple items are selected, the top dropdown will display “multiple
-            selected” (and NOT a list of all the selections made)
-          </li>
-        </ul>
       </Card>
     </ComponentSection>
   );
@@ -454,13 +360,6 @@ const CheckboxesSection: React.FC = () => {
       <Card title="Usage">
         <strong>Basic checkboxes</strong>
         <Checkbox>This is a basic checkbox.</Checkbox>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>8px right margin from the checkbox.</li>
-          <li>5px vertical margins above and below the checkbox</li>
-          <li>5px padding for mandatory and info icons</li>
-          <li>One style of checkboxes throughout the experience.</li>
-        </ul>
         <strong>Variations</strong>
         <Checkbox checked>Checked checkbox</Checkbox>
         <Checkbox checked={false}>Unchecked checkbox</Checkbox>
@@ -516,38 +415,15 @@ const SearchboxesSection: React.FC = () => {
       <Card title="Usage">
         <strong>Default Searchbox</strong>
         <SearchInput placeholder="input search text" />
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>A user should always be able to cancel/clear out a search</li>
-          <li>We need to provide feedback when a search is taking longer than expected</li>
-          <li>Input box experience is from input box component</li>
-        </ul>
         <strong>Variations</strong>
         <SearchInput allowClear enterButton value="Active search box" />
         <SearchInput disabled placeholder="disabled search box" />
         <hr />
         <strong>In-table Searchbox</strong>
         <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Search input box needs to be at least 30 characters long</li>
-          <li>
-            We need to provide feedback when a search is taking longer than expected (&gt;1.5 sec)
-            or when its a long running operation
-          </li>
-        </ul>
         <hr />
         <strong>Search box with scopes</strong>
         <p>Not implemented</p>
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Search input box needs to be at least 30 characters long</li>
-          <li>
-            We need to provide feedback when a search is taking longer than expected (&gt;1.5 sec)
-            or when its a long running operation
-          </li>
-          <li>Dropdown component behavior is the same as the dropdown checkmark component</li>
-        </ul>
       </Card>
     </ComponentSection>
   );
@@ -584,12 +460,6 @@ const SpinbuttonsSection: React.FC = () => {
       <Card title="Usage">
         <strong>Default spin button</strong>
         <NumberInput defaultValue={3} />
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>It&apos;s only up-on hover that the up/down arrows become apparent.</li>
-          <li>Number/type input starts 12px from border. </li>
-          <li>When in focus, use arrow up/down of keyboard to facilitate spinning.</li>
-        </ul>
         <hr />
         <strong>Variations and states of spin buttons</strong>
         <NumberInput disabled />
@@ -810,12 +680,6 @@ const FacepileSection: React.FC = () => {
       <Card title="Usage">
         <strong>Facepile</strong>
         <UserAvatar />
-        <strong>Guiding principles</strong>
-        <ul>
-          <li>Each facepile item needs to have its own color</li>
-          <li>4px of space between faces</li>
-          <li>If more than 4 faces: add a “+ n” where the 5th face would be.</li>
-        </ul>
         <strong>Variations</strong>
         <ul>
           <li>Facepile with 8 people</li>
