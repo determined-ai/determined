@@ -135,7 +135,7 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	curUser := c.(*context.DetContext).MustGetUser()
 	taskID := model.TaskID(ctx.Self().Parent().Address().Local())
 	reqCtx := c.Request().Context()
-	spec, err := db.GetCommandGenericSpec(reqCtx, taskID)
+	spec, err := db.IdentifyTask(reqCtx, taskID)
 	if err != nil {
 		return err
 	}

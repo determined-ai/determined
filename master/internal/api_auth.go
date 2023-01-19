@@ -132,7 +132,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		ctx = c.Request().Context()
 	}
 
-	spec, err := db.GetCommandGenericSpec(ctx, taskID)
+	spec, err := db.IdentifyTask(ctx, taskID)
 	if err != nil {
 		return true, err
 	}

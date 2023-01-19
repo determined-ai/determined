@@ -69,7 +69,7 @@ func expFromAllocationID(
 }
 
 func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
-	spec, err := db.GetCommandGenericSpec(ctx, taskID)
+	spec, err := db.IdentifyTask(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		// Non NTSC case like checkpointGC case or the task just does not exist.
 		// TODO(nick) eventually control access to checkpointGC.
