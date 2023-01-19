@@ -23,6 +23,8 @@ message GetShellsRequest {
     SORT_BY_DESCRIPTION = 2;
     // Return shells sorted by start time.
     SORT_BY_START_TIME = 4;
+    // Return shells sorted by workspace_id.
+    SORT_BY_WORKSPACE_ID = 5;
   }
   // Sort shells by the given field.
   SortBy sort_by = 1;
@@ -37,6 +39,9 @@ message GetShellsRequest {
   repeated string users = 5;
   // Limit shells to those that are owned by users with the specified userIds.
   repeated int32 user_ids = 6;
+  // Limit to those within a specified workspace, or 0 for all
+  // accessible workspaces.
+  int32 workspace_id = 7;
 }
 // Response to GetShellsRequest.
 message GetShellsResponse {
@@ -99,6 +104,8 @@ message LaunchShellRequest {
   repeated determined.util.v1.File files = 3;
   // Additional data.
   bytes data = 4;
+  // Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
+  int32 workspace_id = 5;
 }
 // Response to LaunchShellRequest.
 message LaunchShellResponse {

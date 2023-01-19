@@ -1684,6 +1684,12 @@ export interface V1Command {
      * @memberof V1Command
      */
     jobId: string;
+    /**
+     * The workspace id.
+     * @type {number}
+     * @memberof V1Command
+     */
+    workspaceId: number;
 }
 
 /**
@@ -2786,7 +2792,7 @@ export interface V1GetCommandResponse {
 }
 
 /**
- * Sorts commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
+ * Sorts commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.  - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
  * @export
  * @enum {string}
  */
@@ -2794,7 +2800,8 @@ export enum V1GetCommandsRequestSortBy {
     UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
     ID = <any> 'SORT_BY_ID',
     DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
-    STARTTIME = <any> 'SORT_BY_START_TIME'
+    STARTTIME = <any> 'SORT_BY_START_TIME',
+    WORKSPACEID = <any> 'SORT_BY_WORKSPACE_ID'
 }
 
 /**
@@ -3452,7 +3459,7 @@ export interface V1GetNotebookResponse {
 }
 
 /**
- * Sorts notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
+ * Sorts notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.  - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
  * @export
  * @enum {string}
  */
@@ -3460,7 +3467,8 @@ export enum V1GetNotebooksRequestSortBy {
     UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
     ID = <any> 'SORT_BY_ID',
     DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
-    STARTTIME = <any> 'SORT_BY_START_TIME'
+    STARTTIME = <any> 'SORT_BY_START_TIME',
+    WORKSPACEID = <any> 'SORT_BY_WORKSPACE_ID'
 }
 
 /**
@@ -3648,7 +3656,7 @@ export interface V1GetShellResponse {
 }
 
 /**
- * Sorts shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
+ * Sorts shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.  - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
  * @export
  * @enum {string}
  */
@@ -3656,7 +3664,8 @@ export enum V1GetShellsRequestSortBy {
     UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
     ID = <any> 'SORT_BY_ID',
     DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
-    STARTTIME = <any> 'SORT_BY_START_TIME'
+    STARTTIME = <any> 'SORT_BY_START_TIME',
+    WORKSPACEID = <any> 'SORT_BY_WORKSPACE_ID'
 }
 
 /**
@@ -3806,7 +3815,7 @@ export interface V1GetTensorboardResponse {
 }
 
 /**
- * Sorts tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
+ * Sorts tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.  - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
  * @export
  * @enum {string}
  */
@@ -3814,7 +3823,8 @@ export enum V1GetTensorboardsRequestSortBy {
     UNSPECIFIED = <any> 'SORT_BY_UNSPECIFIED',
     ID = <any> 'SORT_BY_ID',
     DESCRIPTION = <any> 'SORT_BY_DESCRIPTION',
-    STARTTIME = <any> 'SORT_BY_START_TIME'
+    STARTTIME = <any> 'SORT_BY_START_TIME',
+    WORKSPACEID = <any> 'SORT_BY_WORKSPACE_ID'
 }
 
 /**
@@ -4528,6 +4538,12 @@ export interface V1LaunchCommandRequest {
      * @memberof V1LaunchCommandRequest
      */
     data?: string;
+    /**
+     * Workspace ID. Defaults to the 'Uncategorized' workspace if not specified.
+     * @type {number}
+     * @memberof V1LaunchCommandRequest
+     */
+    workspaceId?: number;
 }
 
 /**
@@ -4586,6 +4602,12 @@ export interface V1LaunchNotebookRequest {
      * @memberof V1LaunchNotebookRequest
      */
     preview?: boolean;
+    /**
+     * Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
+     * @type {number}
+     * @memberof V1LaunchNotebookRequest
+     */
+    workspaceId?: number;
 }
 
 /**
@@ -4644,6 +4666,12 @@ export interface V1LaunchShellRequest {
      * @memberof V1LaunchShellRequest
      */
     data?: string;
+    /**
+     * Workspace ID. Defaults to 'Uncategorized' workspace if not specified.
+     * @type {number}
+     * @memberof V1LaunchShellRequest
+     */
+    workspaceId?: number;
 }
 
 /**
@@ -4708,6 +4736,12 @@ export interface V1LaunchTensorboardRequest {
      * @memberof V1LaunchTensorboardRequest
      */
     files?: Array<V1File>;
+    /**
+     * Workspace in which to launch tensorboard. Defaults to 'Uncategorized'.
+     * @type {number}
+     * @memberof V1LaunchTensorboardRequest
+     */
+    workspaceId?: number;
 }
 
 /**
@@ -5358,6 +5392,12 @@ export interface V1Notebook {
      * @memberof V1Notebook
      */
     jobId: string;
+    /**
+     * Workspace ID.
+     * @type {number}
+     * @memberof V1Notebook
+     */
+    workspaceId: number;
 }
 
 /**
@@ -5848,7 +5888,7 @@ export interface V1Permission {
 }
 
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata like experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -5861,6 +5901,9 @@ export enum V1PermissionType {
     UPDATEEXPERIMENT = <any> 'PERMISSION_TYPE_UPDATE_EXPERIMENT',
     UPDATEEXPERIMENTMETADATA = <any> 'PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA',
     DELETEEXPERIMENT = <any> 'PERMISSION_TYPE_DELETE_EXPERIMENT',
+    CREATENSC = <any> 'PERMISSION_TYPE_CREATE_NSC',
+    VIEWNSC = <any> 'PERMISSION_TYPE_VIEW_NSC',
+    UPDATENSC = <any> 'PERMISSION_TYPE_UPDATE_NSC',
     UPDATEGROUP = <any> 'PERMISSION_TYPE_UPDATE_GROUP',
     CREATEWORKSPACE = <any> 'PERMISSION_TYPE_CREATE_WORKSPACE',
     VIEWWORKSPACE = <any> 'PERMISSION_TYPE_VIEW_WORKSPACE',
@@ -7990,6 +8033,12 @@ export interface V1Shell {
      * @memberof V1Shell
      */
     jobId: string;
+    /**
+     * The workspace id.
+     * @type {number}
+     * @memberof V1Shell
+     */
+    workspaceId?: number;
 }
 
 /**
@@ -8350,6 +8399,12 @@ export interface V1Tensorboard {
      * @memberof V1Tensorboard
      */
     jobId: string;
+    /**
+     * The workspace id.
+     * @type {number}
+     * @memberof V1Tensorboard
+     */
+    workspaceId: number;
 }
 
 /**
@@ -11589,16 +11644,17 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get a list of commands.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.  - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of commands before returning results. Negative values denote number of commands to skip from the end before returning results.
          * @param {number} [limit] Limit the number of commands. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/commands`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11635,6 +11691,10 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
 
             if (userIds) {
                 localVarQueryParameter['userIds'] = userIds;
+            }
+
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -11801,17 +11861,18 @@ export const CommandsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of commands.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.  - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of commands before returning results. Negative values denote number of commands to skip from the end before returning results.
          * @param {number} [limit] Limit the number of commands. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, options);
+        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11902,17 +11963,18 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get a list of commands.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.  - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of commands before returning results. Negative values denote number of commands to skip from the end before returning results.
          * @param {number} [limit] Limit the number of commands. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return CommandsApiFp(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return CommandsApiFp(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11970,18 +12032,19 @@ export class CommandsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of commands.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort commands by the given field.   - SORT_BY_UNSPECIFIED: Returns commands in an unsorted list.  - SORT_BY_ID: Returns commands sorted by id.  - SORT_BY_DESCRIPTION: Returns commands sorted by description.  - SORT_BY_START_TIME: Return commands sorted by start time.  - SORT_BY_WORKSPACE_ID: Return commands sorted by workspace_id.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order commands in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of commands before returning results. Negative values denote number of commands to skip from the end before returning results.
      * @param {number} [limit] Limit the number of commands. A value of 0 denotes no limit.
      * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
+     * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return CommandsApiFp(this.configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return CommandsApiFp(this.configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20193,16 +20256,17 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
         /**
          * 
          * @summary Get a list of notebooks.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.  - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of notebooks before returning results. Negative values denote number of notebooks to skip from the end before returning results.
          * @param {number} [limit] Limit the number of notebooks. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit notebooks to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit notebooks to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/notebooks`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -20239,6 +20303,10 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
 
             if (userIds) {
                 localVarQueryParameter['userIds'] = userIds;
+            }
+
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -20405,17 +20473,18 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of notebooks.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.  - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of notebooks before returning results. Negative values denote number of notebooks to skip from the end before returning results.
          * @param {number} [limit] Limit the number of notebooks. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit notebooks to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit notebooks to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebooksResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, options);
+        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebooksResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20506,17 +20575,18 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
         /**
          * 
          * @summary Get a list of notebooks.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.  - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of notebooks before returning results. Negative values denote number of notebooks to skip from the end before returning results.
          * @param {number} [limit] Limit the number of notebooks. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit notebooks to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit notebooks to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return NotebooksApiFp(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return NotebooksApiFp(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -20574,18 +20644,19 @@ export class NotebooksApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of notebooks.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort notebooks by the given field.   - SORT_BY_UNSPECIFIED: Returns notebooks in an unsorted list.  - SORT_BY_ID: Returns notebooks sorted by id.  - SORT_BY_DESCRIPTION: Returns notebooks sorted by description.  - SORT_BY_START_TIME: Return notebooks sorted by start time.  - SORT_BY_WORKSPACE_ID: Return notebooks sorted by workspace_id
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order notebooks in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of notebooks before returning results. Negative values denote number of notebooks to skip from the end before returning results.
      * @param {number} [limit] Limit the number of notebooks. A value of 0 denotes no limit.
      * @param {Array<string>} [users] Limit notebooks to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit notebooks to those that are owned by users with the specified userIds.
+     * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return NotebooksApiFp(this.configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return NotebooksApiFp(this.configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22540,16 +22611,17 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
         /**
          * 
          * @summary Get a list of shells.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.  - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of shells before returning results. Negative values denote number of shells to skip from the end before returning results.
          * @param {number} [limit] Limit the number of shells. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit shells to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit shells to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/shells`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -22586,6 +22658,10 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
 
             if (userIds) {
                 localVarQueryParameter['userIds'] = userIds;
+            }
+
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -22752,17 +22828,18 @@ export const ShellsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of shells.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.  - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of shells before returning results. Negative values denote number of shells to skip from the end before returning results.
          * @param {number} [limit] Limit the number of shells. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit shells to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit shells to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options);
+        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22853,17 +22930,18 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
         /**
          * 
          * @summary Get a list of shells.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.  - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of shells before returning results. Negative values denote number of shells to skip from the end before returning results.
          * @param {number} [limit] Limit the number of shells. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit shells to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit shells to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return ShellsApiFp(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return ShellsApiFp(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -22921,18 +22999,19 @@ export class ShellsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of shells.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort shells by the given field.   - SORT_BY_UNSPECIFIED: Returns shells in an unsorted list.  - SORT_BY_ID: Returns shells sorted by id.  - SORT_BY_DESCRIPTION: Returns shells sorted by description.  - SORT_BY_START_TIME: Return shells sorted by start time.  - SORT_BY_WORKSPACE_ID: Return shells sorted by workspace_id.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order shells in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of shells before returning results. Negative values denote number of shells to skip from the end before returning results.
      * @param {number} [limit] Limit the number of shells. A value of 0 denotes no limit.
      * @param {Array<string>} [users] Limit shells to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit shells to those that are owned by users with the specified userIds.
+     * @param {number} [workspaceId] Limit to those within a specified workspace, or 0 for all accessible workspaces.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return ShellsApiFp(this.configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return ShellsApiFp(this.configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23862,16 +23941,17 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
         /**
          * 
          * @summary Get a list of tensorboards.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.  - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of tensorboards before returning results. Negative values denote number of tensorboards to skip from the end before returning results.
          * @param {number} [limit] Limit the number of tensorboards. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit tensorboards to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit tensorboards to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit tensorboards to those that are in a specific workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tensorboards`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -23908,6 +23988,10 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
 
             if (userIds) {
                 localVarQueryParameter['userIds'] = userIds;
+            }
+
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId;
             }
 
             localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
@@ -24074,17 +24158,18 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of tensorboards.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.  - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of tensorboards before returning results. Negative values denote number of tensorboards to skip from the end before returning results.
          * @param {number} [limit] Limit the number of tensorboards. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit tensorboards to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit tensorboards to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit tensorboards to those that are in a specific workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardsResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, options);
+        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardsResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24175,17 +24260,18 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
         /**
          * 
          * @summary Get a list of tensorboards.
-         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
+         * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.  - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
          * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of tensorboards before returning results. Negative values denote number of tensorboards to skip from the end before returning results.
          * @param {number} [limit] Limit the number of tensorboards. A value of 0 denotes no limit.
          * @param {Array<string>} [users] Limit tensorboards to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit tensorboards to those that are owned by users with the specified userIds.
+         * @param {number} [workspaceId] Limit tensorboards to those that are in a specific workspace, or 0 for all accessible workspaces.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return TensorboardsApiFp(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, options)(fetch, basePath);
+        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return TensorboardsApiFp(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -24243,18 +24329,19 @@ export class TensorboardsApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of tensorboards.
-     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.
+     * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID'} [sortBy] Sort tensorboards by the given field.   - SORT_BY_UNSPECIFIED: Returns tensorboards in an unsorted list.  - SORT_BY_ID: Returns tensorboards sorted by id.  - SORT_BY_DESCRIPTION: Returns tensorboards sorted by description.  - SORT_BY_START_TIME: Return tensorboards sorted by start time.  - SORT_BY_WORKSPACE_ID: Return tensorboards sorted by workspace_id.
      * @param {'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC'} [orderBy] Order tensorboards in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of tensorboards before returning results. Negative values denote number of tensorboards to skip from the end before returning results.
      * @param {number} [limit] Limit the number of tensorboards. A value of 0 denotes no limit.
      * @param {Array<string>} [users] Limit tensorboards to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit tensorboards to those that are owned by users with the specified userIds.
+     * @param {number} [workspaceId] Limit tensorboards to those that are in a specific workspace, or 0 for all accessible workspaces.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return TensorboardsApiFp(this.configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, options)(this.fetch, this.basePath);
+    public getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return TensorboardsApiFp(this.configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**

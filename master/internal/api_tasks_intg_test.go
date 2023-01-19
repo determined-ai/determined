@@ -20,13 +20,6 @@ func errTaskNotFound(id string) error {
 	return status.Errorf(codes.NotFound, "task not found: %s", id)
 }
 
-func TestTasksCountAuthZ(t *testing.T) {
-	api, authZUser, curUser, ctx := setupUserAuthzTest(t, nil)
-	authZUser.On("CanGetActiveTasksCount", mock.Anything, curUser).Return(fmt.Errorf("deny"))
-	_, err := api.GetActiveTasksCount(ctx, &apiv1.GetActiveTasksCountRequest{})
-	require.Equal(t, status.Error(codes.PermissionDenied, "deny"), err)
-}
-
 func TestTaskAuthZ(t *testing.T) {
 	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 

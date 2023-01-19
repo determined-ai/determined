@@ -18,13 +18,16 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
+	"github.com/determined-ai/determined/master/internal/command"
 	mconfig "github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	pkgCommand "github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -54,7 +57,7 @@ type protoCommandParams struct {
 }
 
 func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoCommandParams) (
-	*tasks.GenericCommandSpec, []command.LaunchWarning, error,
+	*tasks.GenericCommandSpec, []pkgCommand.LaunchWarning, error,
 ) {
 	var err error
 
@@ -200,29 +203,42 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 func (a *apiServer) GetCommands(
 	ctx context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	workspaceNotFoundErr := status.Errorf(codes.NotFound, "workspace %d not found", req.WorkspaceId)
+
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if errors.Is(err, db.ErrNotFound) {
+			return nil, workspaceNotFoundErr
+		} else if err != nil {
+			return nil, err
+		}
+	}
 	if err = a.ask(commandsAddr, req, &resp); err != nil {
 		return nil, err
 	}
 
-	a.filter(&resp.Commands, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := user.AuthZProvider.Get().CanAccessNTSCTask(
-			ctx, *curUser, model.UserID(resp.Commands[i].UserId))
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
-	})
+	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
+	)
 	if err != nil {
 		return nil, err
 	}
+	if req.WorkspaceId != 0 && len(limitedScopes) == 0 {
+		return nil, workspaceNotFoundErr
+	}
+
+	a.filter(&resp.Commands, func(i int) bool {
+		return limitedScopes[model.AccessScopeID(resp.Commands[i].WorkspaceId)]
+	})
 
 	a.sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Commands, req.Offset, req.Limit)
@@ -241,8 +257,8 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(
-		ctx, *curUser, model.UserID(resp.Command.UserId)); err != nil {
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+		ctx, *curUser, model.AccessScopeID(resp.Command.WorkspaceId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -253,7 +269,22 @@ func (a *apiServer) GetCommand(
 func (a *apiServer) KillCommand(
 	ctx context.Context, req *apiv1.KillCommandRequest,
 ) (resp *apiv1.KillCommandResponse, err error) {
-	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
+	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = command.AuthZProvider.Get().CanTerminateNSC(
+		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId),
+	); err != nil {
 		return nil, err
 	}
 
@@ -263,7 +294,21 @@ func (a *apiServer) KillCommand(
 func (a *apiServer) SetCommandPriority(
 	ctx context.Context, req *apiv1.SetCommandPriorityRequest,
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
-	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId), int(req.Priority),
+	); err != nil {
 		return nil, err
 	}
 
@@ -280,6 +325,14 @@ func (a *apiServer) LaunchCommand(
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(err)
+	}
+
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	}
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+		return nil, err
 	}
 
 	// Postprocess the spec.
@@ -323,6 +376,6 @@ func (a *apiServer) LaunchCommand(
 	return &apiv1.LaunchCommandResponse{
 		Command:  cmd,
 		Config:   protoutils.ToStruct(spec.Config),
-		Warnings: command.LaunchWarningToProto(launchWarnings),
+		Warnings: pkgCommand.LaunchWarningToProto(launchWarnings),
 	}, nil
 }
