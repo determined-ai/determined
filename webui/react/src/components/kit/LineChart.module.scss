@@ -1,3 +1,21 @@
 .chartTitle {
+  font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  margin-bottom: -10px !important;
   text-align: center;
+}
+.legendContainer {
+  margin-left: 35px;
+
+  .legendItem {
+    display: inline-block;
+    font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    margin-right: 16px;
+
+    .colorButton {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+  }
 }

@@ -133,9 +133,9 @@ const UPlotChart: React.FC<Props> = ({
         return {
           ...axis,
           border: { stroke: borderColor },
-          grid: { stroke: borderColor },
+          grid: { ...axis.grid, stroke: borderColor },
           stroke: labelColor,
-          ticks: { stroke: borderColor },
+          ticks: { ...axis.ticks, stroke: borderColor },
         };
       });
     }

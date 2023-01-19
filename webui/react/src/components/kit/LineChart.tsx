@@ -7,23 +7,23 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import { glasbeyColor } from 'shared/utils/color';
-import { Scale } from 'types';
+import { Metric, MetricType, Scale } from 'types';
 
 import css from './LineChart.module.scss';
 
 export interface Serie {
   color?: string;
   data: (number | null)[];
-  name?: string;
+  metricType?: MetricType;
 }
 
 interface Props {
   focusedSeries?: number;
   height?: number;
+  metric: Metric;
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
-  title?: string;
   xLabel?: string;
   yLabel?: string;
 }
@@ -31,10 +31,10 @@ interface Props {
 export const LineChart: React.FC<Props> = ({
   focusedSeries,
   height = 400,
+  metric,
   scale = Scale.Linear,
   series,
   showLegend = false,
-  title,
   xLabel,
   yLabel,
 }: Props) => {
@@ -44,21 +44,25 @@ export const LineChart: React.FC<Props> = ({
     return {
       axes: [
         {
-          grid: { width: 1 },
+          font: '12px "Objektiv Mk3", Arial, Helvetica, sans-serif',
+          grid: { show: false },
           label: xLabel,
           scale: 'x',
           side: 2,
+          ticks: { show: false },
         },
         {
-          grid: { width: 1 },
+          font: '12px "Objektiv Mk3", Arial, Helvetica, sans-serif',
+          grid: { stroke: '#E3E3E3', width: 1 },
           label: yLabel,
           scale: 'y',
           side: 3,
+          ticks: { show: false },
         },
       ],
-      cursor: { drag: { x: true, y: false } },
+      cursor: { drag: { x: true, y: false }, points: { show: false } },
       height,
-      legend: { show: showLegend },
+      legend: { show: false },
       plugins,
       scales: {
         x: {
@@ -72,25 +76,44 @@ export const LineChart: React.FC<Props> = ({
         { label: xLabel || 'X' },
         ...series.slice(1).map((serie, idx) => {
           return {
-            label: serie.name ?? `Series ${idx + 1}`,
+            label: metric.name ?? `Series ${idx + 1}`,
+            points: { show: false },
             scale: 'y',
             spanGaps: true,
-            stroke: serie.color ?? glasbeyColor(idx),
+            stroke:
+              serie.color ||
+              (serie.metricType === MetricType.Training && '#009BDE') ||
+              (serie.metricType === MetricType.Validation && '#F77B21') ||
+              glasbeyColor(idx),
+            type: 'line',
+            width: 2,
           };
         }),
       ],
     };
-  }, [series, height, scale, showLegend, xLabel, yLabel]);
+  }, [series, height, metric.name, scale, xLabel, yLabel]);
 
   return (
     <>
-      {title && <h5 className={css.chartTitle}>{title}</h5>}
+      {metric.name && <h5 className={css.chartTitle}>{metric.name}</h5>}
       <UPlotChart
         allowDownload
         data={series.map((s) => s.data) as AlignedData}
         focusIndex={focusedSeries}
         options={chartOptions}
       />
+      {showLegend && (
+        <div className={css.legendContainer}>
+          {series.slice(1).map((s, idx) => (
+            <li className={css.legendItem} key={idx}>
+              <span className={css.colorButton} style={{ color: s.color || glasbeyColor(idx) }}>
+                &mdash;
+              </span>
+              {s.metricType}_{metric.name}
+            </li>
+          ))}
+        </div>
+      )}
     </>
   );
 };

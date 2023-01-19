@@ -36,7 +36,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ShirtSize } from 'themes';
-import { BrandingType, ResourcePool } from 'types';
+import { BrandingType, Metric, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
@@ -237,7 +237,7 @@ const DropdownsSection: React.FC = () => {
 };
 
 const ChartsSection: React.FC = () => {
-  const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19] };
+  const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19], name: 'X' };
   const line1: Serie = {
     data: [
       0,
@@ -254,6 +254,7 @@ const ChartsSection: React.FC = () => {
       Math.random() * 80,
       89,
     ],
+    metricType: MetricType.Training,
   };
   const line2: Serie = {
     data: [
@@ -271,6 +272,7 @@ const ChartsSection: React.FC = () => {
       null,
       null,
     ],
+    metricType: MetricType.Validation,
   };
   return (
     <ComponentSection id="Charts" title="Charts">
@@ -281,19 +283,22 @@ const ChartsSection: React.FC = () => {
         </p>
       </Card>
       <Card title="Label options">
-        <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
+        <p>A chart with two metrics, a title, a legend, an x-axis label, a y-axis label.</p>
         <LineChart
           height={250}
+          metric={{ name: 'sample' } as Metric}
           series={[xSeries, line1, line2]}
           showLegend={true}
-          title="Title"
-          xLabel="X Label"
-          yLabel="Y Label"
         />
       </Card>
       <Card title="Focus series">
-        <p>Highlight a specific series in the chart.</p>
-        <LineChart focusedSeries={1} height={250} series={[xSeries, line1, line2]} />
+        <p>Highlight a specific metric in the chart.</p>
+        <LineChart
+          focusedSeries={1}
+          height={250}
+          metric={{ name: 'sample' } as Metric}
+          series={[xSeries, line1, line2]}
+        />
       </Card>
       <Card title="Chart Grid">
         <p>
@@ -303,7 +308,10 @@ const ChartsSection: React.FC = () => {
         </p>
         <div style={{ height: 300 }}>
           <ChartGrid
-            chartsProps={[{ series: [xSeries, line1] }, { series: [xSeries, line2] }]}
+            chartsProps={[
+              { metric: { name: 'Sample1' } as Metric, series: [xSeries, line1] },
+              { metric: { name: 'Sample2' } as Metric, series: [xSeries, line2] },
+            ]}
             rowHeight={250}
           />
         </div>
