@@ -490,6 +490,7 @@ export const mapV1Experiment = (
     projectId: data.projectId,
     projectName: data.projectName,
     resourcePool: data.resourcePool || '',
+    searcherMetricValue: data.bestTrial?.searcherMetricValue,
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),

@@ -50,6 +50,14 @@ enum State {
   STATE_RUNNING = 16;
 }
 
+// ExperimentTrial is trial-level data that is brought up to the experiment
+// level.
+message ExperimentTrial {
+  // the searcher metric value associated with the best_validation_id for the
+  // trial.
+  optional double searcher_metric_value = 1;
+}
+
 // Experiment is a collection of one or more trials that are exploring a
 // user-defined hyperparameter space.
 message Experiment {
@@ -131,6 +139,9 @@ message Experiment {
   int64 checkpoint_size = 29;
   // The count of checkpoints.
   int32 checkpoint_count = 30;
+  // The metrics and hyperparameters associated with the best trial by searcher
+  // metric.
+  optional ExperimentTrial best_trial = 31;
 }
 
 // PatchExperiment is a partial update to an experiment with only id required.

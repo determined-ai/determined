@@ -8,6 +8,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
+import HumanReadableNumber from 'components/HumanReadableNumber';
 import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -615,6 +616,17 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         render: actionRenderer,
         title: '',
         width: DEFAULT_COLUMN_WIDTHS['action'],
+      },
+      {
+        dataIndex: 'searcherMetricValue',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
+        key: V1GetExperimentsRequestSortBy.SEARCHERMETRICVAL,
+        render: (_: string, record: ExperimentItem) => (
+          <HumanReadableNumber num={record.searcherMetricValue} />
+        ),
+        sorter: true,
+        title: 'Best Metric',
+        width: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
       },
     ] as ColumnDef<ExperimentItem>[];
   }, [

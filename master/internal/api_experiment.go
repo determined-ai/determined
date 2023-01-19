@@ -459,6 +459,25 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
+	if req.ShowTrialData {
+		query.ColumnExpr(`
+		(
+			SELECT 
+			json_build_object(
+				'searcher_metric_value', 
+				searcher_metric_value
+			)
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+						WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+							THEN (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
+							ELSE -1.0 * (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
+				END) ASC
+			LIMIT 1
+		 ) AS best_trial`)
+	}
+
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
 		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:      "id",
@@ -476,6 +495,18 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:       "project_id",
 		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_SIZE:  "checkpoint_size",
 		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_COUNT: "checkpoint_count",
+		apiv1.GetExperimentsRequest_SORT_BY_SEARCHER_METRIC_VAL: `(
+			SELECT 
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+						WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+							THEN (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
+							ELSE -1.0 * (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
+				END) ASC
+			LIMIT 1
+		 ) `,
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",

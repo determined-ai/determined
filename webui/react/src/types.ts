@@ -549,6 +549,7 @@ export interface ExperimentItem {
   projectId: number;
   projectName?: string;
   resourcePool: string;
+  searcherMetricValue?: number;
   searcherType: string;
   startTime: string;
   state: CompoundRunState;
