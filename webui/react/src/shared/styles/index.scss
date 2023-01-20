@@ -48,16 +48,27 @@ code.block {
   padding: 8px;
   white-space: pre;
 }
+.uplot canvas {
+  background-color: #f6f6f6;
+}
 .u-cursor-pt {
   border-radius: 0 !important;
   height: 0 !important;
   width: 0 !important;
 }
-.u-cursor-pt::after {
+.u-cursor-pt::before {
   background-color: inherit;
   content: '';
-  height: 6px;
+  height: 8px;
   position: absolute;
-  transform: translateY(-1px) rotate(45deg);
-  width: 6px;
+  transform: scaleX(2) translateY(-1px) rotate(45deg);
+  width: 8px;
+}
+.u-cursor-pt::after {
+  background-color: #f6f6f6;
+  content: '';
+  height: 4px;
+  position: absolute;
+  transform: scaleX(2) translateX(1px) translateY(1px) rotate(45deg);
+  width: 4px;
 }

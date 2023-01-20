@@ -3,7 +3,6 @@ import { SelectValue } from 'antd/es/select';
 import React from 'react';
 
 import SelectFilter from 'components/SelectFilter';
-import { capitalize } from 'shared/utils/string';
 
 const { Option } = Select;
 
@@ -23,7 +22,7 @@ const XAxisFilter: React.FC<Props> = ({ options, onChange, value }: Props) => {
       onSelect={(newValue: SelectValue) => onChange(newValue as string)}>
       {options.map((opt) => (
         <Option key={opt} value={opt}>
-          {capitalize(opt)}
+          {opt}
         </Option>
       ))}
     </SelectFilter>

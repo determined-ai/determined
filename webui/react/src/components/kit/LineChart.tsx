@@ -3,11 +3,11 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 import { AlignedData } from 'uplot';
 
+import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
-import XAxisFilter from 'components/XAxisFilter';
 import { glasbeyColor } from 'shared/utils/color';
 import { Metric, MetricType, Scale } from 'types';
 
@@ -144,18 +144,11 @@ export const LineChart: React.FC<Props> = ({
 };
 
 interface GroupProps {
-  chartSettingsControls?: boolean;
   chartsProps: Props[];
-  rowHeight?: number;
   xAxisOptions?: string[];
 }
 
-export const ChartGrid: React.FC<GroupProps> = ({
-  chartSettingsControls = true,
-  chartsProps,
-  rowHeight = 480,
-  xAxisOptions,
-}: GroupProps) => {
+export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: GroupProps) => {
   // Scale control
   const [scale, setScale] = useState<Scale>(Scale.Linear);
 
@@ -181,14 +174,12 @@ export const ChartGrid: React.FC<GroupProps> = ({
 
   return (
     <>
-      {chartSettingsControls && (
-        <div className={css.filterContainer}>
-          <ScaleSelectFilter value={scale} onChange={setScale} />
-          {xAxisOptions && xAxisOptions.length > 1 && (
-            <XAxisFilter options={xAxisOptions} value={xAxis} onChange={setXAxis} />
-          )}
-        </div>
-      )}
+      <div className={css.filterContainer}>
+        <ScaleSelectFilter value={scale} onChange={setScale} />
+        {xAxisOptions && xAxisOptions.length > 1 && (
+          <XAxisFilter options={xAxisOptions} value={xAxis} onChange={setXAxis} />
+        )}
+      </div>
       <SyncProvider>
         <AutoSizer>
           {({ width }) => {
@@ -197,16 +188,16 @@ export const ChartGrid: React.FC<GroupProps> = ({
               <FixedSizeGrid
                 columnCount={columnCount}
                 columnWidth={Math.floor(width / columnCount) - 10}
-                height={(chartsProps.length > columnCount ? 2.1 : 1.05) * (rowHeight ?? 480)}
+                height={(chartsProps.length > columnCount ? 2.1 : 1.05) * 480}
                 rowCount={Math.ceil(chartsProps.length / columnCount)}
-                rowHeight={rowHeight ?? 480}
+                rowHeight={480}
                 width={width}>
                 {({ columnIndex, rowIndex, style }) => {
                   const cellIndex = rowIndex * columnCount + columnIndex;
                   return (
                     <div key={cellIndex} style={style}>
                       {cellIndex < chartsProps.length && (
-                        <LineChart {...chartsProps[cellIndex]} height={rowHeight} scale={scale} />
+                        <LineChart {...chartsProps[cellIndex]} scale={scale} />
                       )}
                     </div>
                   );
