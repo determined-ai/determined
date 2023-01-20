@@ -345,7 +345,7 @@ const LogViewer: React.FC<Props> = ({
         message: 'Available logs Copied',
       });
     } catch (e) {
-      notification.warn({
+      notification.warning({
         description: (e as Error)?.message,
         message: 'Unable to Copy to Clipboard',
       });

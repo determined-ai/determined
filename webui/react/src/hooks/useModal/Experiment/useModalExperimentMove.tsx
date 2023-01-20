@@ -234,12 +234,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         updateProjectSettings({ pinned: newPinned });
       }
     } else if (numFailures === experimentIds.length) {
-      notification.warn({
+      notification.warning({
         description: `Unable to move ${experimentText}`,
         message: 'Move Failure',
       });
     } else {
-      notification.warn({
+      notification.warning({
         description: (
           <div onClick={closeNotification}>
             <p>

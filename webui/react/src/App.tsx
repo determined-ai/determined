@@ -9,6 +9,7 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
+import { ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
@@ -29,6 +30,7 @@ import { correctViewportHeight, refreshPage } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';
+import 'antd/dist/reset.css';
 
 const AppView: React.FC = () => {
   const resize = useResize();
@@ -95,7 +97,7 @@ const AppView: React.FC = () => {
           .
         </div>
       );
-      notification.warn({
+      notification.warning({
         btn,
         description,
         duration: 0,
@@ -151,7 +153,9 @@ const App: React.FC = () => {
     <HelmetProvider>
       <StoreProvider>
         <DndProvider backend={HTML5Backend}>
-          <AppView />
+          <ThemeProvider>
+            <AppView />
+          </ThemeProvider>
         </DndProvider>
       </StoreProvider>
     </HelmetProvider>

@@ -1,5 +1,5 @@
 import { notification as antdNotification } from 'antd';
-import { ArgsProps, NotificationApi } from 'antd/lib/notification';
+import { ArgsProps, NotificationInstance } from 'antd/lib/notification/interface';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
@@ -22,7 +22,7 @@ const errorLevelMap = {
 };
 
 const openNotification = (e: DetError) => {
-  const key = errorLevelMap[e.level] as keyof NotificationApi;
+  const key = errorLevelMap[e.level] as keyof NotificationInstance;
   const notification = antdNotification[key] as (args: ArgsProps) => void;
 
   notification?.({

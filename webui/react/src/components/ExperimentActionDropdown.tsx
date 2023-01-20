@@ -115,7 +115,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               pinSet.delete(id);
             } else {
               if (pinSet.size >= 5) {
-                notification.warn({
+                notification.warning({
                   description: 'Up to 5 pinned items',
                   message: 'Unable to pin this item',
                 });

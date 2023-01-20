@@ -19,7 +19,7 @@ const AuthToken: React.FC = () => {
         message: 'Auth Token Copied',
       });
     } catch (e) {
-      notification.warn({
+      notification.warning({
         description: (e as Error)?.message,
         message: 'Unable to Copy to Clipboard',
       });
