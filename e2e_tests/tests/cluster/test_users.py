@@ -730,7 +730,7 @@ def test_tensorboard_creation_and_listing(clean_auth: None, login_admin: None) -
 
 
 @pytest.mark.e2e_cpu
-def test_command_creation_and_listing(clean_auth: None, login_admin: None) -> None:
+def test_command_creation_and_listing(clean_auth: None) -> None:
     creds1 = create_test_user(True)
     creds2 = create_test_user(True)
     session1 = api_utils.determined_test_session(credentials=creds1)
