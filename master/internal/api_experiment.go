@@ -470,10 +470,10 @@ func (a *apiServer) GetExperiments(
 			FROM trials t
 			WHERE t.experiment_id = e.id
 			ORDER BY (CASE
-						WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-							THEN (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
-							ELSE -1.0 * (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
-				END) ASC
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
 			LIMIT 1
 		 ) AS best_trial`)
 	}
@@ -501,10 +501,10 @@ func (a *apiServer) GetExperiments(
 			FROM trials t
 			WHERE t.experiment_id = e.id
 			ORDER BY (CASE
-						WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
-							THEN (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
-							ELSE -1.0 * (t.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
-				END) ASC
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
 			LIMIT 1
 		 ) `,
 	}
