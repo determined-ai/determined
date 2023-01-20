@@ -264,7 +264,7 @@ func IsTransientSystemError(err error) bool {
 		case ResourcesFailed, TaskError:
 			return false
 		// Questionable, could be considered failures, but for now we don't.
-		case AgentError, AgentFailed:
+		case AgentError, AgentFailed, RestoreError:
 			return true
 		// Definitely not a failure.
 		case TaskAborted, ResourcesAborted:

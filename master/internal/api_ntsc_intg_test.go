@@ -300,7 +300,8 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	// Tensorboards.
 	tbID := setupMockTensorboardActor(t, api.m)
 	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{
-		TensorboardId: string(tbID)})
+		TensorboardId: string(tbID),
+	})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// check other errors are not returned with permission denied status.
@@ -320,7 +321,8 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
 	_, err = api.SetTensorboardPriority(ctx, &apiv1.SetTensorboardPriorityRequest{
-		TensorboardId: string(tbID)})
+		TensorboardId: string(tbID),
+	})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 }

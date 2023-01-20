@@ -113,7 +113,6 @@ func redirectToLogin(c echo.Context) error {
 // processProxyAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests coming through proxies.
 func processProxyAuthentication(c echo.Context) (done bool, err error) {
-	// CHECK: do we need to further protect access to this singleton?
 	user, _, err := user.GetService().UserAndSessionFromRequest(c.Request())
 	if errors.Is(err, db.ErrNotFound) {
 		return true, redirectToLogin(c)
@@ -133,7 +132,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		ctx = c.Request().Context()
 	}
 
-	spec, err := db.GetCommandGenericSpec(ctx, taskID)
+	spec, err := db.IdentifyTask(ctx, taskID)
 	if err != nil {
 		return true, err
 	}
@@ -141,10 +140,10 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
 		ok, err = command.AuthZProvider.Get().CanGetTensorboard(
-			ctx, *user, spec.Metadata.WorkspaceID)
+			ctx, *user, spec.WorkspaceID)
 	} else {
 		ok, err = command.AuthZProvider.Get().CanGetNSC(
-			ctx, *user, spec.Metadata.WorkspaceID)
+			ctx, *user, spec.WorkspaceID)
 	}
 	if err != nil {
 		return true, err
