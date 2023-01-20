@@ -152,6 +152,10 @@ func (t *TaskSpec) ToDispatcherManifest(
 
 	mounts, userWantsDirMountedOnTmp := getDataVolumes(t.Mounts)
 
+	if containerRunType == enroot {
+		mounts = addTmpFs(mounts, "varTmp", varTmp)
+	}
+
 	/*
 	 * We need a per-container-private link directory to host /run/determined.
 	 * This is the target of a number of softlinks that are remapped to per-container
@@ -162,7 +166,7 @@ func (t *TaskSpec) ToDispatcherManifest(
 	 */
 	localTmp := "/"
 	if containerRunType == enroot {
-		localTmp = tmp
+		localTmp = varTmp
 	}
 
 	// Use the specified workDir if it is user-specified.
@@ -720,6 +724,21 @@ func getDataVolumes(mounts []mount.Mount) ([]launcher.Data, bool) {
 	}
 
 	return volumes, userWantsDirMountedOnTmp
+}
+
+// Used for creating a tmpfs mount type at the target location.
+func addTmpFs(volumes []launcher.Data, name string, target string) []launcher.Data {
+	volume := *launcher.NewData()
+	volume.SetName(name)
+	volume.SetSource("tmpfs")
+
+	/*
+	 * Set target and add a mount option to enable target directory creation,
+	 * if it did not exist
+	 */
+	volume.SetTarget(target + ":x-create=dir")
+	volumes = append(volumes, volume)
+	return volumes
 }
 
 // Create a softlink archive entry for the specified file name in the
