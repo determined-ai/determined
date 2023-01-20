@@ -41,8 +41,8 @@ Version 0.19.10
 -  Notebooks: The default idle notebook termination timeout can now be set via the ``notebook_timeout``
    master config option.
 
--  Trials: Trials can now be killed when in the ``STOPPING_CANCELED`` state. Previously if a trial
-   did not implement preemption correctly and was canceled the trial did not stop and was unkillable
+-  Trials: Trials can now be killed when in the ``STOPPING_CANCELED`` state. Previously, if a trial
+   did not implement preemption correctly and was canceled, the trial did not stop and was unkillable
    until the preemption timeout of an hour.
 
 **Bug Fixes**
