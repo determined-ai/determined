@@ -17,9 +17,8 @@ export interface Serie {
   color?: string;
   data: [number, number][];
   metricType?: MetricType;
+  xAxisRole?: XAxisDomain;
 }
-
-export type TimeSerie = [number, string][];
 
 interface Props {
   focusedSeries?: number;
@@ -28,7 +27,6 @@ interface Props {
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
-  timeSeries?: TimeSerie[];
   xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;
@@ -41,47 +39,48 @@ export const LineChart: React.FC<Props> = ({
   scale = Scale.Linear,
   series,
   showLegend = false,
-  timeSeries,
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
 }: Props) => {
   const seriesColors: string[] = useMemo(
     () =>
-      series.map(
-        (s, idx) =>
-          s.color ||
-          (s.metricType === MetricType.Training && '#009BDE') ||
-          (s.metricType === MetricType.Validation && '#F77B21') ||
-          glasbeyColor(idx),
-      ),
+      series
+        .filter((s) => !s.xAxisRole)
+        .map(
+          (s, idx) =>
+            s.color ||
+            (s.metricType === MetricType.Training && '#009BDE') ||
+            (s.metricType === MetricType.Validation && '#F77B21') ||
+            glasbeyColor(idx),
+        ),
     [series],
   );
 
-  const seriesNames: string[] = useMemo(
-    () =>
-      series.map(
-        (s, idx) =>
-          (series.length > 1 ? `${s.metricType}_` : '') + (metric.name || `Series ${idx + 1}`),
-      ),
-    [series, metric.name],
-  );
+  const seriesNames: string[] = useMemo(() => {
+    const ySeries = series.filter((s) => !s.xAxisRole);
+    return ySeries.map(
+      (s, idx) =>
+        (ySeries.length > 1 ? `${s.metricType}_` : '') + (metric.name || `Series ${idx + 1}`),
+    );
+  }, [series, metric.name]);
 
   const chartData: AlignedData = useMemo(() => {
     const xValues: number[] = [];
     const yValues: Record<string, Record<string, number | null>> = {};
 
-    series.forEach((serie, serieIndex) => {
-      yValues[serieIndex] = {};
-      serie.data.forEach((pt, idx) => {
-        const xVal =
-          xAxis === XAxisDomain.Time && !!timeSeries
-            ? new Date(timeSeries[serieIndex][idx][1]).getTime() / 1000
-            : pt[0];
-        xValues.push(xVal);
-        yValues[serieIndex][xVal] = Number.isFinite(pt[1]) ? pt[1] : null;
+    const xAxisSerie = xAxis && series.find((s) => s.xAxisRole === xAxis);
+
+    series
+      .filter((s) => !s.xAxisRole)
+      .forEach((serie, serieIndex) => {
+        yValues[serieIndex] = {};
+        serie.data.forEach((pt, idx) => {
+          const xVal = xAxisSerie ? xAxisSerie.data[idx][1] : pt[0];
+          xValues.push(xVal);
+          yValues[serieIndex][xVal] = Number.isFinite(pt[1]) ? pt[1] : null;
+        });
       });
-    });
 
     xValues.sort((a, b) => a - b);
     const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
@@ -89,7 +88,7 @@ export const LineChart: React.FC<Props> = ({
     });
 
     return [xValues, ...yValuesArray];
-  }, [series, timeSeries, xAxis]);
+  }, [series, xAxis]);
 
   const chartOptions: Options = useMemo(() => {
     const plugins = [tooltipsPlugin({ isShownEmptyVal: false, seriesColors })];
@@ -121,28 +120,30 @@ export const LineChart: React.FC<Props> = ({
       plugins,
       scales: {
         x: {
-          time: xAxis === XAxisDomain.Time && !!timeSeries,
+          time: xAxis === XAxisDomain.Time,
         },
         y: {
           distr: scale === Scale.Log ? 3 : 1,
         },
       },
       series: [
-        { label: (xAxis === XAxisDomain.Time ? timeSeries && xAxis : xAxis) || xLabel || 'X' },
-        ...series.map((serie, idx) => {
-          return {
-            label: seriesNames[idx],
-            points: { show: false },
-            scale: 'y',
-            spanGaps: true,
-            stroke: seriesColors[idx],
-            type: 'line',
-            width: 2,
-          };
-        }),
+        { label: xAxis || xLabel || 'X' },
+        ...series
+          .filter((s) => !s.xAxisRole)
+          .map((serie, idx) => {
+            return {
+              label: seriesNames[idx],
+              points: { show: false },
+              scale: 'y',
+              spanGaps: true,
+              stroke: seriesColors[idx],
+              type: 'line',
+              width: 2,
+            };
+          }),
       ],
     };
-  }, [series, seriesColors, seriesNames, timeSeries, height, scale, xAxis, xLabel, yLabel]);
+  }, [series, seriesColors, seriesNames, height, scale, xAxis, xLabel, yLabel]);
 
   return (
     <>

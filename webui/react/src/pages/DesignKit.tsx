@@ -266,15 +266,19 @@ const ChartsSection: React.FC = () => {
     metricType: MetricType.Validation,
   };
 
-  const line2Times: TimeSerie = [
-    [1, '2023-01-05T01:00:00Z'],
-    [2, '2023-01-05T02:12:34.56789Z'],
-    [2.5, '2023-01-05T02:30:00Z'],
-    [3, '2023-01-05T03:00:00Z'],
-    [3.25, '2023-01-05T03:15:00Z'],
-    [3.75, '2023-01-05T03:45:00Z'],
-    [4, '2023-01-05T04:02:06Z'],
-  ];
+  const stampToNum = (tstamp: string): number => new Date(tstamp).getTime() / 1000;
+  const line2Times: Serie = {
+    data: [
+      [1, stampToNum('2023-01-05T01:00:00Z')],
+      [2, stampToNum('2023-01-05T02:12:34.56789Z')],
+      [2.5, stampToNum('2023-01-05T02:30:00Z')],
+      [3, stampToNum('2023-01-05T03:00:00Z')],
+      [3.25, stampToNum('2023-01-05T03:15:00Z')],
+      [3.75, stampToNum('2023-01-05T03:45:00Z')],
+      [4, stampToNum('2023-01-05T04:02:06Z')],
+    ],
+    xAxisRole: XAxisDomain.Time,
+  };
 
   return (
     <ComponentSection id="Charts" title="Charts">
@@ -315,9 +319,8 @@ const ChartsSection: React.FC = () => {
               { metric: { name: 'Sample1' } as Metric, series: [line1], showLegend: true },
               {
                 metric: { name: 'Sample2' } as Metric,
-                series: [line2],
+                series: [line2, line2Times],
                 showLegend: true,
-                timeSeries: [line2Times],
               },
             ]}
             xAxisOptions={Object.values(XAxisDomain)}
