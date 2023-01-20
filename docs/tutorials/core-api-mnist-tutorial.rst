@@ -36,8 +36,8 @@ Our goal is to integrate the `PyTorch MNIST training example
 **************************
 
 To get started, add the `Core API MNIST tutorial files
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api_mnist>`_ to your
-computer.
+<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api_mnist>`_ to
+your computer.
 
 -  Create a new directory on your computer and name it something like ``core_api_mnist``.
 -  Add the Core API MNIST Tutorial files.
