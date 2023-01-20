@@ -38,7 +38,7 @@ export interface WorkspaceListSettings extends InteractiveTableSettings {
   columns: WorkspaceColumnName[];
   name?: string;
   sortKey: V1GetWorkspacesRequestSortBy;
-  user?: string[];
+  users?: string[];
   view: GridListView;
   whose: WhoseWorkspaces;
 }
@@ -100,7 +100,7 @@ const config: SettingsConfig<WorkspaceListSettings> = {
       storageKey: 'tableOffset',
       type: number,
     },
-    user: {
+    users: {
       defaultValue: undefined,
       skipUrlEncoding: true,
       storageKey: 'user',

@@ -83,7 +83,7 @@ const WorkspaceList: React.FC = () => {
           offset: settings.view === GridListView.Grid ? 0 : settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetWorkspacesRequestSortBy, settings.sortKey),
-          users: settings.user,
+          users: settings.users,
         },
         { signal: canceler.signal },
       );

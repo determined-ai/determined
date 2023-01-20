@@ -34,6 +34,7 @@ interface UserSettingUpdate extends UpdateUserSettingParams {
 export type UpdateSettings = (updates: Settings, shouldPush?: boolean) => void;
 export type ResetSettings = (settings?: string[]) => void;
 type SettingsRecord<T> = { [K in keyof T]: T[K] };
+type SettingKeyType<T> = t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>;
 
 export type UseSettingsReturn<T> = {
   activeSettings: (keys?: string[]) => string[];
@@ -64,16 +65,49 @@ const queryParamToType = <T>(
   type: t.Type<SettingsConfig<T>, SettingsConfig<T>, unknown>, // type is refferent to each settign key
   param: string | null, // is refering to the value entry, which can be an index of a setting key if said setting is an "array of something"
 ): Primitive | undefined => {
-  // TODO: add check for number literal - comming up in the future!
+  const validateLiteralType = <T>(
+    type: SettingKeyType<T>,
+    param: string,
+  ): Primitive | undefined => {
+    const typeName = type.name.replace(/(\(|\))/g, ''); // just in case it is a union type
+    let parsedValue: Primitive | undefined;
+    const checkTypes = (t: string) => {
+      const possibleLiteralNumber = Number(t);
+
+      if (t.includes('"')) { // check for the literal types
+        if (param === t) parsedValue = param;
+      } else if (!isNaN(possibleLiteralNumber)) { // we might have litreal numbers as type
+        if (param === t) parsedValue = Number(param);
+      } else { // union types can have regular types
+        if (t.includes('{')) {
+          parsedValue = JSON.parse(param);
+        } else {
+          parsedValue = queryParamToType({ name: t } as SettingKeyType<T>, param);
+        }
+      }
+    };
+
+    if (typeName.includes('|')) { // check for union types
+      typeName.split(' | ').forEach((t) => checkTypes(t)); // parse each individual type
+    } else {
+      checkTypes(typeName);
+    }
+
+    return parsedValue;
+  };
+
   if (param === null || param === undefined) return undefined;
   if (type.name === 'boolean') return param === 'true';
   if (type.name === 'number' || type.name === 'Array<number>') {
     const value = Number(param);
     return !isNaN(value) ? value : undefined;
   }
+  if (type.name === 'string' || type.name === 'Array<string>')
+  return param;
   if (type.is({})) return JSON.parse(param);
-  if (type.name === 'string' || type.name === 'Array<string>' || type.name.includes('"'))
-    return param;
+  if (type.name.includes('"')) {
+    return validateLiteralType(type, param);
+  }
   return undefined;
 };
 

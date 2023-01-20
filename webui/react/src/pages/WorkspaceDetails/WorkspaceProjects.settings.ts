@@ -48,7 +48,7 @@ export interface WorkspaceDetailsSettings extends InteractiveTableSettings {
   columns: ProjectColumnName[];
   name?: string;
   sortKey: V1GetWorkspaceProjectsRequestSortBy;
-  user?: string[];
+  users?: string[];
   view: GridListView;
   whose: WhoseProjects;
 }
@@ -115,7 +115,7 @@ const config: SettingsConfig<WorkspaceDetailsSettings> = {
       storageKey: 'tableOffset',
       type: number,
     },
-    user: {
+    users: {
       defaultValue: undefined,
       skipUrlEncoding: true,
       storageKey: 'user',

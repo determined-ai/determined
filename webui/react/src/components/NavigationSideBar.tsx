@@ -303,7 +303,6 @@ const NavigationSideBar: React.FC = () => {
               Loaded: (workspaces) => (
                 <ul className={css.pinnedWorkspaces} role="list">
                   {workspaces
-                    .sort((a, b) => ((a.pinnedAt ?? 0) < (b.pinnedAt ?? 0) ? -1 : 1))
                     .map((workspace) => (
                       <WorkspaceActionDropdown
                         key={workspace.id}
