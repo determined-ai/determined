@@ -18,7 +18,7 @@ import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import Settings from 'pages/Settings';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
-import TaskList from 'pages/TaskList';
+import TaskListPage from 'pages/TaskListPage';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
@@ -50,7 +50,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   settings: <Settings />,
   signIn: <SignIn />,
   signOut: <SignOut />,
-  taskList: <TaskList />,
+  taskList: <TaskListPage />,
   taskLogs: <TaskLogsWrapper />,
   trialDetails: <TrialDetails />,
   uncategorized: <ProjectDetails />,

@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import TaskList from 'components/TaskList';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -39,6 +40,7 @@ type Params = {
 export const WorkspaceDetailsTab = {
   Members: 'members',
   Projects: 'projects',
+  Tasks: 'tasks',
 } as const;
 
 export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
@@ -166,6 +168,11 @@ const WorkspaceDetails: React.FC = () => {
         label: 'Projects',
       },
       {
+        children: <TaskList workspaceId={id} />,
+        key: WorkspaceDetailsTab.Tasks,
+        label: 'Tasks',
+      },
+      {
         children: (
           <WorkspaceMembers
             addableUsersAndGroups={addableUsersAndGroups}
@@ -259,16 +266,12 @@ const WorkspaceDetails: React.FC = () => {
         />
       }
       id="workspaceDetails">
-      {rbacEnabled ? (
-        <Pivot
-          activeKey={tabKey}
-          destroyInactiveTabPane
-          items={tabItems}
-          onChange={handleTabChange}
-        />
-      ) : (
-        <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
-      )}
+      <Pivot
+        activeKey={tabKey}
+        destroyInactiveTabPane
+        items={tabItems}
+        onChange={handleTabChange}
+      />
     </Page>
   );
 };

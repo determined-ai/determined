@@ -64,109 +64,113 @@ export interface Settings extends InteractiveTableSettings {
   user?: string[];
 }
 
-const config: SettingsConfig<Settings> = {
-  settings: {
-    columns: {
-      defaultValue: DEFAULT_COLUMNS,
-      skipUrlEncoding: true,
-      storageKey: 'columns',
-      type: array(
-        union([
-          literal('action'),
+const config = (id: string): SettingsConfig<Settings> => {
+  const storagePath = `task-list-${id}`;
+
+  return {
+    settings: {
+      columns: {
+        defaultValue: DEFAULT_COLUMNS,
+        skipUrlEncoding: true,
+        storageKey: 'columns',
+        type: array(
+          union([
+            literal('action'),
+            literal('id'),
+            literal('startTime'),
+            literal('state'),
+            literal('name'),
+            literal('type'),
+            literal('resourcePool'),
+            literal('user'),
+          ]),
+        ),
+      },
+      columnWidths: {
+        defaultValue: DEFAULT_COLUMNS.map((col: TaskColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
+        skipUrlEncoding: true,
+        storageKey: 'columnWidths',
+        type: array(number),
+      },
+      row: {
+        defaultValue: undefined,
+        storageKey: 'row',
+        type: union([undefinedType, array(string)]),
+      },
+      search: {
+        defaultValue: undefined,
+        storageKey: 'search',
+        type: union([undefinedType, string]),
+      },
+      sortDesc: {
+        defaultValue: true,
+        storageKey: 'sortDesc',
+        type: boolean,
+      },
+      sortKey: {
+        defaultValue: 'startTime',
+        storageKey: 'sortKey',
+        type: union([
           literal('id'),
+          literal('name'),
+          literal('resourcePool'),
           literal('startTime'),
           literal('state'),
-          literal('name'),
           literal('type'),
-          literal('resourcePool'),
           literal('user'),
         ]),
-      ),
+      },
+      state: {
+        defaultValue: undefined,
+        storageKey: 'state',
+        type: union([
+          undefinedType,
+          array(
+            union([
+              literal(CommandState.Pulling),
+              literal(CommandState.Queued),
+              literal(CommandState.Running),
+              literal(CommandState.Starting),
+              literal(CommandState.Terminated),
+              literal(CommandState.Terminating),
+              literal(CommandState.Waiting),
+            ]),
+          ),
+        ]),
+      },
+      tableLimit: {
+        defaultValue: MINIMUM_PAGE_SIZE,
+        storageKey: 'tableLimit',
+        type: number,
+      },
+      tableOffset: {
+        defaultValue: 0,
+        storageKey: 'tableOffset',
+        type: number,
+      },
+      type: {
+        defaultValue: undefined,
+        storageKey: 'type',
+        type: union([
+          undefinedType,
+          array(
+            union([
+              literal(CommandType.Command),
+              literal(CommandType.JupyterLab),
+              literal(CommandType.Shell),
+              literal(CommandType.TensorBoard),
+            ]),
+          ),
+        ]),
+      },
+      user: {
+        defaultValue: undefined,
+        storageKey: 'user',
+        type: union([undefinedType, array(string)]),
+      },
     },
-    columnWidths: {
-      defaultValue: DEFAULT_COLUMNS.map((col: TaskColumnName) => DEFAULT_COLUMN_WIDTHS[col]),
-      skipUrlEncoding: true,
-      storageKey: 'columnWidths',
-      type: array(number),
-    },
-    row: {
-      defaultValue: undefined,
-      storageKey: 'row',
-      type: union([undefinedType, array(string)]),
-    },
-    search: {
-      defaultValue: undefined,
-      storageKey: 'search',
-      type: union([undefinedType, string]),
-    },
-    sortDesc: {
-      defaultValue: true,
-      storageKey: 'sortDesc',
-      type: boolean,
-    },
-    sortKey: {
-      defaultValue: 'startTime',
-      storageKey: 'sortKey',
-      type: union([
-        literal('id'),
-        literal('name'),
-        literal('resourcePool'),
-        literal('startTime'),
-        literal('state'),
-        literal('type'),
-        literal('user'),
-      ]),
-    },
-    state: {
-      defaultValue: undefined,
-      storageKey: 'state',
-      type: union([
-        undefinedType,
-        array(
-          union([
-            literal(CommandState.Pulling),
-            literal(CommandState.Queued),
-            literal(CommandState.Running),
-            literal(CommandState.Starting),
-            literal(CommandState.Terminated),
-            literal(CommandState.Terminating),
-            literal(CommandState.Waiting),
-          ]),
-        ),
-      ]),
-    },
-    tableLimit: {
-      defaultValue: MINIMUM_PAGE_SIZE,
-      storageKey: 'tableLimit',
-      type: number,
-    },
-    tableOffset: {
-      defaultValue: 0,
-      storageKey: 'tableOffset',
-      type: number,
-    },
-    type: {
-      defaultValue: undefined,
-      storageKey: 'type',
-      type: union([
-        undefinedType,
-        array(
-          union([
-            literal(CommandType.Command),
-            literal(CommandType.JupyterLab),
-            literal(CommandType.Shell),
-            literal(CommandType.TensorBoard),
-          ]),
-        ),
-      ]),
-    },
-    user: {
-      defaultValue: undefined,
-      storageKey: 'user',
-      type: union([undefinedType, array(string)]),
-    },
-  },
-  storagePath: 'task-list',
+    storagePath,
+  };
 };
 
 export default config;
