@@ -22,6 +22,7 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
 }
 
 interface Props {
+  allowDownload?: boolean;
   data?: AlignedData | FacetedData;
   focusIndex?: number;
   noDataMessage?: string;
@@ -80,6 +81,7 @@ const shouldRecreate = (
 };
 
 const UPlotChart: React.FC<Props> = ({
+  allowDownload,
   data,
   focusIndex,
   options,
@@ -238,7 +240,7 @@ const UPlotChart: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
-      <DownloadButton containerRef={chartDivRef} />
+      {allowDownload && <DownloadButton containerRef={chartDivRef} />}
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}

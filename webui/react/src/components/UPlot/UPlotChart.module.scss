@@ -1,3 +1,9 @@
+.base {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
 .base.dark {
   :global(.u-select) {
     background-color: rgba(255, 255, 255, 0.1);
@@ -5,8 +11,8 @@
 }
 
 .download {
-  right: 5px;
-  top: 5px;
+  right: 0px;
+  top: -10px;
   position: absolute;
   border: 0;
   cursor: pointer;
