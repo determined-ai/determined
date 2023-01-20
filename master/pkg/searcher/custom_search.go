@@ -99,7 +99,7 @@ func (s *customSearch) validationCompleted(
 			ValidationCompleted: &experimentv1.ValidationCompleted{
 				RequestId:           requestID.String(),
 				ValidateAfterLength: op.ToProto().Length,
-				Metric:              protoMetric,
+				Metrics:             protoMetric,
 			},
 		},
 	})

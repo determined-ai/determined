@@ -64,6 +64,20 @@
         }
       },
       "description": "https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any"
+    },
+    "v1CompleteValidateAfterOperation": {
+        "properties": {
+            "metrics": {
+                "type": null
+            }
+        }
+    },
+    "v1ValidationCompleted": {
+        "properties": {
+            "metrics": {
+                "type": null
+            }
+        }
     }
   }
 }

@@ -77,7 +77,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	validationCompletedEvent := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{
 			RequestId:           requestID.String(),
-			Metric:              protoMetric,
+			Metrics:             protoMetric,
 			ValidateAfterLength: validateAfterOp.ToProto().Length,
 		},
 	}
@@ -100,7 +100,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	validationCompletedEvent2 := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{
 			RequestId:           requestID.String(),
-			Metric:              protoAllMetrics,
+			Metrics:             protoAllMetrics,
 			ValidateAfterLength: validateAfterOp2.ToProto().Length,
 		},
 	}

@@ -20,6 +20,10 @@ def merge_dict(d1: Dict, d2: Dict) -> None:
     """
 
     for k, v2 in d2.items():
+        # Nones represent a deletion
+        if v2 is None:
+            d1.pop(k)
+            continue
         v1 = d1.get(k)
         if isinstance(v1, dict) and isinstance(v2, dict):
             merge_dict(v1, v2)
