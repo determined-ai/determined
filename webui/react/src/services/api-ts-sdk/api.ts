@@ -8079,7 +8079,7 @@ export interface V1Shell {
      * @type {number}
      * @memberof V1Shell
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**

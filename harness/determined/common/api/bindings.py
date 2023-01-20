@@ -9690,7 +9690,6 @@ class v1Shell:
     privateKey: "typing.Optional[str]" = None
     publicKey: "typing.Optional[str]" = None
     userId: "typing.Optional[int]" = None
-    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -9702,6 +9701,7 @@ class v1Shell:
         startTime: str,
         state: "determinedtaskv1State",
         username: str,
+        workspaceId: int,
         addresses: "typing.Union[typing.Sequence[typing.Dict[str, typing.Any]], None, Unset]" = _unset,
         agentUserGroup: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
@@ -9710,7 +9710,6 @@ class v1Shell:
         privateKey: "typing.Union[str, None, Unset]" = _unset,
         publicKey: "typing.Union[str, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.description = description
         self.id = id
@@ -9719,6 +9718,7 @@ class v1Shell:
         self.startTime = startTime
         self.state = state
         self.username = username
+        self.workspaceId = workspaceId
         if not isinstance(addresses, Unset):
             self.addresses = addresses
         if not isinstance(agentUserGroup, Unset):
@@ -9735,8 +9735,6 @@ class v1Shell:
             self.publicKey = publicKey
         if not isinstance(userId, Unset):
             self.userId = userId
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Shell":
@@ -9748,6 +9746,7 @@ class v1Shell:
             "startTime": obj["startTime"],
             "state": determinedtaskv1State(obj["state"]),
             "username": obj["username"],
+            "workspaceId": obj["workspaceId"],
         }
         if "addresses" in obj:
             kwargs["addresses"] = obj["addresses"]
@@ -9765,8 +9764,6 @@ class v1Shell:
             kwargs["publicKey"] = obj["publicKey"]
         if "userId" in obj:
             kwargs["userId"] = obj["userId"]
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9778,6 +9775,7 @@ class v1Shell:
             "startTime": self.startTime,
             "state": self.state.value,
             "username": self.username,
+            "workspaceId": self.workspaceId,
         }
         if not omit_unset or "addresses" in vars(self):
             out["addresses"] = self.addresses
@@ -9795,8 +9793,6 @@ class v1Shell:
             out["publicKey"] = self.publicKey
         if not omit_unset or "userId" in vars(self):
             out["userId"] = self.userId
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
         return out
 
 class v1ShutDownOperation:
