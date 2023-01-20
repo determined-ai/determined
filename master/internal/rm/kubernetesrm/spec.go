@@ -59,18 +59,15 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	case device.CUDA: // default to CUDA-backed slots.
 		fallthrough
 	default:
-		if p.slots > 0 {
-			return k8sV1.ResourceRequirements{
-				Limits: map[k8sV1.ResourceName]resource.Quantity{
-					"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
-				},
-				Requests: map[k8sV1.ResourceName]resource.Quantity{
-					"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
-				},
-			}
+		return k8sV1.ResourceRequirements{
+			Limits: map[k8sV1.ResourceName]resource.Quantity{
+				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+			},
+			Requests: map[k8sV1.ResourceName]resource.Quantity{
+				"nvidia.com/gpu": *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+			},
 		}
 	}
-	return k8sV1.ResourceRequirements{}
 }
 
 func (p *pod) configureEnvVars(

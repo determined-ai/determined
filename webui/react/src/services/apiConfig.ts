@@ -132,16 +132,6 @@ export const postUser: DetApi<
   request: (params) => detApi.Users.postUser(params),
 };
 
-export const postUserActivity: DetApi<
-  Api.V1PostUserActivityRequest,
-  Api.V1PostUserActivityResponse,
-  Api.V1PostUserActivityResponse
-> = {
-  name: 'postUserActivity',
-  postProcess: (response) => response,
-  request: (params) => detApi.Users.postUserActivity(params),
-};
-
 export const setUserPassword: DetApi<
   Service.SetUserPasswordParams,
   Api.V1SetUserPasswordResponse,
@@ -595,7 +585,6 @@ export const getExperiments: DetApi<
       undefined,
       params.experimentIdFilter?.incl,
       params.experimentIdFilter?.notIn,
-      true,
       options,
     );
   },
@@ -1439,19 +1428,6 @@ export const unarchiveProject: DetApi<
   request: (params) => detApi.Projects.unarchiveProject(params.id),
 };
 
-export const getProjectsByUserActivity: DetApi<
-  Service.GetProjectsByUserActivityParams,
-  Api.V1GetProjectsByUserActivityResponse,
-  Type.Project[]
-> = {
-  name: 'getProjectsByUserActivity',
-  postProcess: (response) => {
-    return (response.projects || []).map((project) => decoder.mapV1Project(project));
-  },
-  request: (params: Service.GetProjectsByUserActivityParams) =>
-    detApi.Projects.getProjectsByUserActivity(params.limit),
-};
-
 /* Tasks */
 
 const TASK_LIMIT = 1000;
@@ -1609,7 +1585,7 @@ export const launchTensorBoard: DetApi<
   postProcess: (response) => {
     return {
       command: decoder.mapV1TensorBoard(response.tensorboard),
-      warnings: response.warnings || [],
+      wanrings: response.warnings || [],
     };
   },
   request: (params: Service.LaunchTensorBoardParams) =>

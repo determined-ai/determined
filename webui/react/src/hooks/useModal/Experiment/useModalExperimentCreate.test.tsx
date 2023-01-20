@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Button } from 'antd';
 import React, { useEffect } from 'react';
 
-import Button from 'components/kit/Button';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 

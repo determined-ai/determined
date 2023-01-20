@@ -20,6 +20,7 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'webhook-list',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

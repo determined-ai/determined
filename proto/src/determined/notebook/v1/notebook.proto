@@ -20,8 +20,7 @@ message Notebook {
         "state",
         "username",
         "resource_pool",
-        "job_id",
-        "workspace_id"
+        "job_id"
       ]
     }
   };
@@ -49,6 +48,4 @@ message Notebook {
   string exit_status = 13;
   // The associated job id.
   string job_id = 14;
-  // Workspace ID.
-  int32 workspace_id = 17;
 }

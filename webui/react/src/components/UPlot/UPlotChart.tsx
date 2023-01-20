@@ -25,6 +25,7 @@ interface Props {
   noDataMessage?: string;
   options?: Partial<Options>;
   style?: React.CSSProperties;
+  title?: string;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -41,13 +42,14 @@ const shouldRecreate = (
   if (prev.key !== next.key) return true;
   if (Object.keys(prev).length !== Object.keys(next).length) return true;
 
+  if (prev.title !== next.title) return true;
   if (prev.axes?.length !== next.axes?.length) return true;
 
   if (chart?.series?.length !== next.series?.length) return true;
 
   const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([scaleKey, nextScale]) => {
     const prevScale = prev?.scales?.[scaleKey];
-    return prevScale?.distr !== nextScale?.distr || prevScale?.range !== nextScale?.range;
+    return prevScale?.distr !== nextScale?.distr;
   });
 
   if (someScaleHasChanged) return true;
@@ -83,6 +85,7 @@ const UPlotChart: React.FC<Props> = ({
   options,
   style,
   noDataMessage,
+  title,
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const [divHeight, setDivHeight] = useState((options?.height ?? 300) + 20);
@@ -91,7 +94,7 @@ const UPlotChart: React.FC<Props> = ({
   const classes = [css.base];
 
   const { ui } = useUI();
-  const { xMax, xMin, zoomed, boundsOptions, setZoomed } = useSyncableBounds();
+  const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
@@ -125,13 +128,8 @@ const UPlotChart: React.FC<Props> = ({
       });
     }
 
-    // Override chart xMin / xMax if specified and not zoomed
-    if (extended?.scales?.x && (xMin || xMax) && !zoomed) {
-      extended.scales.x.range = [Number(xMin), Number(xMax)];
-    }
-
     return extended as uPlot.Options;
-  }, [boundsOptions, options, setZoomed, ui.theme, xMax, xMin, zoomed]);
+  }, [boundsOptions, options, setZoomed, ui.theme]);
 
   const previousOptions = usePrevious(extendedOptions, undefined);
 
@@ -179,7 +177,7 @@ const UPlotChart: React.FC<Props> = ({
         });
       }
     }
-  }, [data, extendedOptions, isReady, previousOptions, zoomed]);
+  }, [data, extendedOptions, isReady, previousOptions, title, zoomed]);
 
   /**
    * When a focus index is provided, highlight applicable series.

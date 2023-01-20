@@ -8,7 +8,6 @@ import pytest
 from determined.common import yaml
 from determined.common.api import bindings
 from determined.experimental import Determined
-from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_checkpoints import wait_for_gc_to_finish
@@ -369,12 +368,12 @@ def test_kill_experiment_ignoring_preemption() -> None:
     )
     exp.wait_for_experiment_state(exp_id, bindings.determinedexperimentv1State.STATE_RUNNING)
 
-    bindings.post_CancelExperiment(api_utils.determined_test_session(), id=exp_id)
+    bindings.post_CancelExperiment(exp.experiment.determined_test_session(), id=exp_id)
     exp.wait_for_experiment_state(
         exp_id, bindings.determinedexperimentv1State.STATE_STOPPING_CANCELED
     )
 
-    bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
+    bindings.post_KillExperiment(exp.experiment.determined_test_session(), id=exp_id)
     exp.wait_for_experiment_state(exp_id, bindings.determinedexperimentv1State.STATE_CANCELED)
 
 

@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 12px;
   height: 100%;
+  padding: 16px;
 
   .resource {
     align-items: center;
@@ -20,6 +21,9 @@
   .resourceSize {
     flex-shrink: 0;
     padding-left: 6px;
+  }
+  .link a {
+    color: var(--theme-status-active) !important;
   }
   .placeholder {
     color: var(--theme-colors-monochrome-10);

@@ -16,6 +16,16 @@
       display: none;
     }
   }
+  .optionsDropdown {
+    border-color: transparent !important;
+    color: var(--theme-stage-on);
+    opacity: 0.9;
+
+    &:focus,
+    &:hover {
+      opacity: 1;
+    }
+  }
   :global(
       .ant-select-status-warning.ant-select:not(.ant-select-disabled):not(
           .ant-select-customize-input

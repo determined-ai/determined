@@ -35,13 +35,13 @@ def _simple_reduce_metrics(
                     "Lengths of metrics and num_batches are not equal: "
                     f"{len(metrics)} != {len(num_batches)}."
                 )
-        return np.average(metrics, weights=num_batches)  # type: ignore
+        return np.average(metrics, weights=num_batches)
     elif reducer == Reducer.SUM:
-        return np.sum(metrics)  # type: ignore
+        return np.sum(metrics)
     elif reducer == Reducer.MAX:
-        return np.max(metrics)  # type: ignore
+        return np.max(metrics)
     elif reducer == Reducer.MIN:
-        return np.min(metrics)  # type: ignore
+        return np.min(metrics)
     else:
         raise NotImplementedError
 

@@ -9,10 +9,10 @@ import yaml
 
 from determined.common.api import bindings
 from determined.common.api.bindings import determinedexperimentv1State
-from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
+from ..experiment.experiment import determined_test_session
 from .test_agent_disable import _wait_for_slots
 
 # How long we should for the Nth = 1 rank to free.
@@ -96,12 +96,12 @@ def test_allocation_resources_incremental_release() -> None:
 
     finally:
         for exp_id in cleanup_exp_ids:
-            bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
+            bindings.post_KillExperiment(determined_test_session(), id=exp_id)
             exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_CANCELED)
 
 
 def list_free_agents() -> List[bindings.v1Agent]:
-    agents = bindings.get_GetAgents(api_utils.determined_test_session())
+    agents = bindings.get_GetAgents(determined_test_session())
     if not agents.agents:
         pytest.fail(f"missing agents: {agents}")
 

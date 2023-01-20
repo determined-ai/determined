@@ -1,8 +1,7 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { notification, Result } from 'antd';
+import { Button, notification, Result } from 'antd';
 import React, { useCallback } from 'react';
 
-import Button from 'components/kit/Button';
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'shared/utils/dom';
 

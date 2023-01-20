@@ -22,7 +22,7 @@ export interface SettingsConfigProp<A> {
 }
 
 export interface SettingsConfig<T> {
-  applicableRoutespace?: string;
+  applicableRoutespace: string;
   settings: { [K in keyof T]: SettingsConfigProp<T[K]> };
   storagePath: string;
 }
@@ -144,7 +144,8 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
   const navigate = useNavigate();
   const pathname = window.location.pathname;
   const shouldSkipUpdates = useMemo(
-    () => config.applicableRoutespace && !pathname.endsWith(config.applicableRoutespace),
+    () =>
+      config.applicableRoutespace.includes('/') && !pathname.endsWith(config.applicableRoutespace),
     [config.applicableRoutespace, pathname],
   );
 
@@ -153,7 +154,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
     if (!querySettings || shouldSkipUpdates) return;
 
     const settings = queryToSettings<T>(config, querySettings);
-    const stateSettings = state.get(config.storagePath) ?? {};
+    const stateSettings = state.get(config.applicableRoutespace) ?? {};
 
     if (isEqual(settings, stateSettings)) return;
 
@@ -161,13 +162,13 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
       stateSettings[setting] = settings[setting];
     });
 
-    update(config.storagePath, stateSettings, true);
+    update(config.applicableRoutespace, stateSettings, true);
   }, [config, querySettings, state, update, shouldSkipUpdates]);
 
   const settings: SettingsRecord<T> = useMemo(
     () =>
       ({
-        ...(state.get(config.storagePath) ?? {}),
+        ...(state.get(config.applicableRoutespace) ?? {}),
       } as SettingsRecord<T>),
     [config, state],
   );
@@ -223,10 +224,10 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
           acc.push({
             setting: {
               key: setting,
-              storagePath: config.storagePath,
+              storagePath: config.applicableRoutespace,
               value: JSON.stringify(newSettings[setting]),
             },
-            storagePath: config.storagePath,
+            storagePath: config.applicableRoutespace,
             userId: user.id,
           });
         }
@@ -253,7 +254,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         }
       }
     },
-    [user?.id, config.storagePath, settings],
+    [user?.id, config.applicableRoutespace, settings],
   );
 
   const resetSettings = useCallback(
@@ -280,7 +281,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
         newSettings[setting as keyof T] = defaultSetting.defaultValue;
       });
 
-      update(config.storagePath, newSettings);
+      update(config.applicableRoutespace, newSettings);
 
       await updateDB(newSettings);
 
@@ -297,7 +298,7 @@ const useSettings = <T>(config: SettingsConfig<T>): UseSettingsReturn<T> => {
 
       if (isEqual(newSettings, settings)) return;
 
-      update(config.storagePath, newSettings);
+      update(config.applicableRoutespace, newSettings);
 
       await updateDB(newSettings);
 

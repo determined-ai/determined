@@ -133,15 +133,15 @@ func TestShipper(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		var config expconf.ExperimentConfig
-		config = schemas.WithDefaults(config)
 		for id, delay := range schedule {
 			time.Sleep(scheduledWaitToDuration(delay))
 			expected[id] = 3 // 3 sends, one for each trigger.
+			var conf expconf.ExperimentConfig
 			require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-				ID:    id,
-				State: model.CompletedState,
-			}, config))
+				ID:     id,
+				State:  model.CompletedState,
+				Config: schemas.WithDefaults(conf),
+			}))
 			progress.Store(int64(id))
 		}
 	}()

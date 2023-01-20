@@ -387,9 +387,3 @@ func (t TaskLogBatch) ForEach(f func(interface{}) error) error {
 	}
 	return nil
 }
-
-// AccessScopeID is an identifier for an access scope.
-type AccessScopeID int
-
-// AccessScopeSet is a set of access scopes.
-type AccessScopeSet = map[AccessScopeID]bool

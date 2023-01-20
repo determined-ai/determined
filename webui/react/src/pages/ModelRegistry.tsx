@@ -1,4 +1,4 @@
-import { Dropdown, Input, Space, Typography } from 'antd';
+import { Button, Dropdown, Input, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import {
   FilterDropdownProps,
@@ -9,7 +9,6 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import FilterCounter from 'components/FilterCounter';
-import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -369,10 +368,8 @@ const ModelRegistry: React.FC = () => {
 
     const actionRenderer = (_: string, record: ModelItem) => (
       <Dropdown menu={ModelActionMenu(record)} trigger={['click']}>
-        <Button ghost type="text">
-          <div className={css.overflow}>
-            <Icon name="overflow-vertical" />
-          </div>
+        <Button className={css.overflow} type="text">
+          <Icon name="overflow-vertical" />
         </Button>
       </Dropdown>
     );

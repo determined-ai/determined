@@ -204,6 +204,22 @@ export const modelVersionNumberRenderer = (
 /* Table Helper Functions */
 
 /*
+ * For an `onClick` event on a table row, sometimes we have alternative and secondary
+ * click interactions we want to capture. For example, we might want to capture different
+ * link besides the one the table row is linked to. This function provides the means to
+ * detect these alternative actions based on className definitions.
+ */
+export const isAlternativeAction = (event: React.MouseEvent): boolean => {
+  const target = event.target as Element;
+  if (
+    target.className.includes('ant-checkbox-wrapper') ||
+    target.className.includes('ignoreTableRowClick')
+  )
+    return true;
+  return false;
+};
+
+/*
  * Default clickable row class name for Table components.
  */
 export const defaultRowClassName = (options?: {

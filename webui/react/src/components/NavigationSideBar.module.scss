@@ -82,7 +82,15 @@
     width: 206px;
 
     .launchButton {
-      width: 100%;
+      background-color: transparent;
+      border-color: var(--theme-stage-border);
+      border-radius: var(--theme-border-radius);
+      border-style: solid;
+      border-width: var(--theme-stroke-width);
+      color: var(--theme-stage-on);
+      flex-grow: 1;
+      flex-shrink: 1;
+      overflow: hidden;
     }
     .launchIcon {
       align-items: center;

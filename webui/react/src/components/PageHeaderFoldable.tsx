@@ -1,12 +1,12 @@
-import { Dropdown } from 'antd';
+import { Button, Dropdown } from 'antd';
 import type { DropdownProps, MenuProps } from 'antd';
 import React, { useState } from 'react';
 
-import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Icon from 'shared/components/Icon/Icon';
 import { isMouseEvent } from 'shared/utils/routes';
 
+import IconButton from './IconButton';
 import css from './PageHeaderFoldable.module.scss';
 
 export interface Option {
@@ -39,12 +39,12 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
   const [isExpanded, setIsExpanded] = useState(false);
 
   const dropdownClasses = [css.optionsDropdown];
-
   let dropdownOptions: DropdownProps['menu'] = {};
   if (options && options.length > 0) {
     if (options.length === 1) dropdownClasses.push(css.optionsDropdownOneChild);
     if (options.length === 2) dropdownClasses.push(css.optionsDropdownTwoChild);
     if (options.length === 3) dropdownClasses.push(css.optionsDropdownThreeChild);
+
     const onItemClick: MenuProps['onClick'] = (e) => {
       const opt = options.find((opt) => opt.key === e.key) as Option;
       if (isMouseEvent(e.domEvent)) {
@@ -68,32 +68,35 @@ const PageHeaderFoldable: React.FC<Props> = ({ foldableContent, leftContent, opt
         <div className={css.left}>{leftContent}</div>
         <div className={css.options}>
           {foldableContent && (
-            <Tooltip title="Toggle">
-              <Button type="text" onClick={() => setIsExpanded((prev) => !prev)}>
-                <Icon name={isExpanded ? 'arrow-up' : 'arrow-down'} size="tiny" />
-              </Button>
-            </Tooltip>
+            <IconButton
+              icon={isExpanded ? 'arrow-up' : 'arrow-down'}
+              iconSize="tiny"
+              label="Toggle"
+              type="text"
+              onClick={() => setIsExpanded((prev) => !prev)}
+            />
           )}
           <div className={css.optionsButtons}>
             {options?.slice(0, 3).map((option) => (
-              <div className={css.optionsMainButton} key={option.key}>
-                <Button
-                  disabled={option.disabled || !option.onClick}
-                  ghost
-                  icon={option?.icon}
-                  key={option.key}
-                  loading={option.isLoading}
-                  onClick={option.onClick}>
-                  {renderOptionLabel(option)}
-                </Button>
-              </div>
+              <Button
+                className={css.optionsMainButton}
+                disabled={option.disabled || !option.onClick}
+                ghost
+                icon={option?.icon}
+                key={option.key}
+                loading={option.isLoading}
+                onClick={option.onClick}>
+                {renderOptionLabel(option)}
+              </Button>
             ))}
           </div>
           {dropdownOptions && (
             <Dropdown menu={dropdownOptions} placement="bottomRight" trigger={['click']}>
-              <div className={dropdownClasses.join(' ')}>
-                <Button ghost icon={<Icon name="overflow-vertical" />} />
-              </div>
+              <Button
+                className={dropdownClasses.join(' ')}
+                ghost
+                icon={<Icon name="overflow-vertical" />}
+              />
             </Dropdown>
           )}
         </div>

@@ -962,12 +962,6 @@ func (a *Allocation) terminated(ctx *actor.Context, reason string) {
 				ctx.Log().Debug(exitReason)
 				exit.Err = err
 				return
-			case sproto.RestoreError:
-				exitReason = fmt.Sprintf("allocation failed due to restore error: %s", err)
-				ctx.Log().Warn(exitReason)
-				exit.Err = err
-				return
-
 			default:
 				panic(fmt.Errorf("unexpected allocation failure: %w", err))
 			}

@@ -1,6 +1,6 @@
 # Using model-hub mmdetection with [Hydra](https://hydra.cc/)
 Hydra is a framework for configuring applications that works very well with machine learning experiments.
-You can use Determined's Python SDK with Hydra to:
+You can use Determined's python API with Hydra to:
 * Easily submit experiments with different configurations
 * Perform parameter sweeps
 * Compose configurations

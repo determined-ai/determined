@@ -1,6 +1,5 @@
 import itertools
 import logging
-import sys
 import threading
 import traceback
 from collections import namedtuple
@@ -45,16 +44,6 @@ def dummy_reducer(values: List) -> Any:
 def test_custom_reducer_slot_order(cross_size: int, local_size: int) -> None:
     size = cross_size * local_size
     dataset_size = 47
-
-    # Make sure `make test` doesn't hang on macbook's default file descriptor limit (256).
-    # Avoid skipping on linux because it's not a common default, and to avoid false positives in CI.
-    if sys.platform == "darwin" and size == 9:  # Maximum size 3 x 3
-        import resource
-
-        if resource.getrlimit(resource.RLIMIT_NOFILE)[0] < 1024:
-            pytest.skip(
-                "increase the open fd limit with `ulimit -n 1024` or greater to run this test"
-            )
 
     def do_parallel(fn: Callable) -> List:
         """

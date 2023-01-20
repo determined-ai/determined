@@ -1,0 +1,12 @@
+.base {
+  align-items: center;
+  display: flex;
+
+  .inactive {
+    color: inherit;
+  }
+  .active {
+    border-color: var(--theme-status-active);
+    color: var(--theme-status-active);
+  }
+}

@@ -19,8 +19,6 @@ type SearcherConfigV0 struct {
 	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
 	RawCustomConfig       *CustomConfigV0       `union:"name,custom" json:"-"`
 
-	// TODO(DET-8577): There should not be a need to parse EOL searchers if we get rid of parsing
-	//                 active experiment configs unnecessarily.
 	// These searchers are allowed only to help parse old experiment configs.
 	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
 	RawAdaptiveConfig       *AdaptiveConfigV0       `union:"name,adaptive" json:"-"`
@@ -74,38 +72,6 @@ func (s SearcherConfigV0) Unit() Unit {
 		panic("cannot get unit of EOL searcher class")
 	default:
 		panic("no searcher type specified")
-	}
-}
-
-// AsLegacy converts a current ExperimentConfig to a (limited capacity) LegacySearcher.
-func (s SearcherConfigV0) AsLegacy() LegacySearcher {
-	var name string
-	switch {
-	case s.RawSingleConfig != nil:
-		name = "single"
-	case s.RawRandomConfig != nil:
-		name = "random"
-	case s.RawGridConfig != nil:
-		name = "grid"
-	case s.RawAsyncHalvingConfig != nil:
-		name = "async_halving"
-	case s.RawAdaptiveASHAConfig != nil:
-		name = "adaptive_asha"
-	case s.RawCustomConfig != nil:
-		name = "custom"
-	case s.RawSyncHalvingConfig != nil:
-		name = "sync_halving"
-	case s.RawAdaptiveConfig != nil:
-		name = "adaptive"
-	case s.RawAdaptiveSimpleConfig != nil:
-		name = "adaptive_simple"
-	default:
-		panic("no searcher type specified")
-	}
-	return LegacySearcher{
-		Name:            name,
-		Metric:          s.Metric(),
-		SmallerIsBetter: s.SmallerIsBetter(),
 	}
 }
 

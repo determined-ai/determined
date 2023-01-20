@@ -25,7 +25,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal"
 	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/determined-ai/determined/master/test/testutils"
 
@@ -101,11 +100,11 @@ func trialDetailAPITests(
 
 	runTestCase := func(t *testing.T, tc testCase, id int) {
 		t.Run(tc.name, func(t *testing.T) {
-			_, activeConfig, trial := setupTrial(t, pgDB)
+			experiment, trial := setupTrial(t, pgDB)
 
 			metrics := trialv1.TrialMetrics{
 				TrialId:        int32(trial.ID),
-				StepsCompleted: int32(id * activeConfig.SchedulingUnit()),
+				StepsCompleted: int32(id * experiment.Config.SchedulingUnit()),
 			}
 
 			m := structpb.Struct{}
@@ -163,7 +162,7 @@ func makeMetrics() *structpb.Struct {
 func trialWorkloadsAPIHugeMetrics(
 	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	_, _, trial := setupTrial(t, pgDB)
+	_, trial := setupTrial(t, pgDB)
 
 	batchMetrics := []*structpb.Struct{}
 	const stepSize = 1
@@ -208,7 +207,7 @@ func trialWorkloadsAPIHugeMetrics(
 func trialProfilerMetricsTests(
 	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	_, _, trial := setupTrial(t, pgDB)
+	_, trial := setupTrial(t, pgDB)
 
 	// If we begin to stream for metrics.
 	ctx, cancel := context.WithTimeout(creds, time.Minute)
@@ -276,7 +275,7 @@ func trialProfilerMetricsTests(
 func trialProfilerMetricsAvailableSeriesTests(
 	creds context.Context, t *testing.T, cl apiv1.DeterminedClient, pgDB *db.PgDB,
 ) {
-	_, _, trial := setupTrial(t, pgDB)
+	_, trial := setupTrial(t, pgDB)
 
 	ctx, cancel := context.WithTimeout(creds, time.Minute)
 	defer cancel()
@@ -384,11 +383,9 @@ func randTrialProfilerSystemMetrics(
 	}
 }
 
-func setupTrial(t *testing.T, pgDB *db.PgDB) (
-	*model.Experiment, expconf.ExperimentConfig, *model.Trial,
-) {
-	experiment, activeConfig := model.ExperimentModel()
-	err := pgDB.AddExperiment(experiment, activeConfig)
+func setupTrial(t *testing.T, pgDB *db.PgDB) (*model.Experiment, *model.Trial) {
+	experiment := model.ExperimentModel()
+	err := pgDB.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)
@@ -402,5 +399,5 @@ func setupTrial(t *testing.T, pgDB *db.PgDB) (
 
 	err = pgDB.AddTrial(trial)
 	assert.NilError(t, err, "failed to insert trial")
-	return experiment, activeConfig, trial
+	return experiment, trial
 }

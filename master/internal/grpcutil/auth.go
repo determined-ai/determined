@@ -163,26 +163,6 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	}
 }
 
-// GetUserExternalToken returns the external token for the currently logged in user.
-func GetUserExternalToken(ctx context.Context) (string, error) {
-	if config.GetMasterConfig().InternalConfig.ExternalSessions.JwtKey == "" {
-		return "", ErrPermissionDenied
-	}
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "", ErrTokenMissing
-	}
-	tokens := md[gatewayTokenHeader]
-	if len(tokens) == 0 {
-		return "", ErrTokenMissing
-	}
-	token := tokens[0]
-	if !strings.HasPrefix(token, "Bearer ") {
-		return "", ErrInvalidCredentials
-	}
-	return strings.TrimPrefix(token, "Bearer "), nil
-}
-
 // Return error if user cannot be authenticated or lacks authorization.
 func auth(ctx context.Context, db *db.PgDB, fullMethod string,
 	extConfig *model.ExternalSessions,

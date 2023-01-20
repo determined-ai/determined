@@ -52,8 +52,8 @@ details.
 A checkpoint includes the model definition (Python source code), experiment configuration file,
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
-optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via the
-:ref:`Python SDK <store-checkpoint-metadata>`.
+optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
+:ref:`Python API <store-checkpoint-metadata>`.
 
 TensorFlow Estimator trials are checkpointed using the `SavedModel
 <https://www.tensorflow.org/guide/saved_model>`__ format. Please consult the TensorFlow

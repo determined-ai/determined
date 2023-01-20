@@ -4,51 +4,43 @@ import (
 	"crypto/tls"
 	"time"
 
-	"golang.org/x/time/rate"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
-	actionCooldown    = 5 * time.Second
-	telemetryCooldown = 90 * time.Second
-	secureScheme      = "https"
+	actionCooldown = 5 * time.Second
+	secureScheme   = "https"
 )
 
 // provisionerTick periodically triggers the provisioner to act.
 type provisionerTick struct{}
 
 // Provisioner implements an actor to provision and terminate agent instances.
-// It is composed of four parts: a provisioner actor, a scaling decision maker,
-// a provider, and a rate limiter.
-//  1. The provisioner actor accepts actor messages with pending tasks and idle agents.
-//     1.1. `Scheduler` pushes an immutable view of agents and tasks to `Provisioner`. `Provisioner`
-//     pulls instance data from instance providers.
-//  2. Based on the pending tasks, the scaleDecider chooses how many new instances to launch and
-//     which instances to terminate.
-//     2.1 It terminates instances if they stay idle for more than `maxIdleAgentPeriod` time.
-//     2.2 It checks recently launched instances and avoids provisioning more than needed.
-//  3. The instance providers take actions to launch/terminate instances.
-//  4. The rate limiter ensures telemetry does not get sent more frequently than every 90sec.
+// It is composed of three parts: a provisioner actor, a scaling decision maker, and a provider.
+// 1. The provisioner actor accepts actor messages with pending tasks and idle agents.
+//    1.1. `Scheduler` pushes an immutable view of agents and tasks to `Provisioner`. `Provisioner`
+//         pulls instance data from instance providers.
+// 2. Based on the pending tasks, the scaleDecider chooses how many new instances to launch and
+//    which instances to terminate.
+//    2.1 It terminates instances if they stay idle for more than `maxIdleAgentPeriod` time.
+//    2.2 It checks recently launched instances and avoids provisioning more than needed.
+// 3. The instance providers take actions to launch/terminate instances.
 type Provisioner struct {
-	provider         provider
-	scaleDecider     *scaleDecider
-	telemetryLimiter *rate.Limiter
+	provider     provider
+	scaleDecider *scaleDecider
 }
 
 type provider interface {
-	instanceType() model.InstanceType
+	instanceType() instanceType
 	slotsPerInstance() int
 	prestart(ctx *actor.Context)
-	list(ctx *actor.Context) ([]*model.Instance, error)
+	list(ctx *actor.Context) ([]*Instance, error)
 	launch(ctx *actor.Context, instanceNum int)
 	terminate(ctx *actor.Context, instanceIDs []string)
 }
@@ -85,7 +77,6 @@ func New(
 			config.MaxInstances,
 			db,
 		),
-		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 	}, nil
 }
 
@@ -116,11 +107,6 @@ func (p *Provisioner) SlotsPerInstance() int {
 	return p.provider.slotsPerInstance()
 }
 
-// InstanceType returns the instance type of the provider for the provisioner.
-func (p *Provisioner) InstanceType() string {
-	return p.provider.instanceType().Name()
-}
-
 func (p *Provisioner) provision(ctx *actor.Context) {
 	instances, err := p.provider.list(ctx)
 	if err != nil {
@@ -130,7 +116,7 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	updated := p.scaleDecider.updateInstanceSnapshot(instances)
 	if updated {
 		ctx.Log().Infof("found state changes in %d instances: %s",
-			len(instances), model.FmtInstances(instances))
+			len(instances), fmtInstances(instances))
 	}
 
 	p.scaleDecider.calculateInstanceStates()
@@ -156,11 +142,5 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 		ctx.Log().Infof("decided to launch %d instances (type %s)",
 			numToLaunch, p.provider.instanceType().Name())
 		p.provider.launch(ctx, numToLaunch)
-	}
-
-	if p.telemetryLimiter.Allow() {
-		telemetry.ReportProvisionerTick(ctx.Self().System(),
-			instances,
-			p.InstanceType())
 	}
 }

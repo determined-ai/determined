@@ -7,6 +7,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/google/go-cmp/cmp"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -54,8 +55,8 @@ func TestLegacyConfig(t *testing.T) {
                   ports: null
                 hyperparameters:
                   global_batch_size:
-                    type: const
-                    val: 64
+                  type: const
+                  val: 64
                 internal: null
                 labels:
                 - 0.12.13
@@ -88,7 +89,7 @@ func TestLegacyConfig(t *testing.T) {
                   source_trial_id: null
             `),
 			Expected: LegacyConfig{
-				CheckpointStorage: CheckpointStorageConfig{
+				checkpointStorage: CheckpointStorageConfig{
 					RawSharedFSConfig: &SharedFSConfig{
 						RawHostPath:        ptrs.Ptr("/tmp"),
 						RawContainerPath:   ptrs.Ptr("qwer"),
@@ -101,32 +102,11 @@ func TestLegacyConfig(t *testing.T) {
 					RawSaveTrialBest:      ptrs.Ptr(10),
 					RawSaveTrialLatest:    ptrs.Ptr(10),
 				},
-				BindMounts: BindMountsConfig{},
-				Environment: EnvironmentConfig{
-					RawEnvironmentVariables: &EnvironmentVariablesMap{
-						RawCPU:  []string{"HOME=/where/the/heart/is"},
-						RawCUDA: []string{"HOME=/where/the/heart/is"},
-						RawROCM: []string{"HOME=/where/the/heart/is"},
-					},
-					RawImage: &EnvironmentImageMap{
-						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750"),
-						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"),
-						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0"),
-					},
-					RawPorts:            map[string]int{},
-					RawForcePullImage:   ptrs.Ptr(false),
-					RawAddCapabilities:  []string{},
-					RawDropCapabilities: []string{},
-				},
-				Hyperparameters: Hyperparameters{
-					"global_batch_size": {
-						RawConstHyperparameter: &ConstHyperparameterV0{RawVal: float64(64)},
-					},
-				},
-				Searcher: LegacySearcher{
-					Name:            "random",
-					SmallerIsBetter: false,
-					Metric:          "error",
+				bindMounts: BindMountsConfig{},
+				envvars: EnvironmentVariablesMap{
+					RawCPU:  []string{"HOME=/where/the/heart/is"},
+					RawCUDA: []string{"HOME=/where/the/heart/is"},
+					RawROCM: []string{"HOME=/where/the/heart/is"},
 				},
 			},
 		},
@@ -224,7 +204,7 @@ func TestLegacyConfig(t *testing.T) {
                   source_trial_id: null
             `),
 			Expected: LegacyConfig{
-				CheckpointStorage: CheckpointStorageConfig{
+				checkpointStorage: CheckpointStorageConfig{
 					RawSharedFSConfig: &SharedFSConfig{
 						RawHostPath:    ptrs.Ptr("/tmp"),
 						RawStoragePath: ptrs.Ptr("determined-cp"),
@@ -234,66 +214,13 @@ func TestLegacyConfig(t *testing.T) {
 					RawSaveTrialBest:      ptrs.Ptr(10),
 					RawSaveTrialLatest:    ptrs.Ptr(10),
 				},
-				BindMounts: BindMountsConfig{},
-				Environment: EnvironmentConfig{
-					RawEnvironmentVariables: &EnvironmentVariablesMap{
-						RawCPU:  []string{"HOME=/where/the/heart/is"},
-						RawCUDA: []string{"HOME=/where/the/cuda/is"},
-						RawROCM: []string{},
-					},
-					RawImage: &EnvironmentImageMap{
-						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b"),
-						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b"),
-						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0"),
-					},
-					RawPodSpec: &PodSpec{
-						TypeMeta: metaV1.TypeMeta{
-							Kind:       "Pod",
-							APIVersion: "v1",
-						},
-						ObjectMeta: metaV1.ObjectMeta{
-							Labels: map[string]string{"customLabel": "test-label"},
-						},
-						Spec: k8sV1.PodSpec{
-							Volumes: []k8sV1.Volume{
-								{
-									Name: "test-volume",
-									VolumeSource: k8sV1.VolumeSource{
-										HostPath: &k8sV1.HostPathVolumeSource{
-											Path: "/data",
-											Type: nil,
-										},
-									},
-								},
-							},
-							Containers: []k8sV1.Container{{
-								Name:      "determined-container",
-								Resources: k8sV1.ResourceRequirements{},
-								VolumeMounts: []k8sV1.VolumeMount{{
-									Name:      "test-volume",
-									MountPath: "/test",
-								}},
-							}},
-							SchedulerName:     "coscheduler",
-							PriorityClassName: "determined-medium-priority",
-						},
-						Status: k8sV1.PodStatus{},
-					},
-					RawPorts:            map[string]int{},
-					RawForcePullImage:   ptrs.Ptr(false),
-					RawAddCapabilities:  []string{},
-					RawDropCapabilities: []string{},
+				bindMounts: BindMountsConfig{},
+				envvars: EnvironmentVariablesMap{
+					RawCPU:  []string{"HOME=/where/the/heart/is"},
+					RawCUDA: []string{"HOME=/where/the/cuda/is"},
+					RawROCM: []string{},
 				},
-				Hyperparameters: Hyperparameters{
-					"global_batch_size": {
-						RawConstHyperparameter: &ConstHyperparameterV0{RawVal: float64(32)},
-					},
-				},
-				Searcher: LegacySearcher{
-					Name:            "adaptive_simple",
-					Metric:          "loss",
-					SmallerIsBetter: true,
-				},
+				podSpec: getTestPodSpec(),
 			},
 		},
 		// Test case with a 0.15.5 experiment config.
@@ -332,6 +259,24 @@ func TestLegacyConfig(t *testing.T) {
                   image:
                     cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-24586f0
                     gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-24586f0
+                  pod_spec:
+                    apiVersion: v1
+                    kind: Pod
+                    metadata:
+                      labels:
+                        customLabel: test-label
+                    spec:
+                      schedulerName: coscheduler
+                      priorityClassName: determined-medium-priority
+                      containers:
+                        - name: determined-container
+                          volumeMounts:
+                          - name: test-volume
+                            mountPath: /test
+                      volumes:
+                      - name: test-volume
+                        hostPath:
+                          path: /data
                   ports: {}
                   registry_auth: null
                 hyperparameters:
@@ -383,7 +328,7 @@ func TestLegacyConfig(t *testing.T) {
                   source_trial_id: null
             `),
 			Expected: LegacyConfig{
-				CheckpointStorage: CheckpointStorageConfig{
+				checkpointStorage: CheckpointStorageConfig{
 					RawSharedFSConfig: &SharedFSConfig{
 						RawHostPath:    ptrs.Ptr("/tmp"),
 						RawStoragePath: ptrs.Ptr("determined-cp"),
@@ -393,7 +338,7 @@ func TestLegacyConfig(t *testing.T) {
 					RawSaveTrialBest:      ptrs.Ptr(10),
 					RawSaveTrialLatest:    ptrs.Ptr(10),
 				},
-				BindMounts: BindMountsConfig{
+				bindMounts: BindMountsConfig{
 					BindMount{
 						RawHostPath:      "/tmp/asdf",
 						RawContainerPath: "/tmp/asdf",
@@ -401,32 +346,12 @@ func TestLegacyConfig(t *testing.T) {
 						RawPropagation:   ptrs.Ptr("rprivate"),
 					},
 				},
-				Environment: EnvironmentConfig{
-					RawEnvironmentVariables: &EnvironmentVariablesMap{
-						RawCPU:  []string{},
-						RawCUDA: []string{},
-						RawROCM: []string{},
-					},
-					RawImage: &EnvironmentImageMap{
-						RawCPU:  ptrs.Ptr("determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-24586f0"),
-						RawCUDA: ptrs.Ptr("determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-24586f0"),
-						RawROCM: ptrs.Ptr("determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-24586f0"),
-					},
-					RawPorts:            map[string]int{},
-					RawForcePullImage:   ptrs.Ptr(false),
-					RawAddCapabilities:  []string{},
-					RawDropCapabilities: []string{},
+				envvars: EnvironmentVariablesMap{
+					RawCPU:  []string{},
+					RawCUDA: []string{},
+					RawROCM: []string{},
 				},
-				Hyperparameters: Hyperparameters{
-					"global_batch_size": {
-						RawConstHyperparameter: &ConstHyperparameterV0{RawVal: float64(32)},
-					},
-				},
-				Searcher: LegacySearcher{
-					Name:            "single",
-					Metric:          "loss",
-					SmallerIsBetter: true,
-				},
+				podSpec: getTestPodSpec(),
 			},
 		},
 	}
@@ -439,7 +364,46 @@ func TestLegacyConfig(t *testing.T) {
 			legacyConfig, err := ParseLegacyConfigJSON(jByts)
 			assert.NilError(t, err)
 
-			assert.DeepEqual(t, legacyConfig, tc.Expected)
+			assert.DeepEqual(
+				t, legacyConfig, tc.Expected, cmp.AllowUnexported(LegacyConfig{}),
+			)
 		})
 	}
+}
+
+func getTestPodSpec() *PodSpec {
+	output := &PodSpec{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Pod",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Labels: map[string]string{"customLabel": "test-label"},
+		},
+		Spec: k8sV1.PodSpec{
+			Volumes: []k8sV1.Volume{
+				{
+					Name: "test-volume",
+					VolumeSource: k8sV1.VolumeSource{
+						HostPath: &k8sV1.HostPathVolumeSource{
+							Path: "/data",
+							Type: nil,
+						},
+					},
+				},
+			},
+			Containers: []k8sV1.Container{{
+				Name:      "determined-container",
+				Resources: k8sV1.ResourceRequirements{},
+				VolumeMounts: []k8sV1.VolumeMount{{
+					Name:      "test-volume",
+					MountPath: "/test",
+				}},
+			}},
+			SchedulerName:     "coscheduler",
+			PriorityClassName: "determined-medium-priority",
+		},
+		Status: k8sV1.PodStatus{},
+	}
+	return output
 }

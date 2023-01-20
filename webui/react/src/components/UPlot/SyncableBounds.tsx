@@ -12,28 +12,22 @@ import uPlot from 'uplot';
 interface SyncContext {
   setZoomed: (zoomed: boolean) => void;
   syncRef: MutableRefObject<uPlot.SyncPubSub>;
-  xMax?: number;
-  xMin?: number;
   zoomed: boolean;
 }
 
 interface SyncableBounds {
   boundsOptions: Partial<uPlot.Options>;
   setZoomed: (zoomed: boolean) => void;
-  xMax?: number;
-  xMin?: number;
   zoomed: boolean;
 }
 
 interface Props {
   children: React.ReactNode;
-  xMax?: number;
-  xMin?: number;
 }
 
 const SyncContext = createContext<SyncContext | undefined>(undefined);
 
-export const SyncProvider: React.FC<Props> = ({ children, xMax, xMin }) => {
+export const SyncProvider: React.FC<Props> = ({ children }) => {
   const syncRef = useRef(uPlot.sync('x'));
   const [zoomed, setZoomed] = useState(false);
 
@@ -46,9 +40,7 @@ export const SyncProvider: React.FC<Props> = ({ children, xMax, xMin }) => {
   }, [zoomed]);
 
   return (
-    <SyncContext.Provider value={{ setZoomed, syncRef, xMax, xMin, zoomed }}>
-      {children}
-    </SyncContext.Provider>
+    <SyncContext.Provider value={{ setZoomed, syncRef, zoomed }}>{children}</SyncContext.Provider>
   );
 };
 
@@ -58,8 +50,6 @@ export const useSyncableBounds = (): SyncableBounds => {
   const syncContext = useContext(SyncContext);
   const zoomSetter = syncContext?.setZoomed ?? setZoomed;
   const syncRef: MutableRefObject<uPlot.SyncPubSub> | undefined = syncContext?.syncRef;
-  const xMax = zoomed ? undefined : syncContext?.xMax;
-  const xMin = zoomed ? undefined : syncContext?.xMin;
 
   const boundsOptions = useMemo(() => {
     return {
@@ -97,7 +87,5 @@ export const useSyncableBounds = (): SyncableBounds => {
     };
   }, [zoomSetter, syncRef]) as Partial<uPlot.Options>;
 
-  return syncContext
-    ? { ...syncContext, boundsOptions, xMax, xMin }
-    : { boundsOptions, setZoomed, zoomed };
+  return syncContext ? { ...syncContext, boundsOptions } : { boundsOptions, setZoomed, zoomed };
 };

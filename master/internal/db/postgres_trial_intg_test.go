@@ -29,8 +29,8 @@ func TestProtoGetTrial(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	exp, activeConfig := model.ExperimentModel()
-	err := db.AddExperiment(exp, activeConfig)
+	exp := model.ExperimentModel()
+	err := db.AddExperiment(exp)
 	require.NoError(t, err, "failed to add experiment")
 
 	task := RequireMockTask(t, db, exp.OwnerID)
@@ -81,8 +81,8 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	db := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
-	exp, activeConfig := model.ExperimentModel()
-	require.NoError(t, db.AddExperiment(exp, activeConfig))
+	exp := model.ExperimentModel()
+	require.NoError(t, db.AddExperiment(exp))
 	task := RequireMockTask(t, db, exp.OwnerID)
 	tr := model.Trial{
 		TaskID:       task.TaskID,

@@ -1,8 +1,7 @@
-import { Form } from 'antd';
+import { Button, Form } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
-import Button from 'components/kit/Button';
 import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';
@@ -57,7 +56,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                     onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
                   />
                 ))}
-                <Button type="link" onClick={add}>
+                <Button className={css.addRow} type="link" onClick={add}>
                   + Add Row
                 </Button>
               </>

@@ -44,7 +44,7 @@ const (
 // where order does matter. We need to keep define the Hps and
 // keep track of the order so the data columns will match.
 func createDataFile(data map[int][]model.HPImportanceTrialData,
-	hyperparameters expconf.Hyperparameters, dataFile string,
+	experimentConfig expconf.ExperimentConfig, dataFile string,
 ) (int, error) {
 	//nolint:gosec // Ignore security warning because none of this is user-provided input
 	f, err := os.Create(dataFile)
@@ -66,7 +66,8 @@ func createDataFile(data map[int][]model.HPImportanceTrialData,
 		return 0, err
 	}
 	var hpsOrder []string // HPs must be in the same order for the arff file
-	hps := expconf.FlattenHPs(hyperparameters)
+	hps := experimentConfig.Hyperparameters()
+	hps = expconf.FlattenHPs(hps)
 
 	for key, element := range hps {
 		var st string
@@ -194,7 +195,7 @@ func parseImportanceOutput(filename string) (map[string]float64, error) {
 // 2. The difference between the most(aka max) trained trial and the lowest batch are within a
 // defined range (maxDiffCompBatches).
 func computeHPImportance(data map[int][]model.HPImportanceTrialData,
-	hyperparameters expconf.Hyperparameters, masterConfig config.HPImportanceConfig,
+	experimentConfig expconf.ExperimentConfig, masterConfig config.HPImportanceConfig,
 	growforest string, workingDir string,
 ) (map[string]float64, error) {
 	if len(data) == 0 {
@@ -204,7 +205,7 @@ func computeHPImportance(data map[int][]model.HPImportanceTrialData,
 	growforestInput := path.Join(workingDir, arffFile)
 	growforestOutput := path.Join(workingDir, importanceFile)
 
-	totalNumTrials, err := createDataFile(data, hyperparameters, growforestInput)
+	totalNumTrials, err := createDataFile(data, experimentConfig, growforestInput)
 	if err != nil {
 		return nil, fmt.Errorf("error writing ARFF file: %w", err)
 	}

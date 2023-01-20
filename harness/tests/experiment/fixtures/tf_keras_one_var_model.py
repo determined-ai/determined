@@ -75,12 +75,10 @@ class OneVarTrial(keras.TFKerasTrial):
         epochs = self.context.get_hparams().get("epochs")
         validations = self.context.get_hparams().get("validations")
         # Include a bunch of callbacks just to make sure they work.
-        # EarlyStopping changed in TF 2.5 to stop unconditionally
-        # if patience=0
         return [
             keras_cb_checker.CBChecker(epochs=epochs, validations=validations),
             keras.callbacks.TensorBoard(),
             keras.callbacks.ReduceLROnPlateau(monitor="val_loss"),
-            keras.callbacks.EarlyStopping(restore_best_weights=True, patience=1),
+            keras.callbacks.EarlyStopping(restore_best_weights=True),
         ]
         return

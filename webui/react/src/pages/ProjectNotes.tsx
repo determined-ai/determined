@@ -1,7 +1,7 @@
+import { Button } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
-import Button from 'components/kit/Button';
 import PaginatedNotesCard from 'components/PaginatedNotesCard';
 import useModalProjectNoteDelete from 'hooks/useModal/Project/useModalProjectNoteDelete';
 import { addProjectNote, setProjectNotes } from 'services/api';

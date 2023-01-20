@@ -5,6 +5,7 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 16px;
+    margin-top: 30px;
   }
   .grid {
     display: grid;
@@ -44,4 +45,7 @@
   line-height: 100%;
   margin-right: 10px;
   vertical-align: middle;
+}
+.membersContainer {
+  margin-top: 30px;
 }

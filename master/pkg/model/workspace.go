@@ -12,11 +12,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
 
-const (
-	// DefaultWorkspaceID is a special, always-existing, workspace titled "Uncategorized".
-	DefaultWorkspaceID = 1
-)
-
 // Workspace is the bun model of a workspace.
 type Workspace struct {
 	bun.BaseModel           `bun:"table:workspaces"`

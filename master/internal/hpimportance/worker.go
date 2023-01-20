@@ -95,7 +95,7 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, wo
 
 		masterConfig := work.config
 
-		exp, err := db.ExperimentByID(work.experimentID)
+		experimentConfig, err := db.ExperimentConfig(work.experimentID)
 		if err != nil {
 			sendWorkFailed(system, work, err.Error())
 			return nil
@@ -124,9 +124,7 @@ func taskHandlerFactory(db *db.PgDB, system *actor.System, growforest string, wo
 		if err != nil {
 			sendWorkFailed(system, work, err.Error())
 		}
-		results, err := computeHPImportance(
-			trials, exp.Config.Hyperparameters, masterConfig, growforest, taskDir,
-		)
+		results, err := computeHPImportance(trials, experimentConfig, masterConfig, growforest, taskDir)
 		if err != nil {
 			sendWorkFailed(system, work, err.Error())
 		}

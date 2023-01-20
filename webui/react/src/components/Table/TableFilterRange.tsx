@@ -1,8 +1,6 @@
-import { Input, InputRef } from 'antd';
+import { Button, Input, InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-
-import Button from 'components/kit/Button';
 
 import css from './TableFilterSearch.module.scss';
 

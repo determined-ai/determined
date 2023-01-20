@@ -1,9 +1,8 @@
 import { EditOutlined } from '@ant-design/icons';
-import { Card, Space } from 'antd';
+import { Button, Card, Space } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Spinner from 'shared/components/Spinner/Spinner';
 import history from 'shared/routes/history';

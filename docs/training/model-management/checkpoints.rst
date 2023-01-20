@@ -4,10 +4,6 @@
  Checkpoints
 #############
 
-.. meta::
-   :description: Gain an understanding about working with model checkpoints including querying checkpoints from trials and experiments.
-   :keywords: checkpoints, Python, checkpoint APIs
-
 Determined provides APIs for downloading checkpoints and loading them into memory in a Python
 process.
 
@@ -21,9 +17,9 @@ This guide discusses:
 The Checkpoint Export API is a subset of the features found in the
 :mod:`~determined.experimental.client` module.
 
-**********************
- Querying Checkpoints
-**********************
+*******************
+ Query Checkpoints
+*******************
 
 The :class:`~determined.experimental.client.ExperimentReference` class is a reference to an
 experiment. The reference contains the
@@ -105,9 +101,9 @@ The following snippet showcases how to use the different modes for selecting che
 
    specific_checkpoint = client.get_checkpoint(uuid="uuid-for-checkpoint")
 
-********************************
- Using the ``Checkpoint`` Class
-********************************
+******************************
+ Use the ``Checkpoint`` Class
+******************************
 
 The :class:`~determined.experimental.client.Checkpoint` class can both download the checkpoint from
 persistent storage and load it into memory in a Python process.
@@ -181,11 +177,11 @@ trackable objects (see documentation for `tf.compat.v1.saved_model.load_v2
 
 .. _store-checkpoint-metadata:
 
-*****************************************
- Adding User-Defined Checkpoint Metadata
-*****************************************
+**********************************
+ User-Defined Checkpoint Metadata
+**********************************
 
-You can add arbitrary user-defined metadata to a checkpoint via the Python SDK. This feature is
+You can add arbitrary user-defined metadata to a checkpoint via the Python API. This feature is
 useful for storing post-training metrics, labels, information related to deployment, etc.
 
 .. code:: python
@@ -223,9 +219,9 @@ deleted.
    checkpoint = client.get_experiment(id).top_checkpoint()
    checkpoint.remove_metadata(["metrics"])
 
-***************************************
- Downloading Checkpoints using the CLI
-***************************************
+************************************
+ Download Checkpoints using the CLI
+************************************
 
 The Determined CLI can be used to view all the checkpoints associated with an experiment:
 
@@ -327,7 +323,7 @@ The ``--latest`` and ``--uuid`` options are used as follows:
    det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
 Finally, the ``det experiment download`` command provides a similar experience to using the
-:class:`Python SDK <determined.experimental.client.ExperimentReference>`.
+:class:`~determined.experimental.client.ExperimentReference` Python API.
 
 .. code:: bash
 
@@ -381,9 +377,9 @@ checkpoints.
               |                                      |     }
               |                                      | }
 
-****************************************
- Loading a Checkpoint From a Local Path
-****************************************
+*************************************
+ Load a Checkpoint From a Local Path
+*************************************
 
 :class:`~determined.experimental.client.Checkpoint` contains a static method,
 :meth:`~determined.experimental.client.Checkpoint.load_from_path`, that loads a checkpoint from a
@@ -407,5 +403,5 @@ The checkpoint can then be loaded in Python with this code:
  Next Steps
 ************
 
--  :ref:`python-sdk-reference`: The reference documentation for this API.
+-  :ref:`python-api-reference`: The reference documentation for this API.
 -  :ref:`organizing-models`

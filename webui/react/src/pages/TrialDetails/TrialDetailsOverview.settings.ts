@@ -13,7 +13,8 @@ export interface Settings {
   tableOffset: number;
 }
 
-export const settingsConfigForExperiment = (id: number): SettingsConfig<Settings> => ({
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'overview',
   settings: {
     filter: {
       defaultValue: TrialWorkloadFilter.CheckpointOrValidation,
@@ -51,5 +52,7 @@ export const settingsConfigForExperiment = (id: number): SettingsConfig<Settings
       type: number,
     },
   },
-  storagePath: `experiment-trials-${id}`,
-});
+  storagePath: 'trial-detail',
+};
+
+export default config;

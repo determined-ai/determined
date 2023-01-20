@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/google/uuid"
 )
@@ -77,10 +76,7 @@ func DeleteWebhook(ctx context.Context, id WebhookID) error {
 }
 
 // ReportExperimentStateChanged adds webhook events to the queue.
-// TODO(DET-8577): Remove unnecessary active config usage (remove the activeConfig parameter).
-func ReportExperimentStateChanged(
-	ctx context.Context, e model.Experiment, activeConfig expconf.ExperimentConfig,
-) error {
+func ReportExperimentStateChanged(ctx context.Context, e model.Experiment) error {
 	defer func() {
 		if rec := recover(); rec != nil {
 			log.Errorf("uncaught error in webhook report: %v", rec)
@@ -100,9 +96,7 @@ func ReportExperimentStateChanged(
 
 	var es []Event
 	for _, t := range ts {
-		p, err := generateEventPayload(
-			ctx, t.Webhook.WebhookType, e, activeConfig, e.State, TriggerTypeStateChange,
-		)
+		p, err := generateEventPayload(ctx, t.Webhook.WebhookType, e, e.State, TriggerTypeStateChange)
 		if err != nil {
 			return fmt.Errorf("error generating event payload: %w", err)
 		}
@@ -120,7 +114,6 @@ func generateEventPayload(
 	ctx context.Context,
 	wt WebhookType,
 	e model.Experiment,
-	activeConfig expconf.ExperimentConfig,
 	expState model.State,
 	tT TriggerType,
 ) ([]byte, error) {
@@ -134,7 +127,7 @@ func generateEventPayload(
 				State: expState,
 			},
 			Data: EventData{
-				Experiment: experimentToWebhookPayload(e, activeConfig),
+				Experiment: experimentToWebhookPayload(e),
 			},
 		})
 		if err != nil {
@@ -142,7 +135,7 @@ func generateEventPayload(
 		}
 		return pJSON, nil
 	case WebhookTypeSlack:
-		slackJSON, err := generateSlackPayload(ctx, e, activeConfig)
+		slackJSON, err := generateSlackPayload(ctx, e)
 		if err != nil {
 			return nil, err
 		}
@@ -152,9 +145,7 @@ func generateEventPayload(
 	}
 }
 
-func generateSlackPayload(
-	ctx context.Context, e model.Experiment, activeConfig expconf.ExperimentConfig,
-) ([]byte, error) {
+func generateSlackPayload(ctx context.Context, e model.Experiment) ([]byte, error) {
 	var status string
 	var eURL string
 	var c string
@@ -163,8 +154,8 @@ func generateSlackPayload(
 	var wID int
 	var w *model.Workspace
 	config := conf.GetMasterConfig()
-	wName := activeConfig.Workspace()
-	pName := activeConfig.Project()
+	wName := e.Config.Workspace()
+	pName := e.Config.Project()
 	webUIBaseURL := config.Webhooks.BaseURL
 	baseURLIsSet := webUIBaseURL != ""
 	if baseURLIsSet && wName != "" && pName != "" {
@@ -192,9 +183,9 @@ func generateSlackPayload(
 		status = "Your experiment completed successfully 🎉"
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("✅ <%v/det/experiments/%v/overview | %v (#%v)>",
-				webUIBaseURL, e.ID, activeConfig.Name(), e.ID)
+				webUIBaseURL, e.ID, e.Config.Name(), e.ID)
 		} else {
-			eURL = fmt.Sprintf("✅ %v (#%v)", activeConfig.Name(), e.ID)
+			eURL = fmt.Sprintf("✅ %v (#%v)", e.Config.Name(), e.ID)
 		}
 		c = "#13B670"
 		mStatus = "Completed"
@@ -202,9 +193,9 @@ func generateSlackPayload(
 		status = "Your experiment has stopped with errors"
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>",
-				webUIBaseURL, e.ID, activeConfig.Name(), e.ID)
+				webUIBaseURL, e.ID, e.Config.Name(), e.ID)
 		} else {
-			eURL = fmt.Sprintf("❌ %v (#%v)", activeConfig.Name(), e.ID)
+			eURL = fmt.Sprintf("❌ %v (#%v)", e.Config.Name(), e.ID)
 		}
 		c = "#DD5040"
 		mStatus = "Errored"

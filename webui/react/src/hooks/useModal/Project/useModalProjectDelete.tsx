@@ -2,9 +2,11 @@ import { Form, Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
+import { paths } from 'routes/utils';
 import { deleteProject } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
+import { routeToReactUrl } from 'shared/utils/routes';
 import { Project } from 'types';
 import handleError from 'utils/error';
 
@@ -16,11 +18,10 @@ interface FormInputs {
 
 interface Props {
   onClose?: () => void;
-  onDelete?: () => void;
   project: Project;
 }
 
-const useModalProjectDelete = ({ onClose, project, onDelete }: Props): ModalHooks => {
+const useModalProjectDelete = ({ onClose, project }: Props): ModalHooks => {
   const [form] = Form.useForm<FormInputs>();
   const projectNameValue = Form.useWatch('projectName', form);
 
@@ -56,7 +57,7 @@ const useModalProjectDelete = ({ onClose, project, onDelete }: Props): ModalHook
   const handleOk = useCallback(async () => {
     try {
       await deleteProject({ id: project.id });
-      if (onDelete) onDelete();
+      routeToReactUrl(paths.workspaceDetails(project.workspaceId));
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
@@ -66,7 +67,7 @@ const useModalProjectDelete = ({ onClose, project, onDelete }: Props): ModalHook
         type: ErrorType.Server,
       });
     }
-  }, [project.id, onDelete]);
+  }, [project.id, project.workspaceId]);
 
   const getModalProps = useCallback((): ModalFuncProps => {
     return {

@@ -18,7 +18,7 @@ from pexpect import spawn
 from determined.common import api, constants, yaml
 from determined.common.api import authentication, bindings, certs, errors
 from determined.experimental import Determined
-from tests import api_utils, command
+from tests import command
 from tests import config as conf
 from tests import experiment as exp
 from tests.filetree import FileTree
@@ -173,7 +173,7 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
 def test_post_user_api(clean_auth: None, login_admin: None) -> None:
     new_username = get_random_string()
 
-    sess = api_utils.determined_test_session(admin=True)
+    sess = exp.determined_test_session(admin=True)
 
     user = bindings.v1User(active=True, admin=False, username=new_username)
     body = bindings.v1PostUserRequest(password="", user=user)
@@ -1024,7 +1024,7 @@ def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
     test_username = test_user_credentials.username
 
     # Patch - normal.
-    sess = api_utils.determined_test_session(admin=True)
+    sess = exp.determined_test_session(admin=True)
     patch_user = bindings.v1PatchUser(
         agentUserGroup=bindings.v1AgentUserGroup(
             agentGid=1000, agentUid=1000, agentUser="username", agentGroup="groupname"

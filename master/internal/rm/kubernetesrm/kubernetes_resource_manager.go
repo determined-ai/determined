@@ -1,7 +1,6 @@
 package kubernetesrm
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"time"
@@ -17,14 +16,14 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
-	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/jobv1"
 	"github.com/determined-ai/determined/proto/pkg/resourcepoolv1"
 )
 
 const (
+	// KubernetesDummyResourcePool is the name of the dummy resource pool for kubernetes.
+	KubernetesDummyResourcePool = "kubernetes"
 	// KubernetesScheduler is the "name" of the kubernetes scheduler, for informational reasons.
 	kubernetesScheduler = "kubernetes"
 	// ActionCoolDown is the rate limit for job submission.
@@ -57,7 +56,6 @@ func New(
 		sproto.K8sRMAddr,
 		newKubernetesResourceManager(
 			config.ResourceManager.KubernetesRM,
-			config.ResourcePools,
 			echo,
 			tlsConfig,
 			opts.LoggingOptions,
@@ -141,6 +139,35 @@ func (k ResourceManager) ValidateResourcePoolAvailability(
 	return nil, nil
 }
 
+// GetDefaultComputeResourcePool requests the default compute resource pool.
+func (k ResourceManager) GetDefaultComputeResourcePool(
+	ctx actor.Messenger,
+	msg sproto.GetDefaultComputeResourcePoolRequest,
+) (sproto.GetDefaultComputeResourcePoolResponse, error) {
+	return sproto.GetDefaultComputeResourcePoolResponse{
+		PoolName: KubernetesDummyResourcePool,
+	}, nil
+}
+
+// GetDefaultAuxResourcePool requests the default aux resource pool.
+func (k ResourceManager) GetDefaultAuxResourcePool(
+	ctx actor.Messenger,
+	msg sproto.GetDefaultAuxResourcePoolRequest,
+) (sproto.GetDefaultAuxResourcePoolResponse, error) {
+	return sproto.GetDefaultAuxResourcePoolResponse{
+		PoolName: KubernetesDummyResourcePool,
+	}, nil
+}
+
+// GetAgents gets the state of connected agents. Go around the RM and directly to the pods actor
+// to avoid blocking through it.
+func (k ResourceManager) GetAgents(
+	ctx actor.Messenger,
+	msg *apiv1.GetAgentsRequest,
+) (resp *apiv1.GetAgentsResponse, err error) {
+	return resp, actorrm.AskAt(k.Ref().System(), sproto.PodsAddr, msg, &resp)
+}
+
 // NotifyContainerRunning receives a notification from the container to let
 // the master know that the container is running.
 func (k ResourceManager) NotifyContainerRunning(
@@ -172,9 +199,7 @@ func (k ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rp string) 
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceManager struct {
-	config      *config.KubernetesResourceManagerConfig
-	poolsConfig []config.ResourcePoolConfig
-
+	config    *config.KubernetesResourceManagerConfig
 	podsActor *actor.Ref
 	pools     map[string]*actor.Ref
 
@@ -185,14 +210,12 @@ type kubernetesResourceManager struct {
 
 func newKubernetesResourceManager(
 	config *config.KubernetesResourceManagerConfig,
-	poolsConfig []config.ResourcePoolConfig,
 	echoRef *echo.Echo,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
 ) actor.Actor {
 	return &kubernetesResourceManager{
-		config:      config,
-		poolsConfig: poolsConfig,
+		config: config,
 
 		pools: make(map[string]*actor.Ref),
 
@@ -223,161 +246,42 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 			k.config.MasterPort,
 		)
 
-		for _, poolConfig := range k.poolsConfig {
-			poolConfig := poolConfig
-			k.pools[poolConfig.PoolName] = ctx.MustActorOf(
-				poolConfig.PoolName, newResourcePool(k.config, &poolConfig, k.podsActor),
-			)
-		}
+		k.pools[KubernetesDummyResourcePool] = ctx.MustActorOf(
+			KubernetesDummyResourcePool, newResourcePool(k.config, k.podsActor),
+		)
 
-	case sproto.AllocateRequest:
-		// This code exists to handle the case where an experiment does not have
-		// an explicit resource pool specified in the config. This should never happen
-		// for newly created/forked experiments as the default pool is filled in to the
-		// config at creation time. However, old experiments which were created prior to
-		// the introduction of resource pools could have no resource pool associated with
-		// them and so we need to handle that case gracefully.
-		if len(msg.ResourcePool) == 0 {
-			if msg.SlotsNeeded == 0 {
-				msg.ResourcePool = k.config.DefaultAuxResourcePool
-			} else {
-				msg.ResourcePool = k.config.DefaultComputeResourcePool
-			}
-		}
-		k.forwardToPool(ctx, msg.ResourcePool, msg)
-
-	case sproto.ResourcesReleased:
-		k.forwardToAllPools(ctx, msg)
-
-	case sproto.SetGroupMaxSlots, sproto.SetGroupWeight, sproto.SetGroupPriority,
-		sproto.MoveJob:
-		k.forwardToAllPools(ctx, msg)
-
-	case sproto.PendingPreemption:
-		ctx.Respond(actor.ErrUnexpectedMessage(ctx))
-		return nil
-
-	case sproto.DeleteJob:
-		// For now, there is nothing to clean up in k8s.
-		ctx.Respond(sproto.EmptyDeleteJobResponse())
-
-	case sproto.RecoverJobPosition:
-		k.forwardToPool(ctx, msg.ResourcePool, msg)
-
-	case sproto.GetAllocationHandler:
-		if handler, err := k.aggregateTaskHandler(k.forwardToAllPools(ctx, msg)); err != nil {
-			ctx.Respond(err)
-		} else {
-			ctx.Respond(handler)
-		}
-
-	case sproto.GetAllocationSummary:
-		if summary := k.aggregateTaskSummary(k.forwardToAllPools(ctx, msg)); summary != nil {
-			ctx.Respond(summary)
-		}
-
-	case sproto.GetAllocationSummaries:
-		ctx.Respond(k.aggregateTaskSummaries(k.forwardToAllPools(ctx, msg)))
-
-	case sproto.SetAllocationName:
-		k.forwardToAllPools(ctx, msg)
-
-	case sproto.GetDefaultComputeResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultComputeResourcePoolResponse{
-			PoolName: k.config.DefaultComputeResourcePool,
-		})
-
-	case sproto.GetDefaultAuxResourcePoolRequest:
-		ctx.Respond(sproto.GetDefaultAuxResourcePoolResponse{PoolName: k.config.DefaultAuxResourcePool})
-
-	case sproto.ValidateCommandResourcesRequest:
-		k.forwardToPool(ctx, msg.ResourcePool, msg)
+	case
+		tasklist.GroupActorStopped,
+		sproto.SetGroupMaxSlots,
+		sproto.SetAllocationName,
+		sproto.AllocateRequest,
+		sproto.ResourcesReleased,
+		sproto.UpdatePodStatus,
+		sproto.PendingPreemption,
+		sproto.GetJobQ,
+		sproto.GetJobQStats,
+		sproto.SetGroupWeight,
+		sproto.SetGroupPriority,
+		sproto.MoveJob,
+		sproto.DeleteJob,
+		sproto.RecoverJobPosition,
+		*apiv1.GetJobQueueStatsRequest,
+		sproto.GetAllocationHandler,
+		sproto.GetAllocationSummary,
+		sproto.GetAllocationSummaries:
+		k.forwardToPool(ctx, KubernetesDummyResourcePool, msg)
 
 	case *apiv1.GetResourcePoolsRequest:
-		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(k.poolsConfig))
-		for _, pool := range k.poolsConfig {
-			summary, err := k.createResourcePoolSummary(ctx, pool.PoolName)
-			if err != nil {
-				// Should only raise an error if the resource pool doesn't exist and that can't happen.
-				// But best to handle it anyway in case the implementation changes in the future.
-				ctx.Log().WithError(err).Error("")
-				ctx.Respond(err)
-			}
-
-			jobStats, err := k.getPoolJobStats(ctx, pool)
-			if err != nil {
-				ctx.Respond(err)
-			}
-
-			summary.Stats = jobStats
-			summaries = append(summaries, summary)
+		summaryMap := ctx.AskAll(msg, ctx.Children()...).GetAll()
+		summaries := make([]*resourcepoolv1.ResourcePool, 0, len(k.pools))
+		for _, v := range summaryMap {
+			summaries = append(summaries, v.(*resourcepoolv1.ResourcePool))
 		}
-		resp := &apiv1.GetResourcePoolsResponse{ResourcePools: summaries}
-		ctx.Respond(resp)
+		ctx.Respond(&apiv1.GetResourcePoolsResponse{ResourcePools: summaries})
 
-	case sproto.GetJobQ:
-		if msg.ResourcePool == "" {
-			msg.ResourcePool = k.config.DefaultComputeResourcePool
-		}
-
-		rpRef := ctx.Child(msg.ResourcePool)
-		if rpRef == nil {
-			ctx.Respond(errors.Errorf("resource pool %s not found", msg.ResourcePool))
-			return nil
-		}
-		resp := ctx.Ask(rpRef, msg).Get()
-		ctx.Respond(resp)
-
-	case *apiv1.GetJobQueueStatsRequest:
-		resp := &apiv1.GetJobQueueStatsResponse{
-			Results: make([]*apiv1.RPQueueStat, 0),
-		}
-		rpRefs := make([]*actor.Ref, 0)
-		if len(msg.ResourcePools) == 0 {
-			rpRefs = append(rpRefs, ctx.Children()...)
-		} else {
-			for _, rp := range msg.ResourcePools {
-				rpRefs = append(rpRefs, ctx.Child(rp))
-			}
-		}
-
-		actorResps := ctx.AskAll(sproto.GetJobQStats{}, rpRefs...).GetAll()
-		for _, rpRef := range rpRefs {
-			poolName := rpRef.Address().Local()
-			qStats := apiv1.RPQueueStat{ResourcePool: poolName}
-			aResp := actorResps[rpRef]
-			switch aMsg := aResp.(type) {
-			case error:
-				ctx.Log().WithError(aMsg).Error("")
-				ctx.Respond(aMsg)
-				return nil
-			case *jobv1.QueueStats:
-				qStats.Stats = aMsg
-				aggregates, err := k.fetchAvgQueuedTime(poolName)
-				if err != nil {
-					return fmt.Errorf("fetch average queued time: %s", err)
-				}
-				qStats.Aggregates = aggregates
-				resp.Results = append(resp.Results, &qStats)
-			default:
-				return fmt.Errorf("unexpected response type: %T", aMsg)
-			}
-		}
-		ctx.Respond(resp)
-		return nil
-
-	case sproto.GetJobQStats:
-		resp := ctx.Ask(ctx.Child(msg.ResourcePool), msg).Get()
-		ctx.Respond(resp)
-
-	case taskContainerDefaults:
-		ctx.Respond(k.getTaskContainerDefaults(msg))
-
-	case tasklist.GroupActorStopped:
-		k.forwardToAllPools(ctx, msg)
-
-	case sproto.UpdatePodStatus:
-		k.forwardToAllPools(ctx, msg)
+	case sproto.ValidateCommandResourcesRequest:
+		fulfillable := k.config.MaxSlotsPerPod >= msg.Slots
+		ctx.Respond(sproto.ValidateCommandResourcesResponse{Fulfillable: fulfillable})
 
 	case *apiv1.GetAgentsRequest:
 		resp := ctx.Ask(k.podsActor, msg)
@@ -388,16 +292,6 @@ func (k *kubernetesResourceManager) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
-	return nil
-}
-
-func (k *kubernetesResourceManager) forwardToAllPools(
-	ctx *actor.Context, msg actor.Message,
-) map[*actor.Ref]actor.Message {
-	if ctx.ExpectingResponse() {
-		return ctx.AskAll(msg, ctx.Children()...).GetAll()
-	}
-	ctx.TellAll(msg, ctx.Children()...)
 	return nil
 }
 
@@ -426,191 +320,11 @@ func (k *kubernetesResourceManager) forwardToPool(
 	}
 }
 
-type taskContainerDefaults struct {
-	fallbackDefault model.TaskContainerDefaultsConfig
-	resourcePool    string
-}
-
 // TaskContainerDefaults returns TaskContainerDefaults for the specified pool.
 func (k ResourceManager) TaskContainerDefaults(
 	ctx actor.Messenger,
 	pool string,
 	fallbackConfig model.TaskContainerDefaultsConfig,
-) (result model.TaskContainerDefaultsConfig, err error) {
-	req := taskContainerDefaults{fallbackDefault: fallbackConfig, resourcePool: pool}
-	return result, k.Ask(ctx, req, &result)
-}
-
-func (k *kubernetesResourceManager) aggregateTaskSummaries(
-	resps map[*actor.Ref]actor.Message,
-) map[model.AllocationID]sproto.AllocationSummary {
-	summaries := make(map[model.AllocationID]sproto.AllocationSummary)
-	for _, resp := range resps {
-		if resp != nil {
-			typed := resp.(map[model.AllocationID]sproto.AllocationSummary)
-			for id, summary := range typed {
-				summaries[id] = summary
-			}
-		}
-	}
-	return summaries
-}
-
-func (k *kubernetesResourceManager) createResourcePoolSummary(
-	ctx *actor.Context,
-	poolName string,
-) (*resourcepoolv1.ResourcePool, error) {
-	pool, err := k.getResourcePoolConfig(poolName)
-	if err != nil {
-		return &resourcepoolv1.ResourcePool{}, err
-	}
-
-	const na = "n/a"
-
-	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S
-	preemptible := k.config.GetPreemption()
-	location := na
-	imageID := ""
-	instanceType := na
-	slotsPerAgent := k.config.MaxSlotsPerPod
-	slotType := device.ZeroSlot
-	accelerator := ""
-	schedulerType := resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES
-
-	resp := &resourcepoolv1.ResourcePool{
-		Name:                         pool.PoolName,
-		Description:                  pool.Description,
-		Type:                         poolType,
-		DefaultAuxPool:               k.config.DefaultAuxResourcePool == poolName,
-		DefaultComputePool:           k.config.DefaultComputeResourcePool == poolName,
-		Preemptible:                  preemptible,
-		SlotsPerAgent:                int32(slotsPerAgent),
-		AuxContainerCapacityPerAgent: int32(pool.MaxAuxContainersPerAgent),
-		SchedulerType:                schedulerType,
-		SchedulerFittingPolicy:       resourcepoolv1.FittingPolicy_FITTING_POLICY_KUBERNETES,
-		Location:                     location,
-		ImageId:                      imageID,
-		InstanceType:                 instanceType,
-		Details:                      &resourcepoolv1.ResourcePoolDetail{},
-		SlotType:                     slotType.Proto(),
-		Accelerator:                  accelerator,
-	}
-
-	response := ctx.Ask(k.pools[poolName], getResourceSummary{})
-	if response.Error() != nil {
-		return &resourcepoolv1.ResourcePool{}, err
-	}
-	resourceSummary := response.Get().(resourceSummary)
-	resp.NumAgents = int32(resourceSummary.numAgents)
-	resp.SlotsAvailable = int32(resourceSummary.numTotalSlots)
-	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
-	resp.AuxContainerCapacity = int32(resourceSummary.maxNumAuxContainers)
-	resp.AuxContainersRunning = int32(resourceSummary.numActiveAuxContainers)
-	if pool.Provider == nil && resp.NumAgents > 0 {
-		resp.SlotType = resourceSummary.slotType.Proto()
-	}
-
-	return resp, nil
-}
-
-func (k *kubernetesResourceManager) fetchAvgQueuedTime(pool string) (
-	[]*jobv1.AggregateQueueStats, error,
-) {
-	aggregates := []model.ResourceAggregates{}
-	err := db.Bun().NewSelect().Model(&aggregates).
-		Where("aggregation_type = ?", "queued").
-		Where("aggregation_key = ?", pool).
-		Where("date >= CURRENT_TIMESTAMP - interval '30 days'").
-		Order("date ASC").Scan(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	res := make([]*jobv1.AggregateQueueStats, 0)
-	for _, record := range aggregates {
-		res = append(res, &jobv1.AggregateQueueStats{
-			PeriodStart: record.Date.Format("2006-01-02"),
-			Seconds:     record.Seconds,
-		})
-	}
-	today := float32(0)
-	subq := db.Bun().NewSelect().TableExpr("allocations").Column("allocation_id").
-		Where("resource_pool = ?", pool).
-		Where("start_time >= CURRENT_DATE")
-	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
-		"avg(extract(epoch FROM end_time - start_time))",
-	).Where("event_type = ?", "QUEUED").
-		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
-		Scan(context.TODO(), &today)
-	if err != nil {
-		return nil, err
-	}
-	res = append(res, &jobv1.AggregateQueueStats{
-		PeriodStart: time.Now().Format("2006-01-02"),
-		Seconds:     today,
-	})
-	return res, nil
-}
-
-func (k *kubernetesResourceManager) aggregateTaskHandler(
-	resps map[*actor.Ref]actor.Message,
-) (*actor.Ref, error) {
-	for _, resp := range resps {
-		if typed, ok := resp.(*actor.Ref); ok && typed != nil {
-			return typed, nil
-		}
-	}
-	return nil, errors.New("task handler not found on any resource pool")
-}
-
-func (k *kubernetesResourceManager) aggregateTaskSummary(
-	resps map[*actor.Ref]actor.Message,
-) *sproto.AllocationSummary {
-	for _, resp := range resps {
-		if resp != nil {
-			typed := resp.(sproto.AllocationSummary)
-			return &typed
-		}
-	}
-	return nil
-}
-
-func (k *kubernetesResourceManager) getPoolJobStats(
-	ctx *actor.Context, pool config.ResourcePoolConfig,
-) (*jobv1.QueueStats, error) {
-	jobStatsResp := ctx.Ask(k.pools[pool.PoolName], sproto.GetJobQStats{})
-	if err := jobStatsResp.Error(); err != nil {
-		return nil, fmt.Errorf("unexpected response type from jobStats: %s", err)
-	}
-	jobStats, ok := jobStatsResp.Get().(*jobv1.QueueStats)
-	if !ok {
-		return nil, fmt.Errorf("unexpected response type from jobStats")
-	}
-	return jobStats, nil
-}
-
-func (k *kubernetesResourceManager) getResourcePoolConfig(poolName string) (
-	config.ResourcePoolConfig, error,
-) {
-	for i := range k.poolsConfig {
-		if k.poolsConfig[i].PoolName == poolName {
-			return k.poolsConfig[i], nil
-		}
-	}
-	return config.ResourcePoolConfig{}, errors.Errorf("cannot find resource pool %s", poolName)
-}
-
-func (k *kubernetesResourceManager) getTaskContainerDefaults(
-	msg taskContainerDefaults,
-) model.TaskContainerDefaultsConfig {
-	result := msg.fallbackDefault
-	// Iterate through configured pools looking for a TaskContainerDefaults setting.
-	for _, pool := range k.poolsConfig {
-		if msg.resourcePool == pool.PoolName {
-			if pool.TaskContainerDefaults == nil {
-				break
-			}
-			result = *pool.TaskContainerDefaults
-		}
-	}
-	return result
+) (model.TaskContainerDefaultsConfig, error) {
+	return fallbackConfig, nil
 }

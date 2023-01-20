@@ -230,12 +230,7 @@ func (rp *resourcePool) receiveSetTaskName(ctx *actor.Context, msg sproto.SetAll
 // allocateResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully allocated.
 func (rp *resourcePool) allocateResources(ctx *actor.Context, req *sproto.AllocateRequest) bool {
-	fits := findFits(
-		req,
-		rp.agentStatesCache,
-		rp.fittingMethod,
-		rp.config.Scheduler.AllowHeterogeneousFits,
-	)
+	fits := findFits(req, rp.agentStatesCache, rp.fittingMethod)
 
 	if len(fits) == 0 {
 		return false

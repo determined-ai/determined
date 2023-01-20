@@ -42,7 +42,8 @@ export interface Settings extends InteractiveTableSettings {
   sortKey: V1GetModelVersionsRequestSortBy;
 }
 
-const config = (modelId: string | number): SettingsConfig<Settings> => ({
+const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'model-details',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,
@@ -93,7 +94,7 @@ const config = (modelId: string | number): SettingsConfig<Settings> => ({
       type: number,
     },
   },
-  storagePath: `model-details-${modelId}`,
-});
+  storagePath: 'model-details',
+};
 
 export default config;

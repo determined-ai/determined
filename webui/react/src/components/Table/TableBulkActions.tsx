@@ -1,7 +1,5 @@
-import { Select } from 'antd';
+import { Button, Select } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
-
-import Button from 'components/kit/Button';
 
 import css from './TableBatch.module.scss';
 

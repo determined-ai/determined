@@ -796,7 +796,7 @@ func AllocateTasks(
 	taskList *tasklist.TaskList,
 ) {
 	for _, req := range toAllocate {
-		fits := findFits(req, agents, BestFit, false)
+		fits := findFits(req, agents, BestFit)
 
 		for _, fit := range fits {
 			containerID := cproto.NewID()

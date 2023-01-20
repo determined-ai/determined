@@ -12,6 +12,7 @@ import { isObject } from 'shared/utils/data';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { TrialDetails } from 'types';
 
+import css from './TrialDetailsHyperparameters.module.scss';
 import settingsConfig, { Settings } from './TrialDetailsHyperparameters.settings';
 
 export interface Props {
@@ -60,24 +61,26 @@ const TrialDetailsHyperparameters: React.FC<Props> = ({ trial, pageRef }: Props)
   }, [trial?.hyperparameters]);
 
   return (
-    <Spinner spinning={!trial}>
-      {trial ? (
-        <InteractiveTable
-          columns={columns}
-          containerRef={pageRef}
-          dataSource={dataSource}
-          pagination={false}
-          rowClassName={defaultRowClassName({ clickable: false })}
-          rowKey="hyperparameter"
-          settings={settings as InteractiveTableSettings}
-          showSorterTooltip={false}
-          size="small"
-          updateSettings={updateSettings as UpdateSettings}
-        />
-      ) : (
-        <SkeletonTable columns={columns.length} />
-      )}
-    </Spinner>
+    <div className={css.base}>
+      <Spinner spinning={!trial}>
+        {trial ? (
+          <InteractiveTable
+            columns={columns}
+            containerRef={pageRef}
+            dataSource={dataSource}
+            pagination={false}
+            rowClassName={defaultRowClassName({ clickable: false })}
+            rowKey="hyperparameter"
+            settings={settings as InteractiveTableSettings}
+            showSorterTooltip={false}
+            size="small"
+            updateSettings={updateSettings as UpdateSettings}
+          />
+        ) : (
+          <SkeletonTable columns={columns.length} />
+        )}
+      </Spinner>
+    </div>
   );
 };
 

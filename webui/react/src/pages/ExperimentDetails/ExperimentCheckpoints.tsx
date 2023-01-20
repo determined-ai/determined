@@ -41,6 +41,7 @@ import handleError from 'utils/error';
 
 import settingsConfig, { Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';
+import css from './ExperimentTrials.module.scss';
 
 interface Props {
   experiment: ExperimentBase;
@@ -306,7 +307,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   }, [checkpointMap, settings.row]);
 
   return (
-    <>
+    <div className={css.base}>
       <Section>
         <TableBatch
           actions={batchActions.map((action) => ({
@@ -351,7 +352,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       {modalModelCreateContextHolder}
       {modalCheckpointRegisterContextHolder}
       {modalCheckpointDeleteContextHolder}
-    </>
+    </div>
   );
 };
 

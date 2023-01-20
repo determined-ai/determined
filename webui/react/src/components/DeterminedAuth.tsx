@@ -1,7 +1,6 @@
-import { Form, Input } from 'antd';
+import { Button, Form, Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';

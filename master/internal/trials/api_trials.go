@@ -19,7 +19,7 @@ import (
 type TrialsAPIServer struct{}
 
 func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
-	emptyFilters := status.Error(
+	emptyFilters := status.Errorf(
 		codes.InvalidArgument,
 		"at least one filter required",
 	)
@@ -55,22 +55,12 @@ func checkTrialFiltersEmpty(f *apiv1.TrialFilters) error {
 func (a *TrialsAPIServer) QueryTrials(ctx context.Context,
 	req *apiv1.QueryTrialsRequest,
 ) (*apiv1.QueryTrialsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	err := checkTrialFiltersEmpty(req.Filters)
 	if err != nil {
-		return nil, fmt.Errorf("error querying for trials %w", err)
-	}
-
-	err = checkTrialFiltersEmpty(req.Filters)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error querying tags for trials %w", err)
 	}
 
 	q, err := BuildFilterTrialsQuery(req.Filters, true)
-	if err != nil {
-		return nil, fmt.Errorf("error querying for trials %w", err)
-	}
-
-	q, err = AuthZProvider.Get().AuthFilterTrialsQuery(ctx, curUser, q, false)
 	if err != nil {
 		return nil, fmt.Errorf("error querying for trials %w", err)
 	}
@@ -82,7 +72,6 @@ func (a *TrialsAPIServer) QueryTrials(ctx context.Context,
 		if err != nil {
 			return nil, fmt.Errorf("error querying for trials, bad order by column %w", err)
 		}
-
 		if req.Sorter.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
 			orderDirection = db.SortDirectionDescNullsLast
 		}
@@ -101,12 +90,14 @@ func (a *TrialsAPIServer) QueryTrials(ctx context.Context,
 	)
 
 	trials := []TrialsAugmented{}
-	err = q.Scan(ctx, &trials)
+	err = q.Scan(context.TODO(), &trials)
+
 	if err != nil {
 		return nil, fmt.Errorf("error querying for trials %w", err)
 	}
 
 	resp := apiv1.QueryTrialsResponse{Trials: []*apiv1.AugmentedTrial{}}
+
 	for _, trial := range trials {
 		resp.Trials = append(resp.Trials, trial.Proto())
 	}
@@ -119,56 +110,48 @@ func (a *TrialsAPIServer) QueryTrials(ctx context.Context,
 func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 	req *apiv1.UpdateTrialTagsRequest,
 ) (*apiv1.UpdateTrialTagsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	_, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update trial tags %w", err)
 	}
+
+	// check user is authorized for modifying project? after RBAC?
+	// in that case we will want to make sure len(req.Filters.ProjectID) == 1
+	// right now only option is adding/removing tags, pretty low stakes
 
 	q, err := BuildTrialPatchQuery(req.Patch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to construct set clause for trial tags %w", err)
 	}
 
-	var subQ *bun.SelectQuery
 	switch targetType := req.Target.(type) {
 	case *apiv1.UpdateTrialTagsRequest_Filters:
 		filters := req.GetFilters()
-
 		err = checkTrialFiltersEmpty(filters)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("empty trials provided for patch %s", filters)
 		}
 
-		subQ, err = BuildFilterTrialsQuery(filters, false)
-		if err != nil {
+		subQ, subQerr := BuildFilterTrialsQuery(filters, false)
+
+		if subQerr != nil {
 			return nil, fmt.Errorf("failed to update trial tags %w", err)
 		}
 
-		subQ, err = AuthZProvider.Get().AuthFilterTrialsQuery(ctx, curUser, subQ, true)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update trial tags %w", err)
-		}
+		subQ.Column("trial_id")
+		q.Where("id IN (?)", subQ)
 
 	case *apiv1.UpdateTrialTagsRequest_Trial:
 		trialIds := req.GetTrial().Ids
 		if len(trialIds) == 0 {
 			return nil, fmt.Errorf("no trial ids provided to update trial tags")
 		}
-
-		subQ = db.Bun().NewSelect().Model((*TrialsAugmented)(nil)).
-			Where("trial_id in (?)", bun.In(trialIds))
-		subQ, err = AuthZProvider.Get().AuthFilterTrialsQuery(ctx, curUser, subQ, true)
-		if err != nil {
-			return nil, fmt.Errorf("failed to update trial tags %w", err)
-		}
-
+		q.Where("id IN (?)", bun.In(trialIds))
 	default:
 		return nil, fmt.Errorf("bad target for trials patch %f", targetType)
 	}
 
-	subQ.Column("trial_id")
-	q.Where("id IN (?)", subQ)
-	res, err := q.Exec(ctx)
+	res, err := q.Exec(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to update trial tags %w", err)
 	}
@@ -186,24 +169,17 @@ func (a *TrialsAPIServer) UpdateTrialTags(ctx context.Context,
 func (a *TrialsAPIServer) GetTrialsCollections(
 	ctx context.Context, req *apiv1.GetTrialsCollectionsRequest,
 ) (*apiv1.GetTrialsCollectionsResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get trials collections %w", err)
-	}
-
 	collections := []*TrialsCollection{}
+
 	q := db.Bun().
 		NewSelect().
 		Model(&collections)
+
 	if req.ProjectId != 0 {
 		q = q.Where("project_id = ?", req.ProjectId)
 	}
-	q, err = AuthZProvider.Get().AuthFilterCollectionsReadQuery(ctx, curUser, q)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get trials collections %w", err)
-	}
 
-	err = q.Scan(ctx)
+	err := q.Scan(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get trials collections %w", err)
 	}
@@ -211,9 +187,11 @@ func (a *TrialsAPIServer) GetTrialsCollections(
 	resp := &apiv1.GetTrialsCollectionsResponse{
 		Collections: []*apiv1.TrialsCollection{},
 	}
+
 	for _, c := range collections {
 		resp.Collections = append(resp.Collections, c.Proto())
 	}
+
 	return resp, nil
 }
 
@@ -222,41 +200,34 @@ func (a *TrialsAPIServer) GetTrialsCollections(
 func (a *TrialsAPIServer) CreateTrialsCollection(
 	ctx context.Context, req *apiv1.CreateTrialsCollectionRequest,
 ) (*apiv1.CreateTrialsCollectionResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create trials collection %w", err)
 	}
 
 	err = checkTrialFiltersEmpty(req.Filters)
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create trials collection %w", err)
 	}
 
 	if req.ProjectId == 0 {
 		return nil, errors.New("failed to create trials collection: must specify project_id")
 	}
-	canCreate, err := AuthZProvider.Get().CanCreateTrialCollection(ctx, curUser, req.ProjectId)
-	if !canCreate {
-		return nil, status.Error(
-			codes.PermissionDenied,
-			"unable to create collection",
-		)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("unable to create collection %w", err)
-	}
 
 	collection := TrialsCollection{
-		UserID:    int32(curUser.ID),
+		UserID:    int32(user.ID),
 		Name:      req.Name,
 		ProjectID: req.ProjectId,
 		Filters:   req.Filters,
 		Sorter:    req.Sorter,
 	}
+
 	_, err = db.Bun().NewInsert().
 		Model(&collection).
 		Returning("*").
-		Exec(ctx)
+		Exec(context.TODO())
+
 	if err != nil {
 		return nil, fmt.Errorf("error in creating collection %w", err)
 	}
@@ -270,7 +241,7 @@ func (a *TrialsAPIServer) CreateTrialsCollection(
 func (a *TrialsAPIServer) PatchTrialsCollection(
 	ctx context.Context, req *apiv1.PatchTrialsCollectionRequest,
 ) (*apiv1.PatchTrialsCollectionResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to patch trials collection %w", err)
 	}
@@ -281,31 +252,34 @@ func (a *TrialsAPIServer) PatchTrialsCollection(
 		Filters: req.Filters,
 		Sorter:  req.Sorter,
 	}
+
 	q := db.Bun().NewUpdate().
 		Model(&collection).
 		Returning("*").
-		WherePK()
-
-	q, err = AuthZProvider.Get().AuthFilterCollectionsUpdateQuery(ctx, curUser, q)
-	if err != nil {
-		return nil, fmt.Errorf("failed to patch trials collection %w", err)
-	}
+		WherePK().
+		Where("user_id = ? OR ?", user.ID, user.Admin)
 
 	if req.Name != "" {
 		q.Column("name")
 	}
+
 	if req.Filters != nil {
 		q.Column("filters")
 	}
+
 	if req.Sorter != nil {
 		q.Column("sorter")
 	}
 
-	_, err = q.Exec(ctx)
+	// we dont update project ID on patch
+	// can implement copy collection to other project
+	// at some point
+
+	_, err = q.Exec(context.TODO())
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to patch trials collection %w", err)
 	}
-
 	resp := &apiv1.PatchTrialsCollectionResponse{Collection: collection.Proto()}
 	return resp, nil
 }
@@ -314,7 +288,7 @@ func (a *TrialsAPIServer) PatchTrialsCollection(
 func (a *TrialsAPIServer) DeleteTrialsCollection(
 	ctx context.Context, req *apiv1.DeleteTrialsCollectionRequest,
 ) (*apiv1.DeleteTrialsCollectionResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	user, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete trials collection %w", err)
 	}
@@ -322,16 +296,14 @@ func (a *TrialsAPIServer) DeleteTrialsCollection(
 	collection := TrialsCollection{
 		ID: req.Id,
 	}
+
 	q := db.Bun().NewDelete().
 		Model(&collection).
-		WherePK()
+		WherePK().
+		Where("user_id = ? OR ?", user.ID, user.Admin)
 
-	q, err = AuthZProvider.Get().AuthFilterCollectionsDeleteQuery(ctx, curUser, q)
-	if err != nil {
-		return nil, fmt.Errorf("failed to delete trials collection %w", err)
-	}
+	_, err = q.Exec(context.TODO())
 
-	_, err = q.Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete trials collection %w", err)
 	}

@@ -2,7 +2,6 @@ import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import Button from 'components/kit/Button';
 import useModalProjectDelete from 'hooks/useModal/Project/useModalProjectDelete';
 import useModalProjectEdit from 'hooks/useModal/Project/useModalProjectEdit';
 import useModalProjectMove from 'hooks/useModal/Project/useModalProjectMove';
@@ -20,7 +19,6 @@ interface Props {
   curUser?: DetailedUser;
   direction?: 'vertical' | 'horizontal';
   onComplete?: () => void;
-  onDelete?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   project: Project;
   showChildrenIfEmpty?: boolean;
@@ -38,14 +36,13 @@ const ProjectActionDropdown: React.FC<Props> = ({
   className,
   direction = 'vertical',
   onComplete,
-  onDelete,
   trigger,
   workspaceArchived = false,
 }: Props) => {
   const { contextHolder: modalProjectMoveContextHolder, modalOpen: openProjectMove } =
     useModalProjectMove({ onClose: onComplete, project });
   const { contextHolder: modalProjectDeleteContextHolder, modalOpen: openProjectDelete } =
-    useModalProjectDelete({ onClose: onComplete, onDelete, project });
+    useModalProjectDelete({ onClose: onComplete, project });
   const { contextHolder: modalProjectEditContextHolder, modalOpen: openProjectEdit } =
     useModalProjectEdit({ onClose: onComplete, project });
 
@@ -178,9 +175,9 @@ const ProjectActionDropdown: React.FC<Props> = ({
         menu={menuProps}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
-        <Button ghost onClick={stopPropagation}>
+        <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
-        </Button>
+        </button>
       </Dropdown>
       {contextHolders}
     </div>

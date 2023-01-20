@@ -18,6 +18,8 @@ import { Loadable } from 'utils/loadable';
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 
+import css from './ClustersOverview.module.scss';
+
 /**
  * maximum theoretcial capacity of the resource pool in terms of the advertised
  * compute slot type.
@@ -103,7 +105,7 @@ const ClusterOverview: React.FC = () => {
   }, [canceler, fetchAgents]);
 
   return (
-    <>
+    <div className={css.base}>
       <ClusterOverallStats />
       <ClusterOverallBar />
       <Section title="Resource Pools">
@@ -118,7 +120,7 @@ const ClusterOverview: React.FC = () => {
       {!!rpDetail && (
         <ResourcePoolDetails finally={hideModal} resourcePool={rpDetail} visible={!!rpDetail} />
       )}
-    </>
+    </div>
   );
 };
 

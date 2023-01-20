@@ -1,9 +1,8 @@
+import { Button, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import Button from 'components/kit/Button';
-import Pivot from 'components/kit/Pivot';
 import NotesCard from 'components/NotesCard';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -302,7 +301,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       hidePreview={tabKey === TabType.Logs}
       trial={trialDetails}
       onViewLogs={handleViewLogs}>
-      <Pivot
+      <Tabs
         activeKey={tabKey}
         items={tabItems}
         tabBarExtraContent={
@@ -312,6 +311,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
             </div>
           ) : undefined
         }
+        tabBarStyle={{ height: 48, paddingLeft: 16 }}
         onChange={handleTabChange}
       />
       {modalHyperparameterSearchContextHolder}

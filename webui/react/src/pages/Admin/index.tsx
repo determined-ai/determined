@@ -1,8 +1,8 @@
+import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -67,8 +67,9 @@ const SettingsContent: React.FC = () => {
   }, [canAdministrateUsers, rbacEnabled]);
 
   return (
-    <Pivot
+    <Tabs
       activeKey={tab}
+      className="no-padding"
       defaultActiveKey={tabKey}
       destroyInactiveTabPane
       items={tabItems}
@@ -78,7 +79,7 @@ const SettingsContent: React.FC = () => {
 };
 
 const Admin: React.FC = () => (
-  <Page id="admin" stickyHeader title="Admin Settings">
+  <Page bodyNoPadding id="admin" stickyHeader title="Admin Settings">
     <SettingsContent />
   </Page>
 );

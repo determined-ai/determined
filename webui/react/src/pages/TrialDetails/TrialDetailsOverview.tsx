@@ -11,7 +11,8 @@ import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'type
 import handleError from 'utils/error';
 
 import TrialChart from './TrialChart';
-import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
+import css from './TrialDetailsOverview.module.scss';
+import settingsConfig, { Settings } from './TrialDetailsOverview.settings';
 import TrialDetailsWorkloads from './TrialDetailsWorkloads';
 
 export interface Props {
@@ -21,7 +22,6 @@ export interface Props {
 
 const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => {
   const storagePath = `trial-detail/experiment/${experiment.id}`;
-  const settingsConfig = useMemo(() => settingsConfigForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(
     Object.assign(settingsConfig, { storagePath }),
   );
@@ -69,7 +69,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   );
 
   return (
-    <>
+    <div className={css.base}>
       <TrialInfoBox experiment={experiment} trial={trial} />
       {showExperimentArtifacts ? (
         <>
@@ -96,7 +96,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           )}
         </>
       ) : null}
-    </>
+    </div>
   );
 };
 

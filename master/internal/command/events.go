@@ -13,6 +13,7 @@ import (
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -134,24 +135,16 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	curUser := c.(*context.DetContext).MustGetUser()
 	taskID := model.TaskID(ctx.Self().Parent().Address().Local())
-	reqCtx := c.Request().Context()
-	spec, err := db.GetCommandGenericSpec(reqCtx, taskID)
+	ownerID, err := db.GetCommandOwnerID(c.Request().Context(), taskID)
 	if err != nil {
 		return err
 	}
 
-	var ok bool
-	if spec.TaskType == model.TaskTypeTensorboard {
-		ok, err = AuthZProvider.Get().CanGetTensorboard(
-			reqCtx, curUser, spec.Metadata.WorkspaceID)
-	} else {
-		ok, err = AuthZProvider.Get().CanGetNSC(
-			reqCtx, curUser, spec.Metadata.WorkspaceID)
-	}
-	if err != nil {
+	reqCtx := c.Request().Context()
+	if ok, err := user.AuthZProvider.Get().CanAccessNTSCTask(reqCtx, curUser, ownerID); err != nil {
 		return err
 	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	}
 	return nil
 }

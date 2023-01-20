@@ -2,7 +2,6 @@ import { Dropdown } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
-import Button from 'components/kit/Button';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import useModalWorkspaceDelete from 'hooks/useModal/Workspace/useModalWorkspaceDelete';
 import usePermissions from 'hooks/usePermissions';
@@ -168,9 +167,9 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown menu={WorkspaceActionMenu} placement="bottomRight" trigger={trigger ?? ['click']}>
-        <Button type="text" onClick={stopPropagation}>
+        <button onClick={stopPropagation}>
           <Icon name={`overflow-${direction}`} />
-        </Button>
+        </button>
       </Dropdown>
       {modalWorkspaceDeleteContextHolder}
       {modalWorkspaceEditContextHolder}

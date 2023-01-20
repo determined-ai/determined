@@ -65,6 +65,7 @@ export interface Settings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<Settings> = {
+  applicableRoutespace: 'task-list',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

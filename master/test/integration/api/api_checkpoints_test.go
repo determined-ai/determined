@@ -352,8 +352,8 @@ func testGetTrialCheckpoints(
 func createPrereqs(t *testing.T, pgDB *db.PgDB) (
 	*model.Experiment, *model.Trial, *model.Allocation,
 ) {
-	experiment, activeConfig := model.ExperimentModel()
-	err := pgDB.AddExperiment(experiment, activeConfig)
+	experiment := model.ExperimentModel()
+	err := pgDB.AddExperiment(experiment)
 	assert.NilError(t, err, "failed to insert experiment")
 
 	task := db.RequireMockTask(t, pgDB, experiment.OwnerID)

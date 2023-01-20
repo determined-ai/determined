@@ -15,6 +15,27 @@ type UserAuthZ struct {
 	mock.Mock
 }
 
+// CanAccessNTSCTask provides a mock function with given fields: ctx, curUser, ownerID
+func (_m *UserAuthZ) CanAccessNTSCTask(ctx context.Context, curUser model.User, ownerID model.UserID) (bool, error) {
+	ret := _m.Called(ctx, curUser, ownerID)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.UserID) bool); ok {
+		r0 = rf(ctx, curUser, ownerID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, model.UserID) error); ok {
+		r1 = rf(ctx, curUser, ownerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // CanCreateUser provides a mock function with given fields: ctx, curUser, userToAdd, agentUserGroup
 func (_m *UserAuthZ) CanCreateUser(ctx context.Context, curUser model.User, userToAdd model.User, agentUserGroup *model.AgentUserGroup) error {
 	ret := _m.Called(ctx, curUser, userToAdd, agentUserGroup)
@@ -36,6 +57,20 @@ func (_m *UserAuthZ) CanCreateUsersOwnSetting(ctx context.Context, curUser model
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.UserWebSetting) error); ok {
 		r0 = rf(ctx, curUser, setting)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CanGetActiveTasksCount provides a mock function with given fields: ctx, curUser
+func (_m *UserAuthZ) CanGetActiveTasksCount(ctx context.Context, curUser model.User) error {
+	ret := _m.Called(ctx, curUser)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, model.User) error); ok {
+		r0 = rf(ctx, curUser)
 	} else {
 		r0 = ret.Error(0)
 	}

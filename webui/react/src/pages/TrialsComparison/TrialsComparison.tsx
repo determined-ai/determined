@@ -79,7 +79,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const handleTrialFocus = useMemo(() => debounce(1000, highlights.focus), [highlights.focus]);
 
   return (
-    <Page className={css.base} containerRef={containerRef}>
+    <Page bodyNoPadding className={css.base} containerRef={containerRef}>
       <Section bodyBorder bodyScroll>
         <div className={css.container}>
           <div className={css.chart}>

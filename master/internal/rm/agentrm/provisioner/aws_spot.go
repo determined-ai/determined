@@ -14,7 +14,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -72,9 +71,8 @@ type spotRequest struct {
 // these cases, so we handle them identically.
 //
 // AWS documentation on the spot instance lifecycle:
-// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
-//
 //nolint:lll
+// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-request-status.html#spot-instance-bid-status-understand
 type spotState struct {
 	// Keep track of spot requests that haven't entered a terminal state. This map primarily
 	// exists to handle problems caused by eventual consistency, where we will create a spot
@@ -117,7 +115,7 @@ type spotState struct {
 //
 // This function does more than just list spot instances. Because this function is called every
 // provisioner tick, we have it also handle several aspects of the spot provisioner lifecycle.
-func (c *awsCluster) listSpot(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *awsCluster) listSpot(ctx *actor.Context) ([]*Instance, error) {
 	activeReqsInAPI, err := c.listActiveSpotInstanceRequests(ctx, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 spot requests")
@@ -399,21 +397,19 @@ func (c *awsCluster) attemptToApproximateClockSkew(ctx *actor.Context) {
 
 // Convert c.spot.trackedReqs to a list of Instances. For the requests that have
 // been fulfilled, this requires querying the EC2 API to find the instance state.
-func (c *awsCluster) buildInstanceListFromTrackedReqs(
-	ctx *actor.Context,
-) ([]*model.Instance, error) {
+func (c *awsCluster) buildInstanceListFromTrackedReqs(ctx *actor.Context) ([]*Instance, error) {
 	runningSpotInstanceIds := newSetOfStrings()
-	pendingSpotRequestsAsInstances := make([]*model.Instance, 0)
+	pendingSpotRequestsAsInstances := make([]*Instance, 0)
 
 	for _, activeRequest := range c.spot.trackedReqs.iter() {
 		if activeRequest.InstanceID != nil {
 			runningSpotInstanceIds.add(*activeRequest.InstanceID)
 		} else {
-			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &model.Instance{
+			pendingSpotRequestsAsInstances = append(pendingSpotRequestsAsInstances, &Instance{
 				ID:         activeRequest.SpotRequestID,
 				LaunchTime: activeRequest.CreationTime,
 				AgentName:  activeRequest.SpotRequestID,
-				State:      model.SpotRequestPendingAWS,
+				State:      SpotRequestPendingAWS,
 			})
 		}
 	}
@@ -423,7 +419,7 @@ func (c *awsCluster) buildInstanceListFromTrackedReqs(
 		false,
 	)
 	if err != nil {
-		return []*model.Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
+		return []*Instance{}, errors.Wrap(err, "cannot describe EC2 instances")
 	}
 
 	// Ignore any instances in the terminated state. The can happen due to eventual consistency (the
@@ -442,7 +438,7 @@ func (c *awsCluster) buildInstanceListFromTrackedReqs(
 
 	realInstances := c.newInstances(nonTerminalInstances)
 	for _, inst := range realInstances {
-		if inst.State == model.Unknown {
+		if inst.State == Unknown {
 			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
 		}
 	}

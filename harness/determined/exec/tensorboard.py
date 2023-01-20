@@ -96,7 +96,7 @@ def check_tensorboard_responsive() -> bool:
 
 
 def start_tensorboard(
-    storage_config: Dict[str, Any],
+    config: Dict[str, Any],
     tb_version: str,
     storage_paths: List[str],
     add_tb_args: List[str],
@@ -110,7 +110,7 @@ def start_tensorboard(
     with tempfile.TemporaryDirectory() as local_dir:
 
         # Get fetcher and perform initial fetch
-        fetcher = fetchers.build(storage_config, storage_paths, local_dir)
+        fetcher = fetchers.build(config, storage_paths, local_dir)
         num_fetched_files = fetcher.fetch_new()
 
         # Build Tensorboard args and launch process.
@@ -153,15 +153,15 @@ def start_tensorboard(
 
 if __name__ == "__main__":
     tb_version = sys.argv[1]
-    storage_config_path = sys.argv[2]
+    config_path = sys.argv[2]
     storage_paths = sys.argv[3].split(",")
     additional_tb_args = sys.argv[4:]
 
-    config = {}  # type: Dict[str, Any]
-    with open(storage_config_path) as config_file:
-        storage_config = json.load(config_file)
+    config = {}
+    with open(config_path) as config_file:
+        config = json.load(config_file)
 
     determined.common.set_logger(determined.common.util.debug_mode())
 
-    ret = start_tensorboard(storage_config, tb_version, storage_paths, additional_tb_args)
+    ret = start_tensorboard(config, tb_version, storage_paths, additional_tb_args)
     sys.exit(ret)

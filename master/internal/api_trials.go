@@ -62,7 +62,7 @@ func (a *apiServer) canGetTrialsExperimentAndCheckCanDoAction(ctx context.Contex
 	}
 
 	trialNotFound := status.Errorf(codes.NotFound, "trial %d not found", trialID)
-	exp, err := a.m.db.ExperimentByTrialID(trialID)
+	exp, err := a.m.db.ExperimentWithoutConfigByTrialID(trialID)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound
 	} else if err != nil {
@@ -518,7 +518,7 @@ func (a *apiServer) GetExperimentTrials(
 	ctx context.Context, req *apiv1.GetExperimentTrialsRequest,
 ) (resp *apiv1.GetExperimentTrialsResponse, err error) {
 	if _, _, err = a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		false, expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
 

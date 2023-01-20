@@ -20,8 +20,7 @@ message Tensorboard {
         "state",
         "username",
         "job_id",
-        "resource_pool",
-        "workspace_id"
+        "resource_pool"
       ]
     }
   };
@@ -53,6 +52,4 @@ message Tensorboard {
   string exit_status = 13;
   // The associated job id.
   string job_id = 14;
-  // The workspace id.
-  int32 workspace_id = 17;
 }

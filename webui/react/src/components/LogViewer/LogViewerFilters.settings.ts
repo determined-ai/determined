@@ -19,6 +19,7 @@ export const settingsConfigForTrial = (id: number): SettingsConfig<Settings> =>
   settingsConfigForLogs(id);
 
 const settingsConfigForLogs = (id: number | string): SettingsConfig<Settings> => ({
+  applicableRoutespace: `log-viewer-filters-${id}`,
   settings: {
     agentId: {
       defaultValue: undefined,
@@ -64,5 +65,5 @@ const settingsConfigForLogs = (id: number | string): SettingsConfig<Settings> =>
       type: union([undefinedType, string]),
     },
   },
-  storagePath: `log-viewer-filters-${id}`,
+  storagePath: 'log-viewer-filters',
 });

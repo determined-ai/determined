@@ -20,8 +20,7 @@ message Command {
         "state",
         "username",
         "job_id",
-        "resource_pool",
-        "workspace_id"
+        "resource_pool"
       ]
     }
   };
@@ -47,6 +46,4 @@ message Command {
   string exit_status = 12;
   // The associated job id.
   string job_id = 13;
-  // The workspace id.
-  int32 workspace_id = 16;
 }

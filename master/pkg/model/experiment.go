@@ -279,16 +279,12 @@ var CheckpointReverseTransitions = reverseTransitions(CheckpointTransitions)
 
 // Experiment represents a row from the `experiments` table.
 type Experiment struct {
-	ID    int    `db:"id"`
-	JobID JobID  `db:"job_id"`
-	State State  `db:"state"`
-	Notes string `db:"notes"`
-
-	// Offer a LegacyConfig rather than ExperimentConfig since most of the system is about querying
-	// experiments which ran some time in the past, which is exactly what LegacyConfig is for.
-	Config         expconf.LegacyConfig `db:"config"`
-	OriginalConfig string               `db:"original_config"`
-
+	ID             int                      `db:"id"`
+	JobID          JobID                    `db:"job_id"`
+	State          State                    `db:"state"`
+	Notes          string                   `db:"notes"`
+	Config         expconf.ExperimentConfig `db:"config"`
+	OriginalConfig string                   `db:"original_config"`
 	// The model definition is stored as a .tar.gz file (raw bytes).
 	ModelDefinitionBytes []byte     `db:"model_definition"`
 	StartTime            time.Time  `db:"start_time"`
@@ -319,13 +315,12 @@ func ExperimentFromProto(e *experimentv1.Experiment) (*Experiment, error) {
 		parentID = ptrs.Ptr(int(e.ForkedFrom.Value))
 	}
 
-	byts, err := json.Marshal(e.Config)
+	bytes, err := json.Marshal(e.Config)
 	if err != nil {
 		return nil, err
 	}
-
-	config, err := expconf.ParseLegacyConfigJSON(byts)
-	if err != nil {
+	var config expconf.ExperimentConfig
+	if err = json.Unmarshal(bytes, &config); err != nil {
 		return nil, err
 	}
 
@@ -381,7 +376,7 @@ func NewExperiment(
 	return &Experiment{
 		State:                PausedState,
 		JobID:                NewJobID(),
-		Config:               config.AsLegacy(),
+		Config:               config,
 		OriginalConfig:       originalConfig,
 		ModelDefinitionBytes: modelDefinitionBytes,
 		StartTime:            time.Now().UTC(),

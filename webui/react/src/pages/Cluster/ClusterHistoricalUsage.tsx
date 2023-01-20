@@ -1,8 +1,7 @@
-import { Space } from 'antd';
+import { Button, Space } from 'antd';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Button from 'components/kit/Button';
 import Section from 'components/Section';
 import { SyncProvider } from 'components/UPlot/SyncableBounds';
 import { useSettings } from 'hooks/useSettings';

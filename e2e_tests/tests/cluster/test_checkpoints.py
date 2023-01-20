@@ -13,7 +13,6 @@ from determined import errors
 from determined.common import api, storage
 from determined.common.api import authentication, bindings, certs
 from determined.common.api.bindings import determinedcheckpointv1State
-from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 
@@ -129,7 +128,7 @@ def test_delete_checkpoints() -> None:
     wait_for_gc_to_finish(exp_id_1)
     wait_for_gc_to_finish(exp_id_2)
 
-    test_session = api_utils.determined_test_session()
+    test_session = exp.determined_test_session()
     exp_1_checkpoints = bindings.get_GetExperimentCheckpoints(
         session=test_session, id=exp_id_1
     ).checkpoints

@@ -10,7 +10,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func assertEqualInstancesMarked(t *testing.T, left, right map[string]time.Time) {
@@ -54,66 +53,66 @@ func TestCalculateInstanceStates(t *testing.T) {
 				maxStartingPeriod:   10 * time.Minute,
 				maxDisconnectPeriod: 10 * time.Minute,
 				maxInstanceNum:      10,
-				instanceSnapshot: map[string]*model.Instance{
+				instanceSnapshot: map[string]*Instance{
 					"stopped": {
 						ID:         "stopped",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "stopped",
-						State:      model.Stopped,
+						State:      Stopped,
 					},
 					"unconnected starting": {
 						ID:         "unconnected starting",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "unconnected starting",
-						State:      model.Running,
+						State:      Running,
 					},
 					"unconnected running": {
 						ID:         "unconnected running",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "unconnected running",
-						State:      model.Running,
+						State:      Running,
 					},
 					"past disconnected": {
 						ID:         "past disconnected",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "past disconnected",
-						State:      model.Running,
+						State:      Running,
 					},
 					"new disconnected": {
 						ID:         "new disconnected",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "new disconnected",
-						State:      model.Running,
+						State:      Running,
 					},
 					"long disconnected": {
 						ID:         "long disconnected",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "long disconnected",
-						State:      model.Running,
+						State:      Running,
 					},
 					"past idle": {
 						ID:         "past idle",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "past idle",
-						State:      model.Running,
+						State:      Running,
 					},
 					"new idle": {
 						ID:         "new idle",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "new idle",
-						State:      model.Running,
+						State:      Running,
 					},
 					"long idle": {
 						ID:         "long idle",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "long idle",
-						State:      model.Running,
+						State:      Running,
 					},
 					"occupied": {
 						ID:         "occupied",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "occupied",
-						State:      model.Running,
+						State:      Running,
 					},
 				},
 				connectedAgentSnapshot: map[string]sproto.AgentSummary{
@@ -188,7 +187,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		{
 			name: "terminate stopped",
 			scaleDecider: scaleDecider{
-				instances:      map[string]*model.Instance{"stopped": {}},
+				instances:      map[string]*Instance{"stopped": {}},
 				stopped:        map[string]bool{"stopped": true},
 				maxInstanceNum: 10,
 			},
@@ -197,7 +196,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		{
 			name: "terminate long idle",
 			scaleDecider: scaleDecider{
-				instances:      map[string]*model.Instance{"long idle": {}},
+				instances:      map[string]*Instance{"long idle": {}},
 				longIdle:       map[string]bool{"long idle": true},
 				maxInstanceNum: 10,
 			},
@@ -206,7 +205,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		{
 			name: "terminate long disconnected",
 			scaleDecider: scaleDecider{
-				instances:        map[string]*model.Instance{"long disconnected": {}},
+				instances:        map[string]*Instance{"long disconnected": {}},
 				longDisconnected: map[string]bool{"long disconnected": true},
 				maxInstanceNum:   10,
 			},
@@ -215,30 +214,30 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		{
 			name: "terminate instances until below the maximum",
 			scaleDecider: scaleDecider{
-				instances: map[string]*model.Instance{
+				instances: map[string]*Instance{
 					"earliest": {
 						ID:         "earliest",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "earliest",
-						State:      model.Running,
+						State:      Running,
 					},
 					"most recent": {
 						ID:         "most recent",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "most recent",
-						State:      model.Running,
+						State:      Running,
 					},
 					"new idle": {
 						ID:         "new idle",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "new idle",
-						State:      model.Running,
+						State:      Running,
 					},
 					"long idle": {
 						ID:         "long idle",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "long idle",
-						State:      model.Running,
+						State:      Running,
 					},
 				},
 				idle: map[string]time.Time{
@@ -253,7 +252,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 		{
 			name: "don't terminate instances if below minimum",
 			scaleDecider: scaleDecider{
-				instances: map[string]*model.Instance{
+				instances: map[string]*Instance{
 					"stopped":           {},
 					"occupied":          {LaunchTime: time.Now().Add(-time.Minute)},
 					"past idle":         {LaunchTime: time.Now().Add(-time.Minute)},
@@ -329,12 +328,12 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 			scaleDecider: scaleDecider{
 				maxStartingPeriod: time.Minute,
 				maxInstanceNum:    2,
-				instances: map[string]*model.Instance{
+				instances: map[string]*Instance{
 					"instance1": {
 						ID:         "instance1",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "agent1",
-						State:      model.Running,
+						State:      Running,
 					},
 				},
 				desiredNewInstances: 4,
@@ -346,18 +345,18 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 			scaleDecider: scaleDecider{
 				maxStartingPeriod: 10 * time.Minute,
 				maxInstanceNum:    10,
-				instances: map[string]*model.Instance{
+				instances: map[string]*Instance{
 					"running instance": {
 						ID:         "running instance",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "agent1",
-						State:      model.Running,
+						State:      Running,
 					},
 					"starting instance": {
 						ID:         "starting instance",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "agent2",
-						State:      model.Running,
+						State:      Running,
 					},
 				},
 				recentlyLaunched: map[string]bool{
@@ -372,18 +371,18 @@ func TestCalculateNumInstancesToLaunch(t *testing.T) {
 			scaleDecider: scaleDecider{
 				maxStartingPeriod: 10 * time.Minute,
 				maxInstanceNum:    10,
-				instances: map[string]*model.Instance{
+				instances: map[string]*Instance{
 					"instance1": {
 						ID:         "instance1",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "agent1",
-						State:      model.Running,
+						State:      Running,
 					},
 					"instance2": {
 						ID:         "instance2",
 						LaunchTime: time.Now().Add(-time.Minute),
 						AgentName:  "agent2",
-						State:      model.Running,
+						State:      Running,
 					},
 				},
 				recentlyLaunched: map[string]bool{
@@ -409,18 +408,18 @@ func TestRecordInstanceStats(t *testing.T) {
 	db := &mocks.DB{}
 	sd := scaleDecider{
 		db: db,
-		instances: map[string]*model.Instance{
+		instances: map[string]*Instance{
 			"instance1": {
 				ID:         "instance1",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      model.Running,
+				State:      Running,
 			},
 			"instance2": {
 				ID:         "instance2",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      model.Running,
+				State:      Running,
 			},
 		},
 		disconnected: map[string]time.Time{

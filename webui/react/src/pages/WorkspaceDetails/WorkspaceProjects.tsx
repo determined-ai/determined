@@ -3,10 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
-import Button from 'components/kit/Button';
 import Link from 'components/Link';
-import ProjectActionDropdown from 'components/ProjectActionDropdown';
-import ProjectCard from 'components/ProjectCard';
 import SelectFilter from 'components/SelectFilter';
 import InteractiveTable, {
   ColumnDef,
@@ -21,7 +18,6 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import Toggle from 'components/Toggle';
-import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
 import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
@@ -38,6 +34,9 @@ import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+
+import ProjectActionDropdown from '../WorkspaceDetails/ProjectActionDropdown';
+import ProjectCard from '../WorkspaceDetails/ProjectCard';
 
 import css from './WorkspaceProjects.module.scss';
 import settingsConfig, {
@@ -70,9 +69,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const [total, setTotal] = useState(0);
   const [canceler] = useState(new AbortController());
   const { canCreateProject } = usePermissions();
-  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
-    workspaceId: workspace.id,
-  });
+
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(settingsConfig);
 
   const fetchProjects = useCallback(async () => {
@@ -109,10 +106,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     fetchProjects().then(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleProjectCreateClick = useCallback(() => {
-    openProjectCreate();
-  }, [openProjectCreate]);
 
   const handleViewSelect = useCallback(
     (value: unknown) => {
@@ -428,13 +421,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
             </Option>
           </SelectFilter>
           {settings && <GridListRadioGroup value={settings.view} onChange={handleViewChange} />}
-          <div className={css.headerButton}>
-            {!workspace.immutable &&
-              !workspace.archived &&
-              canCreateProject({ workspace: workspace }) && (
-                <Button onClick={handleProjectCreateClick}>New Project</Button>
-              )}
-          </div>
         </Space>
       </div>
       <Spinner spinning={isLoading}>
@@ -454,7 +440,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           <Message title="No projects matching the current filters" type={MessageType.Empty} />
         )}
       </Spinner>
-      {contextHolder}
     </div>
   );
 };

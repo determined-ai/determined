@@ -87,6 +87,7 @@ const ExperimentDetails: React.FC = () => {
 
   return (
     <Page
+      bodyNoPadding
       containerRef={pageRef}
       headerComponent={
         <ExperimentDetailsHeader
@@ -106,7 +107,9 @@ const ExperimentDetails: React.FC = () => {
         />
       ) : (
         <>
-          <TrialInfoBoxMultiTrial experiment={experiment} />
+          <div style={{ padding: '16px 16px 0' }}>
+            <TrialInfoBoxMultiTrial experiment={experiment} />
+          </div>
           <ExperimentMultiTrialTabs
             experiment={experiment}
             fetchExperimentDetails={fetchExperimentDetails}

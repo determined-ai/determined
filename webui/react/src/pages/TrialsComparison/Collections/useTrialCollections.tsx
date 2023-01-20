@@ -1,9 +1,8 @@
-import { Dropdown, Select } from 'antd';
+import { Button, Dropdown, Select } from 'antd';
 import { string } from 'io-ts';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { SettingsConfig, useSettings, UseSettingsReturn } from 'hooks/useSettings';
@@ -376,7 +375,11 @@ export const useTrialCollections = (
                   ],
             }}
             trigger={['click']}>
-            <Button ghost icon={<Icon name="overflow-vertical" />} />
+            <Button
+              className={[css.optionsDropdown, css.optionsDropdownFourChild].join(' ')}
+              ghost
+              icon={<Icon name="overflow-vertical" />}
+            />
           </Dropdown>
           {viewFiltersContextHolder}
           {collectionContextHolder}

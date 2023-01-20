@@ -21,7 +21,11 @@ _FETCHERS = {
 }  # type: Dict[str, Type[Fetcher]]
 
 
-def build(storage_config: Dict[str, Any], paths: List[str], local_dir: str) -> Fetcher:
+def build(config: Dict[str, Any], paths: List[str], local_dir: str) -> Fetcher:
+    storage_config = config.get("checkpoint_storage")
+    if storage_config is None:
+        raise ValueError("config does not contain a 'checkpoint_storage' key")
+
     storage_type = storage_config.get("type")
     if storage_type not in _FETCHERS:
         raise ValueError(f"checkpoint_storage type '{storage_type}' is not supported")

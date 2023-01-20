@@ -6,8 +6,7 @@ from kubernetes import client, config, watch
 
 from tests import config as conf
 
-from .abstract_cluster import Cluster
-from .managed_cluster import get_agent_data
+from .managed_cluster import Cluster, get_agent_data
 from .test_groups import det_cmd
 from .utils import run_command, wait_for_command_state
 

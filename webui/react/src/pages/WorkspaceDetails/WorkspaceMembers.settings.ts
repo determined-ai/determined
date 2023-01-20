@@ -27,6 +27,7 @@ export interface WorkspaceMembersSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<WorkspaceMembersSettings> = {
+  applicableRoutespace: 'members',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

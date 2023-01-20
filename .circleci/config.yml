@@ -967,7 +967,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0"
           model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
@@ -1470,7 +1470,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
@@ -1491,7 +1491,7 @@ jobs:
       - skip-if-webui-only
       - setup-python-venv:
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 torchvision==0.10.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 torchvision==0.10.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-gpu-pycov make -C harness test-gpu
@@ -1512,7 +1512,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
@@ -1533,7 +1533,7 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          extras-requires: "tensorflow==2.8.4 torch==1.9.0 codecov"
+          extras-requires: "tensorflow==2.4.3 torch==1.9.0 codecov"
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
@@ -2207,6 +2207,17 @@ workflows:
           tf1: false
           tf2: true
           mark: e2e_cpu_2a
+          target-stage: agent2
+
+      - test-e2e:
+          name: test-e2e-cpu-strict-ntsc
+          requires:
+            - build-go
+          parallelism: 1
+          tf1: false
+          tf2: true
+          devcluster-config: strict-ntsc.devcluster.yaml
+          mark: test_strict_ntsc
           target-stage: agent2
 
       - test-e2e:

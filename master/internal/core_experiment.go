@@ -80,10 +80,16 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 }
 
 func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context, m *Master,
-	expID int, actions ...func(context.Context, model.User, *model.Experiment) error,
+	expID int, withConfig bool, actions ...func(context.Context, model.User, *model.Experiment) error,
 ) (*model.Experiment, model.User, error) {
 	user := c.(*detContext.DetContext).MustGetUser()
-	e, err := m.db.ExperimentByID(expID)
+	var err error
+	var e *model.Experiment
+	if withConfig {
+		e, err = m.db.ExperimentByID(expID)
+	} else {
+		e, err = m.db.ExperimentWithoutConfigByID(expID)
+	}
 
 	expNotFound := echo.NewHTTPError(http.StatusNotFound, "experiment not found: %d", expID)
 	if errors.Is(err, db.ErrNotFound) {
@@ -115,11 +121,10 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	exp, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+	if _, _, err := echoGetExperimentAndCheckCanDoActions(
+		c.Request().Context(), c, m, args.ExperimentID, false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
 	}
 
@@ -133,8 +138,14 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 		return nil, err
 	}
 
+	expConfig, err := m.db.ExperimentConfig(args.ExperimentID)
+	if err != nil {
+		return nil, err
+	}
+
+	metricName := expConfig.Searcher().Metric()
 	checkpointsWithMetric := map[string]interface{}{
-		"checkpoints": checkpointsDB, "metric_name": exp.Config.Searcher.Metric,
+		"checkpoints": checkpointsDB, "metric_name": metricName,
 	}
 
 	return checkpointsWithMetric, nil
@@ -159,7 +170,7 @@ func (m *Master) getExperimentModelFile(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, m, args.ExperimentID, false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	); err != nil {
 		return err
@@ -187,7 +198,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 		return err
 	}
 	if _, _, err := echoGetExperimentAndCheckCanDoActions(
-		c.Request().Context(), c, m, args.ExperimentID,
+		c.Request().Context(), c, m, args.ExperimentID, false,
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts,
 	); err != nil {
 		return err
@@ -198,15 +209,14 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 		return err
 	}
 
-	var cleanName string
-
-	// TODO(DET-8577): Remove unnecessary active config usage.
-	activeConfig, err := m.db.ActiveExperimentConfig(args.ExperimentID)
-	if err == nil {
-		// Make a Regex to remove everything but a whitelist of characters.
-		reg := regexp.MustCompile(`[^A-Za-z0-9_ \-()[\].{}]+`)
-		cleanName = "_" + reg.ReplaceAllString(activeConfig.Name().String(), "")
+	expConfig, err := m.db.ExperimentConfig(args.ExperimentID)
+	if err != nil {
+		return err
 	}
+
+	// Make a Regex to remove everything but a whitelist of characters.
+	reg := regexp.MustCompile(`[^A-Za-z0-9_ \-()[\].{}]+`)
+	cleanName := reg.ReplaceAllString(expConfig.Name().String(), "")
 
 	// Truncate name to a smaller size to both accommodate file name and path size
 	// limits on different platforms as well as get users more accustom to picking shorter
@@ -219,7 +229,7 @@ func (m *Master) getExperimentModelDefinition(c echo.Context) error {
 	c.Response().Header().Set(
 		"Content-Disposition",
 		fmt.Sprintf(
-			`attachment; filename="exp%d%s_model_def.tar.gz"`,
+			`attachment; filename="exp%d_%s_model_def.tar.gz"`,
 			args.ExperimentID,
 			cleanName))
 	return c.Blob(http.StatusOK, "application/x-gtar", modelDef)
@@ -235,11 +245,12 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 	ctx := c.Request().Context()
-	dbExp, userModel, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID)
+	dbExp, userModel, err := echoGetExperimentAndCheckCanDoActions(ctx, c, m, args.ExperimentID, true)
 	if err != nil {
 		return nil, err
 	}
 
+	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
 	// Merge Patch (RFC 7386) format.
 	// TODO: check for extraneous fields.
 	patch := struct {
@@ -268,16 +279,8 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		return nil, errors.Errorf("cannot find user %v who owns experiment", dbExp.OwnerID)
 	}
 
-	// TODO(DET-8577): Remove unnecessary active config usage.
-	activeConfig, err := m.db.ActiveExperimentConfig(args.ExperimentID)
-	if err != nil {
-		return nil, errors.Wrapf(
-			err, "unable to load no-longer-valid config for experiment %v", args.ExperimentID,
-		)
-	}
-
 	if patch.Resources != nil {
-		resources := activeConfig.Resources()
+		resources := dbExp.Config.Resources()
 		if patch.Resources.MaxSlots.IsPresent {
 			if err = expauth.AuthZProvider.Get().
 				CanSetExperimentsMaxSlots(ctx, userModel, dbExp, *patch.Resources.MaxSlots.Value); err != nil {
@@ -302,7 +305,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 			resources.SetPriority(patch.Resources.Priority)
 		}
-		activeConfig.SetResources(resources)
+		dbExp.Config.SetResources(resources)
 	}
 	if patch.CheckpointStorage != nil {
 		if err = expauth.AuthZProvider.Get().
@@ -310,15 +313,14 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 			return nil, echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 
-		storage := activeConfig.CheckpointStorage()
+		storage := dbExp.Config.CheckpointStorage()
 		storage.SetSaveExperimentBest(patch.CheckpointStorage.SaveExperimentBest)
 		storage.SetSaveTrialBest(patch.CheckpointStorage.SaveTrialBest)
 		storage.SetSaveTrialLatest(patch.CheckpointStorage.SaveTrialLatest)
-		activeConfig.SetCheckpointStorage(storage)
+		dbExp.Config.SetCheckpointStorage(storage)
 	}
 
-	// `patch` represents the allowed mutations that can be performed on an experiment, in JSON
-	if err := m.db.SaveExperimentConfig(dbExp.ID, activeConfig); err != nil {
+	if err := m.db.SaveExperimentConfig(dbExp); err != nil {
 		return nil, errors.Wrapf(err, "patching experiment %d", dbExp.ID)
 	}
 
@@ -346,9 +348,9 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if patch.CheckpointStorage != nil {
 		checkpoints, err := m.db.ExperimentCheckpointsToGCRaw(
 			dbExp.ID,
-			dbExp.Config.CheckpointStorage.SaveExperimentBest(),
-			dbExp.Config.CheckpointStorage.SaveTrialBest(),
-			dbExp.Config.CheckpointStorage.SaveTrialLatest(),
+			dbExp.Config.CheckpointStorage().SaveExperimentBest(),
+			dbExp.Config.CheckpointStorage().SaveTrialBest(),
+			dbExp.Config.CheckpointStorage().SaveTrialLatest(),
 		)
 		if err != nil {
 			return nil, err
@@ -363,7 +365,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		taskID := model.NewTaskID()
 		ckptGCTask := newCheckpointGCTask(
 			m.rm, m.db, m.taskLogger, taskID, dbExp.JobID, dbExp.StartTime, taskSpec, dbExp.ID,
-			dbExp.Config, checkpoints, true, agentUserGroup, user, nil,
+			dbExp.Config.AsLegacy(), checkpoints, true, agentUserGroup, user, nil,
 		)
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			ckptGCTask)
@@ -445,25 +447,23 @@ func getCreateExperimentsProject(
 }
 
 func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *model.User) (
-	*model.Experiment, expconf.ExperimentConfig, *projectv1.Project, bool, *tasks.TaskSpec, error,
+	*model.Experiment, *projectv1.Project, bool, *tasks.TaskSpec, error,
 ) {
 	// Read the config as the user provided it.
 	config, err := expconf.ParseAnyExperimentConfigYAML([]byte(params.ConfigBytes))
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Apply the template that the user specified.
 	if params.Template != nil {
 		template, terr := m.db.TemplateByName(*params.Template)
 		if terr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
-				terr, "TemplateByName(%q)", *params.Template,
-			)
+			return nil, nil, false, nil, errors.Wrapf(terr, "TemplateByName(%q)", *params.Template)
 		}
 		var tc expconf.ExperimentConfig
 		if yerr := yaml.Unmarshal(template.Config, &tc, yaml.DisallowUnknownFields); yerr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
+			return nil, nil, false, nil, errors.Wrapf(
 				terr, "yaml.Unmarshal(template=%q)", *params.Template,
 			)
 		}
@@ -476,10 +476,10 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system, resources.ResourcePool(), resources.SlotsPerTrial())
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
+		return nil, nil, false, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
 	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "error validating resources")
+		return nil, nil, false, nil, errors.Wrapf(err, "error validating resources")
 	}
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		m.system,
@@ -487,7 +487,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		m.config.TaskContainerDefaults,
 	)
 	if err != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+		return nil, nil, false, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
 	}
 	taskSpec := *m.taskSpec
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
@@ -495,7 +495,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 
 	project, err := getCreateExperimentsProject(m, params, user, defaulted)
 	if err != nil {
-		return nil, config, nil, false, nil, err
+		return nil, nil, false, nil, err
 	}
 
 	// Merge in workspace's checkpoint storage into the conifg.
@@ -504,7 +504,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		Where("id = ?", project.WorkspaceId).
 		Column("checkpoint_storage_config").
 		Scan(context.TODO()); err != nil {
-		return nil, config, nil, false, nil, err
+		return nil, nil, false, nil, err
 	}
 	config.RawCheckpointStorage = schemas.Merge(
 		config.RawCheckpointStorage, w.CheckpointStorageConfig)
@@ -519,12 +519,12 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	// Disallow EOL searchers.
 	if err = config.Searcher().AssertCurrent(); err != nil {
-		return nil, config, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
+		return nil, nil, false, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
 
 	var modelBytes []byte
@@ -532,21 +532,21 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		var dbErr error
 		modelBytes, dbErr = m.db.ExperimentModelDefinitionRaw(*params.ParentID)
 		if dbErr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
+			return nil, nil, false, nil, errors.Wrapf(
 				dbErr, "unable to find parent experiment %v", *params.ParentID)
 		}
 	} else {
 		var compressErr error
 		modelBytes, compressErr = archive.ToTarGz(params.ModelDef)
 		if compressErr != nil {
-			return nil, config, nil, false, nil, errors.Wrapf(
+			return nil, nil, false, nil, errors.Wrapf(
 				compressErr, "unable to find compress model definition")
 		}
 	}
 
 	token, createSessionErr := m.db.StartUserSession(user)
 	if createSessionErr != nil {
-		return nil, config, nil, false, nil, errors.Wrapf(
+		return nil, nil, false, nil, errors.Wrapf(
 			createSessionErr, "unable to create user session inside task")
 	}
 	taskSpec.UserSessionToken = token
@@ -562,7 +562,7 @@ func (m *Master) parseCreateExperiment(params *CreateExperimentParams, user *mod
 		dbExp.Username = user.Username
 	}
 
-	return dbExp, config, project, params.ValidateOnly, &taskSpec, err
+	return dbExp, project, params.ValidateOnly, &taskSpec, err
 }
 
 func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
@@ -579,13 +579,13 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 	}
 	ctx := c.Request().Context()
 	if params.ParentID != nil {
-		if _, _, err = echoGetExperimentAndCheckCanDoActions(ctx, c, m, *params.ParentID,
+		if _, _, err = echoGetExperimentAndCheckCanDoActions(ctx, c, m, *params.ParentID, false,
 			expauth.AuthZProvider.Get().CanForkFromExperiment); err != nil {
 			return nil, err
 		}
 	}
 
-	dbExp, activeConf, p, validateOnly, taskSpec, err := m.parseCreateExperiment(&params, &user)
+	dbExp, p, validateOnly, taskSpec, err := m.parseCreateExperiment(&params, &user)
 	if err != nil {
 		if _, ok := err.(ErrProjectNotFound); ok {
 			return nil, echo.NewHTTPError(http.StatusNotFound, err.Error())
@@ -608,11 +608,11 @@ func (m *Master) postExperiment(c echo.Context) (interface{}, error) {
 		}
 	}
 
-	e, launchWarnings, err := newExperiment(m, dbExp, activeConf, taskSpec)
+	e, launchWarnings, err := newExperiment(m, dbExp, taskSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "starting experiment")
 	}
-	config := schemas.Copy(activeConf)
+	config := schemas.Copy(e.Config)
 	m.system.ActorOf(actor.Addr("experiments", e.ID), e)
 
 	if params.Activate {

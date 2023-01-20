@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/config"
@@ -251,10 +249,6 @@ func (c *Config) Resolve() error {
 
 	if err := c.Logging.Resolve(); err != nil {
 		return err
-	}
-
-	if c.Security.AuthZ.StrictNTSCEnabled {
-		log.Warn("_strict_ntsc_enabled option is removed and will not have any effect.")
 	}
 
 	return nil

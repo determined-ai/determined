@@ -113,9 +113,6 @@ type KubernetesResourceManagerConfig struct {
 	// TODO(nick) this will eventually move down to resource pools when added to k8s
 	// so this is just an experimental feature flag for now.
 	ReattachResources bool `json:"_reattach_resources"`
-
-	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
-	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
@@ -133,14 +130,6 @@ func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	*k = defaultKubernetesResourceManagerConfig
 	type DefaultParser *KubernetesResourceManagerConfig
 	err := json.Unmarshal(data, DefaultParser(k))
-
-	if k.DefaultComputeResourcePool == "" {
-		k.DefaultComputeResourcePool = defaultResourcePoolName
-	}
-	if k.DefaultAuxResourcePool == "" {
-		k.DefaultAuxResourcePool = defaultResourcePoolName
-	}
-
 	if err == nil && k.SlotType == "gpu" {
 		k.SlotType = device.CUDA
 	}

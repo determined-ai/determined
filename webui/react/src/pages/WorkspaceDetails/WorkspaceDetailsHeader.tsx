@@ -1,10 +1,13 @@
 import { DownOutlined, PushpinOutlined } from '@ant-design/icons';
-import { Space } from 'antd';
+import { Button, Space } from 'antd';
 import React, { useCallback } from 'react';
 
 import DynamicIcon from 'components/DynamicIcon';
 import InlineEditor from 'components/InlineEditor';
 import Tooltip from 'components/kit/Tooltip';
+import useFeature from 'hooks/useFeature';
+import useModalProjectCreate from 'hooks/useModal/Project/useModalProjectCreate';
+import useModalWorkspaceAddMember from 'hooks/useModal/Workspace/useModalWorkspaceAddMember';
 import usePermissions from 'hooks/usePermissions';
 import WorkspaceActionDropdown from 'pages/WorkspaceList/WorkspaceActionDropdown';
 import { patchWorkspace } from 'services/api';
@@ -23,8 +26,37 @@ interface Props {
   workspace: Workspace;
 }
 
-const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: Props) => {
-  const { canModifyWorkspace } = usePermissions();
+const WorkspaceDetailsHeader: React.FC<Props> = ({
+  addableUsersAndGroups,
+  rolesAssignableToScope,
+  workspace,
+  fetchWorkspace,
+}: Props) => {
+  const { canAssignRoles } = usePermissions();
+
+  const { contextHolder, modalOpen: openProjectCreate } = useModalProjectCreate({
+    workspaceId: workspace.id,
+  });
+
+  const { contextHolder: workspaceAddMemberContextHolder, modalOpen: openWorkspaceAddMember } =
+    useModalWorkspaceAddMember({
+      addableUsersAndGroups,
+      onClose: fetchWorkspace,
+      rolesAssignableToScope,
+      workspaceId: workspace.id,
+    });
+
+  const rbacEnabled = useFeature().isOn('rbac');
+
+  const { canCreateProject, canModifyWorkspace } = usePermissions();
+
+  const handleProjectCreateClick = useCallback(() => {
+    openProjectCreate();
+  }, [openProjectCreate]);
+
+  const handleAddMembersClick = useCallback(() => {
+    openWorkspaceAddMember();
+  }, [openWorkspaceAddMember]);
 
   const handleNameChange = useCallback(
     async (name: string) => {
@@ -81,6 +113,19 @@ const WorkspaceDetailsHeader: React.FC<Props> = ({ workspace, fetchWorkspace }: 
           </WorkspaceActionDropdown>
         )}
       </Space>
+      <div className={css.headerButton}>
+        {rbacEnabled &&
+          canAssignRoles({ workspace }) &&
+          !workspace.immutable &&
+          !workspace.archived && <Button onClick={handleAddMembersClick}> Add Members</Button>}
+        {!workspace.immutable &&
+          !workspace.archived &&
+          canCreateProject({ workspace: workspace }) && (
+            <Button onClick={handleProjectCreateClick}>New Project</Button>
+          )}
+      </div>
+      {workspaceAddMemberContextHolder}
+      {contextHolder}
     </div>
   );
 };

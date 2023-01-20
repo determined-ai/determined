@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Button } from 'antd';
 import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 
-import Button from 'components/kit/Button';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';

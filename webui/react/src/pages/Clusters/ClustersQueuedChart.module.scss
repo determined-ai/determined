@@ -1,4 +1,8 @@
 .filter {
+  margin-top: -56px !important;
+  position: absolute;
+  right: 0;
+
   :global(.ant-radio-button-wrapper) {
     background-color: transparent !important;
     border: none !important;

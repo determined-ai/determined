@@ -27,9 +27,9 @@ func (f ExperimentModelOptionFunc) apply(experiment *Experiment) {
 
 // ExperimentModel returns a new experiment with the specified options.
 //nolint: exhaustivestruct
-func ExperimentModel(opts ...ExperimentModelOption) (*Experiment, expconf.ExperimentConfig) {
+func ExperimentModel(opts ...ExperimentModelOption) *Experiment {
 	maxLength := expconf.NewLengthInBatches(100)
-	activeConfig := expconf.ExperimentConfig{
+	eConf := expconf.ExperimentConfig{
 		RawSearcher: &expconf.SearcherConfig{
 			RawMetric: ptrs.Ptr("loss"),
 			RawSingleConfig: &expconf.SingleConfig{
@@ -44,13 +44,13 @@ func ExperimentModel(opts ...ExperimentModelOption) (*Experiment, expconf.Experi
 			},
 		},
 	}
-	activeConfig = schemas.WithDefaults(activeConfig)
-	DefaultTaskContainerDefaults().MergeIntoExpConfig(&activeConfig)
+	eConf = schemas.WithDefaults(eConf)
+	DefaultTaskContainerDefaults().MergeIntoExpConfig(&eConf)
 
 	e := &Experiment{
 		JobID:                NewJobID(),
 		State:                ActiveState,
-		Config:               activeConfig.AsLegacy(),
+		Config:               eConf,
 		StartTime:            time.Now(),
 		OwnerID:              &defaultDeterminedUID,
 		ModelDefinitionBytes: []byte{},
@@ -60,5 +60,5 @@ func ExperimentModel(opts ...ExperimentModelOption) (*Experiment, expconf.Experi
 	for _, o := range opts {
 		o.apply(e)
 	}
-	return e, activeConfig
+	return e
 }

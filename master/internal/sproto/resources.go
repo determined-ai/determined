@@ -73,6 +73,8 @@ type ResourcesStarted struct {
 	Addresses []cproto.Address
 	// NativeResourcesID is the native Docker hex container ID of the Determined container.
 	NativeResourcesID string
+	// HPCJobID is the Slurm/PBS job ID.
+	HPCJobID string
 }
 
 // FromContainerStarted converts an aproto.ContainerStarted message to ResourcesStarted.
@@ -264,7 +266,7 @@ func IsTransientSystemError(err error) bool {
 		case ResourcesFailed, TaskError:
 			return false
 		// Questionable, could be considered failures, but for now we don't.
-		case AgentError, AgentFailed, RestoreError:
+		case AgentError, AgentFailed:
 			return true
 		// Definitely not a failure.
 		case TaskAborted, ResourcesAborted:

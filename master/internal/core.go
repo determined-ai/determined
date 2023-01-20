@@ -756,7 +756,7 @@ func (m *Master) Run(ctx context.Context) error {
 	userService := user.GetService()
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{
-		HTTPAuth: processProxyAuthentication,
+		HTTPAuth: userService.ProcessProxyAuthentication,
 	})
 
 	allocationmap.InitAllocationMap()

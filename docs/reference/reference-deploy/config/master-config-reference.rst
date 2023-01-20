@@ -167,10 +167,6 @@ The master supports the following configuration settings:
             -  ``worst``: The worst-fit policy ensures that tasks will be placed on under-utilized
                agents.
 
-         -  ``allow_heterogeneous_fits``: Fit distributed jobs to onto agents of different sizes.
-            When enabled, we still prefer to fit jobs on same sized nodes but will fallback to allow
-            heterogeneous fits. Sizes should be powers of two for the fitting algorithm to work.
-
       -  ``default_aux_resource_pool``: The default resource pool to use for tasks that do not need
          dedicated compute resources, auxiliary, or systems tasks. Defaults to ``default`` if no
          resource pool is specified.

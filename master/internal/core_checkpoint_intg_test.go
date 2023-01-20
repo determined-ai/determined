@@ -147,7 +147,7 @@ func createCheckpoint(t *testing.T, pgDB *db.PgDB) (string, error) {
 func setupCheckpointTestEcho(t *testing.T) (
 	*apiServer, echo.Context, *httptest.ResponseRecorder,
 ) {
-	api, _, _ := setupAPITest(t, nil)
+	api, _, _ := setupAPITest(t)
 	e := echo.New()
 	rec := httptest.NewRecorder()
 	ctx := &detContext.DetContext{Context: e.NewContext(nil, rec)}
@@ -161,7 +161,7 @@ func setupCheckpointTestEcho(t *testing.T) (
 
 func TestGetCheckpointEcho(t *testing.T) {
 	gitBranch := os.Getenv("CIRCLE_BRANCH")
-	if gitBranch == "" || strings.HasPrefix(gitBranch, "pull/") {
+	if strings.HasPrefix(gitBranch, "pull/") {
 		t.Skipf("skipping test %s in a forked repo (branch: %s) due to lack of credentials",
 			t.Name(), gitBranch)
 	}
@@ -250,8 +250,7 @@ func TestGetCheckpointEchoExpErr(t *testing.T) {
 }
 
 func TestAuthZCheckpointsEcho(t *testing.T) {
-	api, authZExp, _, curUser, _ := setupExpAuthTest(t, nil)
-	ctx := newTestEchoContext(curUser)
+	api, authZExp, _, curUser, ctx := setupExpAuthTestEcho(t)
 
 	checkpointUUID := uuid.New()
 	checkpointID := checkpointUUID.String()
@@ -318,14 +317,14 @@ func mockExperimentS3(
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
-		Config:               cfg.AsLegacy(),
+		Config:               cfg,
 		ModelDefinitionBytes: db.ReadTestModelDefiniton(t, folderPath),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		ProjectID:            1,
 	}
-	err := pgDB.AddExperiment(&exp, cfg)
+	err := pgDB.AddExperiment(&exp)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
 }

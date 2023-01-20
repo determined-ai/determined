@@ -133,6 +133,17 @@ In the future, ensure that you activate the virtualenv (by running the
 such as [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
 or [direnv](https://direnv.net/) may help streamline the process.
 
+### Building Errata
+
+If you are building Determined using Python 3.9, you must manually change the
+version of TensorFlow to 2.8.0 in the [end-to-end testing requirements file](https://github.com/determined-ai/determined/blob/master/e2e_tests/tests/requirements.txt#L8)
+because the version of TensorFlow currently set in the end-to-end requirements
+file is not compatible with Python 3.9:
+
+```plain
+tensorflow==2.8.0; sys_platform != 'darwin' or platform_machine != 'arm64'
+```
+
 ## Running Determined
 
 A minimal Determined cluster consists of three services: a

@@ -1,8 +1,8 @@
+import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
-import Pivot from 'components/kit/Pivot';
 import Spinner from 'shared/components/Spinner/Spinner';
 
 import css from './Markdown.module.scss';
@@ -92,7 +92,7 @@ const Markdown: React.FC<Props> = ({
   return (
     <div aria-label="markdown-editor" className={css.base} tabIndex={0}>
       {editing && !disabled ? (
-        <Pivot items={tabItems} />
+        <Tabs className="no-padding" items={tabItems} />
       ) : (
         <MarkdownRender
           markdown={markdown}

@@ -1,6 +1,7 @@
 package expconf
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/pkg/errors"
@@ -17,20 +18,30 @@ import (
 // LegacyConfig can be used to deal with configs that contain some EOL components, like searchers
 // that have been removed.
 type LegacyConfig struct {
-	CheckpointStorage CheckpointStorageConfig
-	BindMounts        BindMountsConfig
-	Environment       EnvironmentConfig
-	Hyperparameters   Hyperparameters
-	Searcher          LegacySearcher
+	checkpointStorage CheckpointStorageConfig
+	bindMounts        BindMountsConfig
+	envvars           EnvironmentVariablesMap
+	podSpec           *PodSpec
 }
 
-// LegacySearcher represents a subset of the SearcherConfig which can be expected to be available
-// for all experiments, new and old.
-type LegacySearcher struct {
-	// Name might contain an EOL searcher name.
-	Name            string
-	Metric          string
-	SmallerIsBetter bool
+// CheckpointStorage returns a current CheckpointStorage from a LegacyConfig.
+func (h LegacyConfig) CheckpointStorage() CheckpointStorageConfig {
+	return h.checkpointStorage
+}
+
+// BindMounts returns a current BindMountsConfig from a LegacyConfig.
+func (h LegacyConfig) BindMounts() BindMountsConfig {
+	return h.bindMounts
+}
+
+// EnvironmentVariables returns a current EnvironmentVariables from a LegacyConfig.
+func (h LegacyConfig) EnvironmentVariables() EnvironmentVariablesMap {
+	return h.envvars
+}
+
+// PodSpec returns a current k8s PodSpec from a LegacyConfig.
+func (h LegacyConfig) PodSpec() *PodSpec {
+	return h.podSpec
 }
 
 func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, error) {
@@ -88,103 +99,72 @@ func getBindMounts(raw map[string]interface{}) (BindMountsConfig, error) {
 	return bm, nil
 }
 
-func getEnvironment(raw map[string]interface{}) (EnvironmentConfig, error) {
-	var env EnvironmentConfig
+func getEnvironmentVariables(raw map[string]interface{}) (EnvironmentVariablesMap, error) {
+	ev := EnvironmentVariablesMap{}
 
 	envOnly := raw["environment"]
-	if envOnly != nil {
-		envByts, err := json.Marshal(envOnly)
-		if err != nil {
-			return env, errors.Wrap(err, "unable to remarshal environment as json")
-		}
-		if err = schemas.SaneBytes(&env, envByts); err != nil {
-			return env, errors.Wrap(err, "legacy environment does not pass sanity checks")
-		}
-		if err = json.Unmarshal(envByts, &env); err != nil {
-			return env, errors.Wrap(err, "unable to unmarshal environment bytes")
-		}
+	if envOnly == nil {
+		// Empty environment.
+		return ev, nil
 	}
 
-	env = schemas.WithDefaults(env)
-
-	if err := schemas.IsComplete(env); err != nil {
-		return env, errors.Wrap(err, "legacy environment is incomplete")
+	evOnly := envOnly.(map[string]interface{})["environment_variables"]
+	if evOnly == nil {
+		// Empty environment.environment_variables.
+		return ev, nil
 	}
 
-	return env, nil
-}
-
-func getHyperparameters(raw map[string]interface{}) (Hyperparameters, error) {
-	h := Hyperparameters{}
-
-	hpOnly := raw["hyperparameters"]
-	if hpOnly == nil {
-		// Empty hyperparameters.
-		return h, nil
-	}
-
-	hpBytes, err := json.Marshal(hpOnly)
+	evByts, err := json.Marshal(evOnly)
 	if err != nil {
-		return h, errors.Wrap(err, "unable to remarshal hyperparameters as json")
+		return ev, errors.Wrap(err, "unable to remarshal environment variables as json")
 	}
-	if err = schemas.SaneBytes(&h, hpBytes); err != nil {
-		return h, errors.Wrap(err, "legacy hyperparameters do not pass sanity checks")
+
+	// The EnvironemntVariablesMap object doesn't point to quite the right schema to validate
+	// against (it can't handle plain lists), so we manually specify the more general schema.
+	validator := schemas.GetSanityValidator(
+		"http://determined.ai/schemas/expconf/v0/environment-variables.json",
+	)
+	if err = validator.Validate(bytes.NewReader(evByts)); err != nil {
+		err = errors.New(schemas.JoinErrors(schemas.GetRenderedErrors(err, evByts), "\n"))
+		return ev, errors.Wrap(err, "legacy environment variables does not pass sanity checks")
 	}
-	if err = json.Unmarshal(hpBytes, &h); err != nil {
-		return h, errors.Wrap(err, "unable to unmarshal hyperparameter bytes")
+
+	if err = json.Unmarshal(evByts, &ev); err != nil {
+		return ev, errors.Wrap(err, "unable to unmarshal environment variables bytes")
 	}
-	h = schemas.WithDefaults(h)
-	if err = schemas.IsComplete(h); err != nil {
-		return h, errors.Wrap(err, "legacy hyperparameters are incomplete")
+	ev = schemas.WithDefaults(ev)
+
+	// The unmarshaling will convert plain lists into a map of lists, so the normal json-schema
+	// API patterns (schemas.IsComplete) will now work.
+	if err = schemas.IsComplete(ev); err != nil {
+		return ev, errors.Wrap(err, "legacy environment variables is incomplete")
 	}
-	return h, nil
+	return ev, nil
 }
 
-func getLegacySearcher(raw map[string]interface{}) (LegacySearcher, error) {
-	searcher := raw["searcher"]
-	if searcher == nil {
-		return LegacySearcher{}, errors.New("searcher field missing")
+func getPodSpec(raw map[string]interface{}) (*PodSpec, error) {
+	ps := &PodSpec{}
+
+	envOnly := raw["environment"]
+	if envOnly == nil {
+		return nil, nil
 	}
 
-	tsearcher, ok := searcher.(map[string]interface{})
-	if !ok {
-		return LegacySearcher{}, errors.New("searcher field is not a map")
+	psOnly := envOnly.(map[string]interface{})["pod_spec"]
+	if psOnly == nil {
+		return nil, nil
 	}
 
-	name, ok := tsearcher["name"]
-	if !ok {
-		return LegacySearcher{}, errors.New("searcher.name missing")
+	rawBytes, err := json.Marshal(psOnly)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to remarshal pod spec as json")
 	}
 
-	tname, ok := name.(string)
-	if !ok {
-		return LegacySearcher{}, errors.New("searcher.name is not a string")
+	if err = json.Unmarshal(rawBytes, ps); err != nil {
+		return nil, errors.Wrap(err, "unable to unmarshal pod spec bytes")
 	}
 
-	metric, ok := tsearcher["metric"]
-	if !ok {
-		return LegacySearcher{}, errors.New("searcher.metric missing")
-	}
-
-	tmetric, ok := metric.(string)
-	if !ok {
-		return LegacySearcher{}, errors.New("searcher.metric is not a string")
-	}
-
-	// smallerIsBetter has always had a default, and always the same one
-	tsmallerIsBetter := true
-	if smallerIsBetter, ok := tsearcher["smaller_is_better"]; ok && smallerIsBetter != nil {
-		tsmallerIsBetter, ok = smallerIsBetter.(bool)
-		if !ok {
-			return LegacySearcher{}, errors.New("searcher.smaller_is_better is not a boolean")
-		}
-	}
-
-	return LegacySearcher{
-		Name:            tname,
-		Metric:          tmetric,
-		SmallerIsBetter: tsmallerIsBetter,
-	}, nil
+	return ps, nil
 }
 
 // ParseLegacyConfigJSON parses bytes that represent an experiment config that was once valid
@@ -208,45 +188,25 @@ func ParseLegacyConfigJSON(byts []byte) (LegacyConfig, error) {
 	if err != nil {
 		return out, err
 	}
-	out.CheckpointStorage = cs
+	out.checkpointStorage = cs
 
 	bm, err := getBindMounts(raw)
 	if err != nil {
 		return out, err
 	}
-	out.BindMounts = bm
+	out.bindMounts = bm
 
-	env, err := getEnvironment(raw)
+	ev, err := getEnvironmentVariables(raw)
 	if err != nil {
 		return out, err
 	}
-	out.Environment = env
+	out.envvars = ev
 
-	hp, err := getHyperparameters(raw)
+	ps, err := getPodSpec(raw)
 	if err != nil {
 		return out, err
 	}
-	out.Hyperparameters = hp
-
-	searcher, err := getLegacySearcher(raw)
-	if err != nil {
-		return out, err
-	}
-	out.Searcher = searcher
+	out.podSpec = ps
 
 	return out, nil
-}
-
-// Scan implements the db.Scanner interface.
-func (l *LegacyConfig) Scan(src interface{}) error {
-	byts, ok := src.([]byte)
-	if !ok {
-		return errors.Errorf("unable to convert to []byte: %v", src)
-	}
-	config, err := ParseLegacyConfigJSON(byts)
-	if err != nil {
-		return err
-	}
-	*l = config
-	return nil
 }

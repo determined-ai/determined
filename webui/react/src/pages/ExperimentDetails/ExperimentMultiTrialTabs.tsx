@@ -1,8 +1,8 @@
+import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import Pivot from 'components/kit/Pivot';
 import NotesCard from 'components/NotesCard';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentTrials from 'pages/ExperimentDetails/ExperimentTrials';
@@ -162,7 +162,9 @@ const ExperimentMultiTrialTabs: React.FC<Props> = ({
     viz,
   ]);
 
-  return <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />;
+  return (
+    <Tabs activeKey={tabKey} className="no-padding" items={tabItems} onChange={handleTabChange} />
+  );
 };
 
 export default ExperimentMultiTrialTabs;

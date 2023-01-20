@@ -29,6 +29,7 @@ _INTEG_MARKERS = {
     "e2e_k8s",
     "det_deploy_local",
     "stress_test",
+    "test_strict_ntsc",
     "distributed",
     "parallel",
     "nightly",

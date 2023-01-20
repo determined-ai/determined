@@ -100,7 +100,6 @@ type (
 		experimentState
 
 		*model.Experiment
-		activeConfig        expconf.ExperimentConfig
 		taskLogger          *task.Logger
 		hpImportance        *actor.Ref
 		db                  *db.PgDB
@@ -121,13 +120,12 @@ type (
 // Create a new experiment object from the given model experiment object, along with its searcher
 // and log. If the input object has no ID set, also create a new experiment in the database and set
 // the returned object's ID appropriately.
-func newExperiment(
-	m *Master,
-	expModel *model.Experiment,
-	activeConfig expconf.ExperimentConfig,
-	taskSpec *tasks.TaskSpec,
-) (*experiment, []command.LaunchWarning, error) {
-	resources := activeConfig.Resources()
+func newExperiment(m *Master, expModel *model.Experiment, taskSpec *tasks.TaskSpec) (
+	*experiment, []command.LaunchWarning, error,
+) {
+	conf := &expModel.Config
+
+	resources := conf.Resources()
 	poolName, err := m.rm.ResolveResourcePool(
 		m.system, resources.ResourcePool(), resources.SlotsPerTrial(),
 	)
@@ -146,25 +144,25 @@ func newExperiment(
 		return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
 	}
 	resources.SetResourcePool(poolName)
-	activeConfig.SetResources(resources)
+	conf.SetResources(resources)
 
-	method := searcher.NewSearchMethod(activeConfig.Searcher())
+	method := searcher.NewSearchMethod(conf.Searcher())
 	search := searcher.NewSearcher(
-		activeConfig.Reproducibility().ExperimentSeed(), method, activeConfig.Hyperparameters(),
+		conf.Reproducibility().ExperimentSeed(), method, conf.Hyperparameters(),
 	)
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
-		m.db, activeConfig.Searcher().SourceTrialID(), activeConfig.Searcher().SourceCheckpointUUID())
+		m.db, conf.Searcher().SourceTrialID(), conf.Searcher().SourceCheckpointUUID())
 	if err != nil {
 		return nil, launchWarnings, err
 	}
 
 	if expModel.ID == 0 {
-		if err = m.db.AddExperiment(expModel, activeConfig); err != nil {
+		if err = m.db.AddExperiment(expModel); err != nil {
 			return nil, launchWarnings, err
 		}
-		telemetry.ReportExperimentCreated(m.system, expModel.ID, activeConfig)
+		telemetry.ReportExperimentCreated(m.system, expModel)
 	}
 
 	agentUserGroup, err := user.GetAgentUserGroup(*expModel.OwnerID, expModel)
@@ -176,7 +174,6 @@ func newExperiment(
 
 	return &experiment{
 		Experiment:          expModel,
-		activeConfig:        activeConfig,
 		taskLogger:          m.taskLogger,
 		hpImportance:        m.hpImportance,
 		db:                  m.db,
@@ -205,17 +202,17 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.AddLabels(e.logCtx)
 		e.rm.SetGroupMaxSlots(ctx, sproto.SetGroupMaxSlots{
-			MaxSlots: e.activeConfig.Resources().MaxSlots(),
+			MaxSlots: e.Config.Resources().MaxSlots(),
 			Handler:  ctx.Self(),
 		})
-		if err := e.setWeight(ctx, e.activeConfig.Resources().Weight()); err != nil {
+		if err := e.setWeight(ctx, e.Config.Resources().Weight()); err != nil {
 			e.updateState(ctx, model.StateWithReason{
 				State:               model.StoppingErrorState,
 				InformationalReason: err.Error(),
 			})
 			return err
 		}
-		if err := e.setPriority(ctx, e.activeConfig.Resources().Priority(), true); err != nil {
+		if err := e.setPriority(ctx, e.Config.Resources().Priority(), true); err != nil {
 			e.updateState(ctx, model.StateWithReason{
 				State:               model.StoppingErrorState,
 				InformationalReason: err.Error(),
@@ -242,7 +239,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 				e.rm.RecoverJobPosition(ctx, sproto.RecoverJobPosition{
 					JobID:        e.JobID,
 					JobPosition:  j.QPos,
-					ResourcePool: e.activeConfig.Resources().ResourcePool(),
+					ResourcePool: e.Config.Resources().ResourcePool(),
 				})
 			}
 
@@ -325,11 +322,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case model.State:
 		e.updateState(ctx, model.StateWithReason{State: msg})
 	case config.ExperimentConfigPatch:
-		e.activeConfig.SetName(expconf.Name{RawString: msg.Name})
+		e.Config.SetName(expconf.Name{RawString: msg.Name})
 	case sproto.SetGroupMaxSlots:
-		resources := e.activeConfig.Resources()
+		resources := e.Config.Resources()
 		resources.SetMaxSlots(msg.MaxSlots)
-		e.activeConfig.SetResources(resources)
+		e.Config.SetResources(resources)
 		msg.Handler = ctx.Self()
 		e.rm.SetGroupMaxSlots(ctx, msg)
 	case sproto.NotifyRMPriorityChange:
@@ -389,9 +386,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			return errors.New("experiment is already in a terminal state")
 		}
 		telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
-		if err := webhooks.ReportExperimentStateChanged(
-			context.TODO(), *e.Experiment, e.activeConfig,
-		); err != nil {
+		if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
 			log.WithError(err).Error("failed to send experiment state change webhook")
 		}
 
@@ -403,9 +398,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		checkpoints, err := e.db.ExperimentCheckpointsToGCRaw(
 			e.Experiment.ID,
-			e.activeConfig.CheckpointStorage().SaveExperimentBest(),
-			e.activeConfig.CheckpointStorage().SaveTrialBest(),
-			e.activeConfig.CheckpointStorage().SaveTrialLatest(),
+			e.Config.CheckpointStorage().SaveExperimentBest(),
+			e.Config.CheckpointStorage().SaveTrialBest(),
+			e.Config.CheckpointStorage().SaveTrialLatest(),
 		)
 		if err != nil {
 			ctx.Log().WithError(err).Error("")
@@ -418,7 +413,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, uuid.New()))
 			ckptGCTask := newCheckpointGCTask(
 				e.rm, e.db, e.taskLogger, taskID, e.JobID, e.StartTime, taskSpec, e.Experiment.ID,
-				e.activeConfig.AsLegacy(), checkpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner,
+				e.Config.AsLegacy(), checkpoints, false, taskSpec.AgentUserGroup, taskSpec.Owner,
 				e.logCtx,
 			)
 			ctx.Self().System().ActorOf(addr, ckptGCTask)
@@ -634,7 +629,7 @@ func (e *experiment) processOperations(
 				ctx.Log().Error(err)
 				return
 			}
-			config := schemas.Copy(e.activeConfig)
+			config := schemas.Copy(e.Config)
 			state := trialSearcherState{Create: op, Complete: true}
 			e.TrialSearcherState[op.RequestID] = state
 			ctx.ActorOf(op.RequestID, newTrial(
@@ -715,9 +710,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.StateWithReason
 		return true
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
-	if err := webhooks.ReportExperimentStateChanged(
-		context.TODO(), *e.Experiment, e.activeConfig,
-	); err != nil {
+	if err := webhooks.ReportExperimentStateChanged(context.TODO(), *e.Experiment); err != nil {
 		log.WithError(err).Error("failed to send experiment state change webhook")
 	}
 
@@ -794,26 +787,26 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 	}
 	oldPriority := config.DefaultSchedulingPriority
 	var oldPriorityPtr *int
-	resources := e.activeConfig.Resources()
+	resources := e.Config.Resources()
 	if resources.Priority() != nil {
 		oldPriority = *resources.Priority()
 		oldPriorityPtr = &oldPriority
 	}
 	resources.SetPriority(priority)
-	e.activeConfig.SetResources(resources)
+	e.Config.SetResources(resources)
 
 	defer func() {
 		if err != nil {
 			resources.SetPriority(oldPriorityPtr)
-			e.activeConfig.SetResources(resources)
-			err = e.db.SaveExperimentConfig(e.ID, e.activeConfig)
+			e.Config.SetResources(resources)
+			err = e.db.SaveExperimentConfig(e.Experiment)
 			if err != nil {
 				return
 			}
 		}
 	}()
 
-	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
 		return errors.Wrapf(err, "setting experiment %d priority", e.ID)
 	}
 
@@ -834,13 +827,13 @@ func (e *experiment) setPriority(ctx *actor.Context, priority *int, forward bool
 }
 
 func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
-	resources := e.activeConfig.Resources()
+	resources := e.Config.Resources()
 	oldWeight := resources.Weight()
 	resources.SetWeight(weight)
-	e.activeConfig.SetResources(resources)
-	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
+	e.Config.SetResources(resources)
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
 		resources.SetWeight(oldWeight)
-		e.activeConfig.SetResources(resources)
+		e.Config.SetResources(resources)
 		return fmt.Errorf("setting experiment %d weight: %w", e.ID, err)
 	}
 
@@ -853,17 +846,17 @@ func (e *experiment) setWeight(ctx *actor.Context, weight float64) error {
 		ctx.Log().WithError(err).Debug("ignoring unsupported call to set group weight")
 	default:
 		resources.SetWeight(oldWeight)
-		e.activeConfig.SetResources(resources)
+		e.Config.SetResources(resources)
 		return fmt.Errorf("setting experiment %d weight: %w", e.ID, err)
 	}
 	return nil
 }
 
 func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error {
-	resources := e.activeConfig.Resources()
+	resources := e.Config.Resources()
 	oldRP := resources.ResourcePool()
 	rp, err := e.rm.ResolveResourcePool(
-		ctx, msg.ResourcePool, e.activeConfig.Resources().SlotsPerTrial(),
+		ctx, msg.ResourcePool, e.Config.Resources().SlotsPerTrial(),
 	)
 	switch {
 	case err != nil:
@@ -873,11 +866,11 @@ func (e *experiment) setRP(ctx *actor.Context, msg sproto.SetResourcePool) error
 	}
 
 	resources.SetResourcePool(rp)
-	e.activeConfig.SetResources(resources)
+	e.Config.SetResources(resources)
 
-	if err := e.db.SaveExperimentConfig(e.ID, e.activeConfig); err != nil {
+	if err := e.db.SaveExperimentConfig(e.Experiment); err != nil {
 		resources.SetResourcePool(oldRP)
-		e.activeConfig.SetResources(resources)
+		e.Config.SetResources(resources)
 		return errors.Wrapf(err, "setting experiment %d RP to %s", e.ID, rp)
 	}
 
@@ -897,14 +890,14 @@ func (e *experiment) toV1Job() *jobv1.Job {
 		Username:       e.Username,
 		UserId:         int32(*e.OwnerID),
 		Progress:       float32(e.searcher.Progress()),
-		Name:           e.activeConfig.Name().String(),
+		Name:           e.Config.Name().String(),
 	}
 
 	j.IsPreemptible = config.ReadRMPreemptionStatus(j.ResourcePool)
-	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.activeConfig))
-	j.Weight = config.ReadWeight(j.ResourcePool, &e.activeConfig)
+	j.Priority = int32(config.ReadPriority(j.ResourcePool, &e.Config))
+	j.Weight = config.ReadWeight(j.ResourcePool, &e.Config)
 
-	j.ResourcePool = e.activeConfig.Resources().ResourcePool()
+	j.ResourcePool = e.Config.Resources().ResourcePool()
 
 	return &j
 }

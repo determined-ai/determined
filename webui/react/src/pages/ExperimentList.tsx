@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Input, MenuProps, Modal, Space, Typography } from 'antd';
+import { Button, Dropdown, Input, MenuProps, Modal, Space, Typography } from 'antd';
 import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -8,8 +8,6 @@ import Badge, { BadgeType } from 'components/Badge';
 import { useSetDynamicTabBar } from 'components/DynamicTabs';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import FilterCounter from 'components/FilterCounter';
-import HumanReadableNumber from 'components/HumanReadableNumber';
-import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -429,13 +427,9 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         disabled={record.archived || !canEditExperiment}
         placeholder={record.archived ? 'Archived' : canEditExperiment ? 'Add description...' : ''}
         title="Edit description"
-        onBlur={(e) => {
+        onPressEnter={(e) => {
           const newDesc = e.currentTarget.value;
           saveExperimentDescription(newDesc, record.id);
-        }}
-        onPressEnter={(e) => {
-          // when enter is pressed,
-          // input box gets blurred and then value will be saved in onBlur
           e.currentTarget.blur();
         }}
       />
@@ -617,17 +611,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         title: '',
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
-      {
-        dataIndex: 'searcherMetricValue',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
-        key: V1GetExperimentsRequestSortBy.SEARCHERMETRICVAL,
-        render: (_: string, record: ExperimentItem) => (
-          <HumanReadableNumber num={record.searcherMetricValue} />
-        ),
-        sorter: true,
-        title: 'Searcher Metric Value',
-        width: DEFAULT_COLUMN_WIDTHS['searcherMetricValue'],
-      },
     ] as ColumnDef<ExperimentItem>[];
   }, [
     ContextMenu,
@@ -689,7 +672,6 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         return openOrCreateTensorBoard({ experimentIds: settings.row });
       }
       if (action === Action.Move) {
-        if (!settings?.row?.length) return;
         return openMoveModal({
           experimentIds: settings.row.filter(
             (id) =>
@@ -954,7 +936,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       // for docTitle, when id is 1 that means Uncategorized from webui/react/src/routes/routes.ts
       docTitle={id === 1 ? 'Uncategorized Experiments' : 'Project Details'}
       id="projectDetails">
-      <>
+      <div className={css.experimentTab}>
         <TableBatch
           actions={batchActions.map((action) => ({
             disabled: !availableBatchActions.includes(action),
@@ -993,7 +975,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
           size="small"
           updateSettings={updateSettings as UpdateSettings}
         />
-      </>
+      </div>
       {modalColumnsCustomizeContextHolder}
       {modalExperimentMoveContextHolder}
     </Page>

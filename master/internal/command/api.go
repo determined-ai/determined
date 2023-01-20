@@ -15,17 +15,6 @@ import (
 var ErrAPIRemoved = errors.New(`the API being called was removed,
 please ensure the client consuming the API is up to date and report a bug if the problem persists`)
 
-const (
-	// CommandActorPath is the path of the actor that manages commands.
-	CommandActorPath = "commands"
-	// NotebookActorPath is the path of the actor that manages notebooks.
-	NotebookActorPath = "notebooks"
-	// ShellActorPath is the path of the actor that manages shells.
-	ShellActorPath = "shells"
-	// TensorboardActorPath is the path of the actor that manages tensorboards.
-	TensorboardActorPath = "tensorboard"
-)
-
 // RegisterAPIHandler initializes and registers the API handlers for all command related features.
 func RegisterAPIHandler(
 	system *actor.System,
@@ -36,19 +25,19 @@ func RegisterAPIHandler(
 	middleware ...echo.MiddlewareFunc,
 ) {
 	commandManagerRef, _ := system.ActorOf(
-		actor.Addr(CommandActorPath),
+		actor.Addr("commands"),
 		&commandManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 	notebookManagerRef, _ := system.ActorOf(
-		actor.Addr(NotebookActorPath),
+		actor.Addr("notebooks"),
 		&notebookManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 	shellManagerRef, _ := system.ActorOf(
-		actor.Addr(ShellActorPath),
+		actor.Addr("shells"),
 		&shellManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 	tensorboardManagerRef, _ := system.ActorOf(
-		actor.Addr(TensorboardActorPath),
+		actor.Addr("tensorboard"),
 		&tensorboardManager{db: db, rm: rm, taskLogger: taskLogger},
 	)
 
@@ -56,10 +45,8 @@ func RegisterAPIHandler(
 	refs := []*actor.Ref{commandManagerRef, notebookManagerRef, shellManagerRef, tensorboardManagerRef}
 	system.AskAll(actor.Ping{}, refs...).GetAll()
 
-	if echo != nil {
-		echo.Any("/commands*", api.Route(system, nil), middleware...)
-		echo.Any("/notebooks*", api.Route(system, nil), middleware...)
-		echo.Any("/shells*", api.Route(system, nil), middleware...)
-		echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
-	}
+	echo.Any("/commands*", api.Route(system, nil), middleware...)
+	echo.Any("/notebooks*", api.Route(system, nil), middleware...)
+	echo.Any("/shells*", api.Route(system, nil), middleware...)
+	echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
 }

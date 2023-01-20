@@ -1,11 +1,10 @@
-import { notification } from 'antd';
+import { Button, notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
-import Button from 'components/kit/Button';
 import Logo, { Orientation } from 'components/Logo';
 import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
@@ -127,7 +126,7 @@ const SignIn: React.FC = () => {
     );
 
   return (
-    <Page docTitle="Sign In" ignorePermissions>
+    <Page docTitle="Sign In">
       <div className={css.base}>
         <div className={css.content}>
           <Logo
@@ -139,11 +138,13 @@ const SignIn: React.FC = () => {
             const key = ssoProvider.name.toLowerCase();
             const logo = logoConfig[key] ? <img alt={key} src={logoConfig[key]} /> : '';
             return (
-              <Button key={key} size="large" type="primary">
-                <a className={css.ssoButton} href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}>
-                  Sign in with {logo}{' '}
-                  {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
-                </a>
+              <Button
+                className={css.ssoButton}
+                href={samlUrl(ssoProvider.ssoUrl, ssoQueryString)}
+                key={key}
+                size="large"
+                type="primary">
+                Sign in with {logo} {ssoProvider.name === key ? capitalize(key) : ssoProvider.name}
               </Button>
             );
           })}

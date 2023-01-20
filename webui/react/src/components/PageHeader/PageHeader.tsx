@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import { Breadcrumb } from 'antd';
+import React from 'react';
 
-import Breadcrumb from 'components/kit/Breadcrumb';
 import Tooltip from 'components/kit/Tooltip';
 import { BreadCrumbRoute } from 'shared/components/Page';
 import { CommonProps } from 'shared/types';
@@ -18,6 +18,23 @@ export interface Props extends CommonProps {
   title?: string;
 }
 
+const breadCrumbRender = (route: BreadCrumbRoute, params: unknown, routes: BreadCrumbRoute[]) => {
+  const last = routes.indexOf(route) === routes.length - 1;
+  return last ? (
+    <span>{route.breadcrumbName}</span>
+  ) : (
+    <Link path={route.path}>
+      {route.breadcrumbTooltip ? (
+        <Tooltip title={route.breadcrumbTooltip}>
+          <span>{route.breadcrumbName}</span>
+        </Tooltip>
+      ) : (
+        route.breadcrumbName
+      )}
+    </Link>
+  );
+};
+
 const PageHeader: React.FC<Props> = (props: Props) => {
   const classes = [css.base, props.className];
 
@@ -25,33 +42,11 @@ const PageHeader: React.FC<Props> = (props: Props) => {
 
   if (props.sticky) classes.push(css.sticky);
 
-  const breadcrumbItems = useMemo(() => {
-    const routes = props.breadcrumb ?? [];
-    return routes.map((route) => {
-      const last = routes.indexOf(route) === routes.length - 1;
-      return last ? (
-        <Breadcrumb.Item>{route.breadcrumbName}</Breadcrumb.Item>
-      ) : (
-        <Breadcrumb.Item>
-          <Link path={route.path}>
-            {route.breadcrumbTooltip ? (
-              <Tooltip title={route.breadcrumbTooltip}>
-                <span>{route.breadcrumbName}</span>
-              </Tooltip>
-            ) : (
-              route.breadcrumbName
-            )}
-          </Link>
-        </Breadcrumb.Item>
-      );
-    });
-  }, [props.breadcrumb]);
-
   return (
     <div className={classes.join(' ')}>
       {props.breadcrumb && (
         <div className={css.breadcrumbs}>
-          <Breadcrumb>{breadcrumbItems}</Breadcrumb>
+          <Breadcrumb itemRender={breadCrumbRender} routes={props.breadcrumb} />
         </div>
       )}
       {showHeader && (

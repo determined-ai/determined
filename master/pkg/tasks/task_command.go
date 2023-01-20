@@ -13,11 +13,10 @@ import (
 
 // genericCommandSpecMetadata is GenericCommandSpec.Metadata.
 type genericCommandSpecMetadata struct {
-	PrivateKey    *string             `json:"privateKey"`
-	PublicKey     *string             `json:"publicKey"`
-	ExperimentIDs []int32             `json:"experiment_ids"`
-	TrialIDs      []int32             `json:"trial_ids"`
-	WorkspaceID   model.AccessScopeID `json:"workspace_id"`
+	PrivateKey    *string `json:"privateKey"`
+	PublicKey     *string `json:"publicKey"`
+	ExperimentIDs []int32 `json:"experiment_ids"`
+	TrialIDs      []int32 `json:"trial_ids"`
 }
 
 // MarshalToMap converts typed struct into a map.

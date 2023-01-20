@@ -11,7 +11,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
-import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -34,8 +33,6 @@ import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { commandTypeToLabel } from 'constants/states';
-import useFeature from 'hooks/useFeature';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
@@ -96,11 +93,9 @@ const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
-  const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+
   const { activeSettings, resetSettings, settings, updateSettings } =
     useSettings<Settings>(settingsConfig);
-  const dashboardEnabled = useFeature().isOn('dashboard');
 
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
@@ -322,9 +317,9 @@ const TaskList: React.FC = () => {
       return (
         <div className={css.sourceName}>
           {taskNameRenderer(_, record, index)}
-          <Button type="text" onClick={() => handleSourceShow(info)}>
+          <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
             Show {info.sources.length} Source{info.plural}
-          </Button>
+          </button>
         </div>
       );
     };
@@ -546,10 +541,6 @@ const TaskList: React.FC = () => {
     [user, handleActionComplete],
   );
 
-  const JupyterLabButton = () => {
-    return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
-  };
-
   return (
     <Page
       containerRef={pageRef}
@@ -559,7 +550,6 @@ const TaskList: React.FC = () => {
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
-          {dashboardEnabled ? <JupyterLabButton /> : null}
         </Space>
       }
       title="Tasks">
@@ -616,7 +606,6 @@ const TaskList: React.FC = () => {
           </Grid>
         </div>
       </Modal>
-      {modalJupyterLabContextHolder}
     </Page>
   );
 };

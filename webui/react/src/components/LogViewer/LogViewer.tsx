@@ -1,4 +1,4 @@
-import { notification, Space } from 'antd';
+import { Button, notification, Space } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
@@ -11,7 +11,6 @@ import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
-import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Section from 'components/Section';
@@ -135,6 +134,9 @@ const LogViewer: React.FC<Props> = ({
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const containerSize = useResize(logsRef);
   const charMeasures = useGetCharMeasureInContainer(logsRef);
+  const enableTailingClasses = [css.enableTailing];
+
+  if (isTailing && fetchDirection === FetchDirection.Older) enableTailingClasses.push(css.enabled);
 
   const { dateTimeWidth, maxCharPerLine } = useMemo(() => {
     const dateTimeWidth = charMeasures.width * MAX_DATETIME_LENGTH;
@@ -598,6 +600,7 @@ const LogViewer: React.FC<Props> = ({
           <Tooltip placement="left" title={ARIA_LABEL_SCROLL_TO_OLDEST}>
             <Button
               aria-label={ARIA_LABEL_SCROLL_TO_OLDEST}
+              className={css.scrollToOldest}
               icon={<Icon name="arrow-up" />}
               onClick={handleScrollToOldest}
             />
@@ -607,6 +610,7 @@ const LogViewer: React.FC<Props> = ({
             title={isTailing ? 'Tailing Enabled' : ARIA_LABEL_ENABLE_TAILING}>
             <Button
               aria-label={ARIA_LABEL_ENABLE_TAILING}
+              className={enableTailingClasses.join(' ')}
               icon={<Icon name="arrow-down" />}
               onClick={handleEnableTailing}
             />

@@ -3,8 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Transfer from 'components/Transfer';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import usePrevious from 'shared/hooks/usePrevious';
-import { isEqual } from 'shared/utils/data';
 
 import css from './useModalColumnsCustomize.module.scss';
 
@@ -30,22 +28,11 @@ const useModalColumnsCustomize = ({
   onSave,
 }: Props): ModalHooks => {
   const columnList = useRef(columns).current; // This is only to prevent rerendering
-  const prevInitVisibleColumns = usePrevious(initialVisibleColumns, defaultVisibleColumns);
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal();
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     initialVisibleColumns ?? defaultVisibleColumns,
   );
   const [modalVisible, setModalVisible] = useState(false);
-
-  useEffect(() => {
-    // If you travel between pages that both use this hook `visibleColumns` doesn't reinitialize.
-    // That means that when you open this modal on the second page it will have the value of `visibleColumns` from the first page.
-    // This useEffect makes sure that if the value of `initialVisibleColumns` prop changes that
-    // `visibleColumns` will be set to the new value.
-    if (!isEqual(initialVisibleColumns, prevInitVisibleColumns))
-      setVisibleColumns(initialVisibleColumns ?? defaultVisibleColumns);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialVisibleColumns]);
 
   const modalContent = useMemo((): React.ReactNode => {
     return (

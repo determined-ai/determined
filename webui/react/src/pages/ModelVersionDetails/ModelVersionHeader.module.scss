@@ -38,6 +38,9 @@
         display: flex;
         gap: 4px;
 
+        .buttonAction {
+          display: none;
+        }
         .overflowAction {
           display: block;
         }

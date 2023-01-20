@@ -79,8 +79,6 @@ message GetExperimentsRequest {
     SORT_BY_CHECKPOINT_SIZE = 15;
     // Returns experiments sorted by checkpoint count.
     SORT_BY_CHECKPOINT_COUNT = 16;
-    // Returns experiments sorted by searcher metric value..
-    SORT_BY_SEARCHER_METRIC_VAL = 17;
   }
   // Sort experiments by the given field.
   SortBy sort_by = 1;
@@ -115,8 +113,6 @@ message GetExperimentsRequest {
   int32 project_id = 12;
   // filtering by experiment ids
   determined.common.v1.Int32FieldFilter experiment_id_filter = 13;
-  // whether to surface trial specific data from the best trial
-  bool show_trial_data = 14;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {

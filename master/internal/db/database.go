@@ -31,19 +31,23 @@ type DB interface {
 	CheckExperimentExists(id int) (bool, error)
 	CheckTrialExists(id int) (bool, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
-	AddExperiment(experiment *model.Experiment, activeConfig expconf.ExperimentConfig) error
+	ExperimentConfigRaw(id int) ([]byte, error)
+	AddExperiment(experiment *model.Experiment) error
 	ExperimentByID(id int) (*model.Experiment, error)
-	ExperimentByTrialID(trialID int) (*model.Experiment, error)
+	LegacyExperimentConfigByID(
+		id int,
+	) (expconf.LegacyConfig, error)
+	ExperimentWithoutConfigByID(id int) (*model.Experiment, error)
 	ExperimentIDByTrialID(trialID int) (int, error)
 	NonTerminalExperiments() ([]*model.Experiment, error)
 	TerminateExperimentInRestart(id int, state model.State) error
-	SaveExperimentConfig(id int, config expconf.ExperimentConfig) error
+	SaveExperimentConfig(experiment *model.Experiment) error
 	SaveExperimentState(experiment *model.Experiment) error
 	SaveExperimentArchiveStatus(experiment *model.Experiment) error
 	DeleteExperiment(id int) error
 	ExperimentHasCheckpointsInRegistry(id int) (bool, error)
 	SaveExperimentProgress(id int, progress *float64) error
-	ActiveExperimentConfig(id int) (expconf.ExperimentConfig, error)
+	ExperimentConfig(id int) (expconf.ExperimentConfig, error)
 	ExperimentTotalStepTime(id int) (float64, error)
 	ExperimentNumTrials(id int) (int64, error)
 	ExperimentTrialIDs(expID int) ([]int, error)

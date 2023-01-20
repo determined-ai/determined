@@ -71,7 +71,7 @@ const ModelDetails: React.FC = () => {
     settings,
     isLoading: isLoadingSettings,
     updateSettings,
-  } = useSettings<Settings>(settingsConfig(modelId));
+  } = useSettings<Settings>(settingsConfig);
 
   const fetchModel = useCallback(async () => {
     if (!settings) return;

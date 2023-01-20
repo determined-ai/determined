@@ -1,7 +1,7 @@
+import { Button } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 
 import Dropdown, { Placement } from 'components/Dropdown';
-import Button from 'components/kit/Button';
 import useResize from 'hooks/useResize';
 import Icon from 'shared/components/Icon/Icon';
 
@@ -48,12 +48,8 @@ const ResponsiveFilters: React.FC<Props> = ({ children, hasFiltersApplied }: Pro
           initVisible={initVisible}
           offset={{ x: 0, y: 8 }}
           placement={Placement.BottomRight}>
-          <div className={css.filtersButtonDesktop}>
-            <Button>Filters</Button>
-          </div>
-          <div className={css.filtersButtonMobile}>
-            <Button icon={<Icon name="filter" />} />
-          </div>
+          <Button className={css.filtersButtonDesktop}>Filters</Button>
+          <Button className={css.filtersButtonMobile} icon={<Icon name="filter" />} />
         </Dropdown>
       ) : (
         content

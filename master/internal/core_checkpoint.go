@@ -82,7 +82,7 @@ func (m *Master) getCheckpointStorageConfig(id uuid.UUID) (
 		return nil, err
 	}
 
-	return ptrs.Ptr(legacyConfig.CheckpointStorage), nil
+	return ptrs.Ptr(legacyConfig.CheckpointStorage()), nil
 }
 
 func (m *Master) getCheckpointImpl(

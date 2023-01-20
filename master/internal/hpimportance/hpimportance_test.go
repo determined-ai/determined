@@ -1,3 +1,4 @@
+//nolint:exhaustivestruct
 package hpimportance
 
 import (
@@ -19,49 +20,51 @@ func TestComputeHPImportance(t *testing.T) {
 		CoresPerWorker: 1,
 		MaxTrees:       100,
 	}
-	hps := expconf.Hyperparameters{
-		"dropout1": expconf.Hyperparameter{
-			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
-				RawMinval: 0.2,
-				RawMaxval: 0.8,
+	expConfig := expconf.ExperimentConfig{
+		RawHyperparameters: expconf.Hyperparameters{
+			"dropout1": expconf.Hyperparameter{
+				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
+					RawMinval: 0.2,
+					RawMaxval: 0.8,
+				},
 			},
-		},
-		"dropout2": {
-			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
-				RawMinval: 0.2,
-				RawMaxval: 0.8,
+			"dropout2": {
+				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
+					RawMinval: 0.2,
+					RawMaxval: 0.8,
+				},
 			},
-		},
-		"global_batch_size": {
-			RawConstHyperparameter: &expconf.ConstHyperparameter{
-				RawVal: 64,
+			"global_batch_size": {
+				RawConstHyperparameter: &expconf.ConstHyperparameter{
+					RawVal: 64,
+				},
 			},
-		},
-		"learning_rate": {
-			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
-				RawMinval: .0001,
-				RawMaxval: 1.0,
+			"learning_rate": {
+				RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
+					RawMinval: .0001,
+					RawMaxval: 1.0,
+				},
 			},
-		},
-		"n_filters1": {
-			RawIntHyperparameter: &expconf.IntHyperparameter{
-				RawMinval: 8,
-				RawMaxval: 64,
+			"n_filters1": {
+				RawIntHyperparameter: &expconf.IntHyperparameter{
+					RawMinval: 8,
+					RawMaxval: 64,
+				},
 			},
-		},
-		"n_filters2": {
-			RawIntHyperparameter: &expconf.IntHyperparameter{
-				RawMinval: 8,
-				RawMaxval: 72,
+			"n_filters2": {
+				RawIntHyperparameter: &expconf.IntHyperparameter{
+					RawMinval: 8,
+					RawMaxval: 72,
+				},
 			},
-		},
-		"n_filters3": {
-			RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
-				RawVals: []interface{}{"val1", "val2"},
+			"n_filters3": {
+				RawCategoricalHyperparameter: &expconf.CategoricalHyperparameter{
+					RawVals: []interface{}{"val1", "val2"},
+				},
 			},
 		},
 	}
-	hps = schemas.WithDefaults(hps)
+	expConfig = schemas.WithDefaults(expConfig)
 
 	data := map[int][]model.HPImportanceTrialData{
 		10: {
@@ -173,7 +176,7 @@ func TestComputeHPImportance(t *testing.T) {
 			},
 		},
 	}
-	nTreesResults, err := createDataFile(data, hps, "data.arff")
+	nTreesResults, err := createDataFile(data, expConfig, "data.arff")
 	assert.NilError(t, err)
 	assert.Equal(t, nTreesResults, 8)
 
@@ -247,11 +250,11 @@ func TestComputeHPImportance(t *testing.T) {
 			Metric: 2.2999706268310547,
 		},
 	}
-	nTreesResults, err = createDataFile(data, hps, "data.arff")
+	nTreesResults, err = createDataFile(data, expConfig, "data.arff")
 	assert.NilError(t, err)
 	assert.Equal(t, nTreesResults, 10)
 
-	_, err = computeHPImportance(data, hps, masterConfig, "growforest", ".")
+	_, err = computeHPImportance(data, expConfig, masterConfig, "growforest", ".")
 	assert.Assert(t, err != nil)
 
 	err = os.Remove("data.arff")

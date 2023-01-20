@@ -40,15 +40,15 @@ hyperparameters:
 
 ### Overriding config fields
 Finally, if you only want to override a few fields of the MMDetection config, you can use the 
-`override_mmdet_config` section under `hyperparameters`.  The overrides here will be applied last 
+`override_config_fields` section under `hyperparameters`.  The overrides here will be applied last 
 and hence take precedence over the values from a merged file if specified.
 You can indicate nested config structure by using a `.` to indicate a child of a field.  For example, 
-you can add the following to `hyperparameters.override_mmdet_config` to change the learning rate:
+you can add the following to `hyperparameters.override_config_fields` to change the learning rate:
 
 ```
 hyperparameters:
-  override_mmdet_config:
-    optimizer.lr: 0.005
+  override_config_fields:
+    - optimizer.lr: 0.005
 ```
 
 There are provided examples commented out in the default config that show how to use the override

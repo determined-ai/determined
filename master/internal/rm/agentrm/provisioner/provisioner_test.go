@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/time/rate"
-
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
@@ -39,8 +37,8 @@ func newInstanceIDSet(instanceIDs []string) map[string]bool {
 type mockConfig struct {
 	*Config
 	maxDisconnectPeriod time.Duration
-	instanceType        model.InstanceType
-	initInstances       []*model.Instance
+	instanceType        instanceType
+	initInstances       []*Instance
 }
 
 type mockEnvironment struct {
@@ -64,7 +62,6 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 			setup.MaxInstances,
 			nil,
 		),
-		telemetryLimiter: rate.NewLimiter(rate.Every(telemetryCooldown), 1),
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
 	assert.Assert(t, created)
@@ -92,14 +89,14 @@ func newMockFuncCall(name string, parameters ...interface{}) mockFuncCall {
 // mockProvider implements a cluster that accepts requests from the provisioner and responds
 // with mock results. It has pre-programmed behavior, which simulates a real provider.
 type mockProvider struct {
-	mockInstanceType model.InstanceType
+	mockInstanceType instanceType
 	maxInstances     int
-	instances        map[string]*model.Instance
+	instances        map[string]*Instance
 	history          []mockFuncCall
 }
 
 func newMockProvider(config *mockConfig) (*mockProvider, error) {
-	instMap := make(map[string]*model.Instance, len(config.initInstances))
+	instMap := make(map[string]*Instance, len(config.initInstances))
 	for _, inst := range config.initInstances {
 		instMap[inst.ID] = inst
 	}
@@ -111,7 +108,7 @@ func newMockProvider(config *mockConfig) (*mockProvider, error) {
 	return cluster, nil
 }
 
-func (c *mockProvider) instanceType() model.InstanceType {
+func (c *mockProvider) instanceType() instanceType {
 	return c.mockInstanceType
 }
 
@@ -119,9 +116,9 @@ func (c *mockProvider) slotsPerInstance() int {
 	return c.mockInstanceType.Slots()
 }
 
-func (c *mockProvider) list(ctx *actor.Context) ([]*model.Instance, error) {
+func (c *mockProvider) list(ctx *actor.Context) ([]*Instance, error) {
 	c.history = append(c.history, newMockFuncCall("list"))
-	instances := make([]*model.Instance, 0, len(c.instances))
+	instances := make([]*Instance, 0, len(c.instances))
 	for _, inst := range c.instances {
 		instCopy := *inst
 		instances = append(instances, &instCopy)
@@ -135,11 +132,11 @@ func (c *mockProvider) launch(ctx *actor.Context, instanceNum int) {
 	c.history = append(c.history, newMockFuncCall("launch", c.mockInstanceType, instanceNum))
 	for i := 0; i < instanceNum; i++ {
 		name := uuid.New().String()
-		inst := model.Instance{
+		inst := Instance{
 			ID:         name,
 			AgentName:  name,
 			LaunchTime: time.Now(),
-			State:      model.Running,
+			State:      Running,
 		}
 		c.instances[inst.ID] = &inst
 	}
@@ -162,7 +159,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 		Config: &Config{
 			MaxInstances: 100,
 		},
-		initInstances: []*model.Instance{},
+		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 4}).Get()
@@ -187,7 +184,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 		Config: &Config{
 			MaxInstances: 1,
 		},
-		initInstances: []*model.Instance{},
+		initInstances: []*Instance{},
 	}
 	mock := newMockEnvironment(t, setup)
 	mock.system.Ask(mock.provisioner, sproto.ScalingInfo{DesiredNewInstances: 3}).Get()
@@ -213,18 +210,18 @@ func TestProvisionerScaleDown(t *testing.T) {
 			MaxIdleAgentPeriod: model.Duration(50 * time.Millisecond),
 			MaxInstances:       100,
 		},
-		initInstances: []*model.Instance{
+		initInstances: []*Instance{
 			{
 				ID:         "instance1",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      model.Running,
+				State:      Running,
 			},
 			{
 				ID:         "instance2",
 				LaunchTime: time.Now().Add(-time.Minute),
 				AgentName:  "agent2",
-				State:      model.Running,
+				State:      Running,
 			},
 		},
 	}
@@ -266,18 +263,18 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 			MaxIdleAgentPeriod: model.Duration(1 * time.Hour),
 			MaxInstances:       100,
 		},
-		initInstances: []*model.Instance{
+		initInstances: []*Instance{
 			{
 				ID:         "instance1",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      model.Running,
+				State:      Running,
 			},
 			{
 				ID:         "instance2",
 				LaunchTime: time.Now().Add(-time.Minute),
 				AgentName:  "agent2",
-				State:      model.Running,
+				State:      Running,
 			},
 		},
 	}
@@ -336,18 +333,18 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 			MaxIdleAgentPeriod:     model.Duration(50 * time.Millisecond),
 			MaxInstances:           100,
 		},
-		initInstances: []*model.Instance{
+		initInstances: []*Instance{
 			{
 				ID:         "disconnectedInstance",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
-				State:      model.Running,
+				State:      Running,
 			},
 			{
 				ID:         "startingInstance",
 				LaunchTime: time.Now().Add(-time.Minute),
 				AgentName:  "agent2",
-				State:      model.Running,
+				State:      Running,
 			},
 		},
 	}

@@ -13,13 +13,23 @@ interface BreadcrumbItemProps {
 type BreadcrumbItem = React.FC<BreadcrumbItemProps>;
 type BreadcrumbSeparator = React.FC;
 type Breadcrumb = React.FC<BreadcrumbProps> & {
-  Item: BreadcrumbItem;
-  Separator: BreadcrumbSeparator;
+  Item: typeof BreadcrumbItem;
+  Separator: typeof BreadcrumbSeparator;
 };
 
-const Breadcrumb: Breadcrumb = AntdBreadcrumb;
+const Breadcrumb: Breadcrumb = ({ separator = '/', ...props }: BreadcrumbProps): JSX.Element => {
+  return <AntdBreadcrumb separator={separator} {...props} />;
+};
 
-Breadcrumb.Item = AntdBreadcrumb.Item;
-Breadcrumb.Separator = AntdBreadcrumb.Separator;
+const BreadcrumbItem: BreadcrumbItem = (props: BreadcrumbItemProps) => {
+  return <AntdBreadcrumb.Item {...props} />;
+};
+
+const BreadcrumbSeparator: BreadcrumbSeparator = () => {
+  return <AntdBreadcrumb.Separator />;
+};
+
+Breadcrumb.Item = BreadcrumbItem;
+Breadcrumb.Separator = BreadcrumbSeparator;
 
 export default Breadcrumb;

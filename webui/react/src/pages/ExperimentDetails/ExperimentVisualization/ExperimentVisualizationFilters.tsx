@@ -1,14 +1,13 @@
-import { Select, Tooltip } from 'antd';
+import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import HpSelectFilter from 'components/HpSelectFilter';
-import Button from 'components/kit/Button';
+import IconButton from 'components/IconButton';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import RadioGroup from 'components/RadioGroup';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import SelectFilter from 'components/SelectFilter';
-import Icon from 'shared/components/Icon';
 import { ValueOf } from 'shared/types';
 import { HpImportance, Metric, Scale } from 'types';
 
@@ -276,11 +275,7 @@ const ExperimentVisualizationFilters: React.FC<Props> = ({
         />
       )}
       <div className={css.buttons}>
-        <Tooltip title="Reset">
-          <Button onClick={handleReset}>
-            <Icon name="reset" />
-          </Button>
-        </Tooltip>
+        <IconButton icon="reset" label="Reset" onClick={handleReset} />
       </div>
     </>
   );

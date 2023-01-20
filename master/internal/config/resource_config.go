@@ -25,8 +25,7 @@ func (r *ResourceConfig) ResolveResource() error {
 	if r.ResourceManager.AgentRM == nil && r.ResourceManager.KubernetesRM == nil {
 		r.ResourceManager.AgentRM = &AgentResourceManagerConfig{}
 	}
-	if r.ResourcePools == nil &&
-		(r.ResourceManager.AgentRM != nil || r.ResourceManager.KubernetesRM != nil) {
+	if r.ResourceManager.AgentRM != nil && r.ResourcePools == nil {
 		defaultPool := defaultRPConfig()
 		defaultPool.PoolName = defaultResourcePoolName
 		r.ResourcePools = []ResourcePoolConfig{defaultPool}

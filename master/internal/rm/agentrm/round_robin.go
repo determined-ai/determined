@@ -19,13 +19,7 @@ func NewRoundRobinScheduler() Scheduler {
 }
 
 func (p *roundRobinScheduler) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return roundRobinSchedule(
-		rp.taskList,
-		rp.groups,
-		rp.agentStatesCache,
-		rp.fittingMethod,
-		rp.config.Scheduler.AllowHeterogeneousFits,
-	)
+	return roundRobinSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
 }
 
 func (p *roundRobinScheduler) JobQInfo(rp *resourcePool) map[model.JobID]*sproto.RMJobInfo {
@@ -38,7 +32,6 @@ func roundRobinSchedule(
 	groups map[*actor.Ref]*tasklist.Group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
-	allowHeterogeneousFits bool,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	var states []*groupState
 	groupMapping := make(map[*tasklist.Group]*groupState)
@@ -74,12 +67,7 @@ func roundRobinSchedule(
 		for _, state := range states {
 			if len(state.pendingReqs) > 0 {
 				req := state.pendingReqs[0]
-				if fits := findFits(
-					req,
-					agents,
-					fittingMethod,
-					allowHeterogeneousFits,
-				); len(fits) == 0 {
+				if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
 					continue
 				}
 				toAllocate = append(toAllocate, req)

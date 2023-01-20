@@ -1,4 +1,4 @@
-import { Menu, MenuProps, Typography } from 'antd';
+import { Button, Menu, MenuProps, Typography } from 'antd';
 import { boolean } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -6,11 +6,9 @@ import { CSSTransition } from 'react-transition-group';
 
 import Dropdown, { Placement } from 'components/Dropdown';
 import DynamicIcon from 'components/DynamicIcon';
-import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
-import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
@@ -50,6 +48,7 @@ interface Settings {
 }
 
 const settingsConfig: SettingsConfig<Settings> = {
+  applicableRoutespace: 'navigation',
   settings: {
     navbarCollapsed: {
       defaultValue: false,
@@ -138,7 +137,6 @@ const NavigationSideBar: React.FC = () => {
     Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
     NotLoaded: () => undefined, // TODO show spinner when this is loading
   });
-  const dashboardEnabled = useFeature().isOn('dashboard');
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
@@ -158,9 +156,8 @@ const NavigationSideBar: React.FC = () => {
     const topNav = canAccessUncategorized
       ? [{ icon: 'experiment', label: 'Uncategorized', path: paths.uncategorized() }]
       : [];
-    const dashboardTopNav = [{ icon: 'home', label: 'Home', path: paths.dashboard() }];
     const topItems = [
-      ...(dashboardEnabled ? dashboardTopNav.concat(topNav) : topNav),
+      ...topNav,
       { icon: 'model', label: 'Model Registry', path: paths.modelList() },
       { icon: 'tasks', label: 'Tasks', path: paths.taskList() },
       { icon: 'cluster', label: 'Cluster', path: paths.cluster() },
@@ -192,7 +189,7 @@ const NavigationSideBar: React.FC = () => {
       ],
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding, dashboardEnabled]);
+  }, [canAccessUncategorized, canEditWebhooks, info.branding]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });
@@ -254,24 +251,18 @@ const NavigationSideBar: React.FC = () => {
           </Dropdown>
         </header>
         <main>
-          {dashboardEnabled ? null : (
-            <section className={css.launch}>
-              <div className={css.launchBlock}>
-                <div className={css.launchButton}>
-                  <Button block type="ghost" onClick={() => openJupyterLabModal()}>
-                    Launch JupyterLab
-                  </Button>
-                </div>
-                {settings.navbarCollapsed ? (
-                  <div className={css.launchIcon}>
-                    <Button type="text" onClick={() => openJupyterLabModal()}>
-                      <Icon name="jupyter-lab" />
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          )}
+          <section className={css.launch}>
+            <div className={css.launchBlock}>
+              <Button className={css.launchButton} onClick={() => openJupyterLabModal()}>
+                Launch JupyterLab
+              </Button>
+              {settings.navbarCollapsed ? (
+                <Button className={css.launchIcon} onClick={() => openJupyterLabModal()}>
+                  <Icon name="jupyter-lab" />
+                </Button>
+              ) : null}
+            </div>
+          </section>
           <section className={css.top}>
             {menuConfig.top.map((config) => (
               <NavigationItem

@@ -1,9 +1,8 @@
-import { Alert } from 'antd';
+import { Alert, Checkbox } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Checkbox from 'components/kit/Checkbox';
 import { cancelExperiment, killExperiment } from 'services/api';
 import useModal, { ModalCloseReason, ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ValueOf } from 'shared/types';

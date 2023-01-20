@@ -75,30 +75,19 @@ interface PermissionsHook {
   canViewGroups: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
-  loading: boolean;
 }
 
 const usePermissions = (): PermissionsHook => {
-  const rbacEnabled = useFeature().isOn('rbac');
-  const rbacAllPermission = useFeature().isOn('mock_permissions_all');
-  const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
-
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const loadableUserAssignments = useUserAssignments();
-  const userAssignments = Loadable.match(loadableUserAssignments, {
-    Loaded: (uAssignments) => uAssignments,
-    NotLoaded: () => [],
-  });
-  const loadableUserRoles = useUserRoles();
-  const userRoles = Loadable.match(loadableUserRoles, {
-    Loaded: (uRoles) => uRoles,
-    NotLoaded: () => [],
-  });
-
+  const rbacEnabled = useFeature().isOn('rbac');
+  const rbacAllPermission = useFeature().isOn('mock_permissions_all');
+  const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
+  const userAssignments = Loadable.getOrElse([], useUserAssignments());
+  const userRoles = Loadable.getOrElse([], useUserRoles());
   const rbacOpts = useMemo(
     () => ({
       rbacAllPermission,
@@ -160,13 +149,8 @@ const usePermissions = (): PermissionsHook => {
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
-      loading:
-        rbacOpts.rbacEnabled &&
-        (Loadable.isLoading(loadableCurrentUser) ||
-          Loadable.isLoading(loadableUserAssignments) ||
-          Loadable.isLoading(loadableUserRoles)),
     }),
-    [rbacOpts, loadableUserAssignments, loadableUserRoles, loadableCurrentUser],
+    [rbacOpts],
   );
 
   return permissions;

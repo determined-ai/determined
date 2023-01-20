@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Button } from 'antd';
 import React from 'react';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 
-import Button from 'components/kit/Button';
 import { PostUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';

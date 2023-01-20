@@ -1,10 +1,9 @@
-import { Divider } from 'antd';
+import { Divider, Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Json from 'components/Json';
-import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import { PoolLogo, RenderAllocationBarResourcePool } from 'components/ResourcePoolCard';
 import Section from 'components/Section';
@@ -131,7 +130,7 @@ const ResourcepoolDetailInner: React.FC = () => {
     delete mainSection.details;
     delete mainSection.stats;
     return (
-      <Page bodyNoPadding>
+      <Page>
         <Json alternateBackground json={mainSection} translateLabel={camelCaseToSentence} />
         {Object.keys(details).map((key) => (
           <Fragment key={key}>
@@ -208,8 +207,9 @@ const ResourcepoolDetailInner: React.FC = () => {
             </Section>
           </Page>
         ) : (
-          <Pivot
+          <Tabs
             activeKey={tabKey}
+            className="no-padding"
             destroyInactiveTabPane={true}
             items={tabItems}
             onChange={handleTabChange}
