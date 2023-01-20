@@ -32,7 +32,7 @@ interface Props {
 
 export const LineChart: React.FC<Props> = ({
   focusedSeries,
-  height = 400,
+  height = 350,
   metric,
   scale = Scale.Linear,
   series,
@@ -187,7 +187,7 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
             return (
               <FixedSizeGrid
                 columnCount={columnCount}
-                columnWidth={Math.floor(width / columnCount) - 10}
+                columnWidth={Math.floor(width / columnCount)}
                 height={(chartsProps.length > columnCount ? 2.1 : 1.05) * 480}
                 rowCount={Math.ceil(chartsProps.length / columnCount)}
                 rowHeight={480}
@@ -195,10 +195,12 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
                 {({ columnIndex, rowIndex, style }) => {
                   const cellIndex = rowIndex * columnCount + columnIndex;
                   return (
-                    <div key={cellIndex} style={style}>
-                      {cellIndex < chartsProps.length && (
-                        <LineChart {...chartsProps[cellIndex]} scale={scale} />
-                      )}
+                    <div className={css.chartgridCell} key={cellIndex} style={style}>
+                      <div className={css.chartgridCellCard}>
+                        {cellIndex < chartsProps.length && (
+                          <LineChart {...chartsProps[cellIndex]} scale={scale} />
+                        )}
+                      </div>
                     </div>
                   );
                 }}
