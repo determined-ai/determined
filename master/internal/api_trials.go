@@ -1122,18 +1122,9 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 	}
 	exp := actor.Addr("experiments", eID)
 
-	var metrics searcher.Metrics
-	switch protoMetric := req.CompletedOperation.Metrics.(type) {
-	case *experimentv1.CompleteValidateAfterOperation_SearcherMetric:
-		metrics = searcher.ScalarMetric{Value: protoMetric.SearcherMetric}
-	case *experimentv1.CompleteValidateAfterOperation_AllMetrics:
-		metrics = searcher.MetricsDict{Value: protoMetric.AllMetrics}
-	default:
-		return nil, errors.Errorf("Invalid metric type %v", protoMetric)
-	}
 	if err = a.ask(exp, trialCompleteOperation{
 		requestID: rID,
-		metrics:   metrics,
+		metrics:   req.CompletedOperation.Metrics.AsInterface(),
 		op:        searcher.NewValidateAfter(rID, req.CompletedOperation.Op.Length),
 	}, nil); err != nil {
 		return nil, err

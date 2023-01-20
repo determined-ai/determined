@@ -2,7 +2,9 @@ package searcher
 
 import (
 	"encoding/json"
-	"fmt"
+
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -88,26 +90,19 @@ func (s *customSearch) progress(
 func (s *customSearch) validationCompleted(
 	ctx context,
 	requestID model.RequestID,
-	metrics Metrics,
+	metrics interface{},
 	op ValidateAfter,
 ) ([]Operation, error) {
-	var validationCompleted experimentv1.ValidationCompleted
-	switch m := metrics.(type) {
-	case ScalarMetric:
-		validationCompleted = experimentv1.ValidationCompleted{
-			RequestId:           requestID.String(),
-			ValidateAfterLength: op.ToProto().Length,
-			Metrics:             &experimentv1.ValidationCompleted_Metric{Metric: m.Value},
-		}
-	case MetricsDict:
-		validationCompleted = experimentv1.ValidationCompleted{
-			RequestId:           requestID.String(),
-			ValidateAfterLength: op.ToProto().Length,
-			Metrics:             &experimentv1.ValidationCompleted_AllMetrics{AllMetrics: m.Value},
-		}
-	default:
-		panic(fmt.Sprintf("Invalid metric type: %v", m))
+	protoMetrics, err := structpb.NewValue(metrics)
+	if err != nil {
+		return nil, errors.Wrapf(err, "illegal type for metrics=%v", metrics)
 	}
+	validationCompleted := experimentv1.ValidationCompleted{
+		RequestId:           requestID.String(),
+		ValidateAfterLength: op.ToProto().Length,
+		Metrics:             protoMetrics,
+	}
+
 	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
 		Event: &experimentv1.SearcherEvent_ValidationCompleted{
 			ValidationCompleted: &validationCompleted,

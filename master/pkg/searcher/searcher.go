@@ -140,7 +140,7 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialU
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
 func (s *Searcher) ValidationCompleted(
-	requestID model.RequestID, metrics Metrics, op ValidateAfter,
+	requestID model.RequestID, metrics interface{}, op ValidateAfter,
 ) ([]Operation, error) {
 	if _, ok := s.CompletedOperations[op.String()]; ok {
 		return nil, fmt.Errorf("operation %v was already completed", op)

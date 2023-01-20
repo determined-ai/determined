@@ -85,7 +85,7 @@ func (s *tournamentSearch) trialCreated(
 func (s *tournamentSearch) validationCompleted(
 	ctx context,
 	requestID model.RequestID,
-	metrics Metrics,
+	metrics interface{},
 	op ValidateAfter,
 ) ([]Operation, error) {
 	subSearchID := s.TrialTable[requestID]

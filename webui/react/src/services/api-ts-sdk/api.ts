@@ -1741,17 +1741,11 @@ export interface V1CompleteValidateAfterOperation {
      */
     op?: V1ValidateAfterOperation;
     /**
-     * The value of searcher metric associated with this completed metric. The metric provided should be the metric used to guide HP search.
-     * @type {number}
-     * @memberof V1CompleteValidateAfterOperation
-     */
-    searcherMetric?: number;
-    /**
-     * All validation metrics.
+     * A searcher metric or all metrics.
      * @type {any}
      * @memberof V1CompleteValidateAfterOperation
      */
-    allMetrics?: any;
+    metrics?: any;
 }
 
 /**
@@ -9397,17 +9391,11 @@ export interface V1ValidationCompleted {
      */
     requestId: string;
     /**
-     * Value of the validation metric used to direct the search.
-     * @type {number}
-     * @memberof V1ValidationCompleted
-     */
-    metric?: number;
-    /**
-     * All validation metrics.
+     * 
      * @type {any}
      * @memberof V1ValidationCompleted
      */
-    allMetrics?: any;
+    metrics: any;
     /**
      * Length from ValidateAfterOperation.
      * @type {string}

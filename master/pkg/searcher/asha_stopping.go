@@ -137,14 +137,13 @@ func (s *asyncHalvingStoppingSearch) trialClosed(
 }
 
 func (s *asyncHalvingStoppingSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metrics Metrics, op ValidateAfter,
+	ctx context, requestID model.RequestID, metrics interface{}, op ValidateAfter,
 ) ([]Operation, error) {
-	if metric, ok := metrics.(ScalarMetric); ok {
-		value := metric.Value
+	if metric, ok := metrics.(float64); ok {
 		if !s.SmallerIsBetter {
-			value *= -1
+			metric *= -1
 		}
-		return s.promoteAsync(ctx, requestID, value), nil
+		return s.promoteAsync(ctx, requestID, metric), nil
 	}
 	return nil, fmt.Errorf("unexpected metric type for ASHA built-in search method %v", metrics)
 }

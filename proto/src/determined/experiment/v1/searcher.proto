@@ -48,14 +48,9 @@ message ValidationCompleted {
   string request_id = 1;
   // Either a single validation metric used to direct the search,
   // or a dictionary of all metrics
-  oneof metrics {
-    // Value of the validation metric used to direct the search.
-    double metric = 2;
-    // All validation metrics.
-    google.protobuf.Struct all_metrics = 3;
-  }
+  google.protobuf.Value metrics = 2;
   // Length from ValidateAfterOperation.
-  uint64 validate_after_length = 4;
+  uint64 validate_after_length = 3;
 }
 
 // TrialClosed is a searcher event triggered when a trial has successfully
@@ -150,13 +145,7 @@ message CompleteValidateAfterOperation {
   // The ValidateAfterOperation being completed.
   ValidateAfterOperation op = 1;
   // A searcher metric or all metrics.
-  oneof metrics {
-    // The value of searcher metric associated with this completed metric.
-    // The metric provided should be the metric used to guide HP search.
-    double searcher_metric = 2;
-    // All validation metrics.
-    google.protobuf.Struct all_metrics = 3;
-  }
+  google.protobuf.Value metrics = 2;
 }
 
 // Create a trial with given hyperparameters.

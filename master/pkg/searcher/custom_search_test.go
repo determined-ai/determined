@@ -69,7 +69,7 @@ func TestCustomSearchMethod(t *testing.T) {
 
 	// Add ValidationCompleted.
 	validateAfterOp := ValidateAfter{requestID, uint64(200)}
-	metric := ScalarMetric{Value: float64(10.3)}
+	metric := float64(10.3)
 	_, err = customSearchMethod.validationCompleted(
 		ctx,
 		requestID,
@@ -78,7 +78,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	protoMetric, err := metric.ToScalarProto()
+	protoMetric, err := structpb.NewValue(metric)
 	require.NoError(t, err)
 
 	validationCompletedEvent := experimentv1.SearcherEvent_ValidationCompleted{
@@ -96,16 +96,8 @@ func TestCustomSearchMethod(t *testing.T) {
 
 	// Add ValidationCompleted with a dictionary of all metrics.
 	validateAfterOp2 := ValidateAfter{requestID, uint64(300)}
-	allMetrics := MetricsDict{
-		Value: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"themetric": {
-					Kind: &structpb.Value_NumberValue{
-						NumberValue: 10.3,
-					},
-				},
-			},
-		},
+	allMetrics := map[string]interface{}{
+		"themetric": float64(10.3),
 	}
 	_, err = customSearchMethod.validationCompleted(
 		ctx,
@@ -115,7 +107,7 @@ func TestCustomSearchMethod(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	protoAllMetrics, err := allMetrics.ToStructProto()
+	protoAllMetrics, err := structpb.NewValue(allMetrics)
 	require.NoError(t, err)
 	validationCompletedEvent2 := experimentv1.SearcherEvent_ValidationCompleted{
 		ValidationCompleted: &experimentv1.ValidationCompleted{
