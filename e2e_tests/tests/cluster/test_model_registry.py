@@ -4,7 +4,7 @@ import uuid
 import pytest
 
 from determined.common import api
-from determined.common.api import authentication, bindings
+from determined.common.api import authentication
 from determined.experimental import Determined, ModelSortBy
 from tests import config as conf
 from tests import experiment as exp
