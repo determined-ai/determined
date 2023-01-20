@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
     NotLoaded: () => undefined,
   });
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+    useModalJupyterLab({});
   type Submission = ExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(

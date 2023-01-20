@@ -96,7 +96,7 @@ const TaskList: React.FC = () => {
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+    useModalJupyterLab({});
   const { activeSettings, resetSettings, settings, updateSettings } =
     useSettings<Settings>(settingsConfig);
 

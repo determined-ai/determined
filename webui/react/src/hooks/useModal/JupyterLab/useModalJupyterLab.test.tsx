@@ -45,7 +45,7 @@ jest.mock('components/MonacoEditor', () => ({
 
 const ModalTrigger: React.FC = () => {
   const { setAuth, setAuthCheck } = useAuth();
-  const { contextHolder, modalOpen } = useModalJupyterLab();
+  const { contextHolder, modalOpen } = useModalJupyterLab({});
 
   useEffect(() => {
     setAuth({ isAuthenticated: true, user: { id: 1 } as DetailedUser });

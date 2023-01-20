@@ -33,9 +33,26 @@
       width: 100%;
     }
   }
-  .spacedInput {
-    margin-bottom: 15px;
-    margin-top: 15px;
+}
+.spacedLine {
+  &:global(.ant-form-item) {
+    margin-bottom: 16px;
+    margin-top: 16px;
+  }
+  & > div {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    width: 100%;
+
+    label {
+      margin: 0;
+      min-width: 110px;
+    }
+    :global(.ant-input-number) {
+      width: 100%;
+    }
   }
 }
 .form {
