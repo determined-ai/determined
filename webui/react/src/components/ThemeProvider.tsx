@@ -1,5 +1,5 @@
 import { ConfigProvider, theme } from 'antd';
-import React, { ReactElement, useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useSettings } from 'hooks/useSettings';
 import { config, Settings } from 'hooks/useTheme.settings';
@@ -51,7 +51,7 @@ const getSystemMode = (): Mode => {
 /**
  * Wraps various theme settings together
  */
-export const ThemeProvider: React.FC<{ children: ReactElement }> = ({ children }) => {
+export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui, actions: uiActions } = useUI();
   const [systemMode, setSystemMode] = useState<Mode>(getSystemMode());

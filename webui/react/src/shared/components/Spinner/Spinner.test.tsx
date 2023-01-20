@@ -1,3 +1,4 @@
+import { StyleProvider } from '@ant-design/cssinjs';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect, useState } from 'react';
@@ -40,7 +41,10 @@ const SpinnerComponent = ({ spinning, handleButtonClick }: Props) => {
 const setup = (spinning: boolean) => {
   const handleButtonClick = jest.fn();
   const { container } = render(
-    <SpinnerComponent handleButtonClick={handleButtonClick} spinning={spinning} />,
+    // apply css-in-js styles without the :when selector
+    <StyleProvider container={document.body} hashPriority="high">
+      <SpinnerComponent handleButtonClick={handleButtonClick} spinning={spinning} />,
+    </StyleProvider>,
   );
   return { container, handleButtonClick };
 };
@@ -55,6 +59,8 @@ describe('Spinner', () => {
     } catch (e) {
       error = e;
     }
+    const spin = document.body.querySelector('.ant-spin');
+    expect(spin).toHaveStyle({ position: 'absolute' });
     expect(error).not.toBeNull();
     expect(handleButtonClick).toHaveBeenCalledTimes(0);
   });
