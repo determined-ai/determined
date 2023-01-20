@@ -74,6 +74,8 @@ def det_run(args: List[str]) -> str:
 
 
 def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0) -> None:
+    if expectedStatus == 0:
+        return api_utils.log_in_user_cli(credentials)
     username, password = credentials
     child = det_spawn(["user", "login", username])
     child.setecho(True)

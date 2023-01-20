@@ -41,3 +41,13 @@ def create_test_user(
     password = get_random_string() if add_password else ""
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
     return authentication.Credentials(user.username, password)
+
+
+def log_in_user_cli(credentials: authentication.Credentials) -> None:
+    """authentication the user for cli usage with the given credentials"""
+    token_store = authentication.TokenStore(conf.make_master_url())
+    token = authentication.do_login(
+        conf.make_master_url(), credentials.username, credentials.password, certs.cli_cert
+    )
+    token_store.set_token(credentials.username, token)
+    token_store.set_active(credentials.username)
