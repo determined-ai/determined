@@ -1,7 +1,7 @@
 import argparse
 import functools
 import sys
-from typing import Any, Callable, Dict, List, Sequence
+from typing import Any, Callable, Dict, List, Sequence, Union
 
 import termcolor
 
@@ -113,6 +113,11 @@ def require_feature_flag(feature_flag: str, error_message: str) -> Callable[...,
         return wrapper
 
     return decorator
+
+
+def report_cli_error(msg: Union[str, Exception]) -> None:
+    print(termcolor.colored(f"Error: {msg}", "red"), file=sys.stderr)
+    sys.exit(1)
 
 
 def print_warnings(warnings: Sequence[bindings.v1LaunchWarning]) -> None:
