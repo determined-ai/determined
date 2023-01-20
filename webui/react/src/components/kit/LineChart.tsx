@@ -15,7 +15,7 @@ import css from './LineChart.module.scss';
 
 export interface Serie {
   color?: string;
-  data: (number | null)[];
+  data: [number, number][];
   metricType?: MetricType;
 }
 
@@ -42,28 +42,44 @@ export const LineChart: React.FC<Props> = ({
 }: Props) => {
   const seriesColors: string[] = useMemo(
     () =>
-      series
-        .slice(1)
-        .map(
-          (s, idx) =>
-            s.color ||
-            (s.metricType === MetricType.Training && '#009BDE') ||
-            (s.metricType === MetricType.Validation && '#F77B21') ||
-            glasbeyColor(idx),
-        ),
+      series.map(
+        (s, idx) =>
+          s.color ||
+          (s.metricType === MetricType.Training && '#009BDE') ||
+          (s.metricType === MetricType.Validation && '#F77B21') ||
+          glasbeyColor(idx),
+      ),
     [series],
   );
 
   const seriesNames: string[] = useMemo(
     () =>
-      series
-        .slice(1)
-        .map(
-          (s, idx) =>
-            (series.length > 2 ? `${s.metricType}_` : '') + (metric.name || `Series ${idx + 1}`),
-        ),
+      series.map(
+        (s, idx) =>
+          (series.length > 1 ? `${s.metricType}_` : '') + (metric.name || `Series ${idx + 1}`),
+      ),
     [series, metric.name],
   );
+
+  const chartData: AlignedData = useMemo(() => {
+    const xValues: number[] = [];
+    const yValues: Record<string, Record<string, number | null>> = {};
+
+    series.forEach((serie, serieIndex) => {
+      yValues[serieIndex] = {};
+      serie.data.forEach((pt) => {
+        xValues.push(pt[0]);
+        yValues[serieIndex][pt[0]] = Number.isFinite(pt[1]) ? pt[1] : null;
+      });
+    });
+
+    xValues.sort((a, b) => a - b);
+    const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
+      return xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null));
+    });
+
+    return [xValues, ...yValuesArray];
+  }, [series]);
 
   const chartOptions: Options = useMemo(() => {
     const plugins = [tooltipsPlugin({ isShownEmptyVal: false, seriesColors })];
@@ -103,7 +119,7 @@ export const LineChart: React.FC<Props> = ({
       },
       series: [
         { label: xLabel || 'X' },
-        ...series.slice(1).map((serie, idx) => {
+        ...series.map((serie, idx) => {
           return {
             label: seriesNames[idx],
             points: { show: false },
@@ -123,13 +139,13 @@ export const LineChart: React.FC<Props> = ({
       {metric.name && <h5 className={css.chartTitle}>{metric.name}</h5>}
       <UPlotChart
         allowDownload
-        data={series.map((s) => s.data) as AlignedData}
+        data={chartData}
         focusIndex={focusedSeries}
         options={chartOptions}
       />
       {showLegend && (
         <div className={css.legendContainer}>
-          {series.slice(1).map((s, idx) => (
+          {series.map((s, idx) => (
             <li className={css.legendItem} key={idx}>
               <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
                 &mdash;
@@ -159,7 +175,8 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
   let xMin = Infinity,
     xMax = -Infinity;
   chartsProps.forEach((chartProp) => {
-    chartProp.series[0].data.forEach((xVal) => {
+    chartProp.series[0].data.forEach((pt) => {
+      const xVal = pt[0];
       if (!isFinite(xMin || 0)) {
         if (xVal !== null && !isNaN(xVal * 1)) {
           xMin = xVal;

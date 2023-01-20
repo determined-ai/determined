@@ -237,40 +237,29 @@ const DropdownsSection: React.FC = () => {
 };
 
 const ChartsSection: React.FC = () => {
-  const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19], name: 'X' };
   const line1: Serie = {
     data: [
-      -2,
-      null,
-      Math.random() * 12,
-      null,
-      null,
-      null,
-      null,
-      15,
-      Math.random() * 60,
-      Math.random() * 40,
-      Math.random() * 76,
-      Math.random() * 80,
-      89,
+      [0, -2],
+      [2, Math.random() * 12],
+      [4, 15],
+      [6, Math.random() * 60],
+      [9, Math.random() * 40],
+      [10, Math.random() * 76],
+      [18, Math.random() * 80],
+      [19, 89],
     ],
     metricType: MetricType.Training,
   };
+
   const line2: Serie = {
     data: [
-      null,
-      15,
-      10.123456789,
-      Math.random() * 22,
-      Math.random() * 18,
-      Math.random() * 10 + 10,
-      Math.random() * 12,
-      12,
-      null,
-      null,
-      null,
-      null,
-      null,
+      [1, 15],
+      [2, 10.123456789],
+      [2.5, Math.random() * 22],
+      [3, Math.random() * 18],
+      [3.25, Math.random() * 10 + 10],
+      [3.75, Math.random() * 12],
+      [4, 12],
     ],
     metricType: MetricType.Validation,
   };
@@ -287,7 +276,7 @@ const ChartsSection: React.FC = () => {
         <LineChart
           height={250}
           metric={{ name: 'sample' } as Metric}
-          series={[xSeries, line1, line2]}
+          series={[line1, line2]}
           showLegend={true}
         />
       </Card>
@@ -297,7 +286,7 @@ const ChartsSection: React.FC = () => {
           focusedSeries={1}
           height={250}
           metric={{ name: 'sample' } as Metric}
-          series={[xSeries, line1, line2]}
+          series={[line1, line2]}
         />
       </Card>
       <Card title="Chart Grid">
@@ -310,8 +299,8 @@ const ChartsSection: React.FC = () => {
         <div style={{ height: 400 }}>
           <ChartGrid
             chartsProps={[
-              { metric: { name: 'Sample1' } as Metric, series: [xSeries, line1], showLegend: true },
-              { metric: { name: 'Sample2' } as Metric, series: [xSeries, line2], showLegend: true },
+              { metric: { name: 'Sample1' } as Metric, series: [line1], showLegend: true },
+              { metric: { name: 'Sample2' } as Metric, series: [line2], showLegend: true },
             ]}
             xAxisOptions={['Batches', 'Time']}
           />
