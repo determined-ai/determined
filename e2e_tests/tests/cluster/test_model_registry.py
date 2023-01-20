@@ -193,12 +193,8 @@ def test_model_cli() -> None:
         master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password
     )
     admin_sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
-    with setup_workspace(admin_sess) as workspace:
-        test_workspace_name = workspace.name
-        test_workspace = bindings.post_PostWorkspace(
-            admin_sess, body=bindings.v1PostWorkspaceRequest(name=test_workspace_name)
-        ).workspace
-
+    with setup_workspace(admin_sess) as test_workspace:
+        test_workspace_name = test_workspace.name
         # create model in test_workspace
         test_model_2_name = get_random_string()
         command = [
