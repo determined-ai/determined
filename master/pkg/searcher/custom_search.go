@@ -3,6 +3,9 @@ package searcher
 import (
 	"encoding/json"
 
+	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -85,14 +88,18 @@ func (s *customSearch) progress(
 }
 
 func (s *customSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric float64, op ValidateAfter,
+	ctx context, requestID model.RequestID, metrics interface{}, op ValidateAfter,
 ) ([]Operation, error) {
+	protoMetric, err := structpb.NewValue(metrics)
+	if err != nil {
+		return nil, errors.Wrapf(err, "illegal type for metrics=%v", metrics)
+	}
 	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
 		Event: &experimentv1.SearcherEvent_ValidationCompleted{
 			ValidationCompleted: &experimentv1.ValidationCompleted{
 				RequestId:           requestID.String(),
 				ValidateAfterLength: op.ToProto().Length,
-				Metric:              metric,
+				Metric:              protoMetric,
 			},
 		},
 	})
