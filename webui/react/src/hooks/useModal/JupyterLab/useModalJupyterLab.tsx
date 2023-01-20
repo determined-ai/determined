@@ -65,6 +65,7 @@ const settingsConfig: SettingsConfig<JupyterLabOptions> = {
 interface FullConfigProps {
   config?: string;
   configError?: string;
+  form: FormInstance;
   onChange?: (config: string) => void;
   setButtonDisabled: (buttonDisabled: boolean) => void;
   workspaces: Workspace[];
@@ -81,6 +82,7 @@ const useModalJupyterLab = (): ModalHooks => {
   const previousConfig = usePrevious(config, config);
   const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
   const [form] = Form.useForm<JupyterLabOptions>();
+  const [fullConfigForm] = Form.useForm();
   const { canCreateNSC } = usePermissions();
 
   const { settings: defaults, updateSettings: updateDefaults } =
@@ -122,15 +124,17 @@ const useModalJupyterLab = (): ModalHooks => {
   const handleSubmit = useCallback(async () => {
     const fields: JupyterLabOptions = form.getFieldsValue(true);
     updateDefaults(fields);
-    const values = await form.validateFields();
-    console.log('VALUES');
-    console.log(values);
-    console.log(fields);
-    alert(values);
-    if (values){
     if (showFullConfig) {
-      launchJupyterLab({ config: yaml.load(config || '') as RawJson, workspace: fields.workspace });
+      const values = await fullConfigForm.validateFields();
+      if (values) {
+        launchJupyterLab({
+          config: yaml.load(config || '') as RawJson,
+          workspace: fields.workspace,
+        });
+      }
     } else {
+      const values = await form.validateFields();
+      if (values) {
         launchJupyterLab({
           name: fields?.name,
           pool: fields?.pool,
@@ -138,26 +142,28 @@ const useModalJupyterLab = (): ModalHooks => {
           template: fields?.template,
           workspace: fields.workspace,
         });
+      }
     }
-  }
     modalClose();
     setVisible(false);
-  }, [config, form, showFullConfig, modalClose, updateDefaults]);
+  }, [config, fullConfigForm, form, showFullConfig, modalClose, updateDefaults]);
 
   const handleConfigChange = useCallback((config: string) => {
     setConfig(config);
     setConfigError(undefined);
   }, []);
 
-  const workspaces = Loadable.getOrElse([], Loadable.map(useWorkspaces(), (ws) =>
-  ws.filter((workspace) => canCreateNSC({ workspace })),
-));
+  const workspaces = Loadable.getOrElse(
+    [],
+    Loadable.map(useWorkspaces(), (ws) => ws.filter((workspace) => canCreateNSC({ workspace }))),
+  );
 
   const bodyContent = useMemo(() => {
     return showFullConfig ? (
       <JupyterLabFullConfig
         config={config}
         configError={configError}
+        form={fullConfigForm}
         setButtonDisabled={setButtonDisabled}
         workspaces={workspaces}
         onChange={handleConfigChange}
@@ -165,7 +171,16 @@ const useModalJupyterLab = (): ModalHooks => {
     ) : (
       <JupyterLabForm defaults={defaults} form={form} workspaces={workspaces} />
     );
-  }, [config, configError, handleConfigChange, showFullConfig, defaults, form]);
+  }, [
+    config,
+    configError,
+    fullConfigForm,
+    handleConfigChange,
+    showFullConfig,
+    defaults,
+    form,
+    workspaces,
+  ]);
 
   const content = useMemo(
     () => (
@@ -232,11 +247,15 @@ const useModalJupyterLab = (): ModalHooks => {
 const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   config,
   configError,
+  form,
   onChange,
   setButtonDisabled,
   workspaces,
 }: FullConfigProps) => {
-  const [field, setField] = useState([{ name: 'config', value: '' }, { name: 'workspace', value: undefined }]);
+  const [field, setField] = useState([
+    { name: 'config', value: '' },
+    { name: 'workspace', value: undefined },
+  ]);
 
   const handleConfigChange = useCallback(
     (_: unknown, allFields: unknown) => {
@@ -253,10 +272,10 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
 
   useEffect(() => {
     setField([...field, { name: 'config', value: config || '' }]);
-  }, [config]);
+  }, [config, field]);
 
   return (
-    <Form fields={field} onFieldsChange={handleConfigChange}>
+    <Form fields={field} form={form} onFieldsChange={handleConfigChange}>
       <div className={css.note}>
         <Link external path="/docs/reference/api/command-notebook-config.html">
           Read about JupyterLab settings
@@ -269,16 +288,16 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
           </div>
         }>
         <Form.Item
-        className={css.line}
-        label="Workspace"
-        name="workspace"
-        rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
+          className={css.line}
+          label="Workspace"
+          name="workspace"
+          rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
           <Select allowClear className={css.spacedInput} placeholder="Workspace (required)">
             {workspaces.map((workspace: Workspace) => (
               <Option key={workspace.id} value={workspace.id}>
                 {workspace.name}
               </Option>
-          ))}
+            ))}
           </Select>
         </Form.Item>
         <Form.Item
