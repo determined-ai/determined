@@ -83,7 +83,7 @@ export class RequiredError extends Error {
  * @export
  * @enum {string}
  */
-export enum Determinedcheckpointv1State {
+export enum Checkpointv1State {
     UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
     ACTIVE = <any> 'STATE_ACTIVE',
     COMPLETED = <any> 'STATE_COMPLETED',
@@ -96,7 +96,7 @@ export enum Determinedcheckpointv1State {
  * @export
  * @enum {string}
  */
-export enum Determinedcontainerv1State {
+export enum Containerv1State {
     UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
     ASSIGNED = <any> 'STATE_ASSIGNED',
     PULLING = <any> 'STATE_PULLING',
@@ -110,97 +110,11 @@ export enum Determinedcontainerv1State {
  * @export
  * @enum {string}
  */
-export enum Determineddevicev1Type {
+export enum Devicev1Type {
     UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
     CPU = <any> 'TYPE_CPU',
     CUDA = <any> 'TYPE_CUDA',
     ROCM = <any> 'TYPE_ROCM'
-}
-
-/**
- * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
- * @export
- * @enum {string}
- */
-export enum Determinedexperimentv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    ACTIVE = <any> 'STATE_ACTIVE',
-    PAUSED = <any> 'STATE_PAUSED',
-    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
-    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
-    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
-    COMPLETED = <any> 'STATE_COMPLETED',
-    CANCELED = <any> 'STATE_CANCELED',
-    ERROR = <any> 'STATE_ERROR',
-    DELETED = <any> 'STATE_DELETED',
-    DELETING = <any> 'STATE_DELETING',
-    DELETEFAILED = <any> 'STATE_DELETE_FAILED',
-    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
-    QUEUED = <any> 'STATE_QUEUED',
-    PULLING = <any> 'STATE_PULLING',
-    STARTING = <any> 'STATE_STARTING',
-    RUNNING = <any> 'STATE_RUNNING'
-}
-
-/**
- * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
- * @export
- * @enum {string}
- */
-export enum Determinedjobv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    QUEUED = <any> 'STATE_QUEUED',
-    SCHEDULED = <any> 'STATE_SCHEDULED',
-    SCHEDULEDBACKFILLED = <any> 'STATE_SCHEDULED_BACKFILLED'
-}
-
-/**
- * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
- * @export
- * @enum {string}
- */
-export enum Determinedjobv1Type {
-    UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
-    EXPERIMENT = <any> 'TYPE_EXPERIMENT',
-    NOTEBOOK = <any> 'TYPE_NOTEBOOK',
-    TENSORBOARD = <any> 'TYPE_TENSORBOARD',
-    SHELL = <any> 'TYPE_SHELL',
-    COMMAND = <any> 'TYPE_COMMAND',
-    CHECKPOINTGC = <any> 'TYPE_CHECKPOINT_GC'
-}
-
-/**
- * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.  - STATE_QUEUED: Additional state to cover queueing operations.
- * @export
- * @enum {string}
- */
-export enum Determinedtaskv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    PULLING = <any> 'STATE_PULLING',
-    STARTING = <any> 'STATE_STARTING',
-    RUNNING = <any> 'STATE_RUNNING',
-    TERMINATED = <any> 'STATE_TERMINATED',
-    TERMINATING = <any> 'STATE_TERMINATING',
-    WAITING = <any> 'STATE_WAITING',
-    QUEUED = <any> 'STATE_QUEUED'
-}
-
-/**
- * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
- * @export
- * @enum {string}
- */
-export enum Determinedtrialv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    ACTIVE = <any> 'STATE_ACTIVE',
-    PAUSED = <any> 'STATE_PAUSED',
-    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
-    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
-    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
-    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
-    CANCELED = <any> 'STATE_CANCELED',
-    COMPLETED = <any> 'STATE_COMPLETED',
-    ERROR = <any> 'STATE_ERROR'
 }
 
 /**
@@ -214,7 +128,7 @@ export interface ExpCompareTrialsSampleResponseExpTrial {
      * @type {number}
      * @memberof ExpCompareTrialsSampleResponseExpTrial
      */
-    trialId?: number;
+    trialId: number;
     /**
      * Hyperparamters values for this specific trial.
      * @type {any}
@@ -232,7 +146,32 @@ export interface ExpCompareTrialsSampleResponseExpTrial {
      * @type {number}
      * @memberof ExpCompareTrialsSampleResponseExpTrial
      */
-    experimentId?: number;
+    experimentId: number;
+}
+
+/**
+ * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+ * @export
+ * @enum {string}
+ */
+export enum Experimentv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    ACTIVE = <any> 'STATE_ACTIVE',
+    PAUSED = <any> 'STATE_PAUSED',
+    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
+    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
+    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
+    COMPLETED = <any> 'STATE_COMPLETED',
+    CANCELED = <any> 'STATE_CANCELED',
+    ERROR = <any> 'STATE_ERROR',
+    DELETED = <any> 'STATE_DELETED',
+    DELETING = <any> 'STATE_DELETING',
+    DELETEFAILED = <any> 'STATE_DELETE_FAILED',
+    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
+    QUEUED = <any> 'STATE_QUEUED',
+    PULLING = <any> 'STATE_PULLING',
+    STARTING = <any> 'STATE_STARTING',
+    RUNNING = <any> 'STATE_RUNNING'
 }
 
 /**
@@ -296,13 +235,40 @@ export enum GetTrialWorkloadsRequestFilterOption {
 }
 
 /**
- * `Any` contains an arbitrary serialized protocol buffer message along with a URL that describes the type of the serialized message.  Protobuf library provides support to pack/unpack Any values in the form of utility functions or additional generated methods of the Any type.  Example 1: Pack and unpack a message in C++.      Foo foo = ...;     Any any;     any.PackFrom(foo);     ...     if (any.UnpackTo(&foo)) {       ...     }  Example 2: Pack and unpack a message in Java.      Foo foo = ...;     Any any = Any.pack(foo);     ...     if (any.is(Foo.class)) {       foo = any.unpack(Foo.class);     }   Example 3: Pack and unpack a message in Python.      foo = Foo(...)     any = Any()     any.Pack(foo)     ...     if any.Is(Foo.DESCRIPTOR):       any.Unpack(foo)       ...   Example 4: Pack and unpack a message in Go       foo := &pb.Foo{...}      any, err := anypb.New(foo)      if err != nil {        ...      }      ...      foo := &pb.Foo{}      if err := any.UnmarshalTo(foo); err != nil {        ...      }  The pack methods provided by protobuf library will by default use 'type.googleapis.com/full.type.name' as the type URL and the unpack methods only use the fully qualified type name after the last '/' in the type URL, for example \"foo.bar.com/x/y.z\" will yield type name \"y.z\".   JSON ==== The JSON representation of an `Any` value uses the regular representation of the deserialized, embedded message, with an additional field `@type` which contains the type URL. Example:      package google.profile;     message Person {       string first_name = 1;       string last_name = 2;     }      {       \"@type\": \"type.googleapis.com/google.profile.Person\",       \"firstName\": <string>,       \"lastName\": <string>     }  If the embedded message type is well-known and has a custom JSON representation, that representation will be embedded adding a field `value` which holds the custom JSON in addition to the `@type` field. Example (for message [google.protobuf.Duration][]):      {       \"@type\": \"type.googleapis.com/google.protobuf.Duration\",       \"value\": \"1.212s\"     }
+ * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+ * @export
+ * @enum {string}
+ */
+export enum Jobv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    QUEUED = <any> 'STATE_QUEUED',
+    SCHEDULED = <any> 'STATE_SCHEDULED',
+    SCHEDULEDBACKFILLED = <any> 'STATE_SCHEDULED_BACKFILLED'
+}
+
+/**
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
+ * @export
+ * @enum {string}
+ */
+export enum Jobv1Type {
+    UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
+    EXPERIMENT = <any> 'TYPE_EXPERIMENT',
+    NOTEBOOK = <any> 'TYPE_NOTEBOOK',
+    TENSORBOARD = <any> 'TYPE_TENSORBOARD',
+    SHELL = <any> 'TYPE_SHELL',
+    COMMAND = <any> 'TYPE_COMMAND',
+    CHECKPOINTGC = <any> 'TYPE_CHECKPOINT_GC'
+}
+
+/**
+ * https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any
  * @export
  * @interface ProtobufAny
  */
 export interface ProtobufAny {
     /**
-     * A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. This string must contain at least one \"/\" character. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted).  In practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows:  * If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][]   value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the   URL, or have them precompiled into a binary to avoid any   lookup. Therefore, binary compatibility needs to be preserved   on changes to types. (Use versioned type names to manage   breaking changes.)  Note: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com.  Schemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics.
+     * https://developers.google.com/protocol-buffers/docs/reference/java/com/google/protobuf/Any
      * @type {string}
      * @memberof ProtobufAny
      */
@@ -675,6 +641,22 @@ export interface StreamResultOfV1TrialsSnapshotResponse {
 }
 
 /**
+ * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.  - STATE_QUEUED: Additional state to cover queueing operations.
+ * @export
+ * @enum {string}
+ */
+export enum Taskv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    PULLING = <any> 'STATE_PULLING',
+    STARTING = <any> 'STATE_STARTING',
+    RUNNING = <any> 'STATE_RUNNING',
+    TERMINATED = <any> 'STATE_TERMINATED',
+    TERMINATING = <any> 'STATE_TERMINATING',
+    WAITING = <any> 'STATE_WAITING',
+    QUEUED = <any> 'STATE_QUEUED'
+}
+
+/**
  * Specifies a ranking for trials within their experiment.
  * @export
  * @interface TrialFiltersRankWithinExp
@@ -719,6 +701,24 @@ export enum TrialSorterNamespace {
 }
 
 /**
+ * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
+ * @export
+ * @enum {string}
+ */
+export enum Trialv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    ACTIVE = <any> 'STATE_ACTIVE',
+    PAUSED = <any> 'STATE_PAUSED',
+    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
+    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
+    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
+    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
+    CANCELED = <any> 'STATE_CANCELED',
+    COMPLETED = <any> 'STATE_COMPLETED',
+    ERROR = <any> 'STATE_ERROR'
+}
+
+/**
  * Trial is a set of workloads and are exploring a determined set of hyperparameters.
  * @export
  * @interface Trialv1Trial
@@ -750,10 +750,10 @@ export interface Trialv1Trial {
     endTime?: Date;
     /**
      * The current state of the trial.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof Trialv1Trial
      */
-    state: Determinedexperimentv1State;
+    state: Experimentv1State;
     /**
      * Number times the trial restarted.
      * @type {number}
@@ -859,7 +859,7 @@ export interface V1AckAllocationPreemptionSignalRequest {
      * @type {string}
      * @memberof V1AckAllocationPreemptionSignalRequest
      */
-    allocationId?: string;
+    allocationId: string;
 }
 
 /**
@@ -1013,7 +1013,7 @@ export interface V1AggregateQueueStats {
      * @type {string}
      * @memberof V1AggregateQueueStats
      */
-    periodStart?: string;
+    periodStart: string;
     /**
      * The total number of seconds queued.
      * @type {number}
@@ -1036,10 +1036,10 @@ export interface V1Allocation {
     taskId?: string;
     /**
      * The current state of the allocation.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Allocation
      */
-    state?: Determinedtaskv1State;
+    state?: Taskv1State;
     /**
      * Whether the allocation is ready to access.
      * @type {boolean}
@@ -1077,7 +1077,7 @@ export interface V1AllocationAllGatherRequest {
      * @type {string}
      * @memberof V1AllocationAllGatherRequest
      */
-    allocationId?: string;
+    allocationId: string;
     /**
      * The UUID of the participant in an all gather.
      * @type {string}
@@ -1123,7 +1123,7 @@ export interface V1AllocationPendingPreemptionSignalRequest {
      * @type {string}
      * @memberof V1AllocationPendingPreemptionSignalRequest
      */
-    allocationId?: string;
+    allocationId: string;
 }
 
 /**
@@ -1181,7 +1181,7 @@ export interface V1AllocationRendezvousInfoResponse {
      * @type {V1RendezvousInfo}
      * @memberof V1AllocationRendezvousInfoResponse
      */
-    rendezvousInfo?: V1RendezvousInfo;
+    rendezvousInfo: V1RendezvousInfo;
 }
 
 /**
@@ -1277,13 +1277,13 @@ export interface V1AugmentedTrial {
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    trialId?: number;
+    trialId: number;
     /**
      * The state of the trial.
-     * @type {Determinedtrialv1State}
+     * @type {Trialv1State}
      * @memberof V1AugmentedTrial
      */
-    state: Determinedtrialv1State;
+    state: Trialv1State;
     /**
      * 
      * @type {any}
@@ -1295,13 +1295,13 @@ export interface V1AugmentedTrial {
      * @type {any}
      * @memberof V1AugmentedTrial
      */
-    trainingMetrics?: any;
+    trainingMetrics: any;
     /**
      * The validation metrics for the trial.
      * @type {any}
      * @memberof V1AugmentedTrial
      */
-    validationMetrics?: any;
+    validationMetrics: any;
     /**
      * The tags for the trial.
      * @type {any}
@@ -1313,19 +1313,19 @@ export interface V1AugmentedTrial {
      * @type {Date}
      * @memberof V1AugmentedTrial
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * The end time for the trial.
      * @type {Date}
      * @memberof V1AugmentedTrial
      */
-    endTime?: Date;
+    endTime: Date;
     /**
      * The searcher type for the trial.
      * @type {string}
      * @memberof V1AugmentedTrial
      */
-    searcherType?: string;
+    searcherType: string;
     /**
      * The trials rank within the experiment, according to the sorter that is provided.
      * @type {number}
@@ -1337,49 +1337,49 @@ export interface V1AugmentedTrial {
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    experimentId?: number;
+    experimentId: number;
     /**
      * The experiment name for the trial.
      * @type {string}
      * @memberof V1AugmentedTrial
      */
-    experimentName?: string;
+    experimentName: string;
     /**
      * The experiment description for the trial.
      * @type {string}
      * @memberof V1AugmentedTrial
      */
-    experimentDescription?: string;
+    experimentDescription: string;
     /**
      * The labels for the experiment corresponding to the trial.
      * @type {Array<string>}
      * @memberof V1AugmentedTrial
      */
-    experimentLabels?: Array<string>;
+    experimentLabels: Array<string>;
     /**
      * The id of the user who created the experiment corresponding to the trial.
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    userId?: number;
+    userId: number;
     /**
      * The project id for the trial.
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    projectId?: number;
+    projectId: number;
     /**
      * The workspace id for the trial.
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    workspaceId?: number;
+    workspaceId: number;
     /**
      * The total number of batches in the trial.
      * @type {number}
      * @memberof V1AugmentedTrial
      */
-    totalBatches?: number;
+    totalBatches: number;
     /**
      * The name of the trials searcher metric.
      * @type {string}
@@ -1472,10 +1472,10 @@ export interface V1Checkpoint {
     metadata: any;
     /**
      * The state of the underlying checkpoint.
-     * @type {Determinedcheckpointv1State}
+     * @type {Checkpointv1State}
      * @memberof V1Checkpoint
      */
-    state: Determinedcheckpointv1State;
+    state: Checkpointv1State;
     /**
      * Training-related data for this checkpoint.
      * @type {V1CheckpointTrainingMetadata}
@@ -1554,10 +1554,10 @@ export interface V1CheckpointWorkload {
     endTime?: Date;
     /**
      * The state of the checkpoint.
-     * @type {Determinedcheckpointv1State}
+     * @type {Checkpointv1State}
      * @memberof V1CheckpointWorkload
      */
-    state: Determinedcheckpointv1State;
+    state: Checkpointv1State;
     /**
      * Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
      * @type {{ [key: string]: string; }}
@@ -1569,7 +1569,7 @@ export interface V1CheckpointWorkload {
      * @type {number}
      * @memberof V1CheckpointWorkload
      */
-    totalBatches?: number;
+    totalBatches: number;
     /**
      * User defined metadata associated with the checkpoint.
      * @type {any}
@@ -1632,16 +1632,16 @@ export interface V1Command {
     description: string;
     /**
      * The state of the command.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Command
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the command was started.
      * @type {Date}
      * @memberof V1Command
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * The container running the command.
      * @type {V1Container}
@@ -1671,7 +1671,7 @@ export interface V1Command {
      * @type {string}
      * @memberof V1Command
      */
-    resourcePool?: string;
+    resourcePool: string;
     /**
      * 
      * @type {string}
@@ -1683,13 +1683,13 @@ export interface V1Command {
      * @type {string}
      * @memberof V1Command
      */
-    jobId?: string;
+    jobId: string;
     /**
      * The workspace id.
      * @type {number}
      * @memberof V1Command
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**
@@ -1747,11 +1747,11 @@ export interface V1CompleteValidateAfterOperation {
      */
     op?: V1ValidateAfterOperation;
     /**
-     * The values of searcher metrics associated with this completed operation. The metrics provided should be the metrics used to guide HP search.
+     * The value of searcher metric associated with this completed operation. The metric provided should be the metric used to guide HP search.
      * @type {any}
      * @memberof V1CompleteValidateAfterOperation
      */
-    metrics?: any;
+    searcherMetric?: any;
 }
 
 /**
@@ -1782,10 +1782,10 @@ export interface V1Container {
     id: string;
     /**
      * The current state that the container is currently in.
-     * @type {Determinedcontainerv1State}
+     * @type {Containerv1State}
      * @memberof V1Container
      */
-    state: Determinedcontainerv1State;
+    state: Containerv1State;
     /**
      * A list of devices that is being used by this container.
      * @type {Array<V1Device>}
@@ -1965,7 +1965,7 @@ export interface V1CreateTrialsCollectionRequest {
      * @type {number}
      * @memberof V1CreateTrialsCollectionRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * The filters for the collection.
      * @type {V1TrialFilters}
@@ -2059,7 +2059,7 @@ export interface V1DeleteCheckpointsRequest {
      * @type {Array<string>}
      * @memberof V1DeleteCheckpointsRequest
      */
-    checkpointUuids?: Array<string>;
+    checkpointUuids: Array<string>;
 }
 
 /**
@@ -2180,10 +2180,10 @@ export interface V1Device {
     uuid?: string;
     /**
      * The type of the Device.
-     * @type {Determineddevicev1Type}
+     * @type {Devicev1Type}
      * @memberof V1Device
      */
-    type?: Determineddevicev1Type;
+    type?: Devicev1Type;
 }
 
 /**
@@ -2341,13 +2341,13 @@ export interface V1ExpCompareTrialsSampleResponse {
      * @type {Array<number>}
      * @memberof V1ExpCompareTrialsSampleResponse
      */
-    promotedTrials?: Array<number>;
+    promotedTrials: Array<number>;
     /**
      * IDs of trials that are no loger included in the top N trials.
      * @type {Array<number>}
      * @memberof V1ExpCompareTrialsSampleResponse
      */
-    demotedTrials?: Array<number>;
+    demotedTrials: Array<number>;
 }
 
 /**
@@ -2379,7 +2379,7 @@ export interface V1Experiment {
      * @type {Date}
      * @memberof V1Experiment
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * The time the experiment ended if the experiment is stopped.
      * @type {Date}
@@ -2388,10 +2388,10 @@ export interface V1Experiment {
     endTime?: Date;
     /**
      * The current state of the experiment.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof V1Experiment
      */
-    state: Determinedexperimentv1State;
+    state: Experimentv1State;
     /**
      * Boolean denoting whether the experiment was archived.
      * @type {boolean}
@@ -2403,7 +2403,7 @@ export interface V1Experiment {
      * @type {number}
      * @memberof V1Experiment
      */
-    numTrials?: number;
+    numTrials: number;
     /**
      * The ids of trials linked to the experiment.
      * @type {Array<number>}
@@ -2439,7 +2439,7 @@ export interface V1Experiment {
      * @type {string}
      * @memberof V1Experiment
      */
-    searcherType?: string;
+    searcherType: string;
     /**
      * The experiment name.
      * @type {string}
@@ -2457,7 +2457,7 @@ export interface V1Experiment {
      * @type {string}
      * @memberof V1Experiment
      */
-    jobId?: string;
+    jobId: string;
     /**
      * Original id of a forked or continued experiment.
      * @type {number}
@@ -2475,7 +2475,7 @@ export interface V1Experiment {
      * @type {number}
      * @memberof V1Experiment
      */
-    projectId?: number;
+    projectId: number;
     /**
      * The name of the project associated with this experiment.
      * @type {string}
@@ -2511,13 +2511,13 @@ export interface V1Experiment {
      * @type {string}
      * @memberof V1Experiment
      */
-    originalConfig?: string;
+    originalConfig: string;
     /**
      * The id of the user who created the parent project.
      * @type {number}
      * @memberof V1Experiment
      */
-    projectOwnerId?: number;
+    projectOwnerId: number;
     /**
      * The total size of checkpoints.
      * @type {string}
@@ -2546,10 +2546,10 @@ export interface V1Experiment {
 export interface V1ExperimentInactive {
     /**
      * Current state of the experiment.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof V1ExperimentInactive
      */
-    experimentState?: Determinedexperimentv1State;
+    experimentState: Experimentv1State;
 }
 
 /**
@@ -3081,7 +3081,7 @@ export interface V1GetGroupsAndUsersAssignedToWorkspaceResponse {
      * @type {Array<V1User>}
      * @memberof V1GetGroupsAndUsersAssignedToWorkspaceResponse
      */
-    usersAssignedDirectly?: Array<V1User>;
+    usersAssignedDirectly: Array<V1User>;
     /**
      * Roles assigned to workspace with associations between groups and users_assigned_directly with roles.
      * @type {Array<V1RoleWithAssignments>}
@@ -3153,13 +3153,13 @@ export interface V1GetHPImportanceResponse {
      * @type {{ [key: string]: GetHPImportanceResponseMetricHPImportance; }}
      * @memberof V1GetHPImportanceResponse
      */
-    trainingMetrics?: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
+    trainingMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
     /**
      * A map of validation metric names to their respective entries.
      * @type {{ [key: string]: GetHPImportanceResponseMetricHPImportance; }}
      * @memberof V1GetHPImportanceResponse
      */
-    validationMetrics?: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
+    validationMetrics: { [key: string]: GetHPImportanceResponseMetricHPImportance; };
 }
 
 /**
@@ -3227,19 +3227,19 @@ export interface V1GetMasterResponse {
      * @type {string}
      * @memberof V1GetMasterResponse
      */
-    masterId?: string;
+    masterId: string;
     /**
      * The global cluster id of the master.
      * @type {string}
      * @memberof V1GetMasterResponse
      */
-    clusterId?: string;
+    clusterId: string;
     /**
      * The cluster name.
      * @type {string}
      * @memberof V1GetMasterResponse
      */
-    clusterName?: string;
+    clusterName: string;
     /**
      * Telemetry status.
      * @type {boolean}
@@ -3349,7 +3349,7 @@ export interface V1GetModelDefResponse {
      * @type {string}
      * @memberof V1GetModelDefResponse
      */
-    b64Tgz?: string;
+    b64Tgz: string;
 }
 
 /**
@@ -3405,7 +3405,7 @@ export interface V1GetModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1GetModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -3436,7 +3436,7 @@ export interface V1GetModelVersionsResponse {
      * @type {Array<V1ModelVersion>}
      * @memberof V1GetModelVersionsResponse
      */
-    modelVersions?: Array<V1ModelVersion>;
+    modelVersions: Array<V1ModelVersion>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
@@ -4224,13 +4224,13 @@ export interface V1GroupRoleAssignment {
      * @type {number}
      * @memberof V1GroupRoleAssignment
      */
-    groupId?: number;
+    groupId: number;
     /**
      * The role and scope of the assignment.
      * @type {V1RoleAssignment}
      * @memberof V1GroupRoleAssignment
      */
-    roleAssignment?: V1RoleAssignment;
+    roleAssignment: V1RoleAssignment;
 }
 
 /**
@@ -4250,7 +4250,7 @@ export interface V1GroupSearchResult {
      * @type {number}
      * @memberof V1GroupSearchResult
      */
-    numMembers?: number;
+    numMembers: number;
 }
 
 /**
@@ -4353,16 +4353,16 @@ export interface V1Job {
     summary?: V1JobSummary;
     /**
      * Job type.
-     * @type {Determinedjobv1Type}
+     * @type {Jobv1Type}
      * @memberof V1Job
      */
-    type: Determinedjobv1Type;
+    type: Jobv1Type;
     /**
      * The time when the job was submitted by the user.
      * @type {Date}
      * @memberof V1Job
      */
-    submissionTime?: Date;
+    submissionTime: Date;
     /**
      * The username of the user who submitted the job.
      * @type {string}
@@ -4380,13 +4380,13 @@ export interface V1Job {
      * @type {string}
      * @memberof V1Job
      */
-    resourcePool?: string;
+    resourcePool: string;
     /**
      * Whether the job is preemptible.
      * @type {boolean}
      * @memberof V1Job
      */
-    isPreemptible?: boolean;
+    isPreemptible: boolean;
     /**
      * The job priority in priority scheduler.
      * @type {number}
@@ -4404,25 +4404,25 @@ export interface V1Job {
      * @type {string}
      * @memberof V1Job
      */
-    entityId?: string;
+    entityId: string;
     /**
      * Job type.
      * @type {string}
      * @memberof V1Job
      */
-    jobId?: string;
+    jobId: string;
     /**
      * Number of requested slots.
      * @type {number}
      * @memberof V1Job
      */
-    requestedSlots?: number;
+    requestedSlots: number;
     /**
      * Number of allocated slots.
      * @type {number}
      * @memberof V1Job
      */
-    allocatedSlots?: number;
+    allocatedSlots: number;
     /**
      * Job name.
      * @type {string}
@@ -4445,16 +4445,16 @@ export interface V1Job {
 export interface V1JobSummary {
     /**
      * The scheduling state of the job.
-     * @type {Determinedjobv1State}
+     * @type {Jobv1State}
      * @memberof V1JobSummary
      */
-    state: Determinedjobv1State;
+    state: Jobv1State;
     /**
      * The number of jobs ahead of this one in the queue.
      * @type {number}
      * @memberof V1JobSummary
      */
-    jobsAhead?: number;
+    jobsAhead: number;
 }
 
 /**
@@ -4973,7 +4973,7 @@ export interface V1MarkAllocationResourcesDaemonRequest {
      * @type {string}
      * @memberof V1MarkAllocationResourcesDaemonRequest
      */
-    allocationId?: string;
+    allocationId: string;
     /**
      * The id of the clump of resources to mark as daemon.
      * @type {string}
@@ -5066,7 +5066,7 @@ export interface V1Metrics {
      * @type {any}
      * @memberof V1Metrics
      */
-    avgMetrics?: any;
+    avgMetrics: any;
     /**
      * 
      * @type {Array<any>}
@@ -5089,10 +5089,10 @@ export interface V1MetricsWorkload {
     endTime?: Date;
     /**
      * The current validation state.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof V1MetricsWorkload
      */
-    state: Determinedexperimentv1State;
+    state: Experimentv1State;
     /**
      * Metrics.
      * @type {V1Metrics}
@@ -5104,13 +5104,13 @@ export interface V1MetricsWorkload {
      * @type {number}
      * @memberof V1MetricsWorkload
      */
-    numInputs?: number;
+    numInputs: number;
     /**
      * Total number of batches as of this workload's completion.
      * @type {number}
      * @memberof V1MetricsWorkload
      */
-    totalBatches?: number;
+    totalBatches: number;
 }
 
 /**
@@ -5142,13 +5142,13 @@ export interface V1Model {
      * @type {Date}
      * @memberof V1Model
      */
-    creationTime?: Date;
+    creationTime: Date;
     /**
      * The time the model was last updated.
      * @type {Date}
      * @memberof V1Model
      */
-    lastUpdatedTime?: Date;
+    lastUpdatedTime: Date;
     /**
      * The id of this model.
      * @type {number}
@@ -5160,7 +5160,7 @@ export interface V1Model {
      * @type {number}
      * @memberof V1Model
      */
-    numVersions?: number;
+    numVersions: number;
     /**
      * Labels associated with this model.
      * @type {Array<string>}
@@ -5184,7 +5184,7 @@ export interface V1Model {
      * @type {number}
      * @memberof V1Model
      */
-    userId?: number;
+    userId: number;
     /**
      * Whether this model is archived or not.
      * @type {boolean}
@@ -5228,7 +5228,7 @@ export interface V1ModelVersion {
      * @type {Date}
      * @memberof V1ModelVersion
      */
-    creationTime?: Date;
+    creationTime: Date;
     /**
      * Unique id for each model version.
      * @type {number}
@@ -5252,7 +5252,7 @@ export interface V1ModelVersion {
      * @type {Date}
      * @memberof V1ModelVersion
      */
-    lastUpdatedTime?: Date;
+    lastUpdatedTime: Date;
     /**
      * Comment associated with this model version.
      * @type {string}
@@ -5296,13 +5296,13 @@ export interface V1MoveExperimentRequest {
      * @type {number}
      * @memberof V1MoveExperimentRequest
      */
-    experimentId?: number;
+    experimentId: number;
     /**
      * The id of the new parent project.
      * @type {number}
      * @memberof V1MoveExperimentRequest
      */
-    destinationProjectId?: number;
+    destinationProjectId: number;
 }
 
 /**
@@ -5324,13 +5324,13 @@ export interface V1MoveProjectRequest {
      * @type {number}
      * @memberof V1MoveProjectRequest
      */
-    projectId?: number;
+    projectId: number;
     /**
      * The id of the new parent workspace.
      * @type {number}
      * @memberof V1MoveProjectRequest
      */
-    destinationWorkspaceId?: number;
+    destinationWorkspaceId: number;
 }
 
 /**
@@ -5381,16 +5381,16 @@ export interface V1Notebook {
     description: string;
     /**
      * The state of the notebook.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Notebook
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the notebook was started.
      * @type {Date}
      * @memberof V1Notebook
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * The container running the notebook.
      * @type {V1Container}
@@ -5426,7 +5426,7 @@ export interface V1Notebook {
      * @type {string}
      * @memberof V1Notebook
      */
-    resourcePool?: string;
+    resourcePool: string;
     /**
      * The exit status.
      * @type {string}
@@ -5438,13 +5438,13 @@ export interface V1Notebook {
      * @type {string}
      * @memberof V1Notebook
      */
-    jobId?: string;
+    jobId: string;
     /**
      * Workspace ID.
      * @type {number}
      * @memberof V1Notebook
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**
@@ -5458,7 +5458,7 @@ export interface V1NotifyContainerRunningRequest {
      * @type {string}
      * @memberof V1NotifyContainerRunningRequest
      */
-    allocationId?: string;
+    allocationId: string;
     /**
      * The UUID of the participant in a notify container running message.
      * @type {string}
@@ -5574,10 +5574,10 @@ export interface V1PatchExperiment {
     description?: string;
     /**
      * Labels attached to the experiment.
-     * @type {Array<any>}
+     * @type {Array<string>}
      * @memberof V1PatchExperiment
      */
-    labels?: Array<any>;
+    labels?: Array<string>;
     /**
      * The experiment name.
      * @type {string}
@@ -5632,10 +5632,10 @@ export interface V1PatchModel {
     metadata?: any;
     /**
      * An updated label list for the model.
-     * @type {Array<any>}
+     * @type {Array<string>}
      * @memberof V1PatchModel
      */
-    labels?: Array<any>;
+    labels?: Array<string>;
     /**
      * Updated notes associated with this model.
      * @type {string}
@@ -5702,10 +5702,10 @@ export interface V1PatchModelVersion {
     comment?: string;
     /**
      * An updated label list for the model version.
-     * @type {Array<any>}
+     * @type {Array<string>}
      * @memberof V1PatchModelVersion
      */
-    labels?: Array<any>;
+    labels?: Array<string>;
     /**
      * Updated text notes for the model version.
      * @type {string}
@@ -5725,7 +5725,7 @@ export interface V1PatchModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1PatchModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -6121,13 +6121,13 @@ export interface V1PostModelVersionRequest {
      * @type {string}
      * @memberof V1PostModelVersionRequest
      */
-    modelName?: string;
+    modelName: string;
     /**
      * UUID of the checkpoint.
      * @type {string}
      * @memberof V1PostModelVersionRequest
      */
-    checkpointUuid?: string;
+    checkpointUuid: string;
     /**
      * User-friendly name for the model version.
      * @type {string}
@@ -6171,7 +6171,7 @@ export interface V1PostModelVersionResponse {
      * @type {V1ModelVersion}
      * @memberof V1PostModelVersionResponse
      */
-    modelVersion?: V1ModelVersion;
+    modelVersion: V1ModelVersion;
 }
 
 /**
@@ -6197,7 +6197,7 @@ export interface V1PostProjectRequest {
      * @type {number}
      * @memberof V1PostProjectRequest
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**
@@ -6289,19 +6289,19 @@ export interface V1PostUserActivityRequest {
      * @type {V1ActivityType}
      * @memberof V1PostUserActivityRequest
      */
-    activityType?: V1ActivityType;
+    activityType: V1ActivityType;
     /**
      * The type of the entity.
      * @type {V1EntityType}
      * @memberof V1PostUserActivityRequest
      */
-    entityType?: V1EntityType;
+    entityType: V1EntityType;
     /**
      * 
      * @type {number}
      * @memberof V1PostUserActivityRequest
      */
-    entityId?: number;
+    entityId: number;
 }
 
 /**
@@ -6363,7 +6363,7 @@ export interface V1PostUserSettingRequest {
      * @type {string}
      * @memberof V1PostUserSettingRequest
      */
-    storagePath?: string;
+    storagePath: string;
     /**
      * Setting key value pair.
      * @type {V1UserWebSetting}
@@ -6491,7 +6491,7 @@ export interface V1Project {
      * @type {number}
      * @memberof V1Project
      */
-    workspaceId?: number;
+    workspaceId: number;
     /**
      * The description of the project.
      * @type {string}
@@ -6515,13 +6515,13 @@ export interface V1Project {
      * @type {number}
      * @memberof V1Project
      */
-    numExperiments?: number;
+    numExperiments: number;
     /**
      * Count of active experiments associated with this project.
      * @type {number}
      * @memberof V1Project
      */
-    numActiveExperiments?: number;
+    numActiveExperiments: number;
     /**
      * Whether this project is archived or not.
      * @type {boolean}
@@ -6545,7 +6545,7 @@ export interface V1Project {
      * @type {number}
      * @memberof V1Project
      */
-    userId?: number;
+    userId: number;
     /**
      * The name of the associated workspace.
      * @type {string}
@@ -6563,7 +6563,7 @@ export interface V1Project {
      * @type {string}
      * @memberof V1Project
      */
-    errorMessage?: string;
+    errorMessage: string;
 }
 
 /**
@@ -6583,7 +6583,7 @@ export interface V1PutProjectNotesRequest {
      * @type {number}
      * @memberof V1PutProjectNotesRequest
      */
-    projectId?: number;
+    projectId: number;
 }
 
 /**
@@ -6671,7 +6671,7 @@ export interface V1QueueControl {
      * @type {string}
      * @memberof V1QueueControl
      */
-    jobId?: string;
+    jobId: string;
     /**
      * The desired job position in the queue in terms of another job.
      * @type {string}
@@ -6715,13 +6715,13 @@ export interface V1QueueStats {
      * @type {number}
      * @memberof V1QueueStats
      */
-    queuedCount?: number;
+    queuedCount: number;
     /**
      * Number of scheduled jobs in the queue.
      * @type {number}
      * @memberof V1QueueStats
      */
-    scheduledCount?: number;
+    scheduledCount: number;
 }
 
 /**
@@ -6741,7 +6741,7 @@ export interface V1RPQueueStat {
      * @type {string}
      * @memberof V1RPQueueStat
      */
-    resourcePool?: string;
+    resourcePool: string;
     /**
      * Aggregate stats.
      * @type {Array<V1AggregateQueueStats>}
@@ -7026,49 +7026,49 @@ export interface V1ResourcePool {
      * @type {number}
      * @memberof V1ResourcePool
      */
-    numAgents?: number;
+    numAgents: number;
     /**
      * 
      * @type {number}
      * @memberof V1ResourcePool
      */
-    slotsAvailable?: number;
+    slotsAvailable: number;
     /**
      * 
      * @type {number}
      * @memberof V1ResourcePool
      */
-    slotsUsed?: number;
+    slotsUsed: number;
     /**
      * Slot device type: cpu, gpu, ...
-     * @type {Determineddevicev1Type}
+     * @type {Devicev1Type}
      * @memberof V1ResourcePool
      */
-    slotType?: Determineddevicev1Type;
+    slotType: Devicev1Type;
     /**
      * 
      * @type {number}
      * @memberof V1ResourcePool
      */
-    auxContainerCapacity?: number;
+    auxContainerCapacity: number;
     /**
      * 
      * @type {number}
      * @memberof V1ResourcePool
      */
-    auxContainersRunning?: number;
+    auxContainersRunning: number;
     /**
      * 
      * @type {boolean}
      * @memberof V1ResourcePool
      */
-    defaultComputePool?: boolean;
+    defaultComputePool: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof V1ResourcePool
      */
-    defaultAuxPool?: boolean;
+    defaultAuxPool: boolean;
     /**
      * Is this resource pool using preemptible/spot instances? Only meaningful in an AWS or GCP resource pool.
      * @type {boolean}
@@ -7080,13 +7080,13 @@ export interface V1ResourcePool {
      * @type {number}
      * @memberof V1ResourcePool
      */
-    minAgents?: number;
+    minAgents: number;
     /**
      * When using dynamic agents, the maximum number of agents that can exist in the resource pool.
      * @type {number}
      * @memberof V1ResourcePool
      */
-    maxAgents?: number;
+    maxAgents: number;
     /**
      * The number of slots that exists on an dynamic agent.
      * @type {number}
@@ -7098,19 +7098,19 @@ export interface V1ResourcePool {
      * @type {number}
      * @memberof V1ResourcePool
      */
-    auxContainerCapacityPerAgent?: number;
+    auxContainerCapacityPerAgent: number;
     /**
      * 
      * @type {V1SchedulerType}
      * @memberof V1ResourcePool
      */
-    schedulerType?: V1SchedulerType;
+    schedulerType: V1SchedulerType;
     /**
      * The fitting policy of the scheduler.
      * @type {V1FittingPolicy}
      * @memberof V1ResourcePool
      */
-    schedulerFittingPolicy?: V1FittingPolicy;
+    schedulerFittingPolicy: V1FittingPolicy;
     /**
      * The location of the resource pool. For AWS this returns the region and for GCP this return the zone.
      * @type {string}
@@ -7122,73 +7122,73 @@ export interface V1ResourcePool {
      * @type {string}
      * @memberof V1ResourcePool
      */
-    imageId?: string;
+    imageId: string;
     /**
      * The instance type of the agents when using dynamic agents. For AWS this is the Instance Type. For GCP this is the machine type combined with the number and types of GPUs. To work with this data programattically, we recommend working with the ResourcePool.details.aws.instanceType and ResourcePool.details.gcp.machineType/gpuType/gpuNum.
      * @type {string}
      * @memberof V1ResourcePool
      */
-    instanceType?: string;
+    instanceType: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePool
      */
-    masterUrl?: string;
+    masterUrl: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePool
      */
-    masterCertName?: string;
+    masterCertName: string;
     /**
      * The startup script for the agent. This runs on the node the agent runs on.
      * @type {string}
      * @memberof V1ResourcePool
      */
-    startupScript?: string;
+    startupScript: string;
     /**
      * The startup script for the agent's container. This runs in the container determined-agent runs in.
      * @type {string}
      * @memberof V1ResourcePool
      */
-    containerStartupScript?: string;
+    containerStartupScript: string;
     /**
      * The Docker network to use for the agent when using dynamic agents.
      * @type {string}
      * @memberof V1ResourcePool
      */
-    agentDockerNetwork?: string;
+    agentDockerNetwork: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePool
      */
-    agentDockerRuntime?: string;
+    agentDockerRuntime: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePool
      */
-    agentDockerImage?: string;
+    agentDockerImage: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePool
      */
-    agentFluentImage?: string;
+    agentFluentImage: string;
     /**
      * The maximum idle period of agents in seconds. The master waits for this period of time before shutting down idle agents.
      * @type {number}
      * @memberof V1ResourcePool
      */
-    maxIdleAgentPeriod?: number;
+    maxIdleAgentPeriod: number;
     /**
      * The maximum starting period of agents in seconds. The master waits for this period of time for starting agents before retrying.
      * @type {number}
      * @memberof V1ResourcePool
      */
-    maxAgentStartingPeriod?: number;
+    maxAgentStartingPeriod: number;
     /**
      * 
      * @type {V1ResourcePoolDetail}
@@ -7226,43 +7226,43 @@ export interface V1ResourcePoolAwsDetail {
      * @type {number}
      * @memberof V1ResourcePoolAwsDetail
      */
-    rootVolumeSize?: number;
+    rootVolumeSize: number;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
-    imageId?: string;
+    imageId: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
-    tagKey?: string;
+    tagKey: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
-    tagValue?: string;
+    tagValue: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
-    instanceName?: string;
+    instanceName: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
-    sshKeyName?: string;
+    sshKeyName: string;
     /**
      * 
      * @type {boolean}
      * @memberof V1ResourcePoolAwsDetail
      */
-    publicIp?: boolean;
+    publicIp: boolean;
     /**
      * 
      * @type {string}
@@ -7274,13 +7274,13 @@ export interface V1ResourcePoolAwsDetail {
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
-    securityGroupId?: string;
+    securityGroupId: string;
     /**
      * The Amazon Resource Name (ARN) of the IAM instance profile to attach to the agent instances.
      * @type {string}
      * @memberof V1ResourcePoolAwsDetail
      */
-    iamInstanceProfileArn?: string;
+    iamInstanceProfileArn: string;
     /**
      * 
      * @type {string}
@@ -7304,7 +7304,7 @@ export interface V1ResourcePoolAwsDetail {
      * @type {boolean}
      * @memberof V1ResourcePoolAwsDetail
      */
-    spotEnabled?: boolean;
+    spotEnabled: boolean;
     /**
      * 
      * @type {string}
@@ -7368,31 +7368,31 @@ export interface V1ResourcePoolGcpDetail {
      * @type {number}
      * @memberof V1ResourcePoolGcpDetail
      */
-    bootDiskSize?: number;
+    bootDiskSize: number;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
-    bootDiskSourceImage?: string;
+    bootDiskSourceImage: string;
     /**
      * Key for labeling the Determined agent instances.
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
-    labelKey?: string;
+    labelKey: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
-    labelValue?: string;
+    labelValue: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
-    namePrefix?: string;
+    namePrefix: string;
     /**
      * 
      * @type {string}
@@ -7410,7 +7410,7 @@ export interface V1ResourcePoolGcpDetail {
      * @type {boolean}
      * @memberof V1ResourcePoolGcpDetail
      */
-    externalIp?: boolean;
+    externalIp: boolean;
     /**
      * 
      * @type {Array<string>}
@@ -7422,31 +7422,31 @@ export interface V1ResourcePoolGcpDetail {
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
-    serviceAccountEmail?: string;
+    serviceAccountEmail: string;
     /**
      * 
      * @type {Array<string>}
      * @memberof V1ResourcePoolGcpDetail
      */
-    serviceAccountScopes?: Array<string>;
+    serviceAccountScopes: Array<string>;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
-    machineType?: string;
+    machineType: string;
     /**
      * 
      * @type {string}
      * @memberof V1ResourcePoolGcpDetail
      */
-    gpuType?: string;
+    gpuType: string;
     /**
      * 
      * @type {number}
      * @memberof V1ResourcePoolGcpDetail
      */
-    gpuNum?: number;
+    gpuNum: number;
     /**
      * 
      * @type {boolean}
@@ -7458,7 +7458,7 @@ export interface V1ResourcePoolGcpDetail {
      * @type {number}
      * @memberof V1ResourcePoolGcpDetail
      */
-    operationTimeoutPeriod?: number;
+    operationTimeoutPeriod: number;
 }
 
 /**
@@ -7478,7 +7478,7 @@ export interface V1ResourcePoolPrioritySchedulerDetail {
      * @type {number}
      * @memberof V1ResourcePoolPrioritySchedulerDetail
      */
-    defaultPriority?: number;
+    defaultPriority: number;
     /**
      * List of available priorities for K8 (if applicable).
      * @type {Array<V1K8PriorityClass>}
@@ -7511,7 +7511,7 @@ export interface V1Role {
      * @type {number}
      * @memberof V1Role
      */
-    roleId?: number;
+    roleId: number;
     /**
      * 
      * @type {string}
@@ -7569,7 +7569,7 @@ export interface V1RoleAssignmentSummary {
      * @type {number}
      * @memberof V1RoleAssignmentSummary
      */
-    roleId?: number;
+    roleId: number;
     /**
      * List of workspace IDs to apply the role.
      * @type {Array<number>}
@@ -7658,7 +7658,7 @@ export interface V1SSOProvider {
      * @type {string}
      * @memberof V1SSOProvider
      */
-    ssoUrl?: string;
+    ssoUrl: string;
 }
 
 /**
@@ -8031,16 +8031,16 @@ export interface V1Shell {
     description: string;
     /**
      * The state of the shell.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Shell
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the shell was started.
      * @type {Date}
      * @memberof V1Shell
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * The container running the shell.
      * @type {V1Container}
@@ -8082,7 +8082,7 @@ export interface V1Shell {
      * @type {string}
      * @memberof V1Shell
      */
-    resourcePool?: string;
+    resourcePool: string;
     /**
      * 
      * @type {string}
@@ -8106,13 +8106,13 @@ export interface V1Shell {
      * @type {string}
      * @memberof V1Shell
      */
-    jobId?: string;
+    jobId: string;
     /**
      * The workspace id.
      * @type {number}
      * @memberof V1Shell
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**
@@ -8324,7 +8324,7 @@ export interface V1TaskLogsResponse {
      * @type {string}
      * @memberof V1TaskLogsResponse
      */
-    taskId?: string;
+    taskId: string;
     /**
      * The ID of the allocation.
      * @type {string}
@@ -8409,16 +8409,16 @@ export interface V1Tensorboard {
     description: string;
     /**
      * The state of the tensorboard.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Tensorboard
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the tensorboard was started.
      * @type {Date}
      * @memberof V1Tensorboard
      */
-    startTime?: Date;
+    startTime: Date;
     /**
      * The container running the tensorboard.
      * @type {V1Container}
@@ -8466,7 +8466,7 @@ export interface V1Tensorboard {
      * @type {string}
      * @memberof V1Tensorboard
      */
-    resourcePool?: string;
+    resourcePool: string;
     /**
      * 
      * @type {string}
@@ -8478,13 +8478,13 @@ export interface V1Tensorboard {
      * @type {string}
      * @memberof V1Tensorboard
      */
-    jobId?: string;
+    jobId: string;
     /**
      * The workspace id.
      * @type {number}
      * @memberof V1Tensorboard
      */
-    workspaceId?: number;
+    workspaceId: number;
 }
 
 /**
@@ -8544,7 +8544,7 @@ export interface V1TrialClosed {
      * @type {string}
      * @memberof V1TrialClosed
      */
-    requestId?: string;
+    requestId: string;
 }
 
 /**
@@ -8558,7 +8558,7 @@ export interface V1TrialCreated {
      * @type {string}
      * @memberof V1TrialCreated
      */
-    requestId?: string;
+    requestId: string;
 }
 
 /**
@@ -8597,13 +8597,13 @@ export interface V1TrialExitedEarly {
      * @type {string}
      * @memberof V1TrialExitedEarly
      */
-    requestId?: string;
+    requestId: string;
     /**
      * The reason for the exit.
      * @type {V1TrialExitedEarlyExitedReason}
      * @memberof V1TrialExitedEarly
      */
-    exitedReason?: V1TrialExitedEarlyExitedReason;
+    exitedReason: V1TrialExitedEarlyExitedReason;
 }
 
 /**
@@ -8698,10 +8698,10 @@ export interface V1TrialFilters {
     endTime?: V1TimestampFieldFilter;
     /**
      * Filter trials to those with any of the given states.
-     * @type {Array<Determinedtrialv1State>}
+     * @type {Array<Trialv1State>}
      * @memberof V1TrialFilters
      */
-    states?: Array<Determinedtrialv1State>;
+    states?: Array<Trialv1State>;
     /**
      * Filter trials to those with the given searcher metric.
      * @type {string}
@@ -8795,7 +8795,7 @@ export interface V1TrialLogsResponse {
      * @type {number}
      * @memberof V1TrialLogsResponse
      */
-    trialId?: number;
+    trialId: number;
     /**
      * The ID of the agent that logged this.
      * @type {string}
@@ -8845,19 +8845,19 @@ export interface V1TrialMetrics {
      * @type {number}
      * @memberof V1TrialMetrics
      */
-    trialId?: number;
+    trialId: number;
     /**
      * The trial run associated with these metrics.
      * @type {number}
      * @memberof V1TrialMetrics
      */
-    trialRunId?: number;
+    trialRunId: number;
     /**
      * The number of batches trained on when these metrics were reported.
      * @type {number}
      * @memberof V1TrialMetrics
      */
-    stepsCompleted?: number;
+    stepsCompleted: number;
     /**
      * The metrics for this bit of training, including: - avg_metrics: metrics reduced over the reporting period). - batch_metrics: (optional) per-batch metrics.
      * @type {V1Metrics}
@@ -8911,7 +8911,7 @@ export interface V1TrialProfilerMetricLabels {
      * @type {number}
      * @memberof V1TrialProfilerMetricLabels
      */
-    trialId?: number;
+    trialId: number;
     /**
      * The name of the metric.
      * @type {string}
@@ -8981,13 +8981,13 @@ export interface V1TrialProgress {
      * @type {string}
      * @memberof V1TrialProgress
      */
-    requestId?: string;
+    requestId: string;
     /**
      * partial_units represent partial epochs, batches or records where the Unit is implied.
      * @type {number}
      * @memberof V1TrialProgress
      */
-    partialUnits?: number;
+    partialUnits: number;
 }
 
 /**
@@ -9081,13 +9081,13 @@ export interface V1TrialsCollection {
      * @type {number}
      * @memberof V1TrialsCollection
      */
-    userId?: number;
+    userId: number;
     /**
      * The id of the project that the collection belongs to .
      * @type {number}
      * @memberof V1TrialsCollection
      */
-    projectId?: number;
+    projectId: number;
     /**
      * The name of the collection.
      * @type {string}
@@ -9125,13 +9125,13 @@ export interface V1TrialsSampleResponse {
      * @type {Array<number>}
      * @memberof V1TrialsSampleResponse
      */
-    promotedTrials?: Array<number>;
+    promotedTrials: Array<number>;
     /**
      * IDs of trials that are no loger included in the top N trials.
      * @type {Array<number>}
      * @memberof V1TrialsSampleResponse
      */
-    demotedTrials?: Array<number>;
+    demotedTrials: Array<number>;
 }
 
 /**
@@ -9145,7 +9145,7 @@ export interface V1TrialsSampleResponseTrial {
      * @type {number}
      * @memberof V1TrialsSampleResponseTrial
      */
-    trialId?: number;
+    trialId: number;
     /**
      * Hyperparamters values for this specific trial.
      * @type {any}
@@ -9185,7 +9185,7 @@ export interface V1TrialsSnapshotResponseTrial {
      * @type {number}
      * @memberof V1TrialsSnapshotResponseTrial
      */
-    trialId?: number;
+    trialId: number;
     /**
      * A dictionary of hyperparameter values for this trial.
      * @type {any}
@@ -9203,7 +9203,7 @@ export interface V1TrialsSnapshotResponseTrial {
      * @type {number}
      * @memberof V1TrialsSnapshotResponseTrial
      */
-    batchesProcessed?: number;
+    batchesProcessed: number;
 }
 
 /**
@@ -9300,7 +9300,7 @@ export interface V1UpdateGroupRequest {
      * @type {number}
      * @memberof V1UpdateGroupRequest
      */
-    groupId?: number;
+    groupId: number;
     /**
      * 
      * @type {string}
@@ -9458,13 +9458,13 @@ export interface V1UserRoleAssignment {
      * @type {number}
      * @memberof V1UserRoleAssignment
      */
-    userId?: number;
+    userId: number;
     /**
      * 
      * @type {V1RoleAssignment}
      * @memberof V1UserRoleAssignment
      */
-    roleAssignment?: V1RoleAssignment;
+    roleAssignment: V1RoleAssignment;
 }
 
 /**
@@ -9524,19 +9524,19 @@ export interface V1ValidationCompleted {
      * @type {string}
      * @memberof V1ValidationCompleted
      */
-    requestId?: string;
+    requestId: string;
     /**
      * Values of the validation metrics used to direct the search.
      * @type {any}
      * @memberof V1ValidationCompleted
      */
-    metrics?: any;
+    metrics: any;
     /**
      * Length from ValidateAfterOperation.
      * @type {string}
      * @memberof V1ValidationCompleted
      */
-    validateAfterLength?: string;
+    validateAfterLength: string;
 }
 
 /**
@@ -9550,19 +9550,19 @@ export interface V1ValidationHistoryEntry {
      * @type {number}
      * @memberof V1ValidationHistoryEntry
      */
-    trialId?: number;
+    trialId: number;
     /**
      * The time at which the completed validation was reported.
      * @type {Date}
      * @memberof V1ValidationHistoryEntry
      */
-    endTime?: Date;
+    endTime: Date;
     /**
      * The value of the `searcher.metric`, indicated by the experiment config, for the validation.
      * @type {number}
      * @memberof V1ValidationHistoryEntry
      */
-    searcherMetric?: number;
+    searcherMetric: number;
 }
 
 /**
@@ -9594,7 +9594,7 @@ export interface V1Webhook {
      * @type {V1WebhookType}
      * @memberof V1Webhook
      */
-    webhookType?: V1WebhookType;
+    webhookType: V1WebhookType;
 }
 
 /**
@@ -9675,7 +9675,7 @@ export interface V1Workspace {
      * @type {number}
      * @memberof V1Workspace
      */
-    numProjects?: number;
+    numProjects: number;
     /**
      * Pin status of this workspace for the current user.
      * @type {boolean}
@@ -9687,13 +9687,13 @@ export interface V1Workspace {
      * @type {number}
      * @memberof V1Workspace
      */
-    userId?: number;
+    userId: number;
     /**
      * Number of experiments associated with this workspace.
      * @type {number}
      * @memberof V1Workspace
      */
-    numExperiments?: number;
+    numExperiments: number;
     /**
      * State of workspace during deletion.
      * @type {V1WorkspaceState}
@@ -9705,7 +9705,7 @@ export interface V1Workspace {
      * @type {string}
      * @memberof V1Workspace
      */
-    errorMessage?: string;
+    errorMessage: string;
     /**
      * Optional agent host uid and gid override.
      * @type {V1AgentUserGroup}
@@ -9762,7 +9762,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCurrentUser(options: any = {}): FetchArgs {
+        currentUser(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/auth/user`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -9794,10 +9794,10 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLogin(body: V1LoginRequest, options: any = {}): FetchArgs {
+        login(body: V1LoginRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedLogin.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling login.');
             }
             const localVarPath = `/api/v1/auth/login`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -9825,7 +9825,7 @@ export const AuthenticationApiFetchParamCreator = function (configuration?: Conf
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLogout(options: any = {}): FetchArgs {
+        logout(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/auth/logout`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
@@ -9865,8 +9865,8 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCurrentUser(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CurrentUserResponse> {
-            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).determinedCurrentUser(options);
+        currentUser(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CurrentUserResponse> {
+            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).currentUser(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9884,8 +9884,8 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLogin(body: V1LoginRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LoginResponse> {
-            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).determinedLogin(body, options);
+        login(body: V1LoginRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LoginResponse> {
+            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).login(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9902,8 +9902,8 @@ export const AuthenticationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLogout(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LogoutResponse> {
-            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).determinedLogout(options);
+        logout(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LogoutResponse> {
+            const localVarFetchArgs = AuthenticationApiFetchParamCreator(configuration).logout(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -9929,8 +9929,8 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCurrentUser(options?: any) {
-            return AuthenticationApiFp(configuration).determinedCurrentUser(options)(fetch, basePath);
+        currentUser(options?: any) {
+            return AuthenticationApiFp(configuration).currentUser(options)(fetch, basePath);
         },
         /**
          * 
@@ -9939,8 +9939,8 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLogin(body: V1LoginRequest, options?: any) {
-            return AuthenticationApiFp(configuration).determinedLogin(body, options)(fetch, basePath);
+        login(body: V1LoginRequest, options?: any) {
+            return AuthenticationApiFp(configuration).login(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -9948,8 +9948,8 @@ export const AuthenticationApiFactory = function (configuration?: Configuration,
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLogout(options?: any) {
-            return AuthenticationApiFp(configuration).determinedLogout(options)(fetch, basePath);
+        logout(options?: any) {
+            return AuthenticationApiFp(configuration).logout(options)(fetch, basePath);
         },
     };
 };
@@ -9968,8 +9968,8 @@ export class AuthenticationApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public determinedCurrentUser(options?: any) {
-        return AuthenticationApiFp(this.configuration).determinedCurrentUser(options)(this.fetch, this.basePath);
+    public currentUser(options?: any) {
+        return AuthenticationApiFp(this.configuration).currentUser(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9980,8 +9980,8 @@ export class AuthenticationApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public determinedLogin(body: V1LoginRequest, options?: any) {
-        return AuthenticationApiFp(this.configuration).determinedLogin(body, options)(this.fetch, this.basePath);
+    public login(body: V1LoginRequest, options?: any) {
+        return AuthenticationApiFp(this.configuration).login(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -9991,8 +9991,8 @@ export class AuthenticationApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof AuthenticationApi
      */
-    public determinedLogout(options?: any) {
-        return AuthenticationApiFp(this.configuration).determinedLogout(options)(this.fetch, this.basePath);
+    public logout(options?: any) {
+        return AuthenticationApiFp(this.configuration).logout(options)(this.fetch, this.basePath);
     }
 
 }
@@ -10010,10 +10010,10 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteCheckpoints(body: V1DeleteCheckpointsRequest, options: any = {}): FetchArgs {
+        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedDeleteCheckpoints.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling deleteCheckpoints.');
             }
             const localVarPath = `/api/v1/checkpoints`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -10050,13 +10050,50 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCheckpoint(checkpointUuid: string, options: any = {}): FetchArgs {
+        getCheckpoint(checkpointUuid: string, options: any = {}): FetchArgs {
             // verify required parameter 'checkpointUuid' is not null or undefined
             if (checkpointUuid === null || checkpointUuid === undefined) {
-                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling determinedGetCheckpoint.');
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpoint.');
             }
             const localVarPath = `/api/v1/checkpoints/{checkpointUuid}`
                 .replace(`{${"checkpointUuid"}}`, encodeURIComponent(String(checkpointUuid)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a checkpoint's contents in a tgz or zip file.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCheckpoint_1(checkpointUuid: string, options: any = {}): FetchArgs {
+            // verify required parameter 'checkpointUuid' is not null or undefined
+            if (checkpointUuid === null || checkpointUuid === undefined) {
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling getCheckpoint_1.');
+            }
+            const localVarPath = `/checkpoints/{checkpoint_uuid}`
+                .replace(`{${"checkpoint_uuid"}}`, encodeURIComponent(String(checkpointUuid)));
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
             const localVarHeaderParameter = {} as any;
@@ -10088,14 +10125,14 @@ export const CheckpointsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options: any = {}): FetchArgs {
+        postCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options: any = {}): FetchArgs {
             // verify required parameter 'checkpointUuid' is not null or undefined
             if (checkpointUuid === null || checkpointUuid === undefined) {
-                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling determinedPostCheckpointMetadata.');
+                throw new RequiredError('checkpointUuid','Required parameter checkpointUuid was null or undefined when calling postCheckpointMetadata.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostCheckpointMetadata.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postCheckpointMetadata.');
             }
             const localVarPath = `/api/v1/checkpoints/{checkpoint.uuid}/metadata`
                 .replace(`{${"checkpoint.uuid"}}`, encodeURIComponent(String(checkpointUuid)));
@@ -10142,8 +10179,8 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteCheckpointsResponse> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).determinedDeleteCheckpoints(body, options);
+        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteCheckpointsResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).deleteCheckpoints(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10161,12 +10198,31 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCheckpoint(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCheckpointResponse> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).determinedGetCheckpoint(checkpointUuid, options);
+        getCheckpoint(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCheckpointResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint(checkpointUuid, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a checkpoint's contents in a tgz or zip file.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCheckpoint_1(checkpointUuid: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).getCheckpoint_1(checkpointUuid, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
                     } else {
                         throw response;
                     }
@@ -10181,8 +10237,8 @@ export const CheckpointsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostCheckpointMetadataResponse> {
-            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).determinedPostCheckpointMetadata(checkpointUuid, body, options);
+        postCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostCheckpointMetadataResponse> {
+            const localVarFetchArgs = CheckpointsApiFetchParamCreator(configuration).postCheckpointMetadata(checkpointUuid, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10209,8 +10265,8 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
-            return CheckpointsApiFp(configuration).determinedDeleteCheckpoints(body, options)(fetch, basePath);
+        deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
+            return CheckpointsApiFp(configuration).deleteCheckpoints(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -10219,8 +10275,18 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCheckpoint(checkpointUuid: string, options?: any) {
-            return CheckpointsApiFp(configuration).determinedGetCheckpoint(checkpointUuid, options)(fetch, basePath);
+        getCheckpoint(checkpointUuid: string, options?: any) {
+            return CheckpointsApiFp(configuration).getCheckpoint(checkpointUuid, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a checkpoint's contents in a tgz or zip file.
+         * @param {string} checkpointUuid Checkpoint UUID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCheckpoint_1(checkpointUuid: string, options?: any) {
+            return CheckpointsApiFp(configuration).getCheckpoint_1(checkpointUuid, options)(fetch, basePath);
         },
         /**
          * 
@@ -10230,8 +10296,8 @@ export const CheckpointsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options?: any) {
-            return CheckpointsApiFp(configuration).determinedPostCheckpointMetadata(checkpointUuid, body, options)(fetch, basePath);
+        postCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options?: any) {
+            return CheckpointsApiFp(configuration).postCheckpointMetadata(checkpointUuid, body, options)(fetch, basePath);
         },
     };
 };
@@ -10251,8 +10317,8 @@ export class CheckpointsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public determinedDeleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
-        return CheckpointsApiFp(this.configuration).determinedDeleteCheckpoints(body, options)(this.fetch, this.basePath);
+    public deleteCheckpoints(body: V1DeleteCheckpointsRequest, options?: any) {
+        return CheckpointsApiFp(this.configuration).deleteCheckpoints(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10263,8 +10329,20 @@ export class CheckpointsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public determinedGetCheckpoint(checkpointUuid: string, options?: any) {
-        return CheckpointsApiFp(this.configuration).determinedGetCheckpoint(checkpointUuid, options)(this.fetch, this.basePath);
+    public getCheckpoint(checkpointUuid: string, options?: any) {
+        return CheckpointsApiFp(this.configuration).getCheckpoint(checkpointUuid, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a checkpoint's contents in a tgz or zip file.
+     * @param {string} checkpointUuid Checkpoint UUID
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CheckpointsApi
+     */
+    public getCheckpoint_1(checkpointUuid: string, options?: any) {
+        return CheckpointsApiFp(this.configuration).getCheckpoint_1(checkpointUuid, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -10276,8 +10354,8 @@ export class CheckpointsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CheckpointsApi
      */
-    public determinedPostCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options?: any) {
-        return CheckpointsApiFp(this.configuration).determinedPostCheckpointMetadata(checkpointUuid, body, options)(this.fetch, this.basePath);
+    public postCheckpointMetadata(checkpointUuid: string, body: V1PostCheckpointMetadataRequest, options?: any) {
+        return CheckpointsApiFp(this.configuration).postCheckpointMetadata(checkpointUuid, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -10296,14 +10374,14 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options: any = {}): FetchArgs {
+        disableAgent(agentId: string, body: V1DisableAgentRequest, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
-                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedDisableAgent.');
+                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling disableAgent.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedDisableAgent.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling disableAgent.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
@@ -10342,14 +10420,14 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        disableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
-                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedDisableSlot.');
+                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling disableSlot.');
             }
             // verify required parameter 'slotId' is not null or undefined
             if (slotId === null || slotId === undefined) {
-                throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling determinedDisableSlot.');
+                throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling disableSlot.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}/disable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
@@ -10384,10 +10462,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedEnableAgent(agentId: string, options: any = {}): FetchArgs {
+        enableAgent(agentId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
-                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedEnableAgent.');
+                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling enableAgent.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/enable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
@@ -10422,14 +10500,14 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedEnableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        enableSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
-                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedEnableSlot.');
+                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling enableSlot.');
             }
             // verify required parameter 'slotId' is not null or undefined
             if (slotId === null || slotId === undefined) {
-                throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling determinedEnableSlot.');
+                throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling enableSlot.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}/enable`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
@@ -10464,10 +10542,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetAgent(agentId: string, options: any = {}): FetchArgs {
+        getAgent(agentId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
-                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedGetAgent.');
+                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getAgent.');
             }
             const localVarPath = `/api/v1/agents/{agentId}`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
@@ -10505,7 +10583,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options: any = {}): FetchArgs {
+        getAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10552,11 +10630,69 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+         * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options: any = {}): FetchArgs {
+            // verify required parameter 'startDate' is not null or undefined
+            if (startDate === null || startDate === undefined) {
+                throw new RequiredError('startDate','Required parameter startDate was null or undefined when calling getAggregatedResourceAllocationCsv.');
+            }
+            // verify required parameter 'endDate' is not null or undefined
+            if (endDate === null || endDate === undefined) {
+                throw new RequiredError('endDate','Required parameter endDate was null or undefined when calling getAggregatedResourceAllocationCsv.');
+            }
+            // verify required parameter 'period' is not null or undefined
+            if (period === null || period === undefined) {
+                throw new RequiredError('period','Required parameter period was null or undefined when calling getAggregatedResourceAllocationCsv.');
+            }
+            const localVarPath = `/allocation/aggregated`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (startDate !== undefined) {
+                localVarQueryParameter['start_date'] = startDate;
+            }
+
+            if (endDate !== undefined) {
+                localVarQueryParameter['end_date'] = endDate;
+            }
+
+            if (period !== undefined) {
+                localVarQueryParameter['period'] = period;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get master information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMaster(options: any = {}): FetchArgs {
+        getMaster(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10579,7 +10715,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMasterConfig(options: any = {}): FetchArgs {
+        getMasterConfig(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/config`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10606,20 +10742,69 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Get a detailed view of resource allocation during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options: any = {}): FetchArgs {
+            // verify required parameter 'timestampAfter' is not null or undefined
+            if (timestampAfter === null || timestampAfter === undefined) {
+                throw new RequiredError('timestampAfter','Required parameter timestampAfter was null or undefined when calling getRawResourceAllocationCsv.');
+            }
+            // verify required parameter 'timestampBefore' is not null or undefined
+            if (timestampBefore === null || timestampBefore === undefined) {
+                throw new RequiredError('timestampBefore','Required parameter timestampBefore was null or undefined when calling getRawResourceAllocationCsv.');
+            }
+            const localVarPath = `/allocation/raw`;
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (timestampAfter !== undefined) {
+                localVarQueryParameter['timestamp_after'] = timestampAfter;
+            }
+
+            if (timestampBefore !== undefined) {
+                localVarQueryParameter['timestamp_before'] = timestampBefore;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested slot for an agent.
          * @param {string} agentId The id of the agent.
          * @param {string} slotId The id of the slot.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
+        getSlot(agentId: string, slotId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
-                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedGetSlot.');
+                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getSlot.');
             }
             // verify required parameter 'slotId' is not null or undefined
             if (slotId === null || slotId === undefined) {
-                throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling determinedGetSlot.');
+                throw new RequiredError('slotId','Required parameter slotId was null or undefined when calling getSlot.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots/{slotId}`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)))
@@ -10654,10 +10839,10 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSlots(agentId: string, options: any = {}): FetchArgs {
+        getSlots(agentId: string, options: any = {}): FetchArgs {
             // verify required parameter 'agentId' is not null or undefined
             if (agentId === null || agentId === undefined) {
-                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling determinedGetSlots.');
+                throw new RequiredError('agentId','Required parameter agentId was null or undefined when calling getSlots.');
             }
             const localVarPath = `/api/v1/agents/{agentId}/slots`
                 .replace(`{${"agentId"}}`, encodeURIComponent(String(agentId)));
@@ -10693,7 +10878,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMasterLogs(offset?: number, limit?: number, follow?: boolean, options: any = {}): FetchArgs {
+        masterLogs(offset?: number, limit?: number, follow?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/logs`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10739,7 +10924,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options: any = {}): FetchArgs {
+        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resources/allocation/aggregated`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10784,7 +10969,7 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options: any = {}): FetchArgs {
+        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resources/allocation/raw`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -10834,8 +11019,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedDisableAgent(agentId, body, options);
+        disableAgent(agentId: string, body: V1DisableAgentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableAgent(agentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10854,8 +11039,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedDisableSlot(agentId, slotId, options);
+        disableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DisableSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).disableSlot(agentId, slotId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10873,8 +11058,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedEnableAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedEnableAgent(agentId, options);
+        enableAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableAgent(agentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10893,8 +11078,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedEnableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedEnableSlot(agentId, slotId, options);
+        enableSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1EnableSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).enableSlot(agentId, slotId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10912,8 +11097,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedGetAgent(agentId, options);
+        getAgent(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgent(agentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10935,8 +11120,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedGetAgents(sortBy, orderBy, offset, limit, label, options);
+        getAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10949,12 +11134,33 @@ export const ClusterApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+         * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get master information.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMaster(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedGetMaster(options);
+        getMaster(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMaster(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -10971,12 +11177,32 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMasterConfig(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterConfigResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedGetMasterConfig(options);
+        getMasterConfig(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMasterConfigResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getMasterConfig(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a detailed view of resource allocation during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
                     } else {
                         throw response;
                     }
@@ -10991,8 +11217,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedGetSlot(agentId, slotId, options);
+        getSlot(agentId: string, slotId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlot(agentId, slotId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11010,8 +11236,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSlots(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedGetSlots(agentId, options);
+        getSlots(agentId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSlotsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getSlots(agentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11031,8 +11257,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMasterLogs(offset?: number, limit?: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MasterLogsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedMasterLogs(offset, limit, follow, options);
+        masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MasterLogsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).masterLogs(offset, limit, follow, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11052,8 +11278,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedResourceAllocationAggregated(startDate, endDate, period, options);
+        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationAggregatedResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationAggregated(startDate, endDate, period, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11072,8 +11298,8 @@ export const ClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).determinedResourceAllocationRaw(timestampAfter, timestampBefore, options);
+        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResourceAllocationRawResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11101,8 +11327,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
-            return ClusterApiFp(configuration).determinedDisableAgent(agentId, body, options)(fetch, basePath);
+        disableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
+            return ClusterApiFp(configuration).disableAgent(agentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -11112,8 +11338,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDisableSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedDisableSlot(agentId, slotId, options)(fetch, basePath);
+        disableSlot(agentId: string, slotId: string, options?: any) {
+            return ClusterApiFp(configuration).disableSlot(agentId, slotId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11122,8 +11348,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedEnableAgent(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedEnableAgent(agentId, options)(fetch, basePath);
+        enableAgent(agentId: string, options?: any) {
+            return ClusterApiFp(configuration).enableAgent(agentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11133,8 +11359,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedEnableSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedEnableSlot(agentId, slotId, options)(fetch, basePath);
+        enableSlot(agentId: string, slotId: string, options?: any) {
+            return ClusterApiFp(configuration).enableSlot(agentId, slotId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11143,8 +11369,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetAgent(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedGetAgent(agentId, options)(fetch, basePath);
+        getAgent(agentId: string, options?: any) {
+            return ClusterApiFp(configuration).getAgent(agentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11157,8 +11383,20 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options?: any) {
-            return ClusterApiFp(configuration).determinedGetAgents(sortBy, orderBy, offset, limit, label, options)(fetch, basePath);
+        getAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options?: any) {
+            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+         * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+         * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any) {
+            return ClusterApiFp(configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options)(fetch, basePath);
         },
         /**
          * 
@@ -11166,8 +11404,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMaster(options?: any) {
-            return ClusterApiFp(configuration).determinedGetMaster(options)(fetch, basePath);
+        getMaster(options?: any) {
+            return ClusterApiFp(configuration).getMaster(options)(fetch, basePath);
         },
         /**
          * 
@@ -11175,8 +11413,19 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMasterConfig(options?: any) {
-            return ClusterApiFp(configuration).determinedGetMasterConfig(options)(fetch, basePath);
+        getMasterConfig(options?: any) {
+            return ClusterApiFp(configuration).getMasterConfig(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a detailed view of resource allocation during the given time period (CSV).
+         * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+            return ClusterApiFp(configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
         /**
          * 
@@ -11186,8 +11435,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSlot(agentId: string, slotId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedGetSlot(agentId, slotId, options)(fetch, basePath);
+        getSlot(agentId: string, slotId: string, options?: any) {
+            return ClusterApiFp(configuration).getSlot(agentId, slotId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11196,8 +11445,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSlots(agentId: string, options?: any) {
-            return ClusterApiFp(configuration).determinedGetSlots(agentId, options)(fetch, basePath);
+        getSlots(agentId: string, options?: any) {
+            return ClusterApiFp(configuration).getSlots(agentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11208,8 +11457,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMasterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
-            return ClusterApiFp(configuration).determinedMasterLogs(offset, limit, follow, options)(fetch, basePath);
+        masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
+            return ClusterApiFp(configuration).masterLogs(offset, limit, follow, options)(fetch, basePath);
         },
         /**
          * 
@@ -11220,8 +11469,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options?: any) {
-            return ClusterApiFp(configuration).determinedResourceAllocationAggregated(startDate, endDate, period, options)(fetch, basePath);
+        resourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options?: any) {
+            return ClusterApiFp(configuration).resourceAllocationAggregated(startDate, endDate, period, options)(fetch, basePath);
         },
         /**
          * 
@@ -11231,8 +11480,8 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
-            return ClusterApiFp(configuration).determinedResourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
+        resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
+            return ClusterApiFp(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
     };
 };
@@ -11253,8 +11502,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedDisableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
-        return ClusterApiFp(this.configuration).determinedDisableAgent(agentId, body, options)(this.fetch, this.basePath);
+    public disableAgent(agentId: string, body: V1DisableAgentRequest, options?: any) {
+        return ClusterApiFp(this.configuration).disableAgent(agentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11266,8 +11515,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedDisableSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedDisableSlot(agentId, slotId, options)(this.fetch, this.basePath);
+    public disableSlot(agentId: string, slotId: string, options?: any) {
+        return ClusterApiFp(this.configuration).disableSlot(agentId, slotId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11278,8 +11527,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedEnableAgent(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedEnableAgent(agentId, options)(this.fetch, this.basePath);
+    public enableAgent(agentId: string, options?: any) {
+        return ClusterApiFp(this.configuration).enableAgent(agentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11291,8 +11540,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedEnableSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedEnableSlot(agentId, slotId, options)(this.fetch, this.basePath);
+    public enableSlot(agentId: string, slotId: string, options?: any) {
+        return ClusterApiFp(this.configuration).enableSlot(agentId, slotId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11303,8 +11552,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedGetAgent(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedGetAgent(agentId, options)(this.fetch, this.basePath);
+    public getAgent(agentId: string, options?: any) {
+        return ClusterApiFp(this.configuration).getAgent(agentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11319,8 +11568,22 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedGetAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedGetAgents(sortBy, orderBy, offset, limit, label, options)(this.fetch, this.basePath);
+    public getAgents(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, label?: string, options?: any) {
+        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get an aggregated view of resource allocation during the given time period (CSV).
+     * @param {string} startDate Start time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+     * @param {string} endDate End time to get allocations for (YYYY-MM-DD format for daily, YYYY-MM format for monthly)
+     * @param {string} period Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public getAggregatedResourceAllocationCsv(startDate: string, endDate: string, period: string, options?: any) {
+        return ClusterApiFp(this.configuration).getAggregatedResourceAllocationCsv(startDate, endDate, period, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11330,8 +11593,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedGetMaster(options?: any) {
-        return ClusterApiFp(this.configuration).determinedGetMaster(options)(this.fetch, this.basePath);
+    public getMaster(options?: any) {
+        return ClusterApiFp(this.configuration).getMaster(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11341,8 +11604,21 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedGetMasterConfig(options?: any) {
-        return ClusterApiFp(this.configuration).determinedGetMasterConfig(options)(this.fetch, this.basePath);
+    public getMasterConfig(options?: any) {
+        return ClusterApiFp(this.configuration).getMasterConfig(options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get a detailed view of resource allocation during the given time period (CSV).
+     * @param {string} timestampAfter Start time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+     * @param {string} timestampBefore End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public getRawResourceAllocationCsv(timestampAfter: string, timestampBefore: string, options?: any) {
+        return ClusterApiFp(this.configuration).getRawResourceAllocationCsv(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11354,8 +11630,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedGetSlot(agentId: string, slotId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedGetSlot(agentId, slotId, options)(this.fetch, this.basePath);
+    public getSlot(agentId: string, slotId: string, options?: any) {
+        return ClusterApiFp(this.configuration).getSlot(agentId, slotId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11366,8 +11642,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedGetSlots(agentId: string, options?: any) {
-        return ClusterApiFp(this.configuration).determinedGetSlots(agentId, options)(this.fetch, this.basePath);
+    public getSlots(agentId: string, options?: any) {
+        return ClusterApiFp(this.configuration).getSlots(agentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11380,8 +11656,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedMasterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
-        return ClusterApiFp(this.configuration).determinedMasterLogs(offset, limit, follow, options)(this.fetch, this.basePath);
+    public masterLogs(offset?: number, limit?: number, follow?: boolean, options?: any) {
+        return ClusterApiFp(this.configuration).masterLogs(offset, limit, follow, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11394,8 +11670,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedResourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options?: any) {
-        return ClusterApiFp(this.configuration).determinedResourceAllocationAggregated(startDate, endDate, period, options)(this.fetch, this.basePath);
+    public resourceAllocationAggregated(startDate?: string, endDate?: string, period?: 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_UNSPECIFIED' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY' | 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY', options?: any) {
+        return ClusterApiFp(this.configuration).resourceAllocationAggregated(startDate, endDate, period, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11407,8 +11683,8 @@ export class ClusterApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public determinedResourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
-        return ClusterApiFp(this.configuration).determinedResourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
+    public resourceAllocationRaw(timestampAfter?: Date, timestampBefore?: Date, options?: any) {
+        return ClusterApiFp(this.configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath);
     }
 
 }
@@ -11426,10 +11702,10 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCommand(commandId: string, options: any = {}): FetchArgs {
+        getCommand(commandId: string, options: any = {}): FetchArgs {
             // verify required parameter 'commandId' is not null or undefined
             if (commandId === null || commandId === undefined) {
-                throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling determinedGetCommand.');
+                throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling getCommand.');
             }
             const localVarPath = `/api/v1/commands/{commandId}`
                 .replace(`{${"commandId"}}`, encodeURIComponent(String(commandId)));
@@ -11469,7 +11745,7 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
+        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/commands`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -11529,10 +11805,10 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillCommand(commandId: string, options: any = {}): FetchArgs {
+        killCommand(commandId: string, options: any = {}): FetchArgs {
             // verify required parameter 'commandId' is not null or undefined
             if (commandId === null || commandId === undefined) {
-                throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling determinedKillCommand.');
+                throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling killCommand.');
             }
             const localVarPath = `/api/v1/commands/{commandId}/kill`
                 .replace(`{${"commandId"}}`, encodeURIComponent(String(commandId)));
@@ -11566,10 +11842,10 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchCommand(body: V1LaunchCommandRequest, options: any = {}): FetchArgs {
+        launchCommand(body: V1LaunchCommandRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedLaunchCommand.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling launchCommand.');
             }
             const localVarPath = `/api/v1/commands`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -11607,14 +11883,14 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options: any = {}): FetchArgs {
+        setCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options: any = {}): FetchArgs {
             // verify required parameter 'commandId' is not null or undefined
             if (commandId === null || commandId === undefined) {
-                throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling determinedSetCommandPriority.');
+                throw new RequiredError('commandId','Required parameter commandId was null or undefined when calling setCommandPriority.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetCommandPriority.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setCommandPriority.');
             }
             const localVarPath = `/api/v1/commands/{commandId}/set_priority`
                 .replace(`{${"commandId"}}`, encodeURIComponent(String(commandId)));
@@ -11661,8 +11937,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).determinedGetCommand(commandId, options);
+        getCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommand(commandId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11686,8 +11962,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).determinedGetCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
+        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11705,8 +11981,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillCommandResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).determinedKillCommand(commandId, options);
+        killCommand(commandId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillCommandResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).killCommand(commandId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11724,8 +12000,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchCommand(body: V1LaunchCommandRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchCommandResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).determinedLaunchCommand(body, options);
+        launchCommand(body: V1LaunchCommandRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchCommandResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).launchCommand(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11744,8 +12020,8 @@ export const CommandsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetCommandPriorityResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).determinedSetCommandPriority(commandId, body, options);
+        setCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetCommandPriorityResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).setCommandPriority(commandId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -11772,8 +12048,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCommand(commandId: string, options?: any) {
-            return CommandsApiFp(configuration).determinedGetCommand(commandId, options)(fetch, basePath);
+        getCommand(commandId: string, options?: any) {
+            return CommandsApiFp(configuration).getCommand(commandId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11788,8 +12064,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-            return CommandsApiFp(configuration).determinedGetCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
+        getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return CommandsApiFp(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11798,8 +12074,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillCommand(commandId: string, options?: any) {
-            return CommandsApiFp(configuration).determinedKillCommand(commandId, options)(fetch, basePath);
+        killCommand(commandId: string, options?: any) {
+            return CommandsApiFp(configuration).killCommand(commandId, options)(fetch, basePath);
         },
         /**
          * 
@@ -11808,8 +12084,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchCommand(body: V1LaunchCommandRequest, options?: any) {
-            return CommandsApiFp(configuration).determinedLaunchCommand(body, options)(fetch, basePath);
+        launchCommand(body: V1LaunchCommandRequest, options?: any) {
+            return CommandsApiFp(configuration).launchCommand(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -11819,8 +12095,8 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any) {
-            return CommandsApiFp(configuration).determinedSetCommandPriority(commandId, body, options)(fetch, basePath);
+        setCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any) {
+            return CommandsApiFp(configuration).setCommandPriority(commandId, body, options)(fetch, basePath);
         },
     };
 };
@@ -11840,8 +12116,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public determinedGetCommand(commandId: string, options?: any) {
-        return CommandsApiFp(this.configuration).determinedGetCommand(commandId, options)(this.fetch, this.basePath);
+    public getCommand(commandId: string, options?: any) {
+        return CommandsApiFp(this.configuration).getCommand(commandId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11858,8 +12134,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public determinedGetCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-        return CommandsApiFp(this.configuration).determinedGetCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
+    public getCommands(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return CommandsApiFp(this.configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11870,8 +12146,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public determinedKillCommand(commandId: string, options?: any) {
-        return CommandsApiFp(this.configuration).determinedKillCommand(commandId, options)(this.fetch, this.basePath);
+    public killCommand(commandId: string, options?: any) {
+        return CommandsApiFp(this.configuration).killCommand(commandId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11882,8 +12158,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public determinedLaunchCommand(body: V1LaunchCommandRequest, options?: any) {
-        return CommandsApiFp(this.configuration).determinedLaunchCommand(body, options)(this.fetch, this.basePath);
+    public launchCommand(body: V1LaunchCommandRequest, options?: any) {
+        return CommandsApiFp(this.configuration).launchCommand(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -11895,8 +12171,8 @@ export class CommandsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public determinedSetCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any) {
-        return CommandsApiFp(this.configuration).determinedSetCommandPriority(commandId, body, options)(this.fetch, this.basePath);
+    public setCommandPriority(commandId: string, body: V1SetCommandPriorityRequest, options?: any) {
+        return CommandsApiFp(this.configuration).setCommandPriority(commandId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -11914,10 +12190,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedActivateExperiment(id: number, options: any = {}): FetchArgs {
+        activateExperiment(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedActivateExperiment.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling activateExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{id}/activate`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -11951,10 +12227,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveExperiment(id: number, options: any = {}): FetchArgs {
+        archiveExperiment(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedArchiveExperiment.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling archiveExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{id}/archive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -11988,10 +12264,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCancelExperiment(id: number, options: any = {}): FetchArgs {
+        cancelExperiment(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedCancelExperiment.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling cancelExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{id}/cancel`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -12032,7 +12308,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCompareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options: any = {}): FetchArgs {
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trials/compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -12096,10 +12372,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteExperiment(experimentId: number, options: any = {}): FetchArgs {
+        deleteExperiment(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedDeleteExperiment.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling deleteExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12133,10 +12409,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiment(experimentId: number, options: any = {}): FetchArgs {
+        getExperiment(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetExperiment.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12175,10 +12451,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
+        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedGetExperimentCheckpoints.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getExperimentCheckpoints.');
             }
             const localVarPath = `/api/v1/experiments/{id}/checkpoints`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -12232,7 +12508,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentLabels(projectId?: number, options: any = {}): FetchArgs {
+        getExperimentLabels(projectId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiment/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -12263,6 +12539,52 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
+         * @summary Get individual file from modal definitions for download.
+         * @param {number} experimentId Experiment ID
+         * @param {string} path Path to the target file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentModelFile(experimentId: number, path: string, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentModelFile.');
+            }
+            // verify required parameter 'path' is not null or undefined
+            if (path === null || path === undefined) {
+                throw new RequiredError('path','Required parameter path was null or undefined when calling getExperimentModelFile.');
+            }
+            const localVarPath = `/experiments/{experiment_id}/file/download`
+                .replace(`{${"experiment_id"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = url.parse(localVarPath, true);
+            const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+					? configuration.apiKey("Authorization")
+					: configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+
+            if (path !== undefined) {
+                localVarQueryParameter['path'] = path;
+            }
+
+            localVarUrlObj.query = Object.assign({}, localVarUrlObj.query, localVarQueryParameter, options.query);
+            // fix override query string Detail: https://stackoverflow.com/a/7517673/1077943
+            delete localVarUrlObj.search;
+            localVarRequestOptions.headers = Object.assign({}, localVarHeaderParameter, options.headers);
+
+            return {
+                url: url.format(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the list of trials for an experiment.
          * @param {number} experimentId Limit trials to those that are owned by the specified experiments.
          * @param {'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE'} [sortBy] Sort trials by the given field.   - SORT_BY_UNSPECIFIED: Returns trials in an unsorted list.  - SORT_BY_ID: Returns trials sorted by id.  - SORT_BY_START_TIME: Return trials sorted by start time.  - SORT_BY_END_TIME: Return trials sorted by end time. Trials without end times are returned after trials that are.  - SORT_BY_STATE: Return trials sorted by state.  - SORT_BY_BEST_VALIDATION_METRIC: Return the trials sorted by the best metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_LATEST_VALIDATION_METRIC: Return the trials sorted by the latest metric so far, where the metric is specified by &#x60;searcher.metric&#x60; in the experiment configuration.  - SORT_BY_BATCHES_PROCESSED: Return the trials sorted by the number of batches completed.  - SORT_BY_DURATION: Return the trials sorted by the total duration.  - SORT_BY_RESTARTS: Return the trials sorted by the number of restarts.  - SORT_BY_CHECKPOINT_SIZE: Return the trials sorted by checkpoint size.
@@ -12273,10 +12595,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options: any = {}): FetchArgs {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetExperimentTrials.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentTrials.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/trials`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12330,10 +12652,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentValidationHistory(experimentId: number, options: any = {}): FetchArgs {
+        getExperimentValidationHistory(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetExperimentValidationHistory.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentValidationHistory.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/validation-history`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12385,7 +12707,7 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options: any = {}): FetchArgs {
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -12493,10 +12815,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDef(experimentId: number, options: any = {}): FetchArgs {
+        getModelDef(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetModelDef.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDef.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/model_def`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12531,14 +12853,14 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options: any = {}): FetchArgs {
+        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetModelDefFile.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefFile.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedGetModelDefFile.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getModelDefFile.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/file`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12576,10 +12898,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDefTree(experimentId: number, options: any = {}): FetchArgs {
+        getModelDefTree(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetModelDefTree.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefTree.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12613,10 +12935,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
+        getSearcherEvents(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetSearcherEvents.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getSearcherEvents.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher_events`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12650,10 +12972,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrial(trialId: number, options: any = {}): FetchArgs {
+        getTrial(trialId: number, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetTrial.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrial.');
             }
             const localVarPath = `/api/v1/trials/{trialId}`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -12692,10 +13014,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
+        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedGetTrialCheckpoints.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getTrialCheckpoints.');
             }
             const localVarPath = `/api/v1/trials/{id}/checkpoints`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -12749,10 +13071,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillExperiment(id: number, options: any = {}): FetchArgs {
+        killExperiment(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedKillExperiment.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling killExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{id}/kill`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -12786,10 +13108,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTrial(id: number, options: any = {}): FetchArgs {
+        killTrial(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedKillTrial.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling killTrial.');
             }
             const localVarPath = `/api/v1/trials/{id}/kill`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -12824,14 +13146,14 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMoveExperiment(experimentId: number, body: V1MoveExperimentRequest, options: any = {}): FetchArgs {
+        moveExperiment(experimentId: number, body: V1MoveExperimentRequest, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedMoveExperiment.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling moveExperiment.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedMoveExperiment.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/move`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12870,14 +13192,14 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchExperiment(experimentId: number, body: V1PatchExperiment, options: any = {}): FetchArgs {
+        patchExperiment(experimentId: number, body: V1PatchExperiment, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedPatchExperiment.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling patchExperiment.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchExperiment.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{experiment.id}`
                 .replace(`{${"experiment.id"}}`, encodeURIComponent(String(experimentId)));
@@ -12915,10 +13237,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPauseExperiment(id: number, options: any = {}): FetchArgs {
+        pauseExperiment(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedPauseExperiment.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling pauseExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{id}/pause`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -12953,14 +13275,14 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options: any = {}): FetchArgs {
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedPostSearcherOperations.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling postSearcherOperations.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostSearcherOperations.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postSearcherOperations.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher_operations`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -12998,10 +13320,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPreviewHPSearch(body: V1PreviewHPSearchRequest, options: any = {}): FetchArgs {
+        previewHPSearch(body: V1PreviewHPSearchRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPreviewHPSearch.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling previewHPSearch.');
             }
             const localVarPath = `/api/v1/preview-hp-search`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -13044,10 +13366,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedSummarizeTrial.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/summarize`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -13117,10 +13439,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedTrialLogs.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -13203,10 +13525,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
+        trialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedTrialLogsFields.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogsFields.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs/fields`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -13244,10 +13566,10 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveExperiment(id: number, options: any = {}): FetchArgs {
+        unarchiveExperiment(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedUnarchiveExperiment.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveExperiment.');
             }
             const localVarPath = `/api/v1/experiments/{id}/unarchive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -13290,8 +13612,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedActivateExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedActivateExperiment(id, options);
+        activateExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ActivateExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).activateExperiment(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13309,8 +13631,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedArchiveExperiment(id, options);
+        archiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).archiveExperiment(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13328,8 +13650,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCancelExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedCancelExperiment(id, options);
+        cancelExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiment(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13354,8 +13676,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCompareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedCompareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13373,8 +13695,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedDeleteExperiment(experimentId, options);
+        deleteExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).deleteExperiment(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13392,8 +13714,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperiment(experimentId, options);
+        getExperiment(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiment(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13416,8 +13738,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
+        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13435,12 +13757,32 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentLabels(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentLabelsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperimentLabels(projectId, options);
+        getExperimentLabels(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentLabelsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentLabels(projectId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
                         return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get individual file from modal definitions for download.
+         * @param {number} experimentId Experiment ID
+         * @param {string} path Path to the target file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentModelFile(experimentId: number, path: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<Response> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentModelFile(experimentId, path, options);
+            return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response;
                     } else {
                         throw response;
                     }
@@ -13459,8 +13801,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13478,8 +13820,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentValidationHistory(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentValidationHistoryResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperimentValidationHistory(experimentId, options);
+        getExperimentValidationHistory(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentValidationHistoryResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentValidationHistory(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13515,8 +13857,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options);
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13534,8 +13876,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDef(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetModelDef(experimentId, options);
+        getModelDef(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDef(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13554,8 +13896,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetModelDefFile(experimentId, body, options);
+        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefFile(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13573,8 +13915,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetModelDefTree(experimentId, options);
+        getModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefTree(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13592,8 +13934,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetSearcherEvents(experimentId, options);
+        getSearcherEvents(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetSearcherEventsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getSearcherEvents(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13611,8 +13953,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetTrial(trialId, options);
+        getTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrial(trialId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13635,8 +13977,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedGetTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
+        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialCheckpointsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13654,8 +13996,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedKillExperiment(id, options);
+        killExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killExperiment(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13673,8 +14015,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedKillTrial(id, options);
+        killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).killTrial(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13693,8 +14035,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMoveExperiment(experimentId: number, body: V1MoveExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedMoveExperiment(experimentId, body, options);
+        moveExperiment(experimentId: number, body: V1MoveExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).moveExperiment(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13713,8 +14055,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchExperiment(experimentId: number, body: V1PatchExperiment, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedPatchExperiment(experimentId, body, options);
+        patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).patchExperiment(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13732,8 +14074,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPauseExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedPauseExperiment(id, options);
+        pauseExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).pauseExperiment(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13752,8 +14094,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedPostSearcherOperations(experimentId, body, options);
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostSearcherOperationsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).postSearcherOperations(experimentId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13771,8 +14113,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPreviewHPSearch(body: V1PreviewHPSearchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PreviewHPSearchResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedPreviewHPSearch(body, options);
+        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PreviewHPSearchResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).previewHPSearch(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13796,8 +14138,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedSummarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13827,8 +14169,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedTrialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13847,8 +14189,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedTrialLogsFields(trialId, follow, options);
+        trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13866,8 +14208,8 @@ export const ExperimentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).determinedUnarchiveExperiment(id, options);
+        unarchiveExperiment(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveExperimentResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).unarchiveExperiment(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13894,8 +14236,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedActivateExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedActivateExperiment(id, options)(fetch, basePath);
+        activateExperiment(id: number, options?: any) {
+            return ExperimentsApiFp(configuration).activateExperiment(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -13904,8 +14246,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedArchiveExperiment(id, options)(fetch, basePath);
+        archiveExperiment(id: number, options?: any) {
+            return ExperimentsApiFp(configuration).archiveExperiment(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -13914,8 +14256,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCancelExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedCancelExperiment(id, options)(fetch, basePath);
+        cancelExperiment(id: number, options?: any) {
+            return ExperimentsApiFp(configuration).cancelExperiment(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -13931,8 +14273,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCompareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
-            return ExperimentsApiFp(configuration).determinedCompareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(fetch, basePath);
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
+            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(fetch, basePath);
         },
         /**
          * 
@@ -13941,8 +14283,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteExperiment(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedDeleteExperiment(experimentId, options)(fetch, basePath);
+        deleteExperiment(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).deleteExperiment(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -13951,8 +14293,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiment(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetExperiment(experimentId, options)(fetch, basePath);
+        getExperiment(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getExperiment(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -13966,8 +14308,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -13976,8 +14318,19 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentLabels(projectId?: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetExperimentLabels(projectId, options)(fetch, basePath);
+        getExperimentLabels(projectId?: number, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentLabels(projectId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get individual file from modal definitions for download.
+         * @param {number} experimentId Experiment ID
+         * @param {string} path Path to the target file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentModelFile(experimentId: number, path: string, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentModelFile(experimentId, path, options)(fetch, basePath);
         },
         /**
          * 
@@ -13991,8 +14344,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -14001,8 +14354,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentValidationHistory(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetExperimentValidationHistory(experimentId, options)(fetch, basePath);
+        getExperimentValidationHistory(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getExperimentValidationHistory(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -14029,8 +14382,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options)(fetch, basePath);
+        getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
+            return ExperimentsApiFp(configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options)(fetch, basePath);
         },
         /**
          * 
@@ -14039,8 +14392,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDef(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetModelDef(experimentId, options)(fetch, basePath);
+        getModelDef(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDef(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -14050,8 +14403,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetModelDefFile(experimentId, body, options)(fetch, basePath);
+        getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDefFile(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14060,8 +14413,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelDefTree(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetModelDefTree(experimentId, options)(fetch, basePath);
+        getModelDefTree(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getModelDefTree(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -14070,8 +14423,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetSearcherEvents(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetSearcherEvents(experimentId, options)(fetch, basePath);
+        getSearcherEvents(experimentId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getSearcherEvents(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -14080,8 +14433,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrial(trialId: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetTrial(trialId, options)(fetch, basePath);
+        getTrial(trialId: number, options?: any) {
+            return ExperimentsApiFp(configuration).getTrial(trialId, options)(fetch, basePath);
         },
         /**
          * 
@@ -14095,8 +14448,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-            return ExperimentsApiFp(configuration).determinedGetTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+            return ExperimentsApiFp(configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -14105,8 +14458,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedKillExperiment(id, options)(fetch, basePath);
+        killExperiment(id: number, options?: any) {
+            return ExperimentsApiFp(configuration).killExperiment(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -14115,8 +14468,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTrial(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedKillTrial(id, options)(fetch, basePath);
+        killTrial(id: number, options?: any) {
+            return ExperimentsApiFp(configuration).killTrial(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -14126,8 +14479,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMoveExperiment(experimentId: number, body: V1MoveExperimentRequest, options?: any) {
-            return ExperimentsApiFp(configuration).determinedMoveExperiment(experimentId, body, options)(fetch, basePath);
+        moveExperiment(experimentId: number, body: V1MoveExperimentRequest, options?: any) {
+            return ExperimentsApiFp(configuration).moveExperiment(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14137,8 +14490,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchExperiment(experimentId: number, body: V1PatchExperiment, options?: any) {
-            return ExperimentsApiFp(configuration).determinedPatchExperiment(experimentId, body, options)(fetch, basePath);
+        patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any) {
+            return ExperimentsApiFp(configuration).patchExperiment(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14147,8 +14500,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPauseExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedPauseExperiment(id, options)(fetch, basePath);
+        pauseExperiment(id: number, options?: any) {
+            return ExperimentsApiFp(configuration).pauseExperiment(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -14158,8 +14511,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
-            return ExperimentsApiFp(configuration).determinedPostSearcherOperations(experimentId, body, options)(fetch, basePath);
+        postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).postSearcherOperations(experimentId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14168,8 +14521,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPreviewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
-            return ExperimentsApiFp(configuration).determinedPreviewHPSearch(body, options)(fetch, basePath);
+        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
+            return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -14184,8 +14537,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-            return ExperimentsApiFp(configuration).determinedSummarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+            return ExperimentsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
         },
         /**
          * 
@@ -14206,8 +14559,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-            return ExperimentsApiFp(configuration).determinedTrialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -14217,8 +14570,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogsFields(trialId: number, follow?: boolean, options?: any) {
-            return ExperimentsApiFp(configuration).determinedTrialLogsFields(trialId, follow, options)(fetch, basePath);
+        trialLogsFields(trialId: number, follow?: boolean, options?: any) {
+            return ExperimentsApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
         },
         /**
          * 
@@ -14227,8 +14580,8 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveExperiment(id: number, options?: any) {
-            return ExperimentsApiFp(configuration).determinedUnarchiveExperiment(id, options)(fetch, basePath);
+        unarchiveExperiment(id: number, options?: any) {
+            return ExperimentsApiFp(configuration).unarchiveExperiment(id, options)(fetch, basePath);
         },
     };
 };
@@ -14248,8 +14601,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedActivateExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedActivateExperiment(id, options)(this.fetch, this.basePath);
+    public activateExperiment(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).activateExperiment(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14260,8 +14613,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedArchiveExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedArchiveExperiment(id, options)(this.fetch, this.basePath);
+    public archiveExperiment(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).archiveExperiment(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14272,8 +14625,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedCancelExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedCancelExperiment(id, options)(this.fetch, this.basePath);
+    public cancelExperiment(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).cancelExperiment(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14291,8 +14644,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedCompareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedCompareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(this.fetch, this.basePath);
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', xAxis?: 'X_AXIS_UNSPECIFIED' | 'X_AXIS_BATCH' | 'X_AXIS_TIME', options?: any) {
+        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, xAxis, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14303,8 +14656,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedDeleteExperiment(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedDeleteExperiment(experimentId, options)(this.fetch, this.basePath);
+    public deleteExperiment(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).deleteExperiment(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14315,8 +14668,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperiment(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetExperiment(experimentId, options)(this.fetch, this.basePath);
+    public getExperiment(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperiment(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14332,8 +14685,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getExperimentCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_TRIAL_ID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_SEARCHER_METRIC', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14344,8 +14697,21 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperimentLabels(projectId?: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetExperimentLabels(projectId, options)(this.fetch, this.basePath);
+    public getExperimentLabels(projectId?: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentLabels(projectId, options)(this.fetch, this.basePath);
+    }
+
+    /**
+     * 
+     * @summary Get individual file from modal definitions for download.
+     * @param {number} experimentId Experiment ID
+     * @param {string} path Path to the target file
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ExperimentsApi
+     */
+    public getExperimentModelFile(experimentId: number, path: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentModelFile(experimentId, path, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14361,8 +14727,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14373,8 +14739,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperimentValidationHistory(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetExperimentValidationHistory(experimentId, options)(this.fetch, this.basePath);
+    public getExperimentValidationHistory(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperimentValidationHistory(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14403,8 +14769,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options)(this.fetch, this.basePath);
+    public getExperiments(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_NUM_TRIALS' | 'SORT_BY_PROGRESS' | 'SORT_BY_USER' | 'SORT_BY_NAME' | 'SORT_BY_FORKED_FROM' | 'SORT_BY_RESOURCE_POOL' | 'SORT_BY_PROJECT_ID' | 'SORT_BY_CHECKPOINT_SIZE' | 'SORT_BY_CHECKPOINT_COUNT' | 'SORT_BY_SEARCHER_METRIC_VAL', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, description?: string, name?: string, labels?: Array<string>, archived?: boolean, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, users?: Array<string>, userIds?: Array<number>, projectId?: number, experimentIdFilterLt?: number, experimentIdFilterLte?: number, experimentIdFilterGt?: number, experimentIdFilterGte?: number, experimentIdFilterIncl?: Array<number>, experimentIdFilterNotIn?: Array<number>, showTrialData?: boolean, options?: any) {
+        return ExperimentsApiFp(this.configuration).getExperiments(sortBy, orderBy, offset, limit, description, name, labels, archived, states, users, userIds, projectId, experimentIdFilterLt, experimentIdFilterLte, experimentIdFilterGt, experimentIdFilterGte, experimentIdFilterIncl, experimentIdFilterNotIn, showTrialData, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14415,8 +14781,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetModelDef(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetModelDef(experimentId, options)(this.fetch, this.basePath);
+    public getModelDef(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDef(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14428,8 +14794,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetModelDefFile(experimentId, body, options)(this.fetch, this.basePath);
+    public getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDefFile(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14440,8 +14806,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetModelDefTree(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetModelDefTree(experimentId, options)(this.fetch, this.basePath);
+    public getModelDefTree(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getModelDefTree(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14452,8 +14818,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetSearcherEvents(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetSearcherEvents(experimentId, options)(this.fetch, this.basePath);
+    public getSearcherEvents(experimentId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getSearcherEvents(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14464,8 +14830,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetTrial(trialId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetTrial(trialId, options)(this.fetch, this.basePath);
+    public getTrial(trialId: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).getTrial(trialId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14481,8 +14847,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedGetTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedGetTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getTrialCheckpoints(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_UUID' | 'SORT_BY_BATCH_NUMBER' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_COMPLETED' | 'STATE_ERROR' | 'STATE_DELETED'>, options?: any) {
+        return ExperimentsApiFp(this.configuration).getTrialCheckpoints(id, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14493,8 +14859,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedKillExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedKillExperiment(id, options)(this.fetch, this.basePath);
+    public killExperiment(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).killExperiment(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14505,8 +14871,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedKillTrial(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedKillTrial(id, options)(this.fetch, this.basePath);
+    public killTrial(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14518,8 +14884,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedMoveExperiment(experimentId: number, body: V1MoveExperimentRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedMoveExperiment(experimentId, body, options)(this.fetch, this.basePath);
+    public moveExperiment(experimentId: number, body: V1MoveExperimentRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).moveExperiment(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14531,8 +14897,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedPatchExperiment(experimentId: number, body: V1PatchExperiment, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedPatchExperiment(experimentId, body, options)(this.fetch, this.basePath);
+    public patchExperiment(experimentId: number, body: V1PatchExperiment, options?: any) {
+        return ExperimentsApiFp(this.configuration).patchExperiment(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14543,8 +14909,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedPauseExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedPauseExperiment(id, options)(this.fetch, this.basePath);
+    public pauseExperiment(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).pauseExperiment(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14556,8 +14922,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedPostSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedPostSearcherOperations(experimentId, body, options)(this.fetch, this.basePath);
+    public postSearcherOperations(experimentId: number, body: V1PostSearcherOperationsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).postSearcherOperations(experimentId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14568,8 +14934,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedPreviewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedPreviewHPSearch(body, options)(this.fetch, this.basePath);
+    public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14586,8 +14952,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedSummarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
+    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+        return ExperimentsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14610,8 +14976,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedTrialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14623,8 +14989,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedTrialLogsFields(trialId: number, follow?: boolean, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedTrialLogsFields(trialId, follow, options)(this.fetch, this.basePath);
+    public trialLogsFields(trialId: number, follow?: boolean, options?: any) {
+        return ExperimentsApiFp(this.configuration).trialLogsFields(trialId, follow, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -14635,8 +15001,8 @@ export class ExperimentsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public determinedUnarchiveExperiment(id: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).determinedUnarchiveExperiment(id, options)(this.fetch, this.basePath);
+    public unarchiveExperiment(id: number, options?: any) {
+        return ExperimentsApiFp(this.configuration).unarchiveExperiment(id, options)(this.fetch, this.basePath);
     }
 
 }
@@ -14655,14 +15021,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options: any = {}): FetchArgs {
+        ackAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAckAllocationPreemptionSignal.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling ackAllocationPreemptionSignal.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAckAllocationPreemptionSignal.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling ackAllocationPreemptionSignal.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/signals/ack_preemption`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -14701,14 +15067,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options: any = {}): FetchArgs {
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationAllGather.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationAllGather.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAllocationAllGather.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationAllGather.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/all_gather`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -14747,14 +15113,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options: any = {}): FetchArgs {
+        allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationPendingPreemptionSignal.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationPendingPreemptionSignal.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAllocationPendingPreemptionSignal.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationPendingPreemptionSignal.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/signals/pending_preemption`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -14793,10 +15159,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options: any = {}): FetchArgs {
+        allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationPreemptionSignal.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationPreemptionSignal.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/signals/preemption`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -14835,14 +15201,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationReady(allocationId: string, body: V1AllocationReadyRequest, options: any = {}): FetchArgs {
+        allocationReady(allocationId: string, body: V1AllocationReadyRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationReady.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationReady.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAllocationReady.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationReady.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/ready`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -14881,14 +15247,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationRendezvousInfo(allocationId: string, resourcesId: string, options: any = {}): FetchArgs {
+        allocationRendezvousInfo(allocationId: string, resourcesId: string, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationRendezvousInfo.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationRendezvousInfo.');
             }
             // verify required parameter 'resourcesId' is not null or undefined
             if (resourcesId === null || resourcesId === undefined) {
-                throw new RequiredError('resourcesId','Required parameter resourcesId was null or undefined when calling determinedAllocationRendezvousInfo.');
+                throw new RequiredError('resourcesId','Required parameter resourcesId was null or undefined when calling allocationRendezvousInfo.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/resources/{resourcesId}/rendezvous`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
@@ -14924,14 +15290,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options: any = {}): FetchArgs {
+        allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedAllocationWaiting.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling allocationWaiting.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAllocationWaiting.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling allocationWaiting.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/waiting`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -14970,14 +15336,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCompleteTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options: any = {}): FetchArgs {
+        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedCompleteTrialSearcherValidation.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling completeTrialSearcherValidation.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedCompleteTrialSearcherValidation.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling completeTrialSearcherValidation.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/completed_operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -15015,10 +15381,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedComputeHPImportance(experimentId: number, options: any = {}): FetchArgs {
+        computeHPImportance(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedComputeHPImportance.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling computeHPImportance.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/hyperparameter-importance`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -15052,10 +15418,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateExperiment(body: V1CreateExperimentRequest, options: any = {}): FetchArgs {
+        createExperiment(body: V1CreateExperimentRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedCreateExperiment.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createExperiment.');
             }
             const localVarPath = `/api/v1/experiments`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -15092,10 +15458,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateGroup(body: V1CreateGroupRequest, options: any = {}): FetchArgs {
+        createGroup(body: V1CreateGroupRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedCreateGroup.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createGroup.');
             }
             const localVarPath = `/api/v1/groups`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -15132,10 +15498,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteGroup(groupId: number, options: any = {}): FetchArgs {
+        deleteGroup(groupId: number, options: any = {}): FetchArgs {
             // verify required parameter 'groupId' is not null or undefined
             if (groupId === null || groupId === undefined) {
-                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling determinedDeleteGroup.');
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling deleteGroup.');
             }
             const localVarPath = `/api/v1/groups/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
@@ -15170,10 +15536,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedExpCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
+        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedExpCompareMetricNames.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling expCompareMetricNames.');
             }
             const localVarPath = `/api/v1/trials/metrics-stream/metric-names`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -15221,18 +15587,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedExpCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentIds' is not null or undefined
             if (experimentIds === null || experimentIds === undefined) {
-                throw new RequiredError('experimentIds','Required parameter experimentIds was null or undefined when calling determinedExpCompareTrialsSample.');
+                throw new RequiredError('experimentIds','Required parameter experimentIds was null or undefined when calling expCompareTrialsSample.');
             }
             // verify required parameter 'metricName' is not null or undefined
             if (metricName === null || metricName === undefined) {
-                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling determinedExpCompareTrialsSample.');
+                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling expCompareTrialsSample.');
             }
             // verify required parameter 'metricType' is not null or undefined
             if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling determinedExpCompareTrialsSample.');
+                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling expCompareTrialsSample.');
             }
             const localVarPath = `/api/v1/experiments-compare`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -15297,10 +15663,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetBestSearcherValidationMetric(experimentId: number, options: any = {}): FetchArgs {
+        getBestSearcherValidationMetric(experimentId: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetBestSearcherValidationMetric.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getBestSearcherValidationMetric.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -15334,10 +15700,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCurrentTrialSearcherOperation(trialId: number, options: any = {}): FetchArgs {
+        getCurrentTrialSearcherOperation(trialId: number, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetCurrentTrialSearcherOperation.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getCurrentTrialSearcherOperation.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -15371,10 +15737,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroup(groupId: number, options: any = {}): FetchArgs {
+        getGroup(groupId: number, options: any = {}): FetchArgs {
             // verify required parameter 'groupId' is not null or undefined
             if (groupId === null || groupId === undefined) {
-                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling determinedGetGroup.');
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getGroup.');
             }
             const localVarPath = `/api/v1/groups/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
@@ -15408,10 +15774,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroups(body: V1GetGroupsRequest, options: any = {}): FetchArgs {
+        getGroups(body: V1GetGroupsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedGetGroups.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getGroups.');
             }
             const localVarPath = `/api/v1/groups/search`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -15449,10 +15815,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetHPImportance(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        getHPImportance(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetHPImportance.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getHPImportance.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/hyperparameter-importance`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -15490,7 +15856,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
+        getJobQueueStats(resourcePools?: Array<string>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues/stats`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15530,7 +15896,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options: any = {}): FetchArgs {
+        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/job-queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15583,7 +15949,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getResourcePools(offset?: number, limit?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/resource-pools`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15622,7 +15988,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTelemetry(options: any = {}): FetchArgs {
+        getTelemetry(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/master/telemetry`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -15653,10 +16019,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options: any = {}): FetchArgs {
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetTrialWorkloads.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/workloads`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -15719,14 +16085,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options: any = {}): FetchArgs {
+        idleNotebook(notebookId: string, body: V1IdleNotebookRequest, options: any = {}): FetchArgs {
             // verify required parameter 'notebookId' is not null or undefined
             if (notebookId === null || notebookId === undefined) {
-                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling determinedIdleNotebook.');
+                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling idleNotebook.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedIdleNotebook.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling idleNotebook.');
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}/report_idle`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
@@ -15766,18 +16132,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMarkAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options: any = {}): FetchArgs {
+        markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedMarkAllocationResourcesDaemon.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling markAllocationResourcesDaemon.');
             }
             // verify required parameter 'resourcesId' is not null or undefined
             if (resourcesId === null || resourcesId === undefined) {
-                throw new RequiredError('resourcesId','Required parameter resourcesId was null or undefined when calling determinedMarkAllocationResourcesDaemon.');
+                throw new RequiredError('resourcesId','Required parameter resourcesId was null or undefined when calling markAllocationResourcesDaemon.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedMarkAllocationResourcesDaemon.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling markAllocationResourcesDaemon.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/resources/{resourcesId}/daemon`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)))
@@ -15819,18 +16185,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMetricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options: any = {}): FetchArgs {
+        metricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedMetricBatches.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricBatches.');
             }
             // verify required parameter 'metricName' is not null or undefined
             if (metricName === null || metricName === undefined) {
-                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling determinedMetricBatches.');
+                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling metricBatches.');
             }
             // verify required parameter 'metricType' is not null or undefined
             if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling determinedMetricBatches.');
+                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling metricBatches.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/batches`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -15877,10 +16243,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMetricNames(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        metricNames(experimentId: number, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedMetricNames.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling metricNames.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/metric-names`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -15919,14 +16285,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedNotifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options: any = {}): FetchArgs {
+        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedNotifyContainerRunning.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling notifyContainerRunning.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedNotifyContainerRunning.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling notifyContainerRunning.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/notify_container_running`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -15965,14 +16331,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options: any = {}): FetchArgs {
+        postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options: any = {}): FetchArgs {
             // verify required parameter 'allocationId' is not null or undefined
             if (allocationId === null || allocationId === undefined) {
-                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling determinedPostAllocationProxyAddress.');
+                throw new RequiredError('allocationId','Required parameter allocationId was null or undefined when calling postAllocationProxyAddress.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostAllocationProxyAddress.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postAllocationProxyAddress.');
             }
             const localVarPath = `/api/v1/allocations/{allocationId}/proxy_address`
                 .replace(`{${"allocationId"}}`, encodeURIComponent(String(allocationId)));
@@ -16010,10 +16376,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options: any = {}): FetchArgs {
+        postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostTrialProfilerMetricsBatch.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postTrialProfilerMetricsBatch.');
             }
             const localVarPath = `/api/v1/trials/profiler/metrics`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -16051,14 +16417,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options: any = {}): FetchArgs {
+        postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedPostTrialRunnerMetadata.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling postTrialRunnerMetadata.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostTrialRunnerMetadata.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postTrialRunnerMetadata.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/runner/metadata`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -16096,10 +16462,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportCheckpoint(body: V1Checkpoint, options: any = {}): FetchArgs {
+        reportCheckpoint(body: V1Checkpoint, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedReportCheckpoint.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportCheckpoint.');
             }
             const localVarPath = `/api/v1/checkpoints`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -16137,14 +16503,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialProgress(trialId: number, body: number, options: any = {}): FetchArgs {
+        reportTrialProgress(trialId: number, body: number, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedReportTrialProgress.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling reportTrialProgress.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedReportTrialProgress.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialProgress.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/progress`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -16183,14 +16549,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options: any = {}): FetchArgs {
+        reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedReportTrialSearcherEarlyExit.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling reportTrialSearcherEarlyExit.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedReportTrialSearcherEarlyExit.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialSearcherEarlyExit.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/early_exit`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -16229,14 +16595,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
+        reportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
             // verify required parameter 'trainingMetricsTrialId' is not null or undefined
             if (trainingMetricsTrialId === null || trainingMetricsTrialId === undefined) {
-                throw new RequiredError('trainingMetricsTrialId','Required parameter trainingMetricsTrialId was null or undefined when calling determinedReportTrialTrainingMetrics.');
+                throw new RequiredError('trainingMetricsTrialId','Required parameter trainingMetricsTrialId was null or undefined when calling reportTrialTrainingMetrics.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedReportTrialTrainingMetrics.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialTrainingMetrics.');
             }
             const localVarPath = `/api/v1/trials/{trainingMetrics.trialId}/training_metrics`
                 .replace(`{${"trainingMetrics.trialId"}}`, encodeURIComponent(String(trainingMetricsTrialId)));
@@ -16275,14 +16641,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
+        reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options: any = {}): FetchArgs {
             // verify required parameter 'validationMetricsTrialId' is not null or undefined
             if (validationMetricsTrialId === null || validationMetricsTrialId === undefined) {
-                throw new RequiredError('validationMetricsTrialId','Required parameter validationMetricsTrialId was null or undefined when calling determinedReportTrialValidationMetrics.');
+                throw new RequiredError('validationMetricsTrialId','Required parameter validationMetricsTrialId was null or undefined when calling reportTrialValidationMetrics.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedReportTrialValidationMetrics.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling reportTrialValidationMetrics.');
             }
             const localVarPath = `/api/v1/trials/{validationMetrics.trialId}/validation_metrics`
                 .replace(`{${"validationMetrics.trialId"}}`, encodeURIComponent(String(validationMetricsTrialId)));
@@ -16327,18 +16693,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        trialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedTrialsSample.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling trialsSample.');
             }
             // verify required parameter 'metricName' is not null or undefined
             if (metricName === null || metricName === undefined) {
-                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling determinedTrialsSample.');
+                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling trialsSample.');
             }
             // verify required parameter 'metricType' is not null or undefined
             if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling determinedTrialsSample.');
+                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling trialsSample.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/trials-sample`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -16405,22 +16771,22 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options: any = {}): FetchArgs {
+        trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedTrialsSnapshot.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling trialsSnapshot.');
             }
             // verify required parameter 'metricName' is not null or undefined
             if (metricName === null || metricName === undefined) {
-                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling determinedTrialsSnapshot.');
+                throw new RequiredError('metricName','Required parameter metricName was null or undefined when calling trialsSnapshot.');
             }
             // verify required parameter 'metricType' is not null or undefined
             if (metricType === null || metricType === undefined) {
-                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling determinedTrialsSnapshot.');
+                throw new RequiredError('metricType','Required parameter metricType was null or undefined when calling trialsSnapshot.');
             }
             // verify required parameter 'batchesProcessed' is not null or undefined
             if (batchesProcessed === null || batchesProcessed === undefined) {
-                throw new RequiredError('batchesProcessed','Required parameter batchesProcessed was null or undefined when calling determinedTrialsSnapshot.');
+                throw new RequiredError('batchesProcessed','Required parameter batchesProcessed was null or undefined when calling trialsSnapshot.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/metrics-stream/trials-snapshot`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -16475,14 +16841,14 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateGroup(groupId: number, body: V1UpdateGroupRequest, options: any = {}): FetchArgs {
+        updateGroup(groupId: number, body: V1UpdateGroupRequest, options: any = {}): FetchArgs {
             // verify required parameter 'groupId' is not null or undefined
             if (groupId === null || groupId === undefined) {
-                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling determinedUpdateGroup.');
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling updateGroup.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedUpdateGroup.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling updateGroup.');
             }
             const localVarPath = `/api/v1/groups/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
@@ -16520,10 +16886,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options: any = {}): FetchArgs {
+        updateJobQueue(body: V1UpdateJobQueueRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedUpdateJobQueue.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling updateJobQueue.');
             }
             const localVarPath = `/api/v1/job-queues`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -16570,8 +16936,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AckAllocationPreemptionSignalResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAckAllocationPreemptionSignal(allocationId, body, options);
+        ackAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AckAllocationPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).ackAllocationPreemptionSignal(allocationId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16590,8 +16956,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationAllGatherResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationAllGather(allocationId, body, options);
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationAllGatherResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationAllGather(allocationId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16610,8 +16976,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPendingPreemptionSignalResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationPendingPreemptionSignal(allocationId, body, options);
+        allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPendingPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPendingPreemptionSignal(allocationId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16630,8 +16996,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPreemptionSignalResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationPreemptionSignal(allocationId, timeoutSeconds, options);
+        allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationPreemptionSignalResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16650,8 +17016,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationReady(allocationId: string, body: V1AllocationReadyRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationReadyResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationReady(allocationId, body, options);
+        allocationReady(allocationId: string, body: V1AllocationReadyRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationReadyResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationReady(allocationId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16670,8 +17036,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationRendezvousInfo(allocationId, resourcesId, options);
+        allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationRendezvousInfoResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationRendezvousInfo(allocationId, resourcesId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16690,8 +17056,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedAllocationWaiting(allocationId, body, options);
+        allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AllocationWaitingResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).allocationWaiting(allocationId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16710,8 +17076,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCompleteTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompleteTrialSearcherValidationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedCompleteTrialSearcherValidation(trialId, body, options);
+        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompleteTrialSearcherValidationResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).completeTrialSearcherValidation(trialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16729,8 +17095,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedComputeHPImportance(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ComputeHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedComputeHPImportance(experimentId, options);
+        computeHPImportance(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ComputeHPImportanceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).computeHPImportance(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16748,8 +17114,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateExperiment(body: V1CreateExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateExperimentResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedCreateExperiment(body, options);
+        createExperiment(body: V1CreateExperimentRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateExperimentResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createExperiment(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16767,8 +17133,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateGroup(body: V1CreateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedCreateGroup(body, options);
+        createGroup(body: V1CreateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).createGroup(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16786,8 +17152,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedDeleteGroup(groupId, options);
+        deleteGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).deleteGroup(groupId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16806,8 +17172,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedExpCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareMetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedExpCompareMetricNames(trialId, periodSeconds, options);
+        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareMetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareMetricNames(trialId, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16832,8 +17198,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedExpCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareTrialsSampleResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedExpCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
+        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1ExpCompareTrialsSampleResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16851,8 +17217,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetBestSearcherValidationMetric(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetBestSearcherValidationMetric(experimentId, options);
+        getBestSearcherValidationMetric(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getBestSearcherValidationMetric(experimentId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16870,8 +17236,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetCurrentTrialSearcherOperation(trialId, options);
+        getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16889,8 +17255,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetGroup(groupId, options);
+        getGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroup(groupId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16908,8 +17274,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroups(body: V1GetGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetGroups(body, options);
+        getGroups(body: V1GetGroupsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getGroups(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16928,8 +17294,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetHPImportance(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetHPImportance(experimentId, periodSeconds, options);
+        getHPImportance(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetHPImportanceResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getHPImportance(experimentId, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16947,8 +17313,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetJobQueueStats(resourcePools, options);
+        getJobQueueStats(resourcePools?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobQueueStatsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobQueueStats(resourcePools, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16970,8 +17336,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetJobs(offset, limit, resourcePool, orderBy, states, options);
+        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetJobsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getJobs(offset, limit, resourcePool, orderBy, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -16990,8 +17356,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetResourcePools(offset, limit, options);
+        getResourcePools(offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetResourcePoolsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getResourcePools(offset, limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17008,8 +17374,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTelemetry(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTelemetryResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetTelemetry(options);
+        getTelemetry(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTelemetryResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTelemetry(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17034,8 +17400,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedGetTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17054,8 +17420,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1IdleNotebookResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedIdleNotebook(notebookId, body, options);
+        idleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1IdleNotebookResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).idleNotebook(notebookId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17075,8 +17441,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMarkAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationResourcesDaemonResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedMarkAllocationResourcesDaemon(allocationId, resourcesId, body, options);
+        markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MarkAllocationResourcesDaemonResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).markAllocationResourcesDaemon(allocationId, resourcesId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17097,8 +17463,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMetricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedMetricBatches(experimentId, metricName, metricType, periodSeconds, options);
+        metricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricBatchesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17117,8 +17483,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMetricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedMetricNames(experimentId, periodSeconds, options);
+        metricNames(experimentId: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1MetricNamesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).metricNames(experimentId, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17137,8 +17503,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedNotifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedNotifyContainerRunning(allocationId, body, options);
+        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1NotifyContainerRunningResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).notifyContainerRunning(allocationId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17157,8 +17523,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedPostAllocationProxyAddress(allocationId, body, options);
+        postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAllocationProxyAddressResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postAllocationProxyAddress(allocationId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17176,8 +17542,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialProfilerMetricsBatchResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedPostTrialProfilerMetricsBatch(body, options);
+        postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialProfilerMetricsBatchResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialProfilerMetricsBatch(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17196,8 +17562,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialRunnerMetadataResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedPostTrialRunnerMetadata(trialId, body, options);
+        postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostTrialRunnerMetadataResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).postTrialRunnerMetadata(trialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17215,8 +17581,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportCheckpoint(body: V1Checkpoint, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportCheckpointResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportCheckpoint(body, options);
+        reportCheckpoint(body: V1Checkpoint, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportCheckpointResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportCheckpoint(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17235,8 +17601,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialProgress(trialId: number, body: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialProgressResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialProgress(trialId, body, options);
+        reportTrialProgress(trialId: number, body: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialProgressResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialProgress(trialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17255,8 +17621,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSearcherEarlyExitResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialSearcherEarlyExit(trialId, body, options);
+        reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialSearcherEarlyExitResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialSearcherEarlyExit(trialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17275,8 +17641,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options);
+        reportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialTrainingMetricsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialTrainingMetrics(trainingMetricsTrialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17295,8 +17661,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options);
+        reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17321,8 +17687,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSampleResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedTrialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
+        trialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSampleResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17345,8 +17711,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSnapshotResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedTrialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options);
+        trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialsSnapshotResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17365,8 +17731,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateGroupResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedUpdateGroup(groupId, body, options);
+        updateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateGroupResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateGroup(groupId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17384,8 +17750,8 @@ export const InternalApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).determinedUpdateJobQueue(body, options);
+        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateJobQueueResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).updateJobQueue(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -17413,8 +17779,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any) {
-            return InternalApiFp(configuration).determinedAckAllocationPreemptionSignal(allocationId, body, options)(fetch, basePath);
+        ackAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any) {
+            return InternalApiFp(configuration).ackAllocationPreemptionSignal(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17424,8 +17790,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
-            return InternalApiFp(configuration).determinedAllocationAllGather(allocationId, body, options)(fetch, basePath);
+        allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
+            return InternalApiFp(configuration).allocationAllGather(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17435,8 +17801,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any) {
-            return InternalApiFp(configuration).determinedAllocationPendingPreemptionSignal(allocationId, body, options)(fetch, basePath);
+        allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any) {
+            return InternalApiFp(configuration).allocationPendingPreemptionSignal(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17446,8 +17812,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedAllocationPreemptionSignal(allocationId, timeoutSeconds, options)(fetch, basePath);
+        allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17457,8 +17823,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationReady(allocationId: string, body: V1AllocationReadyRequest, options?: any) {
-            return InternalApiFp(configuration).determinedAllocationReady(allocationId, body, options)(fetch, basePath);
+        allocationReady(allocationId: string, body: V1AllocationReadyRequest, options?: any) {
+            return InternalApiFp(configuration).allocationReady(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17468,8 +17834,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
-            return InternalApiFp(configuration).determinedAllocationRendezvousInfo(allocationId, resourcesId, options)(fetch, basePath);
+        allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
+            return InternalApiFp(configuration).allocationRendezvousInfo(allocationId, resourcesId, options)(fetch, basePath);
         },
         /**
          * 
@@ -17479,8 +17845,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAllocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
-            return InternalApiFp(configuration).determinedAllocationWaiting(allocationId, body, options)(fetch, basePath);
+        allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
+            return InternalApiFp(configuration).allocationWaiting(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17490,8 +17856,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCompleteTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
-            return InternalApiFp(configuration).determinedCompleteTrialSearcherValidation(trialId, body, options)(fetch, basePath);
+        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
+            return InternalApiFp(configuration).completeTrialSearcherValidation(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17500,8 +17866,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedComputeHPImportance(experimentId: number, options?: any) {
-            return InternalApiFp(configuration).determinedComputeHPImportance(experimentId, options)(fetch, basePath);
+        computeHPImportance(experimentId: number, options?: any) {
+            return InternalApiFp(configuration).computeHPImportance(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -17510,8 +17876,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateExperiment(body: V1CreateExperimentRequest, options?: any) {
-            return InternalApiFp(configuration).determinedCreateExperiment(body, options)(fetch, basePath);
+        createExperiment(body: V1CreateExperimentRequest, options?: any) {
+            return InternalApiFp(configuration).createExperiment(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17520,8 +17886,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateGroup(body: V1CreateGroupRequest, options?: any) {
-            return InternalApiFp(configuration).determinedCreateGroup(body, options)(fetch, basePath);
+        createGroup(body: V1CreateGroupRequest, options?: any) {
+            return InternalApiFp(configuration).createGroup(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17530,8 +17896,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteGroup(groupId: number, options?: any) {
-            return InternalApiFp(configuration).determinedDeleteGroup(groupId, options)(fetch, basePath);
+        deleteGroup(groupId: number, options?: any) {
+            return InternalApiFp(configuration).deleteGroup(groupId, options)(fetch, basePath);
         },
         /**
          * 
@@ -17541,8 +17907,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedExpCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedExpCompareMetricNames(trialId, periodSeconds, options)(fetch, basePath);
+        expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).expCompareMetricNames(trialId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17558,8 +17924,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedExpCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedExpCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
+        expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17568,8 +17934,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetBestSearcherValidationMetric(experimentId: number, options?: any) {
-            return InternalApiFp(configuration).determinedGetBestSearcherValidationMetric(experimentId, options)(fetch, basePath);
+        getBestSearcherValidationMetric(experimentId: number, options?: any) {
+            return InternalApiFp(configuration).getBestSearcherValidationMetric(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -17578,8 +17944,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetCurrentTrialSearcherOperation(trialId: number, options?: any) {
-            return InternalApiFp(configuration).determinedGetCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
+        getCurrentTrialSearcherOperation(trialId: number, options?: any) {
+            return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
         },
         /**
          * 
@@ -17588,8 +17954,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroup(groupId: number, options?: any) {
-            return InternalApiFp(configuration).determinedGetGroup(groupId, options)(fetch, basePath);
+        getGroup(groupId: number, options?: any) {
+            return InternalApiFp(configuration).getGroup(groupId, options)(fetch, basePath);
         },
         /**
          * 
@@ -17598,8 +17964,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroups(body: V1GetGroupsRequest, options?: any) {
-            return InternalApiFp(configuration).determinedGetGroups(body, options)(fetch, basePath);
+        getGroups(body: V1GetGroupsRequest, options?: any) {
+            return InternalApiFp(configuration).getGroups(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17609,8 +17975,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedGetHPImportance(experimentId, periodSeconds, options)(fetch, basePath);
+        getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).getHPImportance(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17619,8 +17985,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobQueueStats(resourcePools?: Array<string>, options?: any) {
-            return InternalApiFp(configuration).determinedGetJobQueueStats(resourcePools, options)(fetch, basePath);
+        getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+            return InternalApiFp(configuration).getJobQueueStats(resourcePools, options)(fetch, basePath);
         },
         /**
          * 
@@ -17633,8 +17999,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any) {
-            return InternalApiFp(configuration).determinedGetJobs(offset, limit, resourcePool, orderBy, states, options)(fetch, basePath);
+        getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any) {
+            return InternalApiFp(configuration).getJobs(offset, limit, resourcePool, orderBy, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -17644,8 +18010,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetResourcePools(offset?: number, limit?: number, options?: any) {
-            return InternalApiFp(configuration).determinedGetResourcePools(offset, limit, options)(fetch, basePath);
+        getResourcePools(offset?: number, limit?: number, options?: any) {
+            return InternalApiFp(configuration).getResourcePools(offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -17653,8 +18019,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTelemetry(options?: any) {
-            return InternalApiFp(configuration).determinedGetTelemetry(options)(fetch, basePath);
+        getTelemetry(options?: any) {
+            return InternalApiFp(configuration).getTelemetry(options)(fetch, basePath);
         },
         /**
          * 
@@ -17670,8 +18036,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
-            return InternalApiFp(configuration).determinedGetTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+            return InternalApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
         },
         /**
          * 
@@ -17681,8 +18047,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
-            return InternalApiFp(configuration).determinedIdleNotebook(notebookId, body, options)(fetch, basePath);
+        idleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
+            return InternalApiFp(configuration).idleNotebook(notebookId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17693,8 +18059,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMarkAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any) {
-            return InternalApiFp(configuration).determinedMarkAllocationResourcesDaemon(allocationId, resourcesId, body, options)(fetch, basePath);
+        markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any) {
+            return InternalApiFp(configuration).markAllocationResourcesDaemon(allocationId, resourcesId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17706,8 +18072,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMetricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedMetricBatches(experimentId, metricName, metricType, periodSeconds, options)(fetch, basePath);
+        metricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17717,8 +18083,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMetricNames(experimentId: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedMetricNames(experimentId, periodSeconds, options)(fetch, basePath);
+        metricNames(experimentId: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).metricNames(experimentId, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17728,8 +18094,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedNotifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
-            return InternalApiFp(configuration).determinedNotifyContainerRunning(allocationId, body, options)(fetch, basePath);
+        notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
+            return InternalApiFp(configuration).notifyContainerRunning(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17739,8 +18105,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
-            return InternalApiFp(configuration).determinedPostAllocationProxyAddress(allocationId, body, options)(fetch, basePath);
+        postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
+            return InternalApiFp(configuration).postAllocationProxyAddress(allocationId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17749,8 +18115,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
-            return InternalApiFp(configuration).determinedPostTrialProfilerMetricsBatch(body, options)(fetch, basePath);
+        postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
+            return InternalApiFp(configuration).postTrialProfilerMetricsBatch(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17760,8 +18126,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
-            return InternalApiFp(configuration).determinedPostTrialRunnerMetadata(trialId, body, options)(fetch, basePath);
+        postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
+            return InternalApiFp(configuration).postTrialRunnerMetadata(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17770,8 +18136,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportCheckpoint(body: V1Checkpoint, options?: any) {
-            return InternalApiFp(configuration).determinedReportCheckpoint(body, options)(fetch, basePath);
+        reportCheckpoint(body: V1Checkpoint, options?: any) {
+            return InternalApiFp(configuration).reportCheckpoint(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17781,8 +18147,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialProgress(trialId: number, body: number, options?: any) {
-            return InternalApiFp(configuration).determinedReportTrialProgress(trialId, body, options)(fetch, basePath);
+        reportTrialProgress(trialId: number, body: number, options?: any) {
+            return InternalApiFp(configuration).reportTrialProgress(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17792,8 +18158,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
-            return InternalApiFp(configuration).determinedReportTrialSearcherEarlyExit(trialId, body, options)(fetch, basePath);
+        reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
+            return InternalApiFp(configuration).reportTrialSearcherEarlyExit(trialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17803,8 +18169,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
-            return InternalApiFp(configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(fetch, basePath);
+        reportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
+            return InternalApiFp(configuration).reportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17814,8 +18180,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
-            return InternalApiFp(configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
+        reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
+            return InternalApiFp(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17831,8 +18197,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedTrialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
+        trialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17846,8 +18212,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
-            return InternalApiFp(configuration).determinedTrialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(fetch, basePath);
+        trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
+            return InternalApiFp(configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(fetch, basePath);
         },
         /**
          * 
@@ -17857,8 +18223,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any) {
-            return InternalApiFp(configuration).determinedUpdateGroup(groupId, body, options)(fetch, basePath);
+        updateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any) {
+            return InternalApiFp(configuration).updateGroup(groupId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -17867,8 +18233,8 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
-            return InternalApiFp(configuration).determinedUpdateJobQueue(body, options)(fetch, basePath);
+        updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+            return InternalApiFp(configuration).updateJobQueue(body, options)(fetch, basePath);
         },
     };
 };
@@ -17889,8 +18255,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedAckAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedAckAllocationPreemptionSignal(allocationId, body, options)(this.fetch, this.basePath);
+    public ackAllocationPreemptionSignal(allocationId: string, body: V1AckAllocationPreemptionSignalRequest, options?: any) {
+        return InternalApiFp(this.configuration).ackAllocationPreemptionSignal(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17902,8 +18268,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedAllocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedAllocationAllGather(allocationId, body, options)(this.fetch, this.basePath);
+    public allocationAllGather(allocationId: string, body: V1AllocationAllGatherRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationAllGather(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17915,8 +18281,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedAllocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedAllocationPendingPreemptionSignal(allocationId, body, options)(this.fetch, this.basePath);
+    public allocationPendingPreemptionSignal(allocationId: string, body: V1AllocationPendingPreemptionSignalRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationPendingPreemptionSignal(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17928,8 +18294,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedAllocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedAllocationPreemptionSignal(allocationId, timeoutSeconds, options)(this.fetch, this.basePath);
+    public allocationPreemptionSignal(allocationId: string, timeoutSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).allocationPreemptionSignal(allocationId, timeoutSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17941,8 +18307,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedAllocationReady(allocationId: string, body: V1AllocationReadyRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedAllocationReady(allocationId, body, options)(this.fetch, this.basePath);
+    public allocationReady(allocationId: string, body: V1AllocationReadyRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationReady(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17954,8 +18320,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedAllocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
-        return InternalApiFp(this.configuration).determinedAllocationRendezvousInfo(allocationId, resourcesId, options)(this.fetch, this.basePath);
+    public allocationRendezvousInfo(allocationId: string, resourcesId: string, options?: any) {
+        return InternalApiFp(this.configuration).allocationRendezvousInfo(allocationId, resourcesId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17967,8 +18333,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedAllocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedAllocationWaiting(allocationId, body, options)(this.fetch, this.basePath);
+    public allocationWaiting(allocationId: string, body: V1AllocationWaitingRequest, options?: any) {
+        return InternalApiFp(this.configuration).allocationWaiting(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17980,8 +18346,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedCompleteTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
-        return InternalApiFp(this.configuration).determinedCompleteTrialSearcherValidation(trialId, body, options)(this.fetch, this.basePath);
+    public completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
+        return InternalApiFp(this.configuration).completeTrialSearcherValidation(trialId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -17992,8 +18358,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedComputeHPImportance(experimentId: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedComputeHPImportance(experimentId, options)(this.fetch, this.basePath);
+    public computeHPImportance(experimentId: number, options?: any) {
+        return InternalApiFp(this.configuration).computeHPImportance(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18004,8 +18370,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedCreateExperiment(body: V1CreateExperimentRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedCreateExperiment(body, options)(this.fetch, this.basePath);
+    public createExperiment(body: V1CreateExperimentRequest, options?: any) {
+        return InternalApiFp(this.configuration).createExperiment(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18016,8 +18382,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedCreateGroup(body: V1CreateGroupRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedCreateGroup(body, options)(this.fetch, this.basePath);
+    public createGroup(body: V1CreateGroupRequest, options?: any) {
+        return InternalApiFp(this.configuration).createGroup(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18028,8 +18394,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedDeleteGroup(groupId: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedDeleteGroup(groupId, options)(this.fetch, this.basePath);
+    public deleteGroup(groupId: number, options?: any) {
+        return InternalApiFp(this.configuration).deleteGroup(groupId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18041,8 +18407,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedExpCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedExpCompareMetricNames(trialId, periodSeconds, options)(this.fetch, this.basePath);
+    public expCompareMetricNames(trialId: Array<number>, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).expCompareMetricNames(trialId, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18060,8 +18426,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedExpCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedExpCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
+    public expCompareTrialsSample(experimentIds: Array<number>, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).expCompareTrialsSample(experimentIds, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18072,8 +18438,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetBestSearcherValidationMetric(experimentId: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetBestSearcherValidationMetric(experimentId, options)(this.fetch, this.basePath);
+    public getBestSearcherValidationMetric(experimentId: number, options?: any) {
+        return InternalApiFp(this.configuration).getBestSearcherValidationMetric(experimentId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18084,8 +18450,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetCurrentTrialSearcherOperation(trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath);
+    public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
+        return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18096,8 +18462,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetGroup(groupId: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetGroup(groupId, options)(this.fetch, this.basePath);
+    public getGroup(groupId: number, options?: any) {
+        return InternalApiFp(this.configuration).getGroup(groupId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18108,8 +18474,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetGroups(body: V1GetGroupsRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetGroups(body, options)(this.fetch, this.basePath);
+    public getGroups(body: V1GetGroupsRequest, options?: any) {
+        return InternalApiFp(this.configuration).getGroups(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18121,8 +18487,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetHPImportance(experimentId, periodSeconds, options)(this.fetch, this.basePath);
+    public getHPImportance(experimentId: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).getHPImportance(experimentId, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18133,8 +18499,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetJobQueueStats(resourcePools?: Array<string>, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetJobQueueStats(resourcePools, options)(this.fetch, this.basePath);
+    public getJobQueueStats(resourcePools?: Array<string>, options?: any) {
+        return InternalApiFp(this.configuration).getJobQueueStats(resourcePools, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18149,8 +18515,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetJobs(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath);
+    public getJobs(offset?: number, limit?: number, resourcePool?: string, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', states?: Array<'STATE_UNSPECIFIED' | 'STATE_QUEUED' | 'STATE_SCHEDULED' | 'STATE_SCHEDULED_BACKFILLED'>, options?: any) {
+        return InternalApiFp(this.configuration).getJobs(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18162,8 +18528,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetResourcePools(offset?: number, limit?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedGetResourcePools(offset, limit, options)(this.fetch, this.basePath);
+    public getResourcePools(offset?: number, limit?: number, options?: any) {
+        return InternalApiFp(this.configuration).getResourcePools(offset, limit, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18173,8 +18539,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetTelemetry(options?: any) {
-        return InternalApiFp(this.configuration).determinedGetTelemetry(options)(this.fetch, this.basePath);
+    public getTelemetry(options?: any) {
+        return InternalApiFp(this.configuration).getTelemetry(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18192,8 +18558,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
-        return InternalApiFp(this.configuration).determinedGetTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath);
+    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+        return InternalApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18205,8 +18571,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedIdleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedIdleNotebook(notebookId, body, options)(this.fetch, this.basePath);
+    public idleNotebook(notebookId: string, body: V1IdleNotebookRequest, options?: any) {
+        return InternalApiFp(this.configuration).idleNotebook(notebookId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18219,8 +18585,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedMarkAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedMarkAllocationResourcesDaemon(allocationId, resourcesId, body, options)(this.fetch, this.basePath);
+    public markAllocationResourcesDaemon(allocationId: string, resourcesId: string, body: V1MarkAllocationResourcesDaemonRequest, options?: any) {
+        return InternalApiFp(this.configuration).markAllocationResourcesDaemon(allocationId, resourcesId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18234,8 +18600,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedMetricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedMetricBatches(experimentId, metricName, metricType, periodSeconds, options)(this.fetch, this.basePath);
+    public metricBatches(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).metricBatches(experimentId, metricName, metricType, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18247,8 +18613,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedMetricNames(experimentId: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedMetricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath);
+    public metricNames(experimentId: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).metricNames(experimentId, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18260,8 +18626,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedNotifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedNotifyContainerRunning(allocationId, body, options)(this.fetch, this.basePath);
+    public notifyContainerRunning(allocationId: string, body: V1NotifyContainerRunningRequest, options?: any) {
+        return InternalApiFp(this.configuration).notifyContainerRunning(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18273,8 +18639,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedPostAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedPostAllocationProxyAddress(allocationId, body, options)(this.fetch, this.basePath);
+    public postAllocationProxyAddress(allocationId: string, body: V1PostAllocationProxyAddressRequest, options?: any) {
+        return InternalApiFp(this.configuration).postAllocationProxyAddress(allocationId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18285,8 +18651,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedPostTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedPostTrialProfilerMetricsBatch(body, options)(this.fetch, this.basePath);
+    public postTrialProfilerMetricsBatch(body: V1PostTrialProfilerMetricsBatchRequest, options?: any) {
+        return InternalApiFp(this.configuration).postTrialProfilerMetricsBatch(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18298,8 +18664,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedPostTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
-        return InternalApiFp(this.configuration).determinedPostTrialRunnerMetadata(trialId, body, options)(this.fetch, this.basePath);
+    public postTrialRunnerMetadata(trialId: number, body: V1TrialRunnerMetadata, options?: any) {
+        return InternalApiFp(this.configuration).postTrialRunnerMetadata(trialId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18310,8 +18676,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportCheckpoint(body: V1Checkpoint, options?: any) {
-        return InternalApiFp(this.configuration).determinedReportCheckpoint(body, options)(this.fetch, this.basePath);
+    public reportCheckpoint(body: V1Checkpoint, options?: any) {
+        return InternalApiFp(this.configuration).reportCheckpoint(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18323,8 +18689,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialProgress(trialId: number, body: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedReportTrialProgress(trialId, body, options)(this.fetch, this.basePath);
+    public reportTrialProgress(trialId: number, body: number, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialProgress(trialId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18336,8 +18702,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
-        return InternalApiFp(this.configuration).determinedReportTrialSearcherEarlyExit(trialId, body, options)(this.fetch, this.basePath);
+    public reportTrialSearcherEarlyExit(trialId: number, body: V1TrialEarlyExit, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialSearcherEarlyExit(trialId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18349,8 +18715,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
-        return InternalApiFp(this.configuration).determinedReportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(this.fetch, this.basePath);
+    public reportTrialTrainingMetrics(trainingMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialTrainingMetrics(trainingMetricsTrialId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18362,8 +18728,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedReportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
-        return InternalApiFp(this.configuration).determinedReportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath);
+    public reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
+        return InternalApiFp(this.configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18381,8 +18747,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedTrialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedTrialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
+    public trialsSample(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', maxTrials?: number, maxDatapoints?: number, startBatches?: number, endBatches?: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).trialsSample(experimentId, metricName, metricType, maxTrials, maxDatapoints, startBatches, endBatches, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18398,8 +18764,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedTrialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
-        return InternalApiFp(this.configuration).determinedTrialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath);
+    public trialsSnapshot(experimentId: number, metricName: string, metricType: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', batchesProcessed: number, batchesMargin?: number, periodSeconds?: number, options?: any) {
+        return InternalApiFp(this.configuration).trialsSnapshot(experimentId, metricName, metricType, batchesProcessed, batchesMargin, periodSeconds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18411,8 +18777,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedUpdateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedUpdateGroup(groupId, body, options)(this.fetch, this.basePath);
+    public updateGroup(groupId: number, body: V1UpdateGroupRequest, options?: any) {
+        return InternalApiFp(this.configuration).updateGroup(groupId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18423,8 +18789,8 @@ export class InternalApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public determinedUpdateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
-        return InternalApiFp(this.configuration).determinedUpdateJobQueue(body, options)(this.fetch, this.basePath);
+    public updateJobQueue(body: V1UpdateJobQueueRequest, options?: any) {
+        return InternalApiFp(this.configuration).updateJobQueue(body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -18455,10 +18821,10 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling determinedTaskLogs.');
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
@@ -18545,10 +18911,10 @@ export const JobsApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogsFields(taskId: string, follow?: boolean, options: any = {}): FetchArgs {
+        taskLogsFields(taskId: string, follow?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling determinedTaskLogsFields.');
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogsFields.');
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs/fields`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
@@ -18608,8 +18974,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).determinedTaskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18628,8 +18994,8 @@ export const JobsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
-            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).determinedTaskLogsFields(taskId, follow, options);
+        taskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
+            const localVarFetchArgs = JobsApiFetchParamCreator(configuration).taskLogsFields(taskId, follow, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18669,8 +19035,8 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-            return JobsApiFp(configuration).determinedTaskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return JobsApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -18680,8 +19046,8 @@ export const JobsApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogsFields(taskId: string, follow?: boolean, options?: any) {
-            return JobsApiFp(configuration).determinedTaskLogsFields(taskId, follow, options)(fetch, basePath);
+        taskLogsFields(taskId: string, follow?: boolean, options?: any) {
+            return JobsApiFp(configuration).taskLogsFields(taskId, follow, options)(fetch, basePath);
         },
     };
 };
@@ -18714,8 +19080,8 @@ export class JobsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-        return JobsApiFp(this.configuration).determinedTaskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return JobsApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -18727,8 +19093,8 @@ export class JobsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof JobsApi
      */
-    public determinedTaskLogsFields(taskId: string, follow?: boolean, options?: any) {
-        return JobsApiFp(this.configuration).determinedTaskLogsFields(taskId, follow, options)(this.fetch, this.basePath);
+    public taskLogsFields(taskId: string, follow?: boolean, options?: any) {
+        return JobsApiFp(this.configuration).taskLogsFields(taskId, follow, options)(this.fetch, this.basePath);
     }
 
 }
@@ -18746,10 +19112,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveModel(modelName: string, options: any = {}): FetchArgs {
+        archiveModel(modelName: string, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedArchiveModel.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling archiveModel.');
             }
             const localVarPath = `/api/v1/models/{modelName}/archive`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
@@ -18783,10 +19149,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteModel(modelName: string, options: any = {}): FetchArgs {
+        deleteModel(modelName: string, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedDeleteModel.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling deleteModel.');
             }
             const localVarPath = `/api/v1/models/{modelName}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
@@ -18821,14 +19187,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
+        deleteModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedDeleteModelVersion.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling deleteModelVersion.');
             }
             // verify required parameter 'modelVersionNum' is not null or undefined
             if (modelVersionNum === null || modelVersionNum === undefined) {
-                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling determinedDeleteModelVersion.');
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling deleteModelVersion.');
             }
             const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
@@ -18863,10 +19229,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options: any = {}): FetchArgs {
+        getModel(modelName: string, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModel.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getModel.');
             }
             const localVarPath = `/api/v1/models/{modelName}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
@@ -18899,7 +19265,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelLabels(options: any = {}): FetchArgs {
+        getModelLabels(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/model/labels`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -18932,14 +19298,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
+        getModelVersion(modelName: string, modelVersionNum: number, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModelVersion.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getModelVersion.');
             }
             // verify required parameter 'modelVersionNum' is not null or undefined
             if (modelVersionNum === null || modelVersionNum === undefined) {
-                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling determinedGetModelVersion.');
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling getModelVersion.');
             }
             const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
@@ -18978,10 +19344,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedGetModelVersions.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling getModelVersions.');
             }
             const localVarPath = `/api/v1/models/{modelName}/versions`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
@@ -19043,7 +19409,7 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options: any = {}): FetchArgs {
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19128,14 +19494,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModel, options: any = {}): FetchArgs {
+        patchModel(modelName: string, body: V1PatchModel, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPatchModel.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModel.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModel.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchModel.');
             }
             const localVarPath = `/api/v1/models/{modelName}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
@@ -19175,18 +19541,18 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options: any = {}): FetchArgs {
+        patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPatchModelVersion.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling patchModelVersion.');
             }
             // verify required parameter 'modelVersionNum' is not null or undefined
             if (modelVersionNum === null || modelVersionNum === undefined) {
-                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling determinedPatchModelVersion.');
+                throw new RequiredError('modelVersionNum','Required parameter modelVersionNum was null or undefined when calling patchModelVersion.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchModelVersion.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchModelVersion.');
             }
             const localVarPath = `/api/v1/models/{modelName}/versions/{modelVersionNum}`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)))
@@ -19225,10 +19591,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(body: V1PostModelRequest, options: any = {}): FetchArgs {
+        postModel(body: V1PostModelRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostModel.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postModel.');
             }
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -19266,14 +19632,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options: any = {}): FetchArgs {
+        postModelVersion(modelName: string, body: V1PostModelVersionRequest, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedPostModelVersion.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling postModelVersion.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostModelVersion.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postModelVersion.');
             }
             const localVarPath = `/api/v1/models/{modelName}/versions`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
@@ -19311,10 +19677,10 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveModel(modelName: string, options: any = {}): FetchArgs {
+        unarchiveModel(modelName: string, options: any = {}): FetchArgs {
             // verify required parameter 'modelName' is not null or undefined
             if (modelName === null || modelName === undefined) {
-                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling determinedUnarchiveModel.');
+                throw new RequiredError('modelName','Required parameter modelName was null or undefined when calling unarchiveModel.');
             }
             const localVarPath = `/api/v1/models/{modelName}/unarchive`
                 .replace(`{${"modelName"}}`, encodeURIComponent(String(modelName)));
@@ -19357,8 +19723,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedArchiveModel(modelName, options);
+        archiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).archiveModel(modelName, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19376,8 +19742,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedDeleteModel(modelName, options);
+        deleteModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModel(modelName, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19396,8 +19762,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedDeleteModelVersion(modelName, modelVersionNum, options);
+        deleteModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).deleteModelVersion(modelName, modelVersionNum, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19415,8 +19781,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModel(modelName, options);
+        getModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModel(modelName, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19433,8 +19799,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelLabels(options);
+        getModelLabels(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelLabelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelLabels(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19453,8 +19819,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersion(modelName, modelVersionNum, options);
+        getModelVersion(modelName: string, modelVersionNum: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersion(modelName, modelVersionNum, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19476,8 +19842,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options);
+        getModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelVersionsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModelVersions(modelName, sortBy, orderBy, offset, limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19507,8 +19873,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19527,8 +19893,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModel, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModel(modelName, body, options);
+        patchModel(modelName: string, body: V1PatchModel, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModel(modelName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19548,8 +19914,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPatchModelVersion(modelName, modelVersionNum, body, options);
+        patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).patchModelVersion(modelName, modelVersionNum, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19567,8 +19933,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(body: V1PostModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModel(body, options);
+        postModel(body: V1PostModelRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModel(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19587,8 +19953,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedPostModelVersion(modelName, body, options);
+        postModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostModelVersionResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).postModelVersion(modelName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19606,8 +19972,8 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveModelResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).determinedUnarchiveModel(modelName, options);
+        unarchiveModel(modelName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveModelResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).unarchiveModel(modelName, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -19634,8 +20000,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).determinedArchiveModel(modelName, options)(fetch, basePath);
+        archiveModel(modelName: string, options?: any) {
+            return ModelsApiFp(configuration).archiveModel(modelName, options)(fetch, basePath);
         },
         /**
          * 
@@ -19644,8 +20010,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).determinedDeleteModel(modelName, options)(fetch, basePath);
+        deleteModel(modelName: string, options?: any) {
+            return ModelsApiFp(configuration).deleteModel(modelName, options)(fetch, basePath);
         },
         /**
          * 
@@ -19655,8 +20021,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-            return ModelsApiFp(configuration).determinedDeleteModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
+        deleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+            return ModelsApiFp(configuration).deleteModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
         },
         /**
          * 
@@ -19665,8 +20031,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModel(modelName, options)(fetch, basePath);
+        getModel(modelName: string, options?: any) {
+            return ModelsApiFp(configuration).getModel(modelName, options)(fetch, basePath);
         },
         /**
          * 
@@ -19674,8 +20040,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelLabels(options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelLabels(options)(fetch, basePath);
+        getModelLabels(options?: any) {
+            return ModelsApiFp(configuration).getModelLabels(options)(fetch, basePath);
         },
         /**
          * 
@@ -19685,8 +20051,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
+        getModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+            return ModelsApiFp(configuration).getModelVersion(modelName, modelVersionNum, options)(fetch, basePath);
         },
         /**
          * 
@@ -19699,8 +20065,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options)(fetch, basePath);
+        getModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+            return ModelsApiFp(configuration).getModelVersions(modelName, sortBy, orderBy, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -19721,8 +20087,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any) {
-            return ModelsApiFp(configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options)(fetch, basePath);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any) {
+            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options)(fetch, basePath);
         },
         /**
          * 
@@ -19732,8 +20098,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModel(modelName: string, body: V1PatchModel, options?: any) {
-            return ModelsApiFp(configuration).determinedPatchModel(modelName, body, options)(fetch, basePath);
+        patchModel(modelName: string, body: V1PatchModel, options?: any) {
+            return ModelsApiFp(configuration).patchModel(modelName, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19744,8 +20110,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any) {
-            return ModelsApiFp(configuration).determinedPatchModelVersion(modelName, modelVersionNum, body, options)(fetch, basePath);
+        patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any) {
+            return ModelsApiFp(configuration).patchModelVersion(modelName, modelVersionNum, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19754,8 +20120,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModel(body: V1PostModelRequest, options?: any) {
-            return ModelsApiFp(configuration).determinedPostModel(body, options)(fetch, basePath);
+        postModel(body: V1PostModelRequest, options?: any) {
+            return ModelsApiFp(configuration).postModel(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19765,8 +20131,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
-            return ModelsApiFp(configuration).determinedPostModelVersion(modelName, body, options)(fetch, basePath);
+        postModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
+            return ModelsApiFp(configuration).postModelVersion(modelName, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19775,8 +20141,8 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveModel(modelName: string, options?: any) {
-            return ModelsApiFp(configuration).determinedUnarchiveModel(modelName, options)(fetch, basePath);
+        unarchiveModel(modelName: string, options?: any) {
+            return ModelsApiFp(configuration).unarchiveModel(modelName, options)(fetch, basePath);
         },
     };
 };
@@ -19796,8 +20162,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedArchiveModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedArchiveModel(modelName, options)(this.fetch, this.basePath);
+    public archiveModel(modelName: string, options?: any) {
+        return ModelsApiFp(this.configuration).archiveModel(modelName, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19808,8 +20174,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedDeleteModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedDeleteModel(modelName, options)(this.fetch, this.basePath);
+    public deleteModel(modelName: string, options?: any) {
+        return ModelsApiFp(this.configuration).deleteModel(modelName, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19821,8 +20187,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedDeleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedDeleteModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
+    public deleteModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+        return ModelsApiFp(this.configuration).deleteModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19833,8 +20199,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModel(modelName, options)(this.fetch, this.basePath);
+    public getModel(modelName: string, options?: any) {
+        return ModelsApiFp(this.configuration).getModel(modelName, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19844,8 +20210,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelLabels(options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelLabels(options)(this.fetch, this.basePath);
+    public getModelLabels(options?: any) {
+        return ModelsApiFp(this.configuration).getModelLabels(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19857,8 +20223,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelVersion(modelName: string, modelVersionNum: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
+    public getModelVersion(modelName: string, modelVersionNum: number, options?: any) {
+        return ModelsApiFp(this.configuration).getModelVersion(modelName, modelVersionNum, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19873,8 +20239,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModelVersions(modelName, sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public getModelVersions(modelName: string, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_VERSION' | 'SORT_BY_CREATION_TIME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+        return ModelsApiFp(this.configuration).getModelVersions(modelName, sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19897,8 +20263,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedGetModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any) {
-        return ModelsApiFp(this.configuration).determinedGetModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options)(this.fetch, this.basePath);
+    public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any) {
+        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19910,8 +20276,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPatchModel(modelName: string, body: V1PatchModel, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPatchModel(modelName, body, options)(this.fetch, this.basePath);
+    public patchModel(modelName: string, body: V1PatchModel, options?: any) {
+        return ModelsApiFp(this.configuration).patchModel(modelName, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19924,8 +20290,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPatchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPatchModelVersion(modelName, modelVersionNum, body, options)(this.fetch, this.basePath);
+    public patchModelVersion(modelName: string, modelVersionNum: number, body: V1PatchModelVersion, options?: any) {
+        return ModelsApiFp(this.configuration).patchModelVersion(modelName, modelVersionNum, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19936,8 +20302,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPostModel(body: V1PostModelRequest, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPostModel(body, options)(this.fetch, this.basePath);
+    public postModel(body: V1PostModelRequest, options?: any) {
+        return ModelsApiFp(this.configuration).postModel(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19949,8 +20315,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedPostModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
-        return ModelsApiFp(this.configuration).determinedPostModelVersion(modelName, body, options)(this.fetch, this.basePath);
+    public postModelVersion(modelName: string, body: V1PostModelVersionRequest, options?: any) {
+        return ModelsApiFp(this.configuration).postModelVersion(modelName, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -19961,8 +20327,8 @@ export class ModelsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public determinedUnarchiveModel(modelName: string, options?: any) {
-        return ModelsApiFp(this.configuration).determinedUnarchiveModel(modelName, options)(this.fetch, this.basePath);
+    public unarchiveModel(modelName: string, options?: any) {
+        return ModelsApiFp(this.configuration).unarchiveModel(modelName, options)(this.fetch, this.basePath);
     }
 
 }
@@ -19980,10 +20346,10 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetNotebook(notebookId: string, options: any = {}): FetchArgs {
+        getNotebook(notebookId: string, options: any = {}): FetchArgs {
             // verify required parameter 'notebookId' is not null or undefined
             if (notebookId === null || notebookId === undefined) {
-                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling determinedGetNotebook.');
+                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling getNotebook.');
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
@@ -20023,7 +20389,7 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
+        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/notebooks`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -20083,10 +20449,10 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillNotebook(notebookId: string, options: any = {}): FetchArgs {
+        killNotebook(notebookId: string, options: any = {}): FetchArgs {
             // verify required parameter 'notebookId' is not null or undefined
             if (notebookId === null || notebookId === undefined) {
-                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling determinedKillNotebook.');
+                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling killNotebook.');
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}/kill`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
@@ -20120,10 +20486,10 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchNotebook(body: V1LaunchNotebookRequest, options: any = {}): FetchArgs {
+        launchNotebook(body: V1LaunchNotebookRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedLaunchNotebook.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling launchNotebook.');
             }
             const localVarPath = `/api/v1/notebooks`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -20161,14 +20527,14 @@ export const NotebooksApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options: any = {}): FetchArgs {
+        setNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options: any = {}): FetchArgs {
             // verify required parameter 'notebookId' is not null or undefined
             if (notebookId === null || notebookId === undefined) {
-                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling determinedSetNotebookPriority.');
+                throw new RequiredError('notebookId','Required parameter notebookId was null or undefined when calling setNotebookPriority.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetNotebookPriority.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setNotebookPriority.');
             }
             const localVarPath = `/api/v1/notebooks/{notebookId}/set_priority`
                 .replace(`{${"notebookId"}}`, encodeURIComponent(String(notebookId)));
@@ -20215,8 +20581,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebookResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).determinedGetNotebook(notebookId, options);
+        getNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebookResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebook(notebookId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20240,8 +20606,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebooksResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).determinedGetNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
+        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetNotebooksResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20259,8 +20625,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillNotebookResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).determinedKillNotebook(notebookId, options);
+        killNotebook(notebookId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillNotebookResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).killNotebook(notebookId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20278,8 +20644,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchNotebook(body: V1LaunchNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchNotebookResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).determinedLaunchNotebook(body, options);
+        launchNotebook(body: V1LaunchNotebookRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchNotebookResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).launchNotebook(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20298,8 +20664,8 @@ export const NotebooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetNotebookPriorityResponse> {
-            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).determinedSetNotebookPriority(notebookId, body, options);
+        setNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetNotebookPriorityResponse> {
+            const localVarFetchArgs = NotebooksApiFetchParamCreator(configuration).setNotebookPriority(notebookId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20326,8 +20692,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetNotebook(notebookId: string, options?: any) {
-            return NotebooksApiFp(configuration).determinedGetNotebook(notebookId, options)(fetch, basePath);
+        getNotebook(notebookId: string, options?: any) {
+            return NotebooksApiFp(configuration).getNotebook(notebookId, options)(fetch, basePath);
         },
         /**
          * 
@@ -20342,8 +20708,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-            return NotebooksApiFp(configuration).determinedGetNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
+        getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return NotebooksApiFp(configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -20352,8 +20718,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillNotebook(notebookId: string, options?: any) {
-            return NotebooksApiFp(configuration).determinedKillNotebook(notebookId, options)(fetch, basePath);
+        killNotebook(notebookId: string, options?: any) {
+            return NotebooksApiFp(configuration).killNotebook(notebookId, options)(fetch, basePath);
         },
         /**
          * 
@@ -20362,8 +20728,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchNotebook(body: V1LaunchNotebookRequest, options?: any) {
-            return NotebooksApiFp(configuration).determinedLaunchNotebook(body, options)(fetch, basePath);
+        launchNotebook(body: V1LaunchNotebookRequest, options?: any) {
+            return NotebooksApiFp(configuration).launchNotebook(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -20373,8 +20739,8 @@ export const NotebooksApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any) {
-            return NotebooksApiFp(configuration).determinedSetNotebookPriority(notebookId, body, options)(fetch, basePath);
+        setNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any) {
+            return NotebooksApiFp(configuration).setNotebookPriority(notebookId, body, options)(fetch, basePath);
         },
     };
 };
@@ -20394,8 +20760,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public determinedGetNotebook(notebookId: string, options?: any) {
-        return NotebooksApiFp(this.configuration).determinedGetNotebook(notebookId, options)(this.fetch, this.basePath);
+    public getNotebook(notebookId: string, options?: any) {
+        return NotebooksApiFp(this.configuration).getNotebook(notebookId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20412,8 +20778,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public determinedGetNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-        return NotebooksApiFp(this.configuration).determinedGetNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
+    public getNotebooks(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return NotebooksApiFp(this.configuration).getNotebooks(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20424,8 +20790,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public determinedKillNotebook(notebookId: string, options?: any) {
-        return NotebooksApiFp(this.configuration).determinedKillNotebook(notebookId, options)(this.fetch, this.basePath);
+    public killNotebook(notebookId: string, options?: any) {
+        return NotebooksApiFp(this.configuration).killNotebook(notebookId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20436,8 +20802,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public determinedLaunchNotebook(body: V1LaunchNotebookRequest, options?: any) {
-        return NotebooksApiFp(this.configuration).determinedLaunchNotebook(body, options)(this.fetch, this.basePath);
+    public launchNotebook(body: V1LaunchNotebookRequest, options?: any) {
+        return NotebooksApiFp(this.configuration).launchNotebook(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20449,8 +20815,8 @@ export class NotebooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof NotebooksApi
      */
-    public determinedSetNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any) {
-        return NotebooksApiFp(this.configuration).determinedSetNotebookPriority(notebookId, body, options)(this.fetch, this.basePath);
+    public setNotebookPriority(notebookId: string, body: V1SetNotebookPriorityRequest, options?: any) {
+        return NotebooksApiFp(this.configuration).setNotebookPriority(notebookId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -20469,10 +20835,10 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
+        getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetTrialProfilerAvailableSeries.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialProfilerAvailableSeries.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/profiler/available_series`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -20515,10 +20881,10 @@ export const ProfilerApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options: any = {}): FetchArgs {
+        getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'labelsTrialId' is not null or undefined
             if (labelsTrialId === null || labelsTrialId === undefined) {
-                throw new RequiredError('labelsTrialId','Required parameter labelsTrialId was null or undefined when calling determinedGetTrialProfilerMetrics.');
+                throw new RequiredError('labelsTrialId','Required parameter labelsTrialId was null or undefined when calling getTrialProfilerMetrics.');
             }
             const localVarPath = `/api/v1/trials/{labels.trialId}/profiler/metrics`
                 .replace(`{${"labels.trialId"}}`, encodeURIComponent(String(labelsTrialId)));
@@ -20582,8 +20948,8 @@ export const ProfilerApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerAvailableSeriesResponse> {
-            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).determinedGetTrialProfilerAvailableSeries(trialId, follow, options);
+        getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerAvailableSeriesResponse> {
+            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerAvailableSeries(trialId, follow, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20606,8 +20972,8 @@ export const ProfilerApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerMetricsResponse> {
-            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).determinedGetTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options);
+        getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1GetTrialProfilerMetricsResponse> {
+            const localVarFetchArgs = ProfilerApiFetchParamCreator(configuration).getTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20635,8 +21001,8 @@ export const ProfilerApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any) {
-            return ProfilerApiFp(configuration).determinedGetTrialProfilerAvailableSeries(trialId, follow, options)(fetch, basePath);
+        getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any) {
+            return ProfilerApiFp(configuration).getTrialProfilerAvailableSeries(trialId, follow, options)(fetch, basePath);
         },
         /**
          * 
@@ -20650,8 +21016,8 @@ export const ProfilerApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options?: any) {
-            return ProfilerApiFp(configuration).determinedGetTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options)(fetch, basePath);
+        getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options?: any) {
+            return ProfilerApiFp(configuration).getTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options)(fetch, basePath);
         },
     };
 };
@@ -20672,8 +21038,8 @@ export class ProfilerApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProfilerApi
      */
-    public determinedGetTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any) {
-        return ProfilerApiFp(this.configuration).determinedGetTrialProfilerAvailableSeries(trialId, follow, options)(this.fetch, this.basePath);
+    public getTrialProfilerAvailableSeries(trialId: number, follow?: boolean, options?: any) {
+        return ProfilerApiFp(this.configuration).getTrialProfilerAvailableSeries(trialId, follow, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -20689,8 +21055,8 @@ export class ProfilerApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProfilerApi
      */
-    public determinedGetTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options?: any) {
-        return ProfilerApiFp(this.configuration).determinedGetTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options)(this.fetch, this.basePath);
+    public getTrialProfilerMetrics(labelsTrialId: number, labelsName?: string, labelsAgentId?: string, labelsGpuUuid?: string, labelsMetricType?: 'PROFILER_METRIC_TYPE_UNSPECIFIED' | 'PROFILER_METRIC_TYPE_SYSTEM' | 'PROFILER_METRIC_TYPE_TIMING' | 'PROFILER_METRIC_TYPE_MISC', follow?: boolean, options?: any) {
+        return ProfilerApiFp(this.configuration).getTrialProfilerMetrics(labelsTrialId, labelsName, labelsAgentId, labelsGpuUuid, labelsMetricType, follow, options)(this.fetch, this.basePath);
     }
 
 }
@@ -20709,14 +21075,14 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAddProjectNote(projectId: number, body: V1Note, options: any = {}): FetchArgs {
+        addProjectNote(projectId: number, body: V1Note, options: any = {}): FetchArgs {
             // verify required parameter 'projectId' is not null or undefined
             if (projectId === null || projectId === undefined) {
-                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling determinedAddProjectNote.');
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling addProjectNote.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAddProjectNote.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling addProjectNote.');
             }
             const localVarPath = `/api/v1/projects/{projectId}/notes`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
@@ -20754,10 +21120,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveProject(id: number, options: any = {}): FetchArgs {
+        archiveProject(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedArchiveProject.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling archiveProject.');
             }
             const localVarPath = `/api/v1/projects/{id}/archive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -20791,10 +21157,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteProject(id: number, options: any = {}): FetchArgs {
+        deleteProject(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedDeleteProject.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling deleteProject.');
             }
             const localVarPath = `/api/v1/projects/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -20828,10 +21194,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetProject(id: number, options: any = {}): FetchArgs {
+        getProject(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedGetProject.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getProject.');
             }
             const localVarPath = `/api/v1/projects/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -20865,7 +21231,7 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetProjectsByUserActivity(limit?: number, options: any = {}): FetchArgs {
+        getProjectsByUserActivity(limit?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/projects/activity`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -20902,14 +21268,14 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMoveProject(projectId: number, body: V1MoveProjectRequest, options: any = {}): FetchArgs {
+        moveProject(projectId: number, body: V1MoveProjectRequest, options: any = {}): FetchArgs {
             // verify required parameter 'projectId' is not null or undefined
             if (projectId === null || projectId === undefined) {
-                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling determinedMoveProject.');
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling moveProject.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedMoveProject.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling moveProject.');
             }
             const localVarPath = `/api/v1/projects/{projectId}/move`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
@@ -20948,14 +21314,14 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchProject(id: number, body: V1PatchProject, options: any = {}): FetchArgs {
+        patchProject(id: number, body: V1PatchProject, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedPatchProject.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling patchProject.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchProject.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchProject.');
             }
             const localVarPath = `/api/v1/projects/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -20994,14 +21360,14 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostProject(workspaceId: number, body: V1PostProjectRequest, options: any = {}): FetchArgs {
+        postProject(workspaceId: number, body: V1PostProjectRequest, options: any = {}): FetchArgs {
             // verify required parameter 'workspaceId' is not null or undefined
             if (workspaceId === null || workspaceId === undefined) {
-                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling determinedPostProject.');
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling postProject.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostProject.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postProject.');
             }
             const localVarPath = `/api/v1/workspaces/{workspaceId}/projects`
                 .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
@@ -21040,14 +21406,14 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPutProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options: any = {}): FetchArgs {
+        putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options: any = {}): FetchArgs {
             // verify required parameter 'projectId' is not null or undefined
             if (projectId === null || projectId === undefined) {
-                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling determinedPutProjectNotes.');
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling putProjectNotes.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPutProjectNotes.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putProjectNotes.');
             }
             const localVarPath = `/api/v1/projects/{projectId}/notes`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)));
@@ -21085,10 +21451,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveProject(id: number, options: any = {}): FetchArgs {
+        unarchiveProject(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedUnarchiveProject.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveProject.');
             }
             const localVarPath = `/api/v1/projects/{id}/unarchive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -21132,8 +21498,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAddProjectNote(projectId: number, body: V1Note, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddProjectNoteResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedAddProjectNote(projectId, body, options);
+        addProjectNote(projectId: number, body: V1Note, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AddProjectNoteResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).addProjectNote(projectId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21151,8 +21517,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedArchiveProject(id, options);
+        archiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).archiveProject(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21170,8 +21536,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedDeleteProject(id, options);
+        deleteProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).deleteProject(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21189,8 +21555,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedGetProject(id, options);
+        getProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProject(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21208,8 +21574,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetProjectsByUserActivity(limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectsByUserActivityResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedGetProjectsByUserActivity(limit, options);
+        getProjectsByUserActivity(limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectsByUserActivityResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectsByUserActivity(limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21228,8 +21594,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMoveProject(projectId: number, body: V1MoveProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedMoveProject(projectId, body, options);
+        moveProject(projectId: number, body: V1MoveProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1MoveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).moveProject(projectId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21248,8 +21614,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchProject(id: number, body: V1PatchProject, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedPatchProject(id, body, options);
+        patchProject(id: number, body: V1PatchProject, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).patchProject(id, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21268,8 +21634,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostProject(workspaceId: number, body: V1PostProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedPostProject(workspaceId, body, options);
+        postProject(workspaceId: number, body: V1PostProjectRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).postProject(workspaceId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21288,8 +21654,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPutProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutProjectNotesResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedPutProjectNotes(projectId, body, options);
+        putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutProjectNotesResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).putProjectNotes(projectId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21307,8 +21673,8 @@ export const ProjectsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveProjectResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).determinedUnarchiveProject(id, options);
+        unarchiveProject(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveProjectResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).unarchiveProject(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21336,8 +21702,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAddProjectNote(projectId: number, body: V1Note, options?: any) {
-            return ProjectsApiFp(configuration).determinedAddProjectNote(projectId, body, options)(fetch, basePath);
+        addProjectNote(projectId: number, body: V1Note, options?: any) {
+            return ProjectsApiFp(configuration).addProjectNote(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21346,8 +21712,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).determinedArchiveProject(id, options)(fetch, basePath);
+        archiveProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).archiveProject(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -21356,8 +21722,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).determinedDeleteProject(id, options)(fetch, basePath);
+        deleteProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).deleteProject(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -21366,8 +21732,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).determinedGetProject(id, options)(fetch, basePath);
+        getProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).getProject(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -21376,8 +21742,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetProjectsByUserActivity(limit?: number, options?: any) {
-            return ProjectsApiFp(configuration).determinedGetProjectsByUserActivity(limit, options)(fetch, basePath);
+        getProjectsByUserActivity(limit?: number, options?: any) {
+            return ProjectsApiFp(configuration).getProjectsByUserActivity(limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -21387,8 +21753,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedMoveProject(projectId: number, body: V1MoveProjectRequest, options?: any) {
-            return ProjectsApiFp(configuration).determinedMoveProject(projectId, body, options)(fetch, basePath);
+        moveProject(projectId: number, body: V1MoveProjectRequest, options?: any) {
+            return ProjectsApiFp(configuration).moveProject(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21398,8 +21764,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchProject(id: number, body: V1PatchProject, options?: any) {
-            return ProjectsApiFp(configuration).determinedPatchProject(id, body, options)(fetch, basePath);
+        patchProject(id: number, body: V1PatchProject, options?: any) {
+            return ProjectsApiFp(configuration).patchProject(id, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21409,8 +21775,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
-            return ProjectsApiFp(configuration).determinedPostProject(workspaceId, body, options)(fetch, basePath);
+        postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
+            return ProjectsApiFp(configuration).postProject(workspaceId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21420,8 +21786,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPutProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any) {
-            return ProjectsApiFp(configuration).determinedPutProjectNotes(projectId, body, options)(fetch, basePath);
+        putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any) {
+            return ProjectsApiFp(configuration).putProjectNotes(projectId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -21430,8 +21796,8 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveProject(id: number, options?: any) {
-            return ProjectsApiFp(configuration).determinedUnarchiveProject(id, options)(fetch, basePath);
+        unarchiveProject(id: number, options?: any) {
+            return ProjectsApiFp(configuration).unarchiveProject(id, options)(fetch, basePath);
         },
     };
 };
@@ -21452,8 +21818,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedAddProjectNote(projectId: number, body: V1Note, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedAddProjectNote(projectId, body, options)(this.fetch, this.basePath);
+    public addProjectNote(projectId: number, body: V1Note, options?: any) {
+        return ProjectsApiFp(this.configuration).addProjectNote(projectId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21464,8 +21830,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedArchiveProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedArchiveProject(id, options)(this.fetch, this.basePath);
+    public archiveProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).archiveProject(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21476,8 +21842,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedDeleteProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedDeleteProject(id, options)(this.fetch, this.basePath);
+    public deleteProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).deleteProject(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21488,8 +21854,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedGetProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedGetProject(id, options)(this.fetch, this.basePath);
+    public getProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21500,8 +21866,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedGetProjectsByUserActivity(limit?: number, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedGetProjectsByUserActivity(limit, options)(this.fetch, this.basePath);
+    public getProjectsByUserActivity(limit?: number, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectsByUserActivity(limit, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21513,8 +21879,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedMoveProject(projectId: number, body: V1MoveProjectRequest, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedMoveProject(projectId, body, options)(this.fetch, this.basePath);
+    public moveProject(projectId: number, body: V1MoveProjectRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).moveProject(projectId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21526,8 +21892,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedPatchProject(id: number, body: V1PatchProject, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedPatchProject(id, body, options)(this.fetch, this.basePath);
+    public patchProject(id: number, body: V1PatchProject, options?: any) {
+        return ProjectsApiFp(this.configuration).patchProject(id, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21539,8 +21905,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedPostProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedPostProject(workspaceId, body, options)(this.fetch, this.basePath);
+    public postProject(workspaceId: number, body: V1PostProjectRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).postProject(workspaceId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21552,8 +21918,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedPutProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedPutProjectNotes(projectId, body, options)(this.fetch, this.basePath);
+    public putProjectNotes(projectId: number, body: V1PutProjectNotesRequest, options?: any) {
+        return ProjectsApiFp(this.configuration).putProjectNotes(projectId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -21564,8 +21930,8 @@ export class ProjectsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public determinedUnarchiveProject(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).determinedUnarchiveProject(id, options)(this.fetch, this.basePath);
+    public unarchiveProject(id: number, options?: any) {
+        return ProjectsApiFp(this.configuration).unarchiveProject(id, options)(this.fetch, this.basePath);
     }
 
 }
@@ -21583,10 +21949,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAssignRoles(body: V1AssignRolesRequest, options: any = {}): FetchArgs {
+        assignRoles(body: V1AssignRolesRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedAssignRoles.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling assignRoles.');
             }
             const localVarPath = `/api/v1/roles/add-assignments`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -21624,10 +21990,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options: any = {}): FetchArgs {
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options: any = {}): FetchArgs {
             // verify required parameter 'workspaceId' is not null or undefined
             if (workspaceId === null || workspaceId === undefined) {
-                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling determinedGetGroupsAndUsersAssignedToWorkspace.');
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling getGroupsAndUsersAssignedToWorkspace.');
             }
             const localVarPath = `/api/v1/roles/workspace/{workspaceId}`
                 .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
@@ -21664,7 +22030,7 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetPermissionsSummary(options: any = {}): FetchArgs {
+        getPermissionsSummary(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/permissions/summary`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -21696,10 +22062,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesAssignedToGroup(groupId: number, options: any = {}): FetchArgs {
+        getRolesAssignedToGroup(groupId: number, options: any = {}): FetchArgs {
             // verify required parameter 'groupId' is not null or undefined
             if (groupId === null || groupId === undefined) {
-                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling determinedGetRolesAssignedToGroup.');
+                throw new RequiredError('groupId','Required parameter groupId was null or undefined when calling getRolesAssignedToGroup.');
             }
             const localVarPath = `/api/v1/roles/search/by-group/{groupId}`
                 .replace(`{${"groupId"}}`, encodeURIComponent(String(groupId)));
@@ -21733,10 +22099,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesAssignedToUser(userId: number, options: any = {}): FetchArgs {
+        getRolesAssignedToUser(userId: number, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling determinedGetRolesAssignedToUser.');
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getRolesAssignedToUser.');
             }
             const localVarPath = `/api/v1/roles/search/by-user/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
@@ -21770,10 +22136,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesByID(body: V1GetRolesByIDRequest, options: any = {}): FetchArgs {
+        getRolesByID(body: V1GetRolesByIDRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedGetRolesByID.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling getRolesByID.');
             }
             const localVarPath = `/api/v1/roles/search/by-ids`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -21810,10 +22176,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedListRoles(body: V1ListRolesRequest, options: any = {}): FetchArgs {
+        listRoles(body: V1ListRolesRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedListRoles.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling listRoles.');
             }
             const localVarPath = `/api/v1/roles/search`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -21850,10 +22216,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedRemoveAssignments(body: V1RemoveAssignmentsRequest, options: any = {}): FetchArgs {
+        removeAssignments(body: V1RemoveAssignmentsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedRemoveAssignments.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling removeAssignments.');
             }
             const localVarPath = `/api/v1/roles/remove-assignments`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -21890,10 +22256,10 @@ export const RBACApiFetchParamCreator = function (configuration?: Configuration)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSearchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options: any = {}): FetchArgs {
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSearchRolesAssignableToScope.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling searchRolesAssignableToScope.');
             }
             const localVarPath = `/api/v1/roles/search/by-assignability`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -21939,8 +22305,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAssignRoles(body: V1AssignRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignRolesResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedAssignRoles(body, options);
+        assignRoles(body: V1AssignRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1AssignRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).assignRoles(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21959,8 +22325,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedGetGroupsAndUsersAssignedToWorkspace(workspaceId, name, options);
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGroupsAndUsersAssignedToWorkspaceResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21977,8 +22343,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetPermissionsSummary(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedGetPermissionsSummary(options);
+        getPermissionsSummary(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetPermissionsSummaryResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getPermissionsSummary(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -21996,8 +22362,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesAssignedToGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToGroupResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedGetRolesAssignedToGroup(groupId, options);
+        getRolesAssignedToGroup(groupId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToGroupResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToGroup(groupId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22015,8 +22381,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesAssignedToUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToUserResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedGetRolesAssignedToUser(userId, options);
+        getRolesAssignedToUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesAssignedToUserResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesAssignedToUser(userId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22034,8 +22400,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesByID(body: V1GetRolesByIDRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesByIDResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedGetRolesByID(body, options);
+        getRolesByID(body: V1GetRolesByIDRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetRolesByIDResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).getRolesByID(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22053,8 +22419,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedListRoles(body: V1ListRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRolesResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedListRoles(body, options);
+        listRoles(body: V1ListRolesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ListRolesResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).listRoles(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22072,8 +22438,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedRemoveAssignments(body: V1RemoveAssignmentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveAssignmentsResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedRemoveAssignments(body, options);
+        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1RemoveAssignmentsResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).removeAssignments(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22091,8 +22457,8 @@ export const RBACApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSearchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRolesAssignableToScopeResponse> {
-            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).determinedSearchRolesAssignableToScope(body, options);
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRolesAssignableToScopeResponse> {
+            const localVarFetchArgs = RBACApiFetchParamCreator(configuration).searchRolesAssignableToScope(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22119,8 +22485,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedAssignRoles(body: V1AssignRolesRequest, options?: any) {
-            return RBACApiFp(configuration).determinedAssignRoles(body, options)(fetch, basePath);
+        assignRoles(body: V1AssignRolesRequest, options?: any) {
+            return RBACApiFp(configuration).assignRoles(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -22130,8 +22496,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
-            return RBACApiFp(configuration).determinedGetGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(fetch, basePath);
+        getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
+            return RBACApiFp(configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(fetch, basePath);
         },
         /**
          * 
@@ -22139,8 +22505,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetPermissionsSummary(options?: any) {
-            return RBACApiFp(configuration).determinedGetPermissionsSummary(options)(fetch, basePath);
+        getPermissionsSummary(options?: any) {
+            return RBACApiFp(configuration).getPermissionsSummary(options)(fetch, basePath);
         },
         /**
          * 
@@ -22149,8 +22515,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesAssignedToGroup(groupId: number, options?: any) {
-            return RBACApiFp(configuration).determinedGetRolesAssignedToGroup(groupId, options)(fetch, basePath);
+        getRolesAssignedToGroup(groupId: number, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToGroup(groupId, options)(fetch, basePath);
         },
         /**
          * 
@@ -22159,8 +22525,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesAssignedToUser(userId: number, options?: any) {
-            return RBACApiFp(configuration).determinedGetRolesAssignedToUser(userId, options)(fetch, basePath);
+        getRolesAssignedToUser(userId: number, options?: any) {
+            return RBACApiFp(configuration).getRolesAssignedToUser(userId, options)(fetch, basePath);
         },
         /**
          * 
@@ -22169,8 +22535,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetRolesByID(body: V1GetRolesByIDRequest, options?: any) {
-            return RBACApiFp(configuration).determinedGetRolesByID(body, options)(fetch, basePath);
+        getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
+            return RBACApiFp(configuration).getRolesByID(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -22179,8 +22545,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedListRoles(body: V1ListRolesRequest, options?: any) {
-            return RBACApiFp(configuration).determinedListRoles(body, options)(fetch, basePath);
+        listRoles(body: V1ListRolesRequest, options?: any) {
+            return RBACApiFp(configuration).listRoles(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -22189,8 +22555,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedRemoveAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
-            return RBACApiFp(configuration).determinedRemoveAssignments(body, options)(fetch, basePath);
+        removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
+            return RBACApiFp(configuration).removeAssignments(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -22199,8 +22565,8 @@ export const RBACApiFactory = function (configuration?: Configuration, fetch?: F
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSearchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
-            return RBACApiFp(configuration).determinedSearchRolesAssignableToScope(body, options)(fetch, basePath);
+        searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
+            return RBACApiFp(configuration).searchRolesAssignableToScope(body, options)(fetch, basePath);
         },
     };
 };
@@ -22220,8 +22586,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedAssignRoles(body: V1AssignRolesRequest, options?: any) {
-        return RBACApiFp(this.configuration).determinedAssignRoles(body, options)(this.fetch, this.basePath);
+    public assignRoles(body: V1AssignRolesRequest, options?: any) {
+        return RBACApiFp(this.configuration).assignRoles(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22233,8 +22599,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedGetGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
-        return RBACApiFp(this.configuration).determinedGetGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(this.fetch, this.basePath);
+    public getGroupsAndUsersAssignedToWorkspace(workspaceId: number, name?: string, options?: any) {
+        return RBACApiFp(this.configuration).getGroupsAndUsersAssignedToWorkspace(workspaceId, name, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22244,8 +22610,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedGetPermissionsSummary(options?: any) {
-        return RBACApiFp(this.configuration).determinedGetPermissionsSummary(options)(this.fetch, this.basePath);
+    public getPermissionsSummary(options?: any) {
+        return RBACApiFp(this.configuration).getPermissionsSummary(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22256,8 +22622,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedGetRolesAssignedToGroup(groupId: number, options?: any) {
-        return RBACApiFp(this.configuration).determinedGetRolesAssignedToGroup(groupId, options)(this.fetch, this.basePath);
+    public getRolesAssignedToGroup(groupId: number, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToGroup(groupId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22268,8 +22634,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedGetRolesAssignedToUser(userId: number, options?: any) {
-        return RBACApiFp(this.configuration).determinedGetRolesAssignedToUser(userId, options)(this.fetch, this.basePath);
+    public getRolesAssignedToUser(userId: number, options?: any) {
+        return RBACApiFp(this.configuration).getRolesAssignedToUser(userId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22280,8 +22646,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedGetRolesByID(body: V1GetRolesByIDRequest, options?: any) {
-        return RBACApiFp(this.configuration).determinedGetRolesByID(body, options)(this.fetch, this.basePath);
+    public getRolesByID(body: V1GetRolesByIDRequest, options?: any) {
+        return RBACApiFp(this.configuration).getRolesByID(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22292,8 +22658,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedListRoles(body: V1ListRolesRequest, options?: any) {
-        return RBACApiFp(this.configuration).determinedListRoles(body, options)(this.fetch, this.basePath);
+    public listRoles(body: V1ListRolesRequest, options?: any) {
+        return RBACApiFp(this.configuration).listRoles(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22304,8 +22670,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedRemoveAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
-        return RBACApiFp(this.configuration).determinedRemoveAssignments(body, options)(this.fetch, this.basePath);
+    public removeAssignments(body: V1RemoveAssignmentsRequest, options?: any) {
+        return RBACApiFp(this.configuration).removeAssignments(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22316,8 +22682,8 @@ export class RBACApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RBACApi
      */
-    public determinedSearchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
-        return RBACApiFp(this.configuration).determinedSearchRolesAssignableToScope(body, options)(this.fetch, this.basePath);
+    public searchRolesAssignableToScope(body: V1SearchRolesAssignableToScopeRequest, options?: any) {
+        return RBACApiFp(this.configuration).searchRolesAssignableToScope(body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -22335,10 +22701,10 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetShell(shellId: string, options: any = {}): FetchArgs {
+        getShell(shellId: string, options: any = {}): FetchArgs {
             // verify required parameter 'shellId' is not null or undefined
             if (shellId === null || shellId === undefined) {
-                throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling determinedGetShell.');
+                throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling getShell.');
             }
             const localVarPath = `/api/v1/shells/{shellId}`
                 .replace(`{${"shellId"}}`, encodeURIComponent(String(shellId)));
@@ -22378,7 +22744,7 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
+        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/shells`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -22438,10 +22804,10 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillShell(shellId: string, options: any = {}): FetchArgs {
+        killShell(shellId: string, options: any = {}): FetchArgs {
             // verify required parameter 'shellId' is not null or undefined
             if (shellId === null || shellId === undefined) {
-                throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling determinedKillShell.');
+                throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling killShell.');
             }
             const localVarPath = `/api/v1/shells/{shellId}/kill`
                 .replace(`{${"shellId"}}`, encodeURIComponent(String(shellId)));
@@ -22475,10 +22841,10 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchShell(body: V1LaunchShellRequest, options: any = {}): FetchArgs {
+        launchShell(body: V1LaunchShellRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedLaunchShell.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling launchShell.');
             }
             const localVarPath = `/api/v1/shells`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -22516,14 +22882,14 @@ export const ShellsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options: any = {}): FetchArgs {
+        setShellPriority(shellId: string, body: V1SetShellPriorityRequest, options: any = {}): FetchArgs {
             // verify required parameter 'shellId' is not null or undefined
             if (shellId === null || shellId === undefined) {
-                throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling determinedSetShellPriority.');
+                throw new RequiredError('shellId','Required parameter shellId was null or undefined when calling setShellPriority.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetShellPriority.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setShellPriority.');
             }
             const localVarPath = `/api/v1/shells/{shellId}/set_priority`
                 .replace(`{${"shellId"}}`, encodeURIComponent(String(shellId)));
@@ -22570,8 +22936,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).determinedGetShell(shellId, options);
+        getShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShell(shellId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22595,8 +22961,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).determinedGetShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
+        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetShellsResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22614,8 +22980,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillShellResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).determinedKillShell(shellId, options);
+        killShell(shellId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillShellResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).killShell(shellId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22633,8 +22999,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchShell(body: V1LaunchShellRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchShellResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).determinedLaunchShell(body, options);
+        launchShell(body: V1LaunchShellRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchShellResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).launchShell(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22653,8 +23019,8 @@ export const ShellsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetShellPriorityResponse> {
-            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).determinedSetShellPriority(shellId, body, options);
+        setShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetShellPriorityResponse> {
+            const localVarFetchArgs = ShellsApiFetchParamCreator(configuration).setShellPriority(shellId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22681,8 +23047,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetShell(shellId: string, options?: any) {
-            return ShellsApiFp(configuration).determinedGetShell(shellId, options)(fetch, basePath);
+        getShell(shellId: string, options?: any) {
+            return ShellsApiFp(configuration).getShell(shellId, options)(fetch, basePath);
         },
         /**
          * 
@@ -22697,8 +23063,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-            return ShellsApiFp(configuration).determinedGetShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
+        getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return ShellsApiFp(configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -22707,8 +23073,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillShell(shellId: string, options?: any) {
-            return ShellsApiFp(configuration).determinedKillShell(shellId, options)(fetch, basePath);
+        killShell(shellId: string, options?: any) {
+            return ShellsApiFp(configuration).killShell(shellId, options)(fetch, basePath);
         },
         /**
          * 
@@ -22717,8 +23083,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchShell(body: V1LaunchShellRequest, options?: any) {
-            return ShellsApiFp(configuration).determinedLaunchShell(body, options)(fetch, basePath);
+        launchShell(body: V1LaunchShellRequest, options?: any) {
+            return ShellsApiFp(configuration).launchShell(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -22728,8 +23094,8 @@ export const ShellsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any) {
-            return ShellsApiFp(configuration).determinedSetShellPriority(shellId, body, options)(fetch, basePath);
+        setShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any) {
+            return ShellsApiFp(configuration).setShellPriority(shellId, body, options)(fetch, basePath);
         },
     };
 };
@@ -22749,8 +23115,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public determinedGetShell(shellId: string, options?: any) {
-        return ShellsApiFp(this.configuration).determinedGetShell(shellId, options)(this.fetch, this.basePath);
+    public getShell(shellId: string, options?: any) {
+        return ShellsApiFp(this.configuration).getShell(shellId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22767,8 +23133,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public determinedGetShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-        return ShellsApiFp(this.configuration).determinedGetShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
+    public getShells(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return ShellsApiFp(this.configuration).getShells(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22779,8 +23145,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public determinedKillShell(shellId: string, options?: any) {
-        return ShellsApiFp(this.configuration).determinedKillShell(shellId, options)(this.fetch, this.basePath);
+    public killShell(shellId: string, options?: any) {
+        return ShellsApiFp(this.configuration).killShell(shellId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22791,8 +23157,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public determinedLaunchShell(body: V1LaunchShellRequest, options?: any) {
-        return ShellsApiFp(this.configuration).determinedLaunchShell(body, options)(this.fetch, this.basePath);
+    public launchShell(body: V1LaunchShellRequest, options?: any) {
+        return ShellsApiFp(this.configuration).launchShell(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -22804,8 +23170,8 @@ export class ShellsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ShellsApi
      */
-    public determinedSetShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any) {
-        return ShellsApiFp(this.configuration).determinedSetShellPriority(shellId, body, options)(this.fetch, this.basePath);
+    public setShellPriority(shellId: string, body: V1SetShellPriorityRequest, options?: any) {
+        return ShellsApiFp(this.configuration).setShellPriority(shellId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -22822,7 +23188,7 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetActiveTasksCount(options: any = {}): FetchArgs {
+        getActiveTasksCount(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tasks/count`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -22854,10 +23220,10 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTask(taskId: string, options: any = {}): FetchArgs {
+        getTask(taskId: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling determinedGetTask.');
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling getTask.');
             }
             const localVarPath = `/api/v1/tasks/{taskId}`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
@@ -22904,10 +23270,10 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling determinedTaskLogs.');
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogs.');
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
@@ -22994,10 +23360,10 @@ export const TasksApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogsFields(taskId: string, follow?: boolean, options: any = {}): FetchArgs {
+        taskLogsFields(taskId: string, follow?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'taskId' is not null or undefined
             if (taskId === null || taskId === undefined) {
-                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling determinedTaskLogsFields.');
+                throw new RequiredError('taskId','Required parameter taskId was null or undefined when calling taskLogsFields.');
             }
             const localVarPath = `/api/v1/tasks/{taskId}/logs/fields`
                 .replace(`{${"taskId"}}`, encodeURIComponent(String(taskId)));
@@ -23043,8 +23409,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetActiveTasksCount(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetActiveTasksCountResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).determinedGetActiveTasksCount(options);
+        getActiveTasksCount(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetActiveTasksCountResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getActiveTasksCount(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23062,8 +23428,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).determinedGetTask(taskId, options);
+        getTask(taskId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTaskResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).getTask(taskId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23094,8 +23460,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).determinedTaskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23114,8 +23480,8 @@ export const TasksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
-            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).determinedTaskLogsFields(taskId, follow, options);
+        taskLogsFields(taskId: string, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TaskLogsFieldsResponse> {
+            const localVarFetchArgs = TasksApiFetchParamCreator(configuration).taskLogsFields(taskId, follow, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23141,8 +23507,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetActiveTasksCount(options?: any) {
-            return TasksApiFp(configuration).determinedGetActiveTasksCount(options)(fetch, basePath);
+        getActiveTasksCount(options?: any) {
+            return TasksApiFp(configuration).getActiveTasksCount(options)(fetch, basePath);
         },
         /**
          * 
@@ -23151,8 +23517,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTask(taskId: string, options?: any) {
-            return TasksApiFp(configuration).determinedGetTask(taskId, options)(fetch, basePath);
+        getTask(taskId: string, options?: any) {
+            return TasksApiFp(configuration).getTask(taskId, options)(fetch, basePath);
         },
         /**
          * 
@@ -23174,8 +23540,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-            return TasksApiFp(configuration).determinedTaskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return TasksApiFp(configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -23185,8 +23551,8 @@ export const TasksApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTaskLogsFields(taskId: string, follow?: boolean, options?: any) {
-            return TasksApiFp(configuration).determinedTaskLogsFields(taskId, follow, options)(fetch, basePath);
+        taskLogsFields(taskId: string, follow?: boolean, options?: any) {
+            return TasksApiFp(configuration).taskLogsFields(taskId, follow, options)(fetch, basePath);
         },
     };
 };
@@ -23205,8 +23571,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public determinedGetActiveTasksCount(options?: any) {
-        return TasksApiFp(this.configuration).determinedGetActiveTasksCount(options)(this.fetch, this.basePath);
+    public getActiveTasksCount(options?: any) {
+        return TasksApiFp(this.configuration).getActiveTasksCount(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23217,8 +23583,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public determinedGetTask(taskId: string, options?: any) {
-        return TasksApiFp(this.configuration).determinedGetTask(taskId, options)(this.fetch, this.basePath);
+    public getTask(taskId: string, options?: any) {
+        return TasksApiFp(this.configuration).getTask(taskId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23242,8 +23608,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public determinedTaskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-        return TasksApiFp(this.configuration).determinedTaskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public taskLogs(taskId: string, limit?: number, follow?: boolean, allocationIds?: Array<string>, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return TasksApiFp(this.configuration).taskLogs(taskId, limit, follow, allocationIds, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23255,8 +23621,8 @@ export class TasksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TasksApi
      */
-    public determinedTaskLogsFields(taskId: string, follow?: boolean, options?: any) {
-        return TasksApiFp(this.configuration).determinedTaskLogsFields(taskId, follow, options)(this.fetch, this.basePath);
+    public taskLogsFields(taskId: string, follow?: boolean, options?: any) {
+        return TasksApiFp(this.configuration).taskLogsFields(taskId, follow, options)(this.fetch, this.basePath);
     }
 
 }
@@ -23274,10 +23640,10 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteTemplate(templateName: string, options: any = {}): FetchArgs {
+        deleteTemplate(templateName: string, options: any = {}): FetchArgs {
             // verify required parameter 'templateName' is not null or undefined
             if (templateName === null || templateName === undefined) {
-                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling determinedDeleteTemplate.');
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling deleteTemplate.');
             }
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
@@ -23311,10 +23677,10 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTemplate(templateName: string, options: any = {}): FetchArgs {
+        getTemplate(templateName: string, options: any = {}): FetchArgs {
             // verify required parameter 'templateName' is not null or undefined
             if (templateName === null || templateName === undefined) {
-                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling determinedGetTemplate.');
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling getTemplate.');
             }
             const localVarPath = `/api/v1/templates/{templateName}`
                 .replace(`{${"templateName"}}`, encodeURIComponent(String(templateName)));
@@ -23352,7 +23718,7 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
+        getTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/templates`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -23405,14 +23771,14 @@ export const TemplatesApiFetchParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPutTemplate(templateName: string, body: V1Template, options: any = {}): FetchArgs {
+        putTemplate(templateName: string, body: V1Template, options: any = {}): FetchArgs {
             // verify required parameter 'templateName' is not null or undefined
             if (templateName === null || templateName === undefined) {
-                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling determinedPutTemplate.');
+                throw new RequiredError('templateName','Required parameter templateName was null or undefined when calling putTemplate.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPutTemplate.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putTemplate.');
             }
             const localVarPath = `/api/v1/templates/{template.name}`
                 .replace(`{${"template.name"}}`, encodeURIComponent(String(templateName)));
@@ -23459,8 +23825,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTemplateResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).determinedDeleteTemplate(templateName, options);
+        deleteTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).deleteTemplate(templateName, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23478,8 +23844,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplateResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).determinedGetTemplate(templateName, options);
+        getTemplate(templateName: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplate(templateName, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23501,8 +23867,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).determinedGetTemplates(sortBy, orderBy, offset, limit, name, options);
+        getTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTemplatesResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23521,8 +23887,8 @@ export const TemplatesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPutTemplate(templateName: string, body: V1Template, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTemplateResponse> {
-            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).determinedPutTemplate(templateName, body, options);
+        putTemplate(templateName: string, body: V1Template, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutTemplateResponse> {
+            const localVarFetchArgs = TemplatesApiFetchParamCreator(configuration).putTemplate(templateName, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23549,8 +23915,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteTemplate(templateName: string, options?: any) {
-            return TemplatesApiFp(configuration).determinedDeleteTemplate(templateName, options)(fetch, basePath);
+        deleteTemplate(templateName: string, options?: any) {
+            return TemplatesApiFp(configuration).deleteTemplate(templateName, options)(fetch, basePath);
         },
         /**
          * 
@@ -23559,8 +23925,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTemplate(templateName: string, options?: any) {
-            return TemplatesApiFp(configuration).determinedGetTemplate(templateName, options)(fetch, basePath);
+        getTemplate(templateName: string, options?: any) {
+            return TemplatesApiFp(configuration).getTemplate(templateName, options)(fetch, basePath);
         },
         /**
          * 
@@ -23573,8 +23939,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any) {
-            return TemplatesApiFp(configuration).determinedGetTemplates(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
+        getTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any) {
+            return TemplatesApiFp(configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(fetch, basePath);
         },
         /**
          * 
@@ -23584,8 +23950,8 @@ export const TemplatesApiFactory = function (configuration?: Configuration, fetc
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPutTemplate(templateName: string, body: V1Template, options?: any) {
-            return TemplatesApiFp(configuration).determinedPutTemplate(templateName, body, options)(fetch, basePath);
+        putTemplate(templateName: string, body: V1Template, options?: any) {
+            return TemplatesApiFp(configuration).putTemplate(templateName, body, options)(fetch, basePath);
         },
     };
 };
@@ -23605,8 +23971,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public determinedDeleteTemplate(templateName: string, options?: any) {
-        return TemplatesApiFp(this.configuration).determinedDeleteTemplate(templateName, options)(this.fetch, this.basePath);
+    public deleteTemplate(templateName: string, options?: any) {
+        return TemplatesApiFp(this.configuration).deleteTemplate(templateName, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23617,8 +23983,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public determinedGetTemplate(templateName: string, options?: any) {
-        return TemplatesApiFp(this.configuration).determinedGetTemplate(templateName, options)(this.fetch, this.basePath);
+    public getTemplate(templateName: string, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplate(templateName, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23633,8 +23999,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public determinedGetTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any) {
-        return TemplatesApiFp(this.configuration).determinedGetTemplates(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath);
+    public getTemplates(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, options?: any) {
+        return TemplatesApiFp(this.configuration).getTemplates(sortBy, orderBy, offset, limit, name, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -23646,8 +24012,8 @@ export class TemplatesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TemplatesApi
      */
-    public determinedPutTemplate(templateName: string, body: V1Template, options?: any) {
-        return TemplatesApiFp(this.configuration).determinedPutTemplate(templateName, body, options)(this.fetch, this.basePath);
+    public putTemplate(templateName: string, body: V1Template, options?: any) {
+        return TemplatesApiFp(this.configuration).putTemplate(templateName, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -23665,10 +24031,10 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTensorboard(tensorboardId: string, options: any = {}): FetchArgs {
+        getTensorboard(tensorboardId: string, options: any = {}): FetchArgs {
             // verify required parameter 'tensorboardId' is not null or undefined
             if (tensorboardId === null || tensorboardId === undefined) {
-                throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling determinedGetTensorboard.');
+                throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling getTensorboard.');
             }
             const localVarPath = `/api/v1/tensorboards/{tensorboardId}`
                 .replace(`{${"tensorboardId"}}`, encodeURIComponent(String(tensorboardId)));
@@ -23708,7 +24074,7 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
+        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/tensorboards`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -23768,10 +24134,10 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTensorboard(tensorboardId: string, options: any = {}): FetchArgs {
+        killTensorboard(tensorboardId: string, options: any = {}): FetchArgs {
             // verify required parameter 'tensorboardId' is not null or undefined
             if (tensorboardId === null || tensorboardId === undefined) {
-                throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling determinedKillTensorboard.');
+                throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling killTensorboard.');
             }
             const localVarPath = `/api/v1/tensorboards/{tensorboardId}/kill`
                 .replace(`{${"tensorboardId"}}`, encodeURIComponent(String(tensorboardId)));
@@ -23805,10 +24171,10 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchTensorboard(body: V1LaunchTensorboardRequest, options: any = {}): FetchArgs {
+        launchTensorboard(body: V1LaunchTensorboardRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedLaunchTensorboard.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling launchTensorboard.');
             }
             const localVarPath = `/api/v1/tensorboards`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -23846,14 +24212,14 @@ export const TensorboardsApiFetchParamCreator = function (configuration?: Config
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options: any = {}): FetchArgs {
+        setTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options: any = {}): FetchArgs {
             // verify required parameter 'tensorboardId' is not null or undefined
             if (tensorboardId === null || tensorboardId === undefined) {
-                throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling determinedSetTensorboardPriority.');
+                throw new RequiredError('tensorboardId','Required parameter tensorboardId was null or undefined when calling setTensorboardPriority.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetTensorboardPriority.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setTensorboardPriority.');
             }
             const localVarPath = `/api/v1/tensorboards/{tensorboardId}/set_priority`
                 .replace(`{${"tensorboardId"}}`, encodeURIComponent(String(tensorboardId)));
@@ -23900,8 +24266,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).determinedGetTensorboard(tensorboardId, options);
+        getTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboard(tensorboardId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23925,8 +24291,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardsResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).determinedGetTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
+        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTensorboardsResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23944,8 +24310,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTensorboardResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).determinedKillTensorboard(tensorboardId, options);
+        killTensorboard(tensorboardId: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTensorboardResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).killTensorboard(tensorboardId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23963,8 +24329,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchTensorboard(body: V1LaunchTensorboardRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchTensorboardResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).determinedLaunchTensorboard(body, options);
+        launchTensorboard(body: V1LaunchTensorboardRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1LaunchTensorboardResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).launchTensorboard(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23983,8 +24349,8 @@ export const TensorboardsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetTensorboardPriorityResponse> {
-            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).determinedSetTensorboardPriority(tensorboardId, body, options);
+        setTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetTensorboardPriorityResponse> {
+            const localVarFetchArgs = TensorboardsApiFetchParamCreator(configuration).setTensorboardPriority(tensorboardId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24011,8 +24377,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTensorboard(tensorboardId: string, options?: any) {
-            return TensorboardsApiFp(configuration).determinedGetTensorboard(tensorboardId, options)(fetch, basePath);
+        getTensorboard(tensorboardId: string, options?: any) {
+            return TensorboardsApiFp(configuration).getTensorboard(tensorboardId, options)(fetch, basePath);
         },
         /**
          * 
@@ -24027,8 +24393,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-            return TensorboardsApiFp(configuration).determinedGetTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
+        getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+            return TensorboardsApiFp(configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
         },
         /**
          * 
@@ -24037,8 +24403,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTensorboard(tensorboardId: string, options?: any) {
-            return TensorboardsApiFp(configuration).determinedKillTensorboard(tensorboardId, options)(fetch, basePath);
+        killTensorboard(tensorboardId: string, options?: any) {
+            return TensorboardsApiFp(configuration).killTensorboard(tensorboardId, options)(fetch, basePath);
         },
         /**
          * 
@@ -24047,8 +24413,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedLaunchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
-            return TensorboardsApiFp(configuration).determinedLaunchTensorboard(body, options)(fetch, basePath);
+        launchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
+            return TensorboardsApiFp(configuration).launchTensorboard(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -24058,8 +24424,8 @@ export const TensorboardsApiFactory = function (configuration?: Configuration, f
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any) {
-            return TensorboardsApiFp(configuration).determinedSetTensorboardPriority(tensorboardId, body, options)(fetch, basePath);
+        setTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any) {
+            return TensorboardsApiFp(configuration).setTensorboardPriority(tensorboardId, body, options)(fetch, basePath);
         },
     };
 };
@@ -24079,8 +24445,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public determinedGetTensorboard(tensorboardId: string, options?: any) {
-        return TensorboardsApiFp(this.configuration).determinedGetTensorboard(tensorboardId, options)(this.fetch, this.basePath);
+    public getTensorboard(tensorboardId: string, options?: any) {
+        return TensorboardsApiFp(this.configuration).getTensorboard(tensorboardId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24097,8 +24463,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public determinedGetTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-        return TensorboardsApiFp(this.configuration).determinedGetTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
+    public getTensorboards(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_START_TIME' | 'SORT_BY_WORKSPACE_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
+        return TensorboardsApiFp(this.configuration).getTensorboards(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24109,8 +24475,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public determinedKillTensorboard(tensorboardId: string, options?: any) {
-        return TensorboardsApiFp(this.configuration).determinedKillTensorboard(tensorboardId, options)(this.fetch, this.basePath);
+    public killTensorboard(tensorboardId: string, options?: any) {
+        return TensorboardsApiFp(this.configuration).killTensorboard(tensorboardId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24121,8 +24487,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public determinedLaunchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
-        return TensorboardsApiFp(this.configuration).determinedLaunchTensorboard(body, options)(this.fetch, this.basePath);
+    public launchTensorboard(body: V1LaunchTensorboardRequest, options?: any) {
+        return TensorboardsApiFp(this.configuration).launchTensorboard(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24134,8 +24500,8 @@ export class TensorboardsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TensorboardsApi
      */
-    public determinedSetTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any) {
-        return TensorboardsApiFp(this.configuration).determinedSetTensorboardPriority(tensorboardId, body, options)(this.fetch, this.basePath);
+    public setTensorboardPriority(tensorboardId: string, body: V1SetTensorboardPriorityRequest, options?: any) {
+        return TensorboardsApiFp(this.configuration).setTensorboardPriority(tensorboardId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -24153,10 +24519,10 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateTrialsCollection(body: V1CreateTrialsCollectionRequest, options: any = {}): FetchArgs {
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedCreateTrialsCollection.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling createTrialsCollection.');
             }
             const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -24193,7 +24559,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteTrialsCollection(id?: number, options: any = {}): FetchArgs {
+        deleteTrialsCollection(id?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'DELETE' }, options);
@@ -24229,7 +24595,7 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialsCollections(projectId?: number, options: any = {}): FetchArgs {
+        getTrialsCollections(projectId?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -24265,10 +24631,10 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchTrialsCollection(body: V1PatchTrialsCollectionRequest, options: any = {}): FetchArgs {
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchTrialsCollection.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchTrialsCollection.');
             }
             const localVarPath = `/api/v1/trial-comparison/collections`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -24305,10 +24671,10 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedQueryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
+        queryTrials(body: V1QueryTrialsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedQueryTrials.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling queryTrials.');
             }
             const localVarPath = `/api/v1/trial-comparison/query`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -24345,10 +24711,10 @@ export const TrialComparisonApiFetchParamCreator = function (configuration?: Con
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateTrialTags(body: V1UpdateTrialTagsRequest, options: any = {}): FetchArgs {
+        updateTrialTags(body: V1UpdateTrialTagsRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedUpdateTrialTags.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling updateTrialTags.');
             }
             const localVarPath = `/api/v1/trial-comparison/update-trial-tags`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -24394,8 +24760,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).determinedCreateTrialsCollection(body, options);
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CreateTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).createTrialsCollection(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24413,8 +24779,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteTrialsCollection(id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).determinedDeleteTrialsCollection(id, options);
+        deleteTrialsCollection(id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).deleteTrialsCollection(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24432,8 +24798,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialsCollections(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).determinedGetTrialsCollections(projectId, options);
+        getTrialsCollections(projectId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialsCollectionsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).getTrialsCollections(projectId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24451,8 +24817,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).determinedPatchTrialsCollection(body, options);
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchTrialsCollectionResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).patchTrialsCollection(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24470,8 +24836,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedQueryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).determinedQueryTrials(body, options);
+        queryTrials(body: V1QueryTrialsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1QueryTrialsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).queryTrials(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24489,8 +24855,8 @@ export const TrialComparisonApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateTrialTags(body: V1UpdateTrialTagsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateTrialTagsResponse> {
-            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).determinedUpdateTrialTags(body, options);
+        updateTrialTags(body: V1UpdateTrialTagsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UpdateTrialTagsResponse> {
+            const localVarFetchArgs = TrialComparisonApiFetchParamCreator(configuration).updateTrialTags(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24517,8 +24883,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedCreateTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).determinedCreateTrialsCollection(body, options)(fetch, basePath);
+        createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).createTrialsCollection(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -24527,8 +24893,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteTrialsCollection(id?: number, options?: any) {
-            return TrialComparisonApiFp(configuration).determinedDeleteTrialsCollection(id, options)(fetch, basePath);
+        deleteTrialsCollection(id?: number, options?: any) {
+            return TrialComparisonApiFp(configuration).deleteTrialsCollection(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -24537,8 +24903,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialsCollections(projectId?: number, options?: any) {
-            return TrialComparisonApiFp(configuration).determinedGetTrialsCollections(projectId, options)(fetch, basePath);
+        getTrialsCollections(projectId?: number, options?: any) {
+            return TrialComparisonApiFp(configuration).getTrialsCollections(projectId, options)(fetch, basePath);
         },
         /**
          * 
@@ -24547,8 +24913,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).determinedPatchTrialsCollection(body, options)(fetch, basePath);
+        patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).patchTrialsCollection(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -24557,8 +24923,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedQueryTrials(body: V1QueryTrialsRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).determinedQueryTrials(body, options)(fetch, basePath);
+        queryTrials(body: V1QueryTrialsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).queryTrials(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -24567,8 +24933,8 @@ export const TrialComparisonApiFactory = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUpdateTrialTags(body: V1UpdateTrialTagsRequest, options?: any) {
-            return TrialComparisonApiFp(configuration).determinedUpdateTrialTags(body, options)(fetch, basePath);
+        updateTrialTags(body: V1UpdateTrialTagsRequest, options?: any) {
+            return TrialComparisonApiFp(configuration).updateTrialTags(body, options)(fetch, basePath);
         },
     };
 };
@@ -24588,8 +24954,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public determinedCreateTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).determinedCreateTrialsCollection(body, options)(this.fetch, this.basePath);
+    public createTrialsCollection(body: V1CreateTrialsCollectionRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).createTrialsCollection(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24600,8 +24966,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public determinedDeleteTrialsCollection(id?: number, options?: any) {
-        return TrialComparisonApiFp(this.configuration).determinedDeleteTrialsCollection(id, options)(this.fetch, this.basePath);
+    public deleteTrialsCollection(id?: number, options?: any) {
+        return TrialComparisonApiFp(this.configuration).deleteTrialsCollection(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24612,8 +24978,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public determinedGetTrialsCollections(projectId?: number, options?: any) {
-        return TrialComparisonApiFp(this.configuration).determinedGetTrialsCollections(projectId, options)(this.fetch, this.basePath);
+    public getTrialsCollections(projectId?: number, options?: any) {
+        return TrialComparisonApiFp(this.configuration).getTrialsCollections(projectId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24624,8 +24990,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public determinedPatchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).determinedPatchTrialsCollection(body, options)(this.fetch, this.basePath);
+    public patchTrialsCollection(body: V1PatchTrialsCollectionRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).patchTrialsCollection(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24636,8 +25002,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public determinedQueryTrials(body: V1QueryTrialsRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).determinedQueryTrials(body, options)(this.fetch, this.basePath);
+    public queryTrials(body: V1QueryTrialsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).queryTrials(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -24648,8 +25014,8 @@ export class TrialComparisonApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialComparisonApi
      */
-    public determinedUpdateTrialTags(body: V1UpdateTrialTagsRequest, options?: any) {
-        return TrialComparisonApiFp(this.configuration).determinedUpdateTrialTags(body, options)(this.fetch, this.basePath);
+    public updateTrialTags(body: V1UpdateTrialTagsRequest, options?: any) {
+        return TrialComparisonApiFp(this.configuration).updateTrialTags(body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -24672,10 +25038,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options: any = {}): FetchArgs {
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options: any = {}): FetchArgs {
             // verify required parameter 'experimentId' is not null or undefined
             if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling determinedGetExperimentTrials.');
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentTrials.');
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/trials`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
@@ -24729,10 +25095,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrial(trialId: number, options: any = {}): FetchArgs {
+        getTrial(trialId: number, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetTrial.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrial.');
             }
             const localVarPath = `/api/v1/trials/{trialId}`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -24773,10 +25139,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options: any = {}): FetchArgs {
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedGetTrialWorkloads.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getTrialWorkloads.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/workloads`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -24838,10 +25204,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTrial(id: number, options: any = {}): FetchArgs {
+        killTrial(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedKillTrial.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling killTrial.');
             }
             const localVarPath = `/api/v1/trials/{id}/kill`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -24881,10 +25247,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedSummarizeTrial.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling summarizeTrial.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/summarize`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -24954,10 +25320,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedTrialLogs.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogs.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -25040,10 +25406,10 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
+        trialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling determinedTrialLogsFields.');
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogsFields.');
             }
             const localVarPath = `/api/v1/trials/{trialId}/logs/fields`
                 .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
@@ -25095,8 +25461,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentTrialsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25114,8 +25480,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedGetTrial(trialId, options);
+        getTrial(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrial(trialId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25140,8 +25506,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedGetTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialWorkloadsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25159,8 +25525,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedKillTrial(id, options);
+        killTrial(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1KillTrialResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).killTrial(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25184,8 +25550,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedSummarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SummarizeTrialResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25215,8 +25581,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedTrialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25235,8 +25601,8 @@ export const TrialsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).determinedTrialLogsFields(trialId, follow, options);
+        trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
+            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25268,8 +25634,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
-            return TrialsApiFp(configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
+        getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
+            return TrialsApiFp(configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(fetch, basePath);
         },
         /**
          * 
@@ -25278,8 +25644,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrial(trialId: number, options?: any) {
-            return TrialsApiFp(configuration).determinedGetTrial(trialId, options)(fetch, basePath);
+        getTrial(trialId: number, options?: any) {
+            return TrialsApiFp(configuration).getTrial(trialId, options)(fetch, basePath);
         },
         /**
          * 
@@ -25295,8 +25661,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
-            return TrialsApiFp(configuration).determinedGetTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
+        getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+            return TrialsApiFp(configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(fetch, basePath);
         },
         /**
          * 
@@ -25305,8 +25671,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedKillTrial(id: number, options?: any) {
-            return TrialsApiFp(configuration).determinedKillTrial(id, options)(fetch, basePath);
+        killTrial(id: number, options?: any) {
+            return TrialsApiFp(configuration).killTrial(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -25321,8 +25687,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-            return TrialsApiFp(configuration).determinedSummarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
+        summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+            return TrialsApiFp(configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(fetch, basePath);
         },
         /**
          * 
@@ -25343,8 +25709,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-            return TrialsApiFp(configuration).determinedTrialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
+        trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+            return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
         },
         /**
          * 
@@ -25354,8 +25720,8 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTrialLogsFields(trialId: number, follow?: boolean, options?: any) {
-            return TrialsApiFp(configuration).determinedTrialLogsFields(trialId, follow, options)(fetch, basePath);
+        trialLogsFields(trialId: number, follow?: boolean, options?: any) {
+            return TrialsApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
         },
     };
 };
@@ -25380,8 +25746,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedGetExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
-        return TrialsApiFp(this.configuration).determinedGetExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
+    public getExperimentTrials(experimentId: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_START_TIME' | 'SORT_BY_END_TIME' | 'SORT_BY_STATE' | 'SORT_BY_BEST_VALIDATION_METRIC' | 'SORT_BY_LATEST_VALIDATION_METRIC' | 'SORT_BY_BATCHES_PROCESSED' | 'SORT_BY_DURATION' | 'SORT_BY_RESTARTS' | 'SORT_BY_CHECKPOINT_SIZE', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, states?: Array<'STATE_UNSPECIFIED' | 'STATE_ACTIVE' | 'STATE_PAUSED' | 'STATE_STOPPING_COMPLETED' | 'STATE_STOPPING_CANCELED' | 'STATE_STOPPING_ERROR' | 'STATE_COMPLETED' | 'STATE_CANCELED' | 'STATE_ERROR' | 'STATE_DELETED' | 'STATE_DELETING' | 'STATE_DELETE_FAILED' | 'STATE_STOPPING_KILLED' | 'STATE_QUEUED' | 'STATE_PULLING' | 'STATE_STARTING' | 'STATE_RUNNING'>, options?: any) {
+        return TrialsApiFp(this.configuration).getExperimentTrials(experimentId, sortBy, orderBy, offset, limit, states, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25392,8 +25758,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedGetTrial(trialId: number, options?: any) {
-        return TrialsApiFp(this.configuration).determinedGetTrial(trialId, options)(this.fetch, this.basePath);
+    public getTrial(trialId: number, options?: any) {
+        return TrialsApiFp(this.configuration).getTrial(trialId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25411,8 +25777,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedGetTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
-        return TrialsApiFp(this.configuration).determinedGetTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath);
+    public getTrialWorkloads(trialId: number, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, sortKey?: string, filter?: 'FILTER_OPTION_UNSPECIFIED' | 'FILTER_OPTION_CHECKPOINT' | 'FILTER_OPTION_VALIDATION' | 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION', includeBatchMetrics?: boolean, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', options?: any) {
+        return TrialsApiFp(this.configuration).getTrialWorkloads(trialId, orderBy, offset, limit, sortKey, filter, includeBatchMetrics, metricType, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25423,8 +25789,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedKillTrial(id: number, options?: any) {
-        return TrialsApiFp(this.configuration).determinedKillTrial(id, options)(this.fetch, this.basePath);
+    public killTrial(id: number, options?: any) {
+        return TrialsApiFp(this.configuration).killTrial(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25441,8 +25807,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedSummarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
-        return TrialsApiFp(this.configuration).determinedSummarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
+    public summarizeTrial(trialId: number, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: 'METRIC_TYPE_UNSPECIFIED' | 'METRIC_TYPE_TRAINING' | 'METRIC_TYPE_VALIDATION', scale?: 'SCALE_UNSPECIFIED' | 'SCALE_LINEAR' | 'SCALE_LOG', options?: any) {
+        return TrialsApiFp(this.configuration).summarizeTrial(trialId, maxDatapoints, metricNames, startBatches, endBatches, metricType, scale, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25465,8 +25831,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedTrialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
-        return TrialsApiFp(this.configuration).determinedTrialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
+    public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<'LOG_LEVEL_UNSPECIFIED' | 'LOG_LEVEL_TRACE' | 'LOG_LEVEL_DEBUG' | 'LOG_LEVEL_INFO' | 'LOG_LEVEL_WARNING' | 'LOG_LEVEL_ERROR' | 'LOG_LEVEL_CRITICAL'>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date, timestampAfter?: Date, orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', searchText?: string, options?: any) {
+        return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -25478,8 +25844,8 @@ export class TrialsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof TrialsApi
      */
-    public determinedTrialLogsFields(trialId: number, follow?: boolean, options?: any) {
-        return TrialsApiFp(this.configuration).determinedTrialLogsFields(trialId, follow, options)(this.fetch, this.basePath);
+    public trialLogsFields(trialId: number, follow?: boolean, options?: any) {
+        return TrialsApiFp(this.configuration).trialLogsFields(trialId, follow, options)(this.fetch, this.basePath);
     }
 
 }
@@ -25496,7 +25862,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMe(options: any = {}): FetchArgs {
+        getMe(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/me`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25528,10 +25894,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUser(userId: number, options: any = {}): FetchArgs {
+        getUser(userId: number, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling determinedGetUser.');
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUser.');
             }
             const localVarPath = `/api/v1/users/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
@@ -25565,10 +25931,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUserByUsername(username: string, options: any = {}): FetchArgs {
+        getUserByUsername(username: string, options: any = {}): FetchArgs {
             // verify required parameter 'username' is not null or undefined
             if (username === null || username === undefined) {
-                throw new RequiredError('username','Required parameter username was null or undefined when calling determinedGetUserByUsername.');
+                throw new RequiredError('username','Required parameter username was null or undefined when calling getUserByUsername.');
             }
             const localVarPath = `/api/v1/users/{username}/by-username`
                 .replace(`{${"username"}}`, encodeURIComponent(String(username)));
@@ -25601,7 +25967,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUserSetting(options: any = {}): FetchArgs {
+        getUserSetting(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/setting`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25636,7 +26002,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
+        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -25685,14 +26051,14 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchUser(userId: number, body: V1PatchUser, options: any = {}): FetchArgs {
+        patchUser(userId: number, body: V1PatchUser, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling determinedPatchUser.');
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling patchUser.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchUser.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchUser.');
             }
             const localVarPath = `/api/v1/users/{userId}`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
@@ -25730,10 +26096,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUser(body: V1PostUserRequest, options: any = {}): FetchArgs {
+        postUser(body: V1PostUserRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostUser.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUser.');
             }
             const localVarPath = `/api/v1/users`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -25770,10 +26136,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUserActivity(body: V1PostUserActivityRequest, options: any = {}): FetchArgs {
+        postUserActivity(body: V1PostUserActivityRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostUserActivity.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserActivity.');
             }
             const localVarPath = `/api/v1/users/activity`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -25810,10 +26176,10 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUserSetting(body: V1PostUserSettingRequest, options: any = {}): FetchArgs {
+        postUserSetting(body: V1PostUserSettingRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostUserSetting.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserSetting.');
             }
             const localVarPath = `/api/v1/users/setting`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -25849,7 +26215,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResetUserSetting(options: any = {}): FetchArgs {
+        resetUserSetting(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/users/setting/reset`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'POST' }, options);
@@ -25882,14 +26248,14 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetUserPassword(userId: number, body: string, options: any = {}): FetchArgs {
+        setUserPassword(userId: number, body: string, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling determinedSetUserPassword.');
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling setUserPassword.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedSetUserPassword.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setUserPassword.');
             }
             const localVarPath = `/api/v1/users/{userId}/password`
                 .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
@@ -25935,8 +26301,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMe(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedGetMe(options);
+        getMe(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMeResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getMe(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25954,8 +26320,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedGetUser(userId, options);
+        getUser(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUser(userId, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25973,8 +26339,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedGetUserByUsername(username, options);
+        getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25991,8 +26357,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserSettingResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedGetUserSetting(options);
+        getUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserSetting(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26013,8 +26379,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedGetUsers(sortBy, orderBy, offset, limit, options);
+        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUsersResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUsers(sortBy, orderBy, offset, limit, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26033,8 +26399,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchUser(userId: number, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedPatchUser(userId, body, options);
+        patchUser(userId: number, body: V1PatchUser, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).patchUser(userId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26052,8 +26418,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUser(body: V1PostUserRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedPostUser(body, options);
+        postUser(body: V1PostUserRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUser(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26071,8 +26437,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUserActivity(body: V1PostUserActivityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserActivityResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedPostUserActivity(body, options);
+        postUserActivity(body: V1PostUserActivityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserActivityResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserActivity(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26090,8 +26456,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUserSetting(body: V1PostUserSettingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserSettingResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedPostUserSetting(body, options);
+        postUserSetting(body: V1PostUserSettingRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserSetting(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26108,8 +26474,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResetUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResetUserSettingResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedResetUserSetting(options);
+        resetUserSetting(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResetUserSettingResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).resetUserSetting(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26128,8 +26494,8 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetUserPassword(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).determinedSetUserPassword(userId, body, options);
+        setUserPassword(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetUserPasswordResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).setUserPassword(userId, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26155,8 +26521,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetMe(options?: any) {
-            return UsersApiFp(configuration).determinedGetMe(options)(fetch, basePath);
+        getMe(options?: any) {
+            return UsersApiFp(configuration).getMe(options)(fetch, basePath);
         },
         /**
          * 
@@ -26165,8 +26531,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUser(userId: number, options?: any) {
-            return UsersApiFp(configuration).determinedGetUser(userId, options)(fetch, basePath);
+        getUser(userId: number, options?: any) {
+            return UsersApiFp(configuration).getUser(userId, options)(fetch, basePath);
         },
         /**
          * 
@@ -26175,8 +26541,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUserByUsername(username: string, options?: any) {
-            return UsersApiFp(configuration).determinedGetUserByUsername(username, options)(fetch, basePath);
+        getUserByUsername(username: string, options?: any) {
+            return UsersApiFp(configuration).getUserByUsername(username, options)(fetch, basePath);
         },
         /**
          * 
@@ -26184,8 +26550,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUserSetting(options?: any) {
-            return UsersApiFp(configuration).determinedGetUserSetting(options)(fetch, basePath);
+        getUserSetting(options?: any) {
+            return UsersApiFp(configuration).getUserSetting(options)(fetch, basePath);
         },
         /**
          * 
@@ -26197,8 +26563,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-            return UsersApiFp(configuration).determinedGetUsers(sortBy, orderBy, offset, limit, options)(fetch, basePath);
+        getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+            return UsersApiFp(configuration).getUsers(sortBy, orderBy, offset, limit, options)(fetch, basePath);
         },
         /**
          * 
@@ -26208,8 +26574,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchUser(userId: number, body: V1PatchUser, options?: any) {
-            return UsersApiFp(configuration).determinedPatchUser(userId, body, options)(fetch, basePath);
+        patchUser(userId: number, body: V1PatchUser, options?: any) {
+            return UsersApiFp(configuration).patchUser(userId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26218,8 +26584,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUser(body: V1PostUserRequest, options?: any) {
-            return UsersApiFp(configuration).determinedPostUser(body, options)(fetch, basePath);
+        postUser(body: V1PostUserRequest, options?: any) {
+            return UsersApiFp(configuration).postUser(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26228,8 +26594,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUserActivity(body: V1PostUserActivityRequest, options?: any) {
-            return UsersApiFp(configuration).determinedPostUserActivity(body, options)(fetch, basePath);
+        postUserActivity(body: V1PostUserActivityRequest, options?: any) {
+            return UsersApiFp(configuration).postUserActivity(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26238,8 +26604,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostUserSetting(body: V1PostUserSettingRequest, options?: any) {
-            return UsersApiFp(configuration).determinedPostUserSetting(body, options)(fetch, basePath);
+        postUserSetting(body: V1PostUserSettingRequest, options?: any) {
+            return UsersApiFp(configuration).postUserSetting(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26247,8 +26613,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedResetUserSetting(options?: any) {
-            return UsersApiFp(configuration).determinedResetUserSetting(options)(fetch, basePath);
+        resetUserSetting(options?: any) {
+            return UsersApiFp(configuration).resetUserSetting(options)(fetch, basePath);
         },
         /**
          * 
@@ -26258,8 +26624,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedSetUserPassword(userId: number, body: string, options?: any) {
-            return UsersApiFp(configuration).determinedSetUserPassword(userId, body, options)(fetch, basePath);
+        setUserPassword(userId: number, body: string, options?: any) {
+            return UsersApiFp(configuration).setUserPassword(userId, body, options)(fetch, basePath);
         },
     };
 };
@@ -26278,8 +26644,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedGetMe(options?: any) {
-        return UsersApiFp(this.configuration).determinedGetMe(options)(this.fetch, this.basePath);
+    public getMe(options?: any) {
+        return UsersApiFp(this.configuration).getMe(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26290,8 +26656,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedGetUser(userId: number, options?: any) {
-        return UsersApiFp(this.configuration).determinedGetUser(userId, options)(this.fetch, this.basePath);
+    public getUser(userId: number, options?: any) {
+        return UsersApiFp(this.configuration).getUser(userId, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26302,8 +26668,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedGetUserByUsername(username: string, options?: any) {
-        return UsersApiFp(this.configuration).determinedGetUserByUsername(username, options)(this.fetch, this.basePath);
+    public getUserByUsername(username: string, options?: any) {
+        return UsersApiFp(this.configuration).getUserByUsername(username, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26313,8 +26679,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedGetUserSetting(options?: any) {
-        return UsersApiFp(this.configuration).determinedGetUserSetting(options)(this.fetch, this.basePath);
+    public getUserSetting(options?: any) {
+        return UsersApiFp(this.configuration).getUserSetting(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26328,8 +26694,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedGetUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
-        return UsersApiFp(this.configuration).determinedGetUsers(sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
+    public getUsers(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_DISPLAY_NAME' | 'SORT_BY_USER_NAME' | 'SORT_BY_ADMIN' | 'SORT_BY_ACTIVE' | 'SORT_BY_MODIFIED_TIME' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, options?: any) {
+        return UsersApiFp(this.configuration).getUsers(sortBy, orderBy, offset, limit, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26341,8 +26707,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedPatchUser(userId: number, body: V1PatchUser, options?: any) {
-        return UsersApiFp(this.configuration).determinedPatchUser(userId, body, options)(this.fetch, this.basePath);
+    public patchUser(userId: number, body: V1PatchUser, options?: any) {
+        return UsersApiFp(this.configuration).patchUser(userId, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26353,8 +26719,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedPostUser(body: V1PostUserRequest, options?: any) {
-        return UsersApiFp(this.configuration).determinedPostUser(body, options)(this.fetch, this.basePath);
+    public postUser(body: V1PostUserRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUser(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26365,8 +26731,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedPostUserActivity(body: V1PostUserActivityRequest, options?: any) {
-        return UsersApiFp(this.configuration).determinedPostUserActivity(body, options)(this.fetch, this.basePath);
+    public postUserActivity(body: V1PostUserActivityRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUserActivity(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26377,8 +26743,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedPostUserSetting(body: V1PostUserSettingRequest, options?: any) {
-        return UsersApiFp(this.configuration).determinedPostUserSetting(body, options)(this.fetch, this.basePath);
+    public postUserSetting(body: V1PostUserSettingRequest, options?: any) {
+        return UsersApiFp(this.configuration).postUserSetting(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26388,8 +26754,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedResetUserSetting(options?: any) {
-        return UsersApiFp(this.configuration).determinedResetUserSetting(options)(this.fetch, this.basePath);
+    public resetUserSetting(options?: any) {
+        return UsersApiFp(this.configuration).resetUserSetting(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26401,8 +26767,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public determinedSetUserPassword(userId: number, body: string, options?: any) {
-        return UsersApiFp(this.configuration).determinedSetUserPassword(userId, body, options)(this.fetch, this.basePath);
+    public setUserPassword(userId: number, body: string, options?: any) {
+        return UsersApiFp(this.configuration).setUserPassword(userId, body, options)(this.fetch, this.basePath);
     }
 
 }
@@ -26420,10 +26786,10 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteWebhook(id: number, options: any = {}): FetchArgs {
+        deleteWebhook(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedDeleteWebhook.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling deleteWebhook.');
             }
             const localVarPath = `/api/v1/webhooks/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -26456,7 +26822,7 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWebhooks(options: any = {}): FetchArgs {
+        getWebhooks(options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/webhooks`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -26488,10 +26854,10 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostWebhook(body: V1Webhook, options: any = {}): FetchArgs {
+        postWebhook(body: V1Webhook, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostWebhook.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postWebhook.');
             }
             const localVarPath = `/api/v1/webhooks`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -26528,10 +26894,10 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTestWebhook(id: number, options: any = {}): FetchArgs {
+        testWebhook(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedTestWebhook.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling testWebhook.');
             }
             const localVarPath = `/api/v1/webhooks/{id}/test`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -26574,8 +26940,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWebhookResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).determinedDeleteWebhook(id, options);
+        deleteWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).deleteWebhook(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26592,8 +26958,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWebhooks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWebhooksResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).determinedGetWebhooks(options);
+        getWebhooks(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWebhooksResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).getWebhooks(options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26611,8 +26977,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostWebhook(body: V1Webhook, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWebhookResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).determinedPostWebhook(body, options);
+        postWebhook(body: V1Webhook, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).postWebhook(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26630,8 +26996,8 @@ export const WebhooksApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTestWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TestWebhookResponse> {
-            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).determinedTestWebhook(id, options);
+        testWebhook(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1TestWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).testWebhook(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -26658,8 +27024,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteWebhook(id: number, options?: any) {
-            return WebhooksApiFp(configuration).determinedDeleteWebhook(id, options)(fetch, basePath);
+        deleteWebhook(id: number, options?: any) {
+            return WebhooksApiFp(configuration).deleteWebhook(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -26667,8 +27033,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWebhooks(options?: any) {
-            return WebhooksApiFp(configuration).determinedGetWebhooks(options)(fetch, basePath);
+        getWebhooks(options?: any) {
+            return WebhooksApiFp(configuration).getWebhooks(options)(fetch, basePath);
         },
         /**
          * 
@@ -26677,8 +27043,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostWebhook(body: V1Webhook, options?: any) {
-            return WebhooksApiFp(configuration).determinedPostWebhook(body, options)(fetch, basePath);
+        postWebhook(body: V1Webhook, options?: any) {
+            return WebhooksApiFp(configuration).postWebhook(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26687,8 +27053,8 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedTestWebhook(id: number, options?: any) {
-            return WebhooksApiFp(configuration).determinedTestWebhook(id, options)(fetch, basePath);
+        testWebhook(id: number, options?: any) {
+            return WebhooksApiFp(configuration).testWebhook(id, options)(fetch, basePath);
         },
     };
 };
@@ -26708,8 +27074,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public determinedDeleteWebhook(id: number, options?: any) {
-        return WebhooksApiFp(this.configuration).determinedDeleteWebhook(id, options)(this.fetch, this.basePath);
+    public deleteWebhook(id: number, options?: any) {
+        return WebhooksApiFp(this.configuration).deleteWebhook(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26719,8 +27085,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public determinedGetWebhooks(options?: any) {
-        return WebhooksApiFp(this.configuration).determinedGetWebhooks(options)(this.fetch, this.basePath);
+    public getWebhooks(options?: any) {
+        return WebhooksApiFp(this.configuration).getWebhooks(options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26731,8 +27097,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public determinedPostWebhook(body: V1Webhook, options?: any) {
-        return WebhooksApiFp(this.configuration).determinedPostWebhook(body, options)(this.fetch, this.basePath);
+    public postWebhook(body: V1Webhook, options?: any) {
+        return WebhooksApiFp(this.configuration).postWebhook(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -26743,8 +27109,8 @@ export class WebhooksApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WebhooksApi
      */
-    public determinedTestWebhook(id: number, options?: any) {
-        return WebhooksApiFp(this.configuration).determinedTestWebhook(id, options)(this.fetch, this.basePath);
+    public testWebhook(id: number, options?: any) {
+        return WebhooksApiFp(this.configuration).testWebhook(id, options)(this.fetch, this.basePath);
     }
 
 }
@@ -26762,10 +27128,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveWorkspace(id: number, options: any = {}): FetchArgs {
+        archiveWorkspace(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedArchiveWorkspace.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling archiveWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}/archive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -26799,10 +27165,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteWorkspace(id: number, options: any = {}): FetchArgs {
+        deleteWorkspace(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedDeleteWorkspace.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling deleteWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -26836,10 +27202,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspace(id: number, options: any = {}): FetchArgs {
+        getWorkspace(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedGetWorkspace.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -26881,10 +27247,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedGetWorkspaceProjects.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getWorkspaceProjects.');
             }
             const localVarPath = `/api/v1/workspaces/{id}/projects`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -26958,7 +27324,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options: any = {}): FetchArgs {
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -27027,14 +27393,14 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchWorkspace(id: number, body: V1PatchWorkspace, options: any = {}): FetchArgs {
+        patchWorkspace(id: number, body: V1PatchWorkspace, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedPatchWorkspace.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling patchWorkspace.');
             }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPatchWorkspace.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -27072,10 +27438,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPinWorkspace(id: number, options: any = {}): FetchArgs {
+        pinWorkspace(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedPinWorkspace.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling pinWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}/pin`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -27109,10 +27475,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostWorkspace(body: V1PostWorkspaceRequest, options: any = {}): FetchArgs {
+        postWorkspace(body: V1PostWorkspaceRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling determinedPostWorkspace.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces`;
             const localVarUrlObj = url.parse(localVarPath, true);
@@ -27149,10 +27515,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveWorkspace(id: number, options: any = {}): FetchArgs {
+        unarchiveWorkspace(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedUnarchiveWorkspace.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling unarchiveWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}/unarchive`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -27186,10 +27552,10 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnpinWorkspace(id: number, options: any = {}): FetchArgs {
+        unpinWorkspace(id: number, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
-                throw new RequiredError('id','Required parameter id was null or undefined when calling determinedUnpinWorkspace.');
+                throw new RequiredError('id','Required parameter id was null or undefined when calling unpinWorkspace.');
             }
             const localVarPath = `/api/v1/workspaces/{id}/unpin`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
@@ -27232,8 +27598,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedArchiveWorkspace(id, options);
+        archiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ArchiveWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).archiveWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27251,8 +27617,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedDeleteWorkspace(id, options);
+        deleteWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27270,8 +27636,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedGetWorkspace(id, options);
+        getWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27297,8 +27663,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedGetWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceProjectsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27324,8 +27690,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedGetWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27344,8 +27710,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchWorkspace(id: number, body: V1PatchWorkspace, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedPatchWorkspace(id, body, options);
+        patchWorkspace(id: number, body: V1PatchWorkspace, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).patchWorkspace(id, body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27363,8 +27729,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PinWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedPinWorkspace(id, options);
+        pinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PinWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).pinWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27382,8 +27748,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostWorkspace(body: V1PostWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedPostWorkspace(body, options);
+        postWorkspace(body: V1PostWorkspaceRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).postWorkspace(body, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27401,8 +27767,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedUnarchiveWorkspace(id, options);
+        unarchiveWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnarchiveWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unarchiveWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27420,8 +27786,8 @@ export const WorkspacesApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnpinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpinWorkspaceResponse> {
-            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).determinedUnpinWorkspace(id, options);
+        unpinWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1UnpinWorkspaceResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).unpinWorkspace(id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -27448,8 +27814,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedArchiveWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).determinedArchiveWorkspace(id, options)(fetch, basePath);
+        archiveWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).archiveWorkspace(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -27458,8 +27824,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedDeleteWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).determinedDeleteWorkspace(id, options)(fetch, basePath);
+        deleteWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).deleteWorkspace(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -27468,8 +27834,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).determinedGetWorkspace(id, options)(fetch, basePath);
+        getWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspace(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -27486,8 +27852,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
-            return WorkspacesApiFp(configuration).determinedGetWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(fetch, basePath);
+        getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(fetch, basePath);
         },
         /**
          * 
@@ -27504,8 +27870,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedGetWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
-            return WorkspacesApiFp(configuration).determinedGetWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(fetch, basePath);
+        getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(fetch, basePath);
         },
         /**
          * 
@@ -27515,8 +27881,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPatchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
-            return WorkspacesApiFp(configuration).determinedPatchWorkspace(id, body, options)(fetch, basePath);
+        patchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
+            return WorkspacesApiFp(configuration).patchWorkspace(id, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -27525,8 +27891,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPinWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).determinedPinWorkspace(id, options)(fetch, basePath);
+        pinWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).pinWorkspace(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -27535,8 +27901,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedPostWorkspace(body: V1PostWorkspaceRequest, options?: any) {
-            return WorkspacesApiFp(configuration).determinedPostWorkspace(body, options)(fetch, basePath);
+        postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
+            return WorkspacesApiFp(configuration).postWorkspace(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -27545,8 +27911,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnarchiveWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).determinedUnarchiveWorkspace(id, options)(fetch, basePath);
+        unarchiveWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).unarchiveWorkspace(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -27555,8 +27921,8 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        determinedUnpinWorkspace(id: number, options?: any) {
-            return WorkspacesApiFp(configuration).determinedUnpinWorkspace(id, options)(fetch, basePath);
+        unpinWorkspace(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).unpinWorkspace(id, options)(fetch, basePath);
         },
     };
 };
@@ -27576,8 +27942,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedArchiveWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedArchiveWorkspace(id, options)(this.fetch, this.basePath);
+    public archiveWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).archiveWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27588,8 +27954,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedDeleteWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedDeleteWorkspace(id, options)(this.fetch, this.basePath);
+    public deleteWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).deleteWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27600,8 +27966,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedGetWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedGetWorkspace(id, options)(this.fetch, this.basePath);
+    public getWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27620,8 +27986,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedGetWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedGetWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(this.fetch, this.basePath);
+    public getWorkspaceProjects(id: number, sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_EXPERIMENT_START_TIME' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_ID', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaceProjects(id, sortBy, orderBy, offset, limit, name, archived, users, userIds, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27640,8 +28006,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedGetWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedGetWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(this.fetch, this.basePath);
+    public getWorkspaces(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_ID' | 'SORT_BY_NAME', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27653,8 +28019,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedPatchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedPatchWorkspace(id, body, options)(this.fetch, this.basePath);
+    public patchWorkspace(id: number, body: V1PatchWorkspace, options?: any) {
+        return WorkspacesApiFp(this.configuration).patchWorkspace(id, body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27665,8 +28031,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedPinWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedPinWorkspace(id, options)(this.fetch, this.basePath);
+    public pinWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).pinWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27677,8 +28043,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedPostWorkspace(body: V1PostWorkspaceRequest, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedPostWorkspace(body, options)(this.fetch, this.basePath);
+    public postWorkspace(body: V1PostWorkspaceRequest, options?: any) {
+        return WorkspacesApiFp(this.configuration).postWorkspace(body, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27689,8 +28055,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedUnarchiveWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedUnarchiveWorkspace(id, options)(this.fetch, this.basePath);
+    public unarchiveWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).unarchiveWorkspace(id, options)(this.fetch, this.basePath);
     }
 
     /**
@@ -27701,8 +28067,8 @@ export class WorkspacesApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof WorkspacesApi
      */
-    public determinedUnpinWorkspace(id: number, options?: any) {
-        return WorkspacesApiFp(this.configuration).determinedUnpinWorkspace(id, options)(this.fetch, this.basePath);
+    public unpinWorkspace(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).unpinWorkspace(id, options)(this.fetch, this.basePath);
     }
 
 }

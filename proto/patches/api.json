@@ -67,7 +67,7 @@
     },
     "v1CompleteValidateAfterOperation": {
         "properties": {
-            "metrics": {
+            "searcherMetric": {
                 "type": null
             }
         }

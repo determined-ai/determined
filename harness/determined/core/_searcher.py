@@ -89,7 +89,7 @@ class SearcherOperation:
             data=det.util.json_encode(length),
         )
 
-    def report_completed(self, searcher_metric: float) -> None:
+    def report_completed(self, searcher_metric: Any) -> None:
         """
         ``report_completed()`` is the final step of a train-validate-report cycle.
 
