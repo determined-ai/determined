@@ -115,22 +115,6 @@ func (p *UserAuthZPermissive) CanResetUsersOwnSettings(
 	return (&UserAuthZBasic{}).CanResetUsersOwnSettings(ctx, curUser)
 }
 
-// CanGetActiveTasksCount calls RBAC authz but enforces basic authz.
-func (p *UserAuthZPermissive) CanGetActiveTasksCount(
-	ctx context.Context, curUser model.User,
-) error {
-	_ = (&UserAuthZRBAC{}).CanGetActiveTasksCount(ctx, curUser)
-	return (&UserAuthZBasic{}).CanGetActiveTasksCount(ctx, curUser)
-}
-
-// CanAccessNTSCTask calls RBAC authz but enforces basic authz.
-func (p *UserAuthZPermissive) CanAccessNTSCTask(
-	ctx context.Context, curUser model.User, ownerID model.UserID,
-) (bool, error) {
-	_, _ = (&UserAuthZRBAC{}).CanAccessNTSCTask(ctx, curUser, ownerID)
-	return (&UserAuthZBasic{}).CanAccessNTSCTask(ctx, curUser, ownerID)
-}
-
 func init() {
 	AuthZProvider.Register("permissive", &UserAuthZPermissive{})
 }
