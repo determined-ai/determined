@@ -57,7 +57,7 @@ Version 0.19.10
 -  Job queue: Fix an issue where the CLI command ``det job list`` would ignore the argument
    ``--resource-pool``.
 
--  Distributed training: We fixed a bug where a distributed training trial that calls
+-  Distributed training: Fix a bug where a distributed training trial that called
    context.set_stop_requested was causing the trial to error and preventing it from completing
    successfully.
 
