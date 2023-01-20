@@ -74,7 +74,9 @@ export const LineChart: React.FC<Props> = ({
           ticks: { show: false },
         },
       ],
-      cursor: { drag: { x: true, y: false }, points: { show: false } },
+      cursor: {
+        drag: { x: true, y: false },
+      },
       height,
       legend: { show: false },
       plugins,

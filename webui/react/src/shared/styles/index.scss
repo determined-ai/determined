@@ -48,3 +48,16 @@ code.block {
   padding: 8px;
   white-space: pre;
 }
+.u-cursor-pt {
+  border-radius: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+.u-cursor-pt::after {
+  background-color: inherit;
+  content: '';
+  height: 6px;
+  position: absolute;
+  transform: translateY(-1px) rotate(45deg);
+  width: 6px;
+}
