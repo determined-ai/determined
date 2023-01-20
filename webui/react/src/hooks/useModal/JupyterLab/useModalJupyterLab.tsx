@@ -271,8 +271,11 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
   );
 
   useEffect(() => {
-    setField([...field, { name: 'config', value: config || '' }]);
-  }, [config, field]);
+    setField([
+      ...field.filter((f) => f.name[0] === 'workspace'),
+      { name: 'config', value: config || '' },
+    ]);
+  }, [config]);
 
   return (
     <Form fields={field} form={form} onFieldsChange={handleConfigChange}>
