@@ -4,8 +4,8 @@ import os
 import pathlib
 from typing import Any, Callable, Dict, Iterator, Optional, Set, Union
 
-# Paths should be a sorted list of paths relative to the checkpoint root that indicate what paths
-# should be uploaded.  A directory should always appear in Paths if any subpath under that directory
+# Paths should be a set of paths relative to the checkpoint root that indicate what paths
+# should be uploaded. A directory should always appear in Paths if any subpath under that directory
 # appears in Paths.
 Paths = Set[str]
 

@@ -269,7 +269,7 @@ class CheckpointContext:
         paths = None
         if selector is not None:
             resources = {key: resources[key] for key in resources if selector(key)}
-            paths = set(resources.keys())
+            paths = set(resources)
 
         self._storage_manager.upload(src=ckpt_dir, dst=storage_id, paths=paths)
         self._report_checkpoint(storage_id, resources, metadata)
