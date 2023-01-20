@@ -304,7 +304,8 @@ const ChartsSection: React.FC = () => {
         <p>
           A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
           responsive grid. There is a sync for the plot window, cursor, and selection/zoom of an
-          x-axis range.
+          x-axis range. Unless <code>showFilters</code> is turned off, there will be a linear/log
+          scale switch, and if X-axis options are provided, an X-axis options switch.
         </p>
         <div style={{ height: 300 }}>
           <ChartGrid
@@ -313,6 +314,7 @@ const ChartsSection: React.FC = () => {
               { metric: { name: 'Sample2' } as Metric, series: [xSeries, line2] },
             ]}
             rowHeight={250}
+            xAxisOptions={['Batches', 'Time']}
           />
         </div>
       </Card>

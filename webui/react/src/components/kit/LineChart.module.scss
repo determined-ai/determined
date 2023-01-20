@@ -4,6 +4,12 @@
   margin-bottom: -10px !important;
   text-align: center;
 }
+.filterContainer {
+  column-gap: 16px;
+  display: flex;
+  justify-content: right;
+  margin-bottom: 12px;
+}
 .legendContainer {
   margin-left: 35px;
 

@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 import { AlignedData } from 'uplot';
 
+import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
+import XAxisFilter from 'components/XAxisFilter';
 import { glasbeyColor } from 'shared/utils/color';
 import { Metric, MetricType, Scale } from 'types';
 
@@ -131,16 +133,24 @@ export const LineChart: React.FC<Props> = ({
 };
 
 interface GroupProps {
+  chartSettingsControls?: boolean;
   chartsProps: Props[];
   rowHeight?: number;
-  scale?: Scale;
+  xAxisOptions?: string[];
 }
 
 export const ChartGrid: React.FC<GroupProps> = ({
+  chartSettingsControls = true,
   chartsProps,
   rowHeight = 480,
-  scale = Scale.Linear,
+  xAxisOptions,
 }: GroupProps) => {
+  // Scale control
+  const [scale, setScale] = useState<Scale>(Scale.Linear);
+
+  // X-Axis control
+  const [xAxis, setXAxis] = useState<string>('Batches');
+
   // calculate xMin / xMax for shared group
   let xMin = Infinity,
     xMax = -Infinity;
@@ -159,32 +169,42 @@ export const ChartGrid: React.FC<GroupProps> = ({
   });
 
   return (
-    <SyncProvider>
-      <AutoSizer>
-        {({ width }) => {
-          const columnCount = Math.max(1, Math.floor(width / 540));
-          return (
-            <FixedSizeGrid
-              columnCount={columnCount}
-              columnWidth={Math.floor(width / columnCount) - 10}
-              height={(chartsProps.length > columnCount ? 2.1 : 1.05) * (rowHeight ?? 480)}
-              rowCount={Math.ceil(chartsProps.length / columnCount)}
-              rowHeight={rowHeight ?? 480}
-              width={width}>
-              {({ columnIndex, rowIndex, style }) => {
-                const cellIndex = rowIndex * columnCount + columnIndex;
-                return (
-                  <div key={cellIndex} style={style}>
-                    {cellIndex < chartsProps.length && (
-                      <LineChart {...chartsProps[cellIndex]} height={rowHeight} scale={scale} />
-                    )}
-                  </div>
-                );
-              }}
-            </FixedSizeGrid>
-          );
-        }}
-      </AutoSizer>
-    </SyncProvider>
+    <>
+      {chartSettingsControls && (
+        <div className={css.filterContainer}>
+          <ScaleSelectFilter value={scale} onChange={setScale} />
+          {xAxisOptions && xAxisOptions.length > 1 && (
+            <XAxisFilter options={xAxisOptions} value={xAxis} onChange={setXAxis} />
+          )}
+        </div>
+      )}
+      <SyncProvider>
+        <AutoSizer>
+          {({ width }) => {
+            const columnCount = Math.max(1, Math.floor(width / 540));
+            return (
+              <FixedSizeGrid
+                columnCount={columnCount}
+                columnWidth={Math.floor(width / columnCount) - 10}
+                height={(chartsProps.length > columnCount ? 2.1 : 1.05) * (rowHeight ?? 480)}
+                rowCount={Math.ceil(chartsProps.length / columnCount)}
+                rowHeight={rowHeight ?? 480}
+                width={width}>
+                {({ columnIndex, rowIndex, style }) => {
+                  const cellIndex = rowIndex * columnCount + columnIndex;
+                  return (
+                    <div key={cellIndex} style={style}>
+                      {cellIndex < chartsProps.length && (
+                        <LineChart {...chartsProps[cellIndex]} height={rowHeight} scale={scale} />
+                      )}
+                    </div>
+                  );
+                }}
+              </FixedSizeGrid>
+            );
+          }}
+        </AutoSizer>
+      </SyncProvider>
+    </>
   );
 };
