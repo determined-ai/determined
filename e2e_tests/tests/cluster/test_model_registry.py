@@ -10,7 +10,7 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user, log_out_user
 
-from .test_agent_user_group import setup_workspace
+from .test_workspace_org import setup_workspace
 
 
 @pytest.mark.e2e_cpu
