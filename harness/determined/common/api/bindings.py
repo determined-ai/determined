@@ -2027,6 +2027,32 @@ class v1DataPoint:
         }
         return out
 
+class v1DataPointTime:
+
+    def __init__(
+        self,
+        *,
+        time: str,
+        value: float,
+    ):
+        self.time = time
+        self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1DataPointTime":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "time": obj["time"],
+            "value": float(obj["value"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "time": self.time,
+            "value": dump_float(self.value),
+        }
+        return out
+
 class v1DeleteCheckpointsRequest:
 
     def __init__(
@@ -9884,6 +9910,7 @@ class v1SummarizeTrialResponse:
         return out
 
 class v1SummarizedMetric:
+    time: "typing.Optional[typing.Sequence[v1DataPointTime]]" = None
 
     def __init__(
         self,
@@ -9891,10 +9918,13 @@ class v1SummarizedMetric:
         data: "typing.Sequence[v1DataPoint]",
         name: str,
         type: "v1MetricType",
+        time: "typing.Union[typing.Sequence[v1DataPointTime], None, Unset]" = _unset,
     ):
         self.data = data
         self.name = name
         self.type = type
+        if not isinstance(time, Unset):
+            self.time = time
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SummarizedMetric":
@@ -9903,6 +9933,8 @@ class v1SummarizedMetric:
             "name": obj["name"],
             "type": v1MetricType(obj["type"]),
         }
+        if "time" in obj:
+            kwargs["time"] = [v1DataPointTime.from_json(x) for x in obj["time"]] if obj["time"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -9911,6 +9943,8 @@ class v1SummarizedMetric:
             "name": self.name,
             "type": self.type.value,
         }
+        if not omit_unset or "time" in vars(self):
+            out["time"] = None if self.time is None else [x.to_json(omit_unset) for x in self.time]
         return out
 
 class v1Task:
@@ -11792,6 +11826,11 @@ class v1WorkspaceState(enum.Enum):
     WORKSPACE_STATE_DELETE_FAILED = "WORKSPACE_STATE_DELETE_FAILED"
     WORKSPACE_STATE_DELETED = "WORKSPACE_STATE_DELETED"
 
+class v1XAxis(enum.Enum):
+    X_AXIS_UNSPECIFIED = "X_AXIS_UNSPECIFIED"
+    X_AXIS_BATCH = "X_AXIS_BATCH"
+    X_AXIS_TIME = "X_AXIS_TIME"
+
 def post_AckAllocationPreemptionSignal(
     session: "api.Session",
     *,
@@ -12112,6 +12151,7 @@ def get_CompareTrials(
     scale: "typing.Optional[v1Scale]" = None,
     startBatches: "typing.Optional[int]" = None,
     trialIds: "typing.Optional[typing.Sequence[int]]" = None,
+    xAxis: "typing.Optional[v1XAxis]" = None,
 ) -> "v1CompareTrialsResponse":
     _params = {
         "endBatches": endBatches,
@@ -12121,6 +12161,7 @@ def get_CompareTrials(
         "scale": scale.value if scale is not None else None,
         "startBatches": startBatches,
         "trialIds": trialIds,
+        "xAxis": xAxis.value if xAxis is not None else None,
     }
     _resp = session._do_request(
         method="GET",
