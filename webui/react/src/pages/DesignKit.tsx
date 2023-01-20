@@ -17,6 +17,8 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
+import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Tooltip from 'components/kit/Tooltip';
@@ -263,6 +265,17 @@ const ChartsSection: React.FC = () => {
     ],
     metricType: MetricType.Validation,
   };
+
+  const line2Times: TimeSerie = [
+    [1, '2023-01-05T01:00:00Z'],
+    [2, '2023-01-05T02:12:34.56789Z'],
+    [2.5, '2023-01-05T02:30:00Z'],
+    [3, '2023-01-05T03:00:00Z'],
+    [3.25, '2023-01-05T03:15:00Z'],
+    [3.75, '2023-01-05T03:45:00Z'],
+    [4, '2023-01-05T04:02:06Z'],
+  ];
+
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
@@ -300,9 +313,14 @@ const ChartsSection: React.FC = () => {
           <ChartGrid
             chartsProps={[
               { metric: { name: 'Sample1' } as Metric, series: [line1], showLegend: true },
-              { metric: { name: 'Sample2' } as Metric, series: [line2], showLegend: true },
+              {
+                metric: { name: 'Sample2' } as Metric,
+                series: [line2],
+                showLegend: true,
+                timeSeries: [line2Times],
+              },
             ]}
-            xAxisOptions={['Batches', 'Time']}
+            xAxisOptions={Object.values(XAxisDomain)}
           />
         </div>
       </Card>

@@ -3,7 +3,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
 import { AlignedData } from 'uplot';
 
-import XAxisFilter from 'components/kit/LineChart/XAxisFilter';
+import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
@@ -19,6 +19,8 @@ export interface Serie {
   metricType?: MetricType;
 }
 
+export type TimeSerie = [number, string][];
+
 interface Props {
   focusedSeries?: number;
   height?: number;
@@ -26,6 +28,8 @@ interface Props {
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
+  timeSeries?: TimeSerie[];
+  xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;
 }
@@ -37,6 +41,8 @@ export const LineChart: React.FC<Props> = ({
   scale = Scale.Linear,
   series,
   showLegend = false,
+  timeSeries,
+  xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
 }: Props) => {
@@ -67,9 +73,13 @@ export const LineChart: React.FC<Props> = ({
 
     series.forEach((serie, serieIndex) => {
       yValues[serieIndex] = {};
-      serie.data.forEach((pt) => {
-        xValues.push(pt[0]);
-        yValues[serieIndex][pt[0]] = Number.isFinite(pt[1]) ? pt[1] : null;
+      serie.data.forEach((pt, idx) => {
+        const xVal =
+          xAxis === XAxisDomain.Time && !!timeSeries
+            ? new Date(timeSeries[serieIndex][idx][1]).getTime() / 1000
+            : pt[0];
+        xValues.push(xVal);
+        yValues[serieIndex][xVal] = Number.isFinite(pt[1]) ? pt[1] : null;
       });
     });
 
@@ -79,7 +89,7 @@ export const LineChart: React.FC<Props> = ({
     });
 
     return [xValues, ...yValuesArray];
-  }, [series]);
+  }, [series, timeSeries, xAxis]);
 
   const chartOptions: Options = useMemo(() => {
     const plugins = [tooltipsPlugin({ isShownEmptyVal: false, seriesColors })];
@@ -111,14 +121,14 @@ export const LineChart: React.FC<Props> = ({
       plugins,
       scales: {
         x: {
-          time: false,
+          time: xAxis === XAxisDomain.Time && !!timeSeries,
         },
         y: {
           distr: scale === Scale.Log ? 3 : 1,
         },
       },
       series: [
-        { label: xLabel || 'X' },
+        { label: (xAxis === XAxisDomain.Time ? timeSeries && xAxis : xAxis) || xLabel || 'X' },
         ...series.map((serie, idx) => {
           return {
             label: seriesNames[idx],
@@ -132,7 +142,7 @@ export const LineChart: React.FC<Props> = ({
         }),
       ],
     };
-  }, [series, seriesColors, seriesNames, height, scale, xLabel, yLabel]);
+  }, [series, seriesColors, seriesNames, timeSeries, height, scale, xAxis, xLabel, yLabel]);
 
   return (
     <>
@@ -169,7 +179,7 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
   const [scale, setScale] = useState<Scale>(Scale.Linear);
 
   // X-Axis control
-  const [xAxis, setXAxis] = useState<string>('Batches');
+  const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
 
   // calculate xMin / xMax for shared group
   let xMin = Infinity,
@@ -215,7 +225,7 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
                     <div className={css.chartgridCell} key={cellIndex} style={style}>
                       <div className={css.chartgridCellCard}>
                         {cellIndex < chartsProps.length && (
-                          <LineChart {...chartsProps[cellIndex]} scale={scale} />
+                          <LineChart {...chartsProps[cellIndex]} scale={scale} xAxis={xAxis} />
                         )}
                       </div>
                     </div>
