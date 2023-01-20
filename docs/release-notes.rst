@@ -58,7 +58,7 @@ Version 0.19.10
    ``--resource-pool``.
 
 -  Distributed training: Fix a bug where a distributed training trial that called
-   context.set_stop_requested was causing the trial to error and preventing it from completing
+   ``context.set_stop_requested`` would cause the trial to error and prevent it from completing
    successfully.
 
 **Removed Features**
