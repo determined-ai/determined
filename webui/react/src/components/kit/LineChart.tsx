@@ -86,6 +86,7 @@ export const LineChart: React.FC<Props> = ({
     <>
       {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
+        allowDownload
         data={series.map((s) => s.data) as AlignedData}
         focusIndex={focusedSeries}
         options={chartOptions}
