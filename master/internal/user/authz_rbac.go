@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -193,41 +192,6 @@ func (a *UserAuthZRBAC) CanResetUsersOwnSettings(ctx context.Context, curUser mo
 	noPermissionRequired(ctx, curUser.ID, curUser.ID)
 
 	return nil
-}
-
-// CanGetActiveTasksCount returns an error if a user can't administrate users.
-func (a *UserAuthZRBAC) CanGetActiveTasksCount(ctx context.Context, curUser model.User,
-) (err error) {
-	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateUser(fields, curUser.ID)
-	defer func() {
-		audit.LogFromErr(fields, err)
-	}()
-	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
-}
-
-// CanAccessNTSCTask returns false if a user can't administrate users and it is not their task.
-func (a *UserAuthZRBAC) CanAccessNTSCTask(
-	ctx context.Context, curUser model.User, ownerID model.UserID,
-) (canAccess bool, err error) {
-	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateUser(fields, curUser.ID)
-	defer func() {
-		audit.LogFromErr(fields, err)
-	}()
-
-	if curUser.ID == ownerID {
-		return true, nil
-	}
-	if err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER); err != nil {
-		if _, ok := err.(authz.PermissionDeniedError); ok {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func init() {
