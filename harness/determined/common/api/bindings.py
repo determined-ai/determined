@@ -1619,13 +1619,13 @@ class v1CompareTrialsResponse:
 
 class v1CompleteValidateAfterOperation:
     op: "typing.Optional[v1ValidateAfterOperation]" = None
-    searcherMetric: "typing.Optional[float]" = None
+    searcherMetric: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
         *,
         op: "typing.Union[v1ValidateAfterOperation, None, Unset]" = _unset,
-        searcherMetric: "typing.Union[float, None, Unset]" = _unset,
+        searcherMetric: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
         if not isinstance(op, Unset):
             self.op = op
@@ -1639,7 +1639,7 @@ class v1CompleteValidateAfterOperation:
         if "op" in obj:
             kwargs["op"] = v1ValidateAfterOperation.from_json(obj["op"]) if obj["op"] is not None else None
         if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = float(obj["searcherMetric"]) if obj["searcherMetric"] is not None else None
+            kwargs["searcherMetric"] = obj["searcherMetric"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -1648,7 +1648,7 @@ class v1CompleteValidateAfterOperation:
         if not omit_unset or "op" in vars(self):
             out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = None if self.searcherMetric is None else dump_float(self.searcherMetric)
+            out["searcherMetric"] = self.searcherMetric
         return out
 
 class v1Container:
@@ -11629,7 +11629,7 @@ class v1ValidationCompleted:
     def __init__(
         self,
         *,
-        metric: float,
+        metric: "typing.Dict[str, typing.Any]",
         requestId: str,
         validateAfterLength: str,
     ):
@@ -11640,7 +11640,7 @@ class v1ValidationCompleted:
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationCompleted":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "metric": float(obj["metric"]),
+            "metric": obj["metric"],
             "requestId": obj["requestId"],
             "validateAfterLength": obj["validateAfterLength"],
         }
@@ -11648,7 +11648,7 @@ class v1ValidationCompleted:
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "metric": dump_float(self.metric),
+            "metric": self.metric,
             "requestId": self.requestId,
             "validateAfterLength": self.validateAfterLength,
         }
