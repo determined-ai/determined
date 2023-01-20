@@ -2,9 +2,8 @@
  Tutorials
 ###########
 
-This section includes quickstarts and tutorials. Learning the basics of
-how to work with Determined and how to port your existing code to the
-Determined environment:
+This section includes quickstarts and tutorials. Learning the basics of how to work with Determined
+and how to port your existing code to the Determined environment:
 
 +---------------------------------+--------------------------------------------------------------+
 | Topic                           | Documentation Content                                        |
