@@ -22,7 +22,7 @@ Version 0.19.10
    - The enterprise edition of Determined (`HPE Machine Learning Development
    <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
       now allows for experiment tags to be propagated as labels to the associated jobs on the HPC
-      cluster. A number of labelling schemes are supported, controlled by the configuration item
+      cluster. A number of labeling schemes are supported, controlled by the configuration item
       ``resource_manager.job_project_source``.
 
 -  Cluster: Add support for launcher-provided resource pools.
