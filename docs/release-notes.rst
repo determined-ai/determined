@@ -51,7 +51,7 @@ Version 0.19.10
    would have a submission time of when the master restarted rather than the original job submission
    time.
 
--  ``det deploy aws``: fix reliability issue in ``efs`` deployment type, fix broken ``fsx``
+-  ``det deploy aws``: Fix reliability issue in ``efs`` deployment type, fix broken ``fsx``
    deployment type.
 
 -  Job queue: Fix an issue where the CLI command ``det job list`` would ignore the argument
