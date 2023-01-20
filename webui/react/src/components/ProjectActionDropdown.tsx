@@ -178,9 +178,7 @@ const ProjectActionDropdown: React.FC<Props> = ({
         menu={menuProps}
         placement="bottomRight"
         trigger={trigger ?? ['click']}>
-        <Button ghost onClick={stopPropagation}>
-          <Icon name={`overflow-${direction}`} />
-        </Button>
+        <Button ghost icon={<Icon name={`overflow-${direction}`} />} onClick={stopPropagation} />
       </Dropdown>
       {contextHolders}
     </div>

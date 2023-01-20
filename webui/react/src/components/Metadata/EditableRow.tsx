@@ -55,9 +55,11 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
             getPopupContainer={(triggerNode) => triggerNode}
             menu={menu}
             trigger={['click']}>
-            <Button aria-label="action" ghost type="text">
-              <Icon name="overflow-vertical" size="tiny" />
-            </Button>
+            <Button
+              aria-label="action"
+              ghost
+              icon={<Icon name="overflow-vertical" size="tiny" />}
+            />
           </Dropdown>
         )}
       </Input.Group>
