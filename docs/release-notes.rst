@@ -38,7 +38,7 @@ Version 0.19.10
 
 **Improvements**
 
--  Notebooks: default idle notebook termination timeout can now be set via ``notebook_timeout``
+-  Notebooks: The default idle notebook termination timeout can now be set via the ``notebook_timeout``
    master config option.
 
 -  Trials: Trials can now be killed when in the ``STOPPING_CANCELED`` state. Previously if a trial
