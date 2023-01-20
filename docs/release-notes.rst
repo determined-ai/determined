@@ -13,7 +13,13 @@
 Version 0.19.10
 ===============
 
-**Release Date:** January 19, 2023
+**Release Date:** January 20, 2023
+
+**Breaking Changes**
+
+- The name of the resource pool in Kubernetes has changed from ``"kubernetes"`` to
+  ``"default"``. Forked experiments will need to have their configurations manually
+  modified to update the resource pool name.
 
 **New Feature**
 
