@@ -55,4 +55,6 @@ message Shell {
   google.protobuf.Struct agent_user_group = 14;
   // The associated job id.
   string job_id = 15;
+  // The workspace id.
+  int32 workspace_id = 18;
 }

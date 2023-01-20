@@ -57,7 +57,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	if checkpoint.CheckpointTrainingMetadata.ExperimentID == 0 {
 		return nil // TODO(nick) add authz for other task types.
 	}
-	exp, err := m.db.ExperimentWithoutConfigByID(checkpoint.CheckpointTrainingMetadata.ExperimentID)
+	exp, err := m.db.ExperimentByID(checkpoint.CheckpointTrainingMetadata.ExperimentID)
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func (a *apiServer) DeleteCheckpoints(
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
 		ckptGCTask := newCheckpointGCTask(
 			a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
-			exps[i].Config.AsLegacy(), checkpointUUIDs, false, agentUserGroup, curUser, nil,
+			exps[i].Config, checkpointUUIDs, false, agentUserGroup, curUser, nil,
 		)
 		a.m.system.MustActorOf(addr, ckptGCTask)
 	}

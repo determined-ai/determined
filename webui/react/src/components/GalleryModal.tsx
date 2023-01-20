@@ -2,13 +2,15 @@ import { Modal } from 'antd';
 import { ModalProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import Tooltip from 'components/kit/Tooltip';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import useResize from 'hooks/useResize';
+import Icon from 'shared/components/Icon';
 import { isNumber } from 'shared/utils/data';
 import { isPercent, percentToFloat } from 'shared/utils/number';
 
 import css from './GalleryModal.module.scss';
-import IconButton from './IconButton';
 
 interface Props extends ModalProps {
   children: React.ReactNode;
@@ -67,22 +69,20 @@ const GalleryModal: React.FC<Props> = ({
     <Modal centered footer={null} open width={width} {...props}>
       <div className={css.base} style={{ minHeight }}>
         {children}
-        <IconButton
-          className={css.prev}
-          icon="arrow-left"
-          iconSize="small"
-          label="Previous"
-          tooltipPlacement="right"
-          onClick={handlePrevious}
-        />
-        <IconButton
-          className={css.next}
-          icon="arrow-right"
-          iconSize="small"
-          label="Next"
-          tooltipPlacement="left"
-          onClick={handleNext}
-        />
+        <div className={css.prev}>
+          <Tooltip placement="right" title="Previous">
+            <Button onClick={handlePrevious}>
+              <Icon name="arrow-left" />
+            </Button>
+          </Tooltip>
+        </div>
+        <div className={css.next}>
+          <Tooltip placement="left" title="Next">
+            <Button onClick={handleNext}>
+              <Icon name="arrow-right" />
+            </Button>
+          </Tooltip>
+        </div>
       </div>
     </Modal>
   );

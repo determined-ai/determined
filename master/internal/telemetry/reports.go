@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
@@ -69,7 +70,8 @@ func ReportMasterTick(system *actor.System, db db.DB, rm telemetryRPFetcher) {
 
 // ReportProvisionerTick reports the state of all provision requests by a provisioner.
 func ReportProvisionerTick(
-	system *actor.System, instances []*model.Instance, instanceType string) {
+	system *actor.System, instances []*model.Instance, instanceType string,
+) {
 	system.TellAt(
 		actor.Addr("telemetry"),
 		analytics.Track{
@@ -82,17 +84,18 @@ func ReportProvisionerTick(
 }
 
 // ReportExperimentCreated reports that an experiment has been created.
-func ReportExperimentCreated(system *actor.System, e *model.Experiment) {
+func ReportExperimentCreated(system *actor.System, id int, config expconf.ExperimentConfig) {
 	system.TellAt(
 		actor.Addr("telemetry"),
 		analytics.Track{
 			Event: "experiment_created",
 			Properties: map[string]interface{}{
-				"id":                        e.ID,
-				"searcher_name":             reflect.TypeOf(e.Config.Searcher().GetUnionMember()),
-				"num_hparams":               len(e.Config.Hyperparameters()),
-				"resources_slots_per_trial": e.Config.Resources().SlotsPerTrial(),
-				"image":                     e.Config.Environment().Image(),
+				"id":                        id,
+				"num_hparams":               len(config.Hyperparameters()),
+				"resources_slots_per_trial": config.Resources().SlotsPerTrial(),
+				"image":                     config.Environment().Image(),
+
+				"searcher_name": reflect.TypeOf(config.Searcher().GetUnionMember()),
 			},
 		},
 	)

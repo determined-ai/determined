@@ -1,10 +1,13 @@
+/* stylelint-disable no-descending-specificity */
+
 .base {
   display: flex;
   gap: 8px;
   height: 100%;
   overflow: auto;
 
-  & nav {
+  & nav:not(:global(.ant-breadcrumb)) {
+    // this was breaking the CSS for the Actionbar
     background-color: var(--theme-surface);
     box-shadow: var(--theme-elevation);
     display: flex;

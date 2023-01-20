@@ -23,6 +23,8 @@ message GetTensorboardsRequest {
     SORT_BY_DESCRIPTION = 2;
     // Return tensorboards sorted by start time.
     SORT_BY_START_TIME = 4;
+    // Return tensorboards sorted by workspace_id.
+    SORT_BY_WORKSPACE_ID = 5;
   }
   // Sort tensorboards by the given field.
   SortBy sort_by = 1;
@@ -40,6 +42,9 @@ message GetTensorboardsRequest {
   // Limit tensorboards to those that are owned by users with the specified
   // userIds.
   repeated int32 user_ids = 6;
+  // Limit tensorboards to those that are in a specific workspace, or 0 for
+  // all accessible workspaces.
+  int32 workspace_id = 7;
 }
 // Response to GetTensorboardsRequest.
 message GetTensorboardsResponse {
@@ -104,6 +109,8 @@ message LaunchTensorboardRequest {
   string template_name = 4;
   // The files to run with the command.
   repeated determined.util.v1.File files = 5;
+  // Workspace in which to launch tensorboard. Defaults to 'Uncategorized'.
+  int32 workspace_id = 6;
 }
 // Response to LaunchTensorboardRequest.
 message LaunchTensorboardResponse {

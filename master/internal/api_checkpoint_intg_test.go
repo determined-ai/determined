@@ -86,7 +86,7 @@ func createVersionTwoCheckpoint(
 }
 
 func TestCheckpointAuthZ(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 
 	cases := []struct {
 		DenyFuncName            string
