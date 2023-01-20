@@ -21,7 +21,7 @@ Version 0.19.10
    Forked experiments will need to have their configurations manually modified to update the
    resource pool name.
 
-**New Feature**
+**New Features**
 
 -  Cluster: Add support for experiment tag propagation.
 
