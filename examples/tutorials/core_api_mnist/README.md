@@ -1,6 +1,6 @@
-# Core API MNIST Example
+# Core API MNIST Tutorial
 
-This example integrates the [PyTorch MNIST training example](https://github.com/pytorch/examples/blob/main/mnist/main.py) into Determined.
+This tutorial integrates the [PyTorch MNIST training example](https://github.com/pytorch/examples/blob/main/mnist/main.py) into Determined.
 
 ## Files
 
