@@ -17,24 +17,24 @@ Version 0.19.10
 
 **Breaking Changes**
 
-- The name of the resource pool in Kubernetes has changed from ``"kubernetes"`` to
-  ``"default"``. Forked experiments will need to have their configurations manually
-  modified to update the resource pool name.
+-  The name of the resource pool in Kubernetes has changed from ``"kubernetes"`` to ``"default"``.
+   Forked experiments will need to have their configurations manually modified to update the
+   resource pool name.
 
 **New Feature**
 
 -  Cluster: Add support for experiment tag propagation.
 
-   - The enterprise edition of Determined (`HPE Machine Learning Development
-   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+   -  The enterprise edition of Determined (`HPE Machine Learning Development
+      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
       now allows for experiment tags to be propagated as labels to the associated jobs on the HPC
       cluster. A number of labeling schemes are supported, controlled by the configuration item
       ``resource_manager.job_project_source``.
 
 -  Cluster: Add support for launcher-provided resource pools.
 
-   - The enterprise edition of Determined (`HPE Machine Learning Development
-   <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+   -  The enterprise edition of Determined (`HPE Machine Learning Development
+      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
       now allows for custom resource pools to be defined that submit work to an underlying Slurm/PBS
       partition on an HPC cluster with different submission options.
 
@@ -44,12 +44,12 @@ Version 0.19.10
 
 **Improvements**
 
--  Notebooks: The default idle notebook termination timeout can now be set via the ``notebook_timeout``
-   master config option.
+-  Notebooks: The default idle notebook termination timeout can now be set via the
+   ``notebook_timeout`` master config option.
 
 -  Trials: Trials can now be killed when in the ``STOPPING_CANCELED`` state. Previously, if a trial
-   did not implement preemption correctly and was canceled, the trial did not stop and was unkillable
-   until the preemption timeout of an hour.
+   did not implement preemption correctly and was canceled, the trial did not stop and was
+   unkillable until the preemption timeout of an hour.
 
 **Bug Fixes**
 
