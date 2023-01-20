@@ -7,24 +7,13 @@ import { FormItemWrapper, WrapperProps } from './Input';
 
 type WrappedInputSelectProps = WrapperProps & SelectProps;
 const InputSelect: React.FC<WrappedInputSelectProps> = ({
-  label,
-  noForm,
+  label, // only pass label to FormItemWrapper, not also to SelectFilter
   ...props
 }: WrappedInputSelectProps) => {
-  if (noForm) {
-    return (
-      <Form>
-        <FormItemWrapper label={label} {...props}>
-          <SelectFilter {...props} />
-        </FormItemWrapper>
-      </Form>
-    );
-  } else {
-    return (
-      <FormItemWrapper label={label} {...props}>
-        <SelectFilter {...props} />
-      </FormItemWrapper>
-    );
-  }
+  return (
+    <FormItemWrapper label={label} {...props}>
+      <SelectFilter {...props} />
+    </FormItemWrapper>
+  );
 };
 export default InputSelect;

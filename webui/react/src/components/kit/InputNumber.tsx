@@ -21,24 +21,11 @@ interface InputNumberProps {
 }
 
 type WrappedInputNumberProps = WrapperProps & InputNumberProps;
-const InputNumber: React.FC<WrappedInputNumberProps> = ({
-  noForm,
-  ...props
-}: WrappedInputNumberProps) => {
-  if (noForm) {
-    return (
-      <Form>
-        <FormItemWrapper {...props}>
-          <AntdInputNumber {...props} />
-        </FormItemWrapper>
-      </Form>
-    );
-  } else {
-    return (
-      <FormItemWrapper {...props}>
-        <AntdInputNumber {...props} />
-      </FormItemWrapper>
-    );
-  }
+const InputNumber: React.FC<WrappedInputNumberProps> = (props: WrappedInputNumberProps) => {
+  return (
+    <FormItemWrapper {...props}>
+      <AntdInputNumber {...props} />
+    </FormItemWrapper>
+  );
 };
 export default InputNumber;

@@ -22,7 +22,6 @@ export interface WrapperProps {
   max?: number;
   maxMessage?: string;
   name?: string;
-  noForm?: boolean; // if not wrapped in an antd <Form> component
   required?: boolean;
   requiredMessage?: string;
   rules?: Rules; // https://ant.design/components/form#rule
@@ -65,23 +64,12 @@ export const FormItemWrapper: React.FC<WrapperProps> = ({
 
 type WrappedInputProps = AntdInputProps & WrapperProps;
 const Input: Input = forwardRef<InputRef, WrappedInputProps>(
-  ({ noForm, ...props }: WrappedInputProps, ref) => {
-    if (noForm) {
-      return (
-        <Form>
-          <FormItemWrapper max={255} {...props}>
-            <AntdInput {...props} ref={ref} />
-          </FormItemWrapper>
-          ;
-        </Form>
-      );
-    } else {
-      return (
-        <FormItemWrapper max={255} {...props}>
-          <AntdInput {...props} ref={ref} />
-        </FormItemWrapper>
-      );
-    }
+  (props: WrappedInputProps, ref) => {
+    return (
+      <FormItemWrapper max={255} {...props}>
+        <AntdInput {...props} ref={ref} />
+      </FormItemWrapper>
+    );
   },
 ) as Input;
 
@@ -94,41 +82,21 @@ type Input = ForwardRefExoticComponent<WrappedInputProps & RefAttributes<InputRe
 Input.Group = AntdInput.Group;
 
 type WrappedPasswordProps = AntdPasswordProps & WrapperProps;
-Input.Password = React.forwardRef(({ noForm, ...props }: WrappedPasswordProps, ref) => {
-  if (noForm) {
-    return (
-      <Form>
-        <FormItemWrapper max={255} {...props}>
-          <AntdInput.Password {...props} ref={ref} />
-        </FormItemWrapper>
-      </Form>
-    );
-  } else {
-    return (
-      <FormItemWrapper max={255} {...props}>
-        <AntdInput.Password {...props} ref={ref} />
-      </FormItemWrapper>
-    );
-  }
+Input.Password = React.forwardRef((props: WrappedPasswordProps, ref) => {
+  return (
+    <FormItemWrapper max={255} {...props}>
+      <AntdInput.Password {...props} ref={ref} />
+    </FormItemWrapper>
+  );
 });
 
 type WrappedTextAreaProps = AntdTextAreaProps & WrapperProps;
-Input.TextArea = React.forwardRef(({ noForm, ...props }: WrappedTextAreaProps, ref) => {
-  if (noForm) {
-    return (
-      <Form>
-        <FormItemWrapper max={255} {...props}>
-          <AntdInput.TextArea {...props} ref={ref} />
-        </FormItemWrapper>
-      </Form>
-    );
-  } else {
-    return (
-      <FormItemWrapper max={255} {...props}>
-        <AntdInput.TextArea {...props} ref={ref} />
-      </FormItemWrapper>
-    );
-  }
+Input.TextArea = React.forwardRef((props: WrappedTextAreaProps, ref) => {
+  return (
+    <FormItemWrapper max={255} {...props}>
+      <AntdInput.TextArea {...props} ref={ref} />
+    </FormItemWrapper>
+  );
 });
 
 export default Input;
