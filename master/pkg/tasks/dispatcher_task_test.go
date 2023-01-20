@@ -908,6 +908,18 @@ func Test_getDataVolumns(t *testing.T) {
 	}
 }
 
+func Test_addTmpFs(t *testing.T) {
+	arg := []mount.Mount{}
+	volumes, _ := getDataVolumes(arg)
+	name := "varTmp"
+	target := "/var/tmp"
+	volumes = addTmpFs(volumes, name, target)
+	v := volumes[0]
+	assert.Equal(t, *v.Name, "varTmp")
+	assert.Equal(t, *v.Source, "tmpfs")
+	assert.Equal(t, *v.Target, "/var/tmp:x-create=dir")
+}
+
 func Test_getPayloadName(t *testing.T) {
 	tests := []struct {
 		name string
