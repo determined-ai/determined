@@ -302,27 +302,26 @@ const NavigationSideBar: React.FC = () => {
             {Loadable.match(pinnedWorkspaces, {
               Loaded: (workspaces) => (
                 <ul className={css.pinnedWorkspaces} role="list">
-                  {workspaces
-                    .map((workspace) => (
-                      <WorkspaceActionDropdown
-                        key={workspace.id}
-                        returnIndexOnDelete={false}
-                        trigger={['contextMenu']}
-                        workspace={workspace}>
-                        <li>
-                          <NavigationItem
-                            icon={<DynamicIcon name={workspace.name} size={24} />}
-                            label={workspace.name}
-                            labelRender={
-                              <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
-                                {workspace.name}
-                              </Typography.Paragraph>
-                            }
-                            path={paths.workspaceDetails(workspace.id)}
-                          />
-                        </li>
-                      </WorkspaceActionDropdown>
-                    ))}
+                  {workspaces.map((workspace) => (
+                    <WorkspaceActionDropdown
+                      key={workspace.id}
+                      returnIndexOnDelete={false}
+                      trigger={['contextMenu']}
+                      workspace={workspace}>
+                      <li>
+                        <NavigationItem
+                          icon={<DynamicIcon name={workspace.name} size={24} />}
+                          label={workspace.name}
+                          labelRender={
+                            <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                              {workspace.name}
+                            </Typography.Paragraph>
+                          }
+                          path={paths.workspaceDetails(workspace.id)}
+                        />
+                      </li>
+                    </WorkspaceActionDropdown>
+                  ))}
                   {canCreateWorkspace ? (
                     <li>
                       <NavigationItem

@@ -74,11 +74,14 @@ const queryParamToType = <T>(
     const checkTypes = (t: string) => {
       const possibleLiteralNumber = Number(t);
 
-      if (t.includes('"')) { // check for the literal types
+      if (t.includes('"')) {
+        // check for the literal types
         if (param === t) parsedValue = param;
-      } else if (!isNaN(possibleLiteralNumber)) { // we might have litreal numbers as type
+      } else if (!isNaN(possibleLiteralNumber)) {
+        // we might have litreal numbers as type
         if (param === t) parsedValue = Number(param);
-      } else { // union types can have regular types
+      } else {
+        // union types can have regular types
         if (t.includes('{')) {
           parsedValue = JSON.parse(param);
         } else {
@@ -87,7 +90,8 @@ const queryParamToType = <T>(
       }
     };
 
-    if (typeName.includes('|')) { // check for union types
+    if (typeName.includes('|')) {
+      // check for union types
       typeName.split(' | ').forEach((t) => checkTypes(t)); // parse each individual type
     } else {
       checkTypes(typeName);
@@ -102,8 +106,7 @@ const queryParamToType = <T>(
     const value = Number(param);
     return !isNaN(value) ? value : undefined;
   }
-  if (type.name === 'string' || type.name === 'Array<string>')
-  return param;
+  if (type.name === 'string' || type.name === 'Array<string>') return param;
   if (type.is({})) return JSON.parse(param);
   if (type.name.includes('"')) {
     return validateLiteralType(type, param);
