@@ -1,10 +1,12 @@
 import { LeftOutlined } from '@ant-design/icons';
-import { Breadcrumb, Button, Dropdown, Modal, Space } from 'antd';
+import { Dropdown, Modal, Space } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import InlineEditor from 'components/InlineEditor';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import TagList from 'components/TagList';
 import TimeAgo from 'components/TimeAgo';
@@ -221,7 +223,6 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
           <div className={css.buttons}>
             {actions.slice(0, 2).map((action) => (
               <Button
-                className={css.buttonAction}
                 danger={action.danger}
                 disabled={action.disabled}
                 key={action.key}

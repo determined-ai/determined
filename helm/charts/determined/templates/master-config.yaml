@@ -126,6 +126,14 @@ data:
       _reattach_resources: {{ .Values._reattachResources }}
       {{- end }}
 
+      default_aux_resource_pool: {{.Values.defaultAuxResourcePool}}
+      default_compute_resource_pool: {{.Values.defaultComputeResourcePool}}
+
+    {{- if .Values.resourcePools}}
+    resource_pools:
+      {{- toYaml .Values.resourcePools | nindent 6}}
+    {{- end }}
+
     {{$cpuImage := (split "/" "determinedai/environments:py-3.8-pytorch-1.10-tf-2.8-cpu-24586f0")._1}}
     {{- $gpuImage := (split "/" "determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0")._1 -}}
     {{ if .Values.taskContainerDefaults -}}

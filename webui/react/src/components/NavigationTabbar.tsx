@@ -5,6 +5,7 @@ import ActionSheet from 'components/ActionSheet';
 import DynamicIcon from 'components/DynamicIcon';
 import Link, { Props as LinkProps } from 'components/Link';
 import AvatarCard from 'components/UserAvatarCard';
+import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
@@ -76,6 +77,7 @@ const NavigationTabbar: React.FC = () => {
     useModalJupyterLab();
 
   const showNavigation = isAuthenticated && ui.showChrome;
+  const dashboardEnabled = useFeature().isOn('dashboard');
 
   const { canCreateWorkspace } = usePermissions();
   const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
@@ -110,10 +112,72 @@ const NavigationTabbar: React.FC = () => {
 
   if (!showNavigation) return null;
 
+  const overflowActionsTop = [
+    {
+      render: () => (
+        <AvatarCard className={css.user} darkLight={ui.darkLight} key="avatar" user={authUser} />
+      ),
+    },
+    {
+      icon: 'settings',
+      label: 'Settings',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.settings('account')),
+    },
+    {
+      icon: 'user',
+      label: 'Sign out',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
+    },
+  ];
+
+  if (!dashboardEnabled) {
+    overflowActionsTop.push({
+      icon: 'jupyter-lab',
+      label: 'Launch JupyterLab',
+      onClick: () => handleLaunchJupyterLab(),
+    });
+  }
+
+  const overflowActionsBottom = [
+    {
+      icon: 'logs',
+      label: 'Cluster Logs',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.clusterLogs()),
+    },
+    {
+      external: true,
+      icon: 'docs',
+      label: 'Docs',
+      path: paths.docs(),
+      popout: true,
+    },
+    {
+      external: true,
+      icon: 'cloud',
+      label: 'API (Beta)',
+      path: paths.docs('/rest-api/'),
+      popout: true,
+    },
+    {
+      external: true,
+      icon: 'pencil',
+      label: 'Feedback',
+      path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
+      popout: true,
+    },
+  ];
+
   return (
     <nav className={css.base}>
       <div className={css.toolbar}>
-        <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
+        {dashboardEnabled ? (
+          <>
+            <ToolbarItem icon="home" label="Home" path={paths.dashboard()} />
+            <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
+          </>
+        ) : (
+          <ToolbarItem icon="experiment" label="Uncategorized" path={paths.uncategorized()} />
+        )}
         <ToolbarItem icon="model" label="Model Registry" path={paths.modelList()} />
         <ToolbarItem icon="tasks" label="Tasks" path={paths.taskList()} />
         <ToolbarItem icon="cluster" label="Cluster" path={paths.cluster()} status={clusterStatus} />
@@ -157,59 +221,7 @@ const NavigationTabbar: React.FC = () => {
         onCancel={handleActionSheetCancel}
       />
       <ActionSheet
-        actions={[
-          {
-            render: () => (
-              <AvatarCard
-                className={css.user}
-                darkLight={ui.darkLight}
-                key="avatar"
-                user={authUser}
-              />
-            ),
-          },
-          {
-            icon: 'settings',
-            label: 'Settings',
-            onClick: (e) => handlePathUpdate(e, paths.settings('account')),
-          },
-          {
-            icon: 'user',
-            label: 'Sign out',
-            onClick: (e) => handlePathUpdate(e, paths.logout()),
-          },
-          {
-            icon: 'jupyter-lab',
-            label: 'Launch JupyterLab',
-            onClick: () => handleLaunchJupyterLab(),
-          },
-          {
-            icon: 'logs',
-            label: 'Cluster Logs',
-            onClick: (e) => handlePathUpdate(e, paths.clusterLogs()),
-          },
-          {
-            external: true,
-            icon: 'docs',
-            label: 'Docs',
-            path: paths.docs(),
-            popout: true,
-          },
-          {
-            external: true,
-            icon: 'cloud',
-            label: 'API (Beta)',
-            path: paths.docs('/rest-api/'),
-            popout: true,
-          },
-          {
-            external: true,
-            icon: 'pencil',
-            label: 'Feedback',
-            path: paths.submitProductFeedback(info.branding || BrandingType.Determined),
-            popout: true,
-          },
-        ]}
+        actions={[...overflowActionsTop, ...overflowActionsBottom]}
         show={isShowingOverflow}
         onCancel={handleActionSheetCancel}
       />

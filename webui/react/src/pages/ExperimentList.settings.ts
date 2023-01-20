@@ -28,6 +28,7 @@ export type ExperimentColumnName =
   | 'progress'
   | 'resourcePool'
   | 'searcherType'
+  | 'searcherMetricValue'
   | 'startTime'
   | 'state'
   | 'tags'
@@ -59,6 +60,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<ExperimentColumnName, number> = {
   numTrials: 74,
   progress: 111,
   resourcePool: 140,
+  searcherMetricValue: 140,
   searcherType: 140,
   startTime: 118,
   state: 106,
@@ -103,6 +105,7 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
           literal('progress'),
           literal('resourcePool'),
           literal('searcherType'),
+          literal('searcherMetricValue'),
           literal('startTime'),
           literal('state'),
           literal('tags'),
@@ -206,5 +209,5 @@ export const settingsConfigForProject = (id: number): SettingsConfig<ExperimentL
       type: union([undefinedType, array(string)]),
     },
   },
-  storagePath: 'project-details',
+  storagePath: `project-details-${id}`,
 });

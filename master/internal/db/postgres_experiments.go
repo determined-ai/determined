@@ -743,14 +743,13 @@ WHERE (hpimportance->>'partial')::boolean=true`, &rows)
 
 // ExperimentBestSearcherValidation returns the best searcher validation for an experiment.
 func (db *PgDB) ExperimentBestSearcherValidation(id int) (float32, error) {
-	conf, err := db.ExperimentConfig(id)
+	exp, err := db.ExperimentByID(id)
 	if err != nil {
 		return 0, errors.Wrap(err, "failed to get experiment config")
 	}
 
-	metricName := conf.Searcher().Metric()
 	metricOrdering := desc
-	if conf.Searcher().SmallerIsBetter() {
+	if exp.Config.Searcher.SmallerIsBetter {
 		metricOrdering = asc
 	}
 
@@ -762,7 +761,7 @@ WHERE v.trial_id = t.id
   AND t.experiment_id = $1
   AND v.state = 'COMPLETED'
 ORDER BY (v.metrics->'validation_metrics'->>$2)::float8 %s
-LIMIT 1`, metricOrdering), id, metricName).Scan(&metric); {
+LIMIT 1`, metricOrdering), id, exp.Config.Searcher.Metric).Scan(&metric); {
 	case errors.Is(err, sql.ErrNoRows):
 		return 0, ErrNotFound
 	case err != nil:
@@ -825,7 +824,9 @@ WHERE id = $1`, id)
 }
 
 // AddExperiment adds the experiment to the database and sets its ID.
-func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
+func (db *PgDB) AddExperiment(
+	experiment *model.Experiment, activeConfig expconf.ExperimentConfig,
+) (err error) {
 	if experiment.ID != 0 {
 		return errors.Errorf("error adding an experiment with non-zero id %v", experiment.ID)
 	}
@@ -838,17 +839,22 @@ func (db *PgDB) AddExperiment(experiment *model.Experiment) (err error) {
 		if err := addJob(tx, &job); err != nil {
 			return errors.Wrapf(err, "error inserting job %v", job)
 		}
-		err := namedGet(tx, &experiment.ID, `
+		// HACK: insert literal "null" into the config, which we set in the next query.
+		if err := namedGet(tx, &experiment.ID, `
 	INSERT INTO experiments
 	(state, config, model_definition, start_time, end_time, archived, parent_id, progress,
 	 git_remote, git_commit, git_committer, git_commit_date, owner_id, original_config, notes, job_id,
  	project_id)
-	VALUES (:state, :config, :model_definition, :start_time, :end_time, :archived, :parent_id, 0,
-					:git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id, :original_config,
-					:notes, :job_id, :project_id)
-	RETURNING id`, experiment)
-		if err != nil {
+	VALUES (:state, 'null'::::jsonb, :model_definition, :start_time, :end_time, :archived, :parent_id,
+					0, :git_remote, :git_commit, :git_committer, :git_commit_date, :owner_id,
+					:original_config, :notes, :job_id, :project_id)
+	RETURNING id`, experiment); err != nil {
 			return errors.Wrapf(err, "error inserting experiment %v", *experiment)
+		}
+		if _, err := tx.Exec(
+			`UPDATE experiments SET config = $1 WHERE id = $2`, activeConfig, experiment.ID,
+		); err != nil {
+			return errors.Wrapf(err, "error inserting experiment config")
 		}
 		return nil
 	})
@@ -865,6 +871,45 @@ SELECT e.id, state, config, model_definition, start_time, end_time, archived,
 FROM experiments e
 JOIN users u ON (e.owner_id = u.id)
 WHERE e.id = $1`, &experiment, id); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
+// ExperimentByTrialID looks up an experiment by a given trialID, returning an error
+// if none exists.
+func (db *PgDB) ExperimentByTrialID(trialID int) (*model.Experiment, error) {
+	var experiment model.Experiment
+
+	if err := db.query(`
+SELECT e.id, e.state, e.config, e.model_definition, e.start_time, e.end_time, e.archived,
+       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
+       e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON (e.owner_id = u.id)
+WHERE t.id = $1`, &experiment, trialID); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
+// ExperimentByTaskID looks up an experiment by a given taskID, returning an error
+// if none exists.
+func ExperimentByTaskID(
+	ctx context.Context, taskID model.TaskID,
+) (*model.Experiment, error) {
+	var experiment model.Experiment
+	if err := Bun().NewRaw(`
+SELECT e.id, e.state, e.config, e.model_definition AS model_definition_bytes, e.start_time,
+       e.end_time, e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date,
+       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON e.owner_id = u.id
+WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
 		return nil, err
 	}
 
@@ -888,66 +933,6 @@ func (db *PgDB) LegacyExperimentConfigByID(
 	}
 
 	return config, nil
-}
-
-// ExperimentWithoutConfigByID looks up an experiment by ID in a database, returning an error if
-// none exists. It loads the experiment without its configuration, for callers that do not need
-// it, or can't handle backwards incompatible changes.
-func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
-	var experiment model.Experiment
-
-	if err := db.query(`
-SELECT e.id, state, model_definition, start_time, end_time, archived,
-       git_remote, git_commit, git_committer, git_commit_date, owner_id, notes,
-			 job_id, u.username as username, project_id
-FROM experiments e
-JOIN users u ON e.owner_id = u.id
-WHERE e.id = $1`, &experiment, id); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
-}
-
-// ExperimentWithoutConfigByTrialID looks up an experiment by a given trialID, returning an error if
-// none exists. It loads the experiment without its configuration, for callers that do not need
-// it, or can't handle backwards incompatible changes.
-func (db *PgDB) ExperimentWithoutConfigByTrialID(id int) (*model.Experiment, error) {
-	var experiment model.Experiment
-
-	if err := db.query(`
-SELECT e.id, e.state, e.model_definition, e.start_time, e.end_time, e.archived,
-       e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id, e.notes,
-			 e.job_id, u.username as username, e.project_id
-FROM experiments e
-JOIN trials t ON e.id = t.experiment_id
-JOIN users u ON e.owner_id = u.id
-WHERE t.id = $1`, &experiment, id); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
-}
-
-// ExperimentWithoutConfigByTaskID looks up an experiment by a given taskID, returning an error
-// if none exists. It loads the experiment without its configuration, for callers that do not need
-// it, or can't handle backwards incompatible changes.
-func ExperimentWithoutConfigByTaskID(
-	ctx context.Context, taskID model.TaskID,
-) (*model.Experiment, error) {
-	var experiment model.Experiment
-	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.model_definition AS model_definition_bytes, e.start_time, e.end_time,
-       e.archived, e.git_remote, e.git_commit, e.git_committer, e.git_commit_date, e.owner_id,
-       e.notes, e.job_id, u.username as username, e.project_id
-FROM experiments e
-JOIN trials t ON e.id = t.experiment_id
-JOIN users u ON e.owner_id = u.id
-WHERE t.task_id = ?`, taskID).Scan(ctx, &experiment); err != nil {
-		return nil, err
-	}
-
-	return &experiment, nil
 }
 
 // ExperimentIDByTrialID looks up an experiment ID by a trial ID.
@@ -1084,12 +1069,13 @@ func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
 }
 
 // SaveExperimentConfig saves the current experiment config to the database.
-func (db *PgDB) SaveExperimentConfig(experiment *model.Experiment) error {
+func (db *PgDB) SaveExperimentConfig(id int, config expconf.ExperimentConfig) error {
 	query := `
 UPDATE experiments
-SET config=:config
-WHERE id = :id`
-	return db.namedExecOne(query, experiment)
+SET config=$1
+WHERE id = $2`
+	_, err := db.sql.Exec(query, config, id)
+	return err
 }
 
 // SaveExperimentState saves the current experiment state to the database.
@@ -1226,8 +1212,8 @@ func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 	return nil
 }
 
-// ExperimentConfig returns the full config object for an experiment.
-func (db *PgDB) ExperimentConfig(id int) (expconf.ExperimentConfig, error) {
+// ActiveExperimentConfig returns the full config object for an experiment.
+func (db *PgDB) ActiveExperimentConfig(id int) (expconf.ExperimentConfig, error) {
 	expConfigBytes, err := db.rawQuery(`
 SELECT config
 FROM experiments

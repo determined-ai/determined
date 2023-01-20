@@ -185,7 +185,9 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 }
 
 // Proto returns a proto from a TriggerType.
-func experimentToWebhookPayload(e model.Experiment) *ExperimentPayload {
+func experimentToWebhookPayload(
+	e model.Experiment, activeConfig expconf.ExperimentConfig,
+) *ExperimentPayload {
 	var duration int
 	if e.EndTime != nil {
 		duration = int(e.EndTime.Sub(e.StartTime).Seconds())
@@ -194,12 +196,12 @@ func experimentToWebhookPayload(e model.Experiment) *ExperimentPayload {
 	return &ExperimentPayload{
 		ID:            e.ID,
 		State:         e.State,
-		Name:          e.Config.Name(),
+		Name:          activeConfig.Name(),
 		Duration:      duration,
-		ResourcePool:  e.Config.Resources().ResourcePool(),
-		SlotsPerTrial: e.Config.Resources().SlotsPerTrial(),
-		WorkspaceName: e.Config.Workspace(),
-		ProjectName:   e.Config.Project(),
+		ResourcePool:  activeConfig.Resources().ResourcePool(),
+		SlotsPerTrial: activeConfig.Resources().SlotsPerTrial(),
+		WorkspaceName: activeConfig.Workspace(),
+		ProjectName:   activeConfig.Project(),
 	}
 }
 

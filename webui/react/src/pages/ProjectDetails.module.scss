@@ -1,6 +1,3 @@
-.experimentTab {
-  padding: 16px;
-}
 .base {
   flex: 1 1 auto;
   flex-grow: 1;
@@ -9,12 +6,15 @@
 .tabPane {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 :global(.ant-spin-container) {
   display: flex;
   flex-direction: column;
 }
 .tabOptions {
+  min-height: 36px;
+
   .actionOverflow {
     display: none;
   }

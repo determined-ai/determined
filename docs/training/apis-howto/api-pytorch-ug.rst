@@ -321,7 +321,7 @@ A checkpoint includes the model definition (Python source code), experiment conf
 network architecture, and the values of the model's parameters (i.e., weights) and hyperparameters.
 When using a stateful optimizer during training, checkpoints will also include the state of the
 optimizer (i.e., learning rate). Users can also embed arbitrary metadata in checkpoints via a
-:ref:`Python API <store-checkpoint-metadata>`.
+:ref:`Python SDK <store-checkpoint-metadata>`.
 
 PyTorch trials are checkpointed as a ``state-dict.pth`` file. This file is created in a similar
 manner to the procedure described in the `PyTorch documentation

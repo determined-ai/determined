@@ -3,6 +3,7 @@ import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
 
+import Button from 'components/kit/Button';
 import Icon from 'shared/components/Icon/Icon';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
@@ -137,9 +138,9 @@ const ActionDropdown = <T extends string>({
   if (menuItems.length === 0) {
     return (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <button disabled>
+        <Button disabled ghost type="text">
           <Icon name="overflow-vertical" />
-        </button>
+        </Button>
       </div>
     );
   }
@@ -161,9 +162,9 @@ const ActionDropdown = <T extends string>({
         placement="bottomRight"
         trigger={trigger ?? ['click']}
         onOpenChange={onVisibleChange}>
-        <button onClick={stopPropagation}>
+        <Button ghost type="text" onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
-        </button>
+        </Button>
       </Dropdown>
     </div>
   );
