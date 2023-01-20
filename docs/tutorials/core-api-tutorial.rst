@@ -24,7 +24,7 @@ Our goal is to increment an integer. This will give you an idea of how you can m
 Get the Quickstart Files
 *************************
 
-To get started, add the quickstart files to your computer. 
+To get started, add the `quickstart files <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_ to your computer. 
 
 * Create a new directory on your computer and name it something like ``core_api``.
 * Add the Core API Tutorial files.
