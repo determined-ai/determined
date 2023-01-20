@@ -2,8 +2,9 @@
  Tutorials
 ###########
 
-This section includes quickstarts and tutorials. Learning the basics of how to work with Determined and how to
-port your existing code to the Determined environment:
+This section includes quickstarts and tutorials. Learning the basics of
+how to work with Determined and how to port your existing code to the
+Determined environment:
 
 +---------------------------------+--------------------------------------------------------------+
 | Topic                           | Documentation Content                                        |
@@ -36,4 +37,3 @@ port your existing code to the Determined environment:
    TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>
    Quickstart: Integrate an Existing Training Script with the Determined Environment <core-api-tutorial>
    Quickstart: Run a Core API MNIST Trial on a Local Cluster <core-api-mnist-tutorial>
-
