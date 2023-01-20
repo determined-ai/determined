@@ -2400,6 +2400,7 @@ class v1ExpCompareTrialsSampleResponse:
         return out
 
 class v1Experiment:
+    bestTrial: "typing.Optional[v1ExperimentTrial]" = None
     checkpointCount: "typing.Optional[int]" = None
     checkpointSize: "typing.Optional[str]" = None
     description: "typing.Optional[str]" = None
@@ -2433,6 +2434,7 @@ class v1Experiment:
         startTime: str,
         state: "determinedexperimentv1State",
         username: str,
+        bestTrial: "typing.Union[v1ExperimentTrial, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
         checkpointSize: "typing.Union[str, None, Unset]" = _unset,
         description: "typing.Union[str, None, Unset]" = _unset,
@@ -2463,6 +2465,8 @@ class v1Experiment:
         self.startTime = startTime
         self.state = state
         self.username = username
+        if not isinstance(bestTrial, Unset):
+            self.bestTrial = bestTrial
         if not isinstance(checkpointCount, Unset):
             self.checkpointCount = checkpointCount
         if not isinstance(checkpointSize, Unset):
@@ -2513,6 +2517,8 @@ class v1Experiment:
             "state": determinedexperimentv1State(obj["state"]),
             "username": obj["username"],
         }
+        if "bestTrial" in obj:
+            kwargs["bestTrial"] = v1ExperimentTrial.from_json(obj["bestTrial"]) if obj["bestTrial"] is not None else None
         if "checkpointCount" in obj:
             kwargs["checkpointCount"] = obj["checkpointCount"]
         if "checkpointSize" in obj:
@@ -2563,6 +2569,8 @@ class v1Experiment:
             "state": self.state.value,
             "username": self.username,
         }
+        if not omit_unset or "bestTrial" in vars(self):
+            out["bestTrial"] = None if self.bestTrial is None else self.bestTrial.to_json(omit_unset)
         if not omit_unset or "checkpointCount" in vars(self):
             out["checkpointCount"] = self.checkpointCount
         if not omit_unset or "checkpointSize" in vars(self):
@@ -2659,6 +2667,32 @@ class v1ExperimentSimulation:
             out["seed"] = self.seed
         if not omit_unset or "trials" in vars(self):
             out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
+        return out
+
+class v1ExperimentTrial:
+    searcherMetricValue: "typing.Optional[float]" = None
+
+    def __init__(
+        self,
+        *,
+        searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
+    ):
+        if not isinstance(searcherMetricValue, Unset):
+            self.searcherMetricValue = searcherMetricValue
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ExperimentTrial":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "searcherMetricValue" in obj:
+            kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "searcherMetricValue" in vars(self):
+            out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         return out
 
 class v1File:
@@ -3205,6 +3239,7 @@ class v1GetExperimentsRequestSortBy(enum.Enum):
     SORT_BY_PROJECT_ID = "SORT_BY_PROJECT_ID"
     SORT_BY_CHECKPOINT_SIZE = "SORT_BY_CHECKPOINT_SIZE"
     SORT_BY_CHECKPOINT_COUNT = "SORT_BY_CHECKPOINT_COUNT"
+    SORT_BY_SEARCHER_METRIC_VAL = "SORT_BY_SEARCHER_METRIC_VAL"
 
 class v1GetExperimentsResponse:
 
@@ -12905,6 +12940,7 @@ def get_GetExperiments(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     projectId: "typing.Optional[int]" = None,
+    showTrialData: "typing.Optional[bool]" = None,
     sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
     states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
@@ -12925,6 +12961,7 @@ def get_GetExperiments(
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "projectId": projectId,
+        "showTrialData": str(showTrialData).lower() if showTrialData is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
         "states": [x.value for x in states] if states is not None else None,
         "userIds": userIds,
