@@ -7,6 +7,7 @@ import Button from 'components/kit/Button';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';
+import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser, ResourcePool } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -70,9 +71,11 @@ const setup = async () => {
     <BrowserRouter>
       <UIProvider>
         <UsersProvider>
-          <AuthProvider>
-            <ModalTrigger />
-          </AuthProvider>
+          <UserRolesProvider>
+            <AuthProvider>
+              <ModalTrigger />
+            </AuthProvider>
+          </UserRolesProvider>
         </UsersProvider>
       </UIProvider>
     </BrowserRouter>,
