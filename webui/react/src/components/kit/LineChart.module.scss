@@ -1,7 +1,13 @@
+.chartgridContainer {
+  background-color: #f0f0f0;
+}
 .chartTitle {
+  background-color: #f6f6f6;
   font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
   font-size: 14px;
-  margin-bottom: -10px !important;
+  margin-bottom: -15px !important;
+  padding-bottom: 15px;
+  padding-top: 5px;
   text-align: center;
 }
 .filterContainer {

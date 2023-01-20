@@ -173,7 +173,7 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
   });
 
   return (
-    <>
+    <div className={css.chartgridContainer}>
       <div className={css.filterContainer}>
         <ScaleSelectFilter value={scale} onChange={setScale} />
         {xAxisOptions && xAxisOptions.length > 1 && (
@@ -207,6 +207,6 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
           }}
         </AutoSizer>
       </SyncProvider>
-    </>
+    </div>
   );
 };
