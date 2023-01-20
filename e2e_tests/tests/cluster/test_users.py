@@ -88,23 +88,7 @@ def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0
 
 
 def create_test_user(add_password: bool = False) -> authentication.Credentials:
-    n_username = get_random_string()
-    command = ["det", "-m", conf.make_master_url(), "user", "create", n_username]
-    subprocess.run(command, check=True)
-    # Now we activate the user.
-    child = det_spawn(["user", "activate", n_username])
-    child.expect(pexpect.EOF, timeout=EXPECT_TIMEOUT)
-    child.read()
-    child.wait()
-    child.close()
-    assert child.exitstatus == 0
-
-    password = ""
-    if add_password:
-        password = get_random_string()
-        assert change_user_password(n_username, password) == 0
-
-    return authentication.Credentials(n_username, password)
+    return api_utils.create_test_user(add_password=add_password)
 
 
 def change_user_password(
@@ -584,7 +568,11 @@ def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
         assert child.exitstatus != 0
 
 
-def run_command() -> str:
+def run_command(session: api.Session) -> str:
+    if session:
+        body = bindings.v1LaunchCommandRequest(config={"entrypoint": ["echo", "hello"]})
+        cmd = bindings.post_LaunchCommand(session, body=body).command
+        return cmd.id
     child = det_spawn(["cmd", "run", "echo", "hello"])
     child.expect(r"Scheduling.*\(id: (?P<id>.+?)\)")
     command_id = child.match.groupdict().get("id", None)
@@ -743,21 +731,22 @@ def test_tensorboard_creation_and_listing(clean_auth: None, login_admin: None) -
 def test_command_creation_and_listing(clean_auth: None, login_admin: None) -> None:
     creds1 = create_test_user(True)
     creds2 = create_test_user(True)
+    session1 = api_utils.determined_test_session(credentials=creds1)
+    session2 = api_utils.determined_test_session(credentials=creds2)
 
-    with logged_in_user(creds1):
-        command_id1 = run_command()
+    command_id1 = run_command(session=session1)
 
-    with logged_in_user(creds2):
-        command_id2 = run_command()
+    command_id2 = run_command(session=session2)
 
-    with logged_in_user(creds1):
-        output = extract_columns(det_run(["cmd", "list"]), [0, 1])
-        assert (command_id1, creds1.username) in output
-        assert (command_id2, creds2.username) not in output
+    cmds = bindings.get_GetCommands(session1, users=[creds1.username]).commands
+    output = [(cmd.id, cmd.username) for cmd in cmds]
+    assert (command_id1, creds1.username) in output
+    assert (command_id2, creds2.username) not in output
 
-        output = extract_columns(det_run(["cmd", "list", "-a"]), [0, 1])
-        assert (command_id1, creds1.username) in output
-        assert (command_id2, creds2.username) in output
+    cmds = bindings.get_GetCommands(session1).commands
+    output = [(cmd.id, cmd.username) for cmd in cmds]
+    assert (command_id1, creds1.username) in output
+    assert (command_id2, creds2.username) in output
 
 
 def create_linked_user(uid: int, user: str, gid: int, group: str) -> authentication.Credentials:
