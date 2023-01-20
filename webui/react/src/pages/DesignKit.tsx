@@ -310,8 +310,8 @@ const ChartsSection: React.FC = () => {
         <div style={{ height: 300 }}>
           <ChartGrid
             chartsProps={[
-              { metric: { name: 'Sample1' } as Metric, series: [xSeries, line1] },
-              { metric: { name: 'Sample2' } as Metric, series: [xSeries, line2] },
+              { metric: { name: 'Sample1' } as Metric, series: [xSeries, line1], showLegend: true },
+              { metric: { name: 'Sample2' } as Metric, series: [xSeries, line2], showLegend: true },
             ]}
             rowHeight={250}
             xAxisOptions={['Batches', 'Time']}

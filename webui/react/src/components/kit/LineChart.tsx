@@ -54,6 +54,17 @@ export const LineChart: React.FC<Props> = ({
     [series],
   );
 
+  const seriesNames: string[] = useMemo(
+    () =>
+      series
+        .slice(1)
+        .map(
+          (s, idx) =>
+            (series.length > 2 ? `${s.metricType}_` : '') + (metric.name || `Series ${idx + 1}`),
+        ),
+    [series, metric.name],
+  );
+
   const chartOptions: Options = useMemo(() => {
     const plugins = [tooltipsPlugin({ isShownEmptyVal: false, seriesColors })];
 
@@ -94,7 +105,7 @@ export const LineChart: React.FC<Props> = ({
         { label: xLabel || 'X' },
         ...series.slice(1).map((serie, idx) => {
           return {
-            label: metric.name ?? `Series ${idx + 1}`,
+            label: seriesNames[idx],
             points: { show: false },
             scale: 'y',
             spanGaps: true,
@@ -105,7 +116,7 @@ export const LineChart: React.FC<Props> = ({
         }),
       ],
     };
-  }, [series, seriesColors, height, metric.name, scale, xLabel, yLabel]);
+  }, [series, seriesColors, seriesNames, height, scale, xLabel, yLabel]);
 
   return (
     <>
@@ -123,7 +134,7 @@ export const LineChart: React.FC<Props> = ({
               <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
                 &mdash;
               </span>
-              {s.metricType}_{metric.name}
+              {seriesNames[idx]}
             </li>
           ))}
         </div>
