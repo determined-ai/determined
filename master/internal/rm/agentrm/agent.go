@@ -22,6 +22,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -376,6 +377,19 @@ func (a *agent) receive(ctx *actor.Context, msg interface{}) error {
 	case actor.PostStop:
 		ctx.Log().Infof("agent disconnected")
 		if a.started {
+			// This normally will run on agent WebSocketConnected to populate
+			// agentState.containerAllocation. There is technically still race here
+			// (and also in calling this in WebSocketConnected). We have no synchronization
+			// between allocation actors starting and registering themselves in the
+			// allocationmap and the lookup of allocationmap in restoreContainersField().
+			// Though this will likely run after agentReconnectWait which should
+			// give enough time for this to be populated.
+			// TODO: add explicit synchronization here.
+			err := a.agentState.restoreContainersField()
+			if err != nil {
+				ctx.Log().WithError(err).Error("failed restoreContainersField in shutdown of agent")
+			}
+
 			for cid := range a.agentState.containerAllocation {
 				stopped := aproto.ContainerError(
 					aproto.AgentFailed, errors.New("agent closed with allocated containers"))
@@ -649,17 +663,26 @@ func (a *agent) clearNonReattachedContainers(
 			continue
 		}
 
+		var containerState *cproto.Container
 		resp := ctx.Ask(allocation, sproto.GetResourcesContainerState{
 			ResourcesID: sproto.ResourcesID(cid),
 		})
 		switch {
 		case resp.Error() != nil:
+			// This error can occur when the allocation knowns about our container
+			// but has the ResourcesWithState.Container field nil. We can instead
+			// get the containerState from our agentState and send that.
+			containerState = a.agentState.containerState[cid]
+
 			ctx.Log().Warnf(
 				"allocation GetTaskContainerState id: %s, got error: %s", cid, resp.Error())
 		case resp.Get() == nil:
 			ctx.Log().Warnf("allocation GetTaskContainerState id: %s, is nil", cid)
 		default:
-			containerState := resp.Get().(cproto.Container)
+			containerState = ptrs.Ptr(resp.Get().(cproto.Container))
+		}
+
+		if containerState != nil {
 			containerState.State = cproto.Terminated
 
 			var stopped aproto.ContainerStopped
@@ -671,7 +694,7 @@ func (a *agent) clearNonReattachedContainers(
 			}
 
 			a.containerStateChanged(ctx, aproto.ContainerStateChanged{
-				Container:        containerState,
+				Container:        *containerState,
 				ContainerStopped: &stopped,
 			})
 		}

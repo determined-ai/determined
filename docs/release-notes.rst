@@ -10,6 +10,70 @@
  Version 0.19
 **************
 
+Version 0.19.10
+===============
+
+**Release Date:** January 20, 2023
+
+**Breaking Changes**
+
+-  The name of the resource pool in Kubernetes has changed from ``"kubernetes"`` to ``"default"``.
+   Forked experiments will need to have their configurations manually modified to update the
+   resource pool name.
+
+**New Features**
+
+-  Cluster: Add support for experiment tag propagation.
+
+   -  The enterprise edition of Determined (`HPE Machine Learning Development
+      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+      now allows for experiment tags to be propagated as labels to the associated jobs on the HPC
+      cluster. A number of labeling schemes are supported, controlled by the configuration item
+      ``resource_manager.job_project_source``.
+
+-  Cluster: Add support for launcher-provided resource pools.
+
+   -  The enterprise edition of Determined (`HPE Machine Learning Development
+      <https://www.hpe.com/us/en/solutions/artificial-intelligence/machine-learning-development-environment.html>`_)
+      now allows for custom resource pools to be defined that submit work to an underlying Slurm/PBS
+      partition on an HPC cluster with different submission options.
+
+-  Cluster: Determined Enterprise Edition now supports the `NVIDIA Enroot
+   <https://github.com/NVIDIA/enroot>`__ container platform as an alternative to
+   Apptainer/Singularity/PodMan.
+
+**Improvements**
+
+-  Notebooks: The default idle notebook termination timeout can now be set via the
+   ``notebook_timeout`` master config option.
+
+-  Trials: Trials can now be killed when in the ``STOPPING_CANCELED`` state. Previously, if a trial
+   did not implement preemption correctly and was canceled, the trial did not stop and was
+   unkillable until the preemption timeout of an hour.
+
+**Bug Fixes**
+
+-  Fix a bug where notebooks, TensorBoards, shells, and commands restored after a master restart
+   would have a submission time of when the master restarted rather than the original job submission
+   time.
+
+-  ``det deploy aws``: Fix reliability issue in ``efs`` deployment type, fix broken ``fsx``
+   deployment type.
+
+-  Job queue: Fix an issue where the CLI command ``det job list`` would ignore the argument
+   ``--resource-pool``.
+
+-  Distributed training: Fix a bug where a distributed training trial that called
+   ``context.set_stop_requested`` would cause the trial to error and prevent it from completing
+   successfully.
+
+**Removed Features**
+
+-  The data layer feature, which was deprecated in 0.18.0 (May 2022), has been removed. A migration
+   guide to use the underlying `yogadl library <https://yogadl.readthedocs.io/en/latest/>`_ directly
+   may be found `here <https://gist.github.com/rb-determined-ai/60813f1f75f75e3073dfea351a081d7e>`_.
+   Affected users are encouraged to follow the migration guide before upgrading to avoid downtime.
+
 Version 0.19.8
 ==============
 

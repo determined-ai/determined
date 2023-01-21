@@ -28,6 +28,8 @@ def start_shell(args: Namespace) -> None:
     if args.passphrase:
         data["passphrase"] = getpass.getpass("Enter new passphrase: ")
     config = command.parse_config(args.config_file, None, args.config, args.volume)
+    workspace_id = cli.workspace.get_workspace_id_from_args(args)
+
     resp = command.launch_command(
         args.master,
         "api/v1/shells",
@@ -36,6 +38,7 @@ def start_shell(args: Namespace) -> None:
         context_path=args.context,
         includes=args.include,
         data=data,
+        workspace_id=workspace_id,
     )["shell"]
 
     if args.detach:
@@ -198,6 +201,7 @@ args_description = [
                 help="only display the IDs"),
             Arg("--all", "-a", action="store_true",
                 help="show all shells (including other users')"),
+            cli.workspace.workspace_arg,
             Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
         ], is_default=True),
         Cmd("config", partial(command.config),
@@ -208,6 +212,7 @@ args_description = [
             Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
+            cli.workspace.workspace_arg,
             Arg("-v", "--volume", action="append", default=[],
                 help=command.VOLUME_DESC),
             Arg("-c", "--context", default=None, type=Path, help=command.CONTEXT_DESC),

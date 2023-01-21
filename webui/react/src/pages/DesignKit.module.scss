@@ -45,6 +45,7 @@
     flex-direction: column;
     gap: 8px;
     height: fit-content;
+    min-width: $breakpoint-mobile;
     padding: 8px;
 
     section {
