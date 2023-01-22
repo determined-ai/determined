@@ -15,6 +15,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // awsCluster wraps an EC2 client. Determined recognizes agent EC2 instances by:
@@ -129,7 +130,7 @@ func newAWSCluster(
 	return cluster, nil
 }
 
-func (c *awsCluster) instanceType() instanceType {
+func (c *awsCluster) instanceType() model.InstanceType {
 	return c.InstanceType
 }
 
@@ -142,19 +143,19 @@ func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {
 }
 
 // See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html.
-var ec2InstanceStates = map[string]InstanceState{
-	"pending":       Starting,
-	"running":       Running,
-	"stopped":       Stopped,
-	"stopping":      Stopping,
-	"shutting-down": Terminating,
+var ec2InstanceStates = map[string]model.InstanceState{
+	"pending":       model.Starting,
+	"running":       model.Running,
+	"stopped":       model.Stopped,
+	"stopping":      model.Stopping,
+	"shutting-down": model.Terminating,
 }
 
-func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) InstanceState {
+func (c *awsCluster) stateFromEC2State(state *ec2.InstanceState) model.InstanceState {
 	if res, ok := ec2InstanceStates[*state.Name]; ok {
 		return res
 	}
-	return Unknown
+	return model.Unknown
 }
 
 func (c *awsCluster) prestart(ctx *actor.Context) {
@@ -164,7 +165,7 @@ func (c *awsCluster) prestart(ctx *actor.Context) {
 	}
 }
 
-func (c *awsCluster) list(ctx *actor.Context) ([]*Instance, error) {
+func (c *awsCluster) list(ctx *actor.Context) ([]*model.Instance, error) {
 	if c.SpotEnabled {
 		return c.listSpot(ctx)
 	}
@@ -196,14 +197,14 @@ func (c *awsCluster) terminate(ctx *actor.Context, instanceIDs []string) {
 	}
 }
 
-func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*Instance, error) {
+func (c *awsCluster) listOnDemand(ctx *actor.Context) ([]*model.Instance, error) {
 	instances, err := c.describeInstances(false)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot describe EC2 instances")
 	}
 	res := c.newInstances(instances)
 	for _, inst := range res {
-		if inst.State == Unknown {
+		if inst.State == model.Unknown {
 			ctx.Log().Errorf("unknown instance state for instance %v", inst.ID)
 		}
 	}
@@ -224,7 +225,7 @@ func (c *awsCluster) launchOnDemand(ctx *actor.Context, instanceNum int) {
 		"launched %d/%d EC2 instances: %s",
 		len(launched),
 		instanceNum,
-		fmtInstances(launched),
+		model.FmtInstances(launched),
 	)
 }
 
@@ -243,14 +244,14 @@ func (c *awsCluster) terminateOnDemand(ctx *actor.Context, instanceIDs []*string
 		"terminated %d/%d EC2 instances: %s",
 		len(terminated),
 		len(instanceIDs),
-		fmtInstances(terminated),
+		model.FmtInstances(terminated),
 	)
 }
 
-func (c *awsCluster) newInstances(input []*ec2.Instance) []*Instance {
-	output := make([]*Instance, 0, len(input))
+func (c *awsCluster) newInstances(input []*ec2.Instance) []*model.Instance {
+	output := make([]*model.Instance, 0, len(input))
 	for _, inst := range input {
-		output = append(output, &Instance{
+		output = append(output, &model.Instance{
 			ID:         *inst.InstanceId,
 			LaunchTime: *inst.LaunchTime,
 			AgentName:  c.agentNameFromInstance(inst),
@@ -262,10 +263,10 @@ func (c *awsCluster) newInstances(input []*ec2.Instance) []*Instance {
 
 func (c *awsCluster) newInstancesFromTerminateInstancesOutput(
 	output *ec2.TerminateInstancesOutput,
-) []*Instance {
-	instances := make([]*Instance, 0, len(output.TerminatingInstances))
+) []*model.Instance {
+	instances := make([]*model.Instance, 0, len(output.TerminatingInstances))
 	for _, instanceChange := range output.TerminatingInstances {
-		instances = append(instances, &Instance{
+		instances = append(instances, &model.Instance{
 			ID:    *instanceChange.InstanceId,
 			State: c.stateFromEC2State(instanceChange.CurrentState),
 		})

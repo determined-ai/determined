@@ -1,8 +1,6 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
 import {
   Alert,
-  Button,
-  Checkbox,
   Form,
   Input,
   InputNumber,
@@ -17,6 +15,8 @@ import { RefSelectProps, SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Button from 'components/kit/Button';
+import Checkbox from 'components/kit/Checkbox';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';

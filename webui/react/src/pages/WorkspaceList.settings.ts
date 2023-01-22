@@ -44,7 +44,6 @@ export interface WorkspaceListSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<WorkspaceListSettings> = {
-  applicableRoutespace: 'workspace-list',
   settings: {
     archived: {
       defaultValue: false,

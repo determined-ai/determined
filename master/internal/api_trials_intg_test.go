@@ -45,7 +45,7 @@ func createTestTrial(
 }
 
 func TestTrialAuthZ(t *testing.T) {
-	api, authZExp, _, curUser, ctx := setupExpAuthTest(t)
+	api, authZExp, _, curUser, ctx := setupExpAuthTest(t, nil)
 	trial := createTestTrial(t, api, curUser)
 
 	cases := []struct {

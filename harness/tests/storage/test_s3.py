@@ -161,9 +161,12 @@ def clean_up(storage_id: str, storage_manager: storage.S3StorageManager) -> None
 
 
 @pytest.mark.cloud
-def test_live_s3_sharded_upload_download(require_secrets: bool, tmp_path: Path) -> None:
+def test_live_s3_sharded_upload_download(
+    require_secrets: bool,
+    tmp_path: Path,
+) -> None:
 
-    with parallel.Execution(2) as pex:
+    with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run
         def do_test() -> None:
@@ -175,7 +178,7 @@ def test_live_s3_sharded_upload_download(require_secrets: bool, tmp_path: Path) 
 @pytest.mark.cloud
 def test_live_s3_sharded_store_restore(require_secrets: bool, tmp_path: Path) -> None:
 
-    with parallel.Execution(2) as pex:
+    with parallel.Execution(4, local_size=2) as pex:
 
         @pex.run
         def do_test() -> None:

@@ -29,7 +29,12 @@ class HDFSStorageManager(storage.CloudStorageManager):
         self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
 
     @util.preserve_random_state
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
+        if paths is not None:
+            raise NotImplementedError("HDFSStorageManager does not support partial uploads")
+
         src = os.fspath(src)
         logging.info(f"Uploading to HDFS: {dst}")
         self.client.upload(dst, src)

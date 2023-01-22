@@ -488,12 +488,16 @@ export const mapV1Experiment = (
     numTrials: data.numTrials || 0,
     progress: data.progress != null ? data.progress : undefined,
     projectId: data.projectId,
+    projectName: data.projectName,
     resourcePool: data.resourcePool || '',
+    searcherMetricValue: data.bestTrial?.searcherMetricValue,
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     trialIds: data.trialIds || [],
     userId: data.userId ?? 0,
+    workspaceId: data.workspaceId,
+    workspaceName: data.workspaceName,
   };
 };
 

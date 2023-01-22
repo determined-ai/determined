@@ -19,7 +19,6 @@ export interface Settings {
 }
 
 const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'profiler-filters',
   settings: {
     agentId: {
       defaultValue: undefined,

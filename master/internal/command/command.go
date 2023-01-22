@@ -577,6 +577,7 @@ func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
@@ -595,6 +596,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
 		JobId:        c.jobID.String(),
+		WorkspaceId:  int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
@@ -617,6 +619,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Addresses:      toProto(allo.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
@@ -638,6 +641,7 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		ResourcePool:   c.Config.Resources.ResourcePool,
 		ExitStatus:     c.exitStatus.String(),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
