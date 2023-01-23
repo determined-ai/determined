@@ -139,6 +139,12 @@ html {
     padding: 16px;
   }
 
+  /* fix for confirm modal content for modals with no icon props */
+
+  .ant-modal-confirm .ant-modal-confirm-title:first-child + .ant-modal-confirm-content {
+    max-width: unset;
+  }
+
   /* Notification */
 
   .ant-notification-notice {
