@@ -1,28 +1,29 @@
 ###########################
- Quickstarts and Tutorials
+ Tutorials
 ###########################
 
-Learning the basics of how to work with Determined and how to port your existing code to the
+Learning the basics of working with Determined and how to port your existing code to the
 Determined environment.
 
-*************
- Quickstarts
-*************
+*******************************
+ Get Started with the Core API
+*******************************
 
 +---------------------------------+--------------------------------------------------------------+
 | Title                           | Description                                                  |
 +=================================+==============================================================+
-| :doc:`core-api-tutorial`        | In this quickstart, you'll learn how to take an existing     |
-|                                 | training script and integrate it with Determined using the   |
-|                                 | Core API.                                                    |
+| :doc:`core-api-tutorial`        | Learn how to take an existing training script and integrate  |
+|                                 | it with Determined using the Core API.                       |
+|                                 |                                                              |
 +---------------------------------+--------------------------------------------------------------+
-| :doc:`core-api-mnist-tutorial`  | In five steps, this quickstart shows you how to integrate    |
-|                                 | the PyTorch MNIST model into Determined using the Core API.  |
+| :doc:`core-api-mnist-tutorial`  | In five steps, learn how to integrate the PyTorch MNIST      |
+|                                 | model into Determined using the Core API.                    |
+|                                 |                                                              |
 +---------------------------------+--------------------------------------------------------------+
 
-***********
- Tutorials
-***********
+*********************************
+ Get Started with the Trial APIs
+*********************************
 
 +---------------------------------+--------------------------------------------------------------+
 | Title                           | Description                                                  |
@@ -46,6 +47,13 @@ Visit our `Examples <https://docs.determined.ai/latest/example-solutions/example
 open the ``examples/`` subdirectory of the `Determined GitHub repo
 <https://github.com/determined-ai/determined/tree/master/examples>`__.
 
+Go Further
+==============
+
+Visit the `Training API Guides <https://docs.determined.ai/latest/training/apis-howto/overview.html>`_ 
+for in-depth guides that contain detailed information about the training APIs.
+
+
 .. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
 
 .. toctree::
@@ -54,5 +62,5 @@ open the ``examples/`` subdirectory of the `Determined GitHub repo
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
    PyTorch Porting Tutorial <pytorch-porting-tutorial>
    TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>
-   Quickstart: Integrate an Existing Training Script with the Determined Environment <core-api-tutorial>
-   Quickstart: Run a Core API MNIST Trial on a Local Cluster <core-api-mnist-tutorial>
+   Integrate an Existing Training Script with the Determined Environment <core-api-tutorial>
+   Run a Core API MNIST Trial on a Local Cluster <core-api-mnist-tutorial>
