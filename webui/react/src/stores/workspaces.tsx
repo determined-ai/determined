@@ -1,4 +1,12 @@
-import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
+import { observable, WritableObservable } from 'micro-observables';
+import React, {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 import { createWorkspace, deleteWorkspace, getWorkspaces } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
@@ -7,63 +15,57 @@ import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-type WorkspacesContext = {
-  updateWorkspaces: (fn: (ws: Loadable<Workspace[]>) => Loadable<Workspace[]>) => void;
-  workspaces: Loadable<Workspace[]>;
-};
+type WorkspacesContext = { workspaces: WritableObservable<Loadable<Workspace[]>> };
 
 const WorkspacesContext = createContext<WorkspacesContext | null>(null);
 
 export const WorkspacesProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [workspaces, updateWorkspaces] = useState<Loadable<Workspace[]>>(NotLoaded);
-  return (
-    <WorkspacesContext.Provider value={{ updateWorkspaces, workspaces }}>
-      {children}
-    </WorkspacesContext.Provider>
-  );
+  const workspaces: WritableObservable<Loadable<Workspace[]>> = observable(NotLoaded);
+
+  return <WorkspacesContext.Provider value={{ workspaces }}>{children}</WorkspacesContext.Provider>;
 };
 
 export const useFetchWorkspaces = (canceler: AbortController): (() => Promise<void>) => {
   const context = useContext(WorkspacesContext);
+
   if (context === null) {
     throw new Error('Attempted to use useFetchWorkspaces outside of Workspace Context');
   }
-  const { updateWorkspaces } = context;
+
+  const { workspaces } = context;
 
   return useCallback(async (): Promise<void> => {
     try {
       const response = await getWorkspaces({}, { signal: canceler.signal });
-      updateWorkspaces(() => Loaded(response.workspaces));
+
+      workspaces.set(Loaded(response.workspaces));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, updateWorkspaces]);
-};
-
-export const useEnsureWorkspacesFetched = (canceler: AbortController): (() => Promise<void>) => {
-  const context = useContext(WorkspacesContext);
-  if (context === null) {
-    throw new Error('Attempted to use useEnsureWorkspacesFetched outside of Workspace Context');
-  }
-  const { workspaces, updateWorkspaces } = context;
-
-  return useCallback(async (): Promise<void> => {
-    if (workspaces !== NotLoaded) return;
-    try {
-      const response = await getWorkspaces({}, { signal: canceler.signal });
-      updateWorkspaces(() => Loaded(response.workspaces));
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, workspaces, updateWorkspaces]);
+  }, [canceler, workspaces]);
 };
 
 export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[]> => {
   const context = useContext(WorkspacesContext);
+
   if (context === null) {
     throw new Error('Attempted to use useWorkspaces outside of Workspace Context');
   }
-  return Loadable.map(context.workspaces, (workspaces: Workspace[]) =>
+
+  const { workspaces } = context;
+  const [workspacesState, setWorkspacesState] = useState(workspaces.get());
+
+  useEffect(() => {
+    const unsubscribe = workspaces.subscribe((ws, prevWs) => {
+      if (ws !== prevWs) setWorkspacesState(ws);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [workspaces]);
+
+  return Loadable.map(workspacesState, (workspaces: Workspace[]) =>
     workspaces.filter((ws) =>
       Object.keys(params || {}).reduce<boolean>((accumulator: boolean, key) => {
         switch (key) {
@@ -88,20 +90,22 @@ export const useUpdateWorkspace = (): ((
   updater: (arg0: Workspace) => Workspace,
 ) => void) => {
   const context = useContext(WorkspacesContext);
+
   if (context === null) {
     throw new Error('Attempted to use useUpdateWorkspace outside of Workspace Context');
   }
-  const { updateWorkspaces } = context;
+
+  const { workspaces } = context;
 
   return useCallback(
     (id: number, updater: (arg0: Workspace) => Workspace): void => {
-      updateWorkspaces((prev) =>
-        Loadable.map(prev, (workspaces) =>
-          workspaces.map((old) => (old.id === id ? updater(old) : old)),
-        ),
-      );
+      workspaces.update((ldbWorkspace) => {
+        return Loadable.map(ldbWorkspace, (ws) =>
+          ws.map((old) => (old.id === id ? updater(old) : old)),
+        );
+      });
     },
-    [updateWorkspaces],
+    [workspaces],
   );
 };
 
@@ -110,36 +114,44 @@ export const useCreateWorkspace = (): ((arg0: V1PostWorkspaceRequest) => Promise
   if (context === null) {
     throw new Error('Attempted to use useCreateWorkspace outside of Workspace Context');
   }
-  const { updateWorkspaces } = context;
+
+  const { workspaces } = context;
 
   return useCallback(
     async (params: V1PostWorkspaceRequest): Promise<Workspace> => {
-      const w = await createWorkspace(params);
-      updateWorkspaces((prev) => Loadable.map(prev, (ws: Workspace[]) => ws.concat([w])));
-      return w;
+      const createdWs = await createWorkspace(params);
+
+      workspaces.update((ldbWorkspace) => {
+        return Loadable.map(ldbWorkspace, (ws: Workspace[]) => [...ws, createdWs]);
+      });
+
+      return createdWs;
     },
-    [updateWorkspaces],
+    [workspaces],
   );
 };
 
 export const useDeleteWorkspace = (): ((id: number) => Promise<void>) => {
   const context = useContext(WorkspacesContext);
+
   if (context === null) {
     throw new Error('Attempted to use useDeleteWorkspace outside of Workspace Context');
   }
-  const { updateWorkspaces } = context;
+
+  const { workspaces } = context;
 
   return useCallback(
     async (id: number): Promise<void> => {
       try {
         await deleteWorkspace({ id });
-        updateWorkspaces((prev) =>
-          Loadable.map(prev, (ws: Workspace[]) => ws.filter((w) => w.id !== id)),
+
+        workspaces.update((ldbWorkspaces) =>
+          Loadable.map(ldbWorkspaces, (ws) => ws.filter((w) => w.id !== id)),
         );
       } catch (e) {
         handleError(e);
       }
     },
-    [updateWorkspaces],
+    [workspaces],
   );
 };
