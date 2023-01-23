@@ -11,6 +11,7 @@ import React, {
 import { createWorkspace, deleteWorkspace, getWorkspaces } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
 import { GetWorkspacesParams } from 'services/types';
+import { isEqual } from 'shared/utils/data';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
@@ -57,7 +58,7 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
 
   useEffect(() => {
     const unsubscribe = workspaces.subscribe((ws, prevWs) => {
-      if (ws !== prevWs) setWorkspacesState(ws);
+      if (!isEqual(ws, prevWs)) setWorkspacesState(ws);
     });
 
     return () => {
