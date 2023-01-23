@@ -113,7 +113,6 @@ func redirectToLogin(c echo.Context) error {
 // processProxyAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests coming through proxies.
 func processProxyAuthentication(c echo.Context) (done bool, err error) {
-	// CHECK: do we need to further protect access to this singleton?
 	user, _, err := user.GetService().UserAndSessionFromRequest(c.Request())
 	if errors.Is(err, db.ErrNotFound) {
 		return true, redirectToLogin(c)

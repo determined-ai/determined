@@ -233,8 +233,6 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 	if req.WorkspaceId != 0 && len(limitedScopes) == 0 {
-		// report missing permissions as a 404 on explicit
-		// workspace requests.
 		return nil, workspaceNotFoundErr
 	}
 
