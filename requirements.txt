@@ -20,7 +20,7 @@ flake8-docstrings>=1.4.0
 flake8-quotes>=2.1.0
 flake8-tuple>=0.4.0
 isort==5.9.3
-mypy==0.910
+mypy==0.991
 bump2version>=1.0.1
 pre-commit~=2.20
 # Earlier versions had different type annotations
