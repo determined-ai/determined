@@ -6120,6 +6120,7 @@ class v1Model:
     description: "typing.Optional[str]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     notes: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
@@ -6136,6 +6137,7 @@ class v1Model:
         description: "typing.Union[str, None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
         self.archived = archived
         self.creationTime = creationTime
@@ -6152,6 +6154,8 @@ class v1Model:
             self.labels = labels
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Model":
@@ -6172,6 +6176,8 @@ class v1Model:
             kwargs["labels"] = obj["labels"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -6192,6 +6198,8 @@ class v1Model:
             out["labels"] = self.labels
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
 
 class v1ModelVersion:
@@ -6689,6 +6697,8 @@ class v1PatchModel:
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     name: "typing.Optional[str]" = None
     notes: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[str]" = None
+    workspaceName: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -6698,6 +6708,8 @@ class v1PatchModel:
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[str, None, Unset]" = _unset,
+        workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(description, Unset):
             self.description = description
@@ -6709,6 +6721,10 @@ class v1PatchModel:
             self.name = name
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+        if not isinstance(workspaceName, Unset):
+            self.workspaceName = workspaceName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PatchModel":
@@ -6724,6 +6740,10 @@ class v1PatchModel:
             kwargs["name"] = obj["name"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        if "workspaceName" in obj:
+            kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -6739,6 +6759,10 @@ class v1PatchModel:
             out["name"] = self.name
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        if not omit_unset or "workspaceName" in vars(self):
+            out["workspaceName"] = self.workspaceName
         return out
 
 class v1PatchModelResponse:
@@ -7200,6 +7224,9 @@ class v1PermissionType(enum.Enum):
     PERMISSION_TYPE_VIEW_PROJECT = "PERMISSION_TYPE_VIEW_PROJECT"
     PERMISSION_TYPE_UPDATE_PROJECT = "PERMISSION_TYPE_UPDATE_PROJECT"
     PERMISSION_TYPE_DELETE_PROJECT = "PERMISSION_TYPE_DELETE_PROJECT"
+    PERMISSION_TYPE_VIEW_MODEL_REGISTRY = "PERMISSION_TYPE_VIEW_MODEL_REGISTRY"
+    PERMISSION_TYPE_EDIT_MODEL_REGISTRY = "PERMISSION_TYPE_EDIT_MODEL_REGISTRY"
+    PERMISSION_TYPE_CREATE_MODEL_REGISTRY = "PERMISSION_TYPE_CREATE_MODEL_REGISTRY"
     PERMISSION_TYPE_UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
     PERMISSION_TYPE_ASSIGN_ROLES = "PERMISSION_TYPE_ASSIGN_ROLES"
     PERMISSION_TYPE_EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
@@ -7295,6 +7322,8 @@ class v1PostModelRequest:
     labels: "typing.Optional[typing.Sequence[str]]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     notes: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+    workspaceName: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -7304,6 +7333,8 @@ class v1PostModelRequest:
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        workspaceName: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
         if not isinstance(description, Unset):
@@ -7314,6 +7345,10 @@ class v1PostModelRequest:
             self.metadata = metadata
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+        if not isinstance(workspaceName, Unset):
+            self.workspaceName = workspaceName
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostModelRequest":
@@ -7328,6 +7363,10 @@ class v1PostModelRequest:
             kwargs["metadata"] = obj["metadata"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        if "workspaceName" in obj:
+            kwargs["workspaceName"] = obj["workspaceName"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -7342,6 +7381,10 @@ class v1PostModelRequest:
             out["metadata"] = self.metadata
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        if not omit_unset or "workspaceName" in vars(self):
+            out["workspaceName"] = self.workspaceName
         return out
 
 class v1PostModelResponse:
@@ -13381,6 +13424,8 @@ def get_GetModels(
     sortBy: "typing.Optional[v1GetModelsRequestSortBy]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
+    workspaceId: "typing.Optional[int]" = None,
+    workspaceName: "typing.Optional[str]" = None,
 ) -> "v1GetModelsResponse":
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
@@ -13394,6 +13439,8 @@ def get_GetModels(
         "sortBy": sortBy.value if sortBy is not None else None,
         "userIds": userIds,
         "users": users,
+        "workspaceId": workspaceId,
+        "workspaceName": workspaceName,
     }
     _resp = session._do_request(
         method="GET",

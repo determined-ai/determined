@@ -1017,6 +1017,8 @@ export const getModels: DetApi<
       params.labels,
       params.archived,
       undefined,
+      undefined,
+      undefined,
       getUserIds(params.users),
     ),
 };
@@ -1472,6 +1474,7 @@ export const getCommands: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1491,6 +1494,7 @@ export const getJupyterLabs: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1509,6 +1513,7 @@ export const getShells: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1528,6 +1533,7 @@ export const getTensorBoards: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 

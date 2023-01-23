@@ -195,6 +195,7 @@ const mapCommonV1Task = (
     state: mapV1TaskState(task.state),
     type,
     userId: task.userId ?? 0,
+    workspaceId: task.workspaceId,
   };
 };
 
