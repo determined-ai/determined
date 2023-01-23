@@ -16,8 +16,6 @@ const (
 	MaxLimit = 500
 )
 
-// CHECK: overlap between this and api/error.go
-
 var (
 	// ErrBadRequest is the returned standard error for bad requests.
 	ErrBadRequest = status.Error(codes.InvalidArgument, "bad request")
@@ -53,7 +51,6 @@ var (
 
 // MapAndFilterErrors takes in an error at the db level and translates it into a standard error.
 func MapAndFilterErrors(err error, passthrough map[error]bool, mapping map[error]error) error {
-	// CHECK: should this be in api/error.go?
 	if err == nil {
 		return nil
 	}
