@@ -15,6 +15,7 @@ import {
   taskTypeRenderer,
 } from 'components/Table/Table';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
   getCommands,
@@ -55,6 +56,7 @@ const Dashboard: React.FC = () => {
   });
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab({});
+  const { canCreateNSC } = usePermissions();
   type Submission = ExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(
@@ -173,7 +175,11 @@ const Dashboard: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const JupyterLabButton = () => {
-    return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
+    return (
+      <Button disabled={!canCreateNSC} onClick={() => openJupyterLabModal()}>
+        Launch JupyterLab
+      </Button>
+    );
   };
 
   if (projectsLoading && submissionsLoading) {

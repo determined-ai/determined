@@ -49,9 +49,10 @@ interface PermissionsHook {
   canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
-  canCreateNSC: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateNSC: boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
+  canCreateWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
@@ -118,10 +119,12 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
-      canCreateNSC: (args: WorkspacePermissionsArgs) => canCreateNSC(rbacOpts, args.workspace),
+      canCreateNSC: canCreateNSC(rbacOpts),
       canCreateProject: (args: WorkspacePermissionsArgs) =>
         canCreateProject(rbacOpts, args.workspace),
       canCreateWorkspace: canCreateWorkspace(rbacOpts),
+      canCreateWorkspaceNSC: (args: WorkspacePermissionsArgs) =>
+        canCreateWorkspaceNSC(rbacOpts, args.workspace),
       canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
         canDeleteExperiment(rbacOpts, args.experiment),
       canDeleteModel: (args: ModelPermissionsArgs) => canDeleteModel(rbacOpts, args.model),
@@ -534,7 +537,16 @@ const canAssignRoles = (
   );
 };
 
-const canCreateNSC = (
+const canCreateNSC = ({ rbacEnabled, rbacReadPermission, userRoles }: RbacOptsProps): boolean => {
+  return (
+    !rbacEnabled ||
+    rbacReadPermission ||
+    (!!userRoles &&
+      !!userRoles.find((r) => !!r.permissions.find((p) => p.id === V1PermissionType.CREATENSC)))
+  );
+};
+
+const canCreateWorkspaceNSC = (
   { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
   workspace?: PermissionWorkspace,
 ): boolean => {

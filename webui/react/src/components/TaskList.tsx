@@ -41,6 +41,7 @@ import settingsConfig, {
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
@@ -111,7 +112,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
     settingsConfig(workspace?.id.toString() ?? 'global'),
   );
-
+  const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
@@ -557,7 +558,13 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const JupyterLabButton = () => {
-    return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
+    return (
+      <Button
+        disabled={workspace ? !canCreateWorkspaceNSC(workspace) : !canCreateNSC}
+        onClick={() => openJupyterLabModal()}>
+        Launch JupyterLab
+      </Button>
+    );
   };
 
   return (

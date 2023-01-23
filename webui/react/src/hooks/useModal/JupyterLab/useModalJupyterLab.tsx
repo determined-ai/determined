@@ -90,7 +90,7 @@ const useModalJupyterLab = ({ workspace }: Props): ModalHooks => {
   const previousShowConfig = usePrevious(showFullConfig, showFullConfig);
   const [form] = Form.useForm<JupyterLabOptions>();
   const [fullConfigForm] = Form.useForm();
-  const { canCreateNSC } = usePermissions();
+  const { canCreateWorkspaceNSC } = usePermissions();
 
   const { settings: defaults, updateSettings: updateDefaults } =
     useSettings<JupyterLabOptions>(settingsConfig);
@@ -169,7 +169,9 @@ const useModalJupyterLab = ({ workspace }: Props): ModalHooks => {
 
   const workspaces = Loadable.getOrElse(
     [],
-    Loadable.map(useWorkspaces(), (ws) => ws.filter((workspace) => canCreateNSC({ workspace }))),
+    Loadable.map(useWorkspaces(), (ws) =>
+      ws.filter((workspace) => canCreateWorkspaceNSC({ workspace })),
+    ),
   );
 
   const bodyContent = useMemo(() => {
