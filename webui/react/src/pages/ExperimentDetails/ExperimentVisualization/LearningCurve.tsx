@@ -104,10 +104,8 @@ const LearningCurve: React.FC<Props> = ({
 
     const canceler = new AbortController();
     const trialIdsMap: Record<number, number> = {};
-    const trialDataMap: Record<number, number[]> = {};
     const trialHpMap: Record<number, TrialHParams> = {};
-    const batchesMap: Record<number, number> = {};
-    const metricsMap: Record<number, Record<number, number>> = {};
+    const metricsMap: Record<number, [number, number][]> = {};
 
     setHasLoaded(false);
 
@@ -127,7 +125,7 @@ const LearningCurve: React.FC<Props> = ({
         if (!event?.trials || !Array.isArray(event.trials)) return;
 
         /*
-         * Cache trial ids, hparams, batches and metric values into easily searchable
+         * Cache trial ids, hparams, and metric values into easily searchable
          * dictionaries, then construct the necessary data structures to render the
          * chart and the table.
          */
@@ -150,12 +148,10 @@ const LearningCurve: React.FC<Props> = ({
             trialHpMap[id] = { hparams: flatHParams, id, metric: null };
           }
 
-          trialDataMap[id] = trialDataMap[id] || [];
-          metricsMap[id] = metricsMap[id] || {};
+          metricsMap[id] = [];
 
           trial.data.forEach((datapoint) => {
-            batchesMap[datapoint.batches] = datapoint.batches;
-            metricsMap[id][datapoint.batches] = datapoint.value;
+            metricsMap[id].push([datapoint.batches, datapoint.value]);
             trialHpMap[id].metric = datapoint.value;
           });
         });
@@ -163,24 +159,12 @@ const LearningCurve: React.FC<Props> = ({
         const newTrialHps = newTrialIds.map((id) => trialHpMap[id]);
         setTrialHps(newTrialHps);
 
-        const newBatches = Object.values(batchesMap);
-
         const newChartData = [
-          {
-            data: newBatches,
-          },
           ...newTrialIds
             .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
             .map((trialId) => ({
               color: glasbeyColor(trialId),
-              data: newBatches.map((batch) => {
-                /**
-                 * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-                 * dynamic min/max ranges via uPlot.Scales.
-                 */
-                const value = metricsMap[trialId][batch];
-                return Number.isFinite(value) ? value : null;
-              }),
+              data: metricsMap[trialId],
               key: trialId,
               name: `trial ${trialId}`,
             })),
@@ -293,7 +277,6 @@ const LearningCurve: React.FC<Props> = ({
             selectedRowKeys={selectedRowKeys}
             selection={true}
             trialHps={trialHps}
-            trialIds={trialIds}
             onMouseEnter={handleTableMouseEnter}
             onMouseLeave={handleTableMouseLeave}
           />

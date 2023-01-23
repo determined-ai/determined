@@ -33,7 +33,6 @@ interface Props {
   selectedRowKeys?: number[];
   selection?: boolean;
   trialHps: TrialHParams[];
-  trialIds: number[];
 }
 
 export interface TrialHParams {
@@ -51,7 +50,6 @@ const HpTrialTable: React.FC<Props> = ({
   onMouseEnter,
   onMouseLeave,
   trialHps,
-  // trialIds,
   experimentId,
   selection,
   handleTableRowSelect,

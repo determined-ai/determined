@@ -122,29 +122,32 @@ export const LineChart: React.FC<Props> = ({
   }, [series, xAxis]);
 
   const chartOptions: Options = useMemo(() => {
+    const ySeries = series.filter((s) => !s.xAxisRole);
     const plugins = [
       tooltipsPlugin({
         isShownEmptyVal: false,
-        seriesColors: series.filter((s) => !s.xAxisRole).map((s) => s.color),
+        // use specified color on Serie, or glasbeyColor
+        seriesColors: ySeries.map((s, idx) => s.color || glasbeyColor(idx)),
+      }),
+      closestPointPlugin({
+        onPointClick: (e, point) => {
+          if (onSeriesClick) {
+            // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
+            // return a serie.key (example: trialId), or the adjusted index
+            onSeriesClick(e, ySeries[point.seriesIdx - 1].key || point.seriesIdx - 1);
+          }
+        },
+        onPointFocus: (point) => {
+          if (onSeriesFocus) {
+            // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
+            // return a serie.key (example: trialId), or the adjusted index
+            // returns null when switching to no point being hovered over
+            onSeriesFocus(point ? ySeries[point.seriesIdx - 1].key || point.seriesIdx - 1 : null);
+          }
+        },
+        yScale: 'y',
       }),
     ];
-    if (onSeriesClick || onSeriesFocus) {
-      plugins.push(
-        closestPointPlugin({
-          onPointClick: (e, point) => {
-            if (onSeriesClick) {
-              onSeriesClick(e, series[point.seriesIdx].key || point.seriesIdx - 1);
-            }
-          },
-          onPointFocus: (point) => {
-            if (onSeriesFocus) {
-              onSeriesFocus(point ? series[point.seriesIdx].key || point.seriesIdx : null);
-            }
-          },
-          yScale: 'y',
-        }),
-      );
-    }
 
     return {
       axes: [
