@@ -52,7 +52,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case *apiv1.DeleteWorkspaceRequest:
-		ctx.Respond(askChildren(ctx, msg))
+		ctx.TellAll(msg, ctx.Children()...)
 
 	case tasks.GenericCommandSpec:
 		taskID := model.NewTaskID()
