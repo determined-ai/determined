@@ -1444,13 +1444,13 @@ jobs:
       - skip-if-docs-only
       - skip-if-webui-only
       - setup-python-venv:
-          install-python: false
+          install-python: true
+          python-version: "3.9.16"
           determined: true
           model-hub: true
           extras-requires: "torch==1.9.0"
           extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-          python-version: "3.9.16"
       - run: make -C cli check
       - run: make -C common check
       - run: make -C harness check
