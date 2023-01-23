@@ -6,6 +6,7 @@ import pytest
 from determined.common import api
 from determined.common.api import authentication
 from determined.experimental import Determined, ModelSortBy
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user, log_out_user
@@ -175,7 +176,6 @@ def test_model_cli() -> None:
     master_url = conf.make_master_url()
     command = ["det", "-m", master_url, "model", "create", test_model_1_name]
     subprocess.run(command, check=True)
-    log_in_user(ADMIN_CREDENTIALS)
     d = Determined(master_url)
     model_1 = d.get_model(identifier=test_model_1_name)
     assert model_1.workspace_id == 1
@@ -189,11 +189,8 @@ def test_model_cli() -> None:
     assert "Workspace ID" in output and "1" in output
 
     # add a test workspace.
-    admin_auth = authentication.Authentication(
-        master_url, ADMIN_CREDENTIALS.username, ADMIN_CREDENTIALS.password
-    )
-    admin_sess = api.Session(master_url, ADMIN_CREDENTIALS.username, admin_auth, None)
-    with setup_workspace(admin_sess) as test_workspace:
+    admin_session = api_utils.determined_test_session(admin=True)
+    with setup_workspace(admin_session) as test_workspace:
         test_workspace_name = test_workspace.name
         # create model in test_workspace
         test_model_2_name = get_random_string()
@@ -235,7 +232,6 @@ def test_model_cli() -> None:
         subprocess.run(command, check=True)
         model_1 = d.get_model(test_model_1_name)
         assert model_1.workspace_id == test_workspace.id
-
-    # Delete test models (workspace deleted in setup_workspace)
-    model_1.delete()
-    model_2.delete()
+        # Delete test models (workspace deleted in setup_workspace)
+        model_1.delete()
+        model_2.delete()
