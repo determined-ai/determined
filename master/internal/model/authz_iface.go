@@ -10,25 +10,25 @@ import (
 
 // ModelAuthZ describes authz methods for experiments.
 type ModelAuthZ interface {
-	// Nikita: Add the actual API url here.
-	// GetModels
+	// GET /api/v1/models
 	CanGetModels(ctx context.Context, curUser model.User,
 		workspaceID int32) (canGetModel bool, serverError error)
-	// Get Checkpoint
-	// GetModel
-	// GetModel version
+	// GET /api/v1/checkpoints/{checkpoint_uuid}
+	// GET /api/v1/models/{model_name}
+	// GET /api/v1/models/{model_name}/versions/{model_version_num}
+	// GET /api/v1/models/{model_name}/versions
 	CanGetModel(ctx context.Context, curUser model.User,
 		m *modelv1.Model, workspaceID int32,
 	) (canGetModel bool, serverError error)
-	// Patch model
-	// Patch model version
-	// Post model version
-	// Archive model
-	// Unarchive model
+	// PATCH /api/v1/models/{model_name}
+	// PATCH /api/v1/models/{model_name}/versions/{model_version_num}
+	// POST /api/v1/models/{model_name}/versions
+	// POST /api/v1/models/{model_name}/archive
+	// POST /api/v1/models/{model_name}/unarchive
 	CanEditModel(ctx context.Context, curUser model.User,
 		m *modelv1.Model, workspaceID int32,
 	) error
-	// Post model
+	// POST /api/v1/models
 	CanCreateModel(ctx context.Context,
 		curUser model.User, workspaceID int32,
 	) error

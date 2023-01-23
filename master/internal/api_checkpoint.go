@@ -119,7 +119,7 @@ func (a *apiServer) GetCheckpoint(
 		}
 		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
 		if errM != nil {
-			return nil, errE // Nikita TODO: Format this to give info about models too?.
+			return nil, errE
 		}
 	}
 
