@@ -5,121 +5,76 @@ import { getWorkspaceProjects } from 'services/api';
 import { Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { observable, useObservable, WritableObservable } from 'utils/observable';
 
-type UpdateProjectsByIndex = (fn: (ws: Map<string, Project[]>) => Map<string, Project[]>) => void;
+class ProjectService {
+  projects: WritableObservable<Map<number, Project>> = observable(Map());
+  projectsByIndex: WritableObservable<Map<string, Project[]>> = observable(Map());
 
-type ProjectsContext = {
-  projects: Map<number, Project>;
-  projectsByIndex: Map<string, Project[]>;
-  updateProjects: (fn: (project: Map<number, Project>) => Map<number, Project>) => void;
-  updateProjectsByIndex: UpdateProjectsByIndex;
-};
+  canceler: AbortController;
 
-const ProjectsContext = createContext<ProjectsContext | null>(null);
+  constructor(canceler: AbortController) {
+    this.canceler = canceler;
+  }
+
+  fetchWorkspaceProjects = async (workspaceId: number): Promise<void> => {
+    try {
+      const response = await getWorkspaceProjects(
+        {
+          id: workspaceId,
+          limit: 0,
+        },
+        { signal: this.canceler.signal },
+      );
+      this.projectsByIndex.update((prevState: Map<string, Project[]>) => {
+        return prevState.set(`byworkspace-${workspaceId}`, response.projects);
+      });
+      this.projects.update((prevState: Map<number, Project>) => {
+        return prevState.withMutations((state: Map<number, Project>) => {
+          response.projects.forEach((proj) => state.set(proj.id, proj));
+        });
+      });
+    } catch (e) {
+      handleError(e);
+    }
+  };
+}
+
+const ProjectsContext = createContext<ProjectService | null>(null);
 
 export const ProjectsProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [workspaceProjects, setWorkspaceProjects] = useState<Map<string, Project[]>>(Map());
-  const [projects, setProjects] = useState<Map<number, Project>>(() => Map());
+  const [projectStore] = useState(() => new ProjectService(new AbortController()));
 
-  return (
-    <ProjectsContext.Provider
-      value={{
-        projects,
-        projectsByIndex: workspaceProjects,
-        updateProjects: setProjects,
-        updateProjectsByIndex: setWorkspaceProjects,
-      }}>
-      {children}
-    </ProjectsContext.Provider>
-  );
+  return <ProjectsContext.Provider value={projectStore}>{children}</ProjectsContext.Provider>;
 };
 
-export const useFetchWorkspaceProjects = (
-  canceler: AbortController,
-): ((workspaceId: number) => Promise<void>) => {
-  const context = useContext(ProjectsContext);
+const useProjectsStore = (): ProjectService => {
+  const store = useContext(ProjectsContext);
+  if (store === null) throw new Error('useProjects is not a store');
+  return store;
+};
 
-  if (context === null) {
-    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
+export const useFetchWorkspaceProjects = (): ((workspaceId: number) => Promise<void>) => {
+  const store = useProjectsStore();
+
+  if (store === null) {
+    throw new Error('Attempted to use useWorkspaceProjects outside of Projects Context');
   }
-
-  const { updateProjectsByIndex, updateProjects } = context;
 
   return useCallback(
     async (workspaceId: number): Promise<void> => {
-      try {
-        const response = await getWorkspaceProjects(
-          {
-            id: workspaceId,
-            limit: 0,
-          },
-          { signal: canceler.signal },
-        );
-
-        updateProjectsByIndex((prevState) => {
-          return prevState.set(`byworkspace-${workspaceId}`, response.projects);
-        });
-
-        updateProjects((prevState) => {
-          return prevState.withMutations((state) => {
-            response.projects.forEach((proj) => state.set(proj.id, proj));
-          });
-        });
-      } catch (e) {
-        handleError(e);
-      }
+      await store.fetchWorkspaceProjects(workspaceId);
     },
-    [canceler, updateProjectsByIndex, updateProjects],
-  );
-};
-
-export const useEnsureWorkspaceProjectsFetched = (
-  canceler: AbortController,
-): ((workspaceId: number) => Promise<void>) => {
-  const context = useContext(ProjectsContext);
-
-  if (context === null) {
-    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
-  }
-
-  const { updateProjectsByIndex, updateProjects } = context;
-
-  return useCallback(
-    async (workspaceId: number): Promise<void> => {
-      if (context.projectsByIndex.get(`byworkspace-${workspaceId}`)) return;
-
-      try {
-        const response = await getWorkspaceProjects(
-          {
-            id: workspaceId,
-            limit: 0,
-          },
-          { signal: canceler.signal },
-        );
-
-        updateProjectsByIndex((prevState) => {
-          return prevState.set(`byworkspace-${workspaceId}`, response.projects);
-        });
-
-        updateProjects((prevState) => {
-          return prevState.withMutations((state) => {
-            response.projects.forEach((proj) => state.set(proj.id, proj));
-          });
-        });
-      } catch (e) {
-        handleError(e);
-      }
-    },
-    [canceler, context.projectsByIndex, updateProjectsByIndex, updateProjects],
+    [store],
   );
 };
 
 export const useWorkspaceProjects = (
   workspaceId: number | Loadable<number>,
 ): Loadable<Project[]> => {
-  const context = useContext(ProjectsContext);
+  const store = useProjectsStore();
 
-  if (context === null) {
+  if (store === null) {
     throw new Error('Attempted to use useWorkspaceProjects outside of Projects Context');
   }
 
@@ -135,7 +90,7 @@ export const useWorkspaceProjects = (
     loadedWorkspaceId = workspaceId;
   }
 
-  const { projectsByIndex } = context;
+  const projectsByIndex = store.projectsByIndex.get();
 
   const projects = projectsByIndex.get(`byworkspace-${loadedWorkspaceId}`);
 
@@ -145,13 +100,13 @@ export const useWorkspaceProjects = (
 };
 
 export const useProject = (projectId: number): Loadable<Project> => {
-  const context = useContext(ProjectsContext);
+  const store = useProjectsStore();
 
-  if (context === null) {
+  if (store === null) {
     throw new Error('Attempted to use useProject outside of Projects Context');
   }
 
-  const { projects } = context;
+  const projects = useObservable(store.projects);
 
   const project = projects.get(projectId);
 

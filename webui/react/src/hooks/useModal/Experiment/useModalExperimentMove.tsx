@@ -14,7 +14,7 @@ import { moveExperiment } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
-import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
+import { useFetchWorkspaceProjects, useWorkspaceProjects } from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, Project } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -69,7 +69,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
     ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
   const projects = useWorkspaceProjects(workspaceId);
-  const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
+  const fetchWorkspaceProjects = useFetchWorkspaceProjects();
   const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
@@ -82,8 +82,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, []);
 
   useEffect(() => {
-    ensureProjectsFetched(workspaceId);
-  }, [workspaceId, ensureProjectsFetched]);
+    fetchWorkspaceProjects(workspaceId);
+  }, [workspaceId, fetchWorkspaceProjects]);
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
