@@ -79,8 +79,7 @@ func (p *pod) configureEnvVars(
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
 	for _, envVar := range environment.EnvironmentVariables().For(deviceType) {
-		key, val, found := strings.Cut(envVar, "=")
-		if found {
+		if key, val, found := strings.Cut(envVar, "="); found {
 			envVarsMap[key] = val
 		} else {
 			envVarsMap[envVar] = ""
