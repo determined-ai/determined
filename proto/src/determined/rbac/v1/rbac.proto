@@ -108,6 +108,13 @@ enum PermissionType {
   // Ability to delete projects.
   PERMISSION_TYPE_DELETE_PROJECT = 5004;
 
+  // Ability to view model registry.
+  PERMISSION_TYPE_VIEW_MODEL_REGISTRY = 7001;
+  // Ability to edit model registry.
+  PERMISSION_TYPE_EDIT_MODEL_REGISTRY = 7002;
+  // Ability to create model registry.
+  PERMISSION_TYPE_CREATE_MODEL_REGISTRY = 7003;
+
   // Ability to create and update role definitions.
   PERMISSION_TYPE_UPDATE_ROLES = 96001;
   // Ability to assign roles to groups / users.
