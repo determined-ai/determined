@@ -458,7 +458,7 @@ TERMINATING_STATES = [
 # tag: no-cli
 @pytest.mark.e2e_cpu
 def test_workspace_delete_notebook() -> None:
-    admin_session = determined_test_session(admin=True)
+    admin_session = api_utils.determined_test_session(admin=True)
 
     # create a workspace using bindings
 
@@ -497,6 +497,9 @@ def test_workspace_delete_notebook() -> None:
         bindings.delete_DeleteWorkspace(admin_session, id=workspace_resp.workspace.id)
 
         # check that the other notebook is not terminated
+        outside_notebook = bindings.get_GetNotebook(
+            admin_session, notebookId=outside_notebook.id
+        ).notebook
         assert outside_notebook.state not in TERMINATING_STATES
 
     # check that notebook is terminated or terminating.
