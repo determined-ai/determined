@@ -1,17 +1,9 @@
-import { InputNumber as AntdInputNumber, Form } from 'antd';
+import { InputNumber as AntdInputNumber } from 'antd';
 import React from 'react';
-
-import { FormItemWrapper, WrapperProps } from './Input';
-
-type LabelCol = {
-  span: number;
-};
 
 interface InputNumberProps {
   defaultValue?: number;
   disabled?: boolean;
-  label: string;
-  labelCol?: LabelCol; // https://ant.design/components/grid#col
   max?: number;
   min?: number;
   onChange?: () => void;
@@ -20,12 +12,9 @@ interface InputNumberProps {
   value?: number;
 }
 
-type WrappedInputNumberProps = WrapperProps & InputNumberProps;
-const InputNumber: React.FC<WrappedInputNumberProps> = (props: WrappedInputNumberProps) => {
+const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {
   return (
-    <FormItemWrapper {...props}>
-      <AntdInputNumber {...props} />
-    </FormItemWrapper>
+    <AntdInputNumber {...props} />
   );
 };
 export default InputNumber;

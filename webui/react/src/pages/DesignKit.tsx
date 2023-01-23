@@ -2,7 +2,6 @@ import { PoweroffOutlined } from '@ant-design/icons';
 import {
   //TODO: Move these imports to components/kit? Add sections to DesignKit page?
   Card,
-  Form,
   Space,
 } from 'antd';
 import React, { useEffect } from 'react';
@@ -12,11 +11,11 @@ import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Form from 'components/kit/Form';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
-import InputSelect from 'components/kit/InputSelect';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
@@ -51,6 +50,7 @@ const ComponentTitles = {
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Facepile: 'Facepile',
+  Form: 'Form',
   Input: 'Input',
   InputNumber: 'InputNumber',
   InputSearch: 'InputSearch',
@@ -172,7 +172,7 @@ const DropdownsSection: React.FC = () => {
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <Card>
         <p>
-          A dropdown/combo box (<code>{'<SelectFilter>'}</code> or <code>{'<InputSelect>'}</code>)
+          A dropdown/combo box (<code>{'<SelectFilter>'}</code>)
           combines a text field and a dropdown giving people a way to select an option from a list
           or enter their own choice.
         </p>
@@ -209,62 +209,23 @@ const DropdownsSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>
-          Standalone dropdown <code>{'<SelectFilter>'}</code>
-        </strong>
+        <strong>Default dropdown</strong>
         <SelectFilter
           defaultValue={1}
-          label="Default dropdown"
           options={[
             { label: 'Option 1', value: 1 },
             { label: 'Option 2', value: 2 },
             { label: 'Option 3', value: 3 },
           ]}
         />
+        <strong>Disabled dropdown</strong>
         <SelectFilter
           defaultValue="disabled"
           disabled
-          label="Disabled dropdown"
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
         <hr />
-        <strong>
-          Form dropdown input <code>{'<InputSelect>'}</code>
-        </strong>
-        <Form>
-          <InputSelect
-            defaultValue={1}
-            label="Default dropdown"
-            options={[
-              { label: 'Option 1', value: 1 },
-              { label: 'Option 2', value: 2 },
-              { label: 'Option 3', value: 3 },
-            ]}
-          />
-          <InputSelect
-            defaultValue="disabled"
-            disabled
-            label="Disabled dropdown"
-            options={[{ label: 'Disabled', value: 'disabled' }]}
-          />
-          <InputSelect
-            defaultValue={1}
-            label="Required dropdown"
-            name="Required Select"
-            options={[
-              { label: 'Option 1', value: 1 },
-              { label: 'Option 2', value: 2 },
-              { label: 'Option 3', value: 3 },
-            ]}
-            required
-          />
-          <InputSelect
-            label="Invalid dropdown"
-            name="Invalid Select"
-            validateMessage="Input validation error"
-            validateStatus="error"
-          />
-        </Form>
+        <span>Also see <Link reloadDocument to={`#${ComponentTitles.Form}`}>Form</Link> for form-specific variations</span>
       </Card>
     </ComponentSection>
   );
@@ -487,14 +448,12 @@ const InputNumberSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <InputNumber label="Default InputNumber" />
-        <InputNumber disabled label="Disabled InputNumber" />
-        <InputNumber label="Required InputNumber" name="number" required />
-        <InputNumber
-          label="Invalid InputNumber"
-          validateMessage="Input validation error"
-          validateStatus="error"
-        />
+        <strong>Default InputNumber</strong>
+        <InputNumber />
+        <strong>Disabled InputNumber</strong>
+        <InputNumber disabled />
+        <hr />
+        <span>Also see <Link reloadDocument to={`#${ComponentTitles.Form}`}>Form</Link> for form-specific variations</span>
       </Card>
     </ComponentSection>
   );
@@ -524,50 +483,31 @@ const InputSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <Form>
-          <strong>
-            Input <code>{'<Input>'}</code>
-          </strong>
-          <Input label="Default Input" name="default" />
-          <Input disabled label="Disabled Input" name="disabled" />
-          <Input label="Required input" name="required" required />
-          <Input
-            label="Invalid input"
-            name="invalid"
-            validateMessage="Input validation error"
-            validateStatus="error"
-          />
-        </Form>
+        <strong>
+          Input <code>{'<Input>'}</code>
+        </strong>
+        <strong>Default Input</strong>
+        <Input />
+        <strong>Disabled Input</strong>
+        <Input disabled />
         <hr />
-        <Form>
-          <strong>
-            TextArea <code>{'<Input.TextArea>'}</code>
-          </strong>
-          <Input.TextArea label="Default TextArea" name="default" />
-          <Input.TextArea disabled label="Disabled TextArea" name="disabled" />
-          <Input.TextArea label="Required TextArea" name="required" required />
-          <Input.TextArea
-            label="Invalid TextArea"
-            name="invalid"
-            validateMessage="Input validation error"
-            validateStatus="error"
-          />
-        </Form>
+        <strong>
+          TextArea <code>{'<Input.TextArea>'}</code>
+        </strong>
+        <strong>Default TextArea</strong>
+        <Input.TextArea />
+        <strong>Disabled TextArea</strong>
+        <Input.TextArea disabled />
         <hr />
-        <Form>
-          <strong>
-            Password <code>{'<Input.Password>'}</code>
-          </strong>
-          <Input.Password label="Default Password" name="default" />
-          <Input.Password disabled label="Disabled Password" name="disabled" />
-          <Input.Password label="Required Password" name="required" required />
-          <Input.Password
-            label="Invalid Password"
-            name="invalid"
-            validateMessage="Input validation error"
-            validateStatus="error"
-          />
-        </Form>
+        <strong>
+          Password <code>{'<Input.Password>'}</code>
+        </strong>
+        <strong>Default Password</strong>
+        <Input.Password />
+        <strong>Disabled Password</strong>
+        <Input.Password disabled />
+        <hr />
+        <span>Also see <Link reloadDocument to={`#${ComponentTitles.Form}`}>Form</Link> for form-specific variations</span>
       </Card>
     </ComponentSection>
   );
@@ -1054,6 +994,86 @@ const LogViewerSection: React.FC = () => {
   );
 };
 
+const FormSection: React.FC = () => {
+  return (
+    <ComponentSection id="Form" title="Form">
+      <Card>
+        <p><code>{'<Form>'}</code> and <code>{'<Form.Item>'}</code> components are used for submitting user input.
+          When these components wrap a user input field (such as <code>{'<Input>'}</code> or <code>{'<SelectFilter>'}</code>),
+          they can show a standard label, indicate that the field is required, apply input validation, or display an input validation error.
+        </p>
+      </Card>
+      <Card title="Usage">
+        <Form>
+          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Input}`}>Input</Link> variations</strong><br />
+          <Form.Item label="Required input" name="required" required>
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Invalid input"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <Input />
+          </Form.Item>
+          <br /><hr /><br />
+          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Input}`}>TextArea</Link> variations</strong><br />
+          <Form.Item label="Required TextArea" name="required" required>
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item
+            label="Invalid TextArea"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <Input.TextArea />
+          </Form.Item>
+          <br /><hr /><br />
+          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Input}`}>Password</Link> variations</strong><br />
+          <Form.Item label="Required Password" name="required" required><Input.Password /></Form.Item>
+          <Form.Item
+            label="Invalid Password"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error"><Input.Password />
+          </Form.Item>
+          <br /><hr /><br />
+          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>InputNumber</Link> variations</strong>
+          <Form.Item label="Required InputNumber" name="number" required>
+            <InputNumber />
+          </Form.Item>
+          <Form.Item
+            label="Invalid InputNumber"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <InputNumber />
+          </Form.Item>
+          <br /><hr /><br />
+          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Dropdowns}`}>Dropdown</Link> variations</strong>
+          <Form.Item
+            label="Required dropdown"
+            name="required"
+            required>
+            <SelectFilter
+              defaultValue={1}
+              options={[
+                { label: 'Option 1', value: 1 },
+                { label: 'Option 2', value: 2 },
+                { label: 'Option 3', value: 3 },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Invalid dropdown"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <SelectFilter />
+          </Form.Item>
+        </Form>
+      </Card>
+    </ComponentSection>);
+};
+
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
@@ -1169,6 +1189,7 @@ const Components = {
   DataCards: <DataCardsSection />,
   Dropdowns: <DropdownsSection />,
   Facepile: <FacepileSection />,
+  Form: <FormSection />,
   Input: <InputSection />,
   InputNumber: <InputNumberSection />,
   InputSearch: <InputSearchSection />,
