@@ -36,7 +36,7 @@ def parse_custom_tags() -> Callable:
 
         for tag in s.split(","):
             try:
-                key, value = tag.split("=", 2)
+                key, value = tag.split("=", 1)
             except ValueError:
                 raise argparse.ArgumentTypeError("key=value format requires both a key and a value")
 
