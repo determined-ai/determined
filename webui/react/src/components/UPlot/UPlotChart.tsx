@@ -1,6 +1,8 @@
 import { DownloadOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
+import { useObservable } from 'micro-observables';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -12,7 +14,7 @@ import { DarkLight } from 'shared/themes';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import { useSyncableBounds } from './SyncableBounds';
+import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';
 import css from './UPlotChart.module.scss';
 
@@ -35,9 +37,8 @@ const SCROLL_THROTTLE_TIME = 500;
 const shouldRecreate = (
   prev: Partial<Options> | undefined,
   next: Partial<Options> | undefined,
-  chart: uPlot | undefined,
 ): boolean => {
-  if (!chart) return true;
+  // if (!chart) return true;
   if (!next) return false;
   if (!prev) return true;
   if (prev === next) return false;
@@ -46,7 +47,7 @@ const shouldRecreate = (
 
   if (prev.axes?.length !== next.axes?.length) return true;
 
-  if (chart?.series?.length !== next.series?.length) return true;
+  if (prev?.series?.length !== next.series?.length) return true;
 
   const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([scaleKey, nextScale]) => {
     const prevScale = prev?.scales?.[scaleKey];
@@ -65,14 +66,14 @@ const shouldRecreate = (
   });
   if (someAxisHasChanged) return true;
 
-  const someSeriesHasChanged = chart.series.some((chartSerie, seriesIdx) => {
+  const someSeriesHasChanged = prev.series?.some((prevSerie, seriesIdx) => {
     const nextSerie = next.series?.[seriesIdx];
-    const prevSerie = prev.series?.[seriesIdx];
+
     return (
-      (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label) ||
+      (nextSerie?.label != null && prevSerie?.label !== nextSerie?.label) ||
       (prevSerie?.stroke != null && prevSerie?.stroke !== nextSerie?.stroke) ||
-      (nextSerie?.paths != null && chartSerie?.paths !== nextSerie?.paths) ||
-      (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
+      (nextSerie?.paths != null && prevSerie?.paths !== nextSerie?.paths) ||
+      (nextSerie?.fill != null && prevSerie?.fill !== nextSerie?.fill)
     );
   });
   if (someSeriesHasChanged) return true;
@@ -95,7 +96,9 @@ const UPlotChart: React.FC<Props> = ({
   const classes = [css.base];
 
   const { ui } = useUI();
-  const { xMax, xMin, zoomed, boundsOptions, setZoomed } = useSyncableBounds();
+  const { syncService, options: syncOptions } = useChartSync();
+
+  const zoomed = useObservable(syncService.bounds.select((b) => b.zoomBounds !== null));
 
   const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
 
@@ -105,12 +108,12 @@ const UPlotChart: React.FC<Props> = ({
     const extended: Partial<uPlot.Options> = uPlot.assign(
       {
         hooks: {
-          destroy: [() => setIsReady(false), () => setZoomed(false)],
-          ready: [() => setIsReady(true)],
+          destroy: [() => setIsReady(false), () => syncService.resetZoom()],
+          // ready: [() => setIsReady(true)],
         },
         width: chartDivRef.current?.offsetWidth,
       },
-      boundsOptions || {},
+      syncOptions || {},
       options || {},
     );
 
@@ -129,13 +132,8 @@ const UPlotChart: React.FC<Props> = ({
       });
     }
 
-    // Override chart xMin / xMax if specified and not zoomed
-    if (extended?.scales?.x && (xMin || xMax) && !zoomed) {
-      extended.scales.x.range = [Number(xMin), Number(xMax)];
-    }
-
     return extended as uPlot.Options;
-  }, [boundsOptions, options, setZoomed, ui.theme, xMax, xMin, zoomed]);
+  }, [syncOptions, syncService, options, ui.theme]);
 
   const previousOptions = usePrevious(extendedOptions, undefined);
 
@@ -147,8 +145,12 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
+    if (data !== undefined) syncService.updateDataBounds(data as AlignedData);
+  }, [syncService, data]);
+
+  useEffect(() => {
     if (!chartDivRef.current) return;
-    if (shouldRecreate(previousOptions, extendedOptions, chartRef.current)) {
+    if (shouldRecreate(previousOptions, extendedOptions)) {
       chartRef.current?.destroy();
       chartRef.current = undefined;
       try {
@@ -169,7 +171,7 @@ const UPlotChart: React.FC<Props> = ({
     } else {
       try {
         if (chartRef.current && isReady) {
-          chartRef.current.setData(data as AlignedData, !zoomed);
+          chartRef.current.setData(data as AlignedData, false);
         }
       } catch (e) {
         chartRef.current?.destroy();
