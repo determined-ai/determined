@@ -1,8 +1,8 @@
 .. _core_api_tutorial_part_2:
 
-###########################################################
+###############################################
  Run a Core API MNIST Trial on a Local Cluster
-###########################################################
+###############################################
 
 .. meta::
    :description: In five steps, learn how to integrate the PyTorch MNIST model into Determined AI.
@@ -100,7 +100,6 @@ This is the cluster address for your local training environment.
  Next Steps
 ************
 
-In this article, we learned how to train on a local, single CPU or GPU.
-To learn how to change your configuration settings, including
-how to run a distributed training job on multiple GPUs, visit the 
+In this article, we learned how to train on a local, single CPU or GPU. To learn how to change your
+configuration settings, including how to run a distributed training job on multiple GPUs, visit the
 `Quickstart for Model Developers <https://docs.determined.ai/latest/quickstart-mdldev.html#>`_.

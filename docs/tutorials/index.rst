@@ -1,9 +1,9 @@
-###########################
+###########
  Tutorials
-###########################
+###########
 
-Learning the basics of working with Determined and how to port your existing code to the
-Determined environment.
+Learning the basics of working with Determined and how to port your existing code to the Determined
+environment.
 
 *******************************
  Get Started with the Core API
@@ -14,11 +14,9 @@ Determined environment.
 +=================================+==============================================================+
 | :doc:`core-api-tutorial`        | Learn how to take an existing training script and integrate  |
 |                                 | it with Determined using the Core API.                       |
-|                                 |                                                              |
 +---------------------------------+--------------------------------------------------------------+
 | :doc:`core-api-mnist-tutorial`  | In five steps, learn how to integrate the PyTorch MNIST      |
 |                                 | model into Determined using the Core API.                    |
-|                                 |                                                              |
 +---------------------------------+--------------------------------------------------------------+
 
 *********************************
@@ -48,11 +46,11 @@ open the ``examples/`` subdirectory of the `Determined GitHub repo
 <https://github.com/determined-ai/determined/tree/master/examples>`__.
 
 Go Further
-==============
+==========
 
-Visit the `Training API Guides <https://docs.determined.ai/latest/training/apis-howto/overview.html>`_ 
-for in-depth guides that contain detailed information about the training APIs.
-
+Visit the `Training API Guides
+<https://docs.determined.ai/latest/training/apis-howto/overview.html>`_ for in-depth guides that
+contain detailed information about the training APIs.
 
 .. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
 

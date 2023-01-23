@@ -1,8 +1,8 @@
 .. _core_api_tutorial_part_1:
 
-###################################################################################
+#######################################################################
  Integrate an Existing Training Script with the Determined Environment
-###################################################################################
+#######################################################################
 
 .. meta::
    :description: Learn how to take an existing training script and integrate it with Determined.
@@ -95,6 +95,5 @@ This is the cluster address for your local training environment.
  Next Steps
 ************
 
-Go further with the Core API by visiting :doc:`core-api-mnist-tutorial` where you'll 
-walk through step-by-step instructions for integrating the PyTorch MNIST training 
-example into Determined.
+Go further with the Core API by visiting :doc:`core-api-mnist-tutorial` where you'll walk through
+step-by-step instructions for integrating the PyTorch MNIST training example into Determined.
