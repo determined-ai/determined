@@ -1450,6 +1450,7 @@ jobs:
           extras-requires: "torch==1.9.0"
           extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
+          python-version: "3.9.16"
       - run: make -C cli check
       - run: make -C common check
       - run: make -C harness check
