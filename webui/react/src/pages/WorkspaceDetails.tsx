@@ -161,7 +161,7 @@ const WorkspaceDetails: React.FC = () => {
       return [];
     }
 
-    return [
+    const items: TabsProps['items'] = [
       {
         children: <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />,
         key: WorkspaceDetailsTab.Projects,
@@ -172,7 +172,10 @@ const WorkspaceDetails: React.FC = () => {
         key: WorkspaceDetailsTab.Tasks,
         label: 'Tasks',
       },
-      {
+    ];
+
+    if (rbacEnabled) {
+      items.push({
         children: (
           <WorkspaceMembers
             addableUsersAndGroups={addableUsersAndGroups}
@@ -188,13 +191,16 @@ const WorkspaceDetails: React.FC = () => {
         ),
         key: WorkspaceDetailsTab.Members,
         label: 'Members',
-      },
-    ];
+      });
+    }
+
+    return items;
   }, [
     addableUsersAndGroups,
     fetchGroupsAndUsersAssignedToWorkspace,
     groupsAssignedDirectly,
     id,
+    rbacEnabled,
     rolesAssignableToScope,
     usersAssignedDirectly,
     workspace,
