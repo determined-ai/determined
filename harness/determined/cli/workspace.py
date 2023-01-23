@@ -22,7 +22,7 @@ WORKSPACE_HEADERS = [
     "Agent Group",
 ]
 
-workspace_arg: Arg = Arg("--workspace-name", type=str, help="workspace name")
+workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace name")
 
 
 def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
