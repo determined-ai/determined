@@ -1,8 +1,12 @@
-import {
-  Input as AntdInput,
-  InputRef as AntdInputRef,
-} from 'antd';
-import React, { CSSProperties, FC, forwardRef, ForwardRefExoticComponent, ReactNode, RefAttributes } from 'react';
+import { Input as AntdInput, InputRef as AntdInputRef } from 'antd';
+import React, {
+  CSSProperties,
+  FC,
+  forwardRef,
+  ForwardRefExoticComponent,
+  ReactNode,
+  RefAttributes,
+} from 'react';
 
 interface InputProps {
   addonAfter?: ReactNode;
@@ -49,13 +53,9 @@ interface GroupProps {
   compact?: boolean;
 }
 
-const Input: Input = forwardRef<InputRef, InputProps>(
-  (props: InputProps, ref) => {
-    return (
-      <AntdInput {...props} ref={ref} />
-    );
-  },
-) as Input;
+const Input: Input = forwardRef<InputRef, InputProps>((props: InputProps, ref) => {
+  return <AntdInput {...props} ref={ref} />;
+}) as Input;
 
 type Input = ForwardRefExoticComponent<InputProps & RefAttributes<AntdInputRef>> & {
   Group: FC<GroupProps>;
@@ -66,15 +66,11 @@ type Input = ForwardRefExoticComponent<InputProps & RefAttributes<AntdInputRef>>
 Input.Group = AntdInput.Group;
 
 Input.Password = forwardRef((props: PasswordProps, ref) => {
-  return (
-    <AntdInput.Password {...props} ref={ref} />
-  );
+  return <AntdInput.Password {...props} ref={ref} />;
 });
 
 Input.TextArea = forwardRef((props: TextAreaProps, ref) => {
-  return (
-    <AntdInput.TextArea {...props} ref={ref} />
-  );
+  return <AntdInput.TextArea {...props} ref={ref} />;
 });
 
 export type InputRef = AntdInputRef;

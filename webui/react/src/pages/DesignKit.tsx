@@ -172,9 +172,8 @@ const DropdownsSection: React.FC = () => {
     <ComponentSection id="Dropdowns" title="Comboboxes & Dropdowns">
       <Card>
         <p>
-          A dropdown/combo box (<code>{'<SelectFilter>'}</code>)
-          combines a text field and a dropdown giving people a way to select an option from a list
-          or enter their own choice.
+          A dropdown/combo box (<code>{'<SelectFilter>'}</code>) combines a text field and a
+          dropdown giving people a way to select an option from a list or enter their own choice.
         </p>
       </Card>
       <Card title="Best practices">
@@ -225,7 +224,13 @@ const DropdownsSection: React.FC = () => {
           options={[{ label: 'Disabled', value: 'disabled' }]}
         />
         <hr />
-        <span>Also see <Link reloadDocument to={`#${ComponentTitles.Form}`}>Form</Link> for form-specific variations</span>
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
+            Form
+          </Link>{' '}
+          for form-specific variations
+        </span>
       </Card>
     </ComponentSection>
   );
@@ -453,7 +458,13 @@ const InputNumberSection: React.FC = () => {
         <strong>Disabled InputNumber</strong>
         <InputNumber disabled />
         <hr />
-        <span>Also see <Link reloadDocument to={`#${ComponentTitles.Form}`}>Form</Link> for form-specific variations</span>
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
+            Form
+          </Link>{' '}
+          for form-specific variations
+        </span>
       </Card>
     </ComponentSection>
   );
@@ -507,7 +518,13 @@ const InputSection: React.FC = () => {
         <strong>Disabled Password</strong>
         <Input.Password disabled />
         <hr />
-        <span>Also see <Link reloadDocument to={`#${ComponentTitles.Form}`}>Form</Link> for form-specific variations</span>
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
+            Form
+          </Link>{' '}
+          for form-specific variations
+        </span>
       </Card>
     </ComponentSection>
   );
@@ -998,14 +1015,24 @@ const FormSection: React.FC = () => {
   return (
     <ComponentSection id="Form" title="Form">
       <Card>
-        <p><code>{'<Form>'}</code> and <code>{'<Form.Item>'}</code> components are used for submitting user input.
-          When these components wrap a user input field (such as <code>{'<Input>'}</code> or <code>{'<SelectFilter>'}</code>),
-          they can show a standard label, indicate that the field is required, apply input validation, or display an input validation error.
+        <p>
+          <code>{'<Form>'}</code> and <code>{'<Form.Item>'}</code> components are used for
+          submitting user input. When these components wrap a user input field (such as{' '}
+          <code>{'<Input>'}</code> or <code>{'<SelectFilter>'}</code>), they can show a standard
+          label, indicate that the field is required, apply input validation, or display an input
+          validation error.
         </p>
       </Card>
       <Card title="Usage">
         <Form>
-          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Input}`}>Input</Link> variations</strong><br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
+              Input
+            </Link>{' '}
+            variations
+          </strong>
+          <br />
           <Form.Item label="Required input" name="required" required>
             <Input />
           </Form.Item>
@@ -1016,8 +1043,17 @@ const FormSection: React.FC = () => {
             validateStatus="error">
             <Input />
           </Form.Item>
-          <br /><hr /><br />
-          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Input}`}>TextArea</Link> variations</strong><br />
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
+              TextArea
+            </Link>{' '}
+            variations
+          </strong>
+          <br />
           <Form.Item label="Required TextArea" name="required" required>
             <Input.TextArea />
           </Form.Item>
@@ -1028,17 +1064,37 @@ const FormSection: React.FC = () => {
             validateStatus="error">
             <Input.TextArea />
           </Form.Item>
-          <br /><hr /><br />
-          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Input}`}>Password</Link> variations</strong><br />
-          <Form.Item label="Required Password" name="required" required><Input.Password /></Form.Item>
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
+              Password
+            </Link>{' '}
+            variations
+          </strong>
+          <br />
+          <Form.Item label="Required Password" name="required" required>
+            <Input.Password />
+          </Form.Item>
           <Form.Item
             label="Invalid Password"
             name="invalid"
             validateMessage="Input validation error"
-            validateStatus="error"><Input.Password />
+            validateStatus="error">
+            <Input.Password />
           </Form.Item>
-          <br /><hr /><br />
-          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>InputNumber</Link> variations</strong>
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
+              InputNumber
+            </Link>{' '}
+            variations
+          </strong>
           <Form.Item label="Required InputNumber" name="number" required>
             <InputNumber />
           </Form.Item>
@@ -1048,12 +1104,17 @@ const FormSection: React.FC = () => {
             validateStatus="error">
             <InputNumber />
           </Form.Item>
-          <br /><hr /><br />
-          <strong>Form-specific <Link reloadDocument to={`#${ComponentTitles.Dropdowns}`}>Dropdown</Link> variations</strong>
-          <Form.Item
-            label="Required dropdown"
-            name="required"
-            required>
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Dropdowns}`}>
+              Dropdown
+            </Link>{' '}
+            variations
+          </strong>
+          <Form.Item label="Required dropdown" name="required" required>
             <SelectFilter
               defaultValue={1}
               options={[
@@ -1071,7 +1132,8 @@ const FormSection: React.FC = () => {
           </Form.Item>
         </Form>
       </Card>
-    </ComponentSection>);
+    </ComponentSection>
+  );
 };
 
 const TooltipsSection: React.FC = () => {

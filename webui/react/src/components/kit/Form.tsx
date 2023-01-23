@@ -78,11 +78,11 @@ interface FormProps {
   initialValues?: object;
   labelCol?: GridCol;
   layout?: 'horizontal' | 'vertical' | 'inline';
-  name?: string
+  name?: string;
   onFieldsChange?: () => void;
   onFinish?: () => void;
   onValuesChange?: () => void;
-  ref?: Ref<AntdFormInstance>
+  ref?: Ref<AntdFormInstance>;
   wrapperCol?: GridCol;
 }
 
@@ -90,7 +90,7 @@ type Form = JSX.Element & {
   Item?: FC<FormItemProps>;
   List?: typeof AntdForm.List;
   useForm?: typeof AntdForm.useForm;
-}
+};
 
 const Form = (props: FormProps): JSX.Element => {
   return <AntdForm {...props} />;
