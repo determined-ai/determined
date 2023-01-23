@@ -1,8 +1,8 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import { Button } from 'antd';
 import React from 'react';
 
+import Button from 'components/kit/Button';
 import { CreateExperimentParams } from 'services/types';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';

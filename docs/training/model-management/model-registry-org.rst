@@ -66,7 +66,7 @@ edited through the Model Registry page after selecting the model or model versio
 Register Models
 ===============
 
-A model can be added to the registry via the WebUI, Python API, REST API, or CLI. This guide will
+A model can be added to the registry via the WebUI, Python SDK, REST API, or CLI. This guide will
 cover the Python and CLI methods. For information on the REST API, see the
 :doc:`/reference/rest-api` documentation.
 
@@ -97,7 +97,7 @@ Query Models
 The following example returns models registered in Determined as a list of
 :class:`~determined.experimental.Model` objects. Models can be sorted by name, description, creation
 time, and last updated time. Additionally, models can be filtered by name or description via the
-Python API. For sorting and ordering options, see :class:`~determined.experimental.ModelSortBy` and
+Python SDK. For sorting and ordering options, see :class:`~determined.experimental.ModelSortBy` and
 :class:`~determined.experimental.ModelOrderBy` respectively.
 
 .. code:: python
@@ -141,7 +141,7 @@ version of the model by default as well.
 Modify Model Metadata
 =====================
 
-Currently, model metadata can only be edited via the WebUI and Python API. The following example
+Currently, model metadata can only be edited via the WebUI and Python SDK. The following example
 demonstrates how to use this API.
 
 .. code:: python
@@ -282,5 +282,5 @@ The CLI equivalent is as follows:
  Next Steps
 ************
 
--  :ref:`python-api-reference`: The reference documentation for this API.
+-  :ref:`python-sdk-reference`: The reference documentation for this API.
 -  :ref:`use-trained-models`

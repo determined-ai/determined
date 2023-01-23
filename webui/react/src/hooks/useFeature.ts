@@ -9,7 +9,8 @@ export type ValidFeature =
   | 'rbac'
   | 'mock_permissions_read'
   | 'trials_comparison'
-  | 'mock_permissions_all';
+  | 'mock_permissions_all'
+  | 'dashboard';
 
 const queryParams = queryString.parse(window.location.search);
 

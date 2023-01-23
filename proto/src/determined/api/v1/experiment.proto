@@ -17,13 +17,24 @@ import "determined/job/v1/job.proto";
 import "determined/util/v1/util.proto";
 import "determined/experiment/v1/searcher.proto";
 
-// One datapoint in a series of metrics from a trial.
+// One datapoint in a series of metrics from a trial in batch.
 message DataPoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "batches", "value" ] }
   };
   // Total batches processed by the time this measurement is taken.
   int32 batches = 1;
+  // Value of the requested metric at this point in the trial.
+  double value = 2;
+}
+
+// One DataPointTime in a series of metrics from a trial in time.
+message DataPointTime {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "time", "value" ] }
+  };
+  // Total batches processed by the time this measurement is taken.
+  google.protobuf.Timestamp time = 1;
   // Value of the requested metric at this point in the trial.
   double value = 2;
 }
@@ -79,6 +90,8 @@ message GetExperimentsRequest {
     SORT_BY_CHECKPOINT_SIZE = 15;
     // Returns experiments sorted by checkpoint count.
     SORT_BY_CHECKPOINT_COUNT = 16;
+    // Returns experiments sorted by searcher metric value..
+    SORT_BY_SEARCHER_METRIC_VAL = 17;
   }
   // Sort experiments by the given field.
   SortBy sort_by = 1;
@@ -113,6 +126,8 @@ message GetExperimentsRequest {
   int32 project_id = 12;
   // filtering by experiment ids
   determined.common.v1.Int32FieldFilter experiment_id_filter = 13;
+  // whether to surface trial specific data from the best trial
+  bool show_trial_data = 14;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {

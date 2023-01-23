@@ -61,7 +61,7 @@ func expFromAllocationID(
 		return false, nil, err
 	}
 
-	exp, err = m.db.ExperimentWithoutConfigByID(expID)
+	exp, err = m.db.ExperimentByID(expID)
 	if err != nil {
 		return false, nil, err
 	}
@@ -69,7 +69,7 @@ func expFromAllocationID(
 }
 
 func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
-	spec, err := db.GetCommandGenericSpec(ctx, taskID)
+	spec, err := db.IdentifyTask(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		// Non NTSC case like checkpointGC case or the task just does not exist.
 		// TODO(nick) eventually control access to checkpointGC.
@@ -78,7 +78,7 @@ func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.Tas
 		return false, err
 	}
 	return command.AuthZProvider.Get().CanGetNSC(
-		ctx, curUser, spec.Metadata.WorkspaceID,
+		ctx, curUser, spec.WorkspaceID,
 	)
 }
 
@@ -101,7 +101,7 @@ func (a *apiServer) canDoActionsOnTask(
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
-		exp, err := db.ExperimentWithoutConfigByTaskID(ctx, t.TaskID)
+		exp, err := db.ExperimentByTaskID(ctx, t.TaskID)
 		if err != nil {
 			return err
 		}

@@ -26,6 +26,7 @@ def ls(args: Namespace) -> None:
     def get_with_offset(offset: int) -> bindings.v1GetJobsResponse:
         return bindings.get_GetJobs(
             session,
+            resourcePool=args.resource_pool,
             offset=offset,
             limit=args.limit,
             orderBy=order_by,

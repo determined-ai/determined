@@ -17,7 +17,7 @@ import handleError from 'utils/error';
 import css from './WorkspaceQuickSearch.module.scss';
 
 interface Props {
-  children: React.ReactChild;
+  children: React.ReactNode;
 }
 
 const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
@@ -101,7 +101,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
               <Link onClick={() => onClickProject(project)}>{project.name}</Link>
             </div>
           ),
-          value: `project-${project.id}`,
         }));
       return treeChildren;
     },
@@ -125,7 +124,6 @@ const WorkspaceQuickSearch: React.FC<Props> = ({ children }: Props) => {
               <Link onClick={() => onClickWorkspace(workspace.id)}>{workspace.name}</Link>
             </div>
           ),
-          value: `workspace-${workspace.id}`,
         };
       })
       .filter((item) => item.isWorkspaceIncluded);

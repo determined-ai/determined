@@ -139,6 +139,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
       try {
         yaml.load(newConfigString);
         newModalState.configError = undefined;
+        newModalState.error = undefined;
       } catch (e) {
         if (isError(e)) newModalState.configError = e.message;
       }

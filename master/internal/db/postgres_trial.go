@@ -248,7 +248,10 @@ VALUES
 			return errors.Wrap(err, "inserting validation metrics")
 		}
 
-		if err := setTrialBestValidation(tx, int(m.TrialId)); err != nil {
+		if err := setTrialBestValidation(
+			tx, int(m.TrialId),
+			int(m.TrialRunId),
+			int(m.StepsCompleted)); err != nil {
 			return errors.Wrap(err, "updating trial best validation")
 		}
 
@@ -414,7 +417,7 @@ WHERE id = $1
 
 // setTrialBestValidation sets `public.trials.best_validation_id` to the `id` of the row in
 // `public.validations` corresponding to the trial's best validation.
-func setTrialBestValidation(tx *sqlx.Tx, id int) error {
+func setTrialBestValidation(tx *sqlx.Tx, trialID int, trialRunID int, stepsCompleted int) error {
 	_, err := tx.Exec(`
 WITH const AS (
     SELECT t.id as trial_id,
@@ -429,15 +432,24 @@ WITH const AS (
 ), best_validation AS (
 	SELECT
 		v.id AS id,
-		const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 AS metric
-	FROM validations v, const
+		const.sign * (v.metrics->'validation_metrics'->>const.metric_name)::float8 AS metric,
+		(v.metrics->'validation_metrics'->>const.metric_name)::float8 AS searcher_metric_value
+	FROM (
+		SELECT * FROM validations where id = (select best_validation_id from trials where id = $1)
+		UNION ALL
+		SELECT * FROM validations 
+			where trial_id = $1
+			and trial_run_id = $2
+			and total_batches = $3
+	) v, const
 	WHERE v.trial_id = $1
 	ORDER BY metric ASC
 	LIMIT 1
 )
 UPDATE trials t
-SET best_validation_id = (SELECT bv.id FROM best_validation bv)
+SET best_validation_id = (SELECT bv.id FROM best_validation bv),
+searcher_metric_value = (SELECT bv.searcher_metric_value FROM best_validation bv)
 WHERE t.id = $1;
-`, id)
-	return errors.Wrapf(err, "error updating best validation for trial %d", id)
+`, trialID, trialRunID, stepsCompleted)
+	return errors.Wrapf(err, "error updating best validation for trial %d", trialID)
 }

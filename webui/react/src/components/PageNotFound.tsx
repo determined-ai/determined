@@ -1,6 +1,6 @@
-import { Button } from 'antd';
 import React from 'react';
 
+import Button from 'components/kit/Button';
 import { paths } from 'routes/utils';
 
 import Link from './Link';

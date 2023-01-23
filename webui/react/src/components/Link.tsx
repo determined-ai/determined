@@ -1,6 +1,6 @@
-import { Button } from 'antd';
 import React, { MouseEvent, useCallback } from 'react';
 
+import Button from 'components/kit/Button';
 import { handlePath, linkPath } from 'routes/utils';
 import { AnyMouseEventHandler, windowOpenFeatures } from 'shared/utils/routes';
 
@@ -42,9 +42,7 @@ const Link: React.FC<Props> = ({ external, popout, onClick, ...props }: Props) =
 
   if (props.disabled) {
     return props.isButton ? (
-      <Button className={classes.join(' ')} disabled>
-        {props.children}
-      </Button>
+      <Button disabled>{props.children}</Button>
     ) : (
       <span className={classes.join(' ')}>{props.children}</span>
     );

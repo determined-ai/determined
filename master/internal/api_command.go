@@ -18,7 +18,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 	"github.com/determined-ai/determined/master/internal/command"
+	mconfig "github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -170,11 +173,23 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		config.WorkDir = nil
 	}
 
-	token, createSessionErr := a.m.db.StartUserSession(userModel)
-	if createSessionErr != nil {
-		return nil, launchWarnings, status.Errorf(codes.Internal,
-			errors.Wrapf(createSessionErr,
-				"unable to create user session inside task").Error())
+	extConfig := mconfig.GetMasterConfig().InternalConfig.ExternalSessions
+	var token string
+	if extConfig.JwtKey != "" {
+		token, err = grpcutil.GetUserExternalToken(ctx)
+		if err != nil {
+			return nil, launchWarnings, status.Errorf(codes.Internal,
+				errors.Wrapf(err,
+					"unable to get external user token").Error())
+		}
+		err = nil
+	} else {
+		token, err = a.m.db.StartUserSession(userModel)
+		if err != nil {
+			return nil, launchWarnings, status.Errorf(codes.Internal,
+				errors.Wrapf(err,
+					"unable to create user session inside task").Error())
+		}
 	}
 	taskSpec.UserSessionToken = token
 
@@ -188,29 +203,44 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 func (a *apiServer) GetCommands(
 	ctx context.Context, req *apiv1.GetCommandsRequest,
 ) (resp *apiv1.GetCommandsResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	workspaceNotFoundErr := status.Errorf(codes.NotFound, "workspace %d not found", req.WorkspaceId)
+
+	if req.WorkspaceId != 0 {
+		// check if the workspace exists.
+		_, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+		if errors.Is(err, db.ErrNotFound) {
+			return nil, workspaceNotFoundErr
+		} else if err != nil {
+			return nil, err
+		}
+	}
 	if err = a.ask(commandsAddr, req, &resp); err != nil {
 		return nil, err
 	}
 
-	a.filter(&resp.Commands, func(i int) bool {
-		if err != nil {
-			return false
-		}
-		ok, serverError := command.AuthZProvider.Get().CanGetNSC(
-			ctx, *curUser, command.PlaceHolderWorkspace)
-		if serverError != nil {
-			err = serverError
-		}
-		return ok
-	})
+	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
+	)
 	if err != nil {
 		return nil, err
 	}
+	if req.WorkspaceId != 0 && len(limitedScopes) == 0 {
+		// report missing permissions as a 404 on explicit
+		// workspace requests.
+		return nil, workspaceNotFoundErr
+	}
+
+	a.filter(&resp.Commands, func(i int) bool {
+		return limitedScopes[model.AccessScopeID(resp.Commands[i].WorkspaceId)]
+	})
 
 	a.sort(resp.Commands, req.OrderBy, req.SortBy, apiv1.GetCommandsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Commands, req.Offset, req.Limit)
@@ -230,7 +260,7 @@ func (a *apiServer) GetCommand(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, command.PlaceHolderWorkspace); err != nil {
+		ctx, *curUser, model.AccessScopeID(resp.Command.WorkspaceId)); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -241,7 +271,22 @@ func (a *apiServer) GetCommand(
 func (a *apiServer) KillCommand(
 	ctx context.Context, req *apiv1.KillCommandRequest,
 ) (resp *apiv1.KillCommandResponse, err error) {
-	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
+	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = command.AuthZProvider.Get().CanTerminateNSC(
+		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId),
+	); err != nil {
 		return nil, err
 	}
 
@@ -251,7 +296,21 @@ func (a *apiServer) KillCommand(
 func (a *apiServer) SetCommandPriority(
 	ctx context.Context, req *apiv1.SetCommandPriorityRequest,
 ) (resp *apiv1.SetCommandPriorityResponse, err error) {
-	if _, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId}); err != nil {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+	targetCmd, err := a.GetCommand(ctx, &apiv1.GetCommandRequest{CommandId: req.CommandId})
+	if err != nil {
+		return nil, err
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = command.AuthZProvider.Get().CanSetNSCsPriority(
+		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId), int(req.Priority),
+	); err != nil {
 		return nil, err
 	}
 
@@ -268,6 +327,14 @@ func (a *apiServer) LaunchCommand(
 	})
 	if err != nil {
 		return nil, api.APIErrToGRPC(err)
+	}
+
+	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	if req.WorkspaceId != 0 {
+		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
+	}
+	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
+		return nil, err
 	}
 
 	// Postprocess the spec.
@@ -296,8 +363,6 @@ func (a *apiServer) LaunchCommand(
 		)
 	}
 	spec.Base.ExtraEnvVars = map[string]string{"DET_TASK_TYPE": string(model.TaskTypeCommand)}
-
-	// TODO(8676): add workspaceID to rest of ntsc.
 
 	// Launch a command actor.
 	var cmdID model.TaskID

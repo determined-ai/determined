@@ -49,11 +49,14 @@ class GCSStorageManager(storage.CloudStorageManager):
 
     @no_type_check
     @util.preserve_random_state
-    def upload(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def upload(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[storage.Paths] = None
+    ) -> None:
         src = os.fspath(src)
         prefix = self.get_storage_prefix(dst)
         logging.info(f"Uploading to GCS: {prefix}")
-        for rel_path in sorted(self._list_directory(src)):
+        upload_paths = paths if paths is not None else self._list_directory(src)
+        for rel_path in sorted(upload_paths):
             blob_name = f"{prefix}/{rel_path}"
             blob = self.bucket.blob(blob_name)
 

@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # resume RemoteSearchRunner and SearchMethod in the case of unexpected process termination.
     # The required information is stored in RemoteSearchRunner experiment checkpoint (reported through Core API
     # checkpointing) and includes experiment id, RemoteSearchRunner state, and SearchMethod state.
-    # To learn more about checkpointing, see https://docs.determined.ai/latest/reference/python-api.html#checkpoint
+    # To learn more about checkpointing, see https://docs.determined.ai/latest/reference/python-sdk.html#checkpoint
     #
     # While RemoteSearchRunner saves its own state and ensures invoking save() and
     # load() methods when necessary, a user is responsible for implementing

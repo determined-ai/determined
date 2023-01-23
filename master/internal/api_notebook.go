@@ -69,13 +69,6 @@ func (a *apiServer) GetNotebooks(
 		return nil, err
 	}
 
-	/*
-		Expected behavior:
-		- If the user doesn't specify a workspace ID we return
-		all the permitted notebooks for the user.
-		- If they have no NSC access to any workspace we return an empty list.
-		- If the user requests a workspace that they don't have access to we respond with a 404.
-	*/
 	limitedScopes, err := command.AuthZProvider.Get().AccessibleScopes(
 		ctx, *curUser, model.AccessScopeID(req.WorkspaceId),
 	)
@@ -230,8 +223,6 @@ func (a *apiServer) LaunchNotebook(
 	if err != nil {
 		return nil, api.APIErrToGRPC(errors.Wrapf(err, "failed to prepare launch params"))
 	}
-
-	// TODO test launching in archived workspace.
 
 	spec.Metadata.WorkspaceID = model.DefaultWorkspaceID
 	if req.WorkspaceId != 0 {

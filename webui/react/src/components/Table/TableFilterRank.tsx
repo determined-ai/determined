@@ -1,6 +1,8 @@
-import { Button, InputNumber, Select } from 'antd';
+import { InputNumber, Select } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useState } from 'react';
+
+import Button from 'components/kit/Button';
 
 import css from './TableFilterRank.module.scss';
 

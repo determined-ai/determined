@@ -133,7 +133,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 		ctx = c.Request().Context()
 	}
 
-	spec, err := db.GetCommandGenericSpec(ctx, taskID)
+	spec, err := db.IdentifyTask(ctx, taskID)
 	if err != nil {
 		return true, err
 	}
@@ -141,10 +141,10 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
 		ok, err = command.AuthZProvider.Get().CanGetTensorboard(
-			ctx, *user, spec.Metadata.WorkspaceID)
+			ctx, *user, spec.WorkspaceID)
 	} else {
 		ok, err = command.AuthZProvider.Get().CanGetNSC(
-			ctx, *user, spec.Metadata.WorkspaceID)
+			ctx, *user, spec.WorkspaceID)
 	}
 	if err != nil {
 		return true, err

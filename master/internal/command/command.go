@@ -56,11 +56,6 @@ func enrichState(state model.AllocationState) taskv1.State {
 	return state.Proto()
 }
 
-const (
-	// PlaceHolderWorkspace is REMOVEME.
-	PlaceHolderWorkspace = 1
-)
-
 func createGenericCommandActor(
 	ctx *actor.Context,
 	db *db.PgDB,
@@ -610,6 +605,7 @@ func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
 		ResourcePool: c.Config.Resources.ResourcePool,
 		ExitStatus:   c.exitStatus.String(),
 		JobId:        c.jobID.String(),
+		WorkspaceId:  int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 
@@ -632,6 +628,7 @@ func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
 		Addresses:      toProto(allo.FirstContainerAddresses()),
 		AgentUserGroup: protoutils.ToStruct(c.Base.AgentUserGroup),
 		JobId:          c.jobID.String(),
+		WorkspaceId:    int32(c.GenericCommandSpec.Metadata.WorkspaceID),
 	}
 }
 

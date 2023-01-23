@@ -3,6 +3,7 @@ package internal
 import (
 	"archive/tar"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/api/apiutils"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -46,7 +49,7 @@ const (
 	minTensorBoardPort        = 2600
 	maxTensorBoardPort        = minTensorBoardPort + 299
 	tensorboardEntrypointFile = "/run/determined/tensorboard/tensorboard-entrypoint.sh"
-	expConfPath               = "/run/determined/tensorboard/experiment_config.json"
+	storageConfPath           = "/run/determined/tensorboard/storage_config.json"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -94,6 +97,10 @@ func (a *apiServer) filterTensorboards(
 func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -148,6 +155,10 @@ func (a *apiServer) GetTensorboard(
 func (a *apiServer) KillTensorboard(
 	ctx context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	getResponse, err := a.GetTensorboard(ctx,
 		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
 	if err != nil {
@@ -171,6 +182,10 @@ func (a *apiServer) KillTensorboard(
 func (a *apiServer) SetTensorboardPriority(
 	ctx context.Context, req *apiv1.SetTensorboardPriorityRequest,
 ) (resp *apiv1.SetTensorboardPriorityResponse, err error) {
+	defer func() {
+		err = apiutils.MapAndFilterErrors(err, nil, nil)
+	}()
+
 	getResponse, err := a.GetTensorboard(ctx,
 		&apiv1.GetTensorboardRequest{TensorboardId: req.TensorboardId})
 	if err != nil {
@@ -270,7 +285,7 @@ func (a *apiServer) LaunchTensorboard(
 	for _, exp := range exps {
 		var logBasePath string
 
-		switch c := exp.Config.CheckpointStorage().GetUnionMember().(type) {
+		switch c := exp.Config.CheckpointStorage.GetUnionMember().(type) {
 		case expconf.SharedFSConfig:
 			// Mount the checkpoint location into the TensorBoard container to
 			// make the logs visible to TensorBoard. Bind mounts must be unique
@@ -333,7 +348,7 @@ func (a *apiServer) LaunchTensorboard(
 
 			// The credentials files for HDFS exist on agent machines and are
 			// bind mounted into the container.
-			for _, mount := range exp.Config.BindMounts() {
+			for _, mount := range exp.Config.BindMounts {
 				uniqMounts[mount.ContainerPath()] = model.ToModelBindMount(mount)
 			}
 
@@ -360,33 +375,27 @@ func (a *apiServer) LaunchTensorboard(
 	// Get the most recent experiment config as raw json and add it to the container. This
 	// is used for automatically configuring checkpoint storage, registry auth, etc.
 	mostRecentExpID := exps[len(exps)-1].ExperimentID
-	confBytes, err := a.m.db.ExperimentConfigRaw(int(mostRecentExpID))
+	exp, err := a.m.db.ExperimentByID(int(mostRecentExpID))
 	if err != nil {
-		return nil, errors.Wrapf(err, "error loading experiment config: %d", mostRecentExpID)
+		return nil, errors.Wrapf(err, "error loading experiment: %d", mostRecentExpID)
 	}
-
-	expConf, err := expconf.ParseAnyExperimentConfigYAML(confBytes)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error parsing experiment config: %d", mostRecentExpID)
-	}
-	expConf = schemas.WithDefaults(expConf)
 
 	spec.Config.Entrypoint = append(
-		[]string{tensorboardEntrypointFile, expConfPath, strings.Join(logDirs, ",")},
+		[]string{tensorboardEntrypointFile, storageConfPath, strings.Join(logDirs, ",")},
 		spec.Config.TensorBoardArgs...)
 
 	spec.Base.ExtraEnvVars = uniqEnvVars
 
 	if !model.UsingCustomImage(req) {
 		spec.Config.Environment.Image = model.RuntimeItem{
-			CPU:  expConf.Environment().Image().CPU(),
-			CUDA: expConf.Environment().Image().CUDA(),
-			ROCM: expConf.Environment().Image().ROCM(),
+			CPU:  exp.Config.Environment.Image().CPU(),
+			CUDA: exp.Config.Environment.Image().CUDA(),
+			ROCM: exp.Config.Environment.Image().ROCM(),
 		}
 
 		// Inherit ImagePullSecrets too, if we inherit the image.
 		presentPod := spec.Config.Environment.PodSpec
-		experimentPod := expConf.Environment().PodSpec()
+		experimentPod := exp.Config.Environment.PodSpec()
 		if experimentPod != nil && len(experimentPod.Spec.ImagePullSecrets) > 0 {
 			if presentPod != nil {
 				// Update the k8sV1.Pod with the experiment's pod's ImagePullSecrets.
@@ -405,7 +414,7 @@ func (a *apiServer) LaunchTensorboard(
 	}
 	// Prefer RegistryAuth already present over the one from inferred from the experiment.
 	if spec.Config.Environment.RegistryAuth == nil {
-		spec.Config.Environment.RegistryAuth = expConf.Environment().RegistryAuth()
+		spec.Config.Environment.RegistryAuth = exp.Config.Environment.RegistryAuth()
 	}
 
 	var bindMounts []model.BindMount
@@ -414,13 +423,18 @@ func (a *apiServer) LaunchTensorboard(
 	}
 	spec.Config.BindMounts = append(spec.Config.BindMounts, bindMounts...)
 
+	confBytes, err := json.Marshal(exp.Config.CheckpointStorage)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error marshaling checkpoint_storage")
+	}
+
 	spec.AdditionalFiles = archive.Archive{
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			tensorboardEntrypointFile,
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0o700,
 			tar.TypeReg,
 		),
-		spec.Base.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0o700, tar.TypeReg),
+		spec.Base.AgentUserGroup.OwnedArchiveItem(storageConfPath, confBytes, 0o700, tar.TypeReg),
 		spec.Base.AgentUserGroup.OwnedArchiveItem(
 			taskReadyCheckLogs,
 			etc.MustStaticFile(etc.TaskCheckReadyLogsResource),
@@ -463,7 +477,7 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 	confByID := map[int32]*tensorboardConfig{}
 
 	for _, expID := range req.ExperimentIds {
-		if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID), false,
+		if _, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(expID),
 			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err
 		}

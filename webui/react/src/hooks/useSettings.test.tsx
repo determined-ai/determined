@@ -85,7 +85,7 @@ const config: hook.SettingsConfig<Settings> = {
       type: union([undefinedType, array(string)]),
     },
   },
-  storagePath: 'settings/normal',
+  storagePath: 'settings-normal',
 };
 
 const extraConfig: hook.SettingsConfig<ExtraSettings> = {
@@ -97,7 +97,7 @@ const extraConfig: hook.SettingsConfig<ExtraSettings> = {
       type: string,
     },
   },
-  storagePath: 'settings/extra',
+  storagePath: 'settings-extra',
 };
 
 const Container: React.FC<{ children: JSX.Element }> = ({ children }) => {

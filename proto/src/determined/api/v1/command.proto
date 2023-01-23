@@ -22,6 +22,8 @@ message GetCommandsRequest {
     SORT_BY_DESCRIPTION = 2;
     // Return commands sorted by start time.
     SORT_BY_START_TIME = 4;
+    // Return commands sorted by workspace_id.
+    SORT_BY_WORKSPACE_ID = 5;
   }
   // Sort commands by the given field.
   SortBy sort_by = 1;
@@ -37,6 +39,9 @@ message GetCommandsRequest {
   repeated string users = 5;
   // Limit commands to those that are owned by users with the specified userIds.
   repeated int32 user_ids = 6;
+  // Limit commands to those within a specific workspace, or 0 for all
+  // accessible workspaces.
+  int32 workspace_id = 7;
 }
 // Response to GetCommandsRequest.
 message GetCommandsResponse {
@@ -99,6 +104,8 @@ message LaunchCommandRequest {
   repeated determined.util.v1.File files = 3;
   // Additional data.
   bytes data = 4;
+  // Workspace ID. Defaults to the 'Uncategorized' workspace if not specified.
+  int32 workspace_id = 5;
 }
 
 // Enum values for warnings when launching commands.
