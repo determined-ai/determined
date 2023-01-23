@@ -168,7 +168,7 @@ const WorkspaceDetails: React.FC = () => {
         label: 'Projects',
       },
       {
-        children: <TaskList workspaceId={id} />,
+        children: <TaskList workspace={workspace} />,
         key: WorkspaceDetailsTab.Tasks,
         label: 'Tasks',
       },

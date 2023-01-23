@@ -52,7 +52,14 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
-import { ExperimentAction as Action, AnyTask, CommandState, CommandTask, CommandType } from 'types';
+import {
+  ExperimentAction as Action,
+  AnyTask,
+  CommandState,
+  CommandTask,
+  CommandType,
+  Workspace,
+} from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
@@ -68,7 +75,7 @@ const TensorBoardSourceType = {
 type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
 
 interface Props {
-  workspaceId?: number;
+  workspace?: Workspace;
 }
 
 interface TensorBoardSource {
@@ -85,7 +92,7 @@ interface SourceInfo {
 
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
-const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
+const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
@@ -100,9 +107,9 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab({});
+    useModalJupyterLab({ workspace: workspace });
   const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
-    settingsConfig(workspaceId?.toString() ?? 'global'),
+    settingsConfig(workspace?.id.toString() ?? 'global'),
   );
 
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
@@ -155,10 +162,10 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
   const fetchTasks = useCallback(async () => {
     try {
       const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
-        getCommands({ signal: canceler.signal, workspaceId }),
-        getJupyterLabs({ signal: canceler.signal, workspaceId }),
-        getShells({ signal: canceler.signal, workspaceId }),
-        getTensorBoards({ signal: canceler.signal, workspaceId }),
+        getCommands({ signal: canceler.signal, workspaceId: workspace?.id }),
+        getJupyterLabs({ signal: canceler.signal, workspaceId: workspace?.id }),
+        getShells({ signal: canceler.signal, workspaceId: workspace?.id }),
+        getTensorBoards({ signal: canceler.signal, workspaceId: workspace?.id }),
       ]);
       const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
       setTasks((prev) => {
@@ -172,7 +179,7 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
         type: ErrorType.Api,
       });
     }
-  }, [canceler.signal, workspaceId]);
+  }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchUsers(), fetchTasks()]);
