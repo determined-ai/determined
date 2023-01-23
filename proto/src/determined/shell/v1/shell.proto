@@ -21,7 +21,8 @@ message Shell {
         "state",
         "username",
         "job_id",
-        "resource_pool"
+        "resource_pool",
+        "workspace_id"
       ]
     }
   };

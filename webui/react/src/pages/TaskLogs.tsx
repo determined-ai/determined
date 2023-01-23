@@ -145,7 +145,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
       bodyNoPadding
       breadcrumb={[
         { breadcrumbName: 'Tasks', path: paths.taskList() },
-        { breadcrumbName: `${taskTypeLabel} ${taskId.substr(0, 8)}`, path: '#' },
+        { breadcrumbName: `${taskTypeLabel} ${taskId.substring(0, 8)}`, path: '#' },
       ]}
       headerComponent={headerComponent}
       id="task-logs"

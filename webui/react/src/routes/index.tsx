@@ -1,5 +1,6 @@
 import React from 'react';
 
+import TaskList from 'components/TaskList';
 import Admin from 'pages/Admin';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
@@ -18,7 +19,6 @@ import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import Settings from 'pages/Settings';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
-import TaskList from 'pages/TaskList';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';

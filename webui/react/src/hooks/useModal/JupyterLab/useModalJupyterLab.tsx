@@ -302,7 +302,7 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
     if (currentWorkspace) {
       form.setFieldValue('workspace', currentWorkspace.id);
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, form]);
 
   return (
     <Form fields={field} form={form} onFieldsChange={handleConfigChange}>
@@ -434,7 +434,7 @@ const JupyterLabForm: React.FC<{
     if (currentWorkspace) {
       form.setFieldValue('workspace', currentWorkspace.id);
     }
-  }, [currentWorkspace]);
+  }, [currentWorkspace, form]);
 
   return (
     <Form className={css.form} form={form} initialValues={defaults}>

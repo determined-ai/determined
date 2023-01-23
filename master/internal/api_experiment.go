@@ -459,6 +459,25 @@ func (a *apiServer) GetExperiments(
 		Join("JOIN projects p ON e.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id")
 
+	if req.ShowTrialData {
+		query.ColumnExpr(`
+		(
+			SELECT 
+			json_build_object(
+				'searcher_metric_value', 
+				searcher_metric_value
+			)
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) AS best_trial`)
+	}
+
 	// Construct the ordering expression.
 	orderColMap := map[apiv1.GetExperimentsRequest_SortBy]string{
 		apiv1.GetExperimentsRequest_SORT_BY_UNSPECIFIED:      "id",
@@ -476,6 +495,18 @@ func (a *apiServer) GetExperiments(
 		apiv1.GetExperimentsRequest_SORT_BY_PROJECT_ID:       "project_id",
 		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_SIZE:  "checkpoint_size",
 		apiv1.GetExperimentsRequest_SORT_BY_CHECKPOINT_COUNT: "checkpoint_count",
+		apiv1.GetExperimentsRequest_SORT_BY_SEARCHER_METRIC_VAL: `(
+			SELECT 
+				searcher_metric_value
+			FROM trials t
+			WHERE t.experiment_id = e.id
+			ORDER BY (CASE
+				WHEN coalesce((config->'searcher'->>'smaller_is_better')::boolean, true)
+					THEN searcher_metric_value
+					ELSE -1.0 * searcher_metric_value
+			END) ASC
+			LIMIT 1
+		 ) `,
 	}
 	sortByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -1571,10 +1602,10 @@ func (a *apiServer) fetchTrialSample(trialID int32, metricName string, metricTyp
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	default:
 		panic("Invalid metric type")
@@ -1629,10 +1660,10 @@ func (a *apiServer) expCompareFetchTrialSample(trialID int32, metricName string,
 	}
 	switch metricType {
 	case apiv1.MetricType_METRIC_TYPE_TRAINING:
-		metricSeries, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.TrainingMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	case apiv1.MetricType_METRIC_TYPE_VALIDATION:
-		metricSeries, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
+		metricSeries, _, endTime, err = a.m.db.ValidationMetricsSeries(trialID, startTime,
 			metricName, startBatches, endBatches)
 	default:
 		panic("Invalid metric type")
