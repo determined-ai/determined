@@ -3,13 +3,11 @@ import uuid
 
 import pytest
 
-from determined.common import api
-from determined.common.api import authentication
 from determined.experimental import Determined, ModelSortBy
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user, log_out_user
+from tests.cluster.test_users import log_out_user
 
 from .test_workspace_org import setup_workspace
 
