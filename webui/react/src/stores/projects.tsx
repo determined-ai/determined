@@ -5,7 +5,7 @@ import { getWorkspaceProjects } from 'services/api';
 import { Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { observable, useObservable, WritableObservable } from 'utils/observable';
+import { observable, WritableObservable } from 'utils/observable';
 
 class ProjectService {
   projects: WritableObservable<Map<number, Project>> = observable(Map());
@@ -106,7 +106,7 @@ export const useProject = (projectId: number): Loadable<Project> => {
     throw new Error('Attempted to use useProject outside of Projects Context');
   }
 
-  const projects = useObservable(store.projects);
+  const projects = store.projects.get();
 
   const project = projects.get(projectId);
 
