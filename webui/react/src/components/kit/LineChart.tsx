@@ -66,7 +66,7 @@ export const LineChart: React.FC<Props> = ({
   }, [series, metric.name]);
 
   const chartData: AlignedData = useMemo(() => {
-    const xValues: number[] = [];
+    const xSet = new Set<number>();
     const yValues: Record<string, Record<string, number | null>> = {};
 
     const xAxisSerie = xAxis && series.find((s) => s.xAxisRole === xAxis);
@@ -77,11 +77,12 @@ export const LineChart: React.FC<Props> = ({
         yValues[serieIndex] = {};
         serie.data.forEach((pt, idx) => {
           const xVal = xAxisSerie ? xAxisSerie.data[idx][1] : pt[0];
-          xValues.push(xVal);
+          xSet.add(xVal);
           yValues[serieIndex][xVal] = Number.isFinite(pt[1]) ? pt[1] : null;
         });
       });
 
+    const xValues: number[] = Array.from(xSet);
     xValues.sort((a, b) => a - b);
     const yValuesArray: (number | null)[][] = Object.values(yValues).map((yValue) => {
       return xValues.map((xValue) => (yValue[xValue] != null ? yValue[xValue] : null));
