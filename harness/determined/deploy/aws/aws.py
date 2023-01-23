@@ -245,10 +245,6 @@ def create_stack(
             "Key": constants.deployment_types.TYPE_TAG_KEY,
             "Value": deployment_type,
         },
-        {
-            "Key": "danh-is-checking-for-this",
-            "Value": "lets-see-how-it-pans-out",
-        },
     ]
     if custom_tags:
         for ct in custom_tags:
