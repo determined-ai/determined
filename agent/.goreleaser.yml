@@ -43,7 +43,7 @@ brews:
 
       (etc/"determined").mkpath
       inreplace "etc/determined/agent.yaml" do |s|
-        s.gsub! "# master_host: 0.0.0.0", "master_host: localhost"
+        s.gsub! "# master_host: 0.0.0.0", "master_host: 127.0.0.1"
         s.gsub! "# master_port: 80", "master_port: 8080"
       end
 
