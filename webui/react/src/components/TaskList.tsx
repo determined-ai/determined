@@ -33,16 +33,16 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { commandTypeToLabel } from 'constants/states';
-import useFeature from 'hooks/useFeature';
-import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
-import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import settingsConfig, {
   ALL_SORTKEY,
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
   Settings,
-} from 'pages/TaskList.settings';
+} from 'components/TaskList.settings';
+import { commandTypeToLabel } from 'constants/states';
+import useFeature from 'hooks/useFeature';
+import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
 import Icon from 'shared/components/Icon/Icon';
