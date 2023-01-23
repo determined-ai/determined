@@ -11,7 +11,6 @@ import (
 
 // TrialAuthZ describes authz methods for experiments.
 type TrialAuthZ interface {
-
 	// POST /trial-comparison/collections
 	CanCreateTrialCollection(
 		ctx context.Context, curUser *model.User, projectID int32,

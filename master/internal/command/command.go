@@ -478,12 +478,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case *apiv1.DeleteWorkspaceRequest:
 		if c.Metadata.WorkspaceID == model.AccessScopeID(msg.Id) {
-			ctx.Tell(c.allocation, sproto.AllocationSignalWithReason{
+			resp := ctx.Ask(c.allocation, sproto.AllocationSignalWithReason{
 				AllocationSignal:    sproto.KillAllocation,
 				InformationalReason: "user requested workspace delete",
-			})
+			}).Get()
+			ctx.Respond(resp)
 		}
-		ctx.Respond(nil)
 
 	case sproto.NotifyRMPriorityChange:
 		ctx.Respond(c.setPriority(ctx, msg.Priority, false))

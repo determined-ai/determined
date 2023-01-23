@@ -532,7 +532,7 @@ func (a *apiServer) DeleteWorkspace(
 				}
 				return nil, status.Errorf(
 					codes.Internal,
-					"failed to delete workspace: failed to kill associated NTSC.",
+					"failed to delete workspace: failed to kill associated NTSC(s).",
 				)
 			}
 		}
