@@ -298,6 +298,12 @@ const JupyterLabFullConfig: React.FC<FullConfigProps> = ({
     ]);
   }, [config]);
 
+  useEffect(() => {
+    if (currentWorkspace) {
+      form.setFieldValue('workspace', currentWorkspace.id);
+    }
+  }, [currentWorkspace]);
+
   return (
     <Form fields={field} form={form} onFieldsChange={handleConfigChange}>
       <div className={css.note}>
@@ -424,6 +430,12 @@ const JupyterLabForm: React.FC<{
     }
   }, [resourcePools, form]);
 
+  useEffect(() => {
+    if (currentWorkspace) {
+      form.setFieldValue('workspace', currentWorkspace.id);
+    }
+  }, [currentWorkspace]);
+
   return (
     <Form className={css.form} form={form} initialValues={defaults}>
       <Form.Item
@@ -437,7 +449,7 @@ const JupyterLabForm: React.FC<{
           disabled={!!currentWorkspace}
           placeholder="Workspace (required)">
           {workspaces.map((workspace: Workspace) => (
-            <Option key={workspace.id} selected value={workspace.id}>
+            <Option key={workspace.id} value={workspace.id}>
               {workspace.name}
             </Option>
           ))}
