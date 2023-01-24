@@ -431,22 +431,22 @@ def test_reset_workspace_checkpoint_storage_conf() -> None:
 
 
 @contextlib.contextmanager
-def setup_workspace(session: api.Session) -> Generator[bindings.v1Workspace, None, None]:
-    workspace_resp: Optional[bindings.v1PostWorkspaceResponse] = None
+def setup_workspaces(
+    session: Optional[api.Session] = None, count: int = 1
+) -> Generator[List[bindings.v1Workspace], None, None]:
+    session = session or api_utils.determined_test_session(admin=True)
+    workspaces: List[bindings.v1Workspace] = []
     try:
-        # create a workspace
-        workspace_resp = bindings.post_PostWorkspace(
-            session,
-            body=bindings.v1PostWorkspaceRequest(
-                name=f"workspace_{uuid.uuid4().hex[:8]}",
-            ),
-        )
-        yield workspace_resp.workspace
+        for _ in range(count):
+            body = bindings.v1PostWorkspaceRequest(name=f"workspace_{uuid.uuid4().hex[:8]}")
+            workspaces.append(bindings.post_PostWorkspace(session, body=body).workspace)
+
+        yield workspaces
+
     finally:
-        # TODO check if it needs deleting.
-        if workspace_resp:
-            # delete the workspace
-            bindings.delete_DeleteWorkspace(session, id=workspace_resp.workspace.id)
+        for w in workspaces:
+            # TODO check if it needs deleting.
+            bindings.delete_DeleteWorkspace(session, id=w.id)
 
 
 # tag: no_cli
@@ -454,7 +454,7 @@ def setup_workspace(session: api.Session) -> Generator[bindings.v1Workspace, Non
 def test_launch_in_archived() -> None:
     admin_session = api_utils.determined_test_session(admin=True)
 
-    with setup_workspace(admin_session) as workspace:
+    with setup_workspaces(admin_session) as [workspace]:
         # archive the workspace
         bindings.post_ArchiveWorkspace(
             admin_session,
@@ -475,7 +475,7 @@ def test_launch_in_archived() -> None:
 def test_workspaceid_set() -> None:
     admin_session = api_utils.determined_test_session(admin=True)
 
-    with setup_workspace(admin_session) as workspace:
+    with setup_workspaces(admin_session) as [workspace]:
         # create a command inside the workspace
         cmd = bindings.post_LaunchCommand(
             admin_session,
