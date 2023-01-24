@@ -35,7 +35,7 @@ repos:
       - id: all-check
         name: Check.py Native Det
         description: run all local checks and format based on the directories changed.
-        stages: # how do I just limit it to push?
+        stages:
           - push
         entry: ./pre-commit/check.py
         language: python
@@ -50,6 +50,8 @@ repos:
           .github/
           | .pre-commit-config.yaml
           )$
+        stages:
+          - commit
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.19.2
@@ -66,6 +68,8 @@ repos:
         # https://github.com/psf/black/issues/2964#issuecomment-1080974737
         additional_dependencies: ['click==8.0.4']
         exclude: ^(harness/determined/common/api/bindings.py)
+        stages:
+          - commit
 
   # - repo: https://github.com/jumanjihouse/pre-commit-hooks
   #   rev: 3.0.0
