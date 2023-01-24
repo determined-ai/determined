@@ -18,7 +18,6 @@ import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
-import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Tooltip from 'components/kit/Tooltip';
