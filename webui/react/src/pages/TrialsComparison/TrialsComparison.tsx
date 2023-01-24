@@ -7,7 +7,7 @@ import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { SyncProvider } from 'components/UPlot/SyncableBounds';
+import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
