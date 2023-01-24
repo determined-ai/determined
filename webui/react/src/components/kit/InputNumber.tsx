@@ -1,7 +1,7 @@
 import { InputNumber as AntdInputNumber } from 'antd';
 import React from 'react';
 
-interface NumberInputProps {
+interface InputNumberProps {
   defaultValue?: number;
   disabled?: boolean;
   max?: number;
@@ -12,7 +12,7 @@ interface NumberInputProps {
   value?: number;
 }
 
-const NumberInput: React.FC<NumberInputProps> = (props: NumberInputProps) => {
+const InputNumber: React.FC<InputNumberProps> = (props: InputNumberProps) => {
   return <AntdInputNumber {...props} />;
 };
-export default NumberInput;
+export default InputNumber;

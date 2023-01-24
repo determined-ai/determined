@@ -1,7 +1,8 @@
 import { PoweroffOutlined } from '@ant-design/icons';
 import {
-  Card, //TODO: Move to components/kit? Add section to DesignKit page?
-  Space, //TODO: Move to components/kit? Add section to DesignKit page?
+  //TODO: Move these imports to components/kit? Add sections to DesignKit page?
+  Card,
+  Space,
 } from 'antd';
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,20 +11,21 @@ import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Form from 'components/kit/Form';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
+import InputSearch from 'components/kit/InputSearch';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
-import NumberInput from 'components/kit/NumberInput';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
-import SearchInput from 'components/kit/SearchInput';
 import Tooltip from 'components/kit/Tooltip';
 import Logo from 'components/Logo'; //TODO: Move to components/kit? Add section to DesignKit page?
 import LogViewer from 'components/LogViewer/LogViewer'; //TODO: Move to components/kit?
 import OverviewStats from 'components/OverviewStats'; //TODO: Rename?
 import Page from 'components/Page'; //TODO: Move to components/kit? Add section to DesignKit page?
 import ResourcePoolCard from 'components/ResourcePoolCard'; //TODO: Rename?
-import SelectFilter from 'components/SelectFilter'; //TODO: Move to components/kit?
+import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable'; //TODO: Move to components/kit?
 import ThemeToggle from 'components/ThemeToggle'; //TODO: Move to components/kit? Add section to DesignKit page?
 import UserAvatar from 'components/UserAvatar'; //TODO: Rename?
@@ -39,7 +41,7 @@ import { BrandingType, ResourcePool } from 'types';
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
 
-const Components = {
+const ComponentTitles = {
   ActionBar: 'ActionBar',
   Breadcrumbs: 'Breadcrumbs',
   Buttons: 'Buttons',
@@ -48,22 +50,23 @@ const Components = {
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
   Facepile: 'Facepile',
+  Form: 'Form',
+  Input: 'Input',
+  InputNumber: 'InputNumber',
+  InputSearch: 'InputSearch',
   Lists: 'Lists (tables)',
   LogViewer: 'LogViewer',
   Pagination: 'Pagination',
   Pivot: 'Pivot',
-  Searchboxes: 'Searchboxes',
-  Spinbuttons: 'Spinbuttons',
-  Textfields: 'Input - Textfields',
   Tooltips: 'Tooltips',
 } as const;
 
-type ComponentNames = ValueOf<typeof Components>;
-type ComponentIds = keyof typeof Components;
+type ComponentNames = ValueOf<typeof ComponentTitles>;
+type ComponentIds = keyof typeof ComponentTitles;
 
-const componentOrder = Object.entries(Components)
+const componentOrder = Object.entries(ComponentTitles)
   .sort((pair1, pair2) => pair1[1].localeCompare(pair2[1]))
-  .map((pair) => pair[0] as keyof typeof Components);
+  .map((pair) => pair[0] as keyof typeof ComponentTitles);
 
 interface Props {
   children?: React.ReactNode;
@@ -205,36 +208,29 @@ const DropdownsSection: React.FC = () => {
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Basic dropdown with inline options</strong>
-        <Space>
-          <SelectFilter
-            defaultValue={1}
-            options={[
-              { label: 'Option 1', value: 1 },
-              { label: 'Option 2', value: 2 },
-              { label: 'Option 3', value: 3 },
-            ]}
-          />
-          <SelectFilter
-            defaultValue="disabled"
-            disabled
-            options={[{ label: 'Disabled', value: 'disabled' }]}
-          />
-        </Space>
+        <strong>Default dropdown</strong>
+        <SelectFilter
+          defaultValue={1}
+          options={[
+            { label: 'Option 1', value: 1 },
+            { label: 'Option 2', value: 2 },
+            { label: 'Option 3', value: 3 },
+          ]}
+        />
+        <strong>Disabled dropdown</strong>
+        <SelectFilter
+          defaultValue="disabled"
+          disabled
+          options={[{ label: 'Disabled', value: 'disabled' }]}
+        />
         <hr />
-        <strong>Dropdown menu items</strong>
-        <strong>Menu items with checkmark</strong>
-        <p>Not implemented</p>
-        <hr />
-        <strong>Categorical menu items</strong>
-        <hr />
-        <strong>Categories with checkmarks</strong>
-        <p>Not implemented</p>
-        <hr />
-        <strong>Categories with checkmarks and icons</strong>
-        <p>Not implemented</p>
-        <hr />
-        <strong>Selecting all categories</strong>
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
+            Form
+          </Link>{' '}
+          for form-specific variations
+        </span>
       </Card>
     </ComponentSection>
   );
@@ -374,12 +370,12 @@ const CheckboxesSection: React.FC = () => {
   );
 };
 
-const SearchboxesSection: React.FC = () => {
+const InputSearchSection: React.FC = () => {
   return (
-    <ComponentSection id="Searchboxes" title="Searchboxes">
+    <ComponentSection id="InputSearch" title="InputSearch">
       <Card>
         <p>
-          A search box (<code>{'<SearchInput>'}</code>) provides an input field for searching
+          A search box (<code>{'<InputSearch>'}</code>) provides an input field for searching
           content within a site or app to find specific items.
         </p>
       </Card>
@@ -414,10 +410,10 @@ const SearchboxesSection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <strong>Default Searchbox</strong>
-        <SearchInput placeholder="input search text" />
+        <InputSearch placeholder="input search text" />
         <strong>Variations</strong>
-        <SearchInput allowClear enterButton value="Active search box" />
-        <SearchInput disabled placeholder="disabled search box" />
+        <InputSearch allowClear enterButton value="Active search box" />
+        <InputSearch disabled placeholder="disabled search box" />
         <hr />
         <strong>In-table Searchbox</strong>
         <p>Not implemented</p>
@@ -429,12 +425,12 @@ const SearchboxesSection: React.FC = () => {
   );
 };
 
-const SpinbuttonsSection: React.FC = () => {
+const InputNumberSection: React.FC = () => {
   return (
-    <ComponentSection id="Spinbuttons" title="Spinbuttons">
+    <ComponentSection id="InputNumber" title="InputNumber">
       <Card>
         <p>
-          A spin button (<code>{'<NumberInput>'}</code>) allows someone to incrementally adjust a
+          A spin button (<code>{'<InputNumber>'}</code>) allows someone to incrementally adjust a
           value in small steps. It&apos;s mainly used for numeric values, but other values are
           supported too.
         </p>
@@ -454,23 +450,29 @@ const SpinbuttonsSection: React.FC = () => {
           <li>Use a spin button when values are tied to a unit of measure.</li>
           <li>Don&apos;t use a spin button for binary settings.</li>
           <li>Don&apos;t use a spin button for a range of three values or less.</li>
-          <li>Include a label indicating what value the spin button changes.</li>
         </ul>
       </Card>
       <Card title="Usage">
-        <strong>Default spin button</strong>
-        <NumberInput defaultValue={3} />
+        <strong>Default InputNumber</strong>
+        <InputNumber />
+        <strong>Disabled InputNumber</strong>
+        <InputNumber disabled />
         <hr />
-        <strong>Variations and states of spin buttons</strong>
-        <NumberInput disabled />
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
+            Form
+          </Link>{' '}
+          for form-specific variations
+        </span>
       </Card>
     </ComponentSection>
   );
 };
 
-const TextfieldsSection: React.FC = () => {
+const InputSection: React.FC = () => {
   return (
-    <ComponentSection id="Textfields" title="Input - Textfields">
+    <ComponentSection id="Input" title="Input">
       <Card>
         <p>
           Text fields (<code>{'<Input>'}</code>) give people a way to enter and edit text.
@@ -490,30 +492,39 @@ const TextfieldsSection: React.FC = () => {
           </li>
           <li>Format the text field for the expected entry.</li>
         </ul>
-        <strong>Content</strong>
-        <ul>
-          <li>
-            Include a short label above the text field to communicate what information should be
-            entered. Don&apos;t use placeholder text instead of a label. Placeholder text poses a
-            variety of accessibility issues (including possible problems with color/contrast, and
-            people thinking the form input is already filled out).
-          </li>
-          <li>
-            When part of a form, make it clear which fields are required vs. optional. If the input
-            is required, add an asterisk &quot;*&quot; to the label. For screen readers, make sure
-            the aria-required property is set to true.
-          </li>
-          <li>Use sentence-style capitalization—only capitalize the first word.</li>
-          <li>
-            ALL input fields need to have validation and limitations in-place (length of input
-            especially)
-          </li>
-          <li>Field validation errors need to be provided for every mandatory field. </li>
-        </ul>
       </Card>
       <Card title="Usage">
-        <strong>Default input - text field</strong>
+        <strong>
+          Input <code>{'<Input>'}</code>
+        </strong>
+        <strong>Default Input</strong>
         <Input />
+        <strong>Disabled Input</strong>
+        <Input disabled />
+        <hr />
+        <strong>
+          TextArea <code>{'<Input.TextArea>'}</code>
+        </strong>
+        <strong>Default TextArea</strong>
+        <Input.TextArea />
+        <strong>Disabled TextArea</strong>
+        <Input.TextArea disabled />
+        <hr />
+        <strong>
+          Password <code>{'<Input.Password>'}</code>
+        </strong>
+        <strong>Default Password</strong>
+        <Input.Password />
+        <strong>Disabled Password</strong>
+        <Input.Password disabled />
+        <hr />
+        <span>
+          Also see{' '}
+          <Link reloadDocument to={`#${ComponentTitles.Form}`}>
+            Form
+          </Link>{' '}
+          for form-specific variations
+        </span>
       </Card>
     </ComponentSection>
   );
@@ -1000,6 +1011,131 @@ const LogViewerSection: React.FC = () => {
   );
 };
 
+const FormSection: React.FC = () => {
+  return (
+    <ComponentSection id="Form" title="Form">
+      <Card>
+        <p>
+          <code>{'<Form>'}</code> and <code>{'<Form.Item>'}</code> components are used for
+          submitting user input. When these components wrap a user input field (such as{' '}
+          <code>{'<Input>'}</code> or <code>{'<SelectFilter>'}</code>), they can show a standard
+          label, indicate that the field is required, apply input validation, or display an input
+          validation error.
+        </p>
+      </Card>
+      <Card title="Usage">
+        <Form>
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
+              Input
+            </Link>{' '}
+            variations
+          </strong>
+          <br />
+          <Form.Item label="Required input" name="required" required>
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Invalid input"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <Input />
+          </Form.Item>
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
+              TextArea
+            </Link>{' '}
+            variations
+          </strong>
+          <br />
+          <Form.Item label="Required TextArea" name="required" required>
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item
+            label="Invalid TextArea"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <Input.TextArea />
+          </Form.Item>
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Input}`}>
+              Password
+            </Link>{' '}
+            variations
+          </strong>
+          <br />
+          <Form.Item label="Required Password" name="required" required>
+            <Input.Password />
+          </Form.Item>
+          <Form.Item
+            label="Invalid Password"
+            name="invalid"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <Input.Password />
+          </Form.Item>
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.InputNumber}`}>
+              InputNumber
+            </Link>{' '}
+            variations
+          </strong>
+          <Form.Item label="Required InputNumber" name="number" required>
+            <InputNumber />
+          </Form.Item>
+          <Form.Item
+            label="Invalid InputNumber"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <InputNumber />
+          </Form.Item>
+          <br />
+          <hr />
+          <br />
+          <strong>
+            Form-specific{' '}
+            <Link reloadDocument to={`#${ComponentTitles.Dropdowns}`}>
+              Dropdown
+            </Link>{' '}
+            variations
+          </strong>
+          <Form.Item label="Required dropdown" name="required" required>
+            <SelectFilter
+              defaultValue={1}
+              options={[
+                { label: 'Option 1', value: 1 },
+                { label: 'Option 2', value: 2 },
+                { label: 'Option 3', value: 3 },
+              ]}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Invalid dropdown"
+            validateMessage="Input validation error"
+            validateStatus="error">
+            <SelectFilter />
+          </Form.Item>
+        </Form>
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const TooltipsSection: React.FC = () => {
   const text = 'Tooltip text';
   const buttonWidth = 70;
@@ -1106,6 +1242,26 @@ const TooltipsSection: React.FC = () => {
   );
 };
 
+const Components = {
+  ActionBar: <ActionBarSection />,
+  Breadcrumbs: <BreadcrumbsSection />,
+  Buttons: <ButtonsSection />,
+  Charts: <ChartsSection />,
+  Checkboxes: <CheckboxesSection />,
+  DataCards: <DataCardsSection />,
+  Dropdowns: <DropdownsSection />,
+  Facepile: <FacepileSection />,
+  Form: <FormSection />,
+  Input: <InputSection />,
+  InputNumber: <InputNumberSection />,
+  InputSearch: <InputSearchSection />,
+  Lists: <ListsSection />,
+  LogViewer: <LogViewerSection />,
+  Pagination: <PaginationSection />,
+  Pivot: <PivotSection />,
+  Tooltips: <TooltipsSection />,
+};
+
 const DesignKit: React.FC = () => {
   const { actions } = useUI();
 
@@ -1125,30 +1281,13 @@ const DesignKit: React.FC = () => {
             {componentOrder.map((componentId) => (
               <li key={componentId}>
                 <Link reloadDocument to={`#${componentId}`}>
-                  {Components[componentId]}
+                  {ComponentTitles[componentId]}
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-        <main>
-          <ButtonsSection />
-          <DropdownsSection />
-          <CheckboxesSection />
-          <SearchboxesSection />
-          <SpinbuttonsSection />
-          <TextfieldsSection />
-          <ListsSection />
-          <BreadcrumbsSection />
-          <FacepileSection />
-          <ActionBarSection />
-          <PivotSection />
-          <PaginationSection />
-          <DataCardsSection />
-          <LogViewerSection />
-          <TooltipsSection />
-          <ChartsSection />
-        </main>
+        <main>{componentOrder.map((componentId) => Components[componentId])}</main>
       </div>
     </Page>
   );
