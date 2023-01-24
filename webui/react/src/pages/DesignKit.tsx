@@ -327,7 +327,6 @@ const ChartsSection: React.FC = () => {
               title: 'Sample2',
             },
           ]}
-          xAxisOptions={[XAxisDomain.Batches, XAxisDomain.Time]}
         />
       </Card>
     </ComponentSection>

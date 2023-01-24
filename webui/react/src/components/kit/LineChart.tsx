@@ -201,14 +201,22 @@ export const LineChart: React.FC<Props> = ({
  */
 interface GroupProps {
   chartsProps: Props[];
-  xAxisOptions?: XAxisDomain[];
 }
 
-export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: GroupProps) => {
+export const ChartGrid: React.FC<GroupProps> = ({ chartsProps }: GroupProps) => {
   // Scale control
   const [scale, setScale] = useState<Scale>(Scale.Linear);
 
   // X-Axis control
+  const xAxisOptions = useMemo(() => {
+    const xOpts = new Set<string>();
+    chartsProps.forEach((chart) => {
+      chart.series.forEach((serie) => {
+        Object.keys(serie.data).forEach((opt) => xOpts.add(opt));
+      });
+    });
+    return Array.from(xOpts).sort();
+  }, [chartsProps]);
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
 
   return (
