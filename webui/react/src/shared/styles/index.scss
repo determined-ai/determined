@@ -59,16 +59,16 @@ code.block {
 .u-cursor-pt::before {
   background-color: inherit;
   content: '';
-  height: 8px;
+  height: 7px;
   position: absolute;
-  transform: scaleX(1.75) translateX(-0.5px) translateY(-1px) rotate(45deg);
-  width: 8px;
+  transform: scaleX(1.25) translateX(-0.5px) translateY(-1px) rotate(45deg);
+  width: 7px;
 }
 .u-cursor-pt::after {
   background-color: #f6f6f6;
   content: '';
-  height: 4px;
+  height: 3px;
   position: absolute;
-  transform: scaleX(1.75) translateX(0.5px) translateY(1px) rotate(45deg);
-  width: 4px;
+  transform: scaleX(1.25) translateX(1px) translateY(1px) rotate(45deg);
+  width: 3px;
 }
