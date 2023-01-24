@@ -20,7 +20,7 @@ import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
 import {
-  Determinedexperimentv1State,
+  Experimentv1State,
   V1GetExperimentTrialsRequestSortBy,
 } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
@@ -288,7 +288,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentTrialsRequestSortBy, settings.sortKey),
-          states: validateDetApiEnumList(Determinedexperimentv1State, states),
+          states: validateDetApiEnumList(Experimentv1State, states),
         },
         { signal: canceler.signal },
       );
