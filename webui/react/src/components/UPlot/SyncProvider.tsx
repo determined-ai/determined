@@ -1,6 +1,6 @@
 import { observable } from 'micro-observables';
 import React, { createContext, useContext, useMemo } from 'react';
-import uPlot, { AlignedData, Plugin } from 'uplot';
+import uPlot, { AlignedData } from 'uplot';
 
 import { generateUUID } from 'shared/utils/string';
 
