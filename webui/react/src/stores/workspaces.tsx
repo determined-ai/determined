@@ -11,15 +11,6 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useValueMemoizedObservable } from 'utils/observable';
 
 type WorkspacesContext = { workspaces: WritableObservable<Loadable<Workspace[]>> };
-export type FetchWSSettings = {
-  archived: boolean | undefined;
-  limit: number;
-  name: string | undefined;
-  offset: number;
-  orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
-  sortBy: any;
-  users: string[] | undefined;
-};
 
 const WorkspacesContext = createContext<WorkspacesContext | null>(null);
 
@@ -35,7 +26,7 @@ export const WorkspacesProvider: React.FC<PropsWithChildren> = ({ children }) =>
 
 export const useFetchWorkspaces = (
   canceler: AbortController,
-): ((settings?: FetchWSSettings) => Promise<void>) => {
+): ((settings?: GetWorkspacesParams) => Promise<void>) => {
   const context = useContext(WorkspacesContext);
 
   if (context === null) {
@@ -45,7 +36,7 @@ export const useFetchWorkspaces = (
   const { workspaces } = context;
 
   return useCallback(
-    async (settings = {} as FetchWSSettings): Promise<void> => {
+    async (settings = {} as GetWorkspacesParams): Promise<void> => {
       try {
         const response = await getWorkspaces(settings, { signal: canceler.signal });
 
@@ -60,7 +51,7 @@ export const useFetchWorkspaces = (
 
 export const useEnsureWorkspacesFetched = (
   canceler: AbortController,
-): ((settings?: FetchWSSettings) => Promise<void>) => {
+): ((settings?: GetWorkspacesParams) => Promise<void>) => {
   const context = useContext(WorkspacesContext);
 
   if (context === null) {
@@ -71,7 +62,7 @@ export const useEnsureWorkspacesFetched = (
   const memoWorkspaces = useValueMemoizedObservable(workspaces);
 
   return useCallback(
-    async (settings = {} as FetchWSSettings): Promise<void> => {
+    async (settings = {} as GetWorkspacesParams): Promise<void> => {
       if (memoWorkspaces !== NotLoaded) return;
 
       try {
