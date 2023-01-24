@@ -2,22 +2,24 @@
  Training API Guides
 #####################
 
-The Training API Guides describe how to use the Determined training APIs. Each API guide contains a
-link to its corresponding API reference.
+Determined leverages specific training APIs for each Deep Learning framework. The Training API
+guides describe how to use these training APIs. Each API guide contains a link to its corresponding
+API reference.
 
-Determined leverages specific APIs for each Deep Learning framework. In general, you convert your
-existing training code by subclassing a Trial class and implementing methods that advertise
-components of your model - e.g., model architecture, data loader, optimizer, learning rate
+With the Core API, you can plug in your existing training code. With the Trial APIs, you first
+convert your existing training code by subclassing a Trial class and implementing methods that
+define each component of training - e.g., model architecture, data loader, optimizer, learning rate
 scheduler, callbacks, etc. This is called the Trial definition. With the code structured in this
 way, Determined is able to run the training loop and provide advanced training and model management
 capabilities.
 
-Once your model code is ported to a Determined API, you can use an :doc:`experiment configuration
+Once you have completed any necessary code conversions (depending on which API you are using), you
+can use an :doc:`experiment configuration
 </reference/reference-training/experiment-config-reference>` to tell Determined how to train the
 model - e.g., multi-GPU, hyperparameter search, etc.
 
-If you have existing model code that you'd like to train with Determined, choose one of the
-following Training API Guides, depending on your ML Framework:
+If you have existing model code that you'd like to train with Determined, follow the Training API
+guide that fits your ML Framework:
 
 -  :doc:`/training/apis-howto/api-core-ug`
 -  :doc:`/training/apis-howto/api-pytorch-ug`
