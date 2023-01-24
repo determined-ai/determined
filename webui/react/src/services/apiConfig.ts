@@ -199,6 +199,7 @@ export const resetUserSetting: DetApi<
 /**
  * Returns roles, and workspace/global assignment of those roles,
  * for a user specified in params.
+ *
  * @param {GetUserParams} params - An object containing userId to look up their roles.
  */
 export const getUserPermissions: DetApi<

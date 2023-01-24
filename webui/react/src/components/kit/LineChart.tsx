@@ -13,6 +13,15 @@ import { Metric, MetricType, Scale } from 'types';
 
 import css from './LineChart.module.scss';
 
+/**
+ * @typedef Serie
+ * Represents a single Series to display on the chart.
+ * @param {string} [color] - A CSS-compatible color to directly set the line and tooltip color for the Serie. Defaults to glasbeyColor.
+ * @param {[number, number][]} data - An array of ordered [x, y] points.
+ * @param {MetricType} [metricType] - Indicator of a Serie representing a Training or Validation metric.
+ * @param {XAxisDomain} [xAxisRole] - Indicates the Serie is for use only as an X-axis (ex: batches, time).
+ */
+
 export interface Serie {
   color?: string;
   data: [number, number][];
@@ -20,6 +29,19 @@ export interface Serie {
   xAxisRole?: XAxisDomain;
 }
 
+/**
+ * @typedef Props {object}
+ * Config for a single LineChart component.
+ * @param {number} [focusedSeries] - Highlight one Serie's line and fade the others, given an index in the given series.
+ * @param {number} [height=350] - Height in pixels.
+ * @param {Metric} metric - Name and type for the displayed Metric.
+ * @param {Scale} [scale=Scale.Linear] - Linear or Log Scale for the y-axis.
+ * @param {Serie[]} series - Array of valid series to plot onto the chart.
+ * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each metric's color, name, and type.
+ * @param {XAxisDomain} [xAxis=XAxisDomain.Batches] - Set the x-axis of the chart to one of the included series with an xAxisRole matching this domain (example: batches, time).
+ * @param {string} [xLabel] - Directly set label below the x-axis.
+ * @param {string} [yLabel] - Directly set label left of the y-axis.
+ */
 interface Props {
   focusedSeries?: number;
   height?: number;
@@ -171,9 +193,15 @@ export const LineChart: React.FC<Props> = ({
   );
 };
 
+/**
+ * @typedef GroupProps {object}
+ * Config for a grid of LineCharts.
+ * @param {Props[]} chartsProps - Provide series to plot on each chart, and any chart-specific config.
+ * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time.
+ */
 interface GroupProps {
   chartsProps: Props[];
-  xAxisOptions?: string[];
+  xAxisOptions?: XAxisDomain[];
 }
 
 export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: GroupProps) => {
@@ -182,24 +210,6 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
 
   // X-Axis control
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
-
-  // calculate xMin / xMax for shared group
-  let xMin = Infinity,
-    xMax = -Infinity;
-  chartsProps.forEach((chartProp) => {
-    chartProp.series[0].data.forEach((pt) => {
-      const xVal = pt[0];
-      if (!isFinite(xMin || 0)) {
-        if (xVal !== null && !isNaN(xVal * 1)) {
-          xMin = xVal;
-          xMax = xVal;
-        }
-      } else if (xMin !== undefined && xMax !== undefined && xVal !== null) {
-        xMin = Math.min(xMin, xVal);
-        xMax = Math.max(xMax, xVal);
-      }
-    });
-  });
 
   return (
     <div className={css.chartgridContainer}>

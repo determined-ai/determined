@@ -27,7 +27,8 @@ jest.mock('services/api', () => ({
 jest.mock('antd', () => {
   const antd = jest.requireActual('antd');
 
-  /** We need to mock Tooltip in order to override getPopupContainer to null. getPopupContainer
+  /**
+   * We need to mock Tooltip in order to override getPopupContainer to null. getPopupContainer
    * sets the DOM container and if this prop is set, the popup div may not be available in the body
    */
   const Tooltip = (props: TooltipProps) => {
