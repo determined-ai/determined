@@ -128,6 +128,12 @@ sitemap_url_scheme = "latest/{link}"
 
 redirects = {
     "api-pytorch": "training/apis-howto/api-pytorch-ug.html",
+    "apis-howto/api-core/checkpoints": "../../api-core-ug.html",
+    "apis-howto/api-core/hpsearch": "../../api-core-ug.html",
+    "apis-howto/api-core/overview": "../../api-core-ug.html",
+    "apis-howto/api-core/metrics": "../../api-core-ug.html",
+    "apis-howto/api-core/getting-started": "../../api-core-ug.html",
+    "apis-howto/api-core/distributed": "../../api-core-ug.html",
     "concepts/elastic-infrastructure": "../introduction.html",
     "concepts/index": "../architecture/index.html",
     "concepts/resource-pool": "../introduction.html",
