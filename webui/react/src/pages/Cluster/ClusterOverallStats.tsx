@@ -1,3 +1,4 @@
+import { useObservable } from 'micro-observables';
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
@@ -6,10 +7,11 @@ import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
+import { GetExperimentsParams } from 'services/types';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { useAgents, useClusterOverview } from 'stores/agents';
-import { useExperiments, useFetchExperiments } from 'stores/experiments';
+import { ExperimentsService } from 'stores/experiments';
 import { useResourcePools } from 'stores/resourcePools';
 import { useActiveTasks, useFetchActiveTasks } from 'stores/tasks';
 import { ShirtSize } from 'themes';
@@ -18,6 +20,12 @@ import { Loadable } from 'utils/loadable';
 
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
+const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
+  limit: -2,
+  states: activeRunStates,
+};
+const experimentsService = new ExperimentsService(ACTIVE_EXPERIMENTS_PARAMS);
+
 export const ClusterOverallStats: React.FC = () => {
   const loadableResourcePools = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
@@ -25,10 +33,7 @@ export const ClusterOverallStats: React.FC = () => {
   const agents = useAgents();
 
   const [canceler] = useState(new AbortController());
-  const fetchActiveExperiments = useFetchExperiments(
-    { limit: -2, states: activeRunStates },
-    canceler,
-  );
+  const fetchActiveExperiments = experimentsService.fetchExperiments(canceler);
   const fetchActiveTasks = useFetchActiveTasks(canceler);
   const fetchActiveRunning = useCallback(async () => {
     await fetchActiveExperiments();
@@ -36,7 +41,7 @@ export const ClusterOverallStats: React.FC = () => {
   }, [fetchActiveExperiments, fetchActiveTasks]);
 
   usePolling(fetchActiveRunning);
-  const activeExperiments = useExperiments({ limit: -2, states: activeRunStates });
+  const activeExperiments = useObservable(experimentsService.experiments);
   const activeTasks = useActiveTasks();
   const rbacEnabled = useFeature().isOn('rbac');
 

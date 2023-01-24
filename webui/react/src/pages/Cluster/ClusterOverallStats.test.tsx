@@ -3,7 +3,6 @@ import React from 'react';
 
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider } from 'stores/auth';
-import { ExperimentsProvider } from 'stores/experiments';
 import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { TasksProvider } from 'stores/tasks';
 import { UserRolesProvider } from 'stores/userRoles';
@@ -22,13 +21,11 @@ const setup = () => {
       <AuthProvider>
         <UsersProvider>
           <UserRolesProvider>
-            <ExperimentsProvider>
-              <TasksProvider>
-                <ResourcePoolsProvider>
-                  <ClusterOverallStats />
-                </ResourcePoolsProvider>
-              </TasksProvider>
-            </ExperimentsProvider>
+            <TasksProvider>
+              <ResourcePoolsProvider>
+                <ClusterOverallStats />
+              </ResourcePoolsProvider>
+            </TasksProvider>
           </UserRolesProvider>
         </UsersProvider>
       </AuthProvider>

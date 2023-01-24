@@ -12,7 +12,6 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AgentsProvider } from './agents';
 import { AuthProvider } from './auth';
 import { DeterminedInfoProvider } from './determinedInfo';
-import { ExperimentsProvider } from './experiments';
 import { KnownRolesProvider } from './knowRoles';
 import { ProjectsProvider } from './projects';
 import { ResourcePoolsProvider } from './resourcePools';
@@ -26,21 +25,19 @@ export const StoreContext = ({ children }: { children: ReactNode }): ReactElemen
     <AgentsProvider>
       <UsersProvider>
         <AuthProvider>
-          <ExperimentsProvider>
-            <TasksProvider>
-              <WorkspacesProvider>
-                <ResourcePoolsProvider>
-                  <DeterminedInfoProvider>
-                    <UserRolesProvider>
-                      <KnownRolesProvider>
-                        <ProjectsProvider>{children}</ProjectsProvider>
-                      </KnownRolesProvider>
-                    </UserRolesProvider>
-                  </DeterminedInfoProvider>
-                </ResourcePoolsProvider>
-              </WorkspacesProvider>
-            </TasksProvider>
-          </ExperimentsProvider>
+          <TasksProvider>
+            <WorkspacesProvider>
+              <ResourcePoolsProvider>
+                <DeterminedInfoProvider>
+                  <UserRolesProvider>
+                    <KnownRolesProvider>
+                      <ProjectsProvider>{children}</ProjectsProvider>
+                    </KnownRolesProvider>
+                  </UserRolesProvider>
+                </DeterminedInfoProvider>
+              </ResourcePoolsProvider>
+            </WorkspacesProvider>
+          </TasksProvider>
         </AuthProvider>
       </UsersProvider>
     </AgentsProvider>
