@@ -7,7 +7,7 @@ usage: swagger.py GENERATED_JSON PATCH_JSON
 
 import json
 import sys
-from typing import Dict
+from typing import Any, Dict, List
 
 SERVICE_NAME = "Determined"
 
@@ -42,7 +42,7 @@ def clean(path: str, patch: str) -> None:
     with open(path, "r") as f:
         spec = json.load(f)
 
-    keys_to_rename = []
+    keys_to_rename: List[str] = []
     for key, value in spec["definitions"].items():
         # Remove definitions that should be hidden from the user.
         if key == "protobufAny":
@@ -64,7 +64,7 @@ def clean(path: str, patch: str) -> None:
         spec["definitions"][key[len(SERVICE_NAME) :]] = spec["definitions"].pop(key)
 
     # recursively find any objects with ref to keys_to_rename and rename them
-    def rename_refs(obj):
+    def rename_refs(obj: Any):
         if isinstance(obj, dict):
             for k, v in obj.items():
                 if k == "$ref":
