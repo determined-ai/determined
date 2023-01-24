@@ -191,6 +191,7 @@ def test_master_restart_error_missing_docker_container(
 
     managed_cluster_restarts.restart_master()
     managed_cluster_restarts.restart_agent()
+    managed_cluster_restarts.wait_for_agent_ok(20)
 
 
 @pytest.mark.managed_devcluster
