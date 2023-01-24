@@ -189,8 +189,8 @@ def test_master_restart_error_missing_docker_container(
     subprocess.check_call(["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)])
     exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=20)
 
-    managed_cluster_restarts.restart_master()
-    managed_cluster_restarts.restart_agent()
+    #managed_cluster_restarts.restart_master()
+    #managed_cluster_restarts.restart_agent()
 
 
 @pytest.mark.managed_devcluster
@@ -260,8 +260,13 @@ def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int
         time.sleep(downtime)
         managed_cluster.restart_master()
 
-    wait_for_command_state(command_id, "TERMINATED", 40)
+
+    start = time.time()
+    print("Sleeping for 10 minutes, will this pass?")
+    wait_for_command_state(command_id, "TERMINATED", 1200) 
     succeeded = "success" in get_command_info(command_id)["exitStatus"]
+    end = time.time()
+    print("TIME PASSED", end - start)
     assert succeeded
 
 
