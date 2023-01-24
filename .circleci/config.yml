@@ -359,6 +359,7 @@ commands:
             if [ -n <<parameters.extra-requirements-file>> ]; then
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
             fi
+            echo <<parameters.python-version>> >> /tmp/cachefile
 
       - restore_cache:
           keys:
