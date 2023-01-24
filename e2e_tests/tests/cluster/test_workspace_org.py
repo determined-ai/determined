@@ -431,22 +431,91 @@ def test_reset_workspace_checkpoint_storage_conf() -> None:
 
 
 @contextlib.contextmanager
-def setup_workspace(session: api.Session) -> Generator[bindings.v1Workspace, None, None]:
-    workspace_resp: Optional[bindings.v1PostWorkspaceResponse] = None
+def setup_workspaces(
+    session: Optional[api.Session] = None, count: int = 1
+) -> Generator[List[bindings.v1Workspace], None, None]:
+    session = session or api_utils.determined_test_session(admin=True)
+    workspaces: List[bindings.v1Workspace] = []
     try:
-        # create a workspace
-        workspace_resp = bindings.post_PostWorkspace(
-            session,
-            body=bindings.v1PostWorkspaceRequest(
-                name=f"workspace_{uuid.uuid4().hex[:8]}",
-            ),
-        )
-        yield workspace_resp.workspace
+        for _ in range(count):
+            body = bindings.v1PostWorkspaceRequest(name=f"workspace_{uuid.uuid4().hex[:8]}")
+            workspaces.append(bindings.post_PostWorkspace(session, body=body).workspace)
+
+        yield workspaces
+
     finally:
-        # TODO check if it needs deleting.
-        if workspace_resp:
-            # delete the workspace
-            bindings.delete_DeleteWorkspace(session, id=workspace_resp.workspace.id)
+        for w in workspaces:
+            # TODO check if it needs deleting.
+            bindings.delete_DeleteWorkspace(session, id=w.id)
+
+
+TERMINATING_STATES = [
+    bindings.determinedtaskv1State.STATE_TERMINATED,
+    bindings.determinedtaskv1State.STATE_TERMINATING,
+]
+
+
+# tag: no-cli
+@pytest.mark.e2e_cpu
+def test_workspace_delete_notebook() -> None:
+    admin_session = api_utils.determined_test_session(admin=True)
+
+    # create a workspace using bindings
+
+    workspace_resp = bindings.post_PostWorkspace(
+        admin_session,
+        body=bindings.v1PostWorkspaceRequest(
+            name=f"workspace_{uuid.uuid4().hex[:8]}",
+        ),
+    )
+
+    # create a notebook inside the workspace
+    created_resp = bindings.post_LaunchNotebook(
+        admin_session,
+        body=bindings.v1LaunchNotebookRequest(workspaceId=workspace_resp.workspace.id),
+    )
+
+    # check that the notebook exists
+    notebook_resp = bindings.get_GetNotebook(admin_session, notebookId=created_resp.notebook.id)
+    assert notebook_resp.notebook.state not in TERMINATING_STATES
+
+    # check that the notebook is returned in the list of notebooks
+    notebooks_resp = bindings.get_GetNotebooks(
+        admin_session, workspaceId=workspace_resp.workspace.id
+    )
+    nb = next((nb for nb in notebooks_resp.notebooks if nb.id == created_resp.notebook.id), None)
+    assert nb is not None
+
+    with setup_workspace(admin_session) as workspace2:
+        # create a notebook inside another workspace
+        outside_notebook = bindings.post_LaunchNotebook(
+            admin_session,
+            body=bindings.v1LaunchNotebookRequest(workspaceId=workspace2.id),
+        ).notebook
+
+        # delete the workspace
+        bindings.delete_DeleteWorkspace(admin_session, id=workspace_resp.workspace.id)
+
+        # check that the other notebook is not terminated
+        outside_notebook = bindings.get_GetNotebook(
+            admin_session, notebookId=outside_notebook.id
+        ).notebook
+        assert outside_notebook.state not in TERMINATING_STATES
+
+    # check that notebook is terminated or terminating.
+    notebook_resp = bindings.get_GetNotebook(admin_session, notebookId=created_resp.notebook.id)
+    assert notebook_resp.notebook.state in TERMINATING_STATES
+
+    # check that the notebook is not returned in the list of notebooks by default.
+    notebooks_resp = bindings.get_GetNotebooks(admin_session)
+    nb = next((nb for nb in notebooks_resp.notebooks if nb.id == created_resp.notebook.id), None)
+    assert nb is None
+
+    # the api returns a 404
+    with pytest.raises(errors.APIException):
+        notebooks_resp = bindings.get_GetNotebooks(
+            admin_session, workspaceId=workspace_resp.workspace.id
+        )
 
 
 # tag: no_cli
@@ -454,7 +523,7 @@ def setup_workspace(session: api.Session) -> Generator[bindings.v1Workspace, Non
 def test_launch_in_archived() -> None:
     admin_session = api_utils.determined_test_session(admin=True)
 
-    with setup_workspace(admin_session) as workspace:
+    with setup_workspaces(admin_session) as [workspace]:
         # archive the workspace
         bindings.post_ArchiveWorkspace(
             admin_session,
@@ -475,7 +544,7 @@ def test_launch_in_archived() -> None:
 def test_workspaceid_set() -> None:
     admin_session = api_utils.determined_test_session(admin=True)
 
-    with setup_workspace(admin_session) as workspace:
+    with setup_workspaces(admin_session) as [workspace]:
         # create a command inside the workspace
         cmd = bindings.post_LaunchCommand(
             admin_session,

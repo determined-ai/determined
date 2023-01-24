@@ -90,11 +90,9 @@ const GroupOrMemberActionDropdown: React.FC<GroupOrMemberActionDropdownProps> = 
   }, [openWorkspaceRemoveMemberModal]);
 
   return (
-    <div>
+    <div className={css.dropdown}>
       <Dropdown menu={menuItems} placement="bottomRight" trigger={['click']}>
-        <Button ghost type="text">
-          <Icon name="overflow-vertical" />
-        </Button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" />
       </Dropdown>
       {openWorkspaceRemoveMemberContextHolder}
     </div>
@@ -222,10 +220,8 @@ const WorkspaceMembers: React.FC<Props> = ({
         title: 'Role',
       },
       {
-        align: 'right',
         dataIndex: 'action',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
-        fixed: 'right',
         render: actionRenderer,
         title: '',
       },

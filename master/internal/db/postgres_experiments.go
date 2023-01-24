@@ -484,7 +484,8 @@ func timeToFloat(t time.Time) float64 {
 }
 
 func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch, metricSeriesTime []lttb.Point) (
-	[]lttb.Point, []lttb.Point, time.Time) {
+	[]lttb.Point, []lttb.Point, time.Time,
+) {
 	var maxEndTime time.Time
 	for rows.Next() {
 		var batches uint

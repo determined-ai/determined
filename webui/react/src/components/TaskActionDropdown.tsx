@@ -96,9 +96,7 @@ const TaskActionDropdown: React.FC<Props> = ({
   ) : (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown menu={menu} placement="bottomRight" trigger={['click']}>
-        <Button ghost type="text" onClick={stopPropagation}>
-          <Icon name="overflow-vertical" />
-        </Button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" onClick={stopPropagation} />
       </Dropdown>
     </div>
   );

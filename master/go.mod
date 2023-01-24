@@ -169,6 +169,7 @@ require (
 )
 
 require (
+	cloud.google.com/go/storage v1.10.0
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/uptrace/bun v1.1.8
 	github.com/uptrace/bun/dialect/pgdialect v1.1.8

@@ -224,8 +224,9 @@ def list_tasks(args: Namespace) -> None:
         if "workspaceId" in item:
             wId = item["workspaceId"]
             del item["workspaceId"]
-            assert wId in w_names, f"workspace id {wId} is not found"
-            item["workspaceName"] = w_names[wId]
+            item["workspaceName"] = (
+                w_names[wId] if wId in w_names else f"missing workspace id {wId}"
+            )
 
     if getattr(args, "json", None):
         print(json.dumps(res, indent=4))
