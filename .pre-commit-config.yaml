@@ -37,7 +37,6 @@ repos:
         description: run all local checks and format based on the directories changed.
         stages: # how do I just limit it to push?
           - push
-          - commit
         entry: ./pre-commit/check.py
         language: python
 
