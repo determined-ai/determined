@@ -4,7 +4,7 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { CreateExperimentParams } from 'services/types';
-import { ResourcePoolsProvider } from 'stores/resourcePools';
+import { ClusterProvider } from 'stores/cluster';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import type { ResourcePool } from 'types';
 
@@ -14,7 +14,7 @@ const MODAL_TITLE = 'Hyperparameter Search';
 
 const mockCreateExperiment = jest.fn();
 
-jest.mock('stores/resourcePools', () => {
+jest.mock('stores/cluster', () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const types = require('types');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -60,7 +60,7 @@ jest.mock('stores/resourcePools', () => {
 
   return {
     __esModule: true,
-    ...jest.requireActual('stores/resourcePools'),
+    ...jest.requireActual('stores/cluster'),
     useResourcePools: () => {
       return loadable.Loaded(value);
     },
@@ -89,9 +89,9 @@ const ModalTrigger: React.FC = () => {
 
 const Container: React.FC = () => {
   return (
-    <ResourcePoolsProvider>
+    <ClusterProvider>
       <ModalTrigger />
-    </ResourcePoolsProvider>
+    </ClusterProvider>
   );
 };
 

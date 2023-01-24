@@ -9,16 +9,14 @@ import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
 import useModalWorkspaceCreate from 'hooks/useModal/Workspace/useModalWorkspaceCreate';
 import usePermissions from 'hooks/usePermissions';
-import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { handlePath, paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
-import { useAgents, useClusterOverview } from 'stores/agents';
 import { useAuth } from 'stores/auth';
+import { useClusterStatus } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useResourcePools } from 'stores/resourcePools';
 import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
@@ -61,16 +59,12 @@ const NavigationTabbar: React.FC = () => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+
+  const clusterStatus = useClusterStatus();
+
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();
-  const overview = useClusterOverview();
-  const agents = useAgents();
-  const clusterStatus = Loadable.match(Loadable.all([agents, overview]), {
-    Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
-    NotLoaded: () => undefined, // TODO show spinner when this is loading
-  });
+
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
   const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =

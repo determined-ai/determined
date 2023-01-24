@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import Message, { MessageType } from 'shared/components/Message';
-import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
+import { initClusterOverview, useAgents, useClusterOverview } from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';

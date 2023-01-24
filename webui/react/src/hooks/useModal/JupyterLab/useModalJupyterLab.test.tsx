@@ -29,9 +29,9 @@ jest.mock('services/api', () => ({
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));
 
-jest.mock('stores/resourcePools', () => ({
+jest.mock('stores/cluster', () => ({
   __esModule: true,
-  ...jest.requireActual('stores/resourcePools'),
+  ...jest.requireActual('stores/cluster'),
   useResourcePools: (): Loadable<ResourcePool[]> => ({ _tag: 'Loaded', data: [] }),
 }));
 

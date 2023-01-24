@@ -12,10 +12,10 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import usePrevious from 'shared/hooks/usePrevious';
 import { RawJson } from 'shared/types';
-import { useResourcePools } from 'stores/resourcePools';
 import { useEnsureWorkspacesFetched } from 'stores/workspaces';
 import { useWorkspaces } from 'stores/workspaces';
 import { Template, Workspace } from 'types';
+import { useResourcePools } from 'stores/cluster';
 import handleError from 'utils/error';
 import { JupyterLabOptions, launchJupyterLab, previewJupyterLab } from 'utils/jupyter';
 import { Loadable } from 'utils/loadable';
@@ -379,8 +379,8 @@ const JupyterLabForm: React.FC<{
   workspaces: Workspace[];
 }> = ({ currentWorkspace, form, defaults, workspaces }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+
+  const resourcePools = Loadable.getOrElse([], useResourcePools());
 
   const selectedPoolName = Form.useWatch('pool', form);
 
