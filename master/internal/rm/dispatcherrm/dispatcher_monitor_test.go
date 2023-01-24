@@ -138,24 +138,6 @@ func Test_getJobID(t *testing.T) {
 // has received a "NotifyContainerRunning" message from all the containers that
 // are part of the job.
 func Test_allContainersRunning(t *testing.T) {
-	user := "joeschmoe"
-	dispatchID := "11ae54526b544bcd-8607d5744a7b1439"
-	payloadName := "myPayload"
-
-	job := launcherJob{
-		user:              user,
-		dispatcherID:      dispatchID,
-		payloadName:       payloadName,
-		timestamp:         time.Now(),
-		totalContainers:   0,
-		runningContainers: make(map[int]containerInfo),
-	}
-
-	clientConfiguration := launcher.NewConfiguration()
-	apiClient := launcher.NewAPIClient(clientConfiguration)
-	authToken := "dummyToken"
-	configFile := "dummyConfigFile"
-
 	// Assume Slurm set the SLURM_NPROCS environment variable to 3, meaning
 	// that there will be 3 containers running for the job. In the notification
 	// message the SLURM_NPROCS environment variable is stored in "numPeers",
@@ -163,35 +145,35 @@ func Test_allContainersRunning(t *testing.T) {
 	var numPeers int32 = 3
 
 	ctx := getMockActorCtx()
-
-	jobWatcher := newDispatchWatcher(apiClient, authToken, configFile)
+	jobWatcher := getJobWatcher()
+	job := getJob()
 
 	// Add the job to the monitored jobs.
-	jobWatcher.monitoredJobs[dispatchID] = job
+	jobWatcher.monitoredJobs[job.dispatcherID] = job
 
 	// Since there have not been any "NotifyContainerRunning" messages sent
 	// for this job, then we do not expect all containers to be running.
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), false)
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), false)
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// first container.
-	jobWatcher.notifyContainerRunning(ctx, dispatchID, 0, numPeers, "node001")
+	jobWatcher.notifyContainerRunning(ctx, job.dispatcherID, 0, numPeers, "node001")
 
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), false)
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), false)
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// second container.
-	jobWatcher.notifyContainerRunning(ctx, dispatchID, 1, numPeers, "node002")
+	jobWatcher.notifyContainerRunning(ctx, job.dispatcherID, 1, numPeers, "node002")
 
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), false)
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), false)
 
 	// The job watcher receives a "NotifyContainerRunning" message from the
 	// third container.
-	jobWatcher.notifyContainerRunning(ctx, dispatchID, 3, numPeers, "node003")
+	jobWatcher.notifyContainerRunning(ctx, job.dispatcherID, 3, numPeers, "node003")
 
 	// The job watcher has received "NotifyContainerRunning" messages from all
 	// 3 containers, so "allContainersRunning()" should now return true.
-	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[dispatchID]), true)
+	assert.Equal(t, jobWatcher.allContainersRunning(jobWatcher.monitoredJobs[job.dispatcherID]), true)
 }
 
 func getMockActorCtx() *actor.Context {
@@ -207,4 +189,71 @@ func getMockActorCtx() *actor.Context {
 	}))
 	sys.Ask(parent, "").Get()
 	return ctx
+}
+
+// getJobWatcher creates an instance of the dispatcher_monitor.
+func getJobWatcher() *launcherMonitor {
+	clientConfiguration := launcher.NewConfiguration()
+	apiClient := launcher.NewAPIClient(clientConfiguration)
+	authToken := "dummyToken"
+	configFile := "dummyConfigFile"
+
+	jobWatcher := newDispatchWatcher(apiClient, authToken, configFile)
+
+	return jobWatcher
+}
+
+// getJob creates a test job instance of type launcherJob.
+func getJob() launcherJob {
+	user := "joeschmoe"
+	dispatchID := "11ae54526b544bcd-8607d5744a7b1439"
+	payloadName := "myPayload"
+
+	job := launcherJob{
+		user:              user,
+		dispatcherID:      dispatchID,
+		payloadName:       payloadName,
+		timestamp:         time.Now(),
+		totalContainers:   0,
+		runningContainers: make(map[int]containerInfo),
+	}
+
+	return job
+}
+
+// Test to check that major events in the dispatcher_monitor life cycle.
+// This test checks the following events:
+// - dispatcher_monitor launched successfully.
+// - add a job to monitor.
+// - new job is being monitored.
+// - remove the job being monitored.
+func TestMonitorJobOperations(t *testing.T) {
+	jobWatcher := getJobWatcher()
+	ctx := getMockActorCtx()
+	go jobWatcher.watch(ctx)
+	job := getJob()
+
+	// Add the job to the monitored jobs.
+	jobWatcher.monitorJob(job.user, job.dispatcherID, job.payloadName)
+	// Wait for the job to be added to the monitored jobs with a timeout of 10 seconds.
+	timeout := time.Now().Add(10 * time.Second)
+	for !(jobWatcher.isJobBeingMonitored(job.dispatcherID)) {
+		if time.Now().After(timeout) {
+			break
+		}
+	}
+	// Check if the job is being monitored.
+	jobWatcher.checkJob(job.dispatcherID)
+	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), true)
+	// Cancel job monitoring.
+	jobWatcher.removeJob(job.dispatcherID)
+	// Wait for the job to be removed from the monitored jobs with a timeout of 10 seconds.
+	timeout = time.Now().Add(10 * time.Second)
+	for jobWatcher.isJobBeingMonitored(job.dispatcherID) {
+		if time.Now().After(timeout) {
+			break
+		}
+	}
+	// Check that job is not being monitored.
+	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), false)
 }
