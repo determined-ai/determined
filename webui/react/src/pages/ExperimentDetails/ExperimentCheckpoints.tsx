@@ -18,10 +18,7 @@ import useModalCheckpointRegister from 'hooks/useModal/Checkpoint/useModalCheckp
 import useModalModelCreate from 'hooks/useModal/Model/useModalModelCreate';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { getExperimentCheckpoints } from 'services/api';
-import {
-  Checkpointv1State,
-  V1GetExperimentCheckpointsRequestSortBy,
-} from 'services/api-ts-sdk';
+import { Checkpointv1State, V1GetExperimentCheckpointsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import { ModalCloseReason } from 'shared/hooks/useModal/useModal';

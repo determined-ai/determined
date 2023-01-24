@@ -403,15 +403,11 @@ const experimentStateMap = {
   [Sdk.Experimentv1State.RUNNING]: types.RunState.Running,
 };
 
-export const decodeCheckpointState = (
-  data: Sdk.Checkpointv1State,
-): types.CheckpointState => {
+export const decodeCheckpointState = (data: Sdk.Checkpointv1State): types.CheckpointState => {
   return checkpointStateMap[data];
 };
 
-export const encodeCheckpointState = (
-  state: types.CheckpointState,
-): Sdk.Checkpointv1State => {
+export const encodeCheckpointState = (state: types.CheckpointState): Sdk.Checkpointv1State => {
   const stateKey = Object.keys(checkpointStateMap).find(
     (key) => checkpointStateMap[key as unknown as Sdk.Checkpointv1State] === state,
   );

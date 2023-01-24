@@ -19,10 +19,7 @@ import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getExpTrials, openOrCreateTensorBoard } from 'services/api';
-import {
-  Experimentv1State,
-  V1GetExperimentTrialsRequestSortBy,
-} from 'services/api-ts-sdk';
+import { Experimentv1State, V1GetExperimentTrialsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import ActionDropdown from 'shared/components/ActionDropdown/ActionDropdown';
 import usePolling from 'shared/hooks/usePolling';

@@ -5,8 +5,8 @@ import {
   TrialSorter,
 } from 'pages/TrialsComparison/Collections/filters';
 import {
-  Trialv1State,
   TrialSorterNamespace,
+  Trialv1State,
   V1ColumnFilter,
   V1OrderBy,
   V1TrialFilters,
