@@ -2,6 +2,7 @@ import json
 from argparse import Namespace
 from typing import Any, List
 
+from determined import cli
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
@@ -253,7 +254,7 @@ args_description = [
                 "create model",
                 [
                     Arg("name", type=str, help="unique name of the model"),
-                    Arg("-w", "--workspace-name", type=str),
+                    cli.workspace.workspace_arg,
                     Arg("--description", type=str, help="description of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
@@ -264,7 +265,7 @@ args_description = [
                 "move model to given workspace",
                 [
                     Arg("name", type=str, help="name of model"),
-                    Arg("-w", "--workspace_name", type=str, help="workspace name"),
+                    cli.workspace.workspace_arg,
                 ],
             ),
         ],
