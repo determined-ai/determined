@@ -189,9 +189,10 @@ def test_master_restart_error_missing_docker_container(
     subprocess.check_call(["det", "-m", conf.make_master_url(), "e", "kill", str(exp_id)])
     exp.wait_for_experiment_state(exp_id, EXP_STATE.STATE_CANCELED, max_wait_secs=20)
 
+    managed_cluster_restarts.kill_agent()
+    managed_cluster_restarts.kill_master()
     managed_cluster_restarts.restart_master()
     managed_cluster_restarts.restart_agent()
-    managed_cluster_restarts.wait_for_agent_ok(20)
 
 
 @pytest.mark.managed_devcluster
