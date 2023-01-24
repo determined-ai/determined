@@ -1,5 +1,12 @@
 import { Map } from 'immutable';
-import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
+import React, {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 import { getWorkspaceProjects } from 'services/api';
 import { Project } from 'types';
@@ -8,28 +15,26 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { observable, WritableObservable } from 'utils/observable';
 
 class ProjectService {
-  projects: WritableObservable<Map<number, Project>> = observable(Map());
-  projectsByIndex: WritableObservable<Map<string, Project[]>> = observable(Map());
+  private _projects: WritableObservable<Map<number, Project>> = observable(Map());
+  private _projectsByIndex: WritableObservable<Map<string, Project[]>> = observable(Map());
 
-  canceler: AbortController;
-
-  constructor(canceler: AbortController) {
-    this.canceler = canceler;
-  }
-
-  fetchWorkspaceProjects = async (workspaceId: number): Promise<void> => {
+  fetchWorkspaceProjects = async (
+    workspaceId: number,
+    canceler: AbortController,
+  ): Promise<void> => {
+    if (this._projectsByIndex.get().get(`byworkspace-${workspaceId}`)) return;
     try {
       const response = await getWorkspaceProjects(
         {
           id: workspaceId,
           limit: 0,
         },
-        { signal: this.canceler.signal },
+        { signal: canceler.signal },
       );
-      this.projectsByIndex.update((prevState: Map<string, Project[]>) => {
+      this._projectsByIndex.update((prevState: Map<string, Project[]>) => {
         return prevState.set(`byworkspace-${workspaceId}`, response.projects);
       });
-      this.projects.update((prevState: Map<number, Project>) => {
+      this._projects.update((prevState: Map<number, Project>) => {
         return prevState.withMutations((state: Map<number, Project>) => {
           response.projects.forEach((proj) => state.set(proj.id, proj));
         });
@@ -38,14 +43,22 @@ class ProjectService {
       handleError(e);
     }
   };
+
+  getWorkspaceProject = (workspaceId: number): Project[] | undefined => {
+    return this._projectsByIndex.get().get(`byworkspace-${workspaceId}`);
+  };
+
+  getProject = (projectId: number): Project | undefined => {
+    return this._projects.get().get(projectId);
+  };
 }
 
 const ProjectsContext = createContext<ProjectService | null>(null);
 
 export const ProjectsProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [projectStore] = useState(() => new ProjectService(new AbortController()));
+  const [store] = useState(() => new ProjectService());
 
-  return <ProjectsContext.Provider value={projectStore}>{children}</ProjectsContext.Provider>;
+  return <ProjectsContext.Provider value={store}>{children}</ProjectsContext.Provider>;
 };
 
 const useProjectsStore = (): ProjectService => {
@@ -54,8 +67,14 @@ const useProjectsStore = (): ProjectService => {
   return store;
 };
 
-export const useFetchWorkspaceProjects = (): ((workspaceId: number) => Promise<void>) => {
+export const useFetchWorkspaceProjects = (
+  canceler: AbortController,
+): ((workspaceId: number) => Promise<void>) => {
   const store = useProjectsStore();
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [canceler]);
 
   if (store === null) {
     throw new Error('Attempted to use useWorkspaceProjects outside of Projects Context');
@@ -63,9 +82,30 @@ export const useFetchWorkspaceProjects = (): ((workspaceId: number) => Promise<v
 
   return useCallback(
     async (workspaceId: number): Promise<void> => {
-      await store.fetchWorkspaceProjects(workspaceId);
+      await store.fetchWorkspaceProjects(workspaceId, canceler);
     },
-    [store],
+    [store, canceler],
+  );
+};
+
+export const useEnsureWorkspaceProjectsFetched = (
+  canceler: AbortController,
+): ((workspaceId: number) => Promise<void>) => {
+  const store = useProjectsStore();
+
+  useEffect(() => {
+    return () => canceler.abort();
+  }, [canceler]);
+
+  if (store === null) {
+    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
+  }
+
+  return useCallback(
+    async (workspaceId: number): Promise<void> => {
+      await store.fetchWorkspaceProjects(workspaceId, canceler);
+    },
+    [store, canceler],
   );
 };
 
@@ -90,9 +130,7 @@ export const useWorkspaceProjects = (
     loadedWorkspaceId = workspaceId;
   }
 
-  const projectsByIndex = store.projectsByIndex.get();
-
-  const projects = projectsByIndex.get(`byworkspace-${loadedWorkspaceId}`);
+  const projects = store.getWorkspaceProject(loadedWorkspaceId);
 
   if (projects === undefined) return NotLoaded;
 
@@ -106,9 +144,7 @@ export const useProject = (projectId: number): Loadable<Project> => {
     throw new Error('Attempted to use useProject outside of Projects Context');
   }
 
-  const projects = store.projects.get();
-
-  const project = projects.get(projectId);
+  const project = store.getProject(projectId);
 
   if (project === undefined) return NotLoaded;
 
