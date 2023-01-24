@@ -547,12 +547,16 @@ export interface ExperimentItem {
   numTrials: number;
   progress?: number;
   projectId: number;
+  projectName?: string;
   resourcePool: string;
+  searcherMetricValue?: number;
   searcherType: string;
   startTime: string;
   state: CompoundRunState;
   trialIds?: number[];
   userId: number;
+  workspaceId?: number;
+  workspaceName?: string;
 }
 
 export interface ProjectExperiment extends ExperimentItem {
@@ -675,6 +679,7 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   userId: number;
+  workspaceId: number;
 }
 
 export type RecentEvent = {

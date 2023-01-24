@@ -28,7 +28,6 @@ export interface UserManagementSettings extends InteractiveTableSettings {
 }
 
 const config: SettingsConfig<UserManagementSettings> = {
-  applicableRoutespace: 'user-management',
   settings: {
     columns: {
       defaultValue: DEFAULT_COLUMNS,

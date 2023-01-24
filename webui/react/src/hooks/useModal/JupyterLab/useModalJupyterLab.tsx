@@ -1,17 +1,9 @@
-import {
-  Alert,
-  Button,
-  Form,
-  FormInstance,
-  Input,
-  InputNumber,
-  ModalFuncProps,
-  Select,
-} from 'antd';
+import { Alert, Form, FormInstance, Input, InputNumber, ModalFuncProps, Select } from 'antd';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Button from 'components/kit/Button';
 import Link from 'components/Link';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { getTaskTemplates } from 'services/api';
@@ -33,7 +25,6 @@ const STORAGE_PATH = 'jupyter-lab';
 const DEFAULT_SLOT_COUNT = 1;
 
 const settingsConfig: SettingsConfig<JupyterLabOptions> = {
-  applicableRoutespace: STORAGE_PATH,
   settings: {
     name: {
       defaultValue: '',

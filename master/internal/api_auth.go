@@ -4,13 +4,19 @@ import (
 	"context"
 	"crypto/sha512"
 	"fmt"
+	"net/http"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -95,4 +101,55 @@ func (a *apiServer) Logout(
 
 	err = a.m.db.DeleteUserSessionByID(userSession.ID)
 	return &apiv1.LogoutResponse{}, err
+}
+
+func redirectToLogin(c echo.Context) error {
+	return c.Redirect(
+		http.StatusSeeOther,
+		fmt.Sprintf("/det/login?redirect=%s", c.Request().URL),
+	)
+}
+
+// processProxyAuthentication is a middleware processing function that attempts
+// to authenticate incoming HTTP requests coming through proxies.
+func processProxyAuthentication(c echo.Context) (done bool, err error) {
+	user, _, err := user.GetService().UserAndSessionFromRequest(c.Request())
+	if errors.Is(err, db.ErrNotFound) {
+		return true, redirectToLogin(c)
+	} else if err != nil {
+		return true, err
+	}
+	if !user.Active {
+		return true, redirectToLogin(c)
+	}
+
+	taskID := model.TaskID(c.Param("service"))
+	var ctx context.Context
+
+	if c.Request() == nil || c.Request().Context() == nil {
+		ctx = context.TODO()
+	} else {
+		ctx = c.Request().Context()
+	}
+
+	spec, err := db.IdentifyTask(ctx, taskID)
+	if err != nil {
+		return true, err
+	}
+
+	var ok bool
+	if spec.TaskType == model.TaskTypeTensorboard {
+		ok, err = command.AuthZProvider.Get().CanGetTensorboard(
+			ctx, *user, spec.WorkspaceID)
+	} else {
+		ok, err = command.AuthZProvider.Get().CanGetNSC(
+			ctx, *user, spec.WorkspaceID)
+	}
+	if err != nil {
+		return true, err
+	} else if !ok {
+		return true, echo.NewHTTPError(http.StatusNotFound, "service not found: "+taskID)
+	}
+
+	return false, nil
 }

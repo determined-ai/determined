@@ -1,8 +1,11 @@
 import React from 'react';
 
+import TaskList from 'components/TaskList';
 import Admin from 'pages/Admin';
 import ClusterLogs from 'pages/ClusterLogs';
 import Clusters from 'pages/Clusters';
+import Dashboard from 'pages/Dashboard';
+import DefaultRoute from 'pages/DefaultRoute';
 import Deprecated from 'pages/Deprecated';
 import DesignKit from 'pages/DesignKit';
 import ExperimentDetails from 'pages/ExperimentDetails';
@@ -10,13 +13,12 @@ import InteractiveTask from 'pages/InteractiveTask';
 import ModelDetails from 'pages/ModelDetails';
 import ModelRegistry from 'pages/ModelRegistry';
 import ModelVersionDetails from 'pages/ModelVersionDetails';
-import ProjectDetailsWrapper from 'pages/ProjectDetailsWrapper';
+import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcepoolDetail';
 import Settings from 'pages/Settings';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
-import TaskList from 'pages/TaskList';
 import { TaskLogsWrapper } from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import Wait from 'pages/Wait';
@@ -33,6 +35,8 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   clusterHistorical: <Deprecated />,
   clusterLogs: <ClusterLogs />,
   clusters: <Clusters />,
+  dashboard: <Dashboard />,
+  default: <DefaultRoute />,
   designKit: <DesignKit />,
   experimentDetails: <ExperimentDetails />,
   interactive: <InteractiveTask />,
@@ -40,7 +44,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   modelDetails: <ModelDetails />,
   models: <ModelRegistry />,
   modelVersionDetails: <ModelVersionDetails />,
-  projectDetails: <ProjectDetailsWrapper />,
+  projectDetails: <ProjectDetails />,
   reload: <Reload />,
   resourcepool: <ResourcepoolDetail />,
   settings: <Settings />,
@@ -49,7 +53,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   taskList: <TaskList />,
   taskLogs: <TaskLogsWrapper />,
   trialDetails: <TrialDetails />,
-  uncategorized: <ProjectDetailsWrapper />,
+  uncategorized: <ProjectDetails />,
   wait: <Wait />,
   webhooks: <Webhooks />,
   workspaceDetails: <WorkspaceDetails />,
@@ -58,6 +62,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
 
 const defaultRouteId = 'uncategorized';
 const rbacDefaultRouteId = 'workspaceList';
+const dashboardDefaultRouteId = 'dashboard';
 
 const appRoutes: RouteConfig[] = Routes.map((route) => {
   if (!routeComponentMap[route.id]) {
@@ -69,6 +74,9 @@ const appRoutes: RouteConfig[] = Routes.map((route) => {
 export const defaultRoute = appRoutes.find((route) => route.id === defaultRouteId) as RouteConfig;
 export const rbacDefaultRoute = appRoutes.find(
   (route) => route.id === rbacDefaultRouteId,
+) as RouteConfig;
+export const dashboardDefaultRoute = appRoutes.find(
+  (route) => route.id === dashboardDefaultRouteId,
 ) as RouteConfig;
 
 appRoutes.push({

@@ -6,12 +6,18 @@ package db
 import (
 	"archive/tar"
 	"crypto/rand"
+	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 
@@ -56,9 +62,90 @@ func MustResolveTestPostgres(t *testing.T) *PgDB {
 	return pgDB
 }
 
+// ResolveNewPostgresDatabase returns a connection to a randomly-named, newly-created database, and
+// a function you should defer for deleting it afterwards.
+func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
+	baseURL := os.Getenv("DET_INTEGRATION_POSTGRES_URL")
+	if baseURL == "" {
+		return nil, nil, errors.New("no DET_INTEGRATION_POSTGRES_URL detected")
+	}
+
+	url, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, nil, errors.Wrapf(
+			err, "failed to parse DET_INTEGRATION_POSTGRES_URL (%q):", baseURL,
+		)
+	}
+
+	// Connect to the db server without selecting a database.
+	url.Path = ""
+	sql, err := sqlx.Connect("pgx", url.String())
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to connect to postgres at %q", url)
+	}
+
+	randomSuffix := make([]byte, 16)
+	_, err = rand.Read(randomSuffix)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed pick a random name")
+	}
+
+	dbname := fmt.Sprintf("intg-%x", randomSuffix)
+	_, err = sql.Exec(fmt.Sprintf("CREATE DATABASE %q", dbname))
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to create new database %q", dbname)
+	}
+
+	// Remember the connection we return to the newly-created database, because if we don't close it
+	// we can't drop the database.  When we require postgres>=13, we can use DROP DATABASE ... FORCE
+	// instead of manually closing this connection.
+	var dbConn *sqlx.DB
+
+	cleanup := func() {
+		if dbConn != nil {
+			if err := dbConn.Close(); err != nil {
+				log.WithError(err).Errorf("failed to close sql")
+			}
+		}
+		if _, err := sql.Exec(fmt.Sprintf("DROP DATABASE %q", dbname)); err != nil {
+			log.WithError(err).Errorf("failed to delete temp database %q", dbname)
+		}
+	}
+
+	success := false
+
+	defer func() {
+		if !success {
+			cleanup()
+		}
+	}()
+
+	// Connect to the new database.
+	url.Path = fmt.Sprintf("/%v", dbname)
+	pgDB, err := ConnectPostgres(url.String())
+	if err != nil {
+		return nil, nil, errors.Wrapf(err, "failed to connect to new database %q", dbname)
+	}
+
+	dbConn = pgDB.sql
+
+	success = true
+	return pgDB, cleanup, nil
+}
+
+// MustResolveNewPostgresDatabase is the same as ResolveNewPostgresDatabase but panics on errors.
+func MustResolveNewPostgresDatabase(t *testing.T) (*PgDB, func()) {
+	pgDB, cleanup, err := ResolveNewPostgresDatabase()
+	require.NoError(t, err, "failed to create new database")
+	return pgDB, cleanup
+}
+
 // MustMigrateTestPostgres ensures the integrations DB has migrations applied.
-func MustMigrateTestPostgres(t *testing.T, db *PgDB, migrationsPath string) {
-	err := db.Migrate(migrationsPath, []string{"up"})
+func MustMigrateTestPostgres(t *testing.T, db *PgDB, migrationsPath string, actions ...string) {
+	if len(actions) == 0 {
+		actions = []string{"up"}
+	}
+	err := db.Migrate(migrationsPath, actions)
 	require.NoError(t, err, "failed to migrate postgres")
 	err = db.initAuthKeys()
 	require.NoError(t, err, "failed to initAuthKeys")
@@ -143,14 +230,14 @@ func RequireMockExperiment(t *testing.T, db *PgDB, user model.User) *model.Exper
 	exp := model.Experiment{
 		JobID:                model.NewJobID(),
 		State:                model.ActiveState,
-		Config:               cfg,
+		Config:               cfg.AsLegacy(),
 		ModelDefinitionBytes: ReadTestModelDefiniton(t, DefaultTestSrcPath),
 		StartTime:            time.Now().Add(-time.Hour),
 		OwnerID:              &user.ID,
 		Username:             user.Username,
 		ProjectID:            1,
 	}
-	err := db.AddExperiment(&exp)
+	err := db.AddExperiment(&exp, cfg)
 	require.NoError(t, err, "failed to add experiment")
 	return &exp
 }
@@ -230,4 +317,11 @@ func MockModelCheckpoint(
 	}
 
 	return ckpt
+}
+
+// MustExec allows integration tests to run raw queries directly against a PgDB.
+func (db *PgDB) MustExec(t *testing.T, sql string, args ...any) sql.Result {
+	out, err := db.sql.Exec(sql, args...)
+	require.NoError(t, err, "failed to run query")
+	return out
 }

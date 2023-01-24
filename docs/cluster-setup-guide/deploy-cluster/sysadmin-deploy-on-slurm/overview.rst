@@ -15,7 +15,7 @@
 +----------------------+
 | Launcher             |
 | (`hpe-hpc-launcher`) |
-| >= 3.1.9             |
+| >= 3.2.0             |
 +----------------------+
 | Java >= 1.8          |
 +----------------------+
@@ -55,4 +55,5 @@ follow the steps in the
    slurm-requirements
    install-on-slurm
    singularity
+   hpc-launching-architecture
    slurm-known-issues

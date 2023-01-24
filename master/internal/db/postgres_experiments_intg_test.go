@@ -66,12 +66,13 @@ func addCheckpointToModelRegistry(db *PgDB, checkpointUUID uuid.UUID, user model
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
 		Username:        user.Username,
+		WorkspaceID:     1,
 	}
 	mdlNotes := "some notes1"
 	var pmdl modelv1.Model
 	if err := db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-		strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
 	); err != nil {
 		return fmt.Errorf("inserting a model: %w", err)
 	}

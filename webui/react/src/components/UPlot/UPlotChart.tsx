@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { DownloadOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -10,7 +12,7 @@ import { DarkLight } from 'shared/themes';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import handleError from 'utils/error';
 
-import { useSyncableBounds } from './SyncableBounds';
+import { useChartSync } from './SyncProvider';
 import { FacetedData } from './types';
 import css from './UPlotChart.module.scss';
 
@@ -20,12 +22,12 @@ export interface Options extends Omit<uPlot.Options, 'width'> {
 }
 
 interface Props {
+  allowDownload?: boolean;
   data?: AlignedData | FacetedData;
   focusIndex?: number;
   noDataMessage?: string;
   options?: Partial<Options>;
   style?: React.CSSProperties;
-  title?: string;
 }
 
 const SCROLL_THROTTLE_TIME = 500;
@@ -33,19 +35,16 @@ const SCROLL_THROTTLE_TIME = 500;
 const shouldRecreate = (
   prev: Partial<Options> | undefined,
   next: Partial<Options> | undefined,
-  chart: uPlot | undefined,
 ): boolean => {
-  if (!chart) return true;
   if (!next) return false;
   if (!prev) return true;
   if (prev === next) return false;
   if (prev.key !== next.key) return true;
   if (Object.keys(prev).length !== Object.keys(next).length) return true;
 
-  if (prev.title !== next.title) return true;
   if (prev.axes?.length !== next.axes?.length) return true;
 
-  if (chart?.series?.length !== next.series?.length) return true;
+  if (prev?.series?.length !== next.series?.length) return true;
 
   const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([scaleKey, nextScale]) => {
     const prevScale = prev?.scales?.[scaleKey];
@@ -64,54 +63,67 @@ const shouldRecreate = (
   });
   if (someAxisHasChanged) return true;
 
-  const someSeriesHasChanged = chart.series.some((chartSerie, seriesIdx) => {
+  const someSeriesHasChanged = prev.series?.some((prevSerie, seriesIdx) => {
     const nextSerie = next.series?.[seriesIdx];
-    const prevSerie = prev.series?.[seriesIdx];
+
     return (
-      (nextSerie?.label != null && chartSerie?.label !== nextSerie?.label) ||
+      (nextSerie?.label != null && prevSerie?.label !== nextSerie?.label) ||
       (prevSerie?.stroke != null && prevSerie?.stroke !== nextSerie?.stroke) ||
-      (nextSerie?.paths != null && chartSerie?.paths !== nextSerie?.paths) ||
-      (nextSerie?.fill != null && chartSerie?.fill !== nextSerie?.fill)
+      (nextSerie?.paths != null && prevSerie?.paths !== nextSerie?.paths) ||
+      (nextSerie?.fill != null && prevSerie?.fill !== nextSerie?.fill)
     );
   });
   if (someSeriesHasChanged) return true;
 
   return false;
 };
+type ChartType = 'Line' | 'Scatter';
 
 const UPlotChart: React.FC<Props> = ({
+  allowDownload,
   data,
   focusIndex,
   options,
   style,
   noDataMessage,
-  title,
 }: Props) => {
   const chartRef = useRef<uPlot>();
   const [divHeight, setDivHeight] = useState((options?.height ?? 300) + 20);
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const [isReady, setIsReady] = useState(false);
   const classes = [css.base];
 
   const { ui } = useUI();
-  const { zoomed, boundsOptions, setZoomed } = useSyncableBounds();
+  const { options: syncOptions, syncService } = useChartSync();
 
-  const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
+  // line charts have their zoom state handled by `SyncProvider`, scatter charts do not.
+  const chartType: ChartType = options?.mode === 2 ? 'Scatter' : 'Line';
+
+  const hasData = data && data.length > 1 && (chartType === 'Scatter' || data?.[0]?.length);
 
   if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
+
+  useEffect(() => {
+    if (data !== undefined) syncService.updateDataBounds(data as AlignedData);
+  }, [syncService, data]);
 
   const extendedOptions = useMemo(() => {
     const extended: Partial<uPlot.Options> = uPlot.assign(
       {
-        hooks: {
-          destroy: [() => setIsReady(false), () => setZoomed(false)],
-          ready: [() => setIsReady(true)],
-        },
         width: chartDivRef.current?.offsetWidth,
       },
-      boundsOptions || {},
-      options || {},
+      chartType === 'Line' ? syncOptions : {},
+      options ?? {},
     );
+
+    if (chartType === 'Line') {
+      const activeBounds = syncService.activeBounds.get();
+      if (activeBounds) {
+        const { min, max } = activeBounds;
+        extended.series = extended.series?.map((ser) => {
+          return { ...ser, max, min };
+        });
+      }
+    }
 
     // Override chart support colors to match theme.
     if (ui.theme && extended.axes) {
@@ -129,7 +141,7 @@ const UPlotChart: React.FC<Props> = ({
     }
 
     return extended as uPlot.Options;
-  }, [boundsOptions, options, setZoomed, ui.theme]);
+  }, [options, ui.theme, chartType, syncOptions, syncService]);
 
   const previousOptions = usePrevious(extendedOptions, undefined);
 
@@ -142,11 +154,11 @@ const UPlotChart: React.FC<Props> = ({
 
   useEffect(() => {
     if (!chartDivRef.current) return;
-    if (shouldRecreate(previousOptions, extendedOptions, chartRef.current)) {
+    if (!chartRef.current || shouldRecreate(previousOptions, extendedOptions)) {
       chartRef.current?.destroy();
       chartRef.current = undefined;
       try {
-        if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length) {
+        if (chartType === 'Scatter' || extendedOptions.series.length === data?.length) {
           chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
         }
       } catch (e) {
@@ -162,9 +174,7 @@ const UPlotChart: React.FC<Props> = ({
       }
     } else {
       try {
-        if (chartRef.current && isReady) {
-          chartRef.current.setData(data as AlignedData, !zoomed);
-        }
+        chartRef.current?.setData(data as AlignedData, chartType === 'Scatter');
       } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
@@ -177,7 +187,7 @@ const UPlotChart: React.FC<Props> = ({
         });
       }
     }
-  }, [data, extendedOptions, isReady, previousOptions, title, zoomed]);
+  }, [data, extendedOptions, previousOptions, chartType]);
 
   /**
    * When a focus index is provided, highlight applicable series.
@@ -234,6 +244,7 @@ const UPlotChart: React.FC<Props> = ({
 
   return (
     <div className={classes.join(' ')} ref={chartDivRef} style={{ ...style, height: divHeight }}>
+      {allowDownload && <DownloadButton containerRef={chartDivRef} />}
       {!hasData && (
         <Message
           style={{ height: options?.height ?? 'auto' }}
@@ -246,3 +257,40 @@ const UPlotChart: React.FC<Props> = ({
 };
 
 export default UPlotChart;
+
+const DownloadButton = ({ containerRef }: { containerRef: RefObject<HTMLDivElement> }) => {
+  const downloadUrl = useRef<string>();
+  const downloadNode = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
+    };
+  }, []);
+
+  const handleDownloadClick = useCallback(() => {
+    if (downloadUrl.current) URL.revokeObjectURL(downloadUrl.current);
+    const canvas = containerRef.current?.querySelector('canvas');
+    const url = canvas?.toDataURL('image/png');
+    if (url && downloadNode.current) {
+      downloadNode.current.href = url;
+      downloadNode.current.click();
+    }
+    downloadUrl.current = url;
+  }, [containerRef]);
+
+  return (
+    <Tooltip className={css.download} title="Download Chart">
+      <DownloadOutlined onClick={handleDownloadClick} />
+      {/* this is an invisible button to programatically download the image file */}
+      <a
+        aria-disabled
+        className={css.invisibleLink}
+        // TODO: add trial/exp id + metrics to filename
+        download="chart.png"
+        href={downloadUrl.current}
+        ref={downloadNode}
+      />
+    </Tooltip>
+  );
+};

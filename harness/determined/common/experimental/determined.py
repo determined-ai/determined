@@ -215,6 +215,7 @@ class Determined:
         description: Optional[str] = "",
         metadata: Optional[Dict[str, Any]] = None,
         labels: Optional[List[str]] = None,
+        workspace_name: Optional[str] = None,
     ) -> model.Model:
         """
         Add a model to the model registry.
@@ -227,7 +228,12 @@ class Determined:
 
         # TODO: add notes param to create_model()
         req = bindings.v1PostModelRequest(
-            name=name, description=description, labels=labels, metadata=metadata, notes=None
+            name=name,
+            description=description,
+            labels=labels,
+            metadata=metadata,
+            notes=None,
+            workspaceName=workspace_name,
         )
 
         resp = bindings.post_PostModel(self._session, body=req)
@@ -276,6 +282,8 @@ class Determined:
         name: Optional[str] = None,
         description: Optional[str] = None,
         model_id: Optional[int] = None,
+        workspace_name: Optional[str] = None,
+        workspaceId: Optional[int] = None,
     ) -> List[model.Model]:
         """
         Get a list of all models in the model registry.
@@ -309,6 +317,8 @@ class Determined:
                 sortBy=sort_by._to_bindings(),
                 userIds=None,
                 users=None,
+                workspaceName=workspace_name,
+                workspaceId=workspaceId,
             )
 
         resps = api.read_paginated(get_with_offset)

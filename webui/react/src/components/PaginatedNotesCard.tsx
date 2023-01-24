@@ -1,9 +1,10 @@
 import { CheckOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Modal } from 'antd';
+import { Dropdown, Modal } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import Select, { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Button from 'components/kit/Button';
 import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 import { Note } from 'types';

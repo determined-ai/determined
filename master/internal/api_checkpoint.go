@@ -14,14 +14,17 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
 func errCheckpointNotFound(id string) error {
@@ -57,7 +60,7 @@ func (m *Master) canDoActionOnCheckpoint(
 	if checkpoint.CheckpointTrainingMetadata.ExperimentID == 0 {
 		return nil // TODO(nick) add authz for other task types.
 	}
-	exp, err := m.db.ExperimentWithoutConfigByID(checkpoint.CheckpointTrainingMetadata.ExperimentID)
+	exp, err := m.db.ExperimentByID(checkpoint.CheckpointTrainingMetadata.ExperimentID)
 	if err != nil {
 		return err
 	}
@@ -73,6 +76,32 @@ func (m *Master) canDoActionOnCheckpoint(
 	return nil
 }
 
+func (m *Master) canDoActionOnCheckpointThroughModel(
+	ctx context.Context, curUser model.User, id uuid.UUID,
+) error {
+	modelIDs, err := db.GetModelIDsAssociatedWithCheckpoint(ctx, id)
+	if err != nil {
+		return err
+	}
+	for _, id := range modelIDs {
+		model := &modelv1.Model{}
+		err = m.db.QueryProto("get_model_by_id", model, id)
+		if !errors.Is(err, db.ErrNotFound) {
+			return err
+		}
+		ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, curUser, model, *model.WorkspaceId)
+		if err != nil {
+			return err
+		}
+		if ok {
+			return nil
+		}
+	}
+
+	return status.Error(codes.PermissionDenied,
+		fmt.Sprintf("cannot access checkpoint: %s", id.String()))
+}
+
 func (a *apiServer) GetCheckpoint(
 	ctx context.Context, req *apiv1.GetCheckpointRequest,
 ) (*apiv1.GetCheckpointResponse, error) {
@@ -80,9 +109,18 @@ func (a *apiServer) GetCheckpoint(
 	if err != nil {
 		return nil, err
 	}
-	if err = a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
-		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		return nil, err
+	errE := a.m.canDoActionOnCheckpoint(ctx, *curUser, req.CheckpointUuid,
+		expauth.AuthZProvider.Get().CanGetExperimentArtifacts)
+
+	if errE != nil {
+		ckptUUID, err := uuid.Parse(req.CheckpointUuid)
+		if err != nil {
+			return nil, err
+		}
+		errM := a.m.canDoActionOnCheckpointThroughModel(ctx, *curUser, ckptUUID)
+		if errM != nil {
+			return nil, errE
+		}
 	}
 
 	resp := &apiv1.GetCheckpointResponse{}
@@ -197,7 +235,7 @@ func (a *apiServer) DeleteCheckpoints(
 		checkpointUUIDs := conv.ToUUIDList(strings.Split(expIDcUUIDs.CheckpointUUIDSStr, ","))
 		ckptGCTask := newCheckpointGCTask(
 			a.m.rm, a.m.db, a.m.taskLogger, taskID, jobID, jobSubmissionTime, taskSpec, exps[i].ID,
-			exps[i].Config.AsLegacy(), checkpointUUIDs, false, agentUserGroup, curUser, nil,
+			exps[i].Config, checkpointUUIDs, false, agentUserGroup, curUser, nil,
 		)
 		a.m.system.MustActorOf(addr, ckptGCTask)
 	}

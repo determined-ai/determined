@@ -1,10 +1,11 @@
-import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+import Pivot from 'components/kit/Pivot';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import TaskList from 'components/TaskList';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -39,6 +40,7 @@ type Params = {
 export const WorkspaceDetailsTab = {
   Members: 'members',
   Projects: 'projects',
+  Tasks: 'tasks',
 } as const;
 
 export type WorkspaceDetailsTab = ValueOf<typeof WorkspaceDetailsTab>;
@@ -137,20 +139,46 @@ const WorkspaceDetails: React.FC = () => {
 
   const handleFilterUpdate = (name: string | undefined) => setNameFilter(name);
 
+  // Users and Groups that are not already a part of the workspace
+  const addableGroups: V1Group[] = useMemo(
+    () =>
+      groups
+        ? groups
+            .map((groupDetails) => groupDetails.group)
+            .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
+        : [],
+    [groups, groupsAssignedDirectlyIds],
+  );
+
+  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
+  const addableUsersAndGroups = useMemo(
+    () => [...addableGroups, ...addableUsers],
+    [addableGroups, addableUsers],
+  );
+
   const tabItems: TabsProps['items'] = useMemo(() => {
     if (!workspace) {
       return [];
     }
 
-    return [
+    const items: TabsProps['items'] = [
       {
         children: <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />,
         key: WorkspaceDetailsTab.Projects,
         label: 'Projects',
       },
       {
+        children: <TaskList workspaceId={id} />,
+        key: WorkspaceDetailsTab.Tasks,
+        label: 'Tasks',
+      },
+    ];
+
+    if (rbacEnabled) {
+      items.push({
         children: (
           <WorkspaceMembers
+            addableUsersAndGroups={addableUsersAndGroups}
             assignments={workspaceAssignments}
             fetchMembers={fetchGroupsAndUsersAssignedToWorkspace}
             groupsAssignedDirectly={groupsAssignedDirectly}
@@ -163,12 +191,16 @@ const WorkspaceDetails: React.FC = () => {
         ),
         key: WorkspaceDetailsTab.Members,
         label: 'Members',
-      },
-    ];
+      });
+    }
+
+    return items;
   }, [
+    addableUsersAndGroups,
     fetchGroupsAndUsersAssignedToWorkspace,
     groupsAssignedDirectly,
     id,
+    rbacEnabled,
     rolesAssignableToScope,
     usersAssignedDirectly,
     workspace,
@@ -209,15 +241,6 @@ const WorkspaceDetails: React.FC = () => {
     tab && setTabKey(tab as WorkspaceDetailsTab);
   }, [workspaceId, navigate, tab]);
 
-  // Users and Groups that are not already a part of the workspace
-  const addableGroups: V1Group[] = groups
-    ? groups
-        .map((groupDetails) => groupDetails.group)
-        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
-    : [];
-  const addableUsers = users.filter((user) => !usersAssignedDirectlyIds.has(user.id));
-  const addableUsersAndGroups = [...addableGroups, ...addableUsers];
-
   useEffect(() => {
     return () => canceler.abort();
   }, [canceler]);
@@ -249,16 +272,12 @@ const WorkspaceDetails: React.FC = () => {
         />
       }
       id="workspaceDetails">
-      {rbacEnabled ? (
-        <Tabs
-          activeKey={tabKey}
-          destroyInactiveTabPane
-          items={tabItems}
-          onChange={handleTabChange}
-        />
-      ) : (
-        <WorkspaceProjects id={id} pageRef={pageRef} workspace={workspace} />
-      )}
+      <Pivot
+        activeKey={tabKey}
+        destroyInactiveTabPane
+        items={tabItems}
+        onChange={handleTabChange}
+      />
     </Page>
   );
 };

@@ -52,7 +52,13 @@ func (g groupState) String() string {
 }
 
 func (f *fairShare) Schedule(rp *resourcePool) ([]*sproto.AllocateRequest, []*actor.Ref) {
-	return fairshareSchedule(rp.taskList, rp.groups, rp.agentStatesCache, rp.fittingMethod)
+	return fairshareSchedule(
+		rp.taskList,
+		rp.groups,
+		rp.agentStatesCache,
+		rp.fittingMethod,
+		rp.config.Scheduler.AllowHeterogeneousFits,
+	)
 }
 
 func (f *fairShare) createJobQInfo(
@@ -80,6 +86,7 @@ func fairshareSchedule(
 	groups map[*actor.Ref]*tasklist.Group,
 	agents map[*actor.Ref]*agentState,
 	fittingMethod SoftConstraint,
+	allowHeterogeneousAgentFits bool,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	allToAllocate := make([]*sproto.AllocateRequest, 0)
 	allToRelease := make([]*actor.Ref, 0)
@@ -88,7 +95,12 @@ func fairshareSchedule(
 		req := it.Value()
 		allocations := taskList.Allocation(req.AllocationRef)
 		if req.SlotsNeeded == 0 && allocations == nil {
-			if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
+			if fits := findFits(
+				req,
+				agents,
+				fittingMethod,
+				allowHeterogeneousAgentFits,
+			); len(fits) == 0 {
 				continue
 			}
 			allToAllocate = append(allToAllocate, req)
@@ -111,7 +123,12 @@ func fairshareSchedule(
 
 	for label, groupStates := range states {
 		allocateSlotOffers(groupStates, capacity[label])
-		toAllocate, toRelease := assignTasks(agents, groupStates, fittingMethod)
+		toAllocate, toRelease := assignTasks(
+			agents,
+			groupStates,
+			fittingMethod,
+			allowHeterogeneousAgentFits,
+		)
 		allToAllocate = append(allToAllocate, toAllocate...)
 		allToRelease = append(allToRelease, toRelease...)
 	}
@@ -324,6 +341,7 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *sproto.Alloc
 
 func assignTasks(
 	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
+	allowHetergenousAgentFits bool,
 ) ([]*sproto.AllocateRequest, []*actor.Ref) {
 	toAllocate := make([]*sproto.AllocateRequest, 0)
 	toRelease := make([]*actor.Ref, 0)
@@ -348,7 +366,12 @@ func assignTasks(
 			state.offered -= state.activeSlots
 			for _, req := range state.pendingReqs {
 				if req.SlotsNeeded <= state.offered {
-					if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
+					if fits := findFits(
+						req,
+						agents,
+						fittingMethod,
+						allowHetergenousAgentFits,
+					); len(fits) == 0 {
 						continue
 					}
 					toAllocate = append(toAllocate, req)

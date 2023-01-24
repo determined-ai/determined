@@ -7,7 +7,7 @@ import LearningCurveChart from 'components/LearningCurveChart';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
-import { SyncProvider } from 'components/UPlot/SyncableBounds';
+import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { useSettings } from 'hooks/useSettings';
 import TrialTable from 'pages/TrialsComparison/Table/TrialTable';
 import { V1AugmentedTrial } from 'services/api-ts-sdk';
@@ -79,7 +79,7 @@ const TrialsComparison: React.FC<Props> = ({ projectId }) => {
   const handleTrialFocus = useMemo(() => debounce(1000, highlights.focus), [highlights.focus]);
 
   return (
-    <Page bodyNoPadding className={css.base} containerRef={containerRef}>
+    <Page className={css.base} containerRef={containerRef}>
       <Section bodyBorder bodyScroll>
         <div className={css.container}>
           <div className={css.chart}>

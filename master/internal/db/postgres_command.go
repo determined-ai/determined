@@ -30,3 +30,27 @@ func GetCommandOwnerID(ctx context.Context, taskID model.TaskID) (model.UserID, 
 
 	return ownerIDBun.OwnerID, nil
 }
+
+// TaskMetadata captures minimal metadata about a task.
+type TaskMetadata struct {
+	bun.BaseModel `bun:"table:command_state"`
+	WorkspaceID   model.AccessScopeID `bun:"workspace_id"`
+	TaskType      model.TaskType      `bun:"task_type"`
+}
+
+// IdentifyTask returns the task metadata for a given task ID.
+// Returns db.ErrNotFound if a command with given taskID does not exist.
+func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error) {
+	metadata := TaskMetadata{}
+	if err := Bun().NewSelect().Model(&metadata).
+		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id' AS workspace_id").
+		ColumnExpr("generic_command_spec->'TaskType' as task_type").
+		Where("task_id = ?", taskID).
+		Scan(ctx); err != nil {
+		if errors.Cause(err) == sql.ErrNoRows {
+			return metadata, ErrNotFound
+		}
+		return metadata, err
+	}
+	return metadata, nil
+}
