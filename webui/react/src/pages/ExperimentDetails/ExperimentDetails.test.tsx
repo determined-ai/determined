@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { unstable_HistoryRouter as HistoryRouter, useParams } from 'react-router-dom';
-import { ClusterProvider } from 'stores/cluster';
 
 import {
   getExperimentDetails,
@@ -15,6 +14,7 @@ import {
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
+import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
 import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
