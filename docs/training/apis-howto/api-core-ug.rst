@@ -1,6 +1,6 @@
-#########################
+##########
  Core API
-#########################
+##########
 
 In this guide, you'll learn how to use the Core API.
 
@@ -54,7 +54,6 @@ Run the code using the command:
 
 If you navigate to this experiment in the WebUI no metrics are displayed because you have not yet
 reported them to the master using the Core API.
-
 
 .. _core-metrics:
 
@@ -121,7 +120,6 @@ with only a few new lines of code.
 The complete ``1_metrics.py`` and ``1_metrics.yaml`` listings used in this example can be found in
 the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
-
 
 .. _core-checkpoints:
 
@@ -203,7 +201,6 @@ The complete ``2_checkpoints.py`` and ``2_checkpoints.yaml`` listings used in th
 found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
 
-
 .. _core-hpsearch:
 
 ***********************
@@ -283,7 +280,6 @@ runs a train-validate-report loop:
 The complete ``3_hpsearch.py`` and ``3_hpsearch.yaml`` listings used in this example can be found in
 the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
-
 
 .. _core-distributed:
 
@@ -412,5 +408,3 @@ considerations are:
 The complete ``4_distributed.py`` and ``3_hpsearch.yaml`` listings used in this example can be found
 in the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github repository
 <https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api>`_.
-
-

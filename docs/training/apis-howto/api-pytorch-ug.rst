@@ -1,6 +1,6 @@
-############################
+#############
  PyTorch API
-############################
+#############
 
 In this guide, you'll learn how to use the PyTorch API.
 

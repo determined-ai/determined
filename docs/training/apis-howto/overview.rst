@@ -2,22 +2,22 @@
  Training API Guides
 #####################
 
-The Training API Guides describe how to use the Determined training APIs. 
-Each API guide contains a link to its corresponding API reference.
+The Training API Guides describe how to use the Determined training APIs. Each API guide contains a
+link to its corresponding API reference.
 
 Determined leverages specific APIs for each Deep Learning framework. In general, you convert your
 existing training code by subclassing a Trial class and implementing methods that advertise
 components of your model - e.g., model architecture, data loader, optimizer, learning rate
-scheduler, callbacks, etc. This is called the Trial definition. With the code structured in this way,
-Determined is able to run the training loop and provide advanced training and model management
+scheduler, callbacks, etc. This is called the Trial definition. With the code structured in this
+way, Determined is able to run the training loop and provide advanced training and model management
 capabilities.
 
-Once your model code is ported to a Determined API, you can use an :doc:`experiment
-configuration </reference/reference-training/experiment-config-reference>` to tell
-Determined how to train the model - e.g., multi-GPU, hyperparameter search, etc.
+Once your model code is ported to a Determined API, you can use an :doc:`experiment configuration
+</reference/reference-training/experiment-config-reference>` to tell Determined how to train the
+model - e.g., multi-GPU, hyperparameter search, etc.
 
-If you have existing model code that you'd like to train with Determined, choose one 
-of the following Training API Guides, depending on your ML Framework:
+If you have existing model code that you'd like to train with Determined, choose one of the
+following Training API Guides, depending on your ML Framework:
 
 -  :doc:`/training/apis-howto/api-core-ug`
 -  :doc:`/training/apis-howto/api-pytorch-ug`
@@ -25,10 +25,10 @@ of the following Training API Guides, depending on your ML Framework:
 -  :doc:`/training/apis-howto/api-keras-ug`
 -  :doc:`/training/apis-howto/deepspeed/overview`
 
-If you'd like to review how to implement the Determined APIs on simple models, visit
-our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an
-existing model that already runs on Determined, visit our :doc:`examples
-</example-solutions/examples>` to see if the model you'd like to train is already available.
+If you'd like to review how to implement the Determined APIs on simple models, visit our
+:doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an existing
+model that already runs on Determined, visit our :doc:`examples </example-solutions/examples>` to
+see if the model you'd like to train is already available.
 
 ********************
  TensorFlow Support

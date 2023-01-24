@@ -1,6 +1,6 @@
-######################################
+#######################
  PyTorch Lightning API
-######################################
+#######################
 
 In this guide, you'll learn how to use the PyTorch Lightning API.
 
