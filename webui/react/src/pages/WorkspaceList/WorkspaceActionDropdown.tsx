@@ -168,9 +168,7 @@ const WorkspaceActionDropdown: React.FC<Props> = ({
       title="Open actions menu"
       onClick={stopPropagation}>
       <Dropdown menu={WorkspaceActionMenu} placement="bottomRight" trigger={trigger ?? ['click']}>
-        <Button type="text" onClick={stopPropagation}>
-          <Icon name={`overflow-${direction}`} />
-        </Button>
+        <Button ghost icon={<Icon name={`overflow-${direction}`} />} onClick={stopPropagation} />
       </Dropdown>
       {modalWorkspaceDeleteContextHolder}
       {modalWorkspaceEditContextHolder}

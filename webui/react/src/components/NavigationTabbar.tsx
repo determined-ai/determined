@@ -74,7 +74,7 @@ const NavigationTabbar: React.FC = () => {
   const [isShowingOverflow, setIsShowingOverflow] = useState(false);
   const [isShowingPinnedWorkspaces, setIsShowingPinnedWorkspaces] = useState(false);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+    useModalJupyterLab({});
 
   const showNavigation = isAuthenticated && ui.showChrome;
   const dashboardEnabled = useFeature().isOn('dashboard');

@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -516,6 +517,10 @@ func (a *apiServer) DeleteWorkspace(
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debugf("deleting workspace %d NTSC", req.Id)
+	command.TellNTSC(a.m.system, req)
+
 	if len(projects) == 0 {
 		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
 		return &apiv1.DeleteWorkspaceResponse{Completed: (err == nil)},

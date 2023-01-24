@@ -259,6 +259,7 @@ export interface LaunchJupyterLabParams {
   };
   preview?: boolean;
   templateName?: string;
+  workspaceId?: number;
 }
 
 export interface GetCommandsParams extends FetchOptions, PaginationParams {
