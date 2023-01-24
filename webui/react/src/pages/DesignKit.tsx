@@ -38,7 +38,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ShirtSize } from 'themes';
-import { BrandingType, Metric, MetricType, ResourcePool } from 'types';
+import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
@@ -290,21 +290,11 @@ const ChartsSection: React.FC = () => {
       </Card>
       <Card title="Label options">
         <p>A chart with two metrics, a title, a legend, an x-axis label, a y-axis label.</p>
-        <LineChart
-          height={250}
-          metric={{ name: 'sample' } as Metric}
-          series={[line1, line2]}
-          showLegend={true}
-        />
+        <LineChart height={250} series={[line1, line2]} showLegend={true} title="Sample" />
       </Card>
       <Card title="Focus series">
         <p>Highlight a specific metric in the chart.</p>
-        <LineChart
-          focusedSeries={1}
-          height={250}
-          metric={{ name: 'sample' } as Metric}
-          series={[line1, line2]}
-        />
+        <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
       </Card>
       <Card title="Chart Grid">
         <p>
@@ -315,11 +305,11 @@ const ChartsSection: React.FC = () => {
         </p>
         <ChartGrid
           chartsProps={[
-            { metric: { name: 'Sample1' } as Metric, series: [line1], showLegend: true },
+            { series: [line1], showLegend: true, title: 'Sample1' },
             {
-              metric: { name: 'Sample2' } as Metric,
               series: [line2, line2Times],
               showLegend: true,
+              title: 'Sample2',
             },
           ]}
           xAxisOptions={Object.values(XAxisDomain)}

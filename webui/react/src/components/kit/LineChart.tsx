@@ -9,7 +9,7 @@ import { SyncProvider } from 'components/UPlot/SyncProvider';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import { glasbeyColor } from 'shared/utils/color';
-import { Metric, MetricType, Scale } from 'types';
+import { MetricType, Scale } from 'types';
 
 import css from './LineChart.module.scss';
 
@@ -19,6 +19,7 @@ import css from './LineChart.module.scss';
  * @param {string} [color] - A CSS-compatible color to directly set the line and tooltip color for the Serie. Defaults to glasbeyColor.
  * @param {[number, number][]} data - An array of ordered [x, y] points.
  * @param {MetricType} [metricType] - Indicator of a Serie representing a Training or Validation metric.
+ * @param {string} [name] - Name to display in legend and toolip instead of Series number.
  * @param {XAxisDomain} [xAxisRole] - Indicates the Serie is for use only as an X-axis (ex: batches, time).
  */
 
@@ -26,6 +27,7 @@ export interface Serie {
   color?: string;
   data: [number, number][];
   metricType?: MetricType;
+  name?: string;
   xAxisRole?: XAxisDomain;
 }
 
@@ -34,10 +36,10 @@ export interface Serie {
  * Config for a single LineChart component.
  * @param {number} [focusedSeries] - Highlight one Serie's line and fade the others, given an index in the given series.
  * @param {number} [height=350] - Height in pixels.
- * @param {Metric} metric - Name and type for the displayed Metric.
  * @param {Scale} [scale=Scale.Linear] - Linear or Log Scale for the y-axis.
  * @param {Serie[]} series - Array of valid series to plot onto the chart.
  * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each metric's color, name, and type.
+ * @param {string} [title] - Title for the chart.
  * @param {XAxisDomain} [xAxis=XAxisDomain.Batches] - Set the x-axis of the chart to one of the included series with an xAxisRole matching this domain (example: batches, time).
  * @param {string} [xLabel] - Directly set label below the x-axis.
  * @param {string} [yLabel] - Directly set label left of the y-axis.
@@ -45,10 +47,10 @@ export interface Serie {
 interface Props {
   focusedSeries?: number;
   height?: number;
-  metric: Metric;
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
+  title?: string;
   xAxis?: XAxisDomain;
   xLabel?: string;
   yLabel?: string;
@@ -57,10 +59,10 @@ interface Props {
 export const LineChart: React.FC<Props> = ({
   focusedSeries,
   height = 350,
-  metric,
   scale = Scale.Linear,
   series,
   showLegend = false,
+  title,
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
@@ -82,10 +84,9 @@ export const LineChart: React.FC<Props> = ({
   const seriesNames: string[] = useMemo(() => {
     const ySeries = series.filter((s) => !s.xAxisRole);
     return ySeries.map(
-      (s, idx) =>
-        (ySeries.length > 1 ? `${s.metricType}_` : '') + (metric.name || `Series ${idx + 1}`),
+      (s, idx) => (ySeries.length > 1 ? `${s.metricType}_` : '') + (s.name || `Series ${idx + 1}`),
     );
-  }, [series, metric.name]);
+  }, [series]);
 
   const chartData: AlignedData = useMemo(() => {
     const xSet = new Set<number>();
@@ -170,7 +171,7 @@ export const LineChart: React.FC<Props> = ({
 
   return (
     <>
-      {metric.name && <h5 className={css.chartTitle}>{metric.name}</h5>}
+      {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
         allowDownload
         data={chartData}
