@@ -9,6 +9,7 @@ const { Option } = Select;
 
 export const XAxisDomain = {
   Batches: 'Batches',
+  Epochs: 'Epochs',
   Time: 'Time',
 } as const;
 
