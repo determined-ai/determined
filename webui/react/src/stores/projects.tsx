@@ -12,17 +12,20 @@ import { getWorkspaceProjects } from 'services/api';
 import { Project } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { observable, WritableObservable } from 'utils/observable';
+import { observable, useObservable, WritableObservable } from 'utils/observable';
 
 class ProjectService {
   private _projects: WritableObservable<Map<number, Project>> = observable(Map());
   private _projectsByIndex: WritableObservable<Map<string, Project[]>> = observable(Map());
 
+  genWorkspaceKey = (workspaceId: number): string => `byworkspace-${workspaceId}`;
+
   fetchWorkspaceProjects = async (
     workspaceId: number,
     canceler: AbortController,
+    forceFetch = false,
   ): Promise<void> => {
-    if (this._projectsByIndex.get().get(`byworkspace-${workspaceId}`)) return;
+    if (!forceFetch && this._projectsByIndex.get().get(this.genWorkspaceKey(workspaceId))) return;
     try {
       const response = await getWorkspaceProjects(
         {
@@ -32,7 +35,7 @@ class ProjectService {
         { signal: canceler.signal },
       );
       this._projectsByIndex.update((prevState: Map<string, Project[]>) => {
-        return prevState.set(`byworkspace-${workspaceId}`, response.projects);
+        return prevState.set(this.genWorkspaceKey(workspaceId), response.projects);
       });
       this._projects.update((prevState: Map<number, Project>) => {
         return prevState.withMutations((state: Map<number, Project>) => {
@@ -45,11 +48,11 @@ class ProjectService {
   };
 
   getWorkspaceProject = (workspaceId: number): Project[] | undefined => {
-    return this._projectsByIndex.get().get(`byworkspace-${workspaceId}`);
+    return useObservable(this._projectsByIndex).get(this.genWorkspaceKey(workspaceId));
   };
 
   getProject = (projectId: number): Project | undefined => {
-    return this._projects.get().get(projectId);
+    return useObservable(this._projects).get(projectId);
   };
 }
 
@@ -77,12 +80,12 @@ export const useFetchWorkspaceProjects = (
   }, [canceler]);
 
   if (store === null) {
-    throw new Error('Attempted to use useWorkspaceProjects outside of Projects Context');
+    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
   }
 
   return useCallback(
     async (workspaceId: number): Promise<void> => {
-      await store.fetchWorkspaceProjects(workspaceId, canceler);
+      await store.fetchWorkspaceProjects(workspaceId, canceler, true);
     },
     [store, canceler],
   );
@@ -98,7 +101,9 @@ export const useEnsureWorkspaceProjectsFetched = (
   }, [canceler]);
 
   if (store === null) {
-    throw new Error('Attempted to use useFetchWorkspaceProjects outside of Projects Context');
+    throw new Error(
+      'Attempted to use useEnsureWorkspaceProjectsFetched outside of Projects Context',
+    );
   }
 
   return useCallback(
