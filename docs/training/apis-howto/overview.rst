@@ -1,32 +1,33 @@
-###############
- Training APIs
-###############
+#####################
+ Training API Guides
+#####################
 
-This section describes how to use the training APIs and contains the API reference information.
+The Training API Guides describe how to use the Determined training APIs. 
+Each API guide contains a link to its corresponding API reference.
 
-Determined leverages specific APIs for each Deep Learning framework. In general, users convert their
+Determined leverages specific APIs for each Deep Learning framework. In general, you convert your
 existing training code by subclassing a Trial class and implementing methods that advertise
-components of the user's model - e.g., model architecture, data loader, optimizer, learning rate
-scheduler, callbacks, etc. This is called the Trial definition and by structuring their code in this
-way, Determined is able to run the training loop and provide advanced training and model management
+components of your model - e.g., model architecture, data loader, optimizer, learning rate
+scheduler, callbacks, etc. This is called the Trial definition. With the code structured in this way,
+Determined is able to run the training loop and provide advanced training and model management
 capabilities.
 
-Once users' model code are ported to Determined's APIs, they can use an :doc:`experiment
-configuration </reference/reference-training/experiment-config-reference>` to configure how
-Determined should train the model - e.g., multi-GPU, hyperparameter search, etc.
+Once your model code is ported to a Determined API, you can use an :doc:`experiment
+configuration </reference/reference-training/experiment-config-reference>` to tell
+Determined how to train the model - e.g., multi-GPU, hyperparameter search, etc.
 
-If you have existing model code that you'd like to train with Determined, continue to one of the API
-docs below depending on your ML Framework.
+If you have existing model code that you'd like to train with Determined, choose one 
+of the following Training API Guides, depending on your ML Framework:
 
--  :doc:`/training/apis-howto/api-core/overview`
+-  :doc:`/training/apis-howto/api-core-ug`
 -  :doc:`/training/apis-howto/api-pytorch-ug`
 -  :doc:`/training/apis-howto/api-pytorch-lightning-ug`
 -  :doc:`/training/apis-howto/api-keras-ug`
 -  :doc:`/training/apis-howto/deepspeed/overview`
 
-If you'd like a review of implementing the Determined APIs on simple models, please take a look at
+If you'd like to review how to implement the Determined APIs on simple models, visit
 our :doc:`Tutorials </tutorials/pytorch-mnist-tutorial>`. Or, if you'd like to build off of an
-existing model that already runs on Determined, take a look at our :doc:`examples
+existing model that already runs on Determined, visit our :doc:`examples
 </example-solutions/examples>` to see if the model you'd like to train is already available.
 
 ********************
@@ -84,7 +85,7 @@ Known limitations:
    :caption: Training
    :hidden:
 
-   api-core/overview
+   api-core-ug
    api-pytorch-ug
    api-pytorch-lightning-ug
    api-keras-ug
