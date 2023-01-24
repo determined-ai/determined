@@ -486,7 +486,7 @@ def test_workspace_delete_notebook() -> None:
     nb = next((nb for nb in notebooks_resp.notebooks if nb.id == created_resp.notebook.id), None)
     assert nb is not None
 
-    with setup_workspace(admin_session) as workspace2:
+    with setup_workspaces(admin_session) as [workspace2]:
         # create a notebook inside another workspace
         outside_notebook = bindings.post_LaunchNotebook(
             admin_session,
