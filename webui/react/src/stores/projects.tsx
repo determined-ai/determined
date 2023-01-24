@@ -49,12 +49,17 @@ class ProjectService {
     }
   };
 
-  getWorkspaceProject = (workspaceId: number): Project[] | undefined => {
-    return useObservable(this._projectsByIndex).get(this.genWorkspaceKey(workspaceId));
+  getWorkspaceProject = (workspaceId: number): Loadable<Project[]> => {
+    const projects = useObservable(this._projectsByIndex).get(this.genWorkspaceKey(workspaceId));
+    if (projects === undefined) return NotLoaded;
+    return Loaded(projects);
   };
 
-  getProject = (projectId: number): Project | undefined => {
-    return useObservable(this._projects).get(projectId);
+  getProject = (projectId: number): Loadable<Project> => {
+    const project = useObservable(this._projects).get(projectId);
+    if (project === undefined) return NotLoaded;
+
+    return Loaded(project);
   };
 }
 
@@ -137,11 +142,7 @@ export const useWorkspaceProjects = (
     loadedWorkspaceId = workspaceId;
   }
 
-  const projects = store.getWorkspaceProject(loadedWorkspaceId);
-
-  if (projects === undefined) return NotLoaded;
-
-  return Loaded(projects);
+  return store.getWorkspaceProject(loadedWorkspaceId);
 };
 
 export const useProject = (projectId: number): Loadable<Project> => {
@@ -151,9 +152,5 @@ export const useProject = (projectId: number): Loadable<Project> => {
     throw new Error('Attempted to use useProject outside of Projects Context');
   }
 
-  const project = store.getProject(projectId);
-
-  if (project === undefined) return NotLoaded;
-
-  return Loaded(project);
+  return store.getProject(projectId);
 };
