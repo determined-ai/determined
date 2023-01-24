@@ -65,16 +65,26 @@ export const LineChart: React.FC<Props> = ({
   xLabel,
   yLabel,
 }: Props) => {
+  const isMetricPair: boolean = useMemo(() => {
+    const mTypes = series.map((s) => s.metricType);
+    return (
+      series.length === 2 &&
+      series[0].name === series[1].name &&
+      mTypes.includes(MetricType.Training) &&
+      mTypes.includes(MetricType.Validation)
+    );
+  }, [series]);
+
   const seriesColors: string[] = useMemo(
     () =>
       series.map(
         (s, idx) =>
           s.color ||
-          (s.metricType === MetricType.Training && '#009BDE') ||
-          (s.metricType === MetricType.Validation && '#F77B21') ||
+          (isMetricPair && s.metricType === MetricType.Training && '#009BDE') ||
+          (isMetricPair && s.metricType === MetricType.Validation && '#F77B21') ||
           glasbeyColor(idx),
       ),
-    [series],
+    [series, isMetricPair],
   );
 
   const seriesNames: string[] = useMemo(() => {

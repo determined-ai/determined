@@ -253,7 +253,7 @@ const ChartsSection: React.FC = () => {
       [XAxisDomain.Time]: [],
     },
     metricType: MetricType.Training,
-    name: 'Line 1',
+    name: 'Line',
   };
 
   const stampToNum = (tstamp: string): number => new Date(tstamp).getTime() / 1000;
@@ -278,7 +278,21 @@ const ChartsSection: React.FC = () => {
       ],
     },
     metricType: MetricType.Validation,
-    name: 'Line 2',
+    name: 'Line',
+  };
+
+  const line3: Serie = {
+    data: {
+      [XAxisDomain.Time]: [
+        [stampToNum('2023-01-05T01:00:00Z'), 12],
+        [stampToNum('2023-01-05T02:00:00Z'), 5],
+        [stampToNum('2023-01-05T02:30:00Z'), 2],
+        [stampToNum('2023-01-05T03:00:00Z'), 10.123456789],
+        [stampToNum('2023-01-05T04:00:00Z'), 4],
+      ],
+    },
+    metricType: MetricType.Validation,
+    name: 'Alt-Line',
   };
 
   return (
@@ -308,12 +322,12 @@ const ChartsSection: React.FC = () => {
           chartsProps={[
             { series: [line1], showLegend: true, title: 'Sample1' },
             {
-              series: [line2],
+              series: [line2, line3],
               showLegend: true,
               title: 'Sample2',
             },
           ]}
-          xAxisOptions={Object.values(XAxisDomain)}
+          xAxisOptions={[XAxisDomain.Batches, XAxisDomain.Time]}
         />
       </Card>
     </ComponentSection>
