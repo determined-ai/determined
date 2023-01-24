@@ -34,6 +34,7 @@ class ProjectService {
         },
         { signal: canceler.signal },
       );
+      // Prevent unecessary re-renders
       if (this._projectsByIndex.get().get(this.genWorkspaceKey(workspaceId))) return;
       this._projectsByIndex.update((prevState: Map<string, Project[]>) => {
         return prevState.set(this.genWorkspaceKey(workspaceId), response.projects);
