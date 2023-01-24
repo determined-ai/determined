@@ -369,11 +369,7 @@ const ModelRegistry: React.FC = () => {
 
     const actionRenderer = (_: string, record: ModelItem) => (
       <Dropdown menu={ModelActionMenu(record)} trigger={['click']}>
-        <Button ghost type="text">
-          <div className={css.overflow}>
-            <Icon name="overflow-vertical" />
-          </div>
-        </Button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" />
       </Dropdown>
     );
 
