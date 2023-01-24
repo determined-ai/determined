@@ -17,10 +17,11 @@ def merge_dict(d1: Dict, d2: Dict) -> None:
     Modifies d1 in-place to contain values from d2.  If any value
     in d1 is a dictionary (or dict-like), *and* the corresponding
     value in d2 is also a dictionary, then merge them in-place.
+    If a key in d2 has an explicit value of None that key is removed
+    from d1.
     """
 
     for k, v2 in d2.items():
-        # Nones represent a deletion
         if v2 is None:
             d1.pop(k)
             continue

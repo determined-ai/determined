@@ -95,6 +95,8 @@ class SearcherOperation:
 
         ``report_completed()`` requires the value of the metric you are searching over.  This value
         is typically the output of the "validate" step of the train-validate-report cycle.
+        In most cases `searcher_metric` should be a `float` but custom search methods
+        may use any json-serializable type as searcher metric.
         """
         if not self._is_chief:
             raise RuntimeError("you must only call op.report_completed() from the chief worker")
