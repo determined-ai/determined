@@ -7,7 +7,9 @@
 Determined publishes a Homebrew tap for installing the Determined master and agent as Homebrew
 services on macOS, for both Apple silicon and Intel hardware.
 
-While it is most common to install the master and agent on the same machine, it is also possible to install the master and agent on separate nodes, or install agents on multiple machines and connect them to one master.
+While it is most common to install the master and agent on the same machine, it is also possible to
+install the master and agent on separate nodes, or install agents on multiple machines and connect
+them to one master.
 
 .. note::
 
@@ -52,8 +54,8 @@ While it is most common to install the master and agent on the same machine, it 
  Installation - Agent
 **********************
 
-#. The Determined agent uses Docker to run your workloads. For more information, visit 
-   :ref:`Docker for Mac installation instructions <install-docker-on-macos>`.
+#. The Determined agent uses Docker to run your workloads. For more information, visit :ref:`Docker
+   for Mac installation instructions <install-docker-on-macos>`.
 
 #. By default, Determined will store checkpoints in ``$(brew --prefix)/var/determined/data``, which
    is typically ``/usr/local/var/determined/data`` or ``/opt/homebrew/var/determined/data``. Make
