@@ -12,6 +12,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import Button from 'components/kit/Button';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -558,12 +559,15 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const JupyterLabButton = () => {
-    return (
-      <Button
-        disabled={workspace ? !canCreateWorkspaceNSC(workspace) : !canCreateNSC}
-        onClick={() => openJupyterLabModal()}>
-        Launch JupyterLab
-      </Button>
+    const hasNSCPermissions = workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC;
+    return hasNSCPermissions ? (
+      <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
+    ) : (
+      <Tooltip placement="leftBottom" title="User lacks permission to create NSC">
+        <div>
+          <Button disabled>Launch JupyterLab</Button>
+        </div>
+      </Tooltip>
     );
   };
 

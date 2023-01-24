@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import Grid, { GridMode } from 'components/Grid';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
@@ -175,10 +176,14 @@ const Dashboard: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const JupyterLabButton = () => {
-    return (
-      <Button disabled={!canCreateNSC} onClick={() => openJupyterLabModal()}>
-        Launch JupyterLab
-      </Button>
+    return !canCreateNSC ? (
+      <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
+    ) : (
+      <Tooltip placement="leftBottom" title="User lacks permission to create NSC">
+        <div>
+          <Button disabled>Launch JupyterLab</Button>
+        </div>
+      </Tooltip>
     );
   };
 

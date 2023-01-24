@@ -150,7 +150,7 @@ const NavigationSideBar: React.FC = () => {
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
 
-  const { canCreateNSC, canCreateWorkspace, canViewWorkspace, canEditWebhooks } = usePermissions();
+  const { canCreateWorkspace, canViewWorkspace, canEditWebhooks } = usePermissions();
 
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
 
@@ -258,20 +258,13 @@ const NavigationSideBar: React.FC = () => {
             <section className={css.launch}>
               <div className={css.launchBlock}>
                 <div className={css.launchButton}>
-                  <Button
-                    block
-                    disabled={!canCreateNSC}
-                    type="ghost"
-                    onClick={() => openJupyterLabModal()}>
+                  <Button block type="ghost" onClick={() => openJupyterLabModal()}>
                     Launch JupyterLab
                   </Button>
                 </div>
                 {settings.navbarCollapsed ? (
                   <div className={css.launchIcon}>
-                    <Button
-                      disabled={!canCreateNSC}
-                      type="text"
-                      onClick={() => openJupyterLabModal()}>
+                    <Button type="text" onClick={() => openJupyterLabModal()}>
                       <Icon name="jupyter-lab" />
                     </Button>
                   </div>
