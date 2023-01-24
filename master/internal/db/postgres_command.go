@@ -8,7 +8,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // GetCommandOwnerID gets a command's ownerID from a taskID. Uses persisted command state.
@@ -32,25 +31,26 @@ func GetCommandOwnerID(ctx context.Context, taskID model.TaskID) (model.UserID, 
 	return ownerIDBun.OwnerID, nil
 }
 
-// GetCommandGenericSpec gets a command's generic spec from a taskID. Uses persisted command state.
-// Returns db.ErrNotFound if a command with given taskID does not exist.
-func GetCommandGenericSpec(ctx context.Context, taskID model.TaskID) (
-	tasks.GenericCommandSpec, error,
-) {
-	specBun := &struct {
-		bun.BaseModel `bun:"table:command_state"`
-		Spec          tasks.GenericCommandSpec `bun:"generic_command_spec"`
-	}{}
+// TaskMetadata captures minimal metadata about a task.
+type TaskMetadata struct {
+	bun.BaseModel `bun:"table:command_state"`
+	WorkspaceID   model.AccessScopeID `bun:"workspace_id"`
+	TaskType      model.TaskType      `bun:"task_type"`
+}
 
-	if err := Bun().NewSelect().Model(specBun).
-		ColumnExpr("generic_command_spec").
+// IdentifyTask returns the task metadata for a given task ID.
+// Returns db.ErrNotFound if a command with given taskID does not exist.
+func IdentifyTask(ctx context.Context, taskID model.TaskID) (TaskMetadata, error) {
+	metadata := TaskMetadata{}
+	if err := Bun().NewSelect().Model(&metadata).
+		ColumnExpr("generic_command_spec->'Metadata'->'workspace_id' AS workspace_id").
+		ColumnExpr("generic_command_spec->'TaskType' as task_type").
 		Where("task_id = ?", taskID).
 		Scan(ctx); err != nil {
 		if errors.Cause(err) == sql.ErrNoRows {
-			return specBun.Spec, ErrNotFound
+			return metadata, ErrNotFound
 		}
-		return specBun.Spec, err
+		return metadata, err
 	}
-
-	return specBun.Spec, nil
+	return metadata, nil
 }

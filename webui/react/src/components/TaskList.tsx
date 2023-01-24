@@ -33,6 +33,12 @@ import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import TableFilterSearch from 'components/Table/TableFilterSearch';
 import TaskActionDropdown from 'components/TaskActionDropdown';
+import settingsConfig, {
+  ALL_SORTKEY,
+  DEFAULT_COLUMN_WIDTHS,
+  isOfSortKey,
+  Settings,
+} from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
@@ -54,12 +60,6 @@ import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } 
 import { getDisplayName } from 'utils/user';
 
 import css from './TaskList.module.scss';
-import settingsConfig, {
-  ALL_SORTKEY,
-  DEFAULT_COLUMN_WIDTHS,
-  isOfSortKey,
-  Settings,
-} from './TaskList.settings';
 
 const TensorBoardSourceType = {
   Experiment: 'Experiment',
@@ -67,6 +67,10 @@ const TensorBoardSourceType = {
 } as const;
 
 type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
+
+interface Props {
+  workspaceId?: number;
+}
 
 interface TensorBoardSource {
   id: number;
@@ -82,7 +86,7 @@ interface SourceInfo {
 
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
-const TaskList: React.FC = () => {
+const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
@@ -98,8 +102,9 @@ const TaskList: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab();
-  const { activeSettings, resetSettings, settings, updateSettings } =
-    useSettings<Settings>(settingsConfig);
+  const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
+    settingsConfig(workspaceId?.toString() ?? 'global'),
+  );
   const dashboardEnabled = useFeature().isOn('dashboard');
 
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
@@ -152,10 +157,10 @@ const TaskList: React.FC = () => {
   const fetchTasks = useCallback(async () => {
     try {
       const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
-        getCommands({ signal: canceler.signal }),
-        getJupyterLabs({ signal: canceler.signal }),
-        getShells({ signal: canceler.signal }),
-        getTensorBoards({ signal: canceler.signal }),
+        getCommands({ signal: canceler.signal, workspaceId }),
+        getJupyterLabs({ signal: canceler.signal, workspaceId }),
+        getShells({ signal: canceler.signal, workspaceId }),
+        getTensorBoards({ signal: canceler.signal, workspaceId }),
       ]);
       const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
       setTasks((prev) => {
@@ -169,7 +174,7 @@ const TaskList: React.FC = () => {
         type: ErrorType.Api,
       });
     }
-  }, [canceler]);
+  }, [canceler.signal, workspaceId]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchUsers(), fetchTasks()]);

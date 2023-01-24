@@ -487,6 +487,10 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
+			rp.agentStatesCache = rp.fetchAgentStates(ctx)
+			defer func() {
+				rp.agentStatesCache = nil
+			}()
 			for _, a := range rp.agentStatesCache {
 				totalSlots += len(a.slotStates)
 			}

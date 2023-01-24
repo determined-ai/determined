@@ -549,6 +549,7 @@ export interface ExperimentItem {
   projectId: number;
   projectName?: string;
   resourcePool: string;
+  searcherMetricValue?: number;
   searcherType: string;
   startTime: string;
   state: CompoundRunState;
@@ -678,6 +679,7 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   userId: number;
+  workspaceId: number;
 }
 
 export type RecentEvent = {

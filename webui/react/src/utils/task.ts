@@ -60,19 +60,6 @@ export function generateExperimentTask(idx: number): Type.RecentExperimentTask {
   };
 }
 
-export function generateCommandTask(idx: number): Type.RecentCommandTask {
-  const state = getRandomElementOfEnum(Type.CommandState);
-  const task = generateTask(idx);
-  const user = sampleUsers.random();
-  return {
-    ...task,
-    displayName: user.displayName,
-    state: state as Type.CommandState,
-    type: getRandomElementOfEnum(Type.CommandType),
-    userId: user.id,
-  };
-}
-
 export const generateOldExperiment = (id = 1): Type.ExperimentOld => {
   const experimentTask = generateExperimentTask(id);
   const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
@@ -158,16 +145,6 @@ export const generateExperiment = (id = 1): Type.ExperimentItem => {
 
 export const generateExperiments = (count = 30): Type.ExperimentItem[] => {
   return new Array(Math.floor(count)).fill(null).map((_, idx) => generateExperiment(idx));
-};
-
-export const generateTasks = (count = 10): Type.RecentTask[] => {
-  return new Array(Math.floor(count)).fill(0).map((_, idx) => {
-    if (Math.random() > 0.5) {
-      return generateCommandTask(idx);
-    } else {
-      return generateExperimentTask(idx);
-    }
-  });
 };
 
 // Differentiate Task from Experiment.
