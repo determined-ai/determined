@@ -68,7 +68,7 @@ def test_slack_webhook() -> None:
 
     exp.wait_for_experiment_state(
         experiment_id,
-        bindings.determinedexperimentv1State.STATE_COMPLETED,
+        bindings.experimentv1State.STATE_COMPLETED,
         max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
     )
     exp_config = exp.experiment_config_json(experiment_id)

@@ -325,7 +325,7 @@ def test_workspace_org() -> None:
         )
         test_exp = bindings.get_GetExperiment(sess, experimentId=test_exp_id).experiment
         test_experiments.append(test_exp)
-        wait_for_experiment_state(test_exp_id, bindings.determinedexperimentv1State.STATE_COMPLETED)
+        wait_for_experiment_state(test_exp_id, bindings.experimentv1State.STATE_COMPLETED)
         assert test_exp.projectId == default_project.id
 
         # Move the test experiment into a user-made project
@@ -450,8 +450,8 @@ def setup_workspaces(
 
 
 TERMINATING_STATES = [
-    bindings.determinedtaskv1State.STATE_TERMINATED,
-    bindings.determinedtaskv1State.STATE_TERMINATING,
+    bindings.taskv1State.STATE_TERMINATED,
+    bindings.taskv1State.STATE_TERMINATING,
 ]
 
 

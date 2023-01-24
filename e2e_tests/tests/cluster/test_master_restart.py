@@ -9,7 +9,7 @@ import requests
 
 from determined.common import constants
 from determined.common.api import authentication
-from determined.common.api.bindings import determinedexperimentv1State as EXP_STATE
+from determined.common.api.bindings import experimentv1State as EXP_STATE
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp

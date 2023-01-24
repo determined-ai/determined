@@ -331,7 +331,7 @@ def test_stress_agents_reconnect(steps: int, num_agents: int, should_disconnect:
                 None,
             )
             exp.wait_for_experiment_state(
-                experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+                experiment_id, bindings.experimentv1State.STATE_COMPLETED
             )
 
     for agent_id in range(num_agents):

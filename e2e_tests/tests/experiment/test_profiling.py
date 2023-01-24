@@ -43,7 +43,7 @@ def test_streaming_observability_metrics_apis(
         )
 
     exp.wait_for_experiment_state(
-        experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+        experiment_id, bindings.experimentv1State.STATE_COMPLETED
     )
     trials = exp.experiment_trials(experiment_id)
     trial_id = trials[0].trial.id

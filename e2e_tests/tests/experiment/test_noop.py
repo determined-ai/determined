@@ -24,7 +24,7 @@ def test_noop_pause() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_RUNNING)
 
     # Wait for the only trial to get scheduled.
     exp.wait_for_experiment_active_workload(experiment_id)
@@ -36,7 +36,7 @@ def test_noop_pause() -> None:
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
 
     # Wait at most 20 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
@@ -54,7 +54,7 @@ def test_noop_pause() -> None:
     # Resume the experiment and wait for completion.
     exp.activate_experiment(experiment_id)
     exp.wait_for_experiment_state(
-        experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+        experiment_id, bindings.experimentv1State.STATE_COMPLETED
     )
 
 
@@ -69,7 +69,7 @@ def test_noop_nan_validations() -> None:
         None,
     )
     exp.wait_for_experiment_state(
-        experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
+        experiment_id, bindings.experimentv1State.STATE_COMPLETED
     )
 
 
@@ -101,14 +101,14 @@ def test_noop_pause_of_experiment_without_trials() -> None:
             yaml.dump(config_obj, f)
         experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"), None)
     exp.pause_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_PAUSED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_PAUSED)
 
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(experiment_id, bindings.determinedexperimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
 
     for _ in range(5):
         assert (
-            exp.experiment_state(experiment_id) == bindings.determinedexperimentv1State.STATE_QUEUED
+            exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
         )
         time.sleep(1)
 

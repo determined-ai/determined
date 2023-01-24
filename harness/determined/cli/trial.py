@@ -26,7 +26,7 @@ def _workload_container_unpack(
 
 
 def _format_state(
-    state: Union[bindings.determinedcheckpointv1State, bindings.determinedexperimentv1State]
+    state: Union[bindings.checkpointv1State, bindings.experimentv1State]
 ) -> str:
     return str(state.value).replace("STATE_", "")
 
