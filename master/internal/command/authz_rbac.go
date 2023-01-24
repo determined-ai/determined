@@ -9,9 +9,7 @@ import (
 // NSCAuthZRBAC is the RBAC implementation of the NSCAuthZ interface.
 type NSCAuthZRBAC struct{}
 
-// CanGetNSC returns true and nil error unless the developer master config option
-// security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
-// an admin or if the user owns the task and a nil error.
+// CanGetNSC always returns a nil error.
 func (a *NSCAuthZRBAC) CanGetNSC(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
 ) (canGetCmd bool, err error) {

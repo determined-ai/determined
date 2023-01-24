@@ -105,3 +105,25 @@ func DoesPermissionMatchAll(ctx context.Context, curUserID model.UserID,
 	}
 	return nil
 }
+
+// GetNonGlobalWorkspacesWithPermission returns all workspaces the user has permissionID on.
+func GetNonGlobalWorkspacesWithPermission(ctx context.Context, curUserID model.UserID,
+	permissionID rbacv1.PermissionType,
+) ([]int, error) {
+	var workspaces []int
+
+	err := Bun().NewSelect().
+		TableExpr("role_assignment_scopes as ras").
+		Column("scope_workspace_id").
+		Join("JOIN role_assignments ra ON ra.scope_id = ras.id").
+		Join("JOIN permission_assignments pa ON ra.role_id = pa.role_id").
+		Join("JOIN user_group_membership ugm ON ra.group_id = ugm.group_id").
+		Where("ugm.user_id = ?", curUserID).
+		Where("pa.permission_id = ?", permissionID).
+		Scan(ctx, &workspaces)
+	if err != nil {
+		return workspaces, err
+	}
+
+	return workspaces, nil
+}

@@ -1,0 +1,51 @@
+stages:
+  - db:
+      name: db
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+        cache: 
+          cache_dir: /tmp/determined-cache
+        security:
+          authz:
+            type: rbac
+            rbac_ui_enabled: true
+        scim:
+          enabled: true
+          auth:
+            type: basic
+            username: determined
+            password: password
+
+  - custom:
+      name: proxy
+      cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]
+      post:
+        - conncheck:
+            port: 8081
+
+  - agent:
+      name: agent1
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        container_auto_remove_disabled: true
+        hooks:
+          on_connection_lost: ["touch", "/tmp/agent1-connection-lost"]
