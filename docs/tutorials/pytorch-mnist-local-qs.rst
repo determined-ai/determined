@@ -6,18 +6,21 @@
 
 .. meta::
    :description: Learn how to integrate the PyTorch MNIST model into Determined AI using only a single CPU or GPU.
-   :keywords: Trial API,MNIST,model developer
+   :keywords: PyTorch API,MNIST,model developer,quickstart
 
 
 In this tutorial, we’ll show you how to integrate a training example with the Determined
 environment. We'll run our experiment on a local training environment requiring only a single CPU or
-GPU. This tutorial is recommended as an introduction for model developers who are new to Determined
-AI.
+GPU. 
+
+.. note::
+
+   This tutorial is recommended as an introduction for model developers who are new to Determined AI.
 
 **Objective**
 
 Our goal is to integrate the `PyTorch MNIST training example
-<https://github.com/pytorch/examples/blob/main/mnist/main.py>`_ into Determined in five steps:
+<https://github.com/pytorch/examples/blob/main/mnist/main.py>`_ into Determined in four steps:
 
 -  Download and extract the files
 -  Set up our training environment
@@ -32,15 +35,14 @@ Our goal is to integrate the `PyTorch MNIST training example
    <https://docs.determined.ai/latest/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements.html#install-docker>`_
 
 *****************************
- Download the Tutorial Files
+ Download the Files
 *****************************
 
 To get started, we'll first download and extract the files we need and ``cd`` into
 the directory.
 
 - Download the :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>` file.
-- Open a terminal window, extract the file, and ``cd`` into the ``mnist_pytorch`` 
-directory:
+- Open a terminal window, extract the file, and ``cd`` into the ``mnist_pytorch`` directory:
 
 .. code::
 

@@ -17,7 +17,7 @@ environment.
 +---------------------------------+--------------------------------------------------------------+
 
 *********************************
- Get Started with the Trial APIs
+ Get Started with a Trial API
 *********************************
 
 +---------------------------------+--------------------------------------------------------------+
@@ -56,5 +56,5 @@ contain detailed information about the training APIs.
 
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
    PyTorch Porting Tutorial <pytorch-porting-tutorial>
-   TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>
    Run a PyTorch API MNIST Trial on a Local Cluster <pytorch-mnist-local-qs>
+   TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>
