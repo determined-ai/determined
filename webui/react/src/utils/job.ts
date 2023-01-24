@@ -46,8 +46,9 @@ export const orderedSchedulers = new Set([
 
 /**
  * Create the update request based on a given position for a job.
+ *
  * @param jobs The list of all jobs.
- * @param job The job id of the job to update
+ * @param jobId The job id of the job to update
  * @param position The position of the job in the queue. Starting from 1.
  * @throws {DetError}
  */

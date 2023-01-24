@@ -17,6 +17,7 @@ import Input from 'components/kit/Input';
 import InputNumber from 'components/kit/InputNumber';
 import InputSearch from 'components/kit/InputSearch';
 import { ChartGrid, LineChart, Serie } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Pagination from 'components/kit/Pagination';
 import Pivot from 'components/kit/Pivot';
 import Tooltip from 'components/kit/Tooltip';
@@ -36,7 +37,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { ShirtSize } from 'themes';
-import { BrandingType, ResourcePool } from 'types';
+import { BrandingType, MetricType, ResourcePool } from 'types';
 
 import css from './DesignKit.module.scss';
 import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader'; //TODO: Rename?
@@ -237,41 +238,63 @@ const DropdownsSection: React.FC = () => {
 };
 
 const ChartsSection: React.FC = () => {
-  const xSeries = { data: [0, 1, 2, 2.5, 3, 3.25, 3.75, 4, 6, 9, 10, 18, 19] };
   const line1: Serie = {
-    data: [
-      0,
-      null,
-      Math.random() * 12,
-      null,
-      null,
-      null,
-      null,
-      15,
-      Math.random() * 60,
-      Math.random() * 40,
-      Math.random() * 76,
-      Math.random() * 80,
-      89,
-    ],
+    data: {
+      [XAxisDomain.Batches]: [
+        [0, -2],
+        [2, Math.random() * 12],
+        [4, 15],
+        [6, Math.random() * 60],
+        [9, Math.random() * 40],
+        [10, Math.random() * 76],
+        [18, Math.random() * 80],
+        [19, 89],
+      ],
+      [XAxisDomain.Time]: [],
+    },
+    metricType: MetricType.Training,
+    name: 'Line',
   };
+
+  const stampToNum = (tstamp: string): number => new Date(tstamp).getTime() / 1000;
+
   const line2: Serie = {
-    data: [
-      null,
-      15,
-      10.123456789,
-      Math.random() * 22,
-      Math.random() * 18,
-      Math.random() * 10 + 10,
-      Math.random() * 12,
-      12,
-      null,
-      null,
-      null,
-      null,
-      null,
-    ],
+    data: {
+      [XAxisDomain.Batches]: [
+        [1, 15],
+        [2, 10.123456789],
+        [2.5, Math.random() * 22],
+        [3, Math.random() * 18],
+        [3.25, Math.random() * 10 + 10],
+        [3.75, Math.random() * 12],
+        [4, 12],
+      ],
+      [XAxisDomain.Time]: [
+        [stampToNum('2023-01-05T01:00:00Z'), 15],
+        [stampToNum('2023-01-05T02:12:34.56789Z'), 10.123456789],
+        [stampToNum('2023-01-05T02:30:00Z'), 22],
+        [stampToNum('2023-01-05T03:15:00Z'), 15],
+        [stampToNum('2023-01-05T04:02:06Z'), 12],
+      ],
+    },
+    metricType: MetricType.Validation,
+    name: 'Line',
   };
+
+  const line3: Serie = {
+    data: {
+      [XAxisDomain.Time]: [
+        [stampToNum('2023-01-05T01:00:00Z'), 12],
+        [stampToNum('2023-01-05T02:00:00Z'), 5],
+        [stampToNum('2023-01-05T02:30:00Z'), 2],
+        [stampToNum('2023-01-05T03:00:00Z'), 10.123456789],
+        [stampToNum('2023-01-05T04:00:00Z'), 4],
+      ],
+    },
+    metricType: MetricType.Validation,
+    name: 'Alt-Line',
+  };
+
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
@@ -281,32 +304,30 @@ const ChartsSection: React.FC = () => {
         </p>
       </Card>
       <Card title="Label options">
-        <p>A chart with two series, a title, a legend, an x-axis label, a y-axis label.</p>
-        <LineChart
-          height={250}
-          series={[xSeries, line1, line2]}
-          showLegend={true}
-          title="Title"
-          xLabel="X Label"
-          yLabel="Y Label"
-        />
+        <p>A chart with two metrics, a title, a legend, an x-axis label, a y-axis label.</p>
+        <LineChart height={250} series={[line1, line2]} showLegend={true} title="Sample" />
       </Card>
       <Card title="Focus series">
-        <p>Highlight a specific series in the chart.</p>
-        <LineChart focusedSeries={1} height={250} series={[xSeries, line1, line2]} />
+        <p>Highlight a specific metric in the chart.</p>
+        <LineChart focusedSeries={1} height={250} series={[line1, line2]} title="Sample" />
       </Card>
       <Card title="Chart Grid">
         <p>
           A Chart Grid (<code>{'<ChartGrid>'}</code>) can be used to place multiple charts in a
           responsive grid. There is a sync for the plot window, cursor, and selection/zoom of an
-          x-axis range.
+          x-axis range. There will be a linear/log scale switch, and if multiple X-axis options are
+          provided, an X-axis switch.
         </p>
-        <div style={{ height: 300 }}>
-          <ChartGrid
-            chartsProps={[{ series: [xSeries, line1] }, { series: [xSeries, line2] }]}
-            rowHeight={250}
-          />
-        </div>
+        <ChartGrid
+          chartsProps={[
+            { series: [line1], showLegend: true, title: 'Sample1' },
+            {
+              series: [line2, line3],
+              showLegend: true,
+              title: 'Sample2',
+            },
+          ]}
+        />
       </Card>
     </ComponentSection>
   );
