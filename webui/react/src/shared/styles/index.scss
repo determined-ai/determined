@@ -49,7 +49,7 @@ code.block {
   white-space: pre;
 }
 .uplot canvas {
-  background-color: #f6f6f6;
+  background-color: var(--theme-stage);
 }
 .u-cursor-pt {
   border-radius: 0 !important;
@@ -65,7 +65,7 @@ code.block {
   width: 7px;
 }
 .u-cursor-pt::after {
-  background-color: #f6f6f6;
+  background-color: var(--theme-stage);
   content: '';
   height: 3px;
   position: absolute;

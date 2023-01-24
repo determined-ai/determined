@@ -313,19 +313,17 @@ const ChartsSection: React.FC = () => {
           x-axis range. There will be a linear/log scale switch, and if multiple X-axis options are
           provided, an X-axis switch.
         </p>
-        <div style={{ height: 400 }}>
-          <ChartGrid
-            chartsProps={[
-              { metric: { name: 'Sample1' } as Metric, series: [line1], showLegend: true },
-              {
-                metric: { name: 'Sample2' } as Metric,
-                series: [line2, line2Times],
-                showLegend: true,
-              },
-            ]}
-            xAxisOptions={Object.values(XAxisDomain)}
-          />
-        </div>
+        <ChartGrid
+          chartsProps={[
+            { metric: { name: 'Sample1' } as Metric, series: [line1], showLegend: true },
+            {
+              metric: { name: 'Sample2' } as Metric,
+              series: [line2, line2Times],
+              showLegend: true,
+            },
+          ]}
+          xAxisOptions={Object.values(XAxisDomain)}
+        />
       </Card>
     </ComponentSection>
   );

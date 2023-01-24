@@ -211,13 +211,16 @@ export const ChartGrid: React.FC<GroupProps> = ({ chartsProps, xAxisOptions }: G
       </div>
       <SyncProvider>
         <AutoSizer>
-          {({ width }) => {
+          {({ height, width }) => {
             const columnCount = Math.max(1, Math.floor(width / 540));
             return (
               <FixedSizeGrid
                 columnCount={columnCount}
                 columnWidth={Math.floor(width / columnCount)}
-                height={(chartsProps.length > columnCount ? 2.1 : 1.05) * 480}
+                height={Math.min(
+                  height - 40,
+                  (chartsProps.length > columnCount ? 2.1 : 1.05) * 480,
+                )}
                 rowCount={Math.ceil(chartsProps.length / columnCount)}
                 rowHeight={480}
                 width={width}>
