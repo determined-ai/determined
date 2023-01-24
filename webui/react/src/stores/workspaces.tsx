@@ -1,12 +1,5 @@
 import { observable, WritableObservable } from 'micro-observables';
-import React, {
-  createContext,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import React, { createContext, PropsWithChildren, useCallback, useContext, useRef } from 'react';
 
 import { createWorkspace, deleteWorkspace, getWorkspaces } from 'services/api';
 import { V1PostWorkspaceRequest } from 'services/api-ts-sdk';
@@ -15,18 +8,34 @@ import { isEqual } from 'shared/utils/data';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { useValueMemoizedObservable } from 'utils/observable';
 
 type WorkspacesContext = { workspaces: WritableObservable<Loadable<Workspace[]>> };
+export type FetchWSSettings = {
+  archived: boolean | undefined;
+  limit: number;
+  name: string | undefined;
+  offset: number;
+  orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
+  sortBy: any;
+  users: string[] | undefined;
+};
 
 const WorkspacesContext = createContext<WorkspacesContext | null>(null);
 
 export const WorkspacesProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const workspaces: WritableObservable<Loadable<Workspace[]>> = observable(NotLoaded);
+  const workspaces = useRef<WritableObservable<Loadable<Workspace[]>>>(observable(NotLoaded));
 
-  return <WorkspacesContext.Provider value={{ workspaces }}>{children}</WorkspacesContext.Provider>;
+  return (
+    <WorkspacesContext.Provider value={{ workspaces: workspaces.current }}>
+      {children}
+    </WorkspacesContext.Provider>
+  );
 };
 
-export const useFetchWorkspaces = (canceler: AbortController): (() => Promise<void>) => {
+export const useFetchWorkspaces = (
+  canceler: AbortController,
+): ((settings?: FetchWSSettings) => Promise<void>) => {
   const context = useContext(WorkspacesContext);
 
   if (context === null) {
@@ -35,15 +44,47 @@ export const useFetchWorkspaces = (canceler: AbortController): (() => Promise<vo
 
   const { workspaces } = context;
 
-  return useCallback(async (): Promise<void> => {
-    try {
-      const response = await getWorkspaces({}, { signal: canceler.signal });
+  return useCallback(
+    async (settings = {} as FetchWSSettings): Promise<void> => {
+      try {
+        const response = await getWorkspaces(settings, { signal: canceler.signal });
 
-      workspaces.set(Loaded(response.workspaces));
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, workspaces]);
+        workspaces.set(Loaded(response.workspaces));
+      } catch (e) {
+        handleError(e);
+      }
+    },
+    [canceler, workspaces],
+  );
+};
+
+export const useEnsureWorkspacesFetched = (
+  canceler: AbortController,
+): ((settings?: FetchWSSettings) => Promise<void>) => {
+  const context = useContext(WorkspacesContext);
+
+  if (context === null) {
+    throw new Error('Attempted to use useEnsureWorkspacesFetched outside of Workspace Context');
+  }
+
+  const { workspaces } = context;
+  const memoWorkspaces = useValueMemoizedObservable(workspaces);
+
+  return useCallback(
+    async (settings = {} as FetchWSSettings): Promise<void> => {
+      if (memoWorkspaces !== NotLoaded) return;
+
+      try {
+        const response = await getWorkspaces(settings, { signal: canceler.signal });
+
+        if (!isEqual(memoWorkspaces, response.workspaces))
+          workspaces.set(Loaded(response.workspaces));
+      } catch (e) {
+        handleError(e);
+      }
+    },
+    [canceler, workspaces, memoWorkspaces],
+  );
 };
 
 export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[]> => {
@@ -54,17 +95,7 @@ export const useWorkspaces = (params?: GetWorkspacesParams): Loadable<Workspace[
   }
 
   const { workspaces } = context;
-  const [workspacesState, setWorkspacesState] = useState(workspaces.get());
-
-  useEffect(() => {
-    const unsubscribe = workspaces.subscribe((ws, prevWs) => {
-      if (!isEqual(ws, prevWs)) setWorkspacesState(ws);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [workspaces]);
+  const workspacesState = useValueMemoizedObservable(workspaces);
 
   return Loadable.map(workspacesState, (workspaces: Workspace[]) =>
     workspaces.filter((ws) =>
@@ -121,9 +152,8 @@ export const useCreateWorkspace = (): ((arg0: V1PostWorkspaceRequest) => Promise
   return useCallback(
     async (params: V1PostWorkspaceRequest): Promise<Workspace> => {
       const createdWs = await createWorkspace(params);
-
-      workspaces.update((ldbWorkspace) => {
-        return Loadable.map(ldbWorkspace, (ws: Workspace[]) => [...ws, createdWs]);
+      workspaces.update((ldbWorkspaces) => {
+        return Loadable.map(ldbWorkspaces, (ws: Workspace[]) => [...ws, createdWs]);
       });
 
       return createdWs;

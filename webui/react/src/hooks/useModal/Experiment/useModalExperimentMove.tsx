@@ -15,7 +15,7 @@ import Icon from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner';
 import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
-import { useFetchWorkspaces, useWorkspaces } from 'stores/workspaces';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, Project } from 'types';
 import { Loadable } from 'utils/loadable';
 
@@ -71,20 +71,16 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   );
   const projects = useWorkspaceProjects(workspaceId);
   const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
-  const fetchWorkspaces = useFetchWorkspaces(canceler.current);
+  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   useEffect(() => {
-    const isLoadingWorkspaces = Loadable.isLoading(loadableWorspaces);
-    const loaded = Loadable.isLoaded(loadableWorspaces);
-
-    if (isLoadingWorkspaces) return;
-
-    if (!loaded) fetchWorkspaces();
-  }, [loadableWorspaces, fetchWorkspaces]);
+    fetchWorkspaces();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     ensureProjectsFetched(workspaceId);
