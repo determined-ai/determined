@@ -77,7 +77,7 @@ func (a *apiServer) filterTensorboards(
 	tensorboards []*tensorboardv1.Tensorboard,
 	workspaceID int32,
 ) ([]*tensorboardv1.Tensorboard, error) {
-	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
+	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopesTB(
 		ctx, curUser, model.AccessScopeID(workspaceID))
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanTerminateNSC(
+	err = command.AuthZProvider.Get().CanTerminateTensorboard(
 		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId))
 	if err != nil {
 		return nil, err
