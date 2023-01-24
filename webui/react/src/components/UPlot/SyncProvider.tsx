@@ -1,9 +1,15 @@
 import { observable } from 'micro-observables';
-import React, { createContext, useContext, useMemo, useState } from 'react';
-import uPlot, { AlignedData } from 'uplot';
+import React, { createContext, useContext, useMemo } from 'react';
+import uPlot, { AlignedData, Plugin } from 'uplot';
+
+import { generateUUID } from 'shared/utils/string';
 
 type Bounds = {
   dataBounds: {
+    max: number;
+    min: number;
+  } | null;
+  unzoomedBounds: {
     max: number;
     min: number;
   } | null;
@@ -14,20 +20,28 @@ type Bounds = {
 };
 
 class SyncService {
-  bounds = observable<Bounds>({ dataBounds: null, zoomBounds: null });
+  bounds = observable<Bounds>({ dataBounds: null, unzoomedBounds: null, zoomBounds: null });
 
   pubSub: uPlot.SyncPubSub;
 
-  activeBounds = this.bounds.select((b) => b?.zoomBounds ?? b?.dataBounds);
+  activeBounds = this.bounds.select((b) => b?.zoomBounds ?? b?.unzoomedBounds);
+  key: string;
 
-  constructor(pubSub: uPlot.SyncPubSub) {
-    this.pubSub = pubSub;
-    this.activeBounds.subscribe((b) => {
-      if (!b) return;
-      pubSub.plots.forEach((u) => {
-        u.setScale('x', { max: b.max, min: b.min });
+  constructor(syncKey?: string) {
+    this.key = syncKey ?? generateUUID();
+    this.pubSub = uPlot.sync(this.key);
+    this.activeBounds.subscribe((activeBounds) => {
+      if (!activeBounds) return;
+      const { min, max } = activeBounds;
+      this.pubSub.plots.forEach((u) => {
+        u.setScale('x', { max, min });
       });
     });
+  }
+
+  syncChart(chart: uPlot) {
+    const activeBounds = this?.activeBounds.get();
+    if (activeBounds) chart.setScale('x', activeBounds);
   }
 
   resetZoom() {
@@ -43,22 +57,32 @@ class SyncService {
     const lastIdx = xValues.length - 1;
     const dataMin = xValues[0];
     const dataMax = xValues[lastIdx];
+
     this.bounds.update((b) => {
-      const newMax = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
-      const newMin = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
-      return { ...b, dataBounds: { max: newMax, min: newMin } };
+      let max = Math.max(b.dataBounds?.max ?? dataMax, dataMax);
+      let min = Math.min(b.dataBounds?.min ?? dataMin, dataMin);
+      if (max - min <= 0) {
+        // default handling of min = max is not great
+        min = Math.min(max, 0);
+        max = 2 * max;
+      }
+      return { ...b, unzoomedBounds: { max, min } };
     });
   }
 }
 
 interface Props {
   children: React.ReactNode;
+  // pass a new key when you want the zoom to be reset,
+  // e.g. when changing the x-axis. by default it will
+  // reset when the component remounts
+  syncKey?: string;
 }
 
 const SyncContext = createContext<SyncService | null>(null);
 
-export const SyncProvider: React.FC<Props> = ({ children }) => {
-  const [syncService] = useState(() => new SyncService(uPlot.sync('x')));
+export const SyncProvider: React.FC<Props> = ({ syncKey, children }) => {
+  const syncService = useMemo(() => new SyncService(syncKey), [syncKey]);
 
   return <SyncContext.Provider value={syncService}>{children}</SyncContext.Provider>;
 };
@@ -67,12 +91,16 @@ export const useChartSync = (): {
   options: Partial<uPlot.Options>;
   syncService: SyncService;
 } => {
-  const syncService = useContext(SyncContext);
+  const syncProviderService = useContext(SyncContext);
 
-  const [dummyService] = useState(() => new SyncService(uPlot.sync('x')));
+  const syncService = useMemo(
+    () => syncProviderService ?? new SyncService(),
+    [syncProviderService],
+  );
 
   const options = useMemo(() => {
     const syncKey = syncService?.pubSub.key;
+    const syncScales: [string, null] = ['x', null];
     return {
       cursor: {
         bind: {
@@ -86,17 +114,15 @@ export const useChartSync = (): {
         drag: { dist: 5, setScale: false, uni: 10, x: true, y: false },
         sync: {
           key: syncKey,
-          scales: [syncKey, null],
+          scales: syncScales,
           setSeries: false,
         },
       },
+
       hooks: {
-        ready: [
-          (chart: uPlot) => {
-            const activeBounds = syncService?.activeBounds.get();
-            if (activeBounds) chart.setScale('x', activeBounds);
-          },
-        ],
+        init: [syncService.syncChart],
+        ready: [syncService.syncChart],
+        setData: [(chart: uPlot) => syncService.updateDataBounds(chart.data)],
         setSelect: [
           (chart: uPlot) => {
             const min = chart.posToVal(chart.select.left, 'x');
@@ -107,16 +133,7 @@ export const useChartSync = (): {
         ],
       },
     };
-  }, [syncService]) as Partial<uPlot.Options>;
+  }, [syncService]);
 
-  return syncService
-    ? { options, syncService }
-    : {
-        options: {
-          cursor: {
-            drag: { dist: 5, uni: 10, x: true, y: true },
-          },
-        },
-        syncService: dummyService,
-      };
+  return { options, syncService };
 };

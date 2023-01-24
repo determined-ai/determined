@@ -1,8 +1,6 @@
 import { DownloadOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import { useObservable } from 'micro-observables';
 import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
 import { throttle } from 'throttle-debounce';
 import uPlot, { AlignedData } from 'uplot';
 
@@ -38,7 +36,6 @@ const shouldRecreate = (
   prev: Partial<Options> | undefined,
   next: Partial<Options> | undefined,
 ): boolean => {
-  // if (!chart) return true;
   if (!next) return false;
   if (!prev) return true;
   if (prev === next) return false;
@@ -51,7 +48,7 @@ const shouldRecreate = (
 
   const someScaleHasChanged = Object.entries(next.scales ?? {}).some(([scaleKey, nextScale]) => {
     const prevScale = prev?.scales?.[scaleKey];
-    return prevScale?.distr !== nextScale?.distr || prevScale?.range !== nextScale?.range;
+    return prevScale?.distr !== nextScale?.distr;
   });
 
   if (someScaleHasChanged) return true;
@@ -80,6 +77,7 @@ const shouldRecreate = (
 
   return false;
 };
+type ChartType = 'Line' | 'Scatter';
 
 const UPlotChart: React.FC<Props> = ({
   allowDownload,
@@ -92,30 +90,40 @@ const UPlotChart: React.FC<Props> = ({
   const chartRef = useRef<uPlot>();
   const [divHeight, setDivHeight] = useState((options?.height ?? 300) + 20);
   const chartDivRef = useRef<HTMLDivElement>(null);
-  const [isReady, setIsReady] = useState(false);
   const classes = [css.base];
 
   const { ui } = useUI();
-  const { syncService, options: syncOptions } = useChartSync();
+  const { options: syncOptions, syncService } = useChartSync();
 
-  const zoomed = useObservable(syncService.bounds.select((b) => b.zoomBounds !== null));
+  // line charts have their zoom state handled by `SyncProvider`, scatter charts do not.
+  const chartType: ChartType = options?.mode === 2 ? 'Scatter' : 'Line';
 
-  const hasData = data && data.length > 1 && (options?.mode === 2 || data?.[0]?.length);
+  const hasData = data && data.length > 1 && (chartType === 'Scatter' || data?.[0]?.length);
 
   if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
+
+  useEffect(() => {
+    if (data !== undefined) syncService.updateDataBounds(data as AlignedData);
+  }, [syncService, data]);
 
   const extendedOptions = useMemo(() => {
     const extended: Partial<uPlot.Options> = uPlot.assign(
       {
-        hooks: {
-          destroy: [() => setIsReady(false), () => syncService.resetZoom()],
-          // ready: [() => setIsReady(true)],
-        },
         width: chartDivRef.current?.offsetWidth,
       },
-      syncOptions || {},
-      options || {},
+      chartType === 'Line' ? syncOptions : {},
+      options ?? {},
     );
+
+    if (chartType === 'Line') {
+      const activeBounds = syncService.activeBounds.get();
+      if (activeBounds) {
+        const { min, max } = activeBounds;
+        extended.series = extended.series?.map((ser) => {
+          return { ...ser, max, min };
+        });
+      }
+    }
 
     // Override chart support colors to match theme.
     if (ui.theme && extended.axes) {
@@ -133,7 +141,7 @@ const UPlotChart: React.FC<Props> = ({
     }
 
     return extended as uPlot.Options;
-  }, [syncOptions, syncService, options, ui.theme]);
+  }, [options, ui.theme, chartType, syncOptions, syncService]);
 
   const previousOptions = usePrevious(extendedOptions, undefined);
 
@@ -145,16 +153,12 @@ const UPlotChart: React.FC<Props> = ({
   }, []);
 
   useEffect(() => {
-    if (data !== undefined) syncService.updateDataBounds(data as AlignedData);
-  }, [syncService, data]);
-
-  useEffect(() => {
     if (!chartDivRef.current) return;
-    if (shouldRecreate(previousOptions, extendedOptions)) {
+    if (!chartRef.current || shouldRecreate(previousOptions, extendedOptions)) {
       chartRef.current?.destroy();
       chartRef.current = undefined;
       try {
-        if (extendedOptions?.mode === 2 || extendedOptions.series.length === data?.length) {
+        if (chartType === 'Scatter' || extendedOptions.series.length === data?.length) {
           chartRef.current = new uPlot(extendedOptions, data as AlignedData, chartDivRef.current);
         }
       } catch (e) {
@@ -170,9 +174,7 @@ const UPlotChart: React.FC<Props> = ({
       }
     } else {
       try {
-        if (chartRef.current && isReady) {
-          chartRef.current.setData(data as AlignedData, false);
-        }
+        chartRef.current?.setData(data as AlignedData, chartType === 'Scatter');
       } catch (e) {
         chartRef.current?.destroy();
         chartRef.current = undefined;
@@ -185,7 +187,7 @@ const UPlotChart: React.FC<Props> = ({
         });
       }
     }
-  }, [data, extendedOptions, isReady, previousOptions, zoomed]);
+  }, [data, extendedOptions, previousOptions, chartType]);
 
   /**
    * When a focus index is provided, highlight applicable series.
