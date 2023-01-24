@@ -200,7 +200,6 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 //	@Param		timestamp_before	query	string	true	"End time to get allocations for (YYYY-MM-DDTHH:MM:SSZ format)"
 //nolint:lll
 //	@Success	200					{}		string	"A CSV file containing the fields experiment_id,kind,username,labels,slots,start_time,end_time,seconds"
-//nolint:godot
 //	@Router		/allocation/raw [get]
 //	@Deprecated
 func (m *Master) getRawResourceAllocation(c echo.Context) error {
@@ -332,7 +331,6 @@ func (m *Master) fetchAggregatedResourceAllocation(
 //nolint:lll
 //	@Param		period		query	string	true	"Period to aggregate over (RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY or RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY)"
 //	@Success	200			{}		string	"aggregation_type,aggregation_key,date,seconds"
-//nolint:godot
 //	@Router		/allocation/aggregated [get]
 func (m *Master) getAggregatedResourceAllocation(c echo.Context) error {
 	args := struct {

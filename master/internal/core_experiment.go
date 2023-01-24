@@ -148,7 +148,6 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 //	@Param		experiment_id	path	int		true	"Experiment ID"
 //	@Param		path			query	string	true	"Path to the target file"
 //	@Success	200				{}		string	""
-//nolint:godot
 //	@Router		/experiments/{experiment_id}/file/download [get]
 func (m *Master) getExperimentModelFile(c echo.Context) error {
 	args := struct {
