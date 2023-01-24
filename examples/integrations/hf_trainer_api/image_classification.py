@@ -46,10 +46,12 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+from transformers.integrations import TensorBoardCallback
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils.versions import require_version
 
 import determined as det
+from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 """ Fine-tuning a 🤗 Transformers model for image classification"""
 
@@ -418,6 +420,7 @@ def main(model_args, data_args, training_args):
         core_context, training_args, filter_metrics=["loss", "accuracy"], user_data=user_data
     )
     trainer.add_callback(det_callback)
+    trainer.add_callback(TensorBoardCallback(tb_writer=TorchWriter().writer))
 
     # Training
     if training_args.do_train:

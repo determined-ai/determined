@@ -32,7 +32,6 @@ class DetCallback(TrainerCallback):
         self.searcher_max_length = list(searcher_config["max_length"].values())[0]
         self.searcher_ops = self.core_context.searcher.operations()
         self.current_op = next(self.searcher_ops)
-
         self._check_searcher_compatibility(args)
 
     def on_log(
@@ -94,7 +93,7 @@ class DetCallback(TrainerCallback):
         info = det.get_cluster_info()
         assert info
 
-        # local_path is where HF Trainer saves model and tokenizer.
+        # local_path is where HF Trainer saves model and tokenizer in a given step.
         local_path = os.path.join(args.output_dir, f"checkpoint-{state.global_step}")
         if state.is_world_process_zero:
             if self.user_data is not None:
