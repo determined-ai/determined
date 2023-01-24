@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 import sys
 
+exit(1)
 # TODO add option to run rules in parallel
 # TODO add option to pass in a git diff to check or git hash
 
