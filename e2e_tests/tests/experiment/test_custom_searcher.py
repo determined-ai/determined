@@ -187,17 +187,13 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
 
     # pause multi-trial experiment
     exp.pause_experiment(multi_trial_exp_id)
-    exp.wait_for_experiment_state(
-        multi_trial_exp_id, bindings.experimentv1State.STATE_PAUSED
-    )
+    exp.wait_for_experiment_state(multi_trial_exp_id, bindings.experimentv1State.STATE_PAUSED)
 
     # activate multi-trial experiment
     exp.activate_experiment(multi_trial_exp_id)
 
     # wait for searcher to complete
-    exp.wait_for_experiment_state(
-        searcher_exp_id, bindings.experimentv1State.STATE_COMPLETED
-    )
+    exp.wait_for_experiment_state(searcher_exp_id, bindings.experimentv1State.STATE_COMPLETED)
 
     # searcher experiment
     searcher_exp = bindings.get_GetExperiment(

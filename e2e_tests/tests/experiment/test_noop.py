@@ -53,9 +53,7 @@ def test_noop_pause() -> None:
 
     # Resume the experiment and wait for completion.
     exp.activate_experiment(experiment_id)
-    exp.wait_for_experiment_state(
-        experiment_id, bindings.experimentv1State.STATE_COMPLETED
-    )
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -68,9 +66,7 @@ def test_noop_nan_validations() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(
-        experiment_id, bindings.experimentv1State.STATE_COMPLETED
-    )
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -107,9 +103,7 @@ def test_noop_pause_of_experiment_without_trials() -> None:
     exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_QUEUED)
 
     for _ in range(5):
-        assert (
-            exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
-        )
+        assert exp.experiment_state(experiment_id) == bindings.experimentv1State.STATE_QUEUED
         time.sleep(1)
 
     exp.cancel_single(experiment_id)

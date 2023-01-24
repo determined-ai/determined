@@ -300,11 +300,9 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
     for t in trials:
         for s in t.workloads:
             if (
-                s.training is not None
-                and s.training.state == experimentv1State.STATE_COMPLETED
+                s.training is not None and s.training.state == experimentv1State.STATE_COMPLETED
             ) or (
-                s.validation is not None
-                and s.validation.state == experimentv1State.STATE_COMPLETED
+                s.validation is not None and s.validation.state == experimentv1State.STATE_COMPLETED
             ):
                 return True
     return False
@@ -626,9 +624,7 @@ def report_failed_experiment(experiment_id: int) -> None:
     stopping_error = sum(
         1 for t in trials if t.trial.state == experimentv1State.STATE_STOPPING_ERROR
     )
-    completed = sum(
-        1 for t in trials if t.trial.state == experimentv1State.STATE_COMPLETED
-    )
+    completed = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_COMPLETED)
     canceled = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_CANCELED)
     errored = sum(1 for t in trials if t.trial.state == experimentv1State.STATE_ERROR)
     stopping_killed = sum(

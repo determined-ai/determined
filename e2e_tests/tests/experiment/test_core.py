@@ -370,9 +370,7 @@ def test_kill_experiment_ignoring_preemption() -> None:
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_RUNNING)
 
     bindings.post_CancelExperiment(api_utils.determined_test_session(), id=exp_id)
-    exp.wait_for_experiment_state(
-        exp_id, bindings.experimentv1State.STATE_STOPPING_CANCELED
-    )
+    exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_STOPPING_CANCELED)
 
     bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
     exp.wait_for_experiment_state(exp_id, bindings.experimentv1State.STATE_CANCELED)

@@ -240,9 +240,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
             experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
-        exp.wait_for_experiment_state(
-            experiment_id, bindings.experimentv1State.STATE_COMPLETED
-        )
+        exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
 
         # In some configurations, checkpoint GC will run on an auxillary machine, which may have to
         # be spun up still.  So we'll wait for it to run.

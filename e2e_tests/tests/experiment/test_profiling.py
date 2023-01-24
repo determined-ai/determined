@@ -42,9 +42,7 @@ def test_streaming_observability_metrics_apis(
             model_def_path,
         )
 
-    exp.wait_for_experiment_state(
-        experiment_id, bindings.experimentv1State.STATE_COMPLETED
-    )
+    exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
     trials = exp.experiment_trials(experiment_id)
     trial_id = trials[0].trial.id
 
