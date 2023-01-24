@@ -12,6 +12,8 @@ mkdir -p "$(dirname "$STDOUT_FILE")" "$(dirname "$STDERR_FILE")"
 ln -sf /proc/$$/fd/1 "$STDOUT_FILE"
 ln -sf /proc/$$/fd/2 "$STDERR_FILE"
 
+echo $(date -u) "ln to stderr and stdout"    
+
 # Create a FIFO to monitor process substitution exits, and a count to know how
 # many to wait on.
 DET_LOG_WAIT_FIFO=/run/determined/train/logs/wait.fifo
@@ -48,6 +50,7 @@ if [ -n "$DET_K8S_LOG_TO_FILE" ]; then
         printf x >$DET_LOG_WAIT_FIFO
     )
 
+    echo $(date -u) "Will add 2 to $DET_LOG_WAIT_COUNT below only if k8s job"        
     ((DET_LOG_WAIT_COUNT += 2))
 fi
 
@@ -81,6 +84,7 @@ if [ "$DET_RESOURCES_TYPE" == "slurm-job" ]; then
         printf x >$DET_LOG_WAIT_FIFO
     )
 
+    echo $(date -u) "Will add 2 to $DET_LOG_WAIT_COUNT below only if slurm job"    
     ((DET_LOG_WAIT_COUNT += 2))
 
     # Each container sends the Determined Master a notification that it's
@@ -111,6 +115,9 @@ exec > >(
     printf x >$DET_LOG_WAIT_FIFO
 )
 
+echo $(date -u) "Will add 2 to $DET_LOG_WAIT_COUNT below"
 ((DET_LOG_WAIT_COUNT += 2))
 
+
+echo $(date -u) "trap log teardown"
 trap 'source /run/determined/task-logging-teardown.sh' EXIT

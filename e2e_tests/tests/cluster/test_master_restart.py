@@ -262,7 +262,13 @@ def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int
         time.sleep(downtime)
         managed_cluster.restart_master()
 
-
+    client = docker.from_env()
+    containers = client.containers.list()
+    label = "ai.determined.container.description"
+    containers = [c for c in containers if f"/commands/{command_id}" in c.labels.get(label, "")]
+    assert len(containers) == 1
+    
+        
     start = time.time()
     print("Sleeping for 10 minutes, will this pass?")
     wait_for_command_state(command_id, "TERMINATED", 1200) 
@@ -271,7 +277,11 @@ def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int
     print("TIME PASSED", end - start)
     assert succeeded
 
+    print("Container logs")
+    print("!Log!", containers[0].logs())
+    print(containers[0].logs().decode("utf-8").replace("\\n", "\n"))
 
+    
 @pytest.mark.managed_devcluster
 @pytest.mark.parametrize("downtime", [5])
 def test_master_restart_shell(restartable_managed_cluster: ManagedCluster, downtime: int) -> None:
