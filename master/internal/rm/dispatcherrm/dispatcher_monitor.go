@@ -117,6 +117,14 @@ func (m *launcherMonitor) removeJob(dispatchID string) {
 	}
 }
 
+// checkJob checks the status of the specified job from the collection of jobs whose status is
+// being monitored.
+func (m *launcherMonitor) checkJob(dispatchID string) {
+	m.checkLauncherJob <- launcherJob{
+		dispatcherID: dispatchID,
+	}
+}
+
 // Return a starting context for the API client call that includes the authToken
 // (may be empty if disabled).
 func (m *launcherMonitor) authContext(ctx *actor.Context) context.Context {

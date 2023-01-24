@@ -234,7 +234,6 @@ OPT_MASTERHOST_casablanca_login=casablanca-login
 OPT_MASTERPORT_casablanca_login=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login=true
 
-
 # Configuration for casablanca-login2 (uses suffix casablanca_login2)
 OPT_name_casablanca_login2=casablanca-login2.us.cray.com
 OPT_LAUNCHERHOST_casablanca_login2=localhost
@@ -244,7 +243,6 @@ OPT_CHECKPOINTPATH_casablanca_login2=/mnt/lustre/foundation_engineering/determin
 OPT_MASTERHOST_casablanca_login2=casablanca-login2
 OPT_MASTERPORT_casablanca_login2=$USERPORT
 OPT_TRESSUPPORTED_casablanca_login2=false
-
 
 # Configuration for sawmill (10.100.97.101)
 OPT_name_sawmill=10.100.97.101
@@ -359,7 +357,6 @@ enroot_OPT_TASKCONTAINERDEFAULTS=$(
             - ENROOT_RUNTIME_PATH=/tmp/\$\$(whoami)
 EOF
 )
-
 
 # This is the list of options that can be injected into devcluster-slurm.yaml
 # If a value is not configured for a specific target cluster, it will be
