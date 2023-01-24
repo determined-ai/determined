@@ -92,7 +92,7 @@ brews:
         s.gsub! "  host_path: /tmp", "  host_path: #{var}/determined/data"
       end
       Pathname("etc/determined/master.yaml").append_lines <<~EOS
-        root: #{pkgshare}
+        root: #{opt_pkgshare}
         cache:
           cache_dir: #{var}/cache/determined
       EOS
