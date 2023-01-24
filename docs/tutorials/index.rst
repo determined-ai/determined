@@ -6,17 +6,14 @@ Learning the basics of working with Determined and how to port your existing cod
 environment.
 
 *******************************
- Get Started with the Core API
+ Get Started in 5 Minutes
 *******************************
 
 +---------------------------------+--------------------------------------------------------------+
 | Title                           | Description                                                  |
 +=================================+==============================================================+
-| :doc:`core-api-tutorial`        | Learn how to take an existing training script and integrate  |
-|                                 | it with Determined using the Core API.                       |
-+---------------------------------+--------------------------------------------------------------+
-| :doc:`core-api-mnist-tutorial`  | In five steps, learn how to integrate the PyTorch MNIST      |
-|                                 | model into Determined using the Core API.                    |
+| :doc:`pytorch-mnist-local-qs`   | In a few steps, learn how to integrate the PyTorch MNIST     |
+|                                 | model into Determined using only a single CPU or GPU.        |
 +---------------------------------+--------------------------------------------------------------+
 
 *********************************
@@ -60,5 +57,4 @@ contain detailed information about the training APIs.
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
    PyTorch Porting Tutorial <pytorch-porting-tutorial>
    TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>
-   Integrate an Existing Training Script with the Determined Environment <core-api-tutorial>
-   Run a Core API MNIST Trial on a Local Cluster <core-api-mnist-tutorial>
+   Run a PyTorch API MNIST Trial on a Local Cluster <pytorch-mnist-local-qs>

@@ -1,12 +1,13 @@
-.. _core_api_tutorial_part_2:
+.. _pytorch_mnist_quickstart:
 
-###############################################
- Run a Core API MNIST Trial on a Local Cluster
-###############################################
+##################################################
+ Run a PyTorch API MNIST Trial on a Local Cluster
+##################################################
 
 .. meta::
-   :description: In five steps, learn how to integrate the PyTorch MNIST model into Determined AI.
-   :keywords: Core API,MNIST,model developer
+   :description: Learn how to integrate the PyTorch MNIST model into Determined AI using only a single CPU or GPU.
+   :keywords: Trial API,MNIST,model developer
+
 
 In this tutorial, we’ll show you how to integrate a training example with the Determined
 environment. We'll run our experiment on a local training environment requiring only a single CPU or
@@ -18,11 +19,10 @@ AI.
 Our goal is to integrate the `PyTorch MNIST training example
 <https://github.com/pytorch/examples/blob/main/mnist/main.py>`_ into Determined in five steps:
 
--  Start with a bare-bones script
--  Report metrics
--  Perform checkpointing
--  Perform hyperparameter search optimization
--  Run distributed training
+-  Download and extract the files
+-  Set up our training environment
+-  Run the experiment
+-  View the experiment in our browser
 
 **Prerequisites**
 
@@ -31,16 +31,22 @@ Our goal is to integrate the `PyTorch MNIST training example
 -  `Docker
    <https://docs.determined.ai/latest/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements.html#install-docker>`_
 
-**************************
- Get the Quickstart Files
-**************************
+*****************************
+ Download the Tutorial Files
+*****************************
 
-To get started, add the `Core API MNIST tutorial files
-<https://github.com/determined-ai/determined/tree/master/examples/tutorials/core_api_mnist>`_ to
-your computer.
+To get started, we'll first download and extract the files we need and ``cd`` into
+the directory.
 
--  Create a new directory on your computer and name it something like ``core_api_mnist``.
--  Add the Core API MNIST Tutorial files.
+- Download the :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>` file.
+- Open a terminal window, extract the file, and ``cd`` into the ``mnist_pytorch`` 
+directory:
+
+.. code::
+
+   tar xzvf mnist_pytorch.tgz
+   cd mnist_pytorch
+
 
 **********************************
  Set Up Your Training Environment
@@ -69,20 +75,18 @@ If your local machine does not have a supported Nvidia GPU, include the ``no-gpu
  Run the Experiment
 ********************
 
-Each step has a corresponding experiment configuration file (.yaml) and training script (.py). In
-step one, you'll run a bare-bones script on your Determined cluster. To run the experiment starting
-with step one, enter the following command:
+To run the experiment, enter the following command:
 
-.. code:: bash
+.. code::
 
-   det -m experiment create -f const.yaml .
+   det experiment create const.yaml .
 
-Continue running the other steps by specifying the experiment configuration file for the step. For
-example, to run the metric reporting step, enter the following command:
+A notification displays letting you know the experiment has started.
 
-.. code:: bash
+.. code::
 
-   det -m experiment create -f metrics.yaml .
+   Preparing files (.../mnist_pytorch) to send to master... 2.5KB and 4 files
+   Created experiment xxx
 
 *********************
  View the Experiment
@@ -100,6 +104,6 @@ This is the cluster address for your local training environment.
  Next Steps
 ************
 
-In this article, we learned how to train on a local, single CPU or GPU. To learn how to change your
+In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to change your
 configuration settings, including how to run a distributed training job on multiple GPUs, visit the
 `Quickstart for Model Developers <https://docs.determined.ai/latest/quickstart-mdldev.html#>`_.
