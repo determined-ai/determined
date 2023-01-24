@@ -265,7 +265,8 @@ func (a *apiServer) GetCommand(
 		return nil, err
 	}
 
-	if err := command.AuthZProvider.Get().CanGetNSC(
+	ctx = command.SupplyEntityID(ctx, req.CommandId)
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
 		ctx, *curUser, model.AccessScopeID(resp.Command.WorkspaceId)); err != nil {
 		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
 	}
@@ -290,6 +291,7 @@ func (a *apiServer) KillCommand(
 		return nil, err
 	}
 
+	ctx = command.SupplyEntityID(ctx, req.CommandId)
 	if err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId),
 	); err != nil {
@@ -316,6 +318,7 @@ func (a *apiServer) SetCommandPriority(
 		return nil, err
 	}
 
+	ctx = command.SupplyEntityID(ctx, req.CommandId)
 	if err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetCmd.Command.WorkspaceId), int(req.Priority),
 	); err != nil {

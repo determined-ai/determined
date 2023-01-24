@@ -16,7 +16,6 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
-	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
@@ -97,9 +96,14 @@ func (a *apiServer) GetNotebook(
 		return nil, err
 	}
 
-	if err = command.AuthZProvider.Get().CanGetNSC(
-		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId)); err != nil {
-		return nil, authz.SubIfUnauthorized(err, errActorNotFound(addr))
+	ctx = command.SupplyEntityID(ctx, req.NotebookId)
+	if ok, err := command.AuthZProvider.Get().CanGetNSC(
+		ctx, *curUser, model.AccessScopeID(resp.Notebook.WorkspaceId),
+	); err != nil {
+		return nil, err
+	} else if !ok { // permission denied.
+		// report the error as if the notebook does not exist.
+		return nil, errActorNotFound(addr)
 	}
 	return resp, nil
 }
@@ -114,6 +118,7 @@ func (a *apiServer) validateToKillNotebook(ctx context.Context, notebookID strin
 		return err
 	}
 
+	ctx = command.SupplyEntityID(ctx, notebookID)
 	err = command.AuthZProvider.Get().CanTerminateNSC(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId),
 	)
@@ -153,6 +158,7 @@ func (a *apiServer) SetNotebookPriority(
 		return nil, err
 	}
 
+	ctx = command.SupplyEntityID(ctx, req.NotebookId)
 	err = command.AuthZProvider.Get().CanSetNSCsPriority(
 		ctx, *curUser, model.AccessScopeID(targetNotebook.Notebook.WorkspaceId), int(req.Priority),
 	)
