@@ -239,44 +239,46 @@ const DropdownsSection: React.FC = () => {
 
 const ChartsSection: React.FC = () => {
   const line1: Serie = {
-    data: [
-      [0, -2],
-      [2, Math.random() * 12],
-      [4, 15],
-      [6, Math.random() * 60],
-      [9, Math.random() * 40],
-      [10, Math.random() * 76],
-      [18, Math.random() * 80],
-      [19, 89],
-    ],
+    data: {
+      [XAxisDomain.Batches]: [
+        [0, -2],
+        [2, Math.random() * 12],
+        [4, 15],
+        [6, Math.random() * 60],
+        [9, Math.random() * 40],
+        [10, Math.random() * 76],
+        [18, Math.random() * 80],
+        [19, 89],
+      ],
+      [XAxisDomain.Time]: [],
+    },
     metricType: MetricType.Training,
-  };
-
-  const line2: Serie = {
-    data: [
-      [1, 15],
-      [2, 10.123456789],
-      [2.5, Math.random() * 22],
-      [3, Math.random() * 18],
-      [3.25, Math.random() * 10 + 10],
-      [3.75, Math.random() * 12],
-      [4, 12],
-    ],
-    metricType: MetricType.Validation,
+    name: 'Line 1',
   };
 
   const stampToNum = (tstamp: string): number => new Date(tstamp).getTime() / 1000;
-  const line2Times: Serie = {
-    data: [
-      [1, stampToNum('2023-01-05T01:00:00Z')],
-      [2, stampToNum('2023-01-05T02:12:34.56789Z')],
-      [2.5, stampToNum('2023-01-05T02:30:00Z')],
-      [3, stampToNum('2023-01-05T03:00:00Z')],
-      [3.25, stampToNum('2023-01-05T03:15:00Z')],
-      [3.75, stampToNum('2023-01-05T03:45:00Z')],
-      [4, stampToNum('2023-01-05T04:02:06Z')],
-    ],
-    xAxisRole: XAxisDomain.Time,
+
+  const line2: Serie = {
+    data: {
+      [XAxisDomain.Batches]: [
+        [1, 15],
+        [2, 10.123456789],
+        [2.5, Math.random() * 22],
+        [3, Math.random() * 18],
+        [3.25, Math.random() * 10 + 10],
+        [3.75, Math.random() * 12],
+        [4, 12],
+      ],
+      [XAxisDomain.Time]: [
+        [stampToNum('2023-01-05T01:00:00Z'), 15],
+        [stampToNum('2023-01-05T02:12:34.56789Z'), 10.123456789],
+        [stampToNum('2023-01-05T02:30:00Z'), 22],
+        [stampToNum('2023-01-05T03:15:00Z'), 15],
+        [stampToNum('2023-01-05T04:02:06Z'), 12],
+      ],
+    },
+    metricType: MetricType.Validation,
+    name: 'Line 2',
   };
 
   return (
@@ -306,7 +308,7 @@ const ChartsSection: React.FC = () => {
           chartsProps={[
             { series: [line1], showLegend: true, title: 'Sample1' },
             {
-              series: [line2, line2Times],
+              series: [line2],
               showLegend: true,
               title: 'Sample2',
             },

@@ -17,18 +17,16 @@ import css from './LineChart.module.scss';
  * @typedef Serie
  * Represents a single Series to display on the chart.
  * @param {string} [color] - A CSS-compatible color to directly set the line and tooltip color for the Serie. Defaults to glasbeyColor.
- * @param {[number, number][]} data - An array of ordered [x, y] points.
+ * @param {Record<string, [number, number][]>} data - An array of ordered [x, y] points for each axis.
  * @param {MetricType} [metricType] - Indicator of a Serie representing a Training or Validation metric.
  * @param {string} [name] - Name to display in legend and toolip instead of Series number.
- * @param {XAxisDomain} [xAxisRole] - Indicates the Serie is for use only as an X-axis (ex: batches, time).
  */
 
 export interface Serie {
   color?: string;
-  data: [number, number][];
+  data: Record<string, [number, number][]>;
   metricType?: MetricType;
   name?: string;
-  xAxisRole?: XAxisDomain;
 }
 
 /**
@@ -40,7 +38,7 @@ export interface Serie {
  * @param {Serie[]} series - Array of valid series to plot onto the chart.
  * @param {boolean} [showLegend=false] - Display a custom legend below the chart with each metric's color, name, and type.
  * @param {string} [title] - Title for the chart.
- * @param {XAxisDomain} [xAxis=XAxisDomain.Batches] - Set the x-axis of the chart to one of the included series with an xAxisRole matching this domain (example: batches, time).
+ * @param {XAxisDomain} [xAxis=XAxisDomain.Batches] - Set the x-axis of the chart (example: batches, time).
  * @param {string} [xLabel] - Directly set label below the x-axis.
  * @param {string} [yLabel] - Directly set label left of the y-axis.
  */
@@ -69,22 +67,19 @@ export const LineChart: React.FC<Props> = ({
 }: Props) => {
   const seriesColors: string[] = useMemo(
     () =>
-      series
-        .filter((s) => !s.xAxisRole)
-        .map(
-          (s, idx) =>
-            s.color ||
-            (s.metricType === MetricType.Training && '#009BDE') ||
-            (s.metricType === MetricType.Validation && '#F77B21') ||
-            glasbeyColor(idx),
-        ),
+      series.map(
+        (s, idx) =>
+          s.color ||
+          (s.metricType === MetricType.Training && '#009BDE') ||
+          (s.metricType === MetricType.Validation && '#F77B21') ||
+          glasbeyColor(idx),
+      ),
     [series],
   );
 
   const seriesNames: string[] = useMemo(() => {
-    const ySeries = series.filter((s) => !s.xAxisRole);
-    return ySeries.map(
-      (s, idx) => (ySeries.length > 1 ? `${s.metricType}_` : '') + (s.name || `Series ${idx + 1}`),
+    return series.map(
+      (s, idx) => (series.length > 1 ? `${s.metricType}_` : '') + (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -92,18 +87,14 @@ export const LineChart: React.FC<Props> = ({
     const xSet = new Set<number>();
     const yValues: Record<string, Record<string, number | null>> = {};
 
-    const xAxisSerie = xAxis && series.find((s) => s.xAxisRole === xAxis);
-
-    series
-      .filter((s) => !s.xAxisRole)
-      .forEach((serie, serieIndex) => {
-        yValues[serieIndex] = {};
-        serie.data.forEach((pt, idx) => {
-          const xVal = xAxisSerie ? xAxisSerie.data[idx][1] : pt[0];
-          xSet.add(xVal);
-          yValues[serieIndex][xVal] = Number.isFinite(pt[1]) ? pt[1] : null;
-        });
+    series.forEach((serie, serieIndex) => {
+      yValues[serieIndex] = {};
+      (serie.data[xAxis] || []).forEach((pt) => {
+        const xVal = pt[0];
+        xSet.add(xVal);
+        yValues[serieIndex][xVal] = Number.isFinite(pt[1]) ? pt[1] : null;
       });
+    });
 
     const xValues: number[] = Array.from(xSet);
     xValues.sort((a, b) => a - b);
@@ -152,19 +143,17 @@ export const LineChart: React.FC<Props> = ({
       },
       series: [
         { label: xAxis || xLabel || 'X' },
-        ...series
-          .filter((s) => !s.xAxisRole)
-          .map((serie, idx) => {
-            return {
-              label: seriesNames[idx],
-              points: { show: false },
-              scale: 'y',
-              spanGaps: true,
-              stroke: seriesColors[idx],
-              type: 'line',
-              width: 2,
-            };
-          }),
+        ...series.map((serie, idx) => {
+          return {
+            label: seriesNames[idx],
+            points: { show: false },
+            scale: 'y',
+            spanGaps: true,
+            stroke: seriesColors[idx],
+            type: 'line',
+            width: 2,
+          };
+        }),
       ],
     };
   }, [series, seriesColors, seriesNames, height, scale, xAxis, xLabel, yLabel]);
