@@ -12,7 +12,7 @@ epoch_seconds() {
 }
 
 # Wait for 30 seconds total for the logging to finish, otherwise just exit.
-waitfor="${DET_LOG_WAIT_TIME:-30}"
+waitfor="${DET_LOG_WAIT_TIME:-42}"
 deadline="$(($(epoch_seconds) + waitfor))"
 for ((i = 0; i < DET_LOG_WAIT_COUNT; i++)); do
     timeout="$((deadline - $(epoch_seconds)))"
