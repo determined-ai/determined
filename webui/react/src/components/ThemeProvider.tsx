@@ -18,13 +18,15 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   [DarkLight.Dark]: {
     algorithm: theme.darkAlgorithm,
     components: {
+      Input: {
+        colorBgContainer: 'transparent',
+      },
       Progress: {
         marginXS: 0,
       },
     },
     token: {
       borderRadius: 2,
-      colorBgContainer: 'transparent',
       colorLink: '#57a3fa',
       colorLinkHover: '#8dc0fb',
       colorPrimary: '#1890ff',
@@ -34,13 +36,15 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   [DarkLight.Light]: {
     algorithm: theme.defaultAlgorithm,
     components: {
+      Input: {
+        colorBgContainer: 'transparent',
+      },
       Progress: {
         marginXS: 0,
       },
     },
     token: {
       borderRadius: 2,
-      colorBgContainer: 'transparent',
       colorPrimary: '#1890ff',
       fontFamily: 'var(--font-family)',
     },
