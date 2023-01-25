@@ -1,21 +1,21 @@
 .. _pytorch_mnist_quickstart:
 
-##################################################
- Run a PyTorch API MNIST Trial on a Local Cluster
-##################################################
+#############################################
+ Running Your First Experiment in Determined
+#############################################
 
 .. meta::
    :description: Learn how to integrate the PyTorch MNIST model into Determined AI using only a single CPU or GPU.
    :keywords: PyTorch API,MNIST,model developer,quickstart
 
-
 In this tutorial, we’ll show you how to integrate a training example with the Determined
 environment. We'll run our experiment on a local training environment requiring only a single CPU or
-GPU. 
+GPU.
 
 .. note::
 
-   This tutorial is recommended as an introduction for model developers who are new to Determined AI.
+   This tutorial is recommended as an introduction for model developers who are new to Determined
+   AI.
 
 **Objective**
 
@@ -34,21 +34,19 @@ Our goal is to integrate the `PyTorch MNIST training example
 -  `Docker
    <https://docs.determined.ai/latest/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements.html#install-docker>`_
 
-*****************************
+********************
  Download the Files
-*****************************
+********************
 
-To get started, we'll first download and extract the files we need and ``cd`` into
-the directory.
+To get started, we'll first download and extract the files we need and ``cd`` into the directory.
 
-- Download the :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>` file.
-- Open a terminal window, extract the file, and ``cd`` into the ``mnist_pytorch`` directory:
+-  Download the :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>` file.
+-  Open a terminal window, extract the files, and ``cd`` into the ``mnist_pytorch`` directory:
 
 .. code::
 
    tar xzvf mnist_pytorch.tgz
    cd mnist_pytorch
-
 
 **********************************
  Set Up Your Training Environment
@@ -57,16 +55,12 @@ the directory.
 To start your experiment, you'll need a Determined cluster. If you are new to Determined AI
 (Determined), you can install the Determined library and start a cluster locally:
 
-.. code:: bash
+.. code::
 
-   pip install determined
+   # If your machine has GPUs:
    det deploy local cluster-up
 
-If your local machine does not have a supported Nvidia GPU, include the ``no-gpu`` option:
-
-.. code:: bash
-
-   pip install determined
+   # If your machine does not have GPUs:
    det deploy local cluster-up --no-gpu
 
 .. note::
@@ -87,8 +81,13 @@ A notification displays letting you know the experiment has started.
 
 .. code::
 
-   Preparing files (.../mnist_pytorch) to send to master... 2.5KB and 4 files
+   Preparing files (.../mnist_pytorch) to send to master...
    Created experiment xxx
+
+.. note::
+
+   The Determined CLI may display a warning letting you know the requested job requires more slots
+   than currently available. For the purposes of this tutorial, you can ignore this warning.
 
 *********************
  View the Experiment
@@ -106,6 +105,10 @@ This is the cluster address for your local training environment.
  Next Steps
 ************
 
-In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to change your
-configuration settings, including how to run a distributed training job on multiple GPUs, visit the
-`Quickstart for Model Developers <https://docs.determined.ai/latest/quickstart-mdldev.html#>`_.
+In four simple steps, you saw how using Determined helps you `build models, not infrastructure
+<https://www.determined.ai/project>`_.
+
+In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to
+change your configuration settings, including how to run a distributed training job on multiple
+GPUs, visit the `Quickstart for Model Developers
+<https://docs.determined.ai/latest/quickstart-mdldev.html#>`_.

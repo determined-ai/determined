@@ -2,23 +2,23 @@
  Tutorials
 ###########
 
-Learning the basics of working with Determined and how to port your existing code to the Determined
+Learn the basics of working with Determined and how to port your existing code to the Determined
 environment.
 
-*******************************
+**************************
  Get Started in 5 Minutes
-*******************************
+**************************
 
 +---------------------------------+--------------------------------------------------------------+
 | Title                           | Description                                                  |
 +=================================+==============================================================+
-| :doc:`pytorch-mnist-local-qs`   | In a few steps, learn how to integrate the PyTorch MNIST     |
-|                                 | model into Determined using only a single CPU or GPU.        |
+| :doc:`pytorch-mnist-local-qs`   | In a few steps, learn how to run your first experiment in    |
+|                                 | Determined using only a single CPU or GPU.                   |
 +---------------------------------+--------------------------------------------------------------+
 
-*********************************
+******************************
  Get Started with a Trial API
-*********************************
+******************************
 
 +---------------------------------+--------------------------------------------------------------+
 | Title                           | Description                                                  |
