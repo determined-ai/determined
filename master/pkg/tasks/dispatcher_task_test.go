@@ -1091,9 +1091,11 @@ func TestTaskSpec_computeResources(t *testing.T) {
 			},
 			wantResources: &launcher.ResourceRequirements{
 				Instances: &map[string]int32{"nodes": 4},
-				Cores:     &map[string]float32{"per-node": float32(slurmSlots)},
+				Cores: &map[string]float32{
+					"per-node":     float32(slurmSlots),
+					"per-instance": float32(32),
+				},
 			},
-			wantOpts: []string{"--cpus-per-task=32"},
 		},
 		{
 			name: "Slot type is CPU, PBS, slots-per-node",
@@ -1109,7 +1111,10 @@ func TestTaskSpec_computeResources(t *testing.T) {
 			},
 			wantResources: &launcher.ResourceRequirements{
 				Instances: &map[string]int32{"nodes": 7},
-				Cores:     &map[string]float32{"per-node": float32(pbsSlots)},
+				Cores: &map[string]float32{
+					"per-node":     float32(pbsSlots),
+					"per-instance": float32(pbsSlots),
+				},
 			},
 		},
 		{
@@ -1160,9 +1165,11 @@ func TestTaskSpec_computeResources(t *testing.T) {
 			},
 			wantResources: &launcher.ResourceRequirements{
 				Instances: &map[string]int32{"per-node": 1},
-				Gpus:      &map[string]int32{"total": int32(100)},
+				Gpus: &map[string]int32{
+					"total":        int32(100),
+					"per-instance": int32(32),
+				},
 			},
-			wantOpts: []string{"--gpus-per-task=32"},
 		},
 		{
 			name: "Slot type GPU, gres & tres supported (Slurm), no slots_per_node",
@@ -1183,6 +1190,23 @@ func TestTaskSpec_computeResources(t *testing.T) {
 		},
 		{
 			name: "Slot type GPU, gres supported, PBS, no slots_per_node",
+			fields: fields{
+				PbsConfig: pbsConfigSlotsUnspecified,
+			},
+			args: args{
+				tresSupported: false,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"per-node": 1},
+				Gpus:      &map[string]int32{"total": int32(100)},
+			},
+		},
+		{
+			name: "Slot type GPU, gres & tres supported, PBS, no slots_per_node",
 			fields: fields{
 				PbsConfig: pbsConfigSlotsUnspecified,
 			},
@@ -1213,6 +1237,26 @@ func TestTaskSpec_computeResources(t *testing.T) {
 			wantResources: &launcher.ResourceRequirements{
 				Instances: &map[string]int32{"nodes": 7},
 				Gpus:      &map[string]int32{"per-node": int32(pbsSlots)},
+			},
+		},
+		{
+			name: "Slot type GPU, gres & tres supported, PBS, slots-per-node",
+			fields: fields{
+				PbsConfig: pbsConfig,
+			},
+			args: args{
+				tresSupported: true,
+				numSlots:      100,
+				slotType:      device.CUDA,
+				gresSupported: true,
+				isPbsLauncher: true,
+			},
+			wantResources: &launcher.ResourceRequirements{
+				Instances: &map[string]int32{"per-node": 1},
+				Gpus: &map[string]int32{
+					"total":        int32(100),
+					"per-instance": int32(16),
+				},
 			},
 		},
 		{
@@ -1303,13 +1347,10 @@ func TestTaskSpec_computeResources(t *testing.T) {
 				SlurmConfig: tt.fields.SlurmConfig,
 				PbsConfig:   tt.fields.PbsConfig,
 			}
-			got, gotOpts := tr.computeResources(tt.args.tresSupported, tt.args.numSlots, tt.args.slotType,
+			got := tr.computeResources(tt.args.tresSupported, tt.args.numSlots, tt.args.slotType,
 				tt.args.gresSupported, tt.args.isPbsLauncher)
 			if !reflect.DeepEqual(got, tt.wantResources) {
 				t.Errorf("TaskSpec.computeResources() = %v, want %v", got, tt.wantResources)
-			}
-			if !reflect.DeepEqual(gotOpts, tt.wantOpts) {
-				t.Errorf("TaskSpec.computeResources() opts = %v, want %v", gotOpts, tt.wantOpts)
 			}
 		})
 	}
