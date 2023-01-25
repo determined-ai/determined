@@ -70,7 +70,8 @@ const shouldRecreate = (
       (nextSerie?.label != null && prevSerie?.label !== nextSerie?.label) ||
       (prevSerie?.stroke != null && prevSerie?.stroke !== nextSerie?.stroke) ||
       (nextSerie?.paths != null && prevSerie?.paths !== nextSerie?.paths) ||
-      (nextSerie?.fill != null && prevSerie?.fill !== nextSerie?.fill)
+      (nextSerie?.fill != null && prevSerie?.fill !== nextSerie?.fill) ||
+      prevSerie?.points?.show !== nextSerie?.points?.show
     );
   });
   if (someSeriesHasChanged) return true;

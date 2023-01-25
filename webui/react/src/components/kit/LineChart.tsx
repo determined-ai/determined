@@ -7,6 +7,7 @@ import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
 import { SyncProvider } from 'components/UPlot/SyncProvider';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
+import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin2';
 import { glasbeyColor } from 'shared/utils/color';
 import { MetricType, Scale } from 'types';
@@ -25,6 +26,7 @@ import css from './LineChart.module.scss';
 export interface Serie {
   color?: string;
   data: Record<string, [number, number][]>;
+  key?: number;
   metricType?: MetricType;
   name?: string;
 }
@@ -45,6 +47,8 @@ export interface Serie {
 interface Props {
   focusedSeries?: number;
   height?: number;
+  onSeriesClick?: (event: MouseEvent, arg1: number) => void;
+  onSeriesFocus?: (arg0: number | null) => void;
   scale?: Scale;
   series: Serie[];
   showLegend?: boolean;
@@ -57,6 +61,8 @@ interface Props {
 export const LineChart: React.FC<Props> = ({
   focusedSeries,
   height = 350,
+  onSeriesClick,
+  onSeriesFocus,
   scale = Scale.Linear,
   series,
   showLegend = false,
@@ -89,7 +95,9 @@ export const LineChart: React.FC<Props> = ({
 
   const seriesNames: string[] = useMemo(() => {
     return series.map(
-      (s, idx) => (series.length > 1 ? `${s.metricType}_` : '') + (s.name || `Series ${idx + 1}`),
+      (s, idx) =>
+        (series.length > 1 && s.metricType ? `${s.metricType}_` : '') +
+        (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -116,7 +124,36 @@ export const LineChart: React.FC<Props> = ({
   }, [series, xAxis]);
 
   const chartOptions: Options = useMemo(() => {
-    const plugins = [tooltipsPlugin({ isShownEmptyVal: false, seriesColors })];
+    const plugins = [
+      tooltipsPlugin({
+        isShownEmptyVal: false,
+        // use specified color on Serie, or glasbeyColor
+        seriesColors,
+      }),
+    ];
+    if (onSeriesClick || onSeriesFocus) {
+      plugins.push(
+        closestPointPlugin({
+          diamond: true,
+          onPointClick: (e, point) => {
+            if (onSeriesClick) {
+              // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
+              // return a serie.key (example: trialId), or the adjusted index
+              onSeriesClick(e, series[point.seriesIdx - 1].key || point.seriesIdx - 1);
+            }
+          },
+          onPointFocus: (point) => {
+            if (onSeriesFocus) {
+              // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
+              // return a serie.key (example: trialId), or the adjusted index
+              // returns null when switching to no point being hovered over
+              onSeriesFocus(point ? series[point.seriesIdx - 1].key || point.seriesIdx - 1 : null);
+            }
+          },
+          yScale: 'y',
+        }),
+      );
+    }
 
     return {
       axes: [
@@ -156,7 +193,7 @@ export const LineChart: React.FC<Props> = ({
         ...series.map((serie, idx) => {
           return {
             label: seriesNames[idx],
-            points: { show: false },
+            points: { show: (serie.data[xAxis] || []).length <= 1 },
             scale: 'y',
             spanGaps: true,
             stroke: seriesColors[idx],
@@ -166,7 +203,18 @@ export const LineChart: React.FC<Props> = ({
         }),
       ],
     };
-  }, [series, seriesColors, seriesNames, height, scale, xAxis, xLabel, yLabel]);
+  }, [
+    series,
+    seriesColors,
+    seriesNames,
+    height,
+    scale,
+    xAxis,
+    xLabel,
+    yLabel,
+    onSeriesClick,
+    onSeriesFocus,
+  ]);
 
   return (
     <>

@@ -51,6 +51,12 @@ code.block {
 .uplot canvas {
   background-color: var(--theme-stage);
 }
+.u-wrap {
+  overflow-x: hidden;
+}
+
+/* diamond cursor for most charts, see closestPointPlugin.module.scss for charts with that plugin (LearningCurve) */
+
 .u-cursor-pt {
   border-radius: 0 !important;
   height: 0 !important;
