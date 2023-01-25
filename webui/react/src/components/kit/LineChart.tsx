@@ -130,25 +130,30 @@ export const LineChart: React.FC<Props> = ({
         // use specified color on Serie, or glasbeyColor
         seriesColors,
       }),
-      closestPointPlugin({
-        onPointClick: (e, point) => {
-          if (onSeriesClick) {
-            // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
-            // return a serie.key (example: trialId), or the adjusted index
-            onSeriesClick(e, series[point.seriesIdx - 1].key || point.seriesIdx - 1);
-          }
-        },
-        onPointFocus: (point) => {
-          if (onSeriesFocus) {
-            // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
-            // return a serie.key (example: trialId), or the adjusted index
-            // returns null when switching to no point being hovered over
-            onSeriesFocus(point ? series[point.seriesIdx - 1].key || point.seriesIdx - 1 : null);
-          }
-        },
-        yScale: 'y',
-      }),
     ];
+    if (onSeriesClick || onSeriesFocus) {
+      plugins.push(
+        closestPointPlugin({
+          diamond: true,
+          onPointClick: (e, point) => {
+            if (onSeriesClick) {
+              // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
+              // return a serie.key (example: trialId), or the adjusted index
+              onSeriesClick(e, series[point.seriesIdx - 1].key || point.seriesIdx - 1);
+            }
+          },
+          onPointFocus: (point) => {
+            if (onSeriesFocus) {
+              // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
+              // return a serie.key (example: trialId), or the adjusted index
+              // returns null when switching to no point being hovered over
+              onSeriesFocus(point ? series[point.seriesIdx - 1].key || point.seriesIdx - 1 : null);
+            }
+          },
+          yScale: 'y',
+        }),
+      );
+    }
 
     return {
       axes: [
@@ -171,7 +176,6 @@ export const LineChart: React.FC<Props> = ({
       ],
       cursor: {
         drag: { x: true, y: false },
-        point: { show: true },
       },
       height,
       legend: { show: false },
@@ -189,7 +193,7 @@ export const LineChart: React.FC<Props> = ({
         ...series.map((serie, idx) => {
           return {
             label: seriesNames[idx],
-            points: { show: false },
+            points: { show: (serie.data[xAxis] || []).length <= 1 },
             scale: 'y',
             spanGaps: true,
             stroke: seriesColors[idx],
