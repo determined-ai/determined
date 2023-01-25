@@ -186,7 +186,7 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
         runner_state = trials[0].runnerState if trials else None
 
         # Update the active_stage by examining the experiment state and trial runner state.
-        if exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED:
+        if exp.state == bindings.experimentv1State.STATE_COMPLETED:
             active_stage = 4
         elif runner_state == "checkpointing":
             active_stage = 3
@@ -199,11 +199,11 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
 
         # If the experiment is in a terminal state, output the appropriate
         # message and exit. Otherwise, sleep and repeat.
-        if exp.state == bindings.determinedexperimentv1State.STATE_COMPLETED:
+        if exp.state == bindings.experimentv1State.STATE_COMPLETED:
             print_progress(active_stage, ended=True)
             print(termcolor.colored("Model definition test succeeded! 🎉", "green"))
             return
-        elif exp.state == bindings.determinedexperimentv1State.STATE_CANCELED:
+        elif exp.state == bindings.experimentv1State.STATE_CANCELED:
             print_progress(active_stage, ended=True)
             print(
                 termcolor.colored(
@@ -213,7 +213,7 @@ def _follow_test_experiment_logs(sess: api.Session, exp_id: int) -> None:
                 )
             )
             sys.exit(1)
-        elif exp.state == bindings.determinedexperimentv1State.STATE_ERROR:
+        elif exp.state == bindings.experimentv1State.STATE_ERROR:
             print_progress(active_stage, ended=True)
             trial_id = trials[0].id
             tlogs = logs.trial_logs(sess, trial_id)

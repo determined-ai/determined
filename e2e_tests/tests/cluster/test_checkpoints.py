@@ -12,7 +12,7 @@ import yaml
 from determined import errors
 from determined.common import api, storage
 from determined.common.api import authentication, bindings, certs
-from determined.common.api.bindings import determinedcheckpointv1State
+from determined.common.api.bindings import checkpointv1State
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -94,10 +94,29 @@ def run_command_gc_policy(
     assert child.exitstatus == 0
 
 
+def run_command_master_checkpoint_download(uuid: str) -> None:
+    with tempfile.TemporaryDirectory() as dirpath:
+        outdir = dirpath + "/checkpoint"
+        command = [
+            "checkpoint",
+            "download",
+            "--mode",
+            "master",
+            "--output-dir",
+            outdir,
+            uuid,
+        ]
+
+        child = det_spawn(command)
+        child.wait()
+        child.close()
+        assert child.exitstatus == 0
+        assert os.path.exists(outdir + "/metadata.json")
+
+
 @pytest.mark.e2e_gpu
-def test_gc_checkpoints_s3(secrets: Dict[str, str]) -> None:
-    config = exp.s3_checkpoint_config(secrets)
-    run_gc_checkpoints_test(config)
+def test_gc_checkpoints(checkpoint_storage_config: Dict[str, Any]) -> None:
+    run_gc_checkpoints_test(checkpoint_storage_config)
 
 
 @pytest.mark.e2e_cpu
@@ -179,7 +198,7 @@ def ensure_checkpoint_deleted(
 
     if d_checkpoint is not None:
         assert (
-            d_checkpoint.state == determinedcheckpointv1State.STATE_DELETED
+            d_checkpoint.state == checkpointv1State.STATE_DELETED
         ), f"checkpoint with uuid {d_checkpoint_uuid} does not have a deleted state"
     else:
         pytest.fail(
@@ -196,8 +215,8 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
         (
             conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
             {
-                (bindings.determinedexperimentv1State.STATE_COMPLETED.value): {800, 900, 1000},
-                (bindings.determinedexperimentv1State.STATE_DELETED.value): {
+                (bindings.experimentv1State.STATE_COMPLETED.value): {800, 900, 1000},
+                (bindings.experimentv1State.STATE_DELETED.value): {
                     100,
                     200,
                     300,
@@ -211,14 +230,14 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
         (
             conf.fixtures_path("no_op/gc_checkpoints_increasing.yaml"),
             {
-                (bindings.determinedexperimentv1State.STATE_COMPLETED.value): {
+                (bindings.experimentv1State.STATE_COMPLETED.value): {
                     100,
                     200,
                     300,
                     900,
                     1000,
                 },
-                (bindings.determinedexperimentv1State.STATE_DELETED.value): {
+                (bindings.experimentv1State.STATE_DELETED.value): {
                     400,
                     500,
                     600,
@@ -232,7 +251,9 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     all_checkpoints: List[Tuple[Any, List[bindings.v1CheckpointWorkload]]] = []
     for base_conf_path, result in fixtures:
         config = conf.load_config(str(base_conf_path))
-        config["checkpoint_storage"].update(checkpoint_storage)
+        experiment_storage = checkpoint_storage.copy()
+        experiment_storage.update(config["checkpoint_storage"])
+        config["checkpoint_storage"].update(experiment_storage)
 
         with tempfile.NamedTemporaryFile() as tf:
             with open(tf.name, "w") as f:
@@ -240,9 +261,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
             experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
-        exp.wait_for_experiment_state(
-            experiment_id, bindings.determinedexperimentv1State.STATE_COMPLETED
-        )
+        exp.wait_for_experiment_state(experiment_id, bindings.experimentv1State.STATE_COMPLETED)
 
         # In some configurations, checkpoint GC will run on an auxillary machine, which may have to
         # be spun up still.  So we'll wait for it to run.
@@ -273,31 +292,31 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
 
             time.sleep(1)
 
-    # Check that the actual checkpoint storage (for shared_fs) reflects the
+    # Check that the actual checkpoint storage reflects the
     # deletions. We want to wait for the GC containers to exit, so check
     # repeatedly with a timeout.
     max_checks = 30
+    last_checkpoint_uuid = None
     for i in range(max_checks):
         time.sleep(1)
         try:
             storage_states = []
             for config, checkpoints in all_checkpoints:
                 checkpoint_config = config["checkpoint_storage"]
-
                 storage_manager = storage.build(checkpoint_config, container_path=None)
                 storage_state = {}  # type: Dict[str, Any]
                 for checkpoint in checkpoints:
                     assert checkpoint.uuid is not None
-                    storage_id = checkpoint.uuid
+                    last_checkpoint_uuid = storage_id = checkpoint.uuid
                     storage_state[storage_id] = {}
-                    if checkpoint.state == bindings.determinedcheckpointv1State.STATE_COMPLETED:
+                    if checkpoint.state == bindings.checkpointv1State.STATE_COMPLETED:
                         storage_state[storage_id]["found"] = False
                         try:
                             with storage_manager.restore_path(storage_id):
                                 storage_state[storage_id]["found"] = True
                         except errors.CheckpointNotFound:
                             pass
-                    elif checkpoint.state == bindings.determinedcheckpointv1State.STATE_DELETED:
+                    elif checkpoint.state == bindings.checkpointv1State.STATE_DELETED:
                         storage_state[storage_id] = {"deleted": False, "checkpoint": checkpoint}
                         try:
                             with storage_manager.restore_path(storage_id):
@@ -321,6 +340,11 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 raise
         else:
             break
+
+    cs_type = checkpoint_storage["type"]
+    if cs_type == "s3" or cs_type == "gcs":
+        assert type(last_checkpoint_uuid) == str
+        run_command_master_checkpoint_download(str(last_checkpoint_uuid))
 
 
 @pytest.mark.e2e_gpu

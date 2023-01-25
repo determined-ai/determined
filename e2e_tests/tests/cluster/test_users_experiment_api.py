@@ -21,6 +21,6 @@ def test_experiment_api_determined_disabled() -> None:
             config=conf.fixtures_path("no_op/single-medium-train-step.yaml"),
             model_dir=conf.fixtures_path("no_op"),
         )
-        exp.wait_for_experiment_state(e.id, bindings.determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(e.id, bindings.experimentv1State.STATE_COMPLETED)
     finally:
         test_users.det_spawn(["user", "activate", "determined"])

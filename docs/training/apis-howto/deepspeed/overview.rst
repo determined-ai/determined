@@ -2,8 +2,10 @@
  DeepSpeed API
 ###############
 
+In this guide, you'll learn how to use the DeepSpeed API.
+
 +-----------------------------------------------------------------------+
-| API reference                                                         |
+| Visit the API reference                                               |
 +=======================================================================+
 | :doc:`/reference/reference-training/training/api-deepspeed-reference` |
 +-----------------------------------------------------------------------+

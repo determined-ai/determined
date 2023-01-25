@@ -2,6 +2,7 @@ import json
 from argparse import Namespace
 from typing import Any, List
 
+from determined import cli
 from determined.common import api
 from determined.common.api import authentication
 from determined.common.declarative_argparse import Arg, Cmd
@@ -21,6 +22,7 @@ def render_model(model: Model) -> None:
         ["ID", model.model_id],
         ["Name", model.name],
         ["Description", model.description],
+        ["Workspace ID", model.workspace_id],
         ["Creation Time", model.creation_time],
         ["Last Updated Time", model.last_updated_time],
         ["Metadata", json.dumps(model.metadata or {}, indent=4)],
@@ -62,17 +64,20 @@ def render_model_version(model_version: ModelVersion) -> None:
 
 def list_models(args: Namespace) -> None:
     models = Determined(args.master, None).get_models(
-        sort_by=ModelSortBy[args.sort_by.upper()], order_by=ModelOrderBy[args.order_by.upper()]
+        sort_by=ModelSortBy[args.sort_by.upper()],
+        order_by=ModelOrderBy[args.order_by.upper()],
+        workspace_name=args.workspace_name,
     )
     if args.json:
         print(json.dumps([m.to_json() for m in models], indent=2))
     else:
-        headers = ["ID", "Name", "Creation Time", "Last Updated Time", "Metadata"]
+        headers = ["ID", "Name", "Workspace ID", "Creation Time", "Last Updated Time", "Metadata"]
 
         values = [
             [
                 m.model_id,
                 m.name,
+                m.workspace_id,
                 m.creation_time,
                 m.last_updated_time,
                 json.dumps(m.metadata or {}, indent=2),
@@ -133,12 +138,19 @@ def list_versions(args: Namespace) -> None:
 
 
 def create(args: Namespace) -> None:
-    model = Determined(args.master, None).create_model(args.name, args.description)
+    model = Determined(args.master, None).create_model(
+        args.name, args.description, workspace_name=args.workspace_name
+    )
 
     if args.json:
         print(json.dumps(model.to_json(), indent=2))
     else:
         render_model(model)
+
+
+def move(args: Namespace) -> None:
+    model = model_by_name(args)
+    model.move_to_workspace(args.workspace_name)
 
 
 def describe(args: Namespace) -> None:
@@ -183,6 +195,7 @@ args_description = [
                 list_models,
                 "list all models in the registry",
                 [
+                    Arg("-w", "--workspace-name", type=str, help="list models in given workspace"),
                     Arg(
                         "--sort-by",
                         type=str,
@@ -241,8 +254,18 @@ args_description = [
                 "create model",
                 [
                     Arg("name", type=str, help="unique name of the model"),
+                    cli.workspace.workspace_arg,
                     Arg("--description", type=str, help="description of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
+                ],
+            ),
+            Cmd(
+                "move",
+                move,
+                "move model to given workspace",
+                [
+                    Arg("name", type=str, help="name of model"),
+                    cli.workspace.workspace_arg,
                 ],
             ),
         ],

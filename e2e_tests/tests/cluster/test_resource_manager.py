@@ -8,7 +8,7 @@ import pytest
 import yaml
 
 from determined.common.api import bindings
-from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.api.bindings import experimentv1State
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -54,7 +54,7 @@ def test_allocation_resources_incremental_release() -> None:
         # Wait for the experiment to start and run some.
         exp.wait_for_experiment_state(
             exp_id,
-            determinedexperimentv1State.STATE_RUNNING,
+            experimentv1State.STATE_RUNNING,
         )
         exp.wait_for_experiment_active_workload(exp_id)
 
@@ -86,7 +86,7 @@ def test_allocation_resources_incremental_release() -> None:
         cleanup_exp_ids.append(exp_id_2)
 
         exp.wait_for_experiment_workload_progress(exp_id_2)
-        exp.wait_for_experiment_state(exp_id_2, determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id_2, experimentv1State.STATE_COMPLETED)
         cleanup_exp_ids = cleanup_exp_ids[:-1]
 
         # And check the hung experiment still is holding on to its hung slot.
@@ -97,7 +97,7 @@ def test_allocation_resources_incremental_release() -> None:
     finally:
         for exp_id in cleanup_exp_ids:
             bindings.post_KillExperiment(api_utils.determined_test_session(), id=exp_id)
-            exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_CANCELED)
+            exp.wait_for_experiment_state(exp_id, experimentv1State.STATE_CANCELED)
 
 
 def list_free_agents() -> List[bindings.v1Agent]:

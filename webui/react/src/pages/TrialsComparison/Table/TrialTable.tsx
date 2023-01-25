@@ -22,7 +22,7 @@ import { Highlights } from 'hooks/useHighlight';
 import { UpdateSettings, UseSettingsReturn } from 'hooks/useSettings';
 import { TrialsWithMetadata } from 'pages/TrialsComparison/Trials/data';
 import { paths } from 'routes/utils';
-import { Determinedtrialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
+import { Trialv1State, V1AugmentedTrial } from 'services/api-ts-sdk';
 import { ColorScale, glasbeyColor } from 'shared/utils/color';
 import { isFiniteNumber } from 'shared/utils/data';
 import { useUsers } from 'stores/users';
@@ -320,11 +320,11 @@ const TrialTable: React.FC<Props> = ({
         />
       ),
       filters: [
-        Determinedtrialv1State.ACTIVE,
-        Determinedtrialv1State.PAUSED,
-        Determinedtrialv1State.CANCELED,
-        Determinedtrialv1State.COMPLETED,
-        Determinedtrialv1State.ERROR,
+        Trialv1State.ACTIVE,
+        Trialv1State.PAUSED,
+        Trialv1State.CANCELED,
+        Trialv1State.COMPLETED,
+        Trialv1State.ERROR,
       ].map((value) => ({
         text: <Badge state={value} type={BadgeType.State} />,
         value,

@@ -2,7 +2,12 @@
  Training Reference
 ####################
 
-This section includes reference documentation for the Determined training APIs:
+This page includes links to the reference documentation for the Determined training APIs and the
+experiment configuration file.
+
+***************
+ Training APIs
+***************
 
 +-------------------------------------------------+-----------------------------------------------+
 | Topic                                           | Documentation Content                         |
@@ -20,7 +25,9 @@ This section includes reference documentation for the Determined training APIs:
 | :doc:`training/api-estimator-reference`         | Estimator API reference documentation.        |
 +-------------------------------------------------+-----------------------------------------------+
 
-Reference documentation for the experiment configuration file is also covered in this section:
+*******************************
+ Experiment Configuration File
+*******************************
 
 +------------------------------------+------------------------------------------------------------+
 | Topic                              | Documentation Content                                      |

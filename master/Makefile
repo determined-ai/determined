@@ -2,6 +2,7 @@
 GENERATED := packaging/LICENSE
 GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
 MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go
+GORELEASER = goreleaser
 
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
@@ -37,6 +38,8 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=ProjectAuthZ --dir=internal/project --output internal/mocks --filename project_authz_iface.go
 	mockery --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
 	mockery --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
+	mockery --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
+
 	# fmt once since the mocks are not generated formatted.
 	goimports -l -local github.com/determined-ai -w ./internal/mocks
 	mkdir -p build
@@ -86,6 +89,7 @@ check: check-gen
 fmt:
 	goimports -l -local github.com/determined-ai -w .
 	gofumpt -l -w .
+	swag fmt
 
 .PHONY: test
 test:
@@ -115,7 +119,7 @@ package: export DET_SEGMENT_MASTER_KEY ?=
 package: export DET_SEGMENT_WEBUI_KEY ?=
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
 package: gen
-	goreleaser --snapshot --rm-dist
+	$(GORELEASER) --snapshot --rm-dist
 
 .PHONY: release
 release: export DET_SEGMENT_MASTER_KEY ?=
@@ -123,7 +127,7 @@ release: export DET_SEGMENT_WEBUI_KEY ?=
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
 release: gen
-	goreleaser --rm-dist
+	$(GORELEASER) --rm-dist
 
 .PHONY: publish
 publish:
