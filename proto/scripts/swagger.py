@@ -7,7 +7,7 @@ usage: swagger.py GENERATED_JSON PATCH_JSON
 
 import json
 import sys
-from typing import Dict
+from typing import Any, Dict, List
 
 SERVICE_NAME = "Determined"
 
@@ -42,6 +42,7 @@ def clean(path: str, patch: str) -> None:
     with open(path, "r") as f:
         spec = json.load(f)
 
+    keys_to_rename: List[str] = []
     for key, value in spec["definitions"].items():
         # Remove definitions that should be hidden from the user.
         if key == "protobufAny":
@@ -49,12 +50,37 @@ def clean(path: str, patch: str) -> None:
         elif key == "protobufNullValue":
             value["title"] = "NullValue"
 
-        # Clean up titles.
+        # Clean up titles. Title is used in documentation.
         if "title" not in value:
             value["title"] = "".join(capitalize(k) for k in key.split(sep="v1"))
+        elif value["title"].startswith(SERVICE_NAME):
+            value["title"] = value["title"][len(SERVICE_NAME) :].lstrip()
+            value["title"] = capitalize(value["title"])
 
         if "required" in value:
             value["required"] = [to_lower_camel_case(attr) for attr in value["required"]]
+
+        if key.startswith(SERVICE_NAME.lower()):
+            keys_to_rename.append(key)
+
+    for key in keys_to_rename:
+        spec["definitions"][key[len(SERVICE_NAME) :]] = spec["definitions"].pop(key)
+
+    # recursively find any objects with ref to keys_to_rename and rename them
+    def rename_refs(obj: Any):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k == "$ref":
+                    for key in keys_to_rename:
+                        if v.endswith(key):
+                            obj[k] = v.replace(key, key[len(SERVICE_NAME) :])
+                else:
+                    rename_refs(v)
+        elif isinstance(obj, list):
+            for v in obj:
+                rename_refs(v)
+
+    rename_refs(spec)
 
     # remove operationId prefix from the main service.
     operationid_prefix = SERVICE_NAME + "_"

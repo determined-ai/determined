@@ -229,14 +229,14 @@ class UpdateTrialTagsRequestIds:
             out["ids"] = self.ids
         return out
 
-class determinedcheckpointv1State(enum.Enum):
+class checkpointv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_ACTIVE = "STATE_ACTIVE"
     STATE_COMPLETED = "STATE_COMPLETED"
     STATE_ERROR = "STATE_ERROR"
     STATE_DELETED = "STATE_DELETED"
 
-class determinedcontainerv1State(enum.Enum):
+class containerv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_ASSIGNED = "STATE_ASSIGNED"
     STATE_PULLING = "STATE_PULLING"
@@ -244,13 +244,13 @@ class determinedcontainerv1State(enum.Enum):
     STATE_RUNNING = "STATE_RUNNING"
     STATE_TERMINATED = "STATE_TERMINATED"
 
-class determineddevicev1Type(enum.Enum):
+class devicev1Type(enum.Enum):
     TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
     TYPE_CPU = "TYPE_CPU"
     TYPE_CUDA = "TYPE_CUDA"
     TYPE_ROCM = "TYPE_ROCM"
 
-class determinedexperimentv1State(enum.Enum):
+class experimentv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_ACTIVE = "STATE_ACTIVE"
     STATE_PAUSED = "STATE_PAUSED"
@@ -269,13 +269,13 @@ class determinedexperimentv1State(enum.Enum):
     STATE_STARTING = "STATE_STARTING"
     STATE_RUNNING = "STATE_RUNNING"
 
-class determinedjobv1State(enum.Enum):
+class jobv1State(enum.Enum):
     STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
     STATE_QUEUED = "STATE_QUEUED"
     STATE_SCHEDULED = "STATE_SCHEDULED"
     STATE_SCHEDULED_BACKFILLED = "STATE_SCHEDULED_BACKFILLED"
 
-class determinedjobv1Type(enum.Enum):
+class jobv1Type(enum.Enum):
     TYPE_UNSPECIFIED = "TYPE_UNSPECIFIED"
     TYPE_EXPERIMENT = "TYPE_EXPERIMENT"
     TYPE_NOTEBOOK = "TYPE_NOTEBOOK"
@@ -283,28 +283,6 @@ class determinedjobv1Type(enum.Enum):
     TYPE_SHELL = "TYPE_SHELL"
     TYPE_COMMAND = "TYPE_COMMAND"
     TYPE_CHECKPOINT_GC = "TYPE_CHECKPOINT_GC"
-
-class determinedtaskv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_PULLING = "STATE_PULLING"
-    STATE_STARTING = "STATE_STARTING"
-    STATE_RUNNING = "STATE_RUNNING"
-    STATE_TERMINATED = "STATE_TERMINATED"
-    STATE_TERMINATING = "STATE_TERMINATING"
-    STATE_WAITING = "STATE_WAITING"
-    STATE_QUEUED = "STATE_QUEUED"
-
-class determinedtrialv1State(enum.Enum):
-    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
-    STATE_ACTIVE = "STATE_ACTIVE"
-    STATE_PAUSED = "STATE_PAUSED"
-    STATE_STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
-    STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
-    STATE_STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
-    STATE_STOPPING_ERROR = "STATE_STOPPING_ERROR"
-    STATE_CANCELED = "STATE_CANCELED"
-    STATE_COMPLETED = "STATE_COMPLETED"
-    STATE_ERROR = "STATE_ERROR"
 
 class protobufAny:
     typeUrl: "typing.Optional[str]" = None
@@ -451,6 +429,28 @@ class runtimeStreamError:
             out["message"] = self.message
         return out
 
+class taskv1State(enum.Enum):
+    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
+    STATE_PULLING = "STATE_PULLING"
+    STATE_STARTING = "STATE_STARTING"
+    STATE_RUNNING = "STATE_RUNNING"
+    STATE_TERMINATED = "STATE_TERMINATED"
+    STATE_TERMINATING = "STATE_TERMINATING"
+    STATE_WAITING = "STATE_WAITING"
+    STATE_QUEUED = "STATE_QUEUED"
+
+class trialv1State(enum.Enum):
+    STATE_UNSPECIFIED = "STATE_UNSPECIFIED"
+    STATE_ACTIVE = "STATE_ACTIVE"
+    STATE_PAUSED = "STATE_PAUSED"
+    STATE_STOPPING_CANCELED = "STATE_STOPPING_CANCELED"
+    STATE_STOPPING_KILLED = "STATE_STOPPING_KILLED"
+    STATE_STOPPING_COMPLETED = "STATE_STOPPING_COMPLETED"
+    STATE_STOPPING_ERROR = "STATE_STOPPING_ERROR"
+    STATE_CANCELED = "STATE_CANCELED"
+    STATE_COMPLETED = "STATE_COMPLETED"
+    STATE_ERROR = "STATE_ERROR"
+
 class trialv1Trial:
     bestCheckpoint: "typing.Optional[v1CheckpointWorkload]" = None
     bestValidation: "typing.Optional[v1MetricsWorkload]" = None
@@ -472,7 +472,7 @@ class trialv1Trial:
         id: int,
         restarts: int,
         startTime: str,
-        state: "determinedexperimentv1State",
+        state: "experimentv1State",
         totalBatchesProcessed: int,
         bestCheckpoint: "typing.Union[v1CheckpointWorkload, None, Unset]" = _unset,
         bestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
@@ -524,7 +524,7 @@ class trialv1Trial:
             "id": obj["id"],
             "restarts": obj["restarts"],
             "startTime": obj["startTime"],
-            "state": determinedexperimentv1State(obj["state"]),
+            "state": experimentv1State(obj["state"]),
             "totalBatchesProcessed": obj["totalBatchesProcessed"],
         }
         if "bestCheckpoint" in obj:
@@ -808,7 +808,7 @@ class v1Allocation:
     endTime: "typing.Optional[str]" = None
     isReady: "typing.Optional[bool]" = None
     startTime: "typing.Optional[str]" = None
-    state: "typing.Optional[determinedtaskv1State]" = None
+    state: "typing.Optional[taskv1State]" = None
     taskId: "typing.Optional[str]" = None
 
     def __init__(
@@ -818,7 +818,7 @@ class v1Allocation:
         endTime: "typing.Union[str, None, Unset]" = _unset,
         isReady: "typing.Union[bool, None, Unset]" = _unset,
         startTime: "typing.Union[str, None, Unset]" = _unset,
-        state: "typing.Union[determinedtaskv1State, None, Unset]" = _unset,
+        state: "typing.Union[taskv1State, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(allocationId, Unset):
@@ -847,7 +847,7 @@ class v1Allocation:
         if "startTime" in obj:
             kwargs["startTime"] = obj["startTime"]
         if "state" in obj:
-            kwargs["state"] = determinedtaskv1State(obj["state"]) if obj["state"] is not None else None
+            kwargs["state"] = taskv1State(obj["state"]) if obj["state"] is not None else None
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         return cls(**kwargs)
@@ -1107,7 +1107,7 @@ class v1AugmentedTrial:
         projectId: int,
         searcherType: str,
         startTime: str,
-        state: "determinedtrialv1State",
+        state: "trialv1State",
         tags: "typing.Dict[str, typing.Any]",
         totalBatches: int,
         trainingMetrics: "typing.Dict[str, typing.Any]",
@@ -1158,7 +1158,7 @@ class v1AugmentedTrial:
             "projectId": obj["projectId"],
             "searcherType": obj["searcherType"],
             "startTime": obj["startTime"],
-            "state": determinedtrialv1State(obj["state"]),
+            "state": trialv1State(obj["state"]),
             "tags": obj["tags"],
             "totalBatches": obj["totalBatches"],
             "trainingMetrics": obj["trainingMetrics"],
@@ -1243,7 +1243,7 @@ class v1Checkpoint:
         *,
         metadata: "typing.Dict[str, typing.Any]",
         resources: "typing.Dict[str, str]",
-        state: "determinedcheckpointv1State",
+        state: "checkpointv1State",
         training: "v1CheckpointTrainingMetadata",
         uuid: str,
         allocationId: "typing.Union[str, None, Unset]" = _unset,
@@ -1267,7 +1267,7 @@ class v1Checkpoint:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metadata": obj["metadata"],
             "resources": obj["resources"],
-            "state": determinedcheckpointv1State(obj["state"]),
+            "state": checkpointv1State(obj["state"]),
             "training": v1CheckpointTrainingMetadata.from_json(obj["training"]),
             "uuid": obj["uuid"],
         }
@@ -1378,7 +1378,7 @@ class v1CheckpointWorkload:
     def __init__(
         self,
         *,
-        state: "determinedcheckpointv1State",
+        state: "checkpointv1State",
         totalBatches: int,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -1399,7 +1399,7 @@ class v1CheckpointWorkload:
     @classmethod
     def from_json(cls, obj: Json) -> "v1CheckpointWorkload":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "state": determinedcheckpointv1State(obj["state"]),
+            "state": checkpointv1State(obj["state"]),
             "totalBatches": obj["totalBatches"],
         }
         if "endTime" in obj:
@@ -1501,7 +1501,7 @@ class v1Command:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
         workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
@@ -1534,7 +1534,7 @@ class v1Command:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
             "workspaceId": obj["workspaceId"],
         }
@@ -1659,7 +1659,7 @@ class v1Container:
         self,
         *,
         id: str,
-        state: "determinedcontainerv1State",
+        state: "containerv1State",
         devices: "typing.Union[typing.Sequence[v1Device], None, Unset]" = _unset,
         parent: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -1674,7 +1674,7 @@ class v1Container:
     def from_json(cls, obj: Json) -> "v1Container":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "id": obj["id"],
-            "state": determinedcontainerv1State(obj["state"]),
+            "state": containerv1State(obj["state"]),
         }
         if "devices" in obj:
             kwargs["devices"] = [v1Device.from_json(x) for x in obj["devices"]] if obj["devices"] is not None else None
@@ -2122,7 +2122,7 @@ class v1DeleteWorkspaceResponse:
 class v1Device:
     brand: "typing.Optional[str]" = None
     id: "typing.Optional[int]" = None
-    type: "typing.Optional[determineddevicev1Type]" = None
+    type: "typing.Optional[devicev1Type]" = None
     uuid: "typing.Optional[str]" = None
 
     def __init__(
@@ -2130,7 +2130,7 @@ class v1Device:
         *,
         brand: "typing.Union[str, None, Unset]" = _unset,
         id: "typing.Union[int, None, Unset]" = _unset,
-        type: "typing.Union[determineddevicev1Type, None, Unset]" = _unset,
+        type: "typing.Union[devicev1Type, None, Unset]" = _unset,
         uuid: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(brand, Unset):
@@ -2151,7 +2151,7 @@ class v1Device:
         if "id" in obj:
             kwargs["id"] = obj["id"]
         if "type" in obj:
-            kwargs["type"] = determineddevicev1Type(obj["type"]) if obj["type"] is not None else None
+            kwargs["type"] = devicev1Type(obj["type"]) if obj["type"] is not None else None
         if "uuid" in obj:
             kwargs["uuid"] = obj["uuid"]
         return cls(**kwargs)
@@ -2458,7 +2458,7 @@ class v1Experiment:
         projectOwnerId: int,
         searcherType: str,
         startTime: str,
-        state: "determinedexperimentv1State",
+        state: "experimentv1State",
         username: str,
         bestTrial: "typing.Union[v1ExperimentTrial, None, Unset]" = _unset,
         checkpointCount: "typing.Union[int, None, Unset]" = _unset,
@@ -2540,7 +2540,7 @@ class v1Experiment:
             "projectOwnerId": obj["projectOwnerId"],
             "searcherType": obj["searcherType"],
             "startTime": obj["startTime"],
-            "state": determinedexperimentv1State(obj["state"]),
+            "state": experimentv1State(obj["state"]),
             "username": obj["username"],
         }
         if "bestTrial" in obj:
@@ -2636,14 +2636,14 @@ class v1ExperimentInactive:
     def __init__(
         self,
         *,
-        experimentState: "determinedexperimentv1State",
+        experimentState: "experimentv1State",
     ):
         self.experimentState = experimentState
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ExperimentInactive":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "experimentState": determinedexperimentv1State(obj["experimentState"]),
+            "experimentState": experimentv1State(obj["experimentState"]),
         }
         return cls(**kwargs)
 
@@ -5120,7 +5120,7 @@ class v1Job:
         requestedSlots: int,
         resourcePool: str,
         submissionTime: str,
-        type: "determinedjobv1Type",
+        type: "jobv1Type",
         username: str,
         priority: "typing.Union[int, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
@@ -5160,7 +5160,7 @@ class v1Job:
             "requestedSlots": obj["requestedSlots"],
             "resourcePool": obj["resourcePool"],
             "submissionTime": obj["submissionTime"],
-            "type": determinedjobv1Type(obj["type"]),
+            "type": jobv1Type(obj["type"]),
             "username": obj["username"],
         }
         if "priority" in obj:
@@ -5206,7 +5206,7 @@ class v1JobSummary:
         self,
         *,
         jobsAhead: int,
-        state: "determinedjobv1State",
+        state: "jobv1State",
     ):
         self.jobsAhead = jobsAhead
         self.state = state
@@ -5215,7 +5215,7 @@ class v1JobSummary:
     def from_json(cls, obj: Json) -> "v1JobSummary":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "jobsAhead": obj["jobsAhead"],
-            "state": determinedjobv1State(obj["state"]),
+            "state": jobv1State(obj["state"]),
         }
         return cls(**kwargs)
 
@@ -6082,7 +6082,7 @@ class v1MetricsWorkload:
         *,
         metrics: "v1Metrics",
         numInputs: int,
-        state: "determinedexperimentv1State",
+        state: "experimentv1State",
         totalBatches: int,
         endTime: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -6098,7 +6098,7 @@ class v1MetricsWorkload:
         kwargs: "typing.Dict[str, typing.Any]" = {
             "metrics": v1Metrics.from_json(obj["metrics"]),
             "numInputs": obj["numInputs"],
-            "state": determinedexperimentv1State(obj["state"]),
+            "state": experimentv1State(obj["state"]),
             "totalBatches": obj["totalBatches"],
         }
         if "endTime" in obj:
@@ -6393,7 +6393,7 @@ class v1Notebook:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
         workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
@@ -6429,7 +6429,7 @@ class v1Notebook:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
             "workspaceId": obj["workspaceId"],
         }
@@ -8524,7 +8524,7 @@ class v1ResourcePool:
         preemptible: bool,
         schedulerFittingPolicy: "v1FittingPolicy",
         schedulerType: "v1SchedulerType",
-        slotType: "determineddevicev1Type",
+        slotType: "devicev1Type",
         slotsAvailable: int,
         slotsUsed: int,
         startupScript: str,
@@ -8600,7 +8600,7 @@ class v1ResourcePool:
             "preemptible": obj["preemptible"],
             "schedulerFittingPolicy": v1FittingPolicy(obj["schedulerFittingPolicy"]),
             "schedulerType": v1SchedulerType(obj["schedulerType"]),
-            "slotType": determineddevicev1Type(obj["slotType"]),
+            "slotType": devicev1Type(obj["slotType"]),
             "slotsAvailable": obj["slotsAvailable"],
             "slotsUsed": obj["slotsUsed"],
             "startupScript": obj["startupScript"],
@@ -9742,7 +9742,7 @@ class v1Shell:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
         workspaceId: int,
         addresses: "typing.Union[typing.Sequence[typing.Dict[str, typing.Any]], None, Unset]" = _unset,
@@ -9787,7 +9787,7 @@ class v1Shell:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
             "workspaceId": obj["workspaceId"],
         }
@@ -10227,7 +10227,7 @@ class v1Tensorboard:
         jobId: str,
         resourcePool: str,
         startTime: str,
-        state: "determinedtaskv1State",
+        state: "taskv1State",
         username: str,
         workspaceId: int,
         container: "typing.Union[v1Container, None, Unset]" = _unset,
@@ -10269,7 +10269,7 @@ class v1Tensorboard:
             "jobId": obj["jobId"],
             "resourcePool": obj["resourcePool"],
             "startTime": obj["startTime"],
-            "state": determinedtaskv1State(obj["state"]),
+            "state": taskv1State(obj["state"]),
             "username": obj["username"],
             "workspaceId": obj["workspaceId"],
         }
@@ -10501,7 +10501,7 @@ class v1TrialFilters:
     searcherMetric: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[v1DoubleFieldFilter]" = None
     startTime: "typing.Optional[v1TimestampFieldFilter]" = None
-    states: "typing.Optional[typing.Sequence[determinedtrialv1State]]" = None
+    states: "typing.Optional[typing.Sequence[trialv1State]]" = None
     tags: "typing.Optional[typing.Sequence[v1TrialTag]]" = None
     trainingMetrics: "typing.Optional[typing.Sequence[v1ColumnFilter]]" = None
     trialIds: "typing.Optional[typing.Sequence[int]]" = None
@@ -10521,7 +10521,7 @@ class v1TrialFilters:
         searcherMetric: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[v1DoubleFieldFilter, None, Unset]" = _unset,
         startTime: "typing.Union[v1TimestampFieldFilter, None, Unset]" = _unset,
-        states: "typing.Union[typing.Sequence[determinedtrialv1State], None, Unset]" = _unset,
+        states: "typing.Union[typing.Sequence[trialv1State], None, Unset]" = _unset,
         tags: "typing.Union[typing.Sequence[v1TrialTag], None, Unset]" = _unset,
         trainingMetrics: "typing.Union[typing.Sequence[v1ColumnFilter], None, Unset]" = _unset,
         trialIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
@@ -10585,7 +10585,7 @@ class v1TrialFilters:
         if "startTime" in obj:
             kwargs["startTime"] = v1TimestampFieldFilter.from_json(obj["startTime"]) if obj["startTime"] is not None else None
         if "states" in obj:
-            kwargs["states"] = [determinedtrialv1State(x) for x in obj["states"]] if obj["states"] is not None else None
+            kwargs["states"] = [trialv1State(x) for x in obj["states"]] if obj["states"] is not None else None
         if "tags" in obj:
             kwargs["tags"] = [v1TrialTag.from_json(x) for x in obj["tags"]] if obj["tags"] is not None else None
         if "trainingMetrics" in obj:
@@ -12907,7 +12907,7 @@ def get_GetExperimentCheckpoints(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentCheckpointsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetExperimentCheckpointsResponse":
     _params = {
         "limit": limit,
@@ -12960,7 +12960,7 @@ def get_GetExperimentTrials(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetExperimentTrialsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
 ) -> "v1GetExperimentTrialsResponse":
     _params = {
         "limit": limit,
@@ -13022,7 +13022,7 @@ def get_GetExperiments(
     projectId: "typing.Optional[int]" = None,
     showTrialData: "typing.Optional[bool]" = None,
     sortBy: "typing.Optional[v1GetExperimentsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedexperimentv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[experimentv1State]]" = None,
     userIds: "typing.Optional[typing.Sequence[int]]" = None,
     users: "typing.Optional[typing.Sequence[str]]" = None,
 ) -> "v1GetExperimentsResponse":
@@ -13184,7 +13184,7 @@ def get_GetJobs(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     resourcePool: "typing.Optional[str]" = None,
-    states: "typing.Optional[typing.Sequence[determinedjobv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[jobv1State]]" = None,
 ) -> "v1GetJobsResponse":
     _params = {
         "limit": limit,
@@ -13939,7 +13939,7 @@ def get_GetTrialCheckpoints(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTrialCheckpointsRequestSortBy]" = None,
-    states: "typing.Optional[typing.Sequence[determinedcheckpointv1State]]" = None,
+    states: "typing.Optional[typing.Sequence[checkpointv1State]]" = None,
 ) -> "v1GetTrialCheckpointsResponse":
     _params = {
         "limit": limit,

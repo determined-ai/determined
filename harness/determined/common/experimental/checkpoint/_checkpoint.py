@@ -31,11 +31,11 @@ class ModelFramework(enum.Enum):
 
 
 class CheckpointState(enum.Enum):
-    UNSPECIFIED = bindings.determinedcheckpointv1State.STATE_UNSPECIFIED.value
-    ACTIVE = bindings.determinedcheckpointv1State.STATE_ACTIVE.value
-    COMPLETED = bindings.determinedcheckpointv1State.STATE_COMPLETED.value
-    ERROR = bindings.determinedcheckpointv1State.STATE_ERROR.value
-    DELETED = bindings.determinedcheckpointv1State.STATE_DELETED.value
+    UNSPECIFIED = bindings.checkpointv1State.STATE_UNSPECIFIED.value
+    ACTIVE = bindings.checkpointv1State.STATE_ACTIVE.value
+    COMPLETED = bindings.checkpointv1State.STATE_COMPLETED.value
+    ERROR = bindings.checkpointv1State.STATE_ERROR.value
+    DELETED = bindings.checkpointv1State.STATE_DELETED.value
 
 
 @dataclasses.dataclass
@@ -319,7 +319,7 @@ class Checkpoint:
                 metadata=self.metadata,
                 resources={},
                 training=bindings.v1CheckpointTrainingMetadata(),
-                state=bindings.determinedcheckpointv1State.STATE_UNSPECIFIED,
+                state=bindings.checkpointv1State.STATE_UNSPECIFIED,
             ),
         )
         bindings.post_PostCheckpointMetadata(self._session, body=req, checkpoint_uuid=self.uuid)

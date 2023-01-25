@@ -295,7 +295,7 @@ export interface GetResourceAllocationAggregatedParams {
 
 export interface GetJobQParams extends PaginationParams, FetchOptions {
   resourcePool: string;
-  states?: Api.Determinedjobv1State[];
+  states?: Api.Jobv1State[];
 }
 
 export interface GetJobsResponse extends Api.V1GetJobsResponse {
