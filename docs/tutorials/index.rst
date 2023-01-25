@@ -54,7 +54,7 @@ contain detailed information about the training APIs.
 .. toctree::
    :hidden:
 
+   Run Your First Experiment <pytorch-mnist-local-qs>
    PyTorch MNIST Tutorial <pytorch-mnist-tutorial>
    PyTorch Porting Tutorial <pytorch-porting-tutorial>
-   Run a PyTorch API MNIST Trial on a Local Cluster <pytorch-mnist-local-qs>
    TensorFlow Keras Fashion MNIST Tutorial <tf-mnist-tutorial>
