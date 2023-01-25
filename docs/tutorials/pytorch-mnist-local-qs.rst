@@ -105,8 +105,8 @@ This is the cluster address for your local training environment.
  Next Steps
 ************
 
-In four simple steps, you saw how using Determined helps you `build models, not infrastructure
-<https://www.determined.ai/project>`_.
+In four simple steps, we've successfully configured our training environment in Determined to start
+training the PyTorch MNIST example.
 
 In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to
 change your configuration settings, including how to run a distributed training job on multiple
