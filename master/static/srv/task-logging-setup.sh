@@ -105,11 +105,11 @@ fi
 # redirections are applied in reverse order.
 exec > >(
     stdbuf -o0 tr '\r' '\n'
-    touch /run/determined/train/logs/stdout.done
+    #touch /run/determined/train/logs/stdout.done
     printf x >$DET_LOG_WAIT_FIFO
 ) 2> >(
     stdbuf -o0 tr '\r' '\n' >&2
-    touch /run/determined/train/logs/stderr.done    
+    #touch /run/determined/train/logs/stderr.done    
     printf x >$DET_LOG_WAIT_FIFO
 )
 

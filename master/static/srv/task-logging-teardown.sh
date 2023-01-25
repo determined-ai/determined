@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-touch /run/determined/train/logs/teardown1.done    
+#touch /run/determined/train/logs/teardown1.done    
 
 # Replace overridden stdout and stderr with original and close them, since the
 # command is finished.
 exec >&1- >&2- 1>&$ORIGINAL_STDOUT 2>&$ORIGINAL_STDERR
 
-touch /run/determined/train/logs/teardown2.done    
+#touch /run/determined/train/logs/teardown2.done    
 
 
 # We use the bash builtin printf for getting the epoch time in seconds.
