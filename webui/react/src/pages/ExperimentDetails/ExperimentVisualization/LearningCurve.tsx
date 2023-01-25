@@ -2,6 +2,7 @@ import { Alert } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { LineChart, Serie } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import { terminalRunStates } from 'constants/states';
@@ -164,7 +165,7 @@ const LearningCurve: React.FC<Props> = ({
             .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
             .map((trialId) => ({
               color: glasbeyColor(trialId),
-              data: metricsMap[trialId],
+              data: { [XAxisDomain.Batches]: metricsMap[trialId] },
               key: trialId,
               name: `trial ${trialId}`,
             })),

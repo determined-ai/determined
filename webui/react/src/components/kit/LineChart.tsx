@@ -95,7 +95,9 @@ export const LineChart: React.FC<Props> = ({
 
   const seriesNames: string[] = useMemo(() => {
     return series.map(
-      (s, idx) => (series.length > 1 ? `${s.metricType}_` : '') + (s.name || `Series ${idx + 1}`),
+      (s, idx) =>
+        (series.length > 1 && s.metricType ? `${s.metricType}_` : '') +
+        (s.name || `Series ${idx + 1}`),
     );
   }, [series]);
 
@@ -122,19 +124,18 @@ export const LineChart: React.FC<Props> = ({
   }, [series, xAxis]);
 
   const chartOptions: Options = useMemo(() => {
-    const ySeries = series.filter((s) => !s.xAxisRole);
     const plugins = [
       tooltipsPlugin({
         isShownEmptyVal: false,
         // use specified color on Serie, or glasbeyColor
-        seriesColors: ySeries.map((s, idx) => s.color || glasbeyColor(idx)),
+        seriesColors,
       }),
       closestPointPlugin({
         onPointClick: (e, point) => {
           if (onSeriesClick) {
             // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
             // return a serie.key (example: trialId), or the adjusted index
-            onSeriesClick(e, ySeries[point.seriesIdx - 1].key || point.seriesIdx - 1);
+            onSeriesClick(e, series[point.seriesIdx - 1].key || point.seriesIdx - 1);
           }
         },
         onPointFocus: (point) => {
@@ -142,7 +143,7 @@ export const LineChart: React.FC<Props> = ({
             // correct seriesIdx (seriesIdx=0 on uPlot continues to be X)
             // return a serie.key (example: trialId), or the adjusted index
             // returns null when switching to no point being hovered over
-            onSeriesFocus(point ? ySeries[point.seriesIdx - 1].key || point.seriesIdx - 1 : null);
+            onSeriesFocus(point ? series[point.seriesIdx - 1].key || point.seriesIdx - 1 : null);
           }
         },
         yScale: 'y',
@@ -170,6 +171,7 @@ export const LineChart: React.FC<Props> = ({
       ],
       cursor: {
         drag: { x: true, y: false },
+        point: { show: true },
       },
       height,
       legend: { show: false },
