@@ -50,9 +50,12 @@ def clean(path: str, patch: str) -> None:
         elif key == "protobufNullValue":
             value["title"] = "NullValue"
 
-        # Clean up titles.
+        # Clean up titles. Title is used in documentation.
         if "title" not in value:
             value["title"] = "".join(capitalize(k) for k in key.split(sep="v1"))
+        elif value["title"].startswith(SERVICE_NAME):
+            value["title"] = value["title"][len(SERVICE_NAME) :].lstrip()
+            value["title"] = capitalize(value["title"])
 
         if "required" in value:
             value["required"] = [to_lower_camel_case(attr) for attr in value["required"]]
