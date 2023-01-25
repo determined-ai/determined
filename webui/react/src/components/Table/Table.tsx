@@ -3,6 +3,7 @@ import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Tooltip from 'components/kit/Tooltip';
@@ -148,6 +149,20 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
         </a>
       )}>
       <span>{record.name}</span>
+    </ConditionalWrapper>
+  </div>
+);
+
+export const taskWorkspaceRenderer: TaskRenderer = (id, record) => (
+  <div>
+    <ConditionalWrapper
+      condition={canBeOpened(record)}
+      wrapper={(ch) => (
+        <a href={`${process.env.PUBLIC_URL}${paths.interactive(record)}`} target={record.id}>
+          {ch}
+        </a>
+      )}>
+      <DynamicIcon name={record.name} size={24} />
     </ConditionalWrapper>
   </div>
 );

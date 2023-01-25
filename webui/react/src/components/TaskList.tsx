@@ -28,6 +28,7 @@ import {
   taskNameRenderer,
   TaskRenderer,
   taskTypeRenderer,
+  taskWorkspaceRenderer,
   userRenderer,
 } from 'components/Table/Table';
 import TableBatch from 'components/Table/TableBatch';
@@ -53,6 +54,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
+import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { ShirtSize } from 'themes';
 import {
   ExperimentAction as Action,
@@ -92,7 +94,7 @@ interface SourceInfo {
   sources: TensorBoardSource[];
 }
 
-const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
+const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
 
 const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
@@ -104,17 +106,25 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
+  const workspaces = Loadable.match(useWorkspaces(), {
+    Loaded: (ws) => ws,
+    NotLoaded: () => [],
+  });
   const [canceler] = useState(new AbortController());
   const [tasks, setTasks] = useState<CommandTask[] | undefined>(undefined);
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab({ workspace: workspace });
-  const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
-    settingsConfig(workspace?.id.toString() ?? 'global'),
+  const stgsConfig = useMemo(
+    () => settingsConfig(workspace?.id.toString() ?? 'global'),
+    [workspace?.id],
   );
+  const { activeSettings, resetSettings, settings, updateSettings } =
+    useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
+  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -187,6 +197,10 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     await Promise.allSettled([fetchUsers(), fetchTasks()]);
   }, [fetchTasks, fetchUsers]);
 
+  useEffect(() => {
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
+
   const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
   const handleSourceDismiss = useCallback(() => setSourcesModal(undefined), []);
 
@@ -227,6 +241,20 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     [updateSettings],
   );
 
+  const handleWorkspaceFilterApply = useCallback(
+    (workspace: string[]) => {
+      updateSettings({
+        row: undefined,
+        workspace: workspace.length !== 0 ? (workspace as CommandType[]) : undefined,
+      });
+    },
+    [updateSettings],
+  );
+
+  const handleWorkspaceFilterReset = useCallback(() => {
+    updateSettings({ row: undefined, workspace: undefined });
+  }, [updateSettings]);
+
   const handleTypeFilterReset = useCallback(() => {
     updateSettings({ row: undefined, type: undefined });
   }, [updateSettings]);
@@ -243,6 +271,20 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       />
     ),
     [handleTypeFilterApply, handleTypeFilterReset, settings.type],
+  );
+
+  const workspaceFilterDropdown = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        values={settings.workspace}
+        width={180}
+        onFilter={handleWorkspaceFilterApply}
+        onReset={handleWorkspaceFilterReset}
+      />
+    ),
+    [handleWorkspaceFilterApply, handleWorkspaceFilterReset, settings.workspace],
   );
 
   const handleStateFilterApply = useCallback(
@@ -435,6 +477,29 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         title: 'User',
       },
       {
+        dataIndex: 'workspace',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
+        filterDropdown: workspaceFilterDropdown,
+        filters: Object.values(CommandType).map((value) => ({
+          text: (
+            <div className={css.typeFilter}>
+              <Icon name={value.toLocaleLowerCase()} />
+              <span>{commandTypeToLabel[value]}</span>
+            </div>
+          ),
+          value,
+        })),
+        isFiltered: (settings: Settings) => !!settings.workspace,
+        key: 'workspace',
+        render: taskWorkspaceRenderer,
+        sorter: (a: CommandTask, b: CommandTask): number =>
+          alphaNumericSorter(
+            workspaces.find((u) => u.id === a.workspaceId)?.name ?? '',
+            workspaces.find((u) => u.id === b.workspaceId)?.name ?? '',
+          ),
+        title: 'Workspace',
+      },
+      {
         align: 'right',
         className: 'fullCell',
         dataIndex: 'action',
@@ -453,7 +518,9 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     tableSearchIcon,
     typeFilterDropdown,
     userFilterDropdown,
+    workspaceFilterDropdown,
     users,
+    workspaces,
   ]);
 
   const handleBatchKill = useCallback(async () => {
@@ -596,6 +663,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           containerRef={pageRef}
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
+          defaultColumns={stgsConfig.settings.columns.defaultValue}
           loading={tasks === undefined || !settings}
           pagination={getFullPaginationConfig(
             {
