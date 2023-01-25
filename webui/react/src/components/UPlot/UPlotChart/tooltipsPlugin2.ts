@@ -11,7 +11,7 @@ interface Props {
   getXTooltipHeader?: (xIndex: number) => ChartTooltip;
   getXTooltipYLabels?: (xIndex: number) => ChartTooltip[];
   isShownEmptyVal: boolean;
-  seriesColors: (string | null)[];
+  seriesColors: string[];
 }
 
 export const tooltipsPlugin = (
