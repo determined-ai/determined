@@ -6,7 +6,7 @@ trap_and_forward_signals() {
         shift
         trapped_signal="yes"
         if [ "${wait_child_pid}" ]; then
-            # If the child process isn't alive yet, then this is OK, whoever can just resend the signal.
+            # If the child process isn't alive yet, then this is OK, whoever can just resend the signal.            
             kill -s "$sig" "${wait_child_pid}" 2>/dev/null
         fi
     }

@@ -4,6 +4,9 @@
 # command is finished.
 exec >&1- >&2- 1>&$ORIGINAL_STDOUT 2>&$ORIGINAL_STDERR
 
+touch /run/determined/train/logs/teardown.done    
+
+
 # We use the bash builtin printf for getting the epoch time in seconds.
 # This requires bash 4.2 (from 2011) and it depends on strftime(3) supporting
 # the %s directive, which is not in posix.
