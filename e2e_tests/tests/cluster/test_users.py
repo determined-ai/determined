@@ -89,10 +89,6 @@ def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0
     assert child.exitstatus == expectedStatus
 
 
-def create_test_user(add_password: bool = False) -> authentication.Credentials:
-    return api_utils.create_test_user(add_password=add_password)
-
-
 def change_user_password(
     target_username: str,
     target_password: str,
@@ -209,7 +205,7 @@ def test_create_user_sdk(clean_auth: None, login_admin: None) -> None:
 @pytest.mark.e2e_cpu
 def test_logout(clean_auth: None, login_admin: None) -> None:
     # Tests fallback to default determined user
-    creds = create_test_user(True)
+    creds = api_utils.create_test_user(True)
 
     # Set Determined password to something in order to disable auto-login.
     password = get_random_string()
@@ -258,7 +254,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
 def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user(True)
+    creds = api_utils.create_test_user(True)
 
     # Make sure we can log in as the user.
     log_in_user(creds)
@@ -298,7 +294,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
 @pytest.mark.e2e_cpu_postgres
 def test_change_password(clean_auth: None, login_admin: None) -> None:
     # Create a user without a password.
-    creds = create_test_user(False)
+    creds = api_utils.create_test_user(False)
 
     # Attempt to log in.
     log_in_user(creds)
@@ -322,7 +318,7 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
 
 @pytest.mark.e2e_cpu
 def test_change_username(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user()
+    creds = api_utils.create_test_user()
     new_username = "rename-user-64"
     command = ["det", "-m", conf.make_master_url(), "user", "rename", creds.username, new_username]
     subprocess.run(command, check=True)
@@ -344,9 +340,9 @@ def test_change_username(clean_auth: None, login_admin: None) -> None:
 @pytest.mark.e2e_cpu_cross_version
 def test_experiment_creation_and_listing(clean_auth: None, login_admin: None) -> None:
     # Create 2 users.
-    creds1 = create_test_user(True)
+    creds1 = api_utils.create_test_user(True)
 
-    creds2 = create_test_user(True)
+    creds2 = api_utils.create_test_user(True)
 
     # Ensure determined creds are the default values.
     change_user_password("determined", "")
@@ -381,7 +377,7 @@ def test_experiment_creation_and_listing(clean_auth: None, login_admin: None) ->
 
 @pytest.mark.e2e_cpu
 def test_login_wrong_password(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user(True)
+    creds = api_utils.create_test_user(True)
 
     passwd_prompt = f"Password for user '{creds.username}':"
     child = det_spawn(["user", "login", creds.username])
@@ -417,7 +413,7 @@ def test_login_as_non_existent_user(clean_auth: None, login_admin: None) -> None
 
 @pytest.mark.e2e_cpu
 def test_login_with_environment_variables(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user(True)
+    creds = api_utils.create_test_user(True)
     # logout admin
     log_out_user()
 
@@ -444,7 +440,7 @@ def test_login_with_environment_variables(clean_auth: None, login_admin: None) -
 
 @pytest.mark.e2e_cpu
 def test_auth_inside_shell(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user(True)
+    creds = api_utils.create_test_user(True)
 
     with logged_in_user(creds):
         # start a shell
@@ -490,7 +486,7 @@ def test_auth_inside_shell(clean_auth: None, login_admin: None) -> None:
 
 @pytest.mark.e2e_cpu
 def test_login_as_non_active_user(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user(True)
+    creds = api_utils.create_test_user(True)
 
     passwd_prompt = f"Password for user '{creds.username}':"
     unauth_error = "user is not active"
@@ -510,7 +506,7 @@ def test_login_as_non_active_user(clean_auth: None, login_admin: None) -> None:
 
 @pytest.mark.e2e_cpu
 def test_non_admin_user_link_with_agent_user(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user(True)
+    creds = api_utils.create_test_user(True)
     unauth_error = r".*Forbidden.*"
 
     with logged_in_user(creds):
@@ -539,7 +535,7 @@ def test_non_admin_user_link_with_agent_user(clean_auth: None, login_admin: None
 
 @pytest.mark.e2e_cpu
 def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
-    creds = create_test_user()
+    creds = api_utils.create_test_user()
     log_in_user(creds)
     command = [
         "det",
@@ -666,8 +662,8 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
 
 @pytest.mark.e2e_cpu
 def test_notebook_creation_and_listing(clean_auth: None, login_admin: None) -> None:
-    creds1 = create_test_user(True)
-    creds2 = create_test_user(True)
+    creds1 = api_utils.create_test_user(True)
+    creds2 = api_utils.create_test_user(True)
 
     with logged_in_user(creds1):
         notebook_id1 = start_notebook()
@@ -694,8 +690,8 @@ def test_notebook_creation_and_listing(clean_auth: None, login_admin: None) -> N
 
 @pytest.mark.e2e_cpu
 def test_tensorboard_creation_and_listing(clean_auth: None, login_admin: None) -> None:
-    creds1 = create_test_user(True)
-    creds2 = create_test_user(True)
+    creds1 = api_utils.create_test_user(True)
+    creds2 = api_utils.create_test_user(True)
 
     with logged_in_user(creds1):
         # Create an experiment.
@@ -731,8 +727,8 @@ def test_tensorboard_creation_and_listing(clean_auth: None, login_admin: None) -
 
 @pytest.mark.e2e_cpu
 def test_command_creation_and_listing(clean_auth: None) -> None:
-    creds1 = create_test_user(True)
-    creds2 = create_test_user(True)
+    creds1 = api_utils.create_test_user(True)
+    creds2 = api_utils.create_test_user(True)
     session1 = api_utils.determined_test_session(credentials=creds1)
     session2 = api_utils.determined_test_session(credentials=creds2)
 
@@ -752,7 +748,7 @@ def test_command_creation_and_listing(clean_auth: None) -> None:
 
 
 def create_linked_user(uid: int, user: str, gid: int, group: str) -> authentication.Credentials:
-    user_creds = create_test_user(False)
+    user_creds = api_utils.create_test_user(False)
 
     child = det_spawn(
         [
@@ -780,7 +776,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> authenticat
 def create_linked_user_sdk(
     uid: int, agent_user: str, gid: int, group: str
 ) -> authentication.Credentials:
-    creds = create_test_user(False)
+    creds = api_utils.create_test_user(False)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
     user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
@@ -885,7 +881,7 @@ def test_non_root_experiment(clean_auth: None, login_admin: None, tmp_path: path
 
 @pytest.mark.e2e_cpu
 def test_link_without_agent_user(clean_auth: None, login_admin: None) -> None:
-    user = create_test_user(False)
+    user = api_utils.create_test_user(False)
 
     expected_output = "root:0:root:0"
     with logged_in_user(user), command.interactive_command(
@@ -920,8 +916,8 @@ def test_non_root_shell(clean_auth: None, login_admin: None, tmp_path: pathlib.P
 
 @pytest.mark.e2e_cpu
 def test_experiment_delete(clean_auth: None, login_admin: None) -> None:
-    user = create_test_user()
-    non_owner_user = create_test_user()
+    user = api_utils.create_test_user()
+    non_owner_user = api_utils.create_test_user()
 
     with logged_in_user(user):
         experiment_id = exp.run_basic_test(
@@ -965,7 +961,7 @@ def _fetch_user_by_username(sess: api.Session, username: str) -> bindings.v1User
 @pytest.mark.e2e_cpu
 @pytest.mark.e2e_cpu_postgres
 def test_change_displayname(clean_auth: None, login_admin: None) -> None:
-    u_patch = create_test_user(False)
+    u_patch = api_utils.create_test_user(False)
     original_name = u_patch.username
 
     master_url = conf.make_master_url()
@@ -1011,7 +1007,7 @@ def test_change_displayname(clean_auth: None, login_admin: None) -> None:
 
 @pytest.mark.e2e_cpu
 def test_patch_agentusergroup(clean_auth: None, login_admin: None) -> None:
-    test_user_credentials = create_test_user(False)
+    test_user_credentials = api_utils.create_test_user(False)
     test_username = test_user_credentials.username
 
     # Patch - normal.
