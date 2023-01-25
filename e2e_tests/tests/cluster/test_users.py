@@ -88,6 +88,7 @@ def log_in_user_cli(credentials: authentication.Credentials, expectedStatus: int
 
 
 def log_in_user(credentials: authentication.Credentials) -> None:
+    """@deprecated. use api_utils.configure_token_store directly"""
     return api_utils.configure_token_store(credentials)
 
 
