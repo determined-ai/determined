@@ -11,10 +11,14 @@ interface Props {
   getXTooltipHeader?: (xIndex: number) => ChartTooltip;
   getXTooltipYLabels?: (xIndex: number) => ChartTooltip[];
   isShownEmptyVal: boolean;
+  seriesColors: string[];
 }
 
 export const tooltipsPlugin = (
-  { getXTooltipHeader, getXTooltipYLabels, isShownEmptyVal }: Props = { isShownEmptyVal: true },
+  { getXTooltipHeader, getXTooltipYLabels, isShownEmptyVal, seriesColors }: Props = {
+    isShownEmptyVal: true,
+    seriesColors: [],
+  },
 ): Plugin => {
   let barEl: HTMLDivElement | null = null;
   let displayedIdx: number | null = null;
@@ -58,7 +62,9 @@ export const tooltipsPlugin = (
           return {
             html: `
           <div class="${cssClass}">
-            <span class="${css.color}" style="background-color: ${glasbeyColor(i - 1)}"></span>
+            <span class="${css.color}" style="background-color: ${
+              seriesColors[i - 1] ?? glasbeyColor(i - 1)
+            }"></span>
             ${label ? label + '<br />' : ''}
             ${serie.label}: ${valueRaw != null ? humanReadableNumber(valueRaw, precision) : 'N/A'}
           </div>`,

@@ -2,8 +2,10 @@
  Estimator API
 ###############
 
+In this guide, you'll learn how to use the Estimator API.
+
 +-----------------------------------------------------------------------+
-| API reference                                                         |
+| Visit the API reference                                               |
 +=======================================================================+
 | :doc:`/reference/reference-training/training/api-estimator-reference` |
 +-----------------------------------------------------------------------+
