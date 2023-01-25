@@ -43,7 +43,7 @@ def create_test_user(
     return authentication.Credentials(user.username, password)
 
 
-def log_in_user_cli(credentials: authentication.Credentials) -> None:
+def configure_token_store(credentials: authentication.Credentials) -> None:
     """authentication the user for cli usage with the given credentials"""
     token_store = authentication.TokenStore(conf.make_master_url())
     token = authentication.do_login(
