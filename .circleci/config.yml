@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev15
+    default: v1dev16
   gke-version:
     type: string
     default: "1.21.14"
