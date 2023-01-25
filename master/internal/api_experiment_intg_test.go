@@ -160,7 +160,7 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	_, err = api.DeleteExperiment(ctx, &apiv1.DeleteExperimentRequest{ExperimentId: int32(exp.ID)})
 	require.NoError(t, err)
 
-	// Delete is aync so we need to retry until it completes.
+	// Delete is async so we need to retry until it completes.
 	for i := 0; i < 60; i++ {
 		e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 		if err != nil {
