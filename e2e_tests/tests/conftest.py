@@ -132,8 +132,7 @@ def pytest_itemcollected(item: Any) -> None:
         pytest.exit(f"{item.nodeid} is missing an integration test mark (any of {_INTEG_MARKERS})")
 
 
-@pytest.fixture(scope="session")
-def secrets(request: SubRequest) -> Dict[str, str]:
+def s3_secrets(request: SubRequest) -> Dict[str, str]:
     """
     Connect to S3 secretsmanager to get the secret values used in integrations tests.
     """
@@ -143,15 +142,48 @@ def secrets(request: SubRequest) -> Dict[str, str]:
     # Create a Secrets Manager client
     session = boto3.session.Session()
     client = session.client(service_name="secretsmanager", region_name=region_name)
+    response = client.get_secret_value(SecretId=secret_name)
+
+    return cast(Dict[str, str], json.loads(response["SecretString"]))
+
+
+@pytest.fixture(scope="session")
+def secrets(request: SubRequest) -> Dict[str, str]:
+    response = {}
 
     try:
-        response = client.get_secret_value(SecretId=secret_name)
+        response = s3_secrets(request)
     except boto_exc.NoCredentialsError:
         if request.config.getoption("--require-secrets"):
             raise
         pytest.skip("No S3 access")
 
-    return cast(Dict[str, str], json.loads(response["SecretString"]))
+    return response
+
+
+@pytest.fixture(scope="session")
+def checkpoint_storage_config(request: SubRequest) -> Dict[str, Any]:
+    command = [
+        "det",
+        "-m",
+        config.make_master_url(),
+        "master",
+        "config",
+        "--json",
+    ]
+
+    with logged_in_user(ADMIN_CREDENTIALS):
+        output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
+
+    checkpoint_config = json.loads(output)["checkpoint_storage"]
+
+    if checkpoint_config["type"] == "s3":
+        secret_conf = s3_secrets(request)
+        checkpoint_config["bucket"] = secret_conf["INTEGRATIONS_S3_BUCKET"]
+        checkpoint_config["access_key"] = secret_conf["INTEGRATIONS_S3_ACCESS_KEY"]
+        checkpoint_config["secret_key"] = secret_conf["INTEGRATIONS_S3_SECRET_KEY"]
+
+    return cast(Dict[str, Any], checkpoint_config)
 
 
 @pytest.fixture(scope="session")
