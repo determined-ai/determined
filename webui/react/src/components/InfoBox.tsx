@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const renderRow = ({ label, content, separator }: InfoRowProps): React.ReactNode => {
-  if (content == null) return null;
+  if (content === undefined) return null;
   return (
     <div className={[css.info, separator ? css.separator : null].join(' ')} key={label?.toString()}>
       <dt className={css.label}>{label}</dt>
@@ -31,7 +31,13 @@ export const renderRow = ({ label, content, separator }: InfoRowProps): React.Re
           ))}
         </dd>
       ) : (
-        <dd className={css.content}>{content}</dd>
+        <dd className={css.content}>
+          {content === null || String(content).trim() === '' ? (
+            <code className={css.blank}> {content}</code>
+          ) : (
+            content
+          )}
+        </dd>
       )}
     </div>
   );
