@@ -51,10 +51,10 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self,
         core_context: det.core.Context,
         trial_seed: int,
-        hparams: Dict,
+        hparams: Optional[Dict],
         slots_per_trial: int,
         num_gpus: int,
-        exp_conf: Dict[str, Any],
+        exp_conf: Optional[Dict[str, Any]],
         aggregation_frequency: int,
         steps_completed: int,
         managed_training: bool,
@@ -63,10 +63,14 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._core = core_context
         self.distributed = self._core.distributed
         pytorch._PyTorchReducerContext.__init__(self, self.distributed.allgather)
-        self._per_slot_batch_size, self._global_batch_size = util.calculate_batch_sizes(
-            hparams=hparams,
-            slots_per_trial=slots_per_trial,
-            trialname="PyTorchTrial",
+        self._per_slot_batch_size, self._global_batch_size = (
+            util.calculate_batch_sizes(
+                hparams=hparams,
+                slots_per_trial=slots_per_trial,
+                trialname="PyTorchTrial",
+            )
+            if hparams
+            else (None, None)
         )
         self._hparams = hparams
         self._num_gpus = num_gpus
@@ -127,6 +131,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         """
         Return the global batch size.
         """
+        if self._global_batch_size is None:
+            raise ValueError(
+                "global_batch_size is undefined in this Trial because hparams was not "
+                "configured. Please check the init() call to Trainer API."
+            )
         return self._global_batch_size
 
     def get_per_slot_batch_size(self) -> int:
@@ -135,15 +144,30 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         the global batch size. When multi-GPU training is used, this is equal to the global batch
         size divided by the number of GPUs used to train the model.
         """
+        if self._per_slot_batch_size is None:
+            raise ValueError(
+                "per_slot_batch_size is undefined in this Trial because hparams was not "
+                "configured. Please check the init() call to Trainer API."
+            )
+
         return self._per_slot_batch_size
 
     def get_experiment_config(self) -> Dict[str, Any]:
+        if self._exp_conf is None:
+            raise ValueError(
+                "exp_conf is undefined in this Trial. Please check the init() call to Trainer API."
+            )
         return self._exp_conf
 
     def get_hparam(self, name: str) -> Any:
         """
         Return the current value of the hyperparameter with the given name.
         """
+        if self._hparams is None:
+            raise ValueError(
+                "hparams is undefined in this Trial because hparams was not "
+                "configured. Please check the init() call to Trainer API."
+            )
         if name not in self.get_hparams():
             raise ValueError(
                 "Could not find name '{}' in experiment "
@@ -159,6 +183,11 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         return self.get_hparams()[name]
 
     def get_hparams(self) -> Dict[str, Any]:
+        if self._hparams is None:
+            raise ValueError(
+                "hparams is undefined in this Trial because hparams was not "
+                "configured. Please check the init() call to Trainer API."
+            )
         return self._hparams
 
     def get_stop_requested(self) -> bool:
@@ -313,9 +342,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                     optimizer,
                     named_parameters=self._filter_named_parameters(optimizer),
                     backward_passes_per_step=backward_passes_per_step * self._aggregation_frequency,
-                    compression=hvd.Compression.fp16
-                    if fp16_compression
-                    else hvd.Compression.none,
+                    compression=hvd.Compression.fp16 if fp16_compression else hvd.Compression.none,
                 )
                 logging.debug(
                     "Initialized optimizer for distributed and optimized parallel training."

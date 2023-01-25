@@ -45,15 +45,14 @@ class Trainer:
         validation_period: Optional[pytorch.TrainUnit] = None,
         max_length: Optional[pytorch.TrainUnit] = None,
         reporting_period: Optional[pytorch.TrainUnit] = None,
-        average_aggregated_gradients: Optional[bool] = None,
         aggregation_frequency: Optional[int] = None,
         checkpoint_policy: Optional[str] = None,
         test_mode: Optional[bool] = None,
     ) -> None:
 
         # Set context and training variables
-        self._context._aggregation_frequency = aggregation_frequency or 1
-        self._context._average_aggregated_gradients = average_aggregated_gradients or True
+        if aggregation_frequency:
+            self._context._aggregation_frequency = aggregation_frequency
 
         # Set defaults
         checkpoint_policy = checkpoint_policy or "best"
@@ -156,7 +155,10 @@ def _generate_local_seed() -> int:
 
 @contextlib.contextmanager
 def init(
-    *, local_config: Optional[Dict[str, Any]], distributed: Optional[core.DistributedContext] = None
+    *,
+    hparams: Optional[Dict] = None,
+    exp_conf: Optional[Dict[str, Any]] = None,
+    distributed: Optional[core.DistributedContext] = None
 ) -> Iterator[pytorch.PyTorchTrialContext]:
     cluster_info = det.get_cluster_info()
     local_training = cluster_info is None or cluster_info.task_type != "TRIAL"
@@ -169,16 +171,10 @@ def init(
 
     # Initialize default values
     if local_training:
-        if "hyperparameters" not in local_config:
-            raise ValueError("hparams is a required config for local-training mode.")
-
-        default_local_config = {"optimizations": {"aggregation_frequency": 1}}
-        local_config = {**default_local_config, **local_config}
-
-        hparams = local_config["hyperparameters"]
+        hparams = hparams
         trial_seed = _generate_local_seed()
-        exp_conf = {}
-        aggregation_frequency = local_config["optimizations"]["aggregation_frequency"]
+        # XXX: figure out a better way to handle this: defaults/puke
+        aggregation_frequency = exp_conf["optimizations"]["aggregation_frequency"]  # type: ignore
         fp16_compression = False
         average_aggregated_gradients = True
         steps_completed = 0
@@ -220,6 +216,7 @@ def init(
             debug_enabled=debug_enabled,
         )
 
+        # Set here for backwards-compatibility: future code-paths should call wrap_optimizer
         context._set_gradient_compression(fp16_compression)
         context._set_average_aggregated_gradients(average_aggregated_gradients)
 

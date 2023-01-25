@@ -172,9 +172,6 @@ def _run_pytorch_trial(
                 ),
                 reporting_period=pytorch.Batch(info.trial._config["scheduling_unit"]),
                 checkpoint_policy=info.trial._config["checkpoint_policy"],
-                average_aggregated_gradients=bool(
-                    info.trial._config["optimizations"]["average_aggregated_gradients"]
-                ),
                 test_mode=False,
                 aggregation_frequency=int(
                     info.trial._config["optimizations"]["aggregation_frequency"]
