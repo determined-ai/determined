@@ -1,0 +1,40 @@
+.base {
+  background-color: var(--theme-surface);
+  border: solid var(--theme-stroke-width) var(--theme-ix-border);
+  border-radius: var(--theme-border-radius-strong);
+  box-shadow: var(--theme-elevation-weak);
+  color: var(--theme-surface-on);
+  padding: 16px;
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+
+    .extraArea {
+      display: grid;
+
+      .action {
+        display: none;
+      }
+    }
+  }
+  &:hover,
+  &:focus {
+    background-color: var(--theme-surface-weak);
+    border-color: var(--theme-ix-border-active);
+
+    .header .extraArea {
+      .action + .hint {
+        display: none;
+      }
+      .action {
+        display: block;
+
+        & :global(button) {
+          height: min-content;
+        }
+      }
+    }
+  }
+}
