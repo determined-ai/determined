@@ -69,6 +69,7 @@ import { Loadable } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
 import { getDisplayName } from 'utils/user';
 
+import DynamicIcon from './DynamicIcon';
 import css from './TaskList.module.scss';
 
 const TensorBoardSourceType = {
@@ -116,10 +117,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
     useModalJupyterLab({ workspace: workspace });
-  const stgsConfig = useMemo(
-    () => settingsConfig(workspace?.id.toString() ?? 'global'),
-    [workspace?.id],
-  );
+  const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
+  const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
   const { activeSettings, resetSettings, settings, updateSettings } =
     useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
@@ -387,7 +386,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       <TaskActionDropdown task={record} onComplete={handleActionComplete} />
     );
 
-    return [
+    const cols = [
       {
         dataIndex: 'id',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['id'],
@@ -467,7 +466,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
         isFiltered: (settings: Settings) => !!settings.user,
         key: 'user',
-        render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
+        render: (_: string, r: CommandTask) => userRenderer(users.find((u) => u.id === r.userId)),
         sorter: (a: CommandTask, b: CommandTask): number => {
           return alphaNumericSorter(
             getDisplayName(users.find((u) => u.id === a.userId)),
@@ -476,22 +475,23 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         },
         title: 'User',
       },
-      {
+      workspaceId === 'global' && {
+        align: 'center',
         dataIndex: 'workspace',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
         filterDropdown: workspaceFilterDropdown,
-        filters: Object.values(CommandType).map((value) => ({
+        filters: workspaces.map((ws) => ({
           text: (
             <div className={css.typeFilter}>
-              <Icon name={value.toLocaleLowerCase()} />
-              <span>{commandTypeToLabel[value]}</span>
+              <DynamicIcon name={ws.name} size={24} />
+              <span>{ws.name}</span>
             </div>
           ),
-          value,
+          ws,
         })),
         isFiltered: (settings: Settings) => !!settings.workspace,
         key: 'workspace',
-        render: taskWorkspaceRenderer,
+        render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
         sorter: (a: CommandTask, b: CommandTask): number =>
           alphaNumericSorter(
             workspaces.find((u) => u.id === a.workspaceId)?.name ?? '',
@@ -509,7 +509,9 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         render: actionRenderer,
         title: '',
       },
-    ] as ColumnDef<CommandTask>[];
+    ].filter(Boolean) as ColumnDef<CommandTask>[];
+
+    return cols;
   }, [
     handleActionComplete,
     handleSourceShow,
@@ -521,6 +523,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     workspaceFilterDropdown,
     users,
     workspaces,
+    workspaceId,
   ]);
 
   const handleBatchKill = useCallback(async () => {

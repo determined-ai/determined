@@ -153,19 +153,19 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
   </div>
 );
 
-export const taskWorkspaceRenderer: TaskRenderer = (id, record) => (
-  <div>
-    <ConditionalWrapper
-      condition={canBeOpened(record)}
-      wrapper={(ch) => (
-        <a href={`${process.env.PUBLIC_URL}${paths.interactive(record)}`} target={record.id}>
-          {ch}
-        </a>
-      )}>
-      <DynamicIcon name={record.name} size={24} />
-    </ConditionalWrapper>
-  </div>
-);
+export const taskWorkspaceRenderer = (
+  record: CommandTask,
+  workspaces: Workspace[],
+): React.ReactNode => {
+  const workspace = workspaces.find((u) => u.id === record.workspaceId);
+  return (
+    <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+      <Link path={paths.workspaceDetails(record.workspaceId)}>
+        <DynamicIcon name={workspace?.name} size={24} />
+      </Link>
+    </div>
+  );
+};
 
 /* Experiment Table Column Renderers */
 
