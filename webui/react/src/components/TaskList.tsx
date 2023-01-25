@@ -242,6 +242,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleWorkspaceFilterApply = useCallback(
     (workspace: string[]) => {
+      // TODO: check id type into humber
       updateSettings({
         row: undefined,
         workspace: workspace.length !== 0 ? (workspace as CommandType[]) : undefined,
@@ -271,7 +272,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     ),
     [handleTypeFilterApply, handleTypeFilterReset, settings.type],
   );
-
   const workspaceFilterDropdown = useCallback(
     (filterProps: FilterDropdownProps) => (
       <TableFilterDropdown
@@ -305,6 +305,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       <TableFilterDropdown
         {...filterProps}
         multiple
+        searchable
         values={settings.state}
         onFilter={handleStateFilterApply}
         onReset={handleStateFilterReset}
@@ -487,7 +488,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
               <span>{ws.name}</span>
             </div>
           ),
-          ws,
+          value: ws.id,
         })),
         isFiltered: (settings: Settings) => !!settings.workspace,
         key: 'workspace',
