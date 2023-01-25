@@ -48,7 +48,7 @@ const (
 	pbsSchedulerType       = "pbs"
 	slurmResourcesCarrier  = "com.cray.analytics.capsules.carriers.hpc.slurm.SlurmResources"
 	pbsResourcesCarrier    = "com.cray.analytics.capsules.carriers.hpc.pbs.PbsResources"
-	launcherMinimumVersion = "3.1.8"
+	launcherMinimumVersion = "3.2.1"
 )
 
 // schedulerTick periodically triggers the scheduler to act.

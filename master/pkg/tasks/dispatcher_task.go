@@ -199,13 +199,12 @@ func (t *TaskSpec) ToDispatcherManifest(
 	}
 	pbsProj, slurmProj := t.jobAndProjectLabels(labelMode)
 
-	resources, resourceOpts := t.computeResources(tresSupported, numSlots,
+	resources := t.computeResources(tresSupported, numSlots,
 		slotType, gresSupported, isPbsLauncher)
 
 	var slurmArgs []string
 	slurmArgs = append(slurmArgs, t.TaskContainerDefaults.Slurm.SbatchArgs()...)
 	slurmArgs = append(slurmArgs, t.SlurmConfig.SbatchArgs()...)
-	slurmArgs = append(slurmArgs, resourceOpts...)
 	logrus.Debugf("Custom slurm arguments: %s", slurmArgs)
 	errList := ValidateSlurm(slurmArgs)
 	if len(errList) > 0 {
@@ -343,7 +342,7 @@ func formatSlurmLabelResult(label string) string {
 // for Slurm only at the time of writing).
 func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType device.Type,
 	gresSupported bool, isPbsLauncher bool,
-) (*launcher.ResourceRequirements, []string) {
+) *launcher.ResourceRequirements {
 	slotsPerNode := t.slotsPerNode(isPbsLauncher)
 	haveSlotsPerNode := slotsPerNode != unspecifiedSlotsPerNode
 
@@ -356,14 +355,17 @@ func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType d
 	logrus.Debugf("slotsPerNode: %d, numNodes: %d, eSlotsPerNode: %d",
 		slotsPerNode, numNodes, effectiveSlotsPerNode)
 
-	var customArgs []string
 	resources := launcher.NewResourceRequirementsWithDefaults()
 	switch {
 	case slotType == device.CPU:
 		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
-		resources.SetCores(map[string]float32{"per-node": float32(effectiveSlotsPerNode)})
-		if !isPbsLauncher && haveSlotsPerNode {
-			customArgs = append(customArgs, fmt.Sprintf("--cpus-per-task=%d", effectiveSlotsPerNode))
+
+		if haveSlotsPerNode {
+			resources.SetCores(map[string]float32{
+				"per-node":     float32(effectiveSlotsPerNode),
+				"per-instance": float32(effectiveSlotsPerNode)})
+		} else {
+			resources.SetCores(map[string]float32{"per-node": float32(effectiveSlotsPerNode)})
 		}
 	case gresSupported && (tresSupported || (isPbsLauncher && !haveSlotsPerNode)):
 		/*
@@ -373,15 +375,14 @@ func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType d
 		 * the GPUs on each node equals the total GPUs requested.
 		 */
 		resources.SetInstances(map[string]int32{"per-node": 1})
-		resources.SetGpus(map[string]int32{"total": int32(numSlots)})
-		if !isPbsLauncher && haveSlotsPerNode {
-			gpuTypePrefix := ""
-			if t.SlurmConfig.GpuType() != nil {
-				gpuTypePrefix = *t.SlurmConfig.GpuType() + ":"
-			}
-			// TODO: Better if this was handled by the launcher
-			customArgs = append(customArgs, fmt.Sprintf("--gpus-per-task=%s%d",
-				gpuTypePrefix, effectiveSlotsPerNode))
+
+		if haveSlotsPerNode {
+			resources.SetGpus(map[string]int32{
+				"total":        int32(numSlots),
+				"per-instance": int32(effectiveSlotsPerNode),
+			})
+		} else {
+			resources.SetGpus(map[string]int32{"total": int32(numSlots)})
 		}
 	case gresSupported:
 		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
@@ -390,7 +391,7 @@ func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType d
 		// GPUs requested, but neither TRES nor GRES supported.
 		resources.SetInstances(map[string]int32{"nodes": int32(numNodes)})
 	}
-	return resources, customArgs
+	return resources
 }
 
 // slotsPerNode returns the number of slots per node specified in the
