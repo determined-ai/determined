@@ -254,7 +254,7 @@ def test_master_restart_cmd_k8s(
 
 
 def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int) -> None:
-    command_id = run_command(30, slots=slots)
+    command_id = run_command(30, slots=slots, cap=(downtime==0 and slots == 1))
     wait_for_command_state(command_id, "RUNNING", 30)
 
     if downtime >= 0:

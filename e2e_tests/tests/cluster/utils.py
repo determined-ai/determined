@@ -67,7 +67,24 @@ def run_command_set_priority(sleep: int = 30, slots: int = 1, priority: int = 0)
     return subprocess.check_output(command).decode().strip()
 
 
-def run_command(sleep: int = 30, slots: int = 1) -> str:
+def run_command(sleep: int = 30, slots: int = 1, cap: bool = False) -> str:
+    if cap:
+        command = [
+            "det",
+            "-m",
+            conf.make_master_url(),
+            "command",
+            "run",
+            "-d",
+            "--config",
+            f"resources.slots={slots}",
+            "--config",
+            f"environment.add_capabilities=['SYS_PTRACE']",
+            "sleep",
+            str(sleep),
+        ]
+        return subprocess.check_output(command).decode().strip()
+        
     command = [
         "det",
         "-m",
