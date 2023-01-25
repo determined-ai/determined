@@ -73,9 +73,7 @@ def det_run(args: List[str]) -> str:
     return cast(str, pexpect.run(f"det -m {conf.make_master_url()} {' '.join(args)}").decode())
 
 
-def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0) -> None:
-    if expectedStatus == 0:
-        return api_utils.configure_token_store(credentials)
+def log_in_user_cli(credentials: authentication.Credentials, expectedStatus: int = 0) -> None:
     username, password = credentials
     child = det_spawn(["user", "login", username])
     child.setecho(True)
@@ -87,6 +85,10 @@ def log_in_user(credentials: authentication.Credentials, expectedStatus: int = 0
     child.wait()
     child.close()
     assert child.exitstatus == expectedStatus
+
+
+def log_in_user(credentials: authentication.Credentials) -> None:
+    return api_utils.configure_token_store(credentials)
 
 
 def change_user_password(
@@ -269,7 +271,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     activate_deactivate_user(False, creds.username)
 
     # Attempt to log in again. It should have a non-zero exit status.
-    log_in_user(creds, 1)
+    log_in_user_cli(creds, 1)
 
     # Activate user.
     activate_deactivate_user(True, creds.username)
