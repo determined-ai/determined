@@ -104,7 +104,8 @@ const UPlotChart: React.FC<Props> = ({
   if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
 
   useEffect(() => {
-    if (data !== undefined) syncService.updateDataBounds(data as AlignedData);
+    if (data !== undefined && chartType === 'Line')
+      syncService.updateDataBounds(data as AlignedData);
   }, [syncService, data]);
 
   const extendedOptions = useMemo(() => {
