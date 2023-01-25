@@ -1,8 +1,8 @@
 .. _pytorch_mnist_quickstart:
 
-#############################################
- Running Your First Experiment in Determined
-#############################################
+#########################################
+ Run Your First Experiment in Determined
+#########################################
 
 .. meta::
    :description: Learn how to integrate the PyTorch MNIST model into Determined AI using only a single CPU or GPU.
