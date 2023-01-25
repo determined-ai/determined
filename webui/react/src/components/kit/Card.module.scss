@@ -11,12 +11,8 @@
     justify-content: space-between;
     margin-bottom: 8px;
 
-    .extraArea {
-      display: grid;
-
-      .action {
-        display: none;
-      }
+    .action {
+      display: none;
     }
   }
   &:hover,
@@ -24,17 +20,8 @@
     background-color: var(--theme-surface-weak);
     border-color: var(--theme-ix-border-active);
 
-    .header .extraArea {
-      .action + .hint {
-        display: none;
-      }
-      .action {
-        display: block;
-
-        & :global(button) {
-          height: min-content;
-        }
-      }
+    .header .action {
+      display: block;
     }
   }
 }
