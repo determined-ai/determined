@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import ExperimentIcons from 'components/ExperimentIcons';
 import Grid, { GridMode } from 'components/Grid';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
@@ -15,6 +16,7 @@ import {
   taskTypeRenderer,
 } from 'components/Table/Table';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
   getCommands,
@@ -54,7 +56,8 @@ const Dashboard: React.FC = () => {
     NotLoaded: () => undefined,
   });
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+    useModalJupyterLab({});
+  const { canCreateNSC } = usePermissions();
   type Submission = ExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(
@@ -173,7 +176,15 @@ const Dashboard: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const JupyterLabButton = () => {
-    return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
+    return !canCreateNSC ? (
+      <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
+    ) : (
+      <Tooltip placement="leftBottom" title="User lacks permission to create NSC">
+        <div>
+          <Button disabled>Launch JupyterLab</Button>
+        </div>
+      </Tooltip>
+    );
   };
 
   if (projectsLoading && submissionsLoading) {

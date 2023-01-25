@@ -12,6 +12,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import Grid from 'components/Grid';
 import Button from 'components/kit/Button';
+import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {
@@ -40,8 +41,8 @@ import settingsConfig, {
   Settings,
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
-import useFeature from 'hooks/useFeature';
 import useModalJupyterLab from 'hooks/useModal/JupyterLab/useModalJupyterLab';
+import usePermissions from 'hooks/usePermissions';
 import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getCommands, getJupyterLabs, getShells, getTensorBoards, killTask } from 'services/api';
@@ -53,7 +54,14 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { alphaNumericSorter, dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { useCurrentUser, useEnsureUsersFetched, useUsers } from 'stores/users';
 import { ShirtSize } from 'themes';
-import { ExperimentAction as Action, AnyTask, CommandState, CommandTask, CommandType } from 'types';
+import {
+  ExperimentAction as Action,
+  AnyTask,
+  CommandState,
+  CommandTask,
+  CommandType,
+  Workspace,
+} from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
@@ -69,7 +77,7 @@ const TensorBoardSourceType = {
 type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
 
 interface Props {
-  workspaceId?: number;
+  workspace?: Workspace;
 }
 
 interface TensorBoardSource {
@@ -86,7 +94,7 @@ interface SourceInfo {
 
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user'];
 
-const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
+const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const users = Loadable.match(useUsers(), {
     Loaded: (cUser) => cUser.users,
     NotLoaded: () => [],
@@ -101,12 +109,11 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
   const [sourcesModal, setSourcesModal] = useState<SourceInfo>();
   const pageRef = useRef<HTMLElement>(null);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+    useModalJupyterLab({ workspace: workspace });
   const { activeSettings, resetSettings, settings, updateSettings } = useSettings<Settings>(
-    settingsConfig(workspaceId?.toString() ?? 'global'),
+    settingsConfig(workspace?.id.toString() ?? 'global'),
   );
-  const dashboardEnabled = useFeature().isOn('dashboard');
-
+  const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
@@ -157,10 +164,10 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
   const fetchTasks = useCallback(async () => {
     try {
       const [commands, jupyterLabs, shells, tensorboards] = await Promise.all([
-        getCommands({ signal: canceler.signal, workspaceId }),
-        getJupyterLabs({ signal: canceler.signal, workspaceId }),
-        getShells({ signal: canceler.signal, workspaceId }),
-        getTensorBoards({ signal: canceler.signal, workspaceId }),
+        getCommands({ signal: canceler.signal, workspaceId: workspace?.id }),
+        getJupyterLabs({ signal: canceler.signal, workspaceId: workspace?.id }),
+        getShells({ signal: canceler.signal, workspaceId: workspace?.id }),
+        getTensorBoards({ signal: canceler.signal, workspaceId: workspace?.id }),
       ]);
       const newTasks = [...commands, ...jupyterLabs, ...shells, ...tensorboards];
       setTasks((prev) => {
@@ -174,7 +181,7 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
         type: ErrorType.Api,
       });
     }
-  }, [canceler.signal, workspaceId]);
+  }, [canceler.signal, workspace?.id]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchUsers(), fetchTasks()]);
@@ -552,7 +559,16 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
   );
 
   const JupyterLabButton = () => {
-    return <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>;
+    const hasNSCPermissions = workspace ? canCreateWorkspaceNSC({ workspace }) : canCreateNSC;
+    return hasNSCPermissions ? (
+      <Button onClick={() => openJupyterLabModal()}>Launch JupyterLab</Button>
+    ) : (
+      <Tooltip placement="leftBottom" title="User lacks permission to create NSC">
+        <div>
+          <Button disabled>Launch JupyterLab</Button>
+        </div>
+      </Tooltip>
+    );
   };
 
   return (
@@ -564,7 +580,7 @@ const TaskList: React.FC<Props> = ({ workspaceId }: Props) => {
           {filterCount > 0 && (
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
-          {dashboardEnabled ? <JupyterLabButton /> : null}
+          <JupyterLabButton />
         </Space>
       }
       title="Tasks">

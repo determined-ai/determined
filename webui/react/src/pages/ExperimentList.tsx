@@ -53,7 +53,7 @@ import {
   pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
-import { Determinedexperimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { Experimentv1State, V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { encodeExperimentState } from 'services/decoder';
 import { GetExperimentsParams } from 'services/types';
 import Icon from 'shared/components/Icon/Icon';
@@ -181,7 +181,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
         projectId: id,
         sortBy: validateDetApiEnum(V1GetExperimentsRequestSortBy, settings.sortKey),
-        states: validateDetApiEnumList(Determinedexperimentv1State, states),
+        states: validateDetApiEnumList(Experimentv1State, states),
         users: settings.user,
       };
       const pinnedIds = pinned?.[id] ?? [];

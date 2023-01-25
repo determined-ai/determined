@@ -138,9 +138,7 @@ const ActionDropdown = <T extends string>({
   if (menuItems.length === 0) {
     return (
       <div className={css.base} title="No actions available" onClick={stopPropagation}>
-        <Button disabled ghost type="text">
-          <Icon name="overflow-vertical" />
-        </Button>
+        <Button disabled icon={<Icon name="overflow-vertical" />} type="text" />
       </div>
     );
   }
@@ -162,9 +160,7 @@ const ActionDropdown = <T extends string>({
         placement="bottomRight"
         trigger={trigger ?? ['click']}
         onOpenChange={onVisibleChange}>
-        <Button ghost type="text" onClick={stopPropagation}>
-          <Icon name="overflow-vertical" />
-        </Button>
+        <Button icon={<Icon name="overflow-vertical" />} type="text" onClick={stopPropagation} />
       </Dropdown>
     </div>
   );

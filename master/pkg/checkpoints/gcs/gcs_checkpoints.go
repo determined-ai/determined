@@ -28,7 +28,8 @@ const DefaultDownloadPartSize = units.MiB * 5
 func (d *GCSDownloader) fileDownload(
 	ctx context.Context,
 	b *storage.BucketHandle,
-	o *storage.ObjectAttrs) error {
+	o *storage.ObjectAttrs,
+) error {
 	r, err := b.Object(o.Name).NewReader(ctx)
 	if err != nil {
 		return err

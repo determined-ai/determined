@@ -58,7 +58,7 @@ def ls(args: Namespace) -> None:
     ]
 
     def computed_job_name(job: bindings.v1Job) -> str:
-        if job.type == bindings.determinedjobv1Type.TYPE_EXPERIMENT:
+        if job.type == bindings.jobv1Type.TYPE_EXPERIMENT:
             return f"{job.name} ({job.entityId})"
         else:
             return job.name

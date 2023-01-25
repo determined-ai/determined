@@ -48,3 +48,33 @@ code.block {
   padding: 8px;
   white-space: pre;
 }
+.uplot canvas {
+  background-color: var(--theme-stage);
+}
+.u-wrap {
+  overflow-x: hidden;
+}
+
+/* diamond cursor for most charts, see closestPointPlugin.module.scss for charts with that plugin (LearningCurve) */
+
+.u-cursor-pt {
+  border-radius: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+.u-cursor-pt::before {
+  background-color: inherit;
+  content: '';
+  height: 7px;
+  position: absolute;
+  transform: scaleX(1.25) translateX(-0.5px) translateY(-1px) rotate(45deg);
+  width: 7px;
+}
+.u-cursor-pt::after {
+  background-color: var(--theme-stage);
+  content: '';
+  height: 3px;
+  position: absolute;
+  transform: scaleX(1.25) translateX(1px) translateY(1px) rotate(45deg);
+  width: 3px;
+}

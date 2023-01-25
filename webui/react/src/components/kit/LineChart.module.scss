@@ -1,3 +1,49 @@
+.chartgridContainer {
+  background-color: #f0f0f0;
+  min-height: 530px;
+  overflow-y: hidden;
+  padding: 5px;
+}
+.chartgridCell {
+  background-color: #f0f0f0;
+  padding: 0;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.chartgridCellCard {
+  background-color: #f6f6f6;
+  border: 1px solid #c2c2c2;
+  border-radius: 4px;
+  padding: 24px;
+}
 .chartTitle {
+  background-color: #f6f6f6;
+  font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  margin-bottom: -18px !important;
+  padding-bottom: 15px;
+  padding-top: 5px;
   text-align: center;
+}
+.filterContainer {
+  column-gap: 16px;
+  display: flex;
+  justify-content: right;
+  margin-bottom: 12px;
+  padding-right: 6px;
+}
+.legendContainer {
+  margin-left: 35px;
+
+  .legendItem {
+    display: inline-block;
+    font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    margin-right: 16px;
+
+    .colorButton {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+  }
 }

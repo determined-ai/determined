@@ -13,6 +13,7 @@ interface Point {
 }
 
 interface Props {
+  diamond?: boolean;
   distInPx?: number; // max cursor distance from data point to focus it (in pixel)
   getPointTooltipHTML?: (xVal: number, yVal: number, point: Point) => string;
   onPointClick?: (e: MouseEvent, point: Point) => void;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export const closestPointPlugin = ({
+  diamond = false,
   distInPx = 30,
   getPointTooltipHTML,
   onPointClick,
@@ -155,7 +157,7 @@ export const closestPointPlugin = ({
 
         // point div
         pointEl = document.createElement('div');
-        pointEl.className = css.point;
+        pointEl.className = diamond ? css.diamond : css.point;
         over.appendChild(pointEl);
 
         // point div

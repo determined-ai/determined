@@ -9,7 +9,7 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import log_out_user
 
-from .test_workspace_org import setup_workspace
+from .test_workspace_org import setup_workspaces
 
 
 @pytest.mark.e2e_cpu
@@ -188,7 +188,7 @@ def test_model_cli() -> None:
 
     # add a test workspace.
     admin_session = api_utils.determined_test_session(admin=True)
-    with setup_workspace(admin_session) as test_workspace:
+    with setup_workspaces(admin_session) as [test_workspace]:
         test_workspace_name = test_workspace.name
         # create model in test_workspace
         test_model_2_name = get_random_string()
