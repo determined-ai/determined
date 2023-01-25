@@ -161,13 +161,13 @@ const LearningCurve: React.FC<Props> = ({
         setTrialHps(newTrialHps);
 
         const newChartData = newTrialIds
-            .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
-            .map((trialId) => ({
-              color: glasbeyColor(trialId),
-              data: { [XAxisDomain.Batches]: metricsMap[trialId] },
-              key: trialId,
-              name: `trial ${trialId}`,
-            }));
+          .filter((trialId) => !selectedRowKeys.length || selectedRowKeys.includes(trialId))
+          .map((trialId) => ({
+            color: glasbeyColor(trialId),
+            data: { [XAxisDomain.Batches]: metricsMap[trialId] },
+            key: trialId,
+            name: `trial ${trialId}`,
+          }));
         setChartData(newChartData);
 
         // One successful event as come through.
