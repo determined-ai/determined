@@ -1,4 +1,5 @@
 import { ConfigProvider, theme } from 'antd';
+import { ThemeConfig } from 'antd/es/config-provider/context';
 import React, { ReactNode, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 import { useSettings } from 'hooks/useSettings';
@@ -13,10 +14,17 @@ import { Loadable } from 'utils/loadable';
 
 const MATCH_MEDIA_SCHEME_DARK = '(prefers-color-scheme: dark)';
 const MATCH_MEDIA_SCHEME_LIGHT = '(prefers-color-scheme: light)';
-const ANTD_THEMES = {
+const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   [DarkLight.Dark]: {
     algorithm: theme.darkAlgorithm,
+    components: {
+      Progress: {
+        marginXS: 0,
+      },
+    },
     token: {
+      borderRadius: 2,
+      colorBgContainer: 'transparent',
       colorLink: '#57a3fa',
       colorLinkHover: '#8dc0fb',
       colorPrimary: '#1890ff',
@@ -25,7 +33,14 @@ const ANTD_THEMES = {
   },
   [DarkLight.Light]: {
     algorithm: theme.defaultAlgorithm,
+    components: {
+      Progress: {
+        marginXS: 0,
+      },
+    },
     token: {
+      borderRadius: 2,
+      colorBgContainer: 'transparent',
       colorPrimary: '#1890ff',
       fontFamily: 'var(--font-family)',
     },
