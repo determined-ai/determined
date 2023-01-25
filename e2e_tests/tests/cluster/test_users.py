@@ -567,18 +567,9 @@ def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
 
 
 def run_command(session: api.Session) -> str:
-    if session:
-        body = bindings.v1LaunchCommandRequest(config={"entrypoint": ["echo", "hello"]})
-        cmd = bindings.post_LaunchCommand(session, body=body).command
-        return cmd.id
-    child = det_spawn(["cmd", "run", "echo", "hello"])
-    child.expect(r"Scheduling.*\(id: (?P<id>.+?)\)")
-    command_id = child.match.groupdict().get("id", None)
-    assert command_id is not None
-    child.read()
-    child.wait()
-    assert child.exitstatus == 0
-    return cast(str, command_id.decode())
+    body = bindings.v1LaunchCommandRequest(config={"entrypoint": ["echo", "hello"]})
+    cmd = bindings.post_LaunchCommand(session, body=body).command
+    return cmd.id
 
 
 def start_notebook() -> str:
