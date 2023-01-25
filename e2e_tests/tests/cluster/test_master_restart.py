@@ -257,7 +257,7 @@ def _test_master_restart_cmd(managed_cluster: Cluster, slots: int, downtime: int
         time.sleep(downtime)
         managed_cluster.restart_master()
 
-    wait_for_command_state(command_id, "TERMINATED", 60)
+    wait_for_command_state(command_id, "TERMINATED", 30)
     succeeded = "success" in get_command_info(command_id)["exitStatus"]
     assert succeeded
 
