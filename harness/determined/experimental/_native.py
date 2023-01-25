@@ -96,8 +96,5 @@ def test_one_batch_pytorch(trial_class: Any, config: Dict) -> Any:
                 **config.get("min_validation_period", {"batches": sys.maxsize})
             ),
             checkpoint_policy=config.get("checkpoint_policy", "all"),
-            average_aggregated_gradients=config.get("optimizations", {}).get(
-                "average_aggregated_gradients"
-            ),
             aggregation_frequency=config.get("optimizations", {}).get("aggregation_frequency", 1),
         )

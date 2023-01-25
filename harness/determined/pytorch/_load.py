@@ -7,7 +7,6 @@ import torch
 
 import determined as det
 from determined import core, errors, load, pytorch, util
-from determined.common import api
 
 
 def load_trial_from_checkpoint_path(path: str, **kwargs: Any) -> pytorch.PyTorchTrial:
@@ -131,7 +130,6 @@ def _load_pytorch_trial_for_checkpoint_export(
                 config, "/tmp", managed_training=managed_training, test_mode=False
             )
         )
-        hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
         use_gpu, container_gpus, slot_ids = det._get_gpus(limit_gpus=False)
         fp16_compression = bool(
             config.get_optimizations_config().get("gradient_compression", False)

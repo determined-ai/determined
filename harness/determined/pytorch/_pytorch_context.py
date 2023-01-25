@@ -122,8 +122,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._aggregation_frequency = aggregation_frequency
 
         # Initialized in wrap_optimizer or caller (to support legacy codepaths)
-        self._fp16_compression = None
-        self._average_aggregated_gradients = None
+        self._fp16_compression = None  # type: Optional[bool]
+        self._average_aggregated_gradients = None  # type: Optional[bool]
 
         self._stop_requested = False
 
@@ -294,8 +294,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self,
         optimizer: torch.optim.Optimizer,
         backward_passes_per_step: int = 1,
-        fp16_compression: bool = None,
-        average_aggregated_gradients: bool = None,
+        fp16_compression: Optional[bool] = None,
+        average_aggregated_gradients: Optional[bool] = None,
     ) -> torch.optim.Optimizer:
         """Returns a wrapped optimizer.
 
