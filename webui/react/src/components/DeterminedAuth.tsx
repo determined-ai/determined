@@ -59,6 +59,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setAuth({ isAuthenticated: true, token });
         updateCurrentUser(user.id);
         if (rbacEnabled) {
+          // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
           await fetchMyRoles();
         }
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);

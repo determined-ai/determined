@@ -92,6 +92,8 @@ const usePermissions = (): PermissionsHook => {
     NotLoaded: () => undefined,
   });
 
+  // Loadables keep track of loading status
+  // userAssignments and userRoles should always be an array -- empty arrays until loading is complete.
   const loadableUserAssignments = useObservable<Loadable<UserAssignment[]>>(
     UserRolesService.getUserAssignments(),
   );
