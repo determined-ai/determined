@@ -38,16 +38,15 @@ environment.
 Go Further
 ==========
 
-Visit the `Training API Guides
-<https://docs.determined.ai/latest/training/apis-howto/overview.html>`_ for in-depth guides that
+Visit the :doc:`Training API Guides </training/apis-howto/overview>` for in-depth guides that
 describe how to take your existing model code and train your model in Determined.
 
 Looking for Examples?
 =====================
 
-Examples let you build off of an existing model that already runs on Determined. Visit our `examples
-<https://docs.determined.ai/latest/example-solutions/examples.html>`_ to see if the model you'd like
-to train is already available.
+Examples let you build off of an existing model that already runs on Determined. Visit our
+:doc:`Examples </example-solutions/examples>` to see if the model you'd like to train is already
+available.
 
 .. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
 

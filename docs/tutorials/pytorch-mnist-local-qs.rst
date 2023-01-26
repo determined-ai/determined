@@ -29,10 +29,8 @@ Our goal is to integrate the `PyTorch MNIST training example
 
 **Prerequisites**
 
--  `System Requirements
-   <https://docs.determined.ai/latest/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements.html#system-requirements>`_
--  `Docker
-   <https://docs.determined.ai/latest/cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements.html#install-docker>`_
+-  :doc:`Installation Requirements
+   </cluster-setup-guide/deploy-cluster/sysadmin-deploy-on-prem/requirements>`
 
 ********************
  Download the Files
@@ -57,15 +55,14 @@ To start your experiment, you'll need a Determined cluster. If you are new to De
 
 .. code::
 
+   pip install determined
+   det deploy local cluster-up
+
    # If your machine has GPUs:
    det deploy local cluster-up
 
    # If your machine does not have GPUs:
    det deploy local cluster-up --no-gpu
-
-.. note::
-
-   If you want to see if Determined is already installed, you can type ``det --version``.
 
 ********************
  Run the Experiment
@@ -75,7 +72,7 @@ To run the experiment, enter the following command:
 
 .. code::
 
-   det experiment create const.yaml .
+   det experiment create const.yaml . -f
 
 A notification displays letting you know the experiment has started.
 
@@ -83,11 +80,6 @@ A notification displays letting you know the experiment has started.
 
    Preparing files (.../mnist_pytorch) to send to master...
    Created experiment xxx
-
-.. note::
-
-   The Determined CLI may display a warning letting you know the requested job requires more slots
-   than currently available. For the purposes of this tutorial, you can ignore this warning.
 
 *********************
  View the Experiment
@@ -110,5 +102,4 @@ training the PyTorch MNIST example.
 
 In this article, we learned how to run an experiment on a local, single CPU or GPU. To learn how to
 change your configuration settings, including how to run a distributed training job on multiple
-GPUs, visit the `Quickstart for Model Developers
-<https://docs.determined.ai/latest/quickstart-mdldev.html#>`_.
+GPUs, visit the :doc:`Quickstart for Model Developers </quickstart-mdldev>`.
