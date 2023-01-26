@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := build
+SHELL := bash
 GENERATED := packaging/LICENSE
 GENERATION_INPUTS = ../schemas/gen.py $(shell find ./pkg/schemas/ -name '*.go') $(shell find ../schemas/expconf -name '*.json')
 MOCK_GENERATION_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go
@@ -6,6 +7,29 @@ GORELEASER = goreleaser
 
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
+export DOCKER_REPO ?= determinedai
+
+FULL_COMMIT = $(shell git rev-parse HEAD)
+SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
+PROJECT_NAME = determined-master
+ARCHS = amd64 arm64 ppc64
+MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
+
+NVCR_REPO = nvcr.io/isv-ngc-partner/determined
+
+PUB_MANIFESTS = \
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
+
+NVCR_MANIFESTS = \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(SHORT_COMMIT) \
+	$(NVCR_REPO)/$(PROJECT_NAME):$(VERSION)
+
+DEV_MANIFESTS = \
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
+	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)
 
 .PHONY: clean
 clean: ungen
@@ -114,11 +138,30 @@ pre-package:
 	cp ../harness/dist/*.whl build/wheels/
 	cp $(shell packaging/fetch-cloud-forest.sh) build/
 
+.PHONE: buildx
+buildx:
+	docker context rm -f buildx-context || true
+	docker context create buildx-context
+	docker buildx rm -f buildx-build || true
+	{ \
+		platforms=(); \
+		for arch in $(ARCHS); do \
+			[ $$arch == "ppc64" ] && arch="ppc64le"; \
+			platforms+=("linux/$$arch"); \
+		done; \
+		platform_list=$$(IFS=, ; echo "$${platforms[*]}"); \
+		docker --context=buildx-context buildx create --platform $$platform_list --bootstrap --use --name buildx-build; \
+	}
+	docker buildx ls
+
+packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
+	../tools/scripts/gen-attributions.py master $@
+
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?=
 package: export DET_SEGMENT_WEBUI_KEY ?=
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
-package: gen
+package: gen buildx
 	$(GORELEASER) --snapshot --rm-dist
 
 .PHONY: release
@@ -126,17 +169,37 @@ release: export DET_SEGMENT_MASTER_KEY ?=
 release: export DET_SEGMENT_WEBUI_KEY ?=
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
-release: gen
+release: gen buildx
 	$(GORELEASER) --rm-dist
+	make publish-nvcr
 
-.PHONY: publish
-publish:
-	docker push determinedai/determined-master:$(VERSION)
+define manifest_publish
+	for image in $(2); do \
+		docker push $$image; \
+	done
+	for manifest in $(1); do \
+		docker manifest rm $$manifest; \
+		docker manifest create $$manifest $(2); \
+		docker manifest push $$manifest || exit 1; \
+	done
+endef
+
+define docker_tag
+	for image in $(1); do \
+		tag=$$(echo $$image | sed -e 's|$(2)|$(3)|'); \
+		docker tag $$image $$tag; \
+		echo $$tag; \
+	done
+endef
 
 .PHONY: publish-dev
 publish-dev:
-	docker push determinedai/determined-master:$(shell git rev-parse HEAD)
-	docker push determinedai/determined-dev:determined-master-$(shell git rev-parse HEAD)
+	@$(call manifest_publish, $(DEV_MANIFESTS), $(MULTI_ARCH_IMAGES))
 
-packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
-	../tools/scripts/gen-attributions.py master $@
+.PHONY: publish
+publish:
+	@$(call manifest_publish, $(PUB_MANIFESTS), $(MULTI_ARCH_IMAGES))
+
+.PHONY: publish-nvcr
+publish-nvcr:
+	@$(call manifest_publish, $(NVCR_MANIFESTS), $(shell $(call docker_tag, $(MULTI_ARCH_IMAGES), ^$(DOCKER_REPO)/, $(NVCR_REPO)/)))
