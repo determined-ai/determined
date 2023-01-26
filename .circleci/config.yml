@@ -359,7 +359,6 @@ commands:
             if [ -n <<parameters.extra-requirements-file>> ]; then
               cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
             fi
-            echo <<parameters.python-version>> >> /tmp/cachefile
 
       - restore_cache:
           keys:
@@ -1445,8 +1444,7 @@ jobs:
       - skip-if-docs-only
       - skip-if-webui-only
       - setup-python-venv:
-          install-python: true
-          python-version: "3.9.16"
+          install-python: false
           determined: true
           model-hub: true
           extras-requires: "torch==1.9.0"
