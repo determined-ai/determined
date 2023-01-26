@@ -7,6 +7,9 @@ import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';
 import EditableRow from './EditableRow';
+
+export const ADD_ROW_TEXT = '+ Add Row';
+
 interface Props {
   editing?: boolean;
   metadata?: Metadata;
@@ -61,7 +64,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                   />
                 ))}
                 <Button type="link" onClick={add}>
-                  + Add Row
+                  {ADD_ROW_TEXT}
                 </Button>
               </>
             )}

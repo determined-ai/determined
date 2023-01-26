@@ -42,15 +42,16 @@ const FormItem: React.FC<FormItemProps> = ({
   children,
   label,
   labelCol = { span: 24 },
-  name,
-  rules = [],
-  required,
-  requiredMessage,
   max,
   maxMessage,
+  name,
+  required,
+  requiredMessage,
+  rules = [],
   validateMessage,
-  validateTrigger,
   validateStatus,
+  validateTrigger,
+  ...props
 }: FormItemProps) => {
   if (required) rules.push({ message: requiredMessage || `${label} required`, required: true });
   if (max) rules.push({ max, message: maxMessage || `${label} cannot exceed ${max} characters` });
@@ -64,7 +65,8 @@ const FormItem: React.FC<FormItemProps> = ({
       required={required}
       rules={rules}
       validateStatus={validateStatus}
-      validateTrigger={validateTrigger}>
+      validateTrigger={validateTrigger}
+      {...props}>
       {children}
     </AntdForm.Item>
   );
