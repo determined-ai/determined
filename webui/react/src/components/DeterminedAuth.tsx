@@ -40,8 +40,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-  const userRolesService = UserRolesService.getInstance();
-  const fetchMyRoles = userRolesService.fetchUserAssignmentsAndRoles(canceler);
+  const fetchMyRoles = UserRolesService.fetchUserAssignmentsAndRoles(canceler);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {

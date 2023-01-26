@@ -29,8 +29,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
   const fetchWorkspaces = useFetchWorkspaces(canceler);
-  const userRolesService = UserRolesService.getInstance();
-  const fetchMyRoles = userRolesService.fetchUserAssignmentsAndRoles(canceler);
+  const fetchMyRoles = UserRolesService.fetchUserAssignmentsAndRoles(canceler);
 
   usePolling(fetchWorkspaces);
 

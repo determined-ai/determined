@@ -18,12 +18,11 @@ const SignOut: React.FC = () => {
   const { resetAuth } = useAuth();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const userRolesService = UserRolesService.getInstance();
 
   useEffect(() => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
-      userRolesService.resetUserAssignmentsAndRoles();
+      UserRolesService.resetUserAssignmentsAndRoles();
       try {
         await logout({});
       } catch (e) {
@@ -47,7 +46,7 @@ const SignOut: React.FC = () => {
     };
 
     if (!isSigningOut) signOut();
-  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, resetAuth, userRolesService]);
+  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, resetAuth]);
 
   return null;
 };

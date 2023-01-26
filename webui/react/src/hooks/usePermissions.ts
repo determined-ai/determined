@@ -92,15 +92,14 @@ const usePermissions = (): PermissionsHook => {
     NotLoaded: () => undefined,
   });
 
-  const userRolesService = UserRolesService.getInstance();
   const loadableUserAssignments = useObservable<Loadable<UserAssignment[]>>(
-    userRolesService.getUserAssignments(),
+    UserRolesService.getUserAssignments(),
   );
   const userAssignments = Loadable.match(loadableUserAssignments, {
     Loaded: (uAssignments) => uAssignments,
     NotLoaded: () => [],
   });
-  const loadableUserRoles = useObservable<Loadable<UserRole[]>>(userRolesService.getUserRoles());
+  const loadableUserRoles = useObservable<Loadable<UserRole[]>>(UserRolesService.getUserRoles());
   const userRoles = Loadable.match(loadableUserRoles, {
     Loaded: (uRoles) => uRoles,
     NotLoaded: () => [],
