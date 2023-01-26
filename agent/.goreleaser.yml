@@ -63,7 +63,6 @@ nfpms:
     formats:
       - deb
       - rpm
-    bindir: /usr/local/bin
     contents:
       - src: "packaging/agent.yaml"
         dst: "/etc/determined/agent.yaml"
