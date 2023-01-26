@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -66,7 +67,7 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 	return returnScope, nil
 }
 
-// AccessibleScopesTB returns the set of scopes of tensorboards that the user should be limited to.
+// FilterTensorboards returns the tensorboards that the user has access to.
 func (a *NSCAuthZBasic) FilterTensorboards(
 	ctx context.Context,
 	curUser model.User,
