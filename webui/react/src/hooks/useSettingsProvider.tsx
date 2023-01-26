@@ -95,7 +95,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     if (clearQuerySettings) querySettings.current = '';
   };
 
-  if (isLoading && !(checked && !user)) return <Spinner spinning />;
+  if (isLoading && !(checked && !user)) return <Spinner center spinning />;
 
   return (
     <UserSettings.Provider
