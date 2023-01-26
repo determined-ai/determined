@@ -100,3 +100,16 @@ export const useUserAssignments = (): Loadable<UserAssignment[]> => {
   const userAssignmentState = useValueMemoizedObservable(userAssignments);
   return userAssignmentState;
 };
+
+export const useResetUserAssignmentsAndRoles = (): (() => void) => {
+  const context = useContext(UserRolesAndAssignmentsContext);
+  if (context === null) {
+    throw new Error('Attempted to use logoutUserRoles outside of UserRolesAndAssignmentsContext');
+  }
+  const { userAssignments, userRoles } = context;
+
+  return useCallback((): void => {
+    userAssignments.set(NotLoaded);
+    userRoles.set(NotLoaded);
+  }, [userAssignments, userRoles]);
+};
