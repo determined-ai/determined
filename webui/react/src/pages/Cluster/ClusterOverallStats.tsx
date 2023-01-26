@@ -24,16 +24,19 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
   limit: -2,
   states: activeRunStates,
 };
-const experimentsService = new ExperimentsService(ACTIVE_EXPERIMENTS_PARAMS);
 
 export const ClusterOverallStats: React.FC = () => {
   const loadableResourcePools = useResourcePools();
   const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
   const overview = useClusterOverview();
   const agents = useAgents();
+  const experimentsService = ExperimentsService.getInstance();
 
   const [canceler] = useState(new AbortController());
-  const fetchActiveExperiments = experimentsService.fetchExperiments(canceler);
+  const fetchActiveExperiments = experimentsService.fetchExperiments(
+    ACTIVE_EXPERIMENTS_PARAMS,
+    canceler,
+  );
   const fetchActiveTasks = useFetchActiveTasks(canceler);
   const fetchActiveRunning = useCallback(async () => {
     await fetchActiveExperiments();
@@ -41,7 +44,9 @@ export const ClusterOverallStats: React.FC = () => {
   }, [fetchActiveExperiments, fetchActiveTasks]);
 
   usePolling(fetchActiveRunning);
-  const activeExperiments = useObservable(experimentsService.experiments);
+  const activeExperiments = useObservable(
+    experimentsService.experimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
+  );
   const activeTasks = useActiveTasks();
   const rbacEnabled = useFeature().isOn('rbac');
 
