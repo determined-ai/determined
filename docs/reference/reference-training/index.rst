@@ -1,6 +1,6 @@
-####################
- Training Reference
-####################
+########################
+ Training API Reference
+########################
 
 This page includes links to the reference documentation for the Determined training APIs and the
 experiment configuration file.
