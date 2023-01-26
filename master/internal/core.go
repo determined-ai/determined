@@ -772,7 +772,7 @@ func (m *Master) Run(ctx context.Context) error {
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return !gzipSkipPaths[c.Path()]
+			return gzipSkipPaths[c.Path()]
 		},
 	}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
