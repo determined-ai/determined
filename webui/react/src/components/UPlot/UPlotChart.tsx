@@ -70,7 +70,8 @@ const shouldRecreate = (
       (nextSerie?.label != null && prevSerie?.label !== nextSerie?.label) ||
       (prevSerie?.stroke != null && prevSerie?.stroke !== nextSerie?.stroke) ||
       (nextSerie?.paths != null && prevSerie?.paths !== nextSerie?.paths) ||
-      (nextSerie?.fill != null && prevSerie?.fill !== nextSerie?.fill)
+      (nextSerie?.fill != null && prevSerie?.fill !== nextSerie?.fill) ||
+      prevSerie?.points?.show !== nextSerie?.points?.show
     );
   });
   if (someSeriesHasChanged) return true;
@@ -103,7 +104,8 @@ const UPlotChart: React.FC<Props> = ({
   if (ui.darkLight === DarkLight.Dark) classes.push(css.dark);
 
   useEffect(() => {
-    if (data !== undefined) syncService.updateDataBounds(data as AlignedData);
+    if (data !== undefined && chartType === 'Line')
+      syncService.updateDataBounds(data as AlignedData);
   }, [syncService, data]);
 
   const extendedOptions = useMemo(() => {

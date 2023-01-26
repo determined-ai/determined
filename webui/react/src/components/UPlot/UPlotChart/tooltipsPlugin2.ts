@@ -111,7 +111,7 @@ export const tooltipsPlugin = (
     const tooltipWidth = tooltipEl.getBoundingClientRect().width;
 
     // right
-    if (chartWidth && idxLeft + tooltipWidth >= chartWidth) {
+    if (chartWidth && idxLeft + tooltipWidth >= chartWidth * 0.9) {
       return idxLeft - tooltipWidth - margin;
     }
 

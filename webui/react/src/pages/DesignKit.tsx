@@ -264,9 +264,9 @@ const ChartsSection: React.FC = () => {
         [1, 15],
         [2, 10.123456789],
         [2.5, Math.random() * 22],
-        [3, Math.random() * 18],
-        [3.25, Math.random() * 10 + 10],
-        [3.75, Math.random() * 12],
+        [3, 10.3909],
+        [3.25, 19],
+        [3.75, 4],
         [4, 12],
       ],
       [XAxisDomain.Time]: [

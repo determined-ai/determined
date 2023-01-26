@@ -4,13 +4,7 @@ from determined.cli.user_groups import group_name_to_group_id, usernames_to_user
 from tests import api_utils
 
 from .test_groups import det_cmd, det_cmd_expect_error, det_cmd_json
-from .test_users import (
-    ADMIN_CREDENTIALS,
-    create_test_user,
-    get_random_string,
-    log_in_user,
-    logged_in_user,
-)
+from .test_users import ADMIN_CREDENTIALS, get_random_string, log_in_user, logged_in_user
 
 
 def roles_not_implemented() -> bool:
@@ -21,7 +15,7 @@ def roles_not_implemented() -> bool:
 @pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_rbac_permission_assignment() -> None:
     log_in_user(ADMIN_CREDENTIALS)
-    test_user_creds = create_test_user()
+    test_user_creds = api_utils.create_test_user()
 
     # User has no permissions.
     with logged_in_user(test_user_creds):
@@ -248,7 +242,7 @@ def test_rbac_permission_assignment_errors() -> None:
     )
 
     log_in_user(ADMIN_CREDENTIALS)
-    test_user_creds = create_test_user()
+    test_user_creds = api_utils.create_test_user()
     group_name = get_random_string()
     with logged_in_user(ADMIN_CREDENTIALS):
         det_cmd(["user-group", "create", group_name], check=True)
@@ -337,7 +331,7 @@ def test_rbac_list_roles() -> None:
 
         # Setup group / user to test with.
         log_in_user(ADMIN_CREDENTIALS)
-        test_user_creds = create_test_user()
+        test_user_creds = api_utils.create_test_user()
         group_name = get_random_string()
         det_cmd(
             ["user-group", "create", group_name, "--add-user", test_user_creds.username], check=True
@@ -436,7 +430,7 @@ def test_rbac_describe_role() -> None:
 
         # Role is assigned to our group and user.
         log_in_user(ADMIN_CREDENTIALS)
-        test_user_creds = create_test_user()
+        test_user_creds = api_utils.create_test_user()
         group_name = get_random_string()
 
         det_cmd(["user-group", "create", group_name], check=True)

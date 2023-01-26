@@ -405,7 +405,6 @@ const HpParallelCoordinates: React.FC<Props> = ({
               selectedRowKeys={selectedRowKeys}
               selection={true}
               trialHps={trialHps}
-              trialIds={chartData?.trialIds || []}
             />
           </div>
           <div className={css.tooltip} ref={tooltipRef}>
