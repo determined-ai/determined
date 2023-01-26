@@ -7,7 +7,7 @@ import Avatar from 'components/UserAvatar';
 import useModalPasswordChange from 'hooks/useModal/UserSettings/useModalPasswordChange';
 import { patchUser } from 'services/api';
 import { Size } from 'shared/components/Avatar';
-import { DetError, ErrorType } from 'shared/utils/error';
+import { ErrorType } from 'shared/utils/error';
 import { useCurrentUser, useUpdateUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -44,8 +44,7 @@ const SettingsAccount: React.FC = () => {
         updateUser(user.id, (oldUser) => ({ ...oldUser, displayName: newValue }));
         message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
       } catch (e) {
-        message.error((e as DetError).message);
-        handleError(e, { silent: true, type: ErrorType.Input });
+        handleError(e, { silent: false, type: ErrorType.Input });
         return e as Error;
       }
     },

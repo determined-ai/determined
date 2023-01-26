@@ -97,7 +97,7 @@ export class DetError extends Error implements DetErrorOptions {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   constructor(e?: any, options: DetErrorOptions = {}) {
     const defaultMessage = isError(e) ? e.message : isString(e) ? e : DEFAULT_ERROR_MESSAGE;
-    const message = options.publicMessage || options.publicSubject || defaultMessage;
+    const message = options.publicSubject || options.publicMessage || defaultMessage;
     super(message);
 
     const eOpts: Partial<DetErrorOptions> = {};
