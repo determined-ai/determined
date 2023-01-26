@@ -275,6 +275,15 @@ func (a *apiServer) PatchModel(
 			currModel.Name)
 	}
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
+		return nil, err
+	}
+
 	madeChanges := false
 	if req.Model.Name != nil && req.Model.Name.Value != currModel.Name {
 		log.Infof("model (%v) name changing from %q to %q",
@@ -352,14 +361,7 @@ func (a *apiServer) PatchModel(
 
 		newWorkspaceID := w.Id
 		if currWorkspaceID != newWorkspaceID {
-			curUser, _, err := grpcutil.GetUser(ctx)
-			if err != nil {
-				return nil, err
-			}
-			if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
-				currWorkspaceID); err != nil {
-				return nil, err
-			}
+			// check if user has permissions in new workspace.
 			if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
 				newWorkspaceID); err != nil {
 				return nil, err

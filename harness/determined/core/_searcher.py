@@ -153,7 +153,7 @@ class SearcherContext:
        # checkpoint if you want to support pausing/continuing training.
        batches_trained = 0
 
-       for op in generic_context.searcher.operations():
+       for op in core_context.searcher.operations():
            # Train for however long the op requires you to.
            # Note that op.length is an absolute length, not an
            # incremental length:

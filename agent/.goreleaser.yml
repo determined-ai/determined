@@ -10,8 +10,8 @@ builds:
       - darwin
     goarch:
       - amd64
-      - ppc64
       - arm64
+      - ppc64
 
 archives:
   - wrap_in_directory: "true"
@@ -100,18 +100,61 @@ release:
     [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
 
 dockers:
+  # amd64
   - goos: linux
     goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --builder=buildx-build
     image_templates:
-      - "determinedai/{{.ProjectName}}:latest"
-      - "determinedai/{{.ProjectName}}:{{.Env.VERSION}}"
-      - "determinedai/{{.ProjectName}}:{{.ShortCommit}}"
-      - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
-      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.Env.VERSION}}"
-      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.ShortCommit}}"
-      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.FullCommit}}"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
     extra_files:
       - packaging/entrypoint.sh
       - packaging/LICENSE
+  # arm64
+  - goos: linux
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --builder=buildx-build
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+    extra_files:
+      - packaging/entrypoint.sh
+      - packaging/LICENSE
+  # ppc64
+  - goos: linux
+    goarch: ppc64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/ppc64le
+      - --builder=buildx-build
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+    extra_files:
+      - packaging/entrypoint.sh
+      - packaging/LICENSE
+
+docker_manifests:
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.ShortCommit}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:latest"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"

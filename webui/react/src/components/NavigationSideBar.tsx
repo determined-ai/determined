@@ -344,7 +344,7 @@ const NavigationSideBar: React.FC = () => {
                   ) : null}
                 </ul>
               ),
-              NotLoaded: () => <Spinner />,
+              NotLoaded: () => <Spinner center />,
             })}
           </section>
           <section className={css.bottom}>
