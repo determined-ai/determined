@@ -1,31 +1,31 @@
-import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
+import { observable, WritableObservable } from 'micro-observables';
+import React, { createContext, PropsWithChildren, useCallback, useContext, useRef } from 'react';
 
 import { getPermissionsSummary } from 'services/api';
+import { isEqual } from 'shared/utils/data';
 import { UserAssignment, UserRole } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
+import { useValueMemoizedObservable } from 'utils/observable';
 
 type UserRolesAndAssignmentsContext = {
-  updateUserAssignments: (
-    fn: (r: Loadable<UserAssignment[]>) => Loadable<UserAssignment[]>,
-  ) => void;
-  updateUserRoles: (fn: (r: Loadable<UserRole[]>) => Loadable<UserRole[]>) => void;
-  userAssignments: Loadable<UserAssignment[]>;
-  userRoles: Loadable<UserRole[]>;
+  userAssignments: WritableObservable<Loadable<UserAssignment[]>>;
+  userRoles: WritableObservable<Loadable<UserRole[]>>;
 };
 
 const UserRolesAndAssignmentsContext = createContext<UserRolesAndAssignmentsContext | null>(null);
 
 export const UserRolesProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [userRoles, setUserRoles] = useState<Loadable<UserRole[]>>(NotLoaded);
-  const [userAssignments, setUserAssignments] = useState<Loadable<UserAssignment[]>>(NotLoaded);
+  const userRoles = useRef<WritableObservable<Loadable<UserRole[]>>>(observable(NotLoaded));
+  const userAssignments = useRef<WritableObservable<Loadable<UserAssignment[]>>>(
+    observable(NotLoaded),
+  );
+
   return (
     <UserRolesAndAssignmentsContext.Provider
       value={{
-        updateUserAssignments: setUserAssignments,
-        updateUserRoles: setUserRoles,
-        userAssignments: userAssignments,
-        userRoles: userRoles,
+        userAssignments: userAssignments.current,
+        userRoles: userRoles.current,
       }}>
       {children}
     </UserRolesAndAssignmentsContext.Provider>
@@ -39,17 +39,18 @@ export const useFetchUserRolesAndAssignments = (
   if (context === null) {
     throw new Error('Attempted to use useFetchUserRoles outside of UserRolesAndAssignmentsContext');
   }
-  const { updateUserRoles, updateUserAssignments } = context;
+
+  const { userAssignments, userRoles } = context;
 
   return useCallback(async (): Promise<void> => {
     try {
-      const { roles, assignments } = await getPermissionsSummary({ signal: canceler.signal });
-      updateUserRoles(() => Loaded(roles));
-      updateUserAssignments(() => Loaded(assignments));
+      const { assignments, roles } = await getPermissionsSummary({ signal: canceler.signal });
+      userAssignments.set(Loaded(assignments));
+      userRoles.set(Loaded(roles));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, updateUserRoles, updateUserAssignments]);
+  }, [canceler, userAssignments, userRoles]);
 };
 
 export const useEnsureUserRolesAndAssignmentsFetched = (
@@ -61,18 +62,20 @@ export const useEnsureUserRolesAndAssignmentsFetched = (
       'Attempted to use useEnsureFetchUserRoles outside of UserRolesAndAssignments Context',
     );
   }
-  const { userRoles, updateUserRoles, userAssignments, updateUserAssignments } = context;
+  const { userAssignments, userRoles } = context;
+  const memoAssignments = useValueMemoizedObservable(userAssignments);
+  const memoRoles = useValueMemoizedObservable(userRoles);
 
   return useCallback(async (): Promise<void> => {
-    if (userRoles !== NotLoaded && userAssignments !== NotLoaded) return;
+    if (memoAssignments !== NotLoaded && memoRoles !== NotLoaded) return;
     try {
       const { roles, assignments } = await getPermissionsSummary({ signal: canceler.signal });
-      updateUserRoles(() => Loaded(roles));
-      updateUserAssignments(() => Loaded(assignments));
+      if (!isEqual(memoAssignments, assignments)) userAssignments.set(Loaded(assignments));
+      if (!isEqual(memoRoles, roles)) userRoles.set(Loaded(roles));
     } catch (e) {
       handleError(e);
     }
-  }, [canceler, userRoles, updateUserRoles, userAssignments, updateUserAssignments]);
+  }, [canceler, memoRoles, userRoles, memoAssignments, userAssignments]);
 };
 
 export const useUserRoles = (): Loadable<UserRole[]> => {
@@ -82,8 +85,8 @@ export const useUserRoles = (): Loadable<UserRole[]> => {
   }
 
   const { userRoles } = context;
-
-  return userRoles;
+  const userRoleState = useValueMemoizedObservable(userRoles);
+  return userRoleState;
 };
 
 export const useUserAssignments = (): Loadable<UserAssignment[]> => {
@@ -94,6 +97,6 @@ export const useUserAssignments = (): Loadable<UserAssignment[]> => {
     );
   }
   const { userAssignments } = context;
-
-  return userAssignments;
+  const userAssignmentState = useValueMemoizedObservable(userAssignments);
+  return userAssignmentState;
 };
