@@ -962,9 +962,9 @@ SELECT experiment_id FROM trials where id = $1
 }
 
 func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs []int32) (
-	map[int]int, error) {
+	[]int, error) {
 	if len(experimentIDs) == 0 {
-		return map[int]int{}, nil
+		return []int{}, nil
 	}
 
 	var rows []map[string]interface{}
@@ -980,26 +980,26 @@ func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs [
 		return nil, err
 	}
 
-	expIDToWorkspaceID := map[int]int{}
-
+	workspaceSet := map[int]bool{}
+	var workspaceIDs []int
 	for _, row := range rows {
 		workspaceID, ok := row["workspace_id"].(int64)
 		if !ok {
 			return nil, fmt.Errorf("workspaceID is not an int64")
 		}
-		experimentID, ok := row["exp_id"].(int64)
-		if !ok {
-			return nil, fmt.Errorf("experimentID is not an int64")
-		}
-		expIDToWorkspaceID[int(experimentID)] = int(workspaceID)
+		workspaceSet[int(workspaceID)] = true
 	}
 
-	return expIDToWorkspaceID, nil
+	for wID := range workspaceSet {
+		workspaceIDs = append(workspaceIDs, wID)
+	}
+
+	return workspaceIDs, nil
 }
 
-func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) (map[int]int, error) {
+func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) ([]int, error) {
 	if len(trialIDs) == 0 {
-		return map[int]int{}, nil
+		return []int{}, nil
 	}
 
 	var rows []map[string]interface{}
@@ -1016,21 +1016,22 @@ func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) (m
 		return nil, err
 	}
 
-	trialIDToWorkspaceID := map[int]int{}
+	workspaceSet := map[int]bool{}
+	var workspaceIDs []int
 
 	for _, row := range rows {
 		workspaceID, ok := row["workspace_id"].(int64)
 		if !ok {
 			return nil, fmt.Errorf("workspaceID is not an int64")
 		}
-		trialID, ok := row["trial_id"].(int64)
-		if !ok {
-			return nil, fmt.Errorf("trialID is not an int64")
-		}
-		trialIDToWorkspaceID[int(trialID)] = int(workspaceID)
+		workspaceSet[int(workspaceID)] = true
 	}
 
-	return trialIDToWorkspaceID, nil
+	for wID := range workspaceSet {
+		workspaceIDs = append(workspaceIDs, wID)
+	}
+
+	return workspaceIDs, nil
 }
 
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
