@@ -195,7 +195,8 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		workspaceIDs, err := a.tensorboardWorkspaces(ctx, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs)
+		workspaceIDs, err := a.tensorboardWorkspaces(ctx, spec.Metadata.ExperimentIDs,
+			spec.Metadata.TrialIDs)
 		if err != nil {
 			return err
 		}
@@ -214,8 +215,9 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	return nil
 }
 
-func (a *apiServer) tensorboardWorkspaces(ctx context.Context, experimentIDs []int32, trialIDs []int32) (
-	[]model.AccessScopeID, error) {
+func (a *apiServer) tensorboardWorkspaces(
+	ctx context.Context, experimentIDs []int32, trialIDs []int32,
+) ([]model.AccessScopeID, error) {
 	expIDsToWorkspaceIDs, err := a.m.db.ExperimentIDsToWorkspaceIDs(ctx, experimentIDs)
 	if err != nil {
 		return nil, err

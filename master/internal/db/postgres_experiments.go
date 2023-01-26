@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/uptrace/bun"
 	"reflect"
 	"time"
+
+	"github.com/uptrace/bun"
 
 	"github.com/google/uuid"
 
@@ -961,8 +962,10 @@ SELECT experiment_id FROM trials where id = $1
 	return experimentID, nil
 }
 
+// ExperimentIDsToWorkspaceIDs returns a slice of workspaces that the given experiments belong to.
 func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs []int32) (
-	[]int, error) {
+	[]int, error,
+) {
 	if len(experimentIDs) == 0 {
 		return []int{}, nil
 	}
@@ -975,7 +978,6 @@ func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs [
 		Join("JOIN experiments e ON p.id = e.project_id").
 		Where("e.id IN (?)", bun.In(experimentIDs)).
 		Scan(ctx, &rows)
-
 	if err != nil {
 		return nil, err
 	}
@@ -997,6 +999,7 @@ func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs [
 	return workspaceIDs, nil
 }
 
+// TrialIDsToWorkspaceIDs returns a slice of workspaces that the given trials belong to.
 func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) ([]int, error) {
 	if len(trialIDs) == 0 {
 		return []int{}, nil
@@ -1011,7 +1014,6 @@ func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) ([
 		Join("JOIN trials t ON e.id = t.experiment_id").
 		Where("trial_id IN (?)", bun.In(trialIDs)).
 		Scan(ctx, &rows)
-
 	if err != nil {
 		return nil, err
 	}
