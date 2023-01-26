@@ -10,6 +10,7 @@ export interface JupyterLabOptions {
   pool?: string;
   slots?: number;
   template?: string;
+  workspaceId?: number;
 }
 
 interface JupyterLabLaunchOptions extends JupyterLabOptions {
@@ -27,6 +28,7 @@ export const launchJupyterLab = async (options: JupyterLabLaunchOptions = {}): P
         },
       },
       templateName: options.template === '' ? undefined : options.template,
+      workspaceId: options.workspaceId,
     });
     openCommandResponse(commandResponse);
   } catch (e) {
@@ -52,6 +54,7 @@ export const previewJupyterLab = async (options: JupyterLabOptions = {}): Promis
       },
       preview: true,
       templateName: options.template === '' ? undefined : options.template,
+      workspaceId: options.workspaceId,
     });
     return config;
   } catch (e) {

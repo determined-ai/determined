@@ -21,6 +21,7 @@ import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
 /**
  * maximum theoretcial capacity of the resource pool in terms of the advertised
  * compute slot type.
+ *
  * @param pool resource pool
  */
 export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
@@ -31,7 +32,8 @@ export const maxPoolSlotCapacity = (pool: ResourcePool): number => {
   return pool.slotsAvailable;
 };
 
-/** maximum theoretical capacity of the cluster, by advertised compute slot type. if all pools are
+/**
+ * maximum theoretical capacity of the cluster, by advertised compute slot type. if all pools are
  * static pools, we just tally the agent slots. this method returns a correct cluster-wide total for
  * slurm where pools can have overlapping sets of agents.
  */

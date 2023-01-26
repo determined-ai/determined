@@ -49,6 +49,7 @@ const clearAuthCookie = (): void => {
 
 /**
  * set the auth cookie if it's not already set.
+ *
  * @param token auth token
  */
 const ensureAuthCookieSet = (token: string): void => {

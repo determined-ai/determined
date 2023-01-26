@@ -199,6 +199,7 @@ export const resetUserSetting: DetApi<
 /**
  * Returns roles, and workspace/global assignment of those roles,
  * for a user specified in params.
+ *
  * @param {GetUserParams} params - An object containing userId to look up their roles.
  */
 export const getUserPermissions: DetApi<
@@ -1017,6 +1018,8 @@ export const getModels: DetApi<
       params.labels,
       params.archived,
       undefined,
+      undefined,
+      undefined,
       getUserIds(params.users),
     ),
 };
@@ -1472,6 +1475,7 @@ export const getCommands: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1491,6 +1495,7 @@ export const getJupyterLabs: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1509,6 +1514,7 @@ export const getShells: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 
@@ -1528,6 +1534,7 @@ export const getTensorBoards: DetApi<
       params.limit ?? TASK_LIMIT,
       undefined,
       getUserIds(params.users),
+      params.workspaceId,
     ),
 };
 

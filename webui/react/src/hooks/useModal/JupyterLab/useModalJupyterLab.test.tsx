@@ -7,8 +7,10 @@ import Button from 'components/kit/Button';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';
+import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
-import { DetailedUser, ResourcePool } from 'types';
+import { WorkspacesProvider } from 'stores/workspaces';
+import { ResourcePool, WorkspaceState } from 'types';
 import { Loadable } from 'utils/loadable';
 
 import useModalJupyterLab from './useModalJupyterLab';
@@ -45,10 +47,22 @@ jest.mock('components/MonacoEditor', () => ({
 
 const ModalTrigger: React.FC = () => {
   const { setAuth, setAuthCheck } = useAuth();
-  const { contextHolder, modalOpen } = useModalJupyterLab();
+  const { contextHolder, modalOpen } = useModalJupyterLab({
+    workspace: {
+      archived: false,
+      id: 1,
+      immutable: false,
+      name: 'Uncategorized',
+      numExperiments: 0,
+      numProjects: 0,
+      pinned: false,
+      state: WorkspaceState.Unspecified,
+      userId: 1,
+    },
+  });
 
   useEffect(() => {
-    setAuth({ isAuthenticated: true, user: { id: 1 } as DetailedUser });
+    setAuth({ isAuthenticated: true });
     setAuthCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -70,9 +84,13 @@ const setup = async () => {
     <BrowserRouter>
       <UIProvider>
         <UsersProvider>
-          <AuthProvider>
-            <ModalTrigger />
-          </AuthProvider>
+          <UserRolesProvider>
+            <WorkspacesProvider>
+              <AuthProvider>
+                <ModalTrigger />
+              </AuthProvider>
+            </WorkspacesProvider>
+          </UserRolesProvider>
         </UsersProvider>
       </UIProvider>
     </BrowserRouter>,

@@ -18,6 +18,7 @@ type Model struct {
 	Username        string    `db:"username" json:"username"`
 	Archived        bool      `db:"archived" json:"archived"`
 	NumVersions     int       `db:"num_versions" json:"num_versions"`
+	WorkspaceID     int       `db:"workspace_id" json:"workspace_id"`
 }
 
 // ModelVersion represents a row from the `model_versions` table.

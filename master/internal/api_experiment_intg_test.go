@@ -149,6 +149,29 @@ func TestGetExperimentLabels(t *testing.T) {
 	require.Subset(t, resp.Labels, labels)
 }
 
+func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	exp := createTestExp(t, api, curUser)
+	_, err := db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", exp.ID).Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.DeleteExperiment(ctx, &apiv1.DeleteExperimentRequest{ExperimentId: int32(exp.ID)})
+	require.NoError(t, err)
+
+	// Delete is async so we need to retry until it completes.
+	for i := 0; i < 60; i++ {
+		e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
+		if err != nil {
+			require.Equal(t, expNotFoundErr(exp.ID), err)
+			return
+		}
+		require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
+	}
+	t.Error("expected experiment to delete after 1 minute and it did not")
+}
+
 //nolint: exhaustivestruct
 func TestCreateExperimentCheckpointStorage(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)

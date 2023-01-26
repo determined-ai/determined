@@ -224,7 +224,7 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	// check permission errors are returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
-	).Times(4)
+	).Times(3)
 
 	// Notebooks.
 	nbID := setupMockNBActor(t, api.m)
@@ -242,6 +242,9 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Tensorboards.
+	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
+		authz2.PermissionDeniedError{},
+	).Once()
 	tbID := setupMockTensorboardActor(t, api.m)
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: string(tbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
@@ -249,7 +252,8 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	// check other errors are not returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
 		errors.New("other error"),
-	).Times(4)
+	).Times(3)
+
 	_, err = api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
@@ -262,6 +266,9 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
+	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
+		errors.New("other error"),
+	)
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: string(tbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))

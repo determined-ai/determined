@@ -33,7 +33,6 @@ interface Props {
   selectedRowKeys?: number[];
   selection?: boolean;
   trialHps: TrialHParams[];
-  trialIds: number[];
 }
 
 export interface TrialHParams {
@@ -51,7 +50,6 @@ const HpTrialTable: React.FC<Props> = ({
   onMouseEnter,
   onMouseLeave,
   trialHps,
-  trialIds,
   experimentId,
   selection,
   handleTableRowSelect,
@@ -66,8 +64,7 @@ const HpTrialTable: React.FC<Props> = ({
 
   const columns = useMemo(() => {
     const idRenderer = (_: string, record: TrialHParams) => {
-      const index = trialIds.findIndex((trialId) => trialId === record.id);
-      let color = index !== -1 ? glasbeyColor(index) : 'rgba(0, 0, 0, 1.0)';
+      let color = glasbeyColor(record.id);
       if (record.metric != null && colorScale) {
         const scaleRange = colorScale[1].scale - colorScale[0].scale;
         const distance = (record.metric - colorScale[0].scale) / scaleRange;
@@ -137,7 +134,7 @@ const HpTrialTable: React.FC<Props> = ({
     });
 
     return [idColumn, metricColumn, ...hpColumns];
-  }, [colorScale, hyperparameters, metric, trialIds, experimentId]);
+  }, [colorScale, hyperparameters, metric, experimentId]);
 
   const handleTableChange = useCallback((tablePagination: TablePaginationConfig) => {
     setPageSize(tablePagination.pageSize ?? 10);

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/determined-ai/determined/master/pkg/checkpoints/archive"
+	"github.com/determined-ai/determined/master/pkg/checkpoints/gcs"
 	"github.com/determined-ai/determined/master/pkg/checkpoints/s3"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -35,17 +36,24 @@ func NewDownloader(
 		return nil, err
 	}
 
+	prefix := ""
 	switch storage := storageConfig.GetUnionMember().(type) {
 	case expconf.S3Config:
-		prefix := ""
 		if storage.Prefix() != nil {
 			prefix = *storage.Prefix()
 		}
 		return s3.NewS3Downloader(
 			aw, storage.Bucket(), strings.TrimLeft(prefix+"/"+id, "/")), nil
+	case expconf.GCSConfig:
+		if storage.Prefix() != nil {
+			prefix = *storage.Prefix()
+		}
+		return gcs.NewGCSDownloader(
+			aw, storage.Bucket(), strings.TrimLeft(prefix+"/"+id, "/")), nil
 	default:
-		return nil, fmt.Errorf("checkpoint download via master is only supported on S3"+
-			", but the checkpoint's storage type is %s", storageConfig2Str(storage))
+		return nil,
+			fmt.Errorf("checkpoint download via master is not supported for %s",
+				storageConfig2Str(storage))
 	}
 }
 

@@ -5,7 +5,7 @@ from time import sleep
 import pytest
 
 from determined.common.api import Session, bindings, errors
-from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.api.bindings import experimentv1State
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -42,7 +42,7 @@ def _check_test_experiment(project_id: int) -> None:
     )
     exp.wait_for_experiment_state(
         test_exp_id,
-        determinedexperimentv1State.STATE_COMPLETED,
+        experimentv1State.STATE_COMPLETED,
     )
 
     trials = exp.experiment_trials(test_exp_id)
