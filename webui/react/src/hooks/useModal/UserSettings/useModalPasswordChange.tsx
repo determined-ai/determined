@@ -1,4 +1,3 @@
-import { message } from 'antd';
 import React, { useCallback } from 'react';
 
 import Form, { FormInstance } from 'components/kit/Form';
@@ -7,6 +6,7 @@ import { login, setUserPassword } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';
 import { useCurrentUser } from 'stores/users';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

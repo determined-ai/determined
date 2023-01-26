@@ -18,6 +18,9 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   [DarkLight.Dark]: {
     algorithm: theme.darkAlgorithm,
     components: {
+      Button: {
+        colorBgContainer: 'transparent',
+      },
       Input: {
         colorBgContainer: 'transparent',
       },
@@ -36,7 +39,7 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
   [DarkLight.Light]: {
     algorithm: theme.defaultAlgorithm,
     components: {
-      Input: {
+      Button: {
         colorBgContainer: 'transparent',
       },
       Progress: {
@@ -73,7 +76,7 @@ const getSystemMode = (): Mode => {
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui, actions: uiActions } = useUI();
-  const [systemMode, setSystemMode] = useState<Mode>(getSystemMode());
+  const [systemMode, setSystemMode] = useState<Mode>(() => getSystemMode());
   const [isSettingsReady, setIsSettingsReady] = useState(false);
   const { settings, isLoading: isSettingsLoading, updateSettings } = useSettings<Settings>(config);
 

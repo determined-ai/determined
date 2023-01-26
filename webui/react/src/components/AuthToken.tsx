@@ -1,10 +1,11 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { notification, Result } from 'antd';
+import { Result } from 'antd';
 import React, { useCallback } from 'react';
 
 import Button from 'components/kit/Button';
 import { globalStorage } from 'globalStorage';
 import { copyToClipboard } from 'shared/utils/dom';
+import { notification } from 'utils/dialogApi';
 
 import css from './AuthToken.module.scss';
 

@@ -1,4 +1,4 @@
-import { message, Select, Switch, Typography } from 'antd';
+import { Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -20,6 +20,7 @@ import { ErrorType } from 'shared/utils/error';
 import { initKnowRoles, useKnownRoles } from 'stores/knowRoles';
 import { useCurrentUser } from 'stores/users';
 import { DetailedUser, UserRole } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 

@@ -1,4 +1,4 @@
-import { Dropdown, Modal, ModalFuncProps } from 'antd';
+import { Dropdown, ModalFuncProps } from 'antd';
 import type { MenuProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { JSXElementConstructor, useCallback } from 'react';
@@ -7,6 +7,7 @@ import Button from 'components/kit/Button';
 import Icon from 'shared/components/Icon/Icon';
 import { DetError, ErrorLevel, ErrorType, wrapPublicMessage } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
+import { modal } from 'utils/dialogApi';
 
 import { Eventually } from '../../types';
 
@@ -112,7 +113,7 @@ const ActionDropdown = <T extends string>({
       };
 
       if (confirmations?.[action]) {
-        Modal.confirm({
+        modal.confirm({
           content: `Are you sure you want to ${action.toLocaleLowerCase()} ${kind} "${id}"?`,
           title: `${capitalize(action)} ${kind}`,
           ...confirmations[action],

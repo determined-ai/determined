@@ -1,4 +1,4 @@
-import { Dropdown, message, Space, Table } from 'antd';
+import { Dropdown, Space, Table } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -26,6 +26,7 @@ import { clone, isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { useFetchKnownRoles } from 'stores/knowRoles';
 import { DetailedUser } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './GroupManagement.module.scss';

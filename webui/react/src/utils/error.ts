@@ -1,4 +1,3 @@
-import { notification as antdNotification } from 'antd';
 import { ArgsProps, NotificationInstance } from 'antd/lib/notification/interface';
 
 import { telemetryInstance } from 'hooks/useTelemetry';
@@ -14,6 +13,7 @@ import { LoggerInterface } from 'shared/utils/Logger';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { isAborted, isAuthFailure } from 'shared/utils/service';
 import { listToStr } from 'shared/utils/string';
+import { notification as antdNotification } from 'utils/dialogApi';
 
 const errorLevelMap = {
   [ErrorLevel.Error]: 'error',

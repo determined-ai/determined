@@ -1,4 +1,4 @@
-import { notification, Space } from 'antd';
+import { Space } from 'antd';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
@@ -28,6 +28,7 @@ import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import { dateTimeStringSorter, numericSorter } from 'shared/utils/sort';
 import { Log, LogLevel } from 'types';
+import { notification } from 'utils/dialogApi';
 
 import css from './LogViewer.module.scss';
 import LogViewerEntry, { DATETIME_FORMAT, ICON_WIDTH, MAX_DATETIME_LENGTH } from './LogViewerEntry';
