@@ -56,7 +56,6 @@ To start your experiment, you'll need a Determined cluster. If you are new to De
 .. code::
 
    pip install determined
-   det deploy local cluster-up
 
    # If your machine has GPUs:
    det deploy local cluster-up
