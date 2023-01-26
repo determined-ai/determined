@@ -9526,11 +9526,11 @@ export interface V1ValidationCompleted {
      */
     requestId: string;
     /**
-     * Values of the validation metrics used to direct the search.
+     * Value of the validation metric used to direct the search.
      * @type {any}
      * @memberof V1ValidationCompleted
      */
-    metrics: any;
+    metric: any;
     /**
      * Length from ValidateAfterOperation.
      * @type {string}

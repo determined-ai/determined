@@ -41,13 +41,13 @@ message TrialProgress {
 message ValidationCompleted {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
-      required: [ "request_id", "metrics", "validate_after_length" ]
+      required: [ "request_id", "metric", "validate_after_length" ]
     }
   };
   // UUID identifying the trial to the searcher.
   string request_id = 1;
-  // Values of the validation metrics used to direct the search.
-  google.protobuf.Value metrics = 2;
+  // Value of the validation metric used to direct the search.
+  google.protobuf.Value metric = 2;
   // Length from ValidateAfterOperation.
   uint64 validate_after_length = 3;
 }

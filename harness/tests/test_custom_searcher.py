@@ -78,7 +78,7 @@ class SimulateMaster:
         if type(op) == searcher.ValidateAfter:
             validation_completed = bindings.v1ValidationCompleted(
                 requestId=str(op.request_id),
-                metrics=self.metric,
+                metric=self.metric,
                 validateAfterLength=str(op.length),
             )
             self.events_count += 1

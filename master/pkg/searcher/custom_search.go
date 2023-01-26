@@ -88,18 +88,18 @@ func (s *customSearch) progress(
 }
 
 func (s *customSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metrics interface{}, op ValidateAfter,
+	ctx context, requestID model.RequestID, metric interface{}, op ValidateAfter,
 ) ([]Operation, error) {
-	protoMetric, err := structpb.NewValue(metrics)
+	protoMetric, err := structpb.NewValue(metric)
 	if err != nil {
-		return nil, errors.Wrapf(err, "illegal type for metrics=%v", metrics)
+		return nil, errors.Wrapf(err, "illegal type for metric=%v", metric)
 	}
 	s.SearcherEventQueue.Enqueue(&experimentv1.SearcherEvent{
 		Event: &experimentv1.SearcherEvent_ValidationCompleted{
 			ValidationCompleted: &experimentv1.ValidationCompleted{
 				RequestId:           requestID.String(),
 				ValidateAfterLength: op.ToProto().Length,
-				Metrics:             protoMetric,
+				Metric:              protoMetric,
 			},
 		},
 	})

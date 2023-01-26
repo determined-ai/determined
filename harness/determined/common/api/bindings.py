@@ -11629,18 +11629,18 @@ class v1ValidationCompleted:
     def __init__(
         self,
         *,
-        metrics: typing.Any,
+        metric: typing.Any,
         requestId: str,
         validateAfterLength: str,
     ):
-        self.metrics = metrics
+        self.metric = metric
         self.requestId = requestId
         self.validateAfterLength = validateAfterLength
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ValidationCompleted":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "metrics": obj["metrics"],
+            "metric": obj["metric"],
             "requestId": obj["requestId"],
             "validateAfterLength": obj["validateAfterLength"],
         }
@@ -11648,7 +11648,7 @@ class v1ValidationCompleted:
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "metrics": self.metrics,
+            "metric": self.metric,
             "requestId": self.requestId,
             "validateAfterLength": self.validateAfterLength,
         }
