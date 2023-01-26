@@ -260,7 +260,7 @@ with learning rates of .001, .01, and .1.
 To run experiments, you need to write your model training code. A *model definition* represents a
 specification of a deep learning model and its training procedure. It contains training code that
 implements training APIs. Visit the :doc:`Training API Guides </training/apis-howto/overview>` for
-more information
+more information.
 
 For each experiment, you can configure a *searcher*, also known as a *search algorithm*. The search
 algorithm determines how many trials will be run for a particular experiment and how the
