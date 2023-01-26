@@ -35,19 +35,19 @@ environment.
 |                                 | port a ``tf.keras`` model to Determined.                     |
 +---------------------------------+--------------------------------------------------------------+
 
-Looking for Examples?
-=====================
-
-Visit our `Examples <https://docs.determined.ai/latest/example-solutions/examples.html>`_ page then
-open the ``examples/`` subdirectory of the `Determined GitHub repo
-<https://github.com/determined-ai/determined/tree/master/examples>`__.
-
 Go Further
 ==========
 
 Visit the `Training API Guides
 <https://docs.determined.ai/latest/training/apis-howto/overview.html>`_ for in-depth guides that
 contain detailed information about the training APIs.
+
+Looking for Examples?
+=====================
+
+Visit our `Examples <https://docs.determined.ai/latest/example-solutions/examples.html>`_ page then
+open the ``examples/`` subdirectory of the `Determined GitHub repo
+<https://github.com/determined-ai/determined/tree/master/examples>`__.
 
 .. _pytorch mnist example: https://github.com/PyTorch/examples/blob/master/mnist/main.py
 
