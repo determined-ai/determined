@@ -158,9 +158,15 @@ export const taskWorkspaceRenderer = (
   workspaces: Workspace[],
 ): React.ReactNode => {
   const workspace = workspaces.find((u) => u.id === record.workspaceId);
+  const workspaceId = record.workspaceId;
+  const isUncategorized = workspaceId === 1;
+
   return (
     <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
-      <Link path={paths.workspaceDetails(record.workspaceId)}>
+      <Link
+        path={
+          isUncategorized ? paths.projectDetails(workspaceId) : paths.workspaceDetails(workspaceId)
+        }>
         <DynamicIcon name={workspace?.name} size={24} />
       </Link>
     </div>

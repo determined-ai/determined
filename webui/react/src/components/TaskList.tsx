@@ -135,6 +135,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         states: settings.state,
         types: settings.type as CommandType[],
         users: settings.user,
+        workspaces: settings.workspace,
       },
       users || [],
       settings.search,
@@ -241,11 +242,10 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleWorkspaceFilterApply = useCallback(
-    (workspace: string[]) => {
-      // TODO: check id type into humber
+    (workspaces: string[]) => {
       updateSettings({
         row: undefined,
-        workspace: workspace.length !== 0 ? (workspace as CommandType[]) : undefined,
+        workspace: workspaces.length !== 0 ? workspaces : undefined,
       });
     },
     [updateSettings],
@@ -277,8 +277,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={settings.workspace}
-        width={180}
+        values={settings.workspace?.map((ws) => ws)}
+        width={220}
         onFilter={handleWorkspaceFilterApply}
         onReset={handleWorkspaceFilterReset}
       />
@@ -483,14 +483,14 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         filterDropdown: workspaceFilterDropdown,
         filters: workspaces.map((ws) => ({
           text: (
-            <div className={css.typeFilter}>
+            <div className={css.workspaceFilterItem}>
               <DynamicIcon name={ws.name} size={24} />
-              <span>{ws.name}</span>
+              <span className={css.workspaceFilterName}>{ws.name}</span>
             </div>
           ),
           value: ws.id,
         })),
-        isFiltered: (settings: Settings) => !!settings.workspace,
+        isFiltered: (settings: Settings) => !!settings.workspace && !!settings.workspace.length,
         key: 'workspace',
         render: (v: string, record: CommandTask) => taskWorkspaceRenderer(record, workspaces),
         sorter: (a: CommandTask, b: CommandTask): number =>

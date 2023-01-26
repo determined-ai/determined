@@ -643,7 +643,7 @@ const InteractiveTable: InteractiveTable = ({
     }
 
     return newColumns;
-  }, [settings, widthData, columnDefs, onHeaderCell, settingsColumns]);
+  }, [settings, widthData, columnDefs, onHeaderCell, defaultColumns, settingsColumns]);
 
   const components = {
     body: {

@@ -729,6 +729,7 @@ export interface TaskFilters<T extends CommandType | TaskType = TaskType> {
   states?: string[];
   types?: T[];
   users?: string[];
+  workspaces?: string[];
 }
 
 export const LogLevel = {
