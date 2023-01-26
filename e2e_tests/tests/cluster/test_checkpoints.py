@@ -377,7 +377,7 @@ def test_delete_experiment_with_no_checkpoints() -> None:
     )
 
     # Still able to delete this since it will have no checkpoints meaning no checkpoint gc task.
-    test_session = exp.determined_test_session()
+    test_session = api_utils.determined_test_session()
     bindings.delete_DeleteExperiment(session=test_session, experimentId=exp_id)
     ticks = 60
     for i in range(ticks):
