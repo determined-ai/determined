@@ -5,7 +5,9 @@ import {
 } from 'antd';
 import { FormListFieldData as AntdFormListFieldData } from 'antd/lib/form/FormList';
 import { FieldData as AntdFieldData, NamePath as AntdNamePath } from 'rc-field-form/lib/interface';
-import React, { FC, ReactNode, Ref, RefObject, useRef } from 'react';
+import React, { FC, ReactNode, Ref } from 'react';
+
+import { Primitive } from 'shared/types';
 
 type Rules = AntdFormItemProps['rules']; // https://github.com/ant-design/ant-design/issues/39466
 type GridCol = {
@@ -15,16 +17,17 @@ type TriggerEvent = 'onChange' | 'onSubmit';
 
 interface FormItemProps {
   children?: ReactNode;
+  className?: string;
   dependencies?: AntdNamePath[];
   extra?: ReactNode;
   field?: AntdFormListFieldData;
   hidden?: boolean;
-  initialValue?: string;
-  label?: string;
+  initialValue?: string | number | Primitive;
+  label?: ReactNode;
   labelCol?: GridCol; // https://ant.design/components/grid#col
   max?: number;
   maxMessage?: string;
-  name?: string;
+  name?: string | number | (string | number)[];
   noStyle?: boolean;
   required?: boolean;
   requiredMessage?: string;
@@ -79,9 +82,9 @@ interface FormProps {
   labelCol?: GridCol;
   layout?: 'horizontal' | 'vertical' | 'inline';
   name?: string;
-  onFieldsChange?: () => void;
-  onFinish?: () => void;
-  onValuesChange?: () => void;
+  onFieldsChange?: (changedFields: any, allFields: any) => void;
+  onFinish?: (values: any) => void;
+  onValuesChange?: (changedValues: any, allValues: any) => void;
   ref?: Ref<AntdFormInstance>;
   wrapperCol?: GridCol;
 }
@@ -99,9 +102,10 @@ const Form = (props: FormProps): JSX.Element => {
 Form.Item = FormItem;
 Form.List = AntdForm.List;
 Form.useForm = AntdForm.useForm;
+Form.useWatch = AntdForm.useWatch;
 
-export const useFormInstance = (): RefObject<AntdFormInstance> => {
-  return useRef<AntdFormInstance>(null);
-};
+export type FormInstance<Values = any> = AntdFormInstance<Values>;
+
+export type FormListFieldData = AntdFormListFieldData;
 
 export default Form;

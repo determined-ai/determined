@@ -1,7 +1,9 @@
-import { Alert, Form, FormInstance, Input, ModalFuncProps } from 'antd';
+import { Alert, ModalFuncProps } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';

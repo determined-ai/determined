@@ -1,8 +1,9 @@
-import { Form, Input, message, Select, Typography } from 'antd';
-import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { message, Select, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import {

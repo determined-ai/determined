@@ -1,7 +1,9 @@
-import { Form, Input, InputNumber, message } from 'antd';
-import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { message } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
 import { patchUser } from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import Spinner from 'shared/components/Spinner';

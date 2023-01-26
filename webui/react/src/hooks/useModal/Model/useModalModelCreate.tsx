@@ -1,6 +1,8 @@
-import { Form, Input, ModalFuncProps, notification } from 'antd';
+import { ModalFuncProps, notification } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';

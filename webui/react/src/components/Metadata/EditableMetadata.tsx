@@ -1,8 +1,8 @@
-import { Form } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Button from 'components/kit/Button';
+import Form from 'components/kit/Form';
 import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';

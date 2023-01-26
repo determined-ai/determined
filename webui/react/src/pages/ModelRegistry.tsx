@@ -1,4 +1,4 @@
-import { Dropdown, Input, Space, Typography } from 'antd';
+import { Dropdown, Space, Typography } from 'antd';
 import type { DropDownProps, MenuProps } from 'antd';
 import {
   FilterDropdownProps,
@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import FilterCounter from 'components/FilterCounter';
 import Button from 'components/kit/Button';
+import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import InteractiveTable, {

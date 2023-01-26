@@ -1,8 +1,9 @@
-import { Input, Typography } from 'antd';
+import { Typography } from 'antd';
 import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+import Input from 'components/kit/Input';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';

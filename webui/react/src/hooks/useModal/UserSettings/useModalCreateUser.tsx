@@ -1,8 +1,9 @@
-import { Form, Input, message, Select, Switch, Typography } from 'antd';
-import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { message, Select, Switch, Typography } from 'antd';
 import { filter } from 'fp-ts/lib/Set';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -37,17 +38,18 @@ const ROLE_LABEL = 'Roles';
 const ROLE_NAME = 'roles';
 export const BUTTON_NAME = 'Save';
 
+interface FormValues {
+  [ADMIN_NAME]: boolean;
+  [DISPLAY_NAME_NAME]?: string;
+  [ROLE_NAME]: number[];
+  [USER_NAME_NAME]: string;
+}
+
 interface Props {
-  form: FormInstance;
+  form: FormInstance<FormValues>;
   roles: UserRole[] | null;
   user?: DetailedUser;
   viewOnly?: boolean;
-}
-
-interface FormValues {
-  ADMIN_NAME: boolean;
-  DISPLAY_NAME_NAME?: string;
-  USER_NAME_NAME: string;
 }
 
 const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
@@ -69,7 +71,7 @@ const ModalForm: React.FC<Props> = ({ form, user, viewOnly, roles }) => {
   }
 
   return (
-    <Form<FormValues> form={form} labelCol={{ span: 24 }}>
+    <Form form={form} labelCol={{ span: 24 }}>
       <Form.Item
         initialValue={user?.username}
         label={USER_NAME_LABEL}
