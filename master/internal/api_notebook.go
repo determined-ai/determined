@@ -195,8 +195,12 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
+		workspaceIDs, err := a.tensorboardWorkspaces(ctx, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs)
+		if err != nil {
+			return err
+		}
 		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-			ctx, *user, workspaceID); err != nil || !ok {
+			ctx, *user, workspaceIDs); err != nil || !ok {
 			return err
 		}
 	} else {
@@ -208,6 +212,33 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	return nil
+}
+
+func (a *apiServer) tensorboardWorkspaces(ctx context.Context, experimentIDs []int32, trialIDs []int32) (
+	[]model.AccessScopeID, error) {
+	expIDsToWorkspaceIDs, err := a.m.db.ExperimentIDsToWorkspaceIDs(ctx, experimentIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	trialIDToWorkspaceIDs, err := a.m.db.TrialIDsToWorkspaceIDs(ctx, trialIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceIDs := map[int]bool{}
+	var workspaceIDList []model.AccessScopeID
+	for wID := range expIDsToWorkspaceIDs {
+		workspaceIDs[wID] = true
+	}
+	for wID := range trialIDToWorkspaceIDs {
+		workspaceIDs[wID] = true
+	}
+	for wID := range workspaceIDs {
+		workspaceIDList = append(workspaceIDList, model.AccessScopeID(wID))
+	}
+
+	return workspaceIDList, nil
 }
 
 func (a *apiServer) LaunchNotebook(

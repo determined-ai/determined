@@ -86,7 +86,22 @@ func (a *apiServer) filterTensorboards(
 	var filteredTensorboards []*tensorboardv1.Tensorboard
 
 	for _, tb := range tensorboards {
-		if _, ok := filteredScopes[model.AccessScopeID(tb.WorkspaceId)]; ok {
+		workspaceIDs, err := a.tensorboardWorkspaces(ctx, tb.ExperimentIds, tb.TrialIds)
+		if err != nil {
+			continue
+		}
+
+		accessGranted := true
+		if _, ok := filteredScopes[model.AccessScopeID(tb.WorkspaceId)]; !ok {
+			continue
+		}
+		for wID := range workspaceIDs {
+			if _, ok := filteredScopes[model.AccessScopeID(wID)]; !ok {
+				accessGranted = false
+				break
+			}
+		}
+		if accessGranted {
 			filteredTensorboards = append(filteredTensorboards, tb)
 		}
 	}
@@ -143,25 +158,14 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	expIDsToWorkspaceIDs, err := a.m.db.ExperimentIDsToWorkspaceIDs(ctx, resp.Tensorboard.ExperimentIds)
+	workspaceIDs, err := a.tensorboardWorkspaces(ctx, resp.Tensorboard.ExperimentIds,
+		resp.Tensorboard.TrialIds)
 	if err != nil {
 		return nil, err
-	}
-
-	trialIDToWorkspaceID, err := a.m.db.TrialIDsToWorkspaceIDs(ctx, resp.Tensorboard.TrialIds)
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range expIDsToWorkspaceIDs {
-		fmt.Printf("experiment %d : workspace %d\n", k, v)
-	}
-	for k, v := range trialIDToWorkspaceID {
-		fmt.Printf("trial %d : workspace %d\n", k, v)
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId)); err != nil {
+		ctx, *curUser, workspaceIDs); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)

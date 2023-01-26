@@ -110,20 +110,20 @@ func (_m *NSCAuthZ) CanGetNSC(ctx context.Context, curUser model.User, workspace
 	return r0, r1
 }
 
-// CanGetTensorboard provides a mock function with given fields: ctx, curUser, workspaceID
-func (_m *NSCAuthZ) CanGetTensorboard(ctx context.Context, curUser model.User, workspaceID model.AccessScopeID) (bool, error) {
-	ret := _m.Called(ctx, curUser, workspaceID)
+// CanGetTensorboard provides a mock function with given fields: ctx, curUser, workspaceIDs
+func (_m *NSCAuthZ) CanGetTensorboard(ctx context.Context, curUser model.User, workspaceIDs []model.AccessScopeID) (bool, error) {
+	ret := _m.Called(ctx, curUser, workspaceIDs)
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, model.User, model.AccessScopeID) bool); ok {
-		r0 = rf(ctx, curUser, workspaceID)
+	if rf, ok := ret.Get(0).(func(context.Context, model.User, []model.AccessScopeID) bool); ok {
+		r0 = rf(ctx, curUser, workspaceIDs)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, model.User, model.AccessScopeID) error); ok {
-		r1 = rf(ctx, curUser, workspaceID)
+	if rf, ok := ret.Get(1).(func(context.Context, model.User, []model.AccessScopeID) error); ok {
+		r1 = rf(ctx, curUser, workspaceIDs)
 	} else {
 		r1 = ret.Error(1)
 	}

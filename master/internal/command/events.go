@@ -143,7 +143,7 @@ func canAccessCommandEvents(ctx *actor.Context, c echo.Context) error {
 	var ok bool
 	if spec.TaskType == model.TaskTypeTensorboard {
 		ok, err = AuthZProvider.Get().CanGetTensorboard(
-			reqCtx, curUser, spec.WorkspaceID)
+			reqCtx, curUser, []model.AccessScopeID{spec.WorkspaceID})
 	} else {
 		ok, err = AuthZProvider.Get().CanGetNSC(
 			reqCtx, curUser, spec.WorkspaceID)
