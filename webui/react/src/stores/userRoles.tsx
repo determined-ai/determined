@@ -9,8 +9,8 @@ import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 import { useValueMemoizedObservable } from 'utils/observable';
 
 type UserRolesAndAssignmentsContext = {
-  userAssignments: WritableObservable<Loadable<UserAssignment[]>>;
-  userRoles: WritableObservable<Loadable<UserRole[]>>;
+  #userAssignments: WritableObservable<Loadable<UserAssignment[]>>;
+  #userRoles: WritableObservable<Loadable<UserRole[]>>;
 };
 
 const UserRolesAndAssignmentsContext = createContext<UserRolesAndAssignmentsContext | null>(null);
