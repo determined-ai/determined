@@ -12,7 +12,6 @@ import { StoreProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider, useAuth } from 'stores/auth';
 import { DeterminedInfoProvider, initInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo';
-import { UserRolesProvider } from 'stores/userRoles';
 import { useFetchUsers, UsersProvider, useUpdateCurrentUser } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -94,11 +93,9 @@ const setup = () =>
       <StoreProvider>
         <UsersProvider>
           <AuthProvider>
-            <UserRolesProvider>
-              <DndProvider backend={HTML5Backend}>
-                <Container />
-              </DndProvider>
-            </UserRolesProvider>
+            <DndProvider backend={HTML5Backend}>
+              <Container />
+            </DndProvider>
           </AuthProvider>
         </UsersProvider>
       </StoreProvider>

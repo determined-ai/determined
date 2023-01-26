@@ -7,7 +7,6 @@ import Button from 'components/kit/Button';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider, useAuth } from 'stores/auth';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 import { WorkspaceState } from 'types';
@@ -91,13 +90,11 @@ const setup = async () => {
     <BrowserRouter>
       <UIProvider>
         <UsersProvider>
-          <UserRolesProvider>
-            <WorkspacesProvider>
-              <AuthProvider>
-                <ModalTrigger />
-              </AuthProvider>
-            </WorkspacesProvider>
-          </UserRolesProvider>
+          <WorkspacesProvider>
+            <AuthProvider>
+              <ModalTrigger />
+            </AuthProvider>
+          </WorkspacesProvider>
         </UsersProvider>
       </UIProvider>
     </BrowserRouter>,

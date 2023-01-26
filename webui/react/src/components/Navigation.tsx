@@ -6,7 +6,7 @@ import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
-import { useFetchUserRolesAndAssignments } from 'stores/userRoles';
+import { UserRolesService } from 'stores/userRoles';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
@@ -29,7 +29,8 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
   const fetchWorkspaces = useFetchWorkspaces(canceler);
-  const fetchMyRoles = useFetchUserRolesAndAssignments(canceler);
+  const userRolesService = UserRolesService.getInstance();
+  const fetchMyRoles = userRolesService.fetchUserAssignmentsAndRoles(canceler);
 
   usePolling(fetchWorkspaces);
 
