@@ -195,13 +195,9 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 	}
 
 	if spec.TaskType == model.TaskTypeTensorboard {
-		workspaceIDs, err := a.tensorboardWorkspaces(ctx, spec.Metadata.ExperimentIDs,
-			spec.Metadata.TrialIDs)
-		if err != nil {
-			return errors.Wrapf(err, "error fetching workspace IDs from database")
-		}
 		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-			ctx, *user, workspaceIDs); err != nil || !ok {
+			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
+			); err != nil || !ok {
 			return err
 		}
 	} else {

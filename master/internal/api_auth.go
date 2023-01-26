@@ -141,7 +141,7 @@ func processProxyAuthentication(c echo.Context) (done bool, err error) {
 	if spec.TaskType == model.TaskTypeTensorboard {
 		// TODO (eliu): validate access for all experiment workspaces that this tensorboard uses
 		ok, err = command.AuthZProvider.Get().CanGetTensorboard(
-			ctx, *user, []model.AccessScopeID{spec.WorkspaceID})
+			ctx, *user, spec.WorkspaceID, nil, nil)
 	} else {
 		ok, err = command.AuthZProvider.Get().CanGetNSC(
 			ctx, *user, spec.WorkspaceID)

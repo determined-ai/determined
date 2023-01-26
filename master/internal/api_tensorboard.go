@@ -71,72 +71,6 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 	return filesArchive
 }
 
-func (a *apiServer) tensorboardWorkspaces(
-	ctx context.Context, experimentIDs []int32, trialIDs []int32,
-) ([]model.AccessScopeID, error) {
-	expIDsToWorkspaceIDs, err := a.m.db.ExperimentIDsToWorkspaceIDs(ctx, experimentIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	trialIDToWorkspaceIDs, err := a.m.db.TrialIDsToWorkspaceIDs(ctx, trialIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	workspaceIDs := map[int]bool{}
-	var workspaceIDList []model.AccessScopeID
-	for wID := range expIDsToWorkspaceIDs {
-		workspaceIDs[wID] = true
-	}
-	for wID := range trialIDToWorkspaceIDs {
-		workspaceIDs[wID] = true
-	}
-	for wID := range workspaceIDs {
-		workspaceIDList = append(workspaceIDList, model.AccessScopeID(wID))
-	}
-
-	return workspaceIDList, nil
-}
-
-func (a *apiServer) filterTensorboards(
-	ctx context.Context,
-	curUser model.User,
-	tensorboards []*tensorboardv1.Tensorboard,
-	workspaceID int32,
-) ([]*tensorboardv1.Tensorboard, error) {
-	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopesTB(
-		ctx, curUser, model.AccessScopeID(workspaceID))
-	if err != nil {
-		return nil, err
-	}
-
-	var filteredTensorboards []*tensorboardv1.Tensorboard
-
-	for _, tb := range tensorboards {
-		workspaceIDs, err := a.tensorboardWorkspaces(ctx, tb.ExperimentIds, tb.TrialIds)
-		if err != nil {
-			continue
-		}
-
-		accessGranted := true
-		if _, ok := filteredScopes[model.AccessScopeID(tb.WorkspaceId)]; !ok {
-			continue
-		}
-		for wID := range workspaceIDs {
-			if _, ok := filteredScopes[model.AccessScopeID(wID)]; !ok {
-				accessGranted = false
-				break
-			}
-		}
-		if accessGranted {
-			filteredTensorboards = append(filteredTensorboards, tb)
-		}
-	}
-
-	return filteredTensorboards, nil
-}
-
 func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
@@ -161,8 +95,8 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
-	filteredTensorboards, err := a.filterTensorboards(ctx, *curUser, resp.Tensorboards,
-		req.WorkspaceId)
+	filteredTensorboards, err := command.AuthZProvider.Get().FilterTensorboards(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId), resp.Tensorboards)
 	if err != nil {
 		return nil, err
 	}
@@ -186,14 +120,9 @@ func (a *apiServer) GetTensorboard(
 		return nil, err
 	}
 
-	workspaceIDs, err := a.tensorboardWorkspaces(ctx, resp.Tensorboard.ExperimentIds,
-		resp.Tensorboard.TrialIds)
-	if err != nil {
-		return nil, err
-	}
-
 	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-		ctx, *curUser, workspaceIDs); err != nil {
+		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId),
+		resp.Tensorboard.ExperimentIds, resp.Tensorboard.TrialIds); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)

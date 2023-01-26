@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 
 	"github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -40,14 +41,16 @@ type NSCAuthZ interface {
 		ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
 	) (model.AccessScopeSet, error)
 
-	AccessibleScopesTB(
+	FilterTensorboards(
 		ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
-	) (model.AccessScopeSet, error)
+		tensorboards []*tensorboardv1.Tensorboard,
+	) ([]*tensorboardv1.Tensorboard, error)
 
 	// Tensorboard functions
 	// GET /api/v1/tensorboards/:tb_id
 	CanGetTensorboard(
-		ctx context.Context, curUser model.User, workspaceIDs []model.AccessScopeID,
+		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+		experimentIDs []int32, trialIDs []int32,
 	) (canGetTensorboard bool, serverError error)
 
 	// POST /api/v1/tensorboards/:tb_id/kill

@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -66,19 +67,21 @@ func (a *NSCAuthZBasic) AccessibleScopes(
 }
 
 // AccessibleScopesTB returns the set of scopes of tensorboards that the user should be limited to.
-func (a *NSCAuthZBasic) AccessibleScopesTB(
+func (a *NSCAuthZBasic) FilterTensorboards(
 	ctx context.Context,
 	curUser model.User,
 	requestedScope model.AccessScopeID,
-) (model.AccessScopeSet, error) {
-	return a.AccessibleScopes(ctx, curUser, requestedScope)
+	tensorboards []*tensorboardv1.Tensorboard,
+) ([]*tensorboardv1.Tensorboard, error) {
+	return tensorboards, nil
 }
 
 // CanGetTensorboard returns true and nil error unless the developer master config option
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the tensorboard and a nil error.
 func (a *NSCAuthZBasic) CanGetTensorboard(
-	ctx context.Context, curUser model.User, workspaceIDs []model.AccessScopeID,
+	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+	experimentIDs []int32, trialIDs []int32,
 ) (canGetTensorboards bool, serverError error) {
 	return true, nil
 }
