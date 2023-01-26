@@ -47,7 +47,7 @@ type NSCAuthZ interface {
 	// Tensorboard functions
 	// GET /api/v1/tensorboards/:tb_id
 	CanGetTensorboard(
-		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+		ctx context.Context, curUser model.User, workspaceIDs []model.AccessScopeID,
 	) (canGetTensorboard bool, serverError error)
 
 	// POST /api/v1/tensorboards/:tb_id/kill

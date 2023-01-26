@@ -78,7 +78,7 @@ func (a *NSCAuthZBasic) AccessibleScopesTB(
 // security.authz._strict_ntsc_enabled is true then it returns a boolean if the user is
 // an admin or if the user owns the tensorboard and a nil error.
 func (a *NSCAuthZBasic) CanGetTensorboard(
-	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+	ctx context.Context, curUser model.User, workspaceIDs []model.AccessScopeID,
 ) (canGetTensorboards bool, serverError error) {
 	return true, nil
 }
