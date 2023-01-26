@@ -251,9 +251,6 @@ func (c *Config) Resolve() error {
 		return err
 	}
 
-	// CHECK: how do we generally check for and report deprecated config options?
-	// Do we want to support this (deprecate) or remove all together? If we're removing
-	// it do we want to prevent master from coming up or warn silently?
 	if c.Security.AuthZ.StrictNTSCEnabled {
 		log.Warn("_strict_ntsc_enabled option is removed and will not have any effect.")
 	}

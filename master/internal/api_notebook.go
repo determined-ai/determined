@@ -191,8 +191,6 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 		return errors.Wrapf(err, "error fetching workspace (%d) from database", workspaceID)
 	}
 	if w.Archived {
-		// CHAT: we might want to use a.GetWorkspaceByID here instead.
-		// Do we allow you to launch into a workspace that you don't have view access to?
 		return notFoundErr
 	}
 

@@ -36,7 +36,6 @@ build/mock_gen.stamp: $(MOCK_GENERATION_INPUTS)
 	mockery --name=UserAuthZ --dir=internal/user --output internal/mocks --filename user_authz_iface.go
 	mockery --name=WorkspaceAuthZ --dir=internal/workspace --output internal/mocks --filename workspace_authz_iface.go
 	mockery --name=ProjectAuthZ --dir=internal/project --output internal/mocks --filename project_authz_iface.go
-	# CHECK: which naming convention do we want? cc: @nick
 	mockery --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
 	mockery --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
 	mockery --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
