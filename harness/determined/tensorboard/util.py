@@ -17,6 +17,7 @@ profiler_file_extensions = [
     ".xplane.pb",
     ".kernel_stats.pb",
     ".overview_page.pb",
+    ".pt.trace.json",
     ".trace.json.gz",
     ".trace.json",
 ]
@@ -48,7 +49,6 @@ def get_rank_aware_path(path: pathlib.Path, rank: int) -> pathlib.Path:
     """
     for ext in profiler_file_extensions:
         if path.match(f"*{ext}"):
-            print(f"matching *{ext}")
             num_parts = ext.count(".")
             while num_parts > 0:
                 path = path.with_suffix("")

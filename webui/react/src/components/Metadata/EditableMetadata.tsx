@@ -30,6 +30,9 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
   const onValuesChange = useCallback(
     (_changedValues: unknown, values: { metadata: Metadata[] }) => {
       const newMetadata = values.metadata.reduce((acc, row) => {
+        if (row.value === undefined) {
+          row.value = '';
+        }
         if (row?.key) acc[row.key] = row.value;
         return acc;
       }, {} as Metadata);
