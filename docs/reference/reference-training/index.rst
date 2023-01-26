@@ -1,6 +1,6 @@
-####################
- Training Reference
-####################
+########################
+ Training API Reference
+########################
 
 This section includes reference documentation for the Determined training APIs:
 
