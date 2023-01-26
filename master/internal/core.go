@@ -85,7 +85,7 @@ var staticWebDirectoryPaths = map[string]bool{
 
 // gzipSkipPaths are locations of paths to be skipped by GZIP compression.
 var gzipSkipPaths = map[string]bool{
-	"/proxy": true,
+	"/proxy/:service/*": true,
 }
 
 // Master manages the Determined master state.
@@ -772,7 +772,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return gzipSkipPaths[c.Path()]
+			proxyService := regexp.MustCompile(`proxy|service`)
+			return proxyService.MatchString(c.Path())
 		},
 	}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
