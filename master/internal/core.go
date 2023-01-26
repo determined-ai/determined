@@ -83,11 +83,6 @@ var staticWebDirectoryPaths = map[string]bool{
 	"/docs/rest-api": true,
 }
 
-// gzipSkipPaths are locations of paths to be skipped by GZIP compression.
-var gzipSkipPaths = map[string]bool{
-	"/proxy/:service/*": true,
-}
-
 // Master manages the Determined master state.
 type Master struct {
 	ClusterID string
