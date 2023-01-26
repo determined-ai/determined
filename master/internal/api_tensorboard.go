@@ -71,6 +71,34 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 	return filesArchive
 }
 
+func (a *apiServer) tensorboardWorkspaces(
+	ctx context.Context, experimentIDs []int32, trialIDs []int32,
+) ([]model.AccessScopeID, error) {
+	expIDsToWorkspaceIDs, err := a.m.db.ExperimentIDsToWorkspaceIDs(ctx, experimentIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	trialIDToWorkspaceIDs, err := a.m.db.TrialIDsToWorkspaceIDs(ctx, trialIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceIDs := map[int]bool{}
+	var workspaceIDList []model.AccessScopeID
+	for wID := range expIDsToWorkspaceIDs {
+		workspaceIDs[wID] = true
+	}
+	for wID := range trialIDToWorkspaceIDs {
+		workspaceIDs[wID] = true
+	}
+	for wID := range workspaceIDs {
+		workspaceIDList = append(workspaceIDList, model.AccessScopeID(wID))
+	}
+
+	return workspaceIDList, nil
+}
+
 func (a *apiServer) filterTensorboards(
 	ctx context.Context,
 	curUser model.User,
