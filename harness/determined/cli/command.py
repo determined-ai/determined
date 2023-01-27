@@ -1,9 +1,7 @@
-import base64
 import json
 import re
 from argparse import Namespace
 from collections import OrderedDict, namedtuple
-from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional
 from typing import OrderedDict as TypedOrderedDict
 from typing import Tuple, Union
@@ -12,7 +10,7 @@ from termcolor import colored
 
 from determined import cli
 from determined.cli import render
-from determined.common import api, context, util, yaml
+from determined.common import api, util, yaml
 from determined.common.api import authentication
 
 yaml = yaml.YAML(typ="safe", pure=True)  # type: ignore
@@ -347,50 +345,6 @@ def parse_config(
         config["entrypoint"] = entrypoint
 
     return config
-
-
-def launch_command(
-    master: str,
-    endpoint: str,
-    config: Dict[str, Any],
-    template: str,
-    context_path: Optional[Path] = None,
-    includes: Iterable[Path] = (),
-    data: Optional[Dict[str, Any]] = None,
-    workspace_id: Optional[int] = None,
-    preview: Optional[bool] = False,
-    default_body: Optional[Dict[str, Any]] = None,
-) -> Any:
-    user_files = context.read_legacy_context(context_path, includes)
-
-    body = {}  # type: Dict[str, Any]
-    if default_body:
-        body.update(default_body)
-
-    body["config"] = config
-
-    if template:
-        body["template_name"] = template
-
-    if len(user_files) > 0:
-        body["files"] = user_files
-
-    if data is not None:
-        message_bytes = json.dumps(data).encode("utf-8")
-        base64_bytes = base64.b64encode(message_bytes)
-        body["data"] = base64_bytes
-
-    if preview:
-        body["preview"] = preview
-
-    if workspace_id is not None:
-        body["workspaceId"] = workspace_id
-
-    return api.post(
-        master,
-        endpoint,
-        body,
-    ).json()
 
 
 def render_event_stream(event: Any) -> None:

@@ -12,18 +12,6 @@ from determined.common.declarative_argparse import Arg, Cmd, Group
 
 @authentication.required
 def run_command(args: Namespace) -> None:
-    """
-    resp = command.launch_command(
-        args.master,
-        "api/v1/commands",
-        config,
-        args.template,
-        context_path=args.context,
-        includes=args.include,
-        workspace_id=workspace_id,
-    )
-    """
-
     config = command.parse_config(args.config_file, args.entrypoint, args.config, args.volume)
     workspace_id = cli.workspace.get_workspace_id_from_args(args)
     files = context.read_v1_context(args.context, args.include)
