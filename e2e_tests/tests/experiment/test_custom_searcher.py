@@ -85,23 +85,26 @@ def test_run_random_searcher_exp() -> None:
 
 @pytest.mark.e2e_cpu_2a
 @pytest.mark.parametrize(
-    "config_name,exp_name,exception_points",
+    "config_name,exp_name,exception_points,metric_as_dict",
     [
-        ("core_api_model.yaml", f"custom-searcher-random-test-{TIMESTAMP}", []),
+        ("core_api_model.yaml", f"custom-searcher-random-test-{TIMESTAMP}", [], True),
         (
             "core_api_model.yaml",
             f"custom-searcher-random-test-fail1-{TIMESTAMP}",
             ["initial_operations_start", "progress_middle", "on_trial_closed_shutdown"],
+            False,
         ),
         (
             "core_api_model.yaml",
             f"custom-searcher-random-test-fail2-{TIMESTAMP}",
             ["on_validation_completed", "on_trial_closed_end", "on_trial_created_5"],
+            False,
         ),
         (
             "core_api_model.yaml",
             f"custom-searcher-random-test-fail3-{TIMESTAMP}",
             ["on_trial_created", "after_save"],
+            False,
         ),
         (
             "core_api_model.yaml",
@@ -113,17 +116,23 @@ def test_run_random_searcher_exp() -> None:
                 "on_validation_completed",
                 "after_save",
             ],
+            False,
         ),
     ],
 )
 def test_run_random_searcher_exp_core_api(
-    config_name: str, exp_name: str, exception_points: List[str]
+    config_name: str,
+    exp_name: str,
+    exception_points: List[str],
+    metric_as_dict: bool,
 ) -> None:
     config = conf.load_config(conf.fixtures_path("custom_searcher/core_api_searcher_random.yaml"))
     config["entrypoint"] += " --exp-name " + exp_name
     config["entrypoint"] += " --config-name " + config_name
     if len(exception_points) > 0:
         config["entrypoint"] += " --exception-points " + " ".join(exception_points)
+    if metric_as_dict:
+        config["entrypoint"] += " --metric-as-dict"
     config["max_restarts"] = len(exception_points)
 
     experiment_id = exp.run_basic_test_with_temp_config(
