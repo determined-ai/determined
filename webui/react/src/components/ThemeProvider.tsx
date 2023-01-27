@@ -21,11 +21,29 @@ const ANTD_THEMES: Record<DarkLight, ThemeConfig> = {
       Button: {
         colorBgContainer: 'transparent',
       },
+      Checkbox: {
+        colorBgContainer: 'transparent',
+      },
+      DatePicker: {
+        colorBgContainer: 'transparent',
+      },
       Input: {
+        colorBgContainer: 'transparent',
+      },
+      InputNumber: {
+        colorBgContainer: 'transparent',
+      },
+      Pagination: {
         colorBgContainer: 'transparent',
       },
       Progress: {
         marginXS: 0,
+      },
+      Radio: {
+        colorBgContainer: 'transparent',
+      },
+      Select: {
+        colorBgContainer: 'transparent',
       },
     },
     token: {
