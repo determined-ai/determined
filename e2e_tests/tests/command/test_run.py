@@ -11,6 +11,7 @@ import docker.errors
 import pytest
 import yaml
 
+from determined.common.api import WARNING_MESSAGE_MAP, bindings
 from tests import command as cmd
 from tests import config as conf
 from tests.filetree import FileTree
@@ -449,6 +450,27 @@ def test_killed_pending_command_terminates() -> None:
     else:
         state = cmd.get_command(command.task_id)["state"]
         raise AssertionError(f"Task was in state {state} rather than STATE_TERMINATED")
+
+
+@pytest.mark.slow
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize(
+    "cli_command",
+    [
+        ["cmd", "run", "--config", "resources.agent_label=notexist", "sleep", "1"],
+        ["notebook", "start", "--config", "resources.agent_label=notexist"],
+        ["shell", "start", "--config", "resources.agent_label=notexist"],
+    ],
+)
+def test_agent_label_warning(cli_command: List[str]) -> None:
+    with cmd.interactive_command(*cli_command) as command:
+        assert command.task_id is not None
+        for line in command.stderr:
+            expected_warn = (
+                bindings.v1LaunchWarning.LAUNCH_WARNING_AGENT_LABEL_WITHOUT_MATCHING_AGENT
+            )
+            assert WARNING_MESSAGE_MAP[expected_warn] in line
+            break
 
 
 @pytest.mark.e2e_gpu

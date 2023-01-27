@@ -68,6 +68,7 @@ def interactive_command(*args: str) -> Iterator[_InteractiveCommandProcess]:
         ("det", "-m", conf.make_master_url()) + args,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         env={"PYTHONUNBUFFERED": "1", **os.environ},
     ) as p:
         cmd = _InteractiveCommandProcess(p, detach="--detach" in args)
