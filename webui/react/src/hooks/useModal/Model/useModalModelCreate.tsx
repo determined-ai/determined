@@ -160,20 +160,27 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
 
       // We always render the form regardless of mode to provide a reference to it.
       return (
-        <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
-          <p className={css.directions}>
-            Create a registered model to organize important checkpoints.
-          </p>
-          <Form.Item
-            label="Model name"
-            name="modelName"
-            rules={[{ message: 'Model name is required ', required: true }]}>
-            <Input onChange={handleNameChange} />
-          </Form.Item>
-          <Form.Item label="Description (optional)" name="description">
-            <Input.TextArea onChange={handleDescriptionChange} />
-          </Form.Item>
-          {expandDetails ? (
+        <>
+          <Form autoComplete="off" form={form} id={FORM_ID} layout="vertical">
+            <p className={css.directions}>
+              Create a registered model to organize important checkpoints.
+            </p>
+            <Form.Item
+              label="Model name"
+              name="modelName"
+              rules={[{ message: 'Model name is required ', required: true }]}>
+              <Input onChange={handleNameChange} />
+            </Form.Item>
+            <Form.Item label="Description (optional)" name="description">
+              <Input.TextArea onChange={handleDescriptionChange} />
+            </Form.Item>
+            {!expandDetails && (
+              <p className={css.expandDetails} onClick={openDetails}>
+                Add More Details...
+              </p>
+            )}
+          </Form>
+          {expandDetails && (
             <>
               <div>
                 <h2>
@@ -192,12 +199,8 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
                 <EditableTagList tags={tags} onChange={handleTagsChange} />
               </div>
             </>
-          ) : (
-            <p className={css.expandDetails} onClick={openDetails}>
-              Add More Details...
-            </p>
           )}
-        </Form>
+        </>
       );
     },
     [
