@@ -169,9 +169,8 @@ func TestCanGetNTSC(t *testing.T) {
 
 	// Tensorboards.
 	// check permission errors are returned with not found status and follow the same pattern.
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		false, nil,
-	).Once()
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(false, nil).Once()
 
 	tbID := setupMockTensorboardActor(t, api.m)
 	tbActor := actor.Addr(command.TensorboardActorPath)
@@ -201,9 +200,8 @@ func TestCanGetNTSC(t *testing.T) {
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	require.NotEqual(t, codes.NotFound, status.Code(err))
 
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		false, errors.New("other error"),
-	).Once()
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(false, errors.New("other error")).Once()
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: string(tbID)})
 	require.NotNil(t, err)
@@ -217,9 +215,8 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		true, nil,
 	)
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		true, nil,
-	)
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(true, nil)
 
 	// check permission errors are returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
@@ -280,9 +277,8 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		true, nil,
 	)
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		true, nil,
-	)
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(true, nil)
 
 	// check permission errors are returned with permission denied status.
 	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
