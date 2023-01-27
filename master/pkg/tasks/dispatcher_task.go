@@ -363,7 +363,8 @@ func (t *TaskSpec) computeResources(tresSupported bool, numSlots int, slotType d
 		if haveSlotsPerNode {
 			resources.SetCores(map[string]float32{
 				"per-node":     float32(effectiveSlotsPerNode),
-				"per-instance": float32(effectiveSlotsPerNode)})
+				"per-instance": float32(effectiveSlotsPerNode),
+			})
 		} else {
 			resources.SetCores(map[string]float32{"per-node": float32(effectiveSlotsPerNode)})
 		}
