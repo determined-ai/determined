@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/uptrace/bun"
-
 	"github.com/google/uuid"
 
 	"github.com/jmoiron/sqlx"
@@ -960,81 +958,6 @@ SELECT experiment_id FROM trials where id = $1
 		return 0, errors.Wrapf(err, "querying for experiment id for trial %v", trialID)
 	}
 	return experimentID, nil
-}
-
-// ExperimentIDsToWorkspaceIDs returns a slice of workspaces that the given experiments belong to.
-func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs []int32) (
-	[]model.AccessScopeID, error,
-) {
-	if len(experimentIDs) == 0 {
-		return []model.AccessScopeID{}, nil
-	}
-
-	var rows []map[string]interface{}
-	err := Bun().NewSelect().TableExpr("workspaces AS w").
-		ColumnExpr("w.id AS workspace_id").
-		ColumnExpr("e.id AS exp_id").
-		Join("JOIN projects p ON w.id = p.workspace_id").
-		Join("JOIN experiments e ON p.id = e.project_id").
-		Where("e.id IN (?)", bun.In(experimentIDs)).
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
-
-	workspaceSet := map[int]bool{}
-	var workspaceIDs []model.AccessScopeID
-	for _, row := range rows {
-		workspaceID, ok := row["workspace_id"].(int64)
-		if !ok {
-			return nil, fmt.Errorf("workspaceID is not an int64")
-		}
-		workspaceSet[int(workspaceID)] = true
-	}
-
-	for wID := range workspaceSet {
-		workspaceIDs = append(workspaceIDs, model.AccessScopeID(wID))
-	}
-
-	return workspaceIDs, nil
-}
-
-// TrialIDsToWorkspaceIDs returns a slice of workspaces that the given trials belong to.
-func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) (
-	[]model.AccessScopeID, error) {
-	if len(trialIDs) == 0 {
-		return []model.AccessScopeID{}, nil
-	}
-
-	var rows []map[string]interface{}
-	err := Bun().NewSelect().TableExpr("workspaces AS w").
-		ColumnExpr("w.id AS workspace_id").
-		ColumnExpr("t.id AS trial_id").
-		Join("JOIN projects p ON w.id = p.workspace_id").
-		Join("JOIN experiments e ON p.id = e.project_id").
-		Join("JOIN trials t ON e.id = t.experiment_id").
-		Where("trial_id IN (?)", bun.In(trialIDs)).
-		Scan(ctx, &rows)
-	if err != nil {
-		return nil, err
-	}
-
-	workspaceSet := map[int]bool{}
-	var workspaceIDs []model.AccessScopeID
-
-	for _, row := range rows {
-		workspaceID, ok := row["workspace_id"].(int64)
-		if !ok {
-			return nil, fmt.Errorf("workspaceID is not an int64")
-		}
-		workspaceSet[int(workspaceID)] = true
-	}
-
-	for wID := range workspaceSet {
-		workspaceIDs = append(workspaceIDs, model.AccessScopeID(wID))
-	}
-
-	return workspaceIDs, nil
 }
 
 // NonTerminalExperiments finds all experiments in the database whose states are not terminal.
