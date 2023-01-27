@@ -31,6 +31,9 @@ func TestCalculatingDesiredInstanceNum(t *testing.T) {
 		{ID: "task7", SlotsNeeded: 3, Group: groups[2]},
 		{ID: "task8", SlotsNeeded: 15, Group: groups[3]},
 		{ID: "task9", SlotsNeeded: 10, Group: groups[2]},
+		// We don't care about tasks with labels currently, since
+		// we will never launch a dynamic agent with an agent label.
+		{ID: "task10", SlotsNeeded: 10, Group: groups[2], Label: "notexistent"},
 	}
 
 	taskList, groupMap, _ := setupSchedulerStates(t, system, tasks, groups, agents)
