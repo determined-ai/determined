@@ -65,25 +65,25 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const { canMoveExperimentsTo } = usePermissions();
-  const workspaces = Loadable.map(useWorkspaces({ archived: false }), (ws) =>
+  const loadableWorkspaces = useWorkspaces({ archived: false });
+  const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
     ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
   const projects = useWorkspaceProjects(workspaceId);
-  const ensureWorkspaceProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
-  const ensureWorkspacesFetched = useEnsureWorkspacesFetched(canceler.current);
+  const ensureProjectsFetched = useEnsureWorkspaceProjectsFetched(canceler.current);
+  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler.current);
 
   const handleClose = useCallback(() => onClose?.(), [onClose]);
 
   const { modalOpen: openOrUpdate, modalRef, ...modalHook } = useModal({ onClose: handleClose });
 
   useEffect(() => {
-    ensureWorkspacesFetched();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    fetchWorkspaces();
+  }, [workspaceId, fetchWorkspaces]);
 
   useEffect(() => {
-    ensureWorkspaceProjectsFetched(workspaceId);
-  }, [workspaceId, ensureWorkspaceProjectsFetched]);
+    ensureProjectsFetched(workspaceId);
+  }, [workspaceId, ensureProjectsFetched]);
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
