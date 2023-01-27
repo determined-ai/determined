@@ -51,6 +51,9 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
 
   if (!settings || !updateSettings) return null;
 
+  const validAgentIds =
+    (settings.name && systemSeries && Object.keys(systemSeries[settings.name])) || [];
+
   return (
     <>
       <SelectFilter
@@ -72,15 +75,13 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
         label="Agent Name"
         showSearch={false}
         style={{ width: 220 }}
-        value={settings.agentId}
+        value={validAgentIds.includes(settings.agentId as string) ? settings.agentId : undefined}
         onChange={handleChangeAgentId}>
-        {settings.name &&
-          systemSeries &&
-          Object.keys(systemSeries[settings.name]).map((agentId) => (
-            <Option key={agentId} value={agentId}>
-              {agentId}
-            </Option>
-          ))}
+        {validAgentIds.map((agentId) => (
+          <Option key={agentId} value={agentId}>
+            {agentId}
+          </Option>
+        ))}
       </SelectFilter>
       {uuidOptions.length !== 0 && (
         <SelectFilter
