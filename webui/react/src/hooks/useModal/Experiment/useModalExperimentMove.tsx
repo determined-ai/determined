@@ -79,12 +79,7 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
 
   useEffect(() => {
     fetchWorkspaces();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    ensureWorkspaceProjectsFetched(workspaceId);
-  }, [workspaceId, ensureWorkspaceProjectsFetched]);
+  }, [workspaceId, fetchWorkspaces]);
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {
