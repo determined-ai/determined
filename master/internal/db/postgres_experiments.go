@@ -964,10 +964,10 @@ SELECT experiment_id FROM trials where id = $1
 
 // ExperimentIDsToWorkspaceIDs returns a slice of workspaces that the given experiments belong to.
 func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs []int32) (
-	[]int, error,
+	[]model.AccessScopeID, error,
 ) {
 	if len(experimentIDs) == 0 {
-		return []int{}, nil
+		return []model.AccessScopeID{}, nil
 	}
 
 	var rows []map[string]interface{}
@@ -983,7 +983,7 @@ func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs [
 	}
 
 	workspaceSet := map[int]bool{}
-	var workspaceIDs []int
+	var workspaceIDs []model.AccessScopeID
 	for _, row := range rows {
 		workspaceID, ok := row["workspace_id"].(int64)
 		if !ok {
@@ -993,16 +993,17 @@ func (db *PgDB) ExperimentIDsToWorkspaceIDs(ctx context.Context, experimentIDs [
 	}
 
 	for wID := range workspaceSet {
-		workspaceIDs = append(workspaceIDs, wID)
+		workspaceIDs = append(workspaceIDs, model.AccessScopeID(wID))
 	}
 
 	return workspaceIDs, nil
 }
 
 // TrialIDsToWorkspaceIDs returns a slice of workspaces that the given trials belong to.
-func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) ([]int, error) {
+func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) (
+	[]model.AccessScopeID, error) {
 	if len(trialIDs) == 0 {
-		return []int{}, nil
+		return []model.AccessScopeID{}, nil
 	}
 
 	var rows []map[string]interface{}
@@ -1019,7 +1020,7 @@ func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) ([
 	}
 
 	workspaceSet := map[int]bool{}
-	var workspaceIDs []int
+	var workspaceIDs []model.AccessScopeID
 
 	for _, row := range rows {
 		workspaceID, ok := row["workspace_id"].(int64)
@@ -1030,7 +1031,7 @@ func (db *PgDB) TrialIDsToWorkspaceIDs(ctx context.Context, trialIDs []int32) ([
 	}
 
 	for wID := range workspaceSet {
-		workspaceIDs = append(workspaceIDs, wID)
+		workspaceIDs = append(workspaceIDs, model.AccessScopeID(wID))
 	}
 
 	return workspaceIDs, nil
