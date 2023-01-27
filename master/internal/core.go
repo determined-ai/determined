@@ -83,11 +83,6 @@ var staticWebDirectoryPaths = map[string]bool{
 	"/docs/rest-api": true,
 }
 
-// gzipSkipPaths are locations of paths to be skipped by GZIP compression.
-var gzipSkipPaths = map[string]bool{
-	"/proxy": true,
-}
-
 // Master manages the Determined master state.
 type Master struct {
 	ClusterID string
@@ -772,7 +767,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return !gzipSkipPaths[c.Path()]
+			webuiStaticAssets := regexp.MustCompile(`\/det\/(themes|static|determined)\/`)
+			return !webuiStaticAssets.MatchString(c.Request().URL.Path)
 		},
 	}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
