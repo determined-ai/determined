@@ -29,11 +29,19 @@ jest.mock('services/api', () => ({
   launchJupyterLab: () => Promise.resolve({ config: '' }),
 }));
 
-jest.mock('stores/cluster', () => ({
-  __esModule: true,
-  ...jest.requireActual('stores/cluster'),
-  useResourcePools: (): Loadable<ResourcePool[]> => ({ _tag: 'Loaded', data: [] }),
-}));
+jest.mock('stores/cluster', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const loadable = require('utils/loadable');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const observable = require('utils/observable');
+
+  const store = { resourcePools: observable.observable(loadable.Loaded([])) };
+  return {
+    __esModule: true,
+    ...jest.requireActual('stores/cluster'),
+    useClusterStore: () => store,
+  };
+});
 
 jest.mock('utils/wait', () => ({
   openCommand: () => null,

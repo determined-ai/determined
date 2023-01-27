@@ -4,9 +4,8 @@ import React from 'react';
 
 import Button from 'components/kit/Button';
 import { CreateExperimentParams } from 'services/types';
-import { ClusterProvider } from 'stores/cluster';
+import { ClusterProvider, ClusterService } from 'stores/cluster';
 import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-import type { ResourcePool } from 'types';
 
 import useModalHyperparameterSearch from './useModalHyperparameterSearch';
 
@@ -21,49 +20,53 @@ jest.mock('stores/cluster', () => {
   const sdkTypes = require('services/api-ts-sdk');
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const loadable = require('utils/loadable');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const observable = require('utils/observable');
 
-  const value: ResourcePool[] = [
-    {
-      agentDockerImage: '',
-      agentDockerNetwork: '',
-      agentDockerRuntime: '',
-      agentFluentImage: '',
-      auxContainerCapacity: 0,
-      auxContainerCapacityPerAgent: 0,
-      auxContainersRunning: 0,
-      containerStartupScript: '',
-      defaultAuxPool: false,
-      defaultComputePool: true,
-      description: '',
-      details: {},
-      imageId: '',
-      instanceType: '',
-      location: '',
-      masterCertName: '',
-      masterUrl: '',
-      maxAgents: 1,
-      maxAgentStartingPeriod: 1000,
-      maxIdleAgentPeriod: 1000,
-      minAgents: 0,
-      name: 'default',
-      numAgents: 1,
-      preemptible: false,
-      schedulerFittingPolicy: sdkTypes.V1FittingPolicy.UNSPECIFIED,
-      schedulerType: sdkTypes.V1SchedulerType.UNSPECIFIED,
-      slotsAvailable: 1,
-      slotsUsed: 0,
-      slotType: types.ResourceType.CUDA,
-      startupScript: '',
-      type: sdkTypes.V1ResourcePoolType.UNSPECIFIED,
-    },
-  ];
+  const store = {
+    resourcePools: observable.observable(
+      loadable.Loaded([
+        {
+          agentDockerImage: '',
+          agentDockerNetwork: '',
+          agentDockerRuntime: '',
+          agentFluentImage: '',
+          auxContainerCapacity: 0,
+          auxContainerCapacityPerAgent: 0,
+          auxContainersRunning: 0,
+          containerStartupScript: '',
+          defaultAuxPool: false,
+          defaultComputePool: true,
+          description: '',
+          details: {},
+          imageId: '',
+          instanceType: '',
+          location: '',
+          masterCertName: '',
+          masterUrl: '',
+          maxAgents: 1,
+          maxAgentStartingPeriod: 1000,
+          maxIdleAgentPeriod: 1000,
+          minAgents: 0,
+          name: 'default',
+          numAgents: 1,
+          preemptible: false,
+          schedulerFittingPolicy: sdkTypes.V1FittingPolicy.UNSPECIFIED,
+          schedulerType: sdkTypes.V1SchedulerType.UNSPECIFIED,
+          slotsAvailable: 1,
+          slotsUsed: 0,
+          slotType: types.ResourceType.CUDA,
+          startupScript: '',
+          type: sdkTypes.V1ResourcePoolType.UNSPECIFIED,
+        },
+      ]),
+    ),
+  };
 
   return {
     __esModule: true,
     ...jest.requireActual('stores/cluster'),
-    useResourcePools: () => {
-      return loadable.Loaded(value);
-    },
+    useClusterStore: () => store,
   };
 });
 
