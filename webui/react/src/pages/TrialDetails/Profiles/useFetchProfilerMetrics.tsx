@@ -15,20 +15,16 @@ const BUCKET_WIDTH = 1000 * BUCKET_SIZE; // seconds -> millisecondss
 const PADDING_WINDOW = 5; // in seconds
 const PADDING_BUCKETS = PADDING_WINDOW / BUCKET_SIZE;
 const INIT_BUCKETS = PADDING_BUCKETS + 1; // plus the one for the initial timestamp
-const BATCH_NAME = 'batch';
 
 const DEFAULT_DATA: MetricsAggregateInterface = {
   data: [],
   isEmpty: true,
   isLoading: true,
-  names: [BATCH_NAME],
+  names: [],
 };
 
 /* Get the time as the nearest 1/10th of a second timestamp */
-const parseTime = (time: string): number => Math.floor(Date.parse(time) / 100) * 100;
-
-const getIndexForTimestamp = (initialTimestamp: number, timestamp: number) =>
-  Math.floor((timestamp - initialTimestamp) / BUCKET_WIDTH) + PADDING_BUCKETS;
+const parseTime = (time: string): number => Math.floor(Date.parse(time) / 100) / 10;
 
 export const useFetchProfilerMetrics = (
   trialId: number,
@@ -72,7 +68,7 @@ export const useFetchProfilerMetrics = (
             const labelName: string = newData.labels.gpuUuid || newData.labels.name;
 
             if (serieData.length === 0) {
-              for (let i = 0; i < INIT_BUCKETS; ++i) {
+              for (let i = 0; i < INIT_BUCKETS; i++) {
                 timestamps.push((i - PADDING_BUCKETS) * BUCKET_WIDTH + initialTimestamp);
               }
             } else {
@@ -82,10 +78,7 @@ export const useFetchProfilerMetrics = (
             }
 
             if (!seriesMap.has(labelName)) {
-              const s_new: Serie = {
-                data: { Batches: [], Time: [] },
-                name: labelName,
-              };
+              const s_new: Serie = { data: { Time: [] }, name: labelName };
               seriesMap.set(labelName, s_new);
               names.push(labelName);
             }
@@ -103,23 +96,13 @@ export const useFetchProfilerMetrics = (
             }
 
             for (let i = 0; i < newData.values.length; i++) {
-              const batch: number = newData.batches[i];
               const value: number = newData.values[i];
               const timestamp = parseTime(newData.timestamps[i]);
 
-              const timestampIndex = getIndexForTimestamp(initialTimestamp, timestamp);
-
-              if (timestampIndex >= 0) {
-                const batchSerie = seriesMap.get(BATCH_NAME);
-                if (batchSerie) {
-                  batchSerie.data['Batches']?.push([timestamp, batch]);
-                  seriesMap.set(BATCH_NAME, batchSerie);
-                }
-                const timeSerie = seriesMap.get(labelName);
-                if (timeSerie) {
-                  timeSerie.data['Time']?.push([timestamp, value]);
-                  seriesMap.set(labelName, timeSerie);
-                }
+              const timeSerie = seriesMap.get(labelName);
+              if (timeSerie) {
+                timeSerie.data['Time']?.push([timestamp, value]);
+                seriesMap.set(labelName, timeSerie);
               }
             }
 

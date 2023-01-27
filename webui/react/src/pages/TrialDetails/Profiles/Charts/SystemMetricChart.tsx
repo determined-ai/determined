@@ -1,7 +1,8 @@
 import { string, undefined as undefinedType, union } from 'io-ts';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 
@@ -39,7 +40,7 @@ const config: SettingsConfig<Settings> = {
   storagePath: 'profiler-filters',
 };
 
-const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
+const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {
   const { settings, updateSettings } = useSettings<Settings>(config);
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
@@ -51,6 +52,11 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
     settings.name,
     settings.agentId,
     settings.gpuUuid,
+  );
+
+  const options = useMemo(
+    () => getOptionsForMetrics(settings.name ?? '', systemMetrics.names),
+    [getOptionsForMetrics, settings.name, systemMetrics.names],
   );
 
   useEffect(() => {
@@ -85,7 +91,12 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
         )
       }
       title="System Metrics">
-      <LineChart series={systemMetrics.data} xAxis="Time" />
+      <LineChart
+        series={systemMetrics.data}
+        xAxis={XAxisDomain.Time}
+        xLabel="Time"
+        yLabel={options.axes?.[1].label ?? ''}
+      />
     </Section>
   );
 };
