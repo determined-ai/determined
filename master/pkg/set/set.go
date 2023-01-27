@@ -16,3 +16,11 @@ func (s *Set[T]) Contains(val T) bool {
 func (s *Set[T]) Insert(val T) {
 	(map[T]unit)(*s)[val] = unit{}
 }
+
+func (s *Set[T]) Copy() Set[T] {
+	copy := Set[T]{}
+	for x := range (map[T]unit)(*s) {
+		copy.Insert(x)
+	}
+	return copy
+}

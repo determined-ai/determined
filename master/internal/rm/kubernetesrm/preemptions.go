@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/set"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,15 +22,18 @@ type startPreemptionListener struct{}
 type preemptionListener struct {
 	clientSet   *k8sClient.Clientset
 	podsHandler *actor.Ref
+	namespaces  set.Set[string]
 }
 
 func newPreemptionListener(
 	clientSet *k8sClient.Clientset,
 	podsHandler *actor.Ref,
+	namespaces set.Set[string],
 ) *preemptionListener {
 	return &preemptionListener{
 		clientSet:   clientSet,
 		podsHandler: podsHandler,
+		namespaces:  namespaces,
 	}
 }
 
@@ -64,6 +68,10 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	}
 
 	for _, pod := range pods.Items {
+		if !p.namespaces.Contains(pod.Namespace) {
+			continue
+		}
+
 		ctx.Tell(p.podsHandler, PreemptTaskPod{PodName: pod.Name})
 	}
 
@@ -91,6 +99,10 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Pod: %+v", e, e)
 			continue
 		}
+		if !p.namespaces.Contains(pod.Namespace) {
+			continue
+		}
+
 		ctx.Tell(p.podsHandler, PreemptTaskPod{PodName: pod.Name})
 	}
 

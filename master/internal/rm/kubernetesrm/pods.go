@@ -393,6 +393,9 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	}
 	existingConfigMaps := make(map[string]bool)
 	for _, cm := range configMaps.Items {
+		if !p.poolNamespaces.Contains(cm.Namespace) {
+			continue
+		}
 		existingConfigMaps[cm.Name] = true
 	}
 
@@ -401,6 +404,10 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	var ports [][]int
 	var resourcePool string
 	for _, pod := range pods.Items {
+		if !p.poolNamespaces.Contains(pod.Namespace) {
+			continue
+		}
+
 		foundID := false
 		foundPool := false
 		for _, container := range pod.Spec.Containers {
@@ -587,6 +594,10 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	toKillPods := &k8sV1.PodList{}
 	savedPodNames := make(map[string]bool)
 	for _, pod := range pods.Items {
+		if !p.poolNamespaces.Contains(pod.Namespace) {
+			continue
+		}
+
 		resourcePool := (func() string {
 			for _, c := range pod.Spec.Containers {
 				for _, e := range c.Env {
@@ -626,6 +637,10 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	}
 	toKillConfigMaps := &k8sV1.ConfigMapList{}
 	for _, cm := range configMaps.Items {
+		if !p.poolNamespaces.Contains(cm.Namespace) {
+			continue
+		}
+
 		if savedPodNames[cm.Name] { // PodName is same as config map name.
 			continue
 		}
@@ -652,12 +667,12 @@ func (p *pods) startNodeInformer(ctx *actor.Context) {
 
 func (p *pods) startEventListener(ctx *actor.Context) {
 	p.eventListener, _ = ctx.ActorOf(
-		"event-listener", newEventListener(p.clientSet, ctx.Self()))
+		"event-listener", newEventListener(p.clientSet, ctx.Self(), p.poolNamespaces))
 }
 
 func (p *pods) startPreemptionListener(ctx *actor.Context) {
 	p.preemptionListener, _ = ctx.ActorOf(
-		"preemption-listener", newPreemptionListener(p.clientSet, ctx.Self()))
+		"preemption-listener", newPreemptionListener(p.clientSet, ctx.Self(), p.poolNamespaces))
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {

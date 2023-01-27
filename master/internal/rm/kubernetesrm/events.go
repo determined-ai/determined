@@ -3,17 +3,16 @@ package kubernetesrm
 import (
 	"context"
 
+	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	k8sClient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
-	k8sV1 "k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sClient "k8s.io/client-go/kubernetes"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // Messages that are sent to the event listener.
@@ -31,15 +30,18 @@ type (
 type eventListener struct {
 	clientSet   *k8sClient.Clientset
 	podsHandler *actor.Ref
+	namespaces  set.Set[string]
 }
 
 func newEventListener(
 	clientSet *k8sClient.Clientset,
 	podsHandler *actor.Ref,
+	namespaces set.Set[string],
 ) *eventListener {
 	return &eventListener{
 		clientSet:   clientSet,
 		podsHandler: podsHandler,
+		namespaces:  namespaces,
 	}
 }
 
@@ -94,6 +96,11 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
 			continue
 		}
+
+		if !e.namespaces.Contains(newEvent.Namespace) {
+			continue
+		}
+
 		ctx.Tell(e.podsHandler, podEventUpdate{event: newEvent})
 	}
 
