@@ -1,8 +1,8 @@
 import { string, undefined as undefinedType, union } from 'io-ts';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 
+import { LineChart } from 'components/kit/LineChart';
 import Section from 'components/Section';
-import UPlotChart from 'components/UPlot/UPlotChart';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 
 import { ChartProps } from '../types';
@@ -39,7 +39,7 @@ const config: SettingsConfig<Settings> = {
   storagePath: 'profiler-filters',
 };
 
-const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {
+const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const { settings, updateSettings } = useSettings<Settings>(config);
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
@@ -51,11 +51,6 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
     settings.name,
     settings.agentId,
     settings.gpuUuid,
-  );
-
-  const options = useMemo(
-    () => getOptionsForMetrics(settings.name ?? '', systemMetrics.names),
-    [getOptionsForMetrics, settings.name, systemMetrics.names],
   );
 
   useEffect(() => {
@@ -90,7 +85,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
         )
       }
       title="System Metrics">
-      <UPlotChart data={systemMetrics.data} options={options} />
+      <LineChart series={systemMetrics.data} xAxis="Time" />
     </Section>
   );
 };
