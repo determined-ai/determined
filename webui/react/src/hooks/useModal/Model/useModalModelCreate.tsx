@@ -180,28 +180,26 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
               </p>
             )}
           </Form>
-          {
-            expandDetails && (
-              <>
-                <div>
-                  <h2>
-                    Metadata <span>(optional)</span>
-                  </h2>
-                  <EditableMetadata
-                    editing={true}
-                    metadata={metadata}
-                    updateMetadata={handleMetadataChange}
-                  />
-                </div>
-                <div>
-                  <h2>
-                    Tags <span>(optional)</span>
-                  </h2>
-                  <EditableTagList tags={tags} onChange={handleTagsChange} />
-                </div>
-              </>
-            )
-          }
+          {expandDetails && (
+            <>
+              <div>
+                <h2>
+                  Metadata <span>(optional)</span>
+                </h2>
+                <EditableMetadata
+                  editing={true}
+                  metadata={metadata}
+                  updateMetadata={handleMetadataChange}
+                />
+              </div>
+              <div>
+                <h2>
+                  Tags <span>(optional)</span>
+                </h2>
+                <EditableTagList tags={tags} onChange={handleTagsChange} />
+              </div>
+            </>
+          )}
         </>
       );
     },
