@@ -8,7 +8,8 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
-import { useClusterStatus, useRefetchClusterData } from 'stores/cluster';
+import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
+import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
@@ -38,7 +39,7 @@ const Clusters: React.FC = () => {
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
 
   useRefetchClusterData();
-  const clusterStatus = useClusterStatus();
+  const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const handleTabChange = useCallback(
     (key: string) => {

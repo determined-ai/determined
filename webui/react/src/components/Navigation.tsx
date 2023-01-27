@@ -4,13 +4,14 @@ import useFeature from 'hooks/useFeature';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import usePolling from 'shared/hooks/usePolling';
-import { useClusterOverview } from 'stores/cluster';
+import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useFetchUserRolesAndAssignments } from 'stores/userRoles';
 import { useFetchWorkspaces } from 'stores/workspaces';
 import { BrandingType, ResourceType } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './Navigation.module.scss';
 import NavigationSideBar from './NavigationSideBar';
@@ -25,7 +26,7 @@ const Navigation: React.FC<Props> = ({ children }) => {
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [canceler] = useState(new AbortController());
 
-  const clusterOverview = useClusterOverview();
+  const clusterOverview = useObservable(useClusterStore().clusterOverview);
 
   const fetchWorkspaces = useFetchWorkspaces(canceler);
   const fetchMyRoles = useFetchUserRolesAndAssignments(canceler);

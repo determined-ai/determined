@@ -9,12 +9,12 @@ import React, {
 
 import { clusterStatusText } from 'pages/Clusters/ClustersOverview';
 import { getAgents, getResourcePools } from 'services/api';
-import { clone } from 'shared/utils/data';
+import { clone, isEqual } from 'shared/utils/data';
 import { percent } from 'shared/utils/number';
 import { Agent, ClusterOverview, ClusterOverviewResource, ResourcePool, ResourceType } from 'types';
 import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
-import { Observable, observable, useObservable, WritableObservable } from 'utils/observable';
+import { Observable, observable, WritableObservable } from 'utils/observable';
 
 const initResourceTally: ClusterOverviewResource = { allocation: 0, available: 0, total: 0 };
 // TODO: dont export
@@ -75,7 +75,7 @@ class ClusterService {
   fetchAgents = async (signal: AbortSignal): Promise<void> => {
     try {
       const response = await getAgents({}, { signal });
-      this.agents.set(Loaded(response));
+      this.agents.update((prev) => (isEqual(prev, Loaded(response)) ? prev : Loaded(response)));
     } catch (e) {
       handleError(e);
     }
@@ -84,14 +84,15 @@ class ClusterService {
   fetchResourcePools = async (signal: AbortSignal): Promise<void> => {
     try {
       const response = await getResourcePools({}, { signal });
-      this.resourcePools.set(Loaded(response));
+      this.resourcePools.update((prev) =>
+        isEqual(prev, Loaded(response)) ? prev : Loaded(response),
+      );
     } catch (e) {
       handleError(e);
     }
   };
 
-  poll = (): void => {
-    this.canceler?.abort();
+  startPolling = (): void => {
     this.cancelPolling();
     const canceler = new AbortController();
     const pollFn = () => {
@@ -112,58 +113,31 @@ class ClusterService {
   };
 }
 
-const StoreContext = createContext<ClusterService | null>(null);
+const ClusterContext = createContext<ClusterService | null>(null);
 
 export const ClusterProvider = ({ children }: { children: ReactNode }): ReactElement => {
   const [store] = useState(() => new ClusterService());
 
-  store.poll();
+  store.startPolling();
 
-  useEffect(() => store.cancelPolling, [store]);
+  useEffect(() => {
+    store.startPolling();
+    return () => store.cancelPolling();
+  }, [store]);
 
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
+  return <ClusterContext.Provider value={store}>{children}</ClusterContext.Provider>;
 };
 
-const useClusterStore = (): ClusterService => {
-  const store = useContext(StoreContext);
+export const useClusterStore = (): ClusterService => {
+  const store = useContext(ClusterContext);
   if (store === null)
     throw new Error('attempted to use cluster store outside of a cluster context');
   return store;
-};
-
-export const useClusterStatus = (): string | undefined => {
-  const store = useClusterStore();
-  if (store === null)
-    throw new Error('attempted to use cluster store outside of a cluster context');
-  return useObservable(store.clusterStatus);
-};
-
-export const useAgents = (): Loadable<Agent[]> => {
-  const store = useClusterStore();
-  if (store === null)
-    throw new Error('attempted to use cluster store outside of a cluster context');
-  return useObservable(store.agents);
-};
-
-export const useResourcePools = (): Loadable<ResourcePool[]> => {
-  const store = useClusterStore();
-  if (store === null)
-    throw new Error('attempted to use cluster store outside of a cluster context');
-  return useObservable(store.resourcePools);
-};
-
-export const useClusterOverview = (): Loadable<ClusterOverview> => {
-  const store = useClusterStore();
-  if (store === null)
-    throw new Error('attempted to use cluster store outside of a cluster context');
-  return useObservable(store.clusterOverview);
 };
 
 export const useRefetchClusterData = (): void => {
   // kick off another round of polling to ensure fresh data
   // only use at top level pages to avoid redundant api calls
   const store = useClusterStore();
-  if (store === null)
-    throw new Error('attempted to use cluster store outside of a cluster context');
-  useEffect(() => store.poll(), [store]);
+  useEffect(() => store.startPolling(), [store]);
 };

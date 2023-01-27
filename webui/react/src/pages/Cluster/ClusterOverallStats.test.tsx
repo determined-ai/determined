@@ -43,6 +43,5 @@ describe('ClusterOverallStats', () => {
   it('displays cluster overall stats ', () => {
     const { view } = setup();
     expect(view.getByText('Connected Agents')).toBeInTheDocument();
-    // expect(1).toBe(1);
   });
 });

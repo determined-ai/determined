@@ -22,12 +22,13 @@ import Icon, { IconSize } from 'shared/components/Icon/Icon';
 import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { useAuth } from 'stores/auth';
-import { useClusterStatus } from 'stores/cluster';
+import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './NavigationSideBar.module.scss';
 import ThemeToggle from './ThemeToggle';
@@ -116,7 +117,7 @@ const NavigationSideBar: React.FC = () => {
   // `nodeRef` padding is required for CSSTransition to work with React.StrictMode.
   const nodeRef = useRef(null);
 
-  const clusterStatus = useClusterStatus();
+  const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const loadableAuth = useAuth();
   const isAuthenticated = Loadable.match(loadableAuth.auth, {

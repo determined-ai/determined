@@ -23,7 +23,7 @@ import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { numericSorter } from 'shared/utils/sort';
 import { capitalize } from 'shared/utils/string';
-import { useRefetchClusterData, useResourcePools } from 'stores/cluster';
+import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
 import { useUsers } from 'stores/users';
 import { Job, JobAction, JobState, JobType, ResourcePool, RPStats } from 'types';
 import handleError from 'utils/error';
@@ -35,6 +35,7 @@ import {
   unsupportedQPosSchedulers,
 } from 'utils/job';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './JobQueue.module.scss';
 import settingsConfig, { Settings } from './JobQueue.settings';
@@ -52,7 +53,7 @@ const JobQueue: React.FC<Props> = ({ bodyNoPadding, selectedRp, jobState }) => {
     NotLoaded: () => [],
   });
   useRefetchClusterData();
-  const resourcePools = Loadable.getOrElse([], useResourcePools()); // TODO show spinner when this is loading
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
   const [managingJob, setManagingJob] = useState<Job>();
   const [rpStats, setRpStats] = useState<RPStats[]>(
     resourcePools.map(

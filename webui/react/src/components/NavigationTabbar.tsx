@@ -15,12 +15,13 @@ import Spinner from 'shared/components/Spinner/Spinner';
 import useUI from 'shared/contexts/stores/UI';
 import { AnyMouseEvent, routeToReactUrl } from 'shared/utils/routes';
 import { useAuth } from 'stores/auth';
-import { useClusterStatus } from 'stores/cluster';
+import { useClusterStore } from 'stores/cluster';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { useCurrentUser } from 'stores/users';
 import { useWorkspaces } from 'stores/workspaces';
 import { BrandingType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './NavigationTabbar.module.scss';
 
@@ -60,7 +61,7 @@ const NavigationTabbar: React.FC = () => {
     NotLoaded: () => undefined,
   });
 
-  const clusterStatus = useClusterStatus();
+  const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const { ui } = useUI();

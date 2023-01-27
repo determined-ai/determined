@@ -32,7 +32,7 @@ import { DetError, ErrorLevel, ErrorType, isDetError } from 'shared/utils/error'
 import { roundToPrecision } from 'shared/utils/number';
 import { routeToReactUrl } from 'shared/utils/routes';
 import { validateLength } from 'shared/utils/string';
-import { useResourcePools } from 'stores/cluster';
+import { useClusterStore } from 'stores/cluster';
 import {
   ExperimentItem,
   ExperimentSearcherName,
@@ -45,6 +45,7 @@ import {
 } from 'types';
 import { handleWarning } from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './useModalHyperparameterSearch.module.scss';
 
@@ -110,7 +111,7 @@ const useModalHyperparameterSearch = ({
       SEARCH_METHODS.ASHA,
   );
   const canceler = useRef<AbortController>(new AbortController());
-  const resourcePools = Loadable.getOrElse([], useResourcePools());
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools));
   const [resourcePool, setResourcePool] = useState<ResourcePool>(
     resourcePools.find((pool) => pool.name === experiment.resourcePool) ?? resourcePools[0],
   );

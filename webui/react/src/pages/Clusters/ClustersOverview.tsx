@@ -8,10 +8,11 @@ import Section from 'components/Section';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
 import { percent } from 'shared/utils/number';
-import { useResourcePools } from 'stores/cluster';
+import { useClusterStore } from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
@@ -83,7 +84,7 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const resourcePools = Loadable.getOrElse([], useResourcePools()); // TODO show spinner when this is loading
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
