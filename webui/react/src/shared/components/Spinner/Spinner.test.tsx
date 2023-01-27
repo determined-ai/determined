@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { StyleProvider } from '@ant-design/cssinjs';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
