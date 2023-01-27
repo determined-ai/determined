@@ -1,7 +1,9 @@
-import { Form, FormInstance, Input, List, Modal, Select, Typography } from 'antd';
+import { List, Modal, Select, Typography } from 'antd';
 import React, { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
@@ -186,7 +188,7 @@ const ManageJob: React.FC<Props> = ({
         </p>
       )}
       <h6>Queue Settings</h6>
-      <Form<FormValues>
+      <Form
         initialValues={{
           position: job.summary.jobsAhead + 1,
           priority: job.priority,

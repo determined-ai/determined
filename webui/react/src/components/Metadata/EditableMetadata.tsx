@@ -1,12 +1,15 @@
-import { Form } from 'antd';
 import React, { useCallback, useMemo } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Button from 'components/kit/Button';
+import Form from 'components/kit/Form';
 import { Metadata } from 'types';
 
 import css from './EditableMetadata.module.scss';
 import EditableRow from './EditableRow';
+
+export const ADD_ROW_TEXT = '+ Add Row';
+
 interface Props {
   editing?: boolean;
   metadata?: Metadata;
@@ -61,7 +64,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                   />
                 ))}
                 <Button type="link" onClick={add}>
-                  + Add Row
+                  {ADD_ROW_TEXT}
                 </Button>
               </>
             )}

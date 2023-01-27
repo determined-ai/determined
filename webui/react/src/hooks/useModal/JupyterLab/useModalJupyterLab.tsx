@@ -1,9 +1,12 @@
-import { Alert, Form, FormInstance, Input, InputNumber, ModalFuncProps, Select } from 'antd';
+import { Alert, ModalFuncProps, Select } from 'antd';
 import { number, string, undefined as undefinedType, union } from 'io-ts';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
 import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';

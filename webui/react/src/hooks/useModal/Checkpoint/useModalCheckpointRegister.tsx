@@ -1,6 +1,7 @@
-import { Input, ModalFuncProps, notification, Select } from 'antd';
+import { ModalFuncProps, notification, Select } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import EditableMetadata from 'components/Metadata/EditableMetadata';
 import EditableTagList from 'components/TagList';

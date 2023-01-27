@@ -17,12 +17,16 @@ interface InputProps {
   className?: string;
   defaultValue?: string;
   disabled?: boolean;
+  id?: string;
   max?: number;
   maxLength?: number;
   min?: number;
-  onBlur?: () => void;
-  onChange?: () => void;
-  onPressEnter?: () => void;
+  onBlur?: (
+    e: React.FocusEvent<HTMLInputElement> | React.KeyboardEvent<HTMLInputElement>,
+    previousValue?: string,
+  ) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPressEnter?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   placeholder?: string;
   prefix?: ReactNode;
   size?: 'large' | 'middle' | 'small';
@@ -35,7 +39,7 @@ interface InputProps {
 
 interface TextAreaProps {
   disabled?: boolean;
-  onChange?: () => void;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   rows?: number;
   value?: string;
@@ -48,12 +52,12 @@ interface PasswordProps {
 }
 
 interface GroupProps {
+  children?: ReactNode;
   className?: string;
-
   compact?: boolean;
 }
 
-const Input: Input = forwardRef<InputRef, InputProps>((props: InputProps, ref) => {
+const Input: Input = forwardRef<AntdInputRef, InputProps>((props: InputProps, ref) => {
   return <AntdInput {...props} ref={ref} />;
 }) as Input;
 
@@ -65,11 +69,11 @@ type Input = ForwardRefExoticComponent<InputProps & RefAttributes<AntdInputRef>>
 
 Input.Group = AntdInput.Group;
 
-Input.Password = forwardRef((props: PasswordProps, ref) => {
+Input.Password = forwardRef<AntdInputRef, PasswordProps>((props: PasswordProps, ref) => {
   return <AntdInput.Password {...props} ref={ref} />;
 });
 
-Input.TextArea = forwardRef((props: TextAreaProps, ref) => {
+Input.TextArea = forwardRef<AntdInputRef, TextAreaProps>((props: TextAreaProps, ref) => {
   return <AntdInput.TextArea {...props} ref={ref} />;
 });
 

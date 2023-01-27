@@ -1,7 +1,8 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Input, InputRef, Tag } from 'antd';
+import { Tag } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import Input, { InputRef } from 'components/kit/Input';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import { ValueOf } from 'shared/types';

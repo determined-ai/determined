@@ -1,7 +1,7 @@
-import { Form, message, Select } from 'antd';
-import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { message, Select } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
+import Form, { FormInstance } from 'components/kit/Form';
 import useFeature from 'hooks/useFeature';
 import { getGroups, updateGroup } from 'services/api';
 import { V1GroupSearchResult } from 'services/api-ts-sdk';

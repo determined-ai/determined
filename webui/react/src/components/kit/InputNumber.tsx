@@ -2,11 +2,13 @@ import { InputNumber as AntdInputNumber } from 'antd';
 import React from 'react';
 
 interface InputNumberProps {
+  className?: string;
   defaultValue?: number;
   disabled?: boolean;
   max?: number;
   min?: number;
-  onChange?: () => void;
+  onChange?: (value: number | string | null) => void;
+  placeholder?: string;
   precision?: number;
   step?: number;
   value?: number;

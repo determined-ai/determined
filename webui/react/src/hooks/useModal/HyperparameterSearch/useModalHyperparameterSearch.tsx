@@ -1,22 +1,14 @@
 import { InfoCircleOutlined } from '@ant-design/icons';
-import {
-  Alert,
-  Form,
-  Input,
-  InputNumber,
-  ModalFuncProps,
-  Radio,
-  RadioChangeEvent,
-  Select,
-  Space,
-  Typography,
-} from 'antd';
+import { Alert, ModalFuncProps, Radio, RadioChangeEvent, Select, Space, Typography } from 'antd';
 import { RefSelectProps, SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
@@ -628,7 +620,7 @@ const useModalHyperparameterSearch = ({
       className: css.modal,
       closable: true,
       content: (
-        <Form form={form} layout="vertical" requiredMark={false}>
+        <Form form={form} layout="vertical">
           {pages[currentPage]}
           {footer}
         </Form>
