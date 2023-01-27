@@ -4,13 +4,14 @@ import pytest
 
 from determined.errors import EnterpriseOnlyError
 from determined.experimental import Determined
+from tests import api_utils
 from tests import config as conf
-from tests.cluster.test_users import ADMIN_CREDENTIALS, log_in_user
+from tests.cluster.test_users import ADMIN_CREDENTIALS
 
 
 @pytest.mark.e2e_cpu
 def test_list_oauth_clients() -> None:
-    log_in_user(ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     command = [
         "det",
@@ -29,7 +30,7 @@ def test_list_oauth_clients() -> None:
 
 @pytest.mark.e2e_cpu
 def test_add_client() -> None:
-    log_in_user(ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
 
     det_obj = Determined(master=conf.make_master_url())
     command = [
@@ -51,7 +52,7 @@ def test_add_client() -> None:
 
 @pytest.mark.e2e_cpu
 def test_remove_client() -> None:
-    log_in_user(ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     with pytest.raises(EnterpriseOnlyError):
         det_obj.remove_oauth_client(client_id="3")
