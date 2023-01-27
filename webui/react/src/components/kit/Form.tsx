@@ -44,13 +44,10 @@ const FormItem: React.FC<FormItemProps> = ({
   labelCol = { span: 24 },
   max,
   maxMessage,
-  name,
   required,
   requiredMessage,
   rules = [],
   validateMessage,
-  validateStatus,
-  validateTrigger,
   ...props
 }: FormItemProps) => {
   if (required) rules.push({ message: requiredMessage || `${label} required`, required: true });
@@ -61,11 +58,8 @@ const FormItem: React.FC<FormItemProps> = ({
       help={validateMessage}
       label={label}
       labelCol={labelCol}
-      name={name}
       required={required}
       rules={rules}
-      validateStatus={validateStatus}
-      validateTrigger={validateTrigger}
       {...props}>
       {children}
     </AntdForm.Item>
