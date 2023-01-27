@@ -3,7 +3,7 @@ from typing import Callable
 
 import pytest
 
-from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.api.bindings import experimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
@@ -16,7 +16,7 @@ def run_test_case(testcase: str, message: str) -> None:
 
     try:
         exp.wait_for_experiment_state(
-            experiment_id, determinedexperimentv1State.STATE_COMPLETED, max_wait_secs=600
+            experiment_id, experimentv1State.STATE_COMPLETED, max_wait_secs=600
         )
 
         trials = exp.experiment_trials(experiment_id)

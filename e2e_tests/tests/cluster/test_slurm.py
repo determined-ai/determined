@@ -4,7 +4,7 @@ from typing import List
 import pytest
 import torch
 
-from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.api.bindings import experimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
@@ -16,13 +16,11 @@ def run_failure_test_multiple(config_file: str, model_def_file: str, errors: Lis
         config_file,
         model_def_file,
     )
-    exp.wait_for_experiment_state(
-        experiment_id, determinedexperimentv1State.STATE_ERROR, max_wait_secs=600
-    )
+    exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_ERROR, max_wait_secs=600)
     trials = exp.experiment_trials(experiment_id)
     for t in trials:
         trial = t.trial
-        if trial.state != determinedexperimentv1State.STATE_ERROR:
+        if trial.state != experimentv1State.STATE_ERROR:
             continue
 
         logs = exp.trial_logs(trial.id)
