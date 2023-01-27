@@ -166,7 +166,9 @@ export const taskWorkspaceRenderer = (
       <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
         <Link
           path={
-            isUncategorized ? paths.projectDetails(workspaceId) : paths.workspaceDetails(workspaceId)
+            isUncategorized
+              ? paths.projectDetails(workspaceId)
+              : paths.workspaceDetails(workspaceId)
           }>
           <DynamicIcon name={workspace?.name} size={24} />
         </Link>
