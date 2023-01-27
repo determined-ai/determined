@@ -156,6 +156,11 @@ const UPlotChart: React.FC<Props> = ({
 
   useEffect(() => {
     if (!chartDivRef.current) return;
+    if (!hasData) {
+      chartRef.current?.destroy();
+      chartRef.current = undefined;
+      return;
+    }
     if (!chartRef.current || shouldRecreate(previousOptions, extendedOptions)) {
       chartRef.current?.destroy();
       chartRef.current = undefined;
@@ -189,7 +194,7 @@ const UPlotChart: React.FC<Props> = ({
         });
       }
     }
-  }, [data, extendedOptions, previousOptions, chartType]);
+  }, [data, hasData, extendedOptions, previousOptions, chartType]);
 
   /**
    * When a focus index is provided, highlight applicable series.

@@ -177,7 +177,7 @@ export const LineChart: React.FC<Props> = ({
       cursor: {
         drag: { x: true, y: false },
       },
-      height,
+      height: height - (series.find((s) => s.data[xAxis].length > 0) ? 0 : 20),
       legend: { show: false },
       plugins,
       scales: {
