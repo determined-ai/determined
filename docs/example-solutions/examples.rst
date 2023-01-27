@@ -2,8 +2,8 @@
  Examples
 ##########
 
-Get started quickly by using one of the Determined AI example machine learning models that has been
-converted to Determine's APIs. Visit the ``examples/`` subdirectory of the `Determined GitHub repo
+Get started quickly by using a Determined AI example machine learning model that has been
+converted to Determined's APIs. Visit the ``examples/`` subdirectory of the `Determined GitHub repo
 <https://github.com/determined-ai/determined/tree/master/examples>`__ or download the link below.
 
 Each example includes a model definition and one or more experiment configuration files. To run an
