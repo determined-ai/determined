@@ -137,11 +137,12 @@ func newExperiment(
 	if err = m.rm.ValidateResources(m.system, poolName, resources.SlotsPerTrial(), false); err != nil {
 		return nil, nil, fmt.Errorf("validating resources: %v", err)
 	}
-	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(
-		m.system,
-		poolName,
-		resources.SlotsPerTrial(),
-	)
+	launchWarnings, err := m.rm.ValidateResourcePoolAvailability(m.system,
+		sproto.ResourcePoolAvailabilityRequest{
+			PoolName: poolName,
+			Slots:    resources.SlotsPerTrial(),
+			Label:    resources.AgentLabel(),
+		})
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("getting resource availability: %w", err)
 	}

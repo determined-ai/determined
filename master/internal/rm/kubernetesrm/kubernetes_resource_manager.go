@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -126,20 +125,6 @@ func (k ResourceManager) ValidateResources(
 func (k ResourceManager) ValidateResourcePool(ctx actor.Messenger, name string) error {
 	_, err := k.GetResourcePoolRef(ctx, name)
 	return err
-}
-
-// ValidateResourcePoolAvailability checks the available resources for a given pool.
-// This is a no-op for k8s.
-func (k ResourceManager) ValidateResourcePoolAvailability(
-	ctx actor.Messenger,
-	name string,
-	slots int,
-) ([]command.LaunchWarning, error) {
-	if _, err := k.GetResourcePoolRef(ctx, name); err != nil {
-		return nil, fmt.Errorf("%s is an invalid resource pool", name)
-	}
-
-	return nil, nil
 }
 
 // NotifyContainerRunning receives a notification from the container to let

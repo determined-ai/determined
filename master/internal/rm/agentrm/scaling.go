@@ -22,9 +22,15 @@ func calculateDesiredNewAgentNum(
 		// TODO(DET-4035): This code is duplicated from the fitting functions in the
 		//    scheduler. To determine is a task is schedulable, we would ideally interface
 		//    with the scheduler in some way and not duplicate this logic.
+		allocReq := it.Value()
 		switch {
-		case taskList.Allocation(it.Value().AllocationRef) != nil:
+		case taskList.Allocation(allocReq.AllocationRef) != nil:
 			// If a task is already allocated, skip it.
+			continue
+		case allocReq.AgentLabel != "":
+			// Currently we do not support configuring agent labels in dynamic agents.
+			// Any allocation request with an agent label can never get scheduled on
+			// any instance we launch ourselves.
 			continue
 		case it.Value().SlotsNeeded == 0:
 			zeroSlotTasks++

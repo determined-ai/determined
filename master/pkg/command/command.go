@@ -12,12 +12,18 @@ type LaunchWarning int
 const (
 	// CurrentSlotsExceeded represents a resource pool having insufficient slots.
 	CurrentSlotsExceeded LaunchWarning = 1
+
+	// AgentLabelWithoutMatchingAgent represents a task submitted with
+	// resources.agent_label with no matching agent.
+	AgentLabelWithoutMatchingAgent LaunchWarning = 2
 )
 
 func toProtoEnum(l LaunchWarning) apiv1.LaunchWarning {
 	switch l {
 	case CurrentSlotsExceeded:
 		return apiv1.LaunchWarning_LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED
+	case AgentLabelWithoutMatchingAgent:
+		return apiv1.LaunchWarning_LAUNCH_WARNING_AGENT_LABEL_WITHOUT_MATCHING_AGENT
 	default:
 		panic(fmt.Sprintf("Unknown LaunchWarning value %v", l))
 	}

@@ -23,6 +23,7 @@ import (
 	mconfig "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -98,11 +99,12 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 		return nil, nil, fmt.Errorf("validating resources: %v", err)
 	}
 
-	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(
-		a.m.system,
-		poolName,
-		resources.Slots,
-	)
+	launchWarnings, err := a.m.rm.ValidateResourcePoolAvailability(a.m.system,
+		sproto.ResourcePoolAvailabilityRequest{
+			PoolName: poolName,
+			Slots:    resources.Slots,
+			Label:    resources.AgentLabel,
+		})
 	if err != nil {
 		return nil, launchWarnings, fmt.Errorf("checking resource availability: %v", err.Error())
 	}

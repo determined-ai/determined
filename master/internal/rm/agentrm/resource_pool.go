@@ -484,13 +484,13 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		ctx.Respond(resourceSummaryFromAgentStates(rp.agentStatesCache))
 
 	case sproto.CapacityCheck:
+		reschedule = false
 		var totalSlots int
 		switch {
 		case rp.config.Provider == nil:
-			rp.agentStatesCache = rp.fetchAgentStates(ctx)
-			defer func() {
-				rp.agentStatesCache = nil
-			}()
+			if rp.agentStatesCache == nil {
+				rp.agentStatesCache = rp.fetchAgentStates(ctx)
+			}
 			for _, a := range rp.agentStatesCache {
 				totalSlots += len(a.slotStates)
 			}
@@ -511,6 +511,23 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 			CapacityExceeded: capacityExceeded,
 			SlotsAvailable:   totalSlots,
 		})
+
+	case sproto.HasAgentWithLabel:
+		// We could maybe count agent labels in add agent and remove agent
+		// to save this fetchAgentStates but this is simpler for now.
+		reschedule = false
+		if rp.agentStatesCache == nil {
+			rp.agentStatesCache = rp.fetchAgentStates(ctx)
+		}
+
+		resp := false
+		for _, a := range rp.agentStatesCache {
+			if a.Label == msg.Label {
+				resp = true
+				break
+			}
+		}
+		ctx.Respond(resp)
 
 	case aproto.GetRPConfig:
 		reschedule = false

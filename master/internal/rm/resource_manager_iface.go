@@ -65,9 +65,8 @@ type ResourceManager interface {
 		slots int,
 	) (string, error)
 	ValidateResourcePoolAvailability(
-		ctx actor.Messenger,
-		name string,
-		slots int) ([]command.LaunchWarning, error)
+		ctx actor.Messenger, req sproto.ResourcePoolAvailabilityRequest,
+	) ([]command.LaunchWarning, error)
 	TaskContainerDefaults(
 		ctx actor.Messenger,
 		resourcePoolName string,

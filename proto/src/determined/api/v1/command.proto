@@ -112,8 +112,10 @@ message LaunchCommandRequest {
 enum LaunchWarning {
   // Default value
   LAUNCH_WARNING_UNSPECIFIED = 0;
-  // For a default webhook
+  // If the requested slots exceeded the current max available.
   LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED = 1;
+  // If the job has an agent_label with no matching agents with this label.
+  LAUNCH_WARNING_AGENT_LABEL_WITHOUT_MATCHING_AGENT = 2;
 }
 
 // Response to LaunchCommandRequest.
@@ -125,6 +127,6 @@ message LaunchCommandResponse {
   determined.command.v1.Command command = 1;
   // The config;
   google.protobuf.Struct config = 2;
-  // If the requested slots exceeded the current max available.
+  // Any launch warnings that may have occured.
   repeated LaunchWarning warnings = 3;
 }

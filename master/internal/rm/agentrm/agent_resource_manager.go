@@ -98,6 +98,23 @@ func (a ResourceManager) IsReattachEnabledForRP(ctx actor.Messenger, rpName stri
 	return false
 }
 
+// CheckPoolHasAnAgentWithLabel checks if a resource pool has a matching label.
+func (a ResourceManager) CheckPoolHasAnAgentWithLabel(
+	ctx actor.Messenger, name, label string,
+) (bool, error) {
+	ref, err := a.GetResourcePoolRef(ctx, name)
+	if err != nil {
+		return false, err
+	}
+	resp := ref.System().Ask(ref, sproto.HasAgentWithLabel{
+		Label: label,
+	})
+	if resp.Error() != nil {
+		return false, resp.Error()
+	}
+	return resp.Get().(bool), nil
+}
+
 // CheckMaxSlotsExceeded checks if the job exceeded the maximum number of slots.
 func (a ResourceManager) CheckMaxSlotsExceeded(
 	ctx actor.Messenger, name string, slots int,
@@ -165,23 +182,27 @@ func (a ResourceManager) ValidateResources(
 }
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
-func (a ResourceManager) ValidateResourcePoolAvailability(ctx actor.Messenger,
-	name string, slots int) (
-	[]command.LaunchWarning,
-	error,
-) {
-	if slots == 0 {
-		return nil, nil
+func (a ResourceManager) ValidateResourcePoolAvailability(
+	ctx actor.Messenger, req sproto.ResourcePoolAvailabilityRequest,
+) ([]command.LaunchWarning, error) {
+	var warnings []command.LaunchWarning
+	if req.Slots != 0 {
+		switch exceeded, err := a.CheckMaxSlotsExceeded(ctx, req.PoolName, req.Slots); {
+		case err != nil:
+			return nil, fmt.Errorf("validating request for (%+v): %w", req, err)
+		case exceeded:
+			warnings = append(warnings, command.CurrentSlotsExceeded)
+		}
 	}
 
-	switch exceeded, err := a.CheckMaxSlotsExceeded(ctx, name, slots); {
+	switch hasLabel, err := a.CheckPoolHasAnAgentWithLabel(ctx, req.PoolName, req.Label); {
 	case err != nil:
-		return nil, fmt.Errorf("validating request for (%s, %d): %w", name, slots, err)
-	case exceeded:
-		return []command.LaunchWarning{command.CurrentSlotsExceeded}, nil
-	default:
-		return nil, nil
+		return nil, fmt.Errorf("validating request for (%+v): %w", req, err)
+	case !hasLabel:
+		warnings = append(warnings, command.AgentLabelWithoutMatchingAgent)
 	}
+
+	return warnings, nil
 }
 
 // GetAgents gets the state of connected agents. Go around the RM and directly to the agents actor

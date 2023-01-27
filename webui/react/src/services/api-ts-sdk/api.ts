@@ -4606,7 +4606,7 @@ export interface V1LaunchCommandResponse {
      */
     config: any;
     /**
-     * If the requested slots exceeded the current max available.
+     * Any launch warnings that may have occured.
      * @type {Array<V1LaunchWarning>}
      * @memberof V1LaunchCommandResponse
      */
@@ -4812,13 +4812,14 @@ export interface V1LaunchTensorboardResponse {
 }
 
 /**
- * Enum values for warnings when launching commands.   - LAUNCH_WARNING_UNSPECIFIED: Default value  - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: For a default webhook
+ * Enum values for warnings when launching commands.   - LAUNCH_WARNING_UNSPECIFIED: Default value  - LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: If the requested slots exceeded the current max available.  - LAUNCH_WARNING_AGENT_LABEL_WITHOUT_MATCHING_AGENT: If the job has an agent_label with no matching agents with this label.
  * @export
  * @enum {string}
  */
 export enum V1LaunchWarning {
     UNSPECIFIED = <any> 'LAUNCH_WARNING_UNSPECIFIED',
-    CURRENTSLOTSEXCEEDED = <any> 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED'
+    CURRENTSLOTSEXCEEDED = <any> 'LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED',
+    AGENTLABELWITHOUTMATCHINGAGENT = <any> 'LAUNCH_WARNING_AGENT_LABEL_WITHOUT_MATCHING_AGENT'
 }
 
 /**

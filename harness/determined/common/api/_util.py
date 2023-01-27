@@ -18,7 +18,12 @@ WARNING_MESSAGE_MAP = {
     bindings.v1LaunchWarning.LAUNCH_WARNING_CURRENT_SLOTS_EXCEEDED: (
         "Warning: The requested job requires more slots than currently available. "
         "You may need to increase cluster resources in order for the job to run."
-    )
+    ),
+    bindings.v1LaunchWarning.LAUNCH_WARNING_AGENT_LABEL_WITHOUT_MATCHING_AGENT: (
+        "Warning: The requested job specified an agent_label and no agents are connected "
+        "with this matching label. Verify that the agent_label specified is correct and "
+        "agents exist with this label."
+    ),
 }
 
 

@@ -53,12 +53,8 @@ func (r *ResourceManager) ValidateResources(
 
 // ValidateResourcePoolAvailability is a default implementation to satisfy the interface.
 func (r *ResourceManager) ValidateResourcePoolAvailability(
-	ctx actor.Messenger,
-	name string,
-	slots int) (
-	[]command.LaunchWarning,
-	error,
-) {
+	ctx actor.Messenger, req sproto.ResourcePoolAvailabilityRequest,
+) ([]command.LaunchWarning, error) {
 	return nil, nil
 }
 
