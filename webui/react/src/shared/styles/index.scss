@@ -52,7 +52,7 @@ code.block {
   background-color: var(--theme-stage);
 }
 .u-wrap {
-  overflow-x: hidden;
+  overflow-x: visible;
 }
 
 /* diamond cursor for most charts, see closestPointPlugin.module.scss for charts with that plugin (LearningCurve) */
