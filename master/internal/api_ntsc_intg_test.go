@@ -169,9 +169,8 @@ func TestCanGetNTSC(t *testing.T) {
 
 	// Tensorboards.
 	// check permission errors are returned with not found status and follow the same pattern.
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		false, nil,
-	).Once()
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(false, nil).Once()
 
 	tbID := setupMockTensorboardActor(t, api.m)
 	tbActor := actor.Addr(command.TensorboardActorPath)
@@ -201,9 +200,8 @@ func TestCanGetNTSC(t *testing.T) {
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 	require.NotEqual(t, codes.NotFound, status.Code(err))
 
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		false, errors.New("other error"),
-	).Once()
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(false, errors.New("other error")).Once()
 
 	_, err = api.GetTensorboard(ctx, &apiv1.GetTensorboardRequest{TensorboardId: string(tbID)})
 	require.NotNil(t, err)
@@ -217,14 +215,13 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		true, nil,
 	)
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		true, nil,
-	)
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(true, nil)
 
 	// check permission errors are returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
 		authz2.PermissionDeniedError{},
-	).Times(4)
+	).Times(3)
 
 	// Notebooks.
 	nbID := setupMockNBActor(t, api.m)
@@ -242,6 +239,9 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 
 	// Tensorboards.
+	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
+		authz2.PermissionDeniedError{},
+	).Once()
 	tbID := setupMockTensorboardActor(t, api.m)
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: string(tbID)})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
@@ -249,7 +249,8 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	// check other errors are not returned with permission denied status.
 	authz.On("CanTerminateNSC", mock.Anything, curUser, mock.Anything).Return(
 		errors.New("other error"),
-	).Times(4)
+	).Times(3)
+
 	_, err = api.KillNotebook(ctx, &apiv1.KillNotebookRequest{NotebookId: string(nbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
@@ -262,6 +263,9 @@ func TestAuthZCanTerminateNSC(t *testing.T) {
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
 
+	authz.On("CanTerminateTensorboard", mock.Anything, curUser, mock.Anything).Return(
+		errors.New("other error"),
+	)
 	_, err = api.KillTensorboard(ctx, &apiv1.KillTensorboardRequest{TensorboardId: string(tbID)})
 	require.NotNil(t, err)
 	require.NotEqual(t, codes.PermissionDenied, status.Code(err))
@@ -273,9 +277,8 @@ func TestAuthZCanSetNSCsPriority(t *testing.T) {
 	authz.On("CanGetNSC", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
 		true, nil,
 	)
-	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything).Return(
-		true, nil,
-	)
+	authz.On("CanGetTensorboard", mock.Anything, curUser, mock.Anything, mock.Anything,
+		mock.Anything).Return(true, nil)
 
 	// check permission errors are returned with permission denied status.
 	authz.On("CanSetNSCsPriority", mock.Anything, curUser, mock.Anything, mock.Anything).Return(

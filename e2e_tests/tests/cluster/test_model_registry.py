@@ -1,9 +1,15 @@
+import subprocess
+import uuid
+
 import pytest
 
 from determined.experimental import Determined, ModelSortBy
+from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 from tests.cluster.test_users import log_out_user
+
+from .test_workspace_org import setup_workspaces
 
 
 @pytest.mark.e2e_cpu
@@ -156,3 +162,74 @@ def test_model_registry() -> None:
         for model in [mnist, objectdetect, tform]:
             if model is not None:
                 model.delete()
+
+
+def get_random_string() -> str:
+    return str(uuid.uuid4())
+
+
+@pytest.mark.e2e_cpu
+def test_model_cli() -> None:
+    test_model_1_name = get_random_string()
+    master_url = conf.make_master_url()
+    command = ["det", "-m", master_url, "model", "create", test_model_1_name]
+    subprocess.run(command, check=True)
+    d = Determined(master_url)
+    model_1 = d.get_model(identifier=test_model_1_name)
+    assert model_1.workspace_id == 1
+    # Test det model list and det model describe
+    command = ["det", "-m", master_url, "model", "list"]
+    output = str(subprocess.check_output(command))
+    assert "Workspace ID" in output and "1" in output
+
+    command = ["det", "-m", master_url, "model", "describe", test_model_1_name]
+    output = str(subprocess.check_output(command))
+    assert "Workspace ID" in output and "1" in output
+
+    # add a test workspace.
+    admin_session = api_utils.determined_test_session(admin=True)
+    with setup_workspaces(admin_session) as [test_workspace]:
+        test_workspace_name = test_workspace.name
+        # create model in test_workspace
+        test_model_2_name = get_random_string()
+        command = [
+            "det",
+            "-m",
+            master_url,
+            "model",
+            "create",
+            test_model_2_name,
+            "-w",
+            test_workspace_name,
+        ]
+        subprocess.run(command, check=True)
+        model_2 = d.get_model(identifier=test_model_2_name)
+        assert model_2.workspace_id == test_workspace.id
+
+        # Test det model list -w workspace_name and det model describe
+        command = ["det", "-m", master_url, "model", "list", "-w", test_workspace.name]
+        output = str(subprocess.check_output(command))
+        assert (
+            "Workspace ID" in output
+            and str(test_workspace.id) in output
+            and test_model_2_name in output
+            and test_model_1_name not in output
+        )  # should only output models in given workspace
+
+        # move test_model_1 to test_workspace
+        command = [
+            "det",
+            "-m",
+            master_url,
+            "model",
+            "move",
+            test_model_1_name,
+            "-w",
+            test_workspace_name,
+        ]
+        subprocess.run(command, check=True)
+        model_1 = d.get_model(test_model_1_name)
+        assert model_1.workspace_id == test_workspace.id
+        # Delete test models (workspace deleted in setup_workspace)
+        model_1.delete()
+        model_2.delete()

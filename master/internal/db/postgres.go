@@ -22,7 +22,7 @@ import (
 var (
 	bunMutex         sync.Mutex
 	theOneBun        *bun.DB
-	modelsToRegister []interface{}
+	modelsToRegister []interface{} // TODO (eliu): currently allows duplicate models
 	tokenKeys        *model.AuthTokenKeypair
 )
 
@@ -37,9 +37,8 @@ func RegisterModel(m interface{}) {
 
 	if theOneBun != nil {
 		theOneBun.RegisterModel(m)
-	} else {
-		modelsToRegister = append(modelsToRegister, m)
 	}
+	modelsToRegister = append(modelsToRegister, m)
 }
 
 func initTheOneBun(db *sql.DB) {
@@ -55,7 +54,6 @@ func initTheOneBun(db *sql.DB) {
 	for _, m := range modelsToRegister {
 		theOneBun.RegisterModel(m)
 	}
-	modelsToRegister = nil
 
 	// This will print every query that runs.
 	// theOneBun.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))

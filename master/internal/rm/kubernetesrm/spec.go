@@ -79,11 +79,11 @@ func (p *pod) configureEnvVars(
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
 	for _, envVar := range environment.EnvironmentVariables().For(deviceType) {
-		envVarSplit := strings.Split(envVar, "=")
-		if len(envVarSplit) != 2 {
-			return nil, errors.Errorf("unable to split envVar %s", envVar)
+		if key, val, found := strings.Cut(envVar, "="); found {
+			envVarsMap[key] = val
+		} else {
+			envVarsMap[envVar] = ""
 		}
-		envVarsMap[envVarSplit[0]] = envVarSplit[1]
 	}
 
 	var slotIds []string

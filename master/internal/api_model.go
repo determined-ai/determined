@@ -15,9 +15,12 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
+	modelauth "github.com/determined-ai/determined/master/internal/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
+	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 )
@@ -63,23 +66,35 @@ func (a *apiServer) ModelVersionFromID(modelIdentifier string,
 }
 
 func (a *apiServer) GetModel(
-	_ context.Context, req *apiv1.GetModelRequest,
+	ctx context.Context, req *apiv1.GetModelRequest,
 ) (*apiv1.GetModelResponse, error) {
 	m, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
 	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, m,
+		*m.WorkspaceId); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			curUser.Username, m.Name)
+	}
 	return &apiv1.GetModelResponse{Model: m}, err
 }
 
 func (a *apiServer) GetModels(
-	_ context.Context, req *apiv1.GetModelsRequest,
+	ctx context.Context, req *apiv1.GetModelsRequest,
 ) (*apiv1.GetModelsResponse, error) {
 	resp := &apiv1.GetModelsResponse{}
 	idFilterExpr := req.Id
 	nameFilter := "%" + req.Name + "%"
 	descFilterExpr := "%" + req.Description + "%"
 	archFilterExpr := ""
+	workspaceIDFilterExpr := 0
 	if req.Archived != nil {
 		archFilterExpr = strconv.FormatBool(req.Archived.Value)
 	}
@@ -116,7 +131,33 @@ func (a *apiServer) GetModels(
 	default:
 		orderExpr = fmt.Sprintf("id %s", orderByMap[req.OrderBy])
 	}
-	err := a.m.db.QueryProtof(
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if req.WorkspaceId != nil { // default is to use workspace ID
+		workspaceIDFilterExpr = int(*req.WorkspaceId)
+	} else if req.WorkspaceName != nil {
+		w := workspacev1.Workspace{}
+		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.WorkspaceName)
+		}
+		workspaceIDFilterExpr = int(w.Id)
+	}
+	if workspaceIDFilterExpr != 0 {
+		// if workspace id isn't provided then no auth is required here. All models will be returned.
+		if ok, err := modelauth.AuthZProvider.Get().CanGetModels(ctx, *curUser,
+			int32(workspaceIDFilterExpr)); err != nil {
+			return nil, err
+		} else if !ok {
+			return nil, errors.Errorf(
+				"current user %q doesn't have view permissions in the given workspace with id: %v.",
+				curUser.Username, workspaceIDFilterExpr)
+		}
+	}
+	err = a.m.db.QueryProtof(
 		"get_models",
 		[]interface{}{orderExpr},
 		&resp.Models,
@@ -127,6 +168,7 @@ func (a *apiServer) GetModels(
 		labelFilterExpr,
 		nameFilter,
 		descFilterExpr,
+		workspaceIDFilterExpr,
 	)
 	if err != nil {
 		return nil, err
@@ -163,7 +205,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 
 	getResp := &apiv1.GetModelsResponse{}
 	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "")
+		&getResp.Models, 0, "", "", "", "", modelName, "", 0)
 	if err != nil {
 		return err
 	}
@@ -189,12 +231,31 @@ func (a *apiServer) PostModel(
 	if err != nil {
 		return nil, err
 	}
+	workspaceID := 1
+	if req.WorkspaceId != nil { // default is to use workspace ID
+		workspaceID = int(*req.WorkspaceId)
+	} else if req.WorkspaceName != nil {
+		w := workspacev1.Workspace{}
+		err := a.m.db.Query("get_workspace_from_name", &w, *req.WorkspaceName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get workspace %v", *req.WorkspaceName)
+		}
+		workspaceID = int(w.Id)
+	}
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanCreateModel(ctx, *curUser,
+		int32(workspaceID)); err != nil {
+		return nil, err
+	}
 	m := &modelv1.Model{}
 	reqLabels := strings.Join(req.Labels, ",")
 	err = a.m.db.QueryProto(
 		"insert_model", m, req.Name, req.Description, b,
-		reqLabels, req.Notes, user.User.Id,
+		reqLabels, req.Notes, user.User.Id, workspaceID,
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
@@ -212,6 +273,15 @@ func (a *apiServer) PatchModel(
 	if currModel.Archived {
 		return nil, errors.Errorf("model %q is archived and cannot have attributes updated.",
 			currModel.Name)
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
+		return nil, err
 	}
 
 	madeChanges := false
@@ -274,6 +344,33 @@ func (a *apiServer) PatchModel(
 		currLabels = reqLabels
 	}
 
+	currWorkspaceID := *(currModel.WorkspaceId)
+	if req.Model.WorkspaceId != nil || req.Model.WorkspaceName != nil {
+		w := workspacev1.Workspace{}
+		if req.Model.WorkspaceId != nil { // default
+			err := a.m.db.Query("get_workspace", &w, *req.Model.WorkspaceId)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to get workspace with id %v", *req.Model.WorkspaceId)
+			}
+		} else {
+			err := a.m.db.Query("get_workspace_from_name", &w, *req.Model.WorkspaceName)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to get workspace %v", *req.Model.WorkspaceName)
+			}
+		}
+
+		newWorkspaceID := w.Id
+		if currWorkspaceID != newWorkspaceID {
+			// check if user has permissions in new workspace.
+			if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+				newWorkspaceID); err != nil {
+				return nil, err
+			}
+			currWorkspaceID = newWorkspaceID
+			madeChanges = true
+		}
+	}
+
 	if !madeChanges {
 		return &apiv1.PatchModelResponse{Model: currModel}, nil
 	}
@@ -281,7 +378,7 @@ func (a *apiServer) PatchModel(
 	finalModel := &modelv1.Model{}
 	err = a.m.db.QueryProto(
 		"update_model", finalModel, currModel.Id, currModel.Name, currModel.Description,
-		currModel.Notes, currMeta, currLabels)
+		currModel.Notes, currMeta, currLabels, currWorkspaceID)
 
 	return &apiv1.PatchModelResponse{Model: finalModel},
 		errors.Wrapf(err, "error updating model %q in database", currModel.Name)
@@ -292,6 +389,15 @@ func (a *apiServer) ArchiveModel(
 ) (*apiv1.ArchiveModelResponse, error) {
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -312,6 +418,15 @@ func (a *apiServer) UnarchiveModel(
 ) (*apiv1.UnarchiveModelResponse, error) {
 	currModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -341,6 +456,14 @@ func (a *apiServer) DeleteModel(
 		return nil, err
 	}
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
+		return nil, err
+	}
 	holder := &modelv1.Model{}
 	err = a.m.db.QueryProto("delete_model", holder, currModel.Name, user.User.Id,
 		user.User.Admin)
@@ -361,6 +484,20 @@ func (a *apiServer) GetModelVersion(
 	if err != nil {
 		return nil, err
 	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			curUser.Username, currModel.Name)
+	}
+
 	resp := &apiv1.GetModelVersionResponse{}
 	resp.ModelVersion = mv
 	return resp, err
@@ -372,6 +509,19 @@ func (a *apiServer) GetModelVersions(
 	parentModel, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
 		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if ok, err := modelauth.AuthZProvider.Get().CanGetModel(ctx, *curUser, parentModel,
+		*parentModel.WorkspaceId); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.Errorf("current user %q doesn't have permissions to get model %q.",
+			curUser.Username, parentModel.Name)
 	}
 
 	resp := &apiv1.GetModelVersionsResponse{Model: parentModel}
@@ -390,6 +540,15 @@ func (a *apiServer) PostModelVersion(
 	// make sure that the model exists before adding a version
 	modelResp, err := a.ModelFromIdentifier(req.ModelName)
 	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, modelResp,
+		*modelResp.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -454,6 +613,19 @@ func (a *apiServer) PatchModelVersion(
 ) {
 	currModelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionNum)
 	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -541,6 +713,19 @@ func (a *apiServer) DeleteModelVersion(
 
 	modelVersion, err := a.ModelVersionFromID(req.ModelName, req.ModelVersionNum)
 	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	currModel, err := a.ModelFromIdentifier(req.ModelName)
+	if err != nil {
+		return nil, err
+	}
+	if err := modelauth.AuthZProvider.Get().CanEditModel(ctx, *curUser, currModel,
+		*currModel.WorkspaceId); err != nil {
 		return nil, err
 	}
 

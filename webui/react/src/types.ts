@@ -679,6 +679,7 @@ export interface CommandTask extends Task {
   state: CommandState;
   type: CommandType;
   userId: number;
+  workspaceId: number;
 }
 
 export type RecentEvent = {
@@ -786,10 +787,10 @@ export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
 export interface Job extends Api.V1Job {
   summary: Api.V1JobSummary;
 }
-export const JobType = Api.Determinedjobv1Type;
-export type JobType = Api.Determinedjobv1Type;
-export const JobState = Api.Determinedjobv1State;
-export type JobState = Api.Determinedjobv1State;
+export const JobType = Api.Jobv1Type;
+export type JobType = Api.Jobv1Type;
+export const JobState = Api.Jobv1State;
+export type JobState = Api.Jobv1State;
 export type JobSummary = Api.V1JobSummary;
 export type RPStats = Api.V1RPQueueStat;
 

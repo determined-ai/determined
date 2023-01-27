@@ -196,7 +196,8 @@ func (a *apiServer) isNTSCPermittedToLaunch(
 
 	if spec.TaskType == model.TaskTypeTensorboard {
 		if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-			ctx, *user, workspaceID); err != nil || !ok {
+			ctx, *user, workspaceID, spec.Metadata.ExperimentIDs, spec.Metadata.TrialIDs,
+		); err != nil || !ok {
 			return err
 		}
 	} else {

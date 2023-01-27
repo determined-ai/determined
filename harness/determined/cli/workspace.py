@@ -22,7 +22,7 @@ WORKSPACE_HEADERS = [
     "Agent Group",
 ]
 
-workspace_arg: Arg = Arg("--workspace-name", type=str, help="workspace name")
+workspace_arg: Arg = Arg("-w", "--workspace-name", type=str, help="workspace name")
 
 
 def get_workspace_id_from_args(args: Namespace) -> Optional[int]:
@@ -223,7 +223,8 @@ def delete_workspace(args: Namespace) -> None:
     w = workspace_by_name(sess, args.workspace_name)
     if args.yes or render.yes_or_no(
         'Deleting workspace "' + args.workspace_name + '" will result \n'
-        "in the unrecoverable deletion of all associated projects and experiments.\n"
+        "in the unrecoverable deletion of all associated projects, experiments,\n"
+        "Notebooks, shells, commands, and Tensorboards.\n"
         "For a recoverable alternative, see the 'archive' command. Do you still \n"
         "wish to proceed?"
     ):

@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { SyncProvider } from 'components/UPlot/SyncableBounds';
+import { SyncProvider } from 'components/UPlot/SyncProvider';
 import { Options } from 'components/UPlot/UPlotChart';
 import { glasbeyColor } from 'shared/utils/color';
 import { TrialDetails } from 'types';

@@ -142,7 +142,7 @@ const NavigationSideBar: React.FC = () => {
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
   const { contextHolder: modalJupyterLabContextHolder, modalOpen: openJupyterLabModal } =
-    useModalJupyterLab();
+    useModalJupyterLab({});
   const { contextHolder: modalWorkspaceCreateContextHolder, modalOpen: openWorkspaceCreateModal } =
     useModalWorkspaceCreate();
   const showNavigation = isAuthenticated && ui.showChrome;
@@ -344,7 +344,7 @@ const NavigationSideBar: React.FC = () => {
                   ) : null}
                 </ul>
               ),
-              NotLoaded: () => <Spinner />,
+              NotLoaded: () => <Spinner center />,
             })}
           </section>
           <section className={css.bottom}>

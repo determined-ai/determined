@@ -14,7 +14,6 @@ import { Loadable } from 'utils/loadable';
 
 import css from './SettingsAccount.module.scss';
 
-export const API_DISPLAYNAME_ERROR_MESSAGE = 'Could not update display name.';
 export const API_DISPLAYNAME_SUCCESS_MESSAGE = 'Display name updated.';
 export const API_USERNAME_ERROR_MESSAGE = 'Could not update username.';
 export const API_USERNAME_SUCCESS_MESSAGE = 'Username updated.';
@@ -45,8 +44,7 @@ const SettingsAccount: React.FC = () => {
         updateUser(user.id, (oldUser) => ({ ...oldUser, displayName: newValue }));
         message.success(API_DISPLAYNAME_SUCCESS_MESSAGE);
       } catch (e) {
-        message.error(API_DISPLAYNAME_ERROR_MESSAGE);
-        handleError(e, { silent: true, type: ErrorType.Input });
+        handleError(e, { silent: false, type: ErrorType.Input });
         return e as Error;
       }
     },

@@ -71,29 +71,6 @@ func filesToArchive(files []*utilv1.File) archive.Archive {
 	return filesArchive
 }
 
-func (a *apiServer) filterTensorboards(
-	ctx context.Context,
-	curUser model.User,
-	tensorboards []*tensorboardv1.Tensorboard,
-	workspaceID int32,
-) ([]*tensorboardv1.Tensorboard, error) {
-	filteredScopes, err := command.AuthZProvider.Get().AccessibleScopes(
-		ctx, curUser, model.AccessScopeID(workspaceID))
-	if err != nil {
-		return nil, err
-	}
-
-	var filteredTensorboards []*tensorboardv1.Tensorboard
-
-	for _, tb := range tensorboards {
-		if _, ok := filteredScopes[model.AccessScopeID(tb.WorkspaceId)]; ok {
-			filteredTensorboards = append(filteredTensorboards, tb)
-		}
-	}
-
-	return filteredTensorboards, nil
-}
-
 func (a *apiServer) GetTensorboards(
 	ctx context.Context, req *apiv1.GetTensorboardsRequest,
 ) (resp *apiv1.GetTensorboardsResponse, err error) {
@@ -118,8 +95,8 @@ func (a *apiServer) GetTensorboards(
 		return nil, err
 	}
 
-	filteredTensorboards, err := a.filterTensorboards(ctx, *curUser, resp.Tensorboards,
-		req.WorkspaceId)
+	filteredTensorboards, err := command.AuthZProvider.Get().FilterTensorboards(
+		ctx, *curUser, model.AccessScopeID(req.WorkspaceId), resp.Tensorboards)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +121,8 @@ func (a *apiServer) GetTensorboard(
 	}
 
 	if ok, err := command.AuthZProvider.Get().CanGetTensorboard(
-		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId)); err != nil {
+		ctx, *curUser, model.AccessScopeID(resp.Tensorboard.WorkspaceId),
+		resp.Tensorboard.ExperimentIds, resp.Tensorboard.TrialIds); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, errActorNotFound(addr)
@@ -170,7 +148,7 @@ func (a *apiServer) KillTensorboard(
 		return nil, err
 	}
 
-	err = command.AuthZProvider.Get().CanTerminateNSC(
+	err = command.AuthZProvider.Get().CanTerminateTensorboard(
 		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId))
 	if err != nil {
 		return nil, err

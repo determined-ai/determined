@@ -18,6 +18,7 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
       - ppc64
   - main: ./cmd/determined-gotmpl
     id: determined-gotmpl
@@ -27,18 +28,87 @@ builds:
       - darwin
     goarch:
       - amd64
+      - arm64
       - ppc64
 
 archives:
   - wrap_in_directory: "true"
+    rlcp: true
     files:
-      - "share/determined/master/**/*"
+      - src: "packaging/master.yaml"
+        dst: "etc/determined/"
+        strip_parent: true
+
+      - src: "packaging/determined-master.service"
+        dst: "lib/systemd/system/"
+        strip_parent: true
+      - src: "packaging/determined-master.socket"
+        dst: "lib/systemd/system/"
+        strip_parent: true
+      - src: "packaging/LICENSE"
+        strip_parent: true
+      - src: "static/**/*"
+        dst: "share/static"
+      - src: "build/**/*"
+        dst: "share"
+      - src: "build/growforest"
+        dst: "share"
+        strip_parent: true
+
+brews:
+  - name: determined-master
+    tap:
+      owner: determined-ai
+      name: homebrew-determined
+    url_template: "https://github.com/determined-ai/determined/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    caveats: |
+      Determined master config is located at #{etc}/determined/master.yaml
+
+      Make sure to setup the determined database:
+        brew services start postgresql@14
+        createuser postgres
+        createdb determined
+
+      Checkpoints are stored in #{var}/determined/data by default.
+      Make sure to configure it as a shared path for Docker for Mac in
+      Docker -> Preferences... -> Resources -> File Sharing.
+    homepage: "https://github.com/determined-ai/determined"
+    license: "Apache-2.0"
+    folder: Formula
+    dependencies:
+      - "postgresql@14"
+    install: |
+      bin.install "determined-master"
+
+      doc.install "LICENSE"
+      pkgshare.install Dir["share/*"]
+
+      (var/"cache/determined").mkpath
+      (var/"determined/data").mkpath
+      (var/"log/determined").mkpath
+
+      (etc/"determined").mkpath
+      inreplace "etc/determined/master.yaml" do |s|
+        s.gsub! "  host_path: /tmp", "  host_path: #{var}/determined/data"
+      end
+      Pathname("etc/determined/master.yaml").append_lines <<~EOS
+        root: #{opt_pkgshare}
+        cache:
+          cache_dir: #{var}/cache/determined
+      EOS
+      etc.install "etc/determined/master.yaml" => "determined/master.yaml"
+    service: |
+      run [opt_bin/"determined-master", "--config-file", etc/"determined/master.yaml"]
+      keep_alive false
+      error_log_path var/"log/determined/master-stderr.log"
+      log_path var/"log/determined/master-stdout.log"
 
 nfpms:
   - maintainer: "Determined AI <hello@determined.ai>"
     formats:
       - deb
       - rpm
+    bindir: /usr/local/bin
     contents:
       - src: "packaging/master.yaml"
         dst: "/etc/determined/master.yaml"
@@ -63,7 +133,7 @@ nfpms:
       - src: "packaging/LICENSE"
         dst: "/usr/share/licenses/determined-master/LICENSE"
         packager: rpm
-      
+
     overrides:
       deb:
         scripts:
@@ -83,18 +153,15 @@ release:
     [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
 
 dockers:
+  # amd64
   - goos: linux
     goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --builder=buildx-build
     image_templates:
-      - "determinedai/{{.ProjectName}}:latest"
-      - "determinedai/{{.ProjectName}}:{{.Env.VERSION}}"
-      - "determinedai/{{.ProjectName}}:{{.ShortCommit}}"
-      - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
-      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.Env.VERSION}}"
-      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.ShortCommit}}"
-      - "nvcr.io/isv-ngc-partner/determined/{{.ProjectName}}:{{.FullCommit}}"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
     extra_files:
       - "packaging/master.yaml"
       - "packaging/LICENSE"
@@ -103,3 +170,59 @@ dockers:
     ids:
       - determined-master
       - determined-gotmpl
+  # arm64
+  - goos: linux
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --builder=buildx-build
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+    extra_files:
+      - "packaging/master.yaml"
+      - "packaging/LICENSE"
+      - "build"
+      - "static"
+    ids:
+      - determined-master
+      - determined-gotmpl
+  # ppc64
+  - goos: linux
+    goarch: ppc64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/ppc64le
+      - --builder=buildx-build
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+    extra_files:
+      - "packaging/master.yaml"
+      - "packaging/LICENSE"
+      - "build"
+      - "static"
+    ids:
+      - determined-master
+      - determined-gotmpl
+
+docker_manifests:
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.ShortCommit}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:latest"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-ppc64"

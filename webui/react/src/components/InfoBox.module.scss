@@ -35,6 +35,10 @@
       flex-grow: 1;
       font-size: 14px;
       margin: 0;
+
+      .blank {
+        background-color: var(--theme-background-on);
+      }
     }
     .contentList {
       color: var(--theme-colors-monochrome-6);

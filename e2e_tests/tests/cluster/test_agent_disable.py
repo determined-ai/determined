@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterator, List, Optional, cast
 
 import pytest
 
-from determined.common.api.bindings import determinedexperimentv1State
+from determined.common.api.bindings import experimentv1State
 from tests import config as conf
 from tests import experiment as exp
 
@@ -121,7 +121,7 @@ def test_disable_agent_experiment_resume() -> None:
             time.sleep(1)
         else:
             pytest.fail("Experiment stayed scheduled after agent was disabled")
-    exp.wait_for_experiment_state(exp_id, determinedexperimentv1State.STATE_COMPLETED)
+    exp.wait_for_experiment_state(exp_id, experimentv1State.STATE_COMPLETED)
 
 
 @pytest.mark.e2e_cpu
@@ -163,7 +163,7 @@ def test_drain_agent() -> None:
         conf.fixtures_path("no_op"),
         None,
     )
-    exp.wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_RUNNING)
+    exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_RUNNING)
     exp.wait_for_experiment_active_workload(experiment_id)
     exp.wait_for_experiment_workload_progress(experiment_id)
 
@@ -179,7 +179,7 @@ def test_drain_agent() -> None:
         None,
     )
     time.sleep(5)
-    exp.wait_for_experiment_state(experiment_id_no_start, determinedexperimentv1State.STATE_QUEUED)
+    exp.wait_for_experiment_state(experiment_id_no_start, experimentv1State.STATE_QUEUED)
 
     with _disable_agent(agent_id, drain=True):
         # Check for 15 seconds it doesn't get scheduled into the same slot.
@@ -188,7 +188,7 @@ def test_drain_agent() -> None:
             assert len(trials) == 0
 
         # Ensure the first one has finished with the correct number of workloads.
-        exp.wait_for_experiment_state(experiment_id, determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(experiment_id, experimentv1State.STATE_COMPLETED)
         trials = exp.experiment_trials(experiment_id)
         assert len(trials) == 1
         assert len(trials[0].workloads) == 7
@@ -238,7 +238,7 @@ def test_drain_agent_sched() -> None:
             conf.fixtures_path("no_op"),
             None,
         )
-        exp.wait_for_experiment_state(exp_id2, determinedexperimentv1State.STATE_RUNNING)
+        exp.wait_for_experiment_state(exp_id2, experimentv1State.STATE_RUNNING)
 
         # Wait for a state when *BOTH* experiments are scheduled.
         for _ in range(20):
@@ -254,8 +254,8 @@ def test_drain_agent_sched() -> None:
                 "while the first agent was draining"
             )
 
-        exp.wait_for_experiment_state(exp_id1, determinedexperimentv1State.STATE_COMPLETED)
-        exp.wait_for_experiment_state(exp_id2, determinedexperimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id1, experimentv1State.STATE_COMPLETED)
+        exp.wait_for_experiment_state(exp_id2, experimentv1State.STATE_COMPLETED)
 
         trials1 = exp.experiment_trials(exp_id1)
         trials2 = exp.experiment_trials(exp_id2)

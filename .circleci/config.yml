@@ -41,7 +41,7 @@ parameters:
   # the old build may be cached, and you may need to invalidate it.
   cache-buster:
     type: string
-    default: v1dev14
+    default: v1dev16
   gke-version:
     type: string
     default: "1.21.14"
@@ -1019,7 +1019,9 @@ jobs:
           check: false
       - run: make package
       - run: mkdir -p build/
+      - run: docker tag determinedai/determined-master:${CIRCLE_SHA1}-amd64 determinedai/determined-master:${CIRCLE_SHA1}
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
+      - run: docker tag determinedai/determined-agent:${CIRCLE_SHA1}-amd64 determinedai/determined-agent:${CIRCLE_SHA1}
       - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
       - persist_to_workspace:
           root: .
@@ -1220,7 +1222,7 @@ jobs:
           target-stage: db
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
       - run: sudo systemctl restart determined-master
-      - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
+      - run: python3 .circleci/scripts/wait_for_server.py localhost 8080 || { journalctl --no-pager -u determined-master; exit 1; }
       - run: sudo systemctl restart determined-agent
       - run: ./.circleci/scripts/sanity.sh
 

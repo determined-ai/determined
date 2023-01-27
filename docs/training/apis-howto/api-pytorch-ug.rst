@@ -2,8 +2,10 @@
  PyTorch API
 #############
 
+In this guide, you'll learn how to use the PyTorch API.
+
 +---------------------------------------------------------------------+
-| API reference                                                       |
+| Visit the API reference                                             |
 +=====================================================================+
 | :doc:`/reference/reference-training/training/api-pytorch-reference` |
 +---------------------------------------------------------------------+

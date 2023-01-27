@@ -123,6 +123,8 @@ Install on Linux
       sudo systemd-tmpfiles --create --prefix /var/log/journal
       sudo systemctl restart systemd-journald
 
+.. _install-docker-on-macos:
+
 Install on macOS
 ================
 

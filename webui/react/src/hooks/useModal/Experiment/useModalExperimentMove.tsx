@@ -83,8 +83,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   }, []);
 
   useEffect(() => {
-    ensureProjectsFetched(workspaceId);
-  }, [workspaceId, ensureProjectsFetched]);
+    ensureWorkspaceProjectsFetched(workspaceId);
+  }, [workspaceId, ensureWorkspaceProjectsFetched]);
 
   const handleWorkspaceSelect = useCallback(
     (workspaceId: SelectValue) => {

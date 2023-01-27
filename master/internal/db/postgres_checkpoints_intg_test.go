@@ -57,12 +57,13 @@ func TestDeleteCheckpoints(t *testing.T) {
 		LastUpdatedTime: now,
 		Labels:          []string{"some other label"},
 		Username:        user.Username,
+		WorkspaceID:     1,
 	}
 	mdlNotes := "some notes2"
 	var pmdl modelv1.Model
 	err = db.QueryProto(
 		"insert_model", &pmdl, mdl.Name, mdl.Description, emptyMetadata,
-		strings.Join(mdl.Labels, ","), mdlNotes, user.ID,
+		strings.Join(mdl.Labels, ","), mdlNotes, user.ID, mdl.WorkspaceID,
 	)
 
 	require.NoError(t, err)
@@ -111,6 +112,11 @@ func TestDeleteCheckpoints(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, reqCheckpointUUIDs, dbCheckpointsUUIDs)
 
+	// Test GetModelIDsAssociatedWithCheckpoint
+	expmodelIDsCheckpoint := []int32{pmdl.Id}
+	modelIDsCheckpoint, err := GetModelIDsAssociatedWithCheckpoint(context.TODO(), checkpoint1.UUID)
+	require.NoError(t, err)
+	require.Equal(t, expmodelIDsCheckpoint, modelIDsCheckpoint)
 	// Send a list of delete checkpoints uuids the user wants to delete and
 	// check if it's in model registry.
 	requestedDeleteCheckpoints := []uuid.UUID{checkpoint1.UUID, checkpoint3.UUID}

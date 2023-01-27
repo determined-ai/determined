@@ -6,7 +6,7 @@ import pickle
 import random
 import sys
 import uuid
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 from urllib3 import connectionpool
 
@@ -26,7 +26,7 @@ class SingleSearchMethod(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: Any, train_length: int
     ) -> List[searcher.Operation]:
         return []
 
@@ -72,6 +72,7 @@ class RandomSearchMethod(searcher.SearchMethod):
         max_length: int,
         test_type: str = "core_api",
         exception_points: Optional[List[str]] = None,
+        metric_as_dict: bool = False,
     ) -> None:
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
@@ -79,6 +80,7 @@ class RandomSearchMethod(searcher.SearchMethod):
 
         self.test_type = test_type
         self.exception_points = exception_points
+        self.metric_as_dict = metric_as_dict
 
         self.created_trials = 0
         self.pending_trials = 0
@@ -95,9 +97,12 @@ class RandomSearchMethod(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: Any, train_length: int
     ) -> List[searcher.Operation]:
         self.raise_exception("on_validation_completed")
+        if self.metric_as_dict:
+            logging.debug(f"metric={metric.items()}")
+            assert isinstance(metric, dict)
         return []
 
     def on_trial_closed(
@@ -388,7 +393,7 @@ class ASHASearchMethod(searcher.SearchMethod):
         return []
 
     def on_validation_completed(
-        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: float, train_length: int
+        self, _: searcher.SearcherState, request_id: uuid.UUID, metric: Any, train_length: int
     ) -> List[searcher.Operation]:
         self.asha_search_state.pending_trials -= 1
         if self.asha_search_state.is_smaller_better is False:

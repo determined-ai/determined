@@ -49,7 +49,7 @@ type (
 	trialCompleteOperation struct {
 		requestID model.RequestID
 		op        searcher.ValidateAfter
-		metric    float64
+		metric    interface{}
 	}
 	trialReportEarlyExit struct {
 		requestID model.RequestID

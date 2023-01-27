@@ -304,7 +304,7 @@ platform. There may be additional per-user configuration that is required.
             image=determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
             cd /shared/enroot/images
             enroot import docker://$image
-            enroot create /shared/enroot/images/${image//[\/:]/\+}
+            enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh
 
    #. The Enroot container storage directory for the user ``${ENROOT_CACHE_PATH}`` (which defaults
       to ``$HOME/.local/share/enroot``) must be accessible on all compute nodes.

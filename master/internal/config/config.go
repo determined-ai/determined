@@ -103,9 +103,8 @@ func DefaultConfig() *Config {
 			AuthZ: *DefaultAuthZConfig(),
 		},
 		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
-		Port:        0,
-		HarnessPath: "/opt/determined",
-		Root:        "/usr/share/determined/master",
+		Port: 0,
+		Root: "/usr/share/determined/master",
 		Telemetry: config.TelemetryConfig{
 			Enabled:                  true,
 			OtelEnabled:              false,
@@ -147,7 +146,6 @@ type Config struct {
 	CheckpointStorage     expconf.CheckpointStorageConfig   `json:"checkpoint_storage"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
 	Port                  int                               `json:"port"`
-	HarnessPath           string                            `json:"harness_path"`
 	Root                  string                            `json:"root"`
 	Telemetry             config.TelemetryConfig            `json:"telemetry"`
 	EnableCors            bool                              `json:"enable_cors"`

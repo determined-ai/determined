@@ -1,11 +1,12 @@
-###################
- Example Solutions
-###################
+##########
+ Examples
+##########
 
-Determined includes several example machine learning models that have been ported to Determined's
-APIs. These examples can be found in the ``examples/`` subdirectory of the `Determined GitHub repo
-<https://github.com/determined-ai/determined/tree/master/examples>`__; download links to each
-example can also be found below.
+Get started quickly by using one of the Determined AI examples.
+
+This page contains download links to example machine learning models that have been ported to
+Determined's APIs. You'll find the files in the ``examples/`` subdirectory of the `Determined GitHub
+repo <https://github.com/determined-ai/determined/tree/master/examples>`__.
 
 Each example consists of a model definition, along with one or more experiment configuration files.
 To run one of these examples, download the appropriate ``.tgz`` file, extract it, ``cd`` into the
@@ -19,7 +20,7 @@ of hyperparameters:
    cd mnist_pytorch
    det experiment create const.yaml .
 
-For an introduction to using the training API, please see the Training APIs section.
+For an introduction to using the training API, please visit the Training APIs section.
 
 *****************
  Computer Vision

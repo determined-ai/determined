@@ -66,7 +66,7 @@ def test_wait_stable_network(
     exp = api_server.sample_get_experiment().experiment
     args = CliArgs(master="http://localhost:8888", experiment_id=1)
 
-    exp.state = bindings.determinedexperimentv1State.STATE_COMPLETED
+    exp.state = bindings.experimentv1State.STATE_COMPLETED
     requests_mock.get(
         f"/api/v1/experiments/{args.experiment_id}",
         status_code=200,
@@ -74,7 +74,7 @@ def test_wait_stable_network(
     )
     determined.cli.experiment.wait(args)
 
-    exp.state = bindings.determinedexperimentv1State.STATE_ERROR
+    exp.state = bindings.experimentv1State.STATE_ERROR
     requests_mock.get(
         f"/api/v1/experiments/{args.experiment_id}",
         status_code=200,

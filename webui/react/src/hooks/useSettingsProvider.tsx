@@ -84,7 +84,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
   }, [canceler, user?.id, settingsState]);
 
   useEffect(() => {
-    const url = window.location.search.substr(/^\?/.test(location.search) ? 1 : 0);
+    const url = window.location.search.substring(/^\?/.test(location.search) ? 1 : 0);
 
     querySettings.current = url;
   }, []);
@@ -95,7 +95,7 @@ export const SettingsProvider: React.FC<React.PropsWithChildren> = ({ children }
     if (clearQuerySettings) querySettings.current = '';
   };
 
-  if (isLoading && !(checked && !user)) return <Spinner spinning />;
+  if (isLoading && !(checked && !user)) return <Spinner center spinning />;
 
   return (
     <UserSettings.Provider

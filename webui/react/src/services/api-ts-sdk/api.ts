@@ -83,7 +83,7 @@ export class RequiredError extends Error {
  * @export
  * @enum {string}
  */
-export enum Determinedcheckpointv1State {
+export enum Checkpointv1State {
     UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
     ACTIVE = <any> 'STATE_ACTIVE',
     COMPLETED = <any> 'STATE_COMPLETED',
@@ -96,7 +96,7 @@ export enum Determinedcheckpointv1State {
  * @export
  * @enum {string}
  */
-export enum Determinedcontainerv1State {
+export enum Containerv1State {
     UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
     ASSIGNED = <any> 'STATE_ASSIGNED',
     PULLING = <any> 'STATE_PULLING',
@@ -110,97 +110,11 @@ export enum Determinedcontainerv1State {
  * @export
  * @enum {string}
  */
-export enum Determineddevicev1Type {
+export enum Devicev1Type {
     UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
     CPU = <any> 'TYPE_CPU',
     CUDA = <any> 'TYPE_CUDA',
     ROCM = <any> 'TYPE_ROCM'
-}
-
-/**
- * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
- * @export
- * @enum {string}
- */
-export enum Determinedexperimentv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    ACTIVE = <any> 'STATE_ACTIVE',
-    PAUSED = <any> 'STATE_PAUSED',
-    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
-    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
-    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
-    COMPLETED = <any> 'STATE_COMPLETED',
-    CANCELED = <any> 'STATE_CANCELED',
-    ERROR = <any> 'STATE_ERROR',
-    DELETED = <any> 'STATE_DELETED',
-    DELETING = <any> 'STATE_DELETING',
-    DELETEFAILED = <any> 'STATE_DELETE_FAILED',
-    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
-    QUEUED = <any> 'STATE_QUEUED',
-    PULLING = <any> 'STATE_PULLING',
-    STARTING = <any> 'STATE_STARTING',
-    RUNNING = <any> 'STATE_RUNNING'
-}
-
-/**
- * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
- * @export
- * @enum {string}
- */
-export enum Determinedjobv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    QUEUED = <any> 'STATE_QUEUED',
-    SCHEDULED = <any> 'STATE_SCHEDULED',
-    SCHEDULEDBACKFILLED = <any> 'STATE_SCHEDULED_BACKFILLED'
-}
-
-/**
- * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
- * @export
- * @enum {string}
- */
-export enum Determinedjobv1Type {
-    UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
-    EXPERIMENT = <any> 'TYPE_EXPERIMENT',
-    NOTEBOOK = <any> 'TYPE_NOTEBOOK',
-    TENSORBOARD = <any> 'TYPE_TENSORBOARD',
-    SHELL = <any> 'TYPE_SHELL',
-    COMMAND = <any> 'TYPE_COMMAND',
-    CHECKPOINTGC = <any> 'TYPE_CHECKPOINT_GC'
-}
-
-/**
- * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.  - STATE_QUEUED: Additional state to cover queueing operations.
- * @export
- * @enum {string}
- */
-export enum Determinedtaskv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    PULLING = <any> 'STATE_PULLING',
-    STARTING = <any> 'STATE_STARTING',
-    RUNNING = <any> 'STATE_RUNNING',
-    TERMINATED = <any> 'STATE_TERMINATED',
-    TERMINATING = <any> 'STATE_TERMINATING',
-    WAITING = <any> 'STATE_WAITING',
-    QUEUED = <any> 'STATE_QUEUED'
-}
-
-/**
- * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
- * @export
- * @enum {string}
- */
-export enum Determinedtrialv1State {
-    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
-    ACTIVE = <any> 'STATE_ACTIVE',
-    PAUSED = <any> 'STATE_PAUSED',
-    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
-    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
-    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
-    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
-    CANCELED = <any> 'STATE_CANCELED',
-    COMPLETED = <any> 'STATE_COMPLETED',
-    ERROR = <any> 'STATE_ERROR'
 }
 
 /**
@@ -233,6 +147,31 @@ export interface ExpCompareTrialsSampleResponseExpTrial {
      * @memberof ExpCompareTrialsSampleResponseExpTrial
      */
     experimentId: number;
+}
+
+/**
+ * The current state of the experiment.   - STATE_UNSPECIFIED: The state of the experiment is unknown.  - STATE_ACTIVE: The experiment is in an active state.  - STATE_PAUSED: The experiment is in a paused state  - STATE_STOPPING_COMPLETED: The experiment is completed and is shutting down.  - STATE_STOPPING_CANCELED: The experiment is canceled and is shutting down.  - STATE_STOPPING_ERROR: The experiment is errored and is shutting down.  - STATE_COMPLETED: The experiment is completed and is shut down.  - STATE_CANCELED: The experiment is canceled and is shut down.  - STATE_ERROR: The experiment is errored and is shut down.  - STATE_DELETED: The experiment has been deleted.  - STATE_DELETING: The experiment is deleting.  - STATE_DELETE_FAILED: The experiment failed to delete.  - STATE_STOPPING_KILLED: The experiment is killed and is shutting down.  - STATE_QUEUED: The experiment is queued (waiting to be run, or job state is still queued). Queued is a substate of the Active state.  - STATE_PULLING: The experiment is pulling the image. Pulling is a substate of the Active state.  - STATE_STARTING: The experiment is preparing the environment after finishing pulling the image. Starting is a substate of the Active state.  - STATE_RUNNING: The experiment has an allocation actively running. Running is a substate of the Active state.
+ * @export
+ * @enum {string}
+ */
+export enum Experimentv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    ACTIVE = <any> 'STATE_ACTIVE',
+    PAUSED = <any> 'STATE_PAUSED',
+    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
+    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
+    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
+    COMPLETED = <any> 'STATE_COMPLETED',
+    CANCELED = <any> 'STATE_CANCELED',
+    ERROR = <any> 'STATE_ERROR',
+    DELETED = <any> 'STATE_DELETED',
+    DELETING = <any> 'STATE_DELETING',
+    DELETEFAILED = <any> 'STATE_DELETE_FAILED',
+    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
+    QUEUED = <any> 'STATE_QUEUED',
+    PULLING = <any> 'STATE_PULLING',
+    STARTING = <any> 'STATE_STARTING',
+    RUNNING = <any> 'STATE_RUNNING'
 }
 
 /**
@@ -293,6 +232,33 @@ export enum GetTrialWorkloadsRequestFilterOption {
     CHECKPOINT = <any> 'FILTER_OPTION_CHECKPOINT',
     VALIDATION = <any> 'FILTER_OPTION_VALIDATION',
     CHECKPOINTORVALIDATION = <any> 'FILTER_OPTION_CHECKPOINT_OR_VALIDATION'
+}
+
+/**
+ * Job state.   - STATE_UNSPECIFIED: Unspecified state.  - STATE_QUEUED: Job is queued and waiting to be schedlued.  - STATE_SCHEDULED: Job is scheduled.  - STATE_SCHEDULED_BACKFILLED: Job is scheduled as a backfill.
+ * @export
+ * @enum {string}
+ */
+export enum Jobv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    QUEUED = <any> 'STATE_QUEUED',
+    SCHEDULED = <any> 'STATE_SCHEDULED',
+    SCHEDULEDBACKFILLED = <any> 'STATE_SCHEDULED_BACKFILLED'
+}
+
+/**
+ * Job type.   - TYPE_UNSPECIFIED: Unspecified state.  - TYPE_EXPERIMENT: Experiement Job.  - TYPE_NOTEBOOK: Jupyter Notebook Job.  - TYPE_TENSORBOARD: TensorBoard Job.  - TYPE_SHELL: Shell Job.  - TYPE_COMMAND: Command Job.  - TYPE_CHECKPOINT_GC: CheckpointGC Job.
+ * @export
+ * @enum {string}
+ */
+export enum Jobv1Type {
+    UNSPECIFIED = <any> 'TYPE_UNSPECIFIED',
+    EXPERIMENT = <any> 'TYPE_EXPERIMENT',
+    NOTEBOOK = <any> 'TYPE_NOTEBOOK',
+    TENSORBOARD = <any> 'TYPE_TENSORBOARD',
+    SHELL = <any> 'TYPE_SHELL',
+    COMMAND = <any> 'TYPE_COMMAND',
+    CHECKPOINTGC = <any> 'TYPE_CHECKPOINT_GC'
 }
 
 /**
@@ -675,6 +641,22 @@ export interface StreamResultOfV1TrialsSnapshotResponse {
 }
 
 /**
+ * The current state of the task.   - STATE_UNSPECIFIED: The task state is unknown.  - STATE_PULLING: The task's base image is being pulled from the Docker registry.  - STATE_STARTING: The image has been pulled and the task is being started, but the task is not ready yet.  - STATE_RUNNING: The service in the task is running.  - STATE_TERMINATED: The task has exited or has been aborted.  - STATE_TERMINATING: The task has begun to exit.  - STATE_WAITING: The task is waiting on something to complete.  - STATE_QUEUED: Additional state to cover queueing operations.
+ * @export
+ * @enum {string}
+ */
+export enum Taskv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    PULLING = <any> 'STATE_PULLING',
+    STARTING = <any> 'STATE_STARTING',
+    RUNNING = <any> 'STATE_RUNNING',
+    TERMINATED = <any> 'STATE_TERMINATED',
+    TERMINATING = <any> 'STATE_TERMINATING',
+    WAITING = <any> 'STATE_WAITING',
+    QUEUED = <any> 'STATE_QUEUED'
+}
+
+/**
  * Specifies a ranking for trials within their experiment.
  * @export
  * @interface TrialFiltersRankWithinExp
@@ -719,6 +701,24 @@ export enum TrialSorterNamespace {
 }
 
 /**
+ * - STATE_UNSPECIFIED: The trial is in an unspecified state.  - STATE_ACTIVE: The trial is in an active state.  - STATE_PAUSED: The trial is in a paused state  - STATE_STOPPING_CANCELED: The trial is canceled and is shutting down.  - STATE_STOPPING_KILLED: The trial is killed and is shutting down.  - STATE_STOPPING_COMPLETED: The trial is completed and is shutting down.  - STATE_STOPPING_ERROR: The trial is errored and is shutting down.  - STATE_CANCELED: The trial is canceled and is shut down.  - STATE_COMPLETED: The trial is completed and is shut down.  - STATE_ERROR: The trial is errored and is shut down.
+ * @export
+ * @enum {string}
+ */
+export enum Trialv1State {
+    UNSPECIFIED = <any> 'STATE_UNSPECIFIED',
+    ACTIVE = <any> 'STATE_ACTIVE',
+    PAUSED = <any> 'STATE_PAUSED',
+    STOPPINGCANCELED = <any> 'STATE_STOPPING_CANCELED',
+    STOPPINGKILLED = <any> 'STATE_STOPPING_KILLED',
+    STOPPINGCOMPLETED = <any> 'STATE_STOPPING_COMPLETED',
+    STOPPINGERROR = <any> 'STATE_STOPPING_ERROR',
+    CANCELED = <any> 'STATE_CANCELED',
+    COMPLETED = <any> 'STATE_COMPLETED',
+    ERROR = <any> 'STATE_ERROR'
+}
+
+/**
  * Trial is a set of workloads and are exploring a determined set of hyperparameters.
  * @export
  * @interface Trialv1Trial
@@ -750,10 +750,10 @@ export interface Trialv1Trial {
     endTime?: Date;
     /**
      * The current state of the trial.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof Trialv1Trial
      */
-    state: Determinedexperimentv1State;
+    state: Experimentv1State;
     /**
      * Number times the trial restarted.
      * @type {number}
@@ -1036,10 +1036,10 @@ export interface V1Allocation {
     taskId?: string;
     /**
      * The current state of the allocation.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Allocation
      */
-    state?: Determinedtaskv1State;
+    state?: Taskv1State;
     /**
      * Whether the allocation is ready to access.
      * @type {boolean}
@@ -1280,10 +1280,10 @@ export interface V1AugmentedTrial {
     trialId: number;
     /**
      * The state of the trial.
-     * @type {Determinedtrialv1State}
+     * @type {Trialv1State}
      * @memberof V1AugmentedTrial
      */
-    state: Determinedtrialv1State;
+    state: Trialv1State;
     /**
      * 
      * @type {any}
@@ -1472,10 +1472,10 @@ export interface V1Checkpoint {
     metadata: any;
     /**
      * The state of the underlying checkpoint.
-     * @type {Determinedcheckpointv1State}
+     * @type {Checkpointv1State}
      * @memberof V1Checkpoint
      */
-    state: Determinedcheckpointv1State;
+    state: Checkpointv1State;
     /**
      * Training-related data for this checkpoint.
      * @type {V1CheckpointTrainingMetadata}
@@ -1554,10 +1554,10 @@ export interface V1CheckpointWorkload {
     endTime?: Date;
     /**
      * The state of the checkpoint.
-     * @type {Determinedcheckpointv1State}
+     * @type {Checkpointv1State}
      * @memberof V1CheckpointWorkload
      */
-    state: Determinedcheckpointv1State;
+    state: Checkpointv1State;
     /**
      * Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
      * @type {{ [key: string]: string; }}
@@ -1632,10 +1632,10 @@ export interface V1Command {
     description: string;
     /**
      * The state of the command.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Command
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the command was started.
      * @type {Date}
@@ -1747,11 +1747,11 @@ export interface V1CompleteValidateAfterOperation {
      */
     op?: V1ValidateAfterOperation;
     /**
-     * The value of searcher metric associated with this completed metric. The metric provided should be the metric used to guide HP search.
-     * @type {number}
+     * The value of searcher metric associated with this completed operation. The metric provided should be the metric used to guide HP search.
+     * @type {any}
      * @memberof V1CompleteValidateAfterOperation
      */
-    searcherMetric?: number;
+    searcherMetric?: any;
 }
 
 /**
@@ -1782,10 +1782,10 @@ export interface V1Container {
     id: string;
     /**
      * The current state that the container is currently in.
-     * @type {Determinedcontainerv1State}
+     * @type {Containerv1State}
      * @memberof V1Container
      */
-    state: Determinedcontainerv1State;
+    state: Containerv1State;
     /**
      * A list of devices that is being used by this container.
      * @type {Array<V1Device>}
@@ -2180,10 +2180,10 @@ export interface V1Device {
     uuid?: string;
     /**
      * The type of the Device.
-     * @type {Determineddevicev1Type}
+     * @type {Devicev1Type}
      * @memberof V1Device
      */
-    type?: Determineddevicev1Type;
+    type?: Devicev1Type;
 }
 
 /**
@@ -2388,10 +2388,10 @@ export interface V1Experiment {
     endTime?: Date;
     /**
      * The current state of the experiment.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof V1Experiment
      */
-    state: Determinedexperimentv1State;
+    state: Experimentv1State;
     /**
      * Boolean denoting whether the experiment was archived.
      * @type {boolean}
@@ -2546,10 +2546,10 @@ export interface V1Experiment {
 export interface V1ExperimentInactive {
     /**
      * Current state of the experiment.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof V1ExperimentInactive
      */
-    experimentState: Determinedexperimentv1State;
+    experimentState: Experimentv1State;
 }
 
 /**
@@ -4353,10 +4353,10 @@ export interface V1Job {
     summary?: V1JobSummary;
     /**
      * Job type.
-     * @type {Determinedjobv1Type}
+     * @type {Jobv1Type}
      * @memberof V1Job
      */
-    type: Determinedjobv1Type;
+    type: Jobv1Type;
     /**
      * The time when the job was submitted by the user.
      * @type {Date}
@@ -4445,10 +4445,10 @@ export interface V1Job {
 export interface V1JobSummary {
     /**
      * The scheduling state of the job.
-     * @type {Determinedjobv1State}
+     * @type {Jobv1State}
      * @memberof V1JobSummary
      */
-    state: Determinedjobv1State;
+    state: Jobv1State;
     /**
      * The number of jobs ahead of this one in the queue.
      * @type {number}
@@ -5089,10 +5089,10 @@ export interface V1MetricsWorkload {
     endTime?: Date;
     /**
      * The current validation state.
-     * @type {Determinedexperimentv1State}
+     * @type {Experimentv1State}
      * @memberof V1MetricsWorkload
      */
-    state: Determinedexperimentv1State;
+    state: Experimentv1State;
     /**
      * Metrics.
      * @type {V1Metrics}
@@ -5173,6 +5173,12 @@ export interface V1Model {
      * @memberof V1Model
      */
     username: string;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {number}
+     * @memberof V1Model
+     */
+    workspaceId?: number;
     /**
      * Id of the user who created this model.
      * @type {number}
@@ -5375,10 +5381,10 @@ export interface V1Notebook {
     description: string;
     /**
      * The state of the notebook.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Notebook
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the notebook was started.
      * @type {Date}
@@ -5636,6 +5642,18 @@ export interface V1PatchModel {
      * @memberof V1PatchModel
      */
     notes?: string;
+    /**
+     * The name of the workspace associated with this model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    workspaceName?: string;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {string}
+     * @memberof V1PatchModel
+     */
+    workspaceId?: string;
 }
 
 /**
@@ -5929,7 +5947,7 @@ export interface V1Permission {
 }
 
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
  * @export
  * @enum {string}
  */
@@ -5956,6 +5974,9 @@ export enum V1PermissionType {
     VIEWPROJECT = <any> 'PERMISSION_TYPE_VIEW_PROJECT',
     UPDATEPROJECT = <any> 'PERMISSION_TYPE_UPDATE_PROJECT',
     DELETEPROJECT = <any> 'PERMISSION_TYPE_DELETE_PROJECT',
+    VIEWMODELREGISTRY = <any> 'PERMISSION_TYPE_VIEW_MODEL_REGISTRY',
+    EDITMODELREGISTRY = <any> 'PERMISSION_TYPE_EDIT_MODEL_REGISTRY',
+    CREATEMODELREGISTRY = <any> 'PERMISSION_TYPE_CREATE_MODEL_REGISTRY',
     UPDATEROLES = <any> 'PERMISSION_TYPE_UPDATE_ROLES',
     ASSIGNROLES = <any> 'PERMISSION_TYPE_ASSIGN_ROLES',
     EDITWEBHOOKS = <any> 'PERMISSION_TYPE_EDIT_WEBHOOKS'
@@ -6055,6 +6076,18 @@ export interface V1PostModelRequest {
      * @memberof V1PostModelRequest
      */
     labels?: Array<string>;
+    /**
+     * The name of the workspace associated with this model.
+     * @type {string}
+     * @memberof V1PostModelRequest
+     */
+    workspaceName?: string;
+    /**
+     * The id of the workspace associated with this model.
+     * @type {number}
+     * @memberof V1PostModelRequest
+     */
+    workspaceId?: number;
     /**
      * Notes associated with this model.
      * @type {string}
@@ -7008,10 +7041,10 @@ export interface V1ResourcePool {
     slotsUsed: number;
     /**
      * Slot device type: cpu, gpu, ...
-     * @type {Determineddevicev1Type}
+     * @type {Devicev1Type}
      * @memberof V1ResourcePool
      */
-    slotType: Determineddevicev1Type;
+    slotType: Devicev1Type;
     /**
      * 
      * @type {number}
@@ -7998,10 +8031,10 @@ export interface V1Shell {
     description: string;
     /**
      * The state of the shell.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Shell
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the shell was started.
      * @type {Date}
@@ -8376,10 +8409,10 @@ export interface V1Tensorboard {
     description: string;
     /**
      * The state of the tensorboard.
-     * @type {Determinedtaskv1State}
+     * @type {Taskv1State}
      * @memberof V1Tensorboard
      */
-    state: Determinedtaskv1State;
+    state: Taskv1State;
     /**
      * The time the tensorboard was started.
      * @type {Date}
@@ -8665,10 +8698,10 @@ export interface V1TrialFilters {
     endTime?: V1TimestampFieldFilter;
     /**
      * Filter trials to those with any of the given states.
-     * @type {Array<Determinedtrialv1State>}
+     * @type {Array<Trialv1State>}
      * @memberof V1TrialFilters
      */
-    states?: Array<Determinedtrialv1State>;
+    states?: Array<Trialv1State>;
     /**
      * Filter trials to those with the given searcher metric.
      * @type {string}
@@ -9494,10 +9527,10 @@ export interface V1ValidationCompleted {
     requestId: string;
     /**
      * Value of the validation metric used to direct the search.
-     * @type {number}
+     * @type {any}
      * @memberof V1ValidationCompleted
      */
-    metric: number;
+    metric: any;
     /**
      * Length from ValidateAfterOperation.
      * @type {string}
@@ -19369,12 +19402,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
+         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
+         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options: any = {}): FetchArgs {
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/models`;
             const localVarUrlObj = url.parse(localVarPath, true);
             const localVarRequestOptions = Object.assign({ method: 'GET' }, options);
@@ -19423,6 +19458,14 @@ export const ModelsApiFetchParamCreator = function (configuration?: Configuratio
 
             if (users) {
                 localVarQueryParameter['users'] = users;
+            }
+
+            if (workspaceName !== undefined) {
+                localVarQueryParameter['workspaceName'] = workspaceName;
+            }
+
+            if (workspaceId !== undefined) {
+                localVarQueryParameter['workspaceId'] = workspaceId;
             }
 
             if (userIds) {
@@ -19823,13 +19866,15 @@ export const ModelsApiFp = function(configuration?: Configuration) {
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
+         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
+         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
-            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id, options);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelsResponse> {
+            const localVarFetchArgs = ModelsApiFetchParamCreator(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options);
             return (fetch: FetchAPI = portableFetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -20035,13 +20080,15 @@ export const ModelsApiFactory = function (configuration?: Configuration, fetch?:
          * @param {Array<string>} [labels] Limit the models to those with the following labels.
          * @param {boolean} [archived] Limit to unarchived models only.
          * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
+         * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
+         * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
          * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
          * @param {number} [id] Limit the models to this model id.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options?: any) {
-            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id, options)(fetch, basePath);
+        getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any) {
+            return ModelsApiFp(configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options)(fetch, basePath);
         },
         /**
          * 
@@ -20208,14 +20255,16 @@ export class ModelsApi extends BaseAPI {
      * @param {Array<string>} [labels] Limit the models to those with the following labels.
      * @param {boolean} [archived] Limit to unarchived models only.
      * @param {Array<string>} [users] Limit the models to those made by the users with the following usernames.
+     * @param {string} [workspaceName] Limit models to those that belong to the following worksapce.
+     * @param {number} [workspaceId] Limit models to those that belong to the following workspace id.
      * @param {Array<number>} [userIds] Limit the models to those made by the users with the following userIds.
      * @param {number} [id] Limit the models to this model id.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ModelsApi
      */
-    public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, userIds?: Array<number>, id?: number, options?: any) {
-        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, userIds, id, options)(this.fetch, this.basePath);
+    public getModels(sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME' | 'SORT_BY_DESCRIPTION' | 'SORT_BY_CREATION_TIME' | 'SORT_BY_LAST_UPDATED_TIME' | 'SORT_BY_NUM_VERSIONS', orderBy?: 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC', offset?: number, limit?: number, name?: string, description?: string, labels?: Array<string>, archived?: boolean, users?: Array<string>, workspaceName?: string, workspaceId?: number, userIds?: Array<number>, id?: number, options?: any) {
+        return ModelsApiFp(this.configuration).getModels(sortBy, orderBy, offset, limit, name, description, labels, archived, users, workspaceName, workspaceId, userIds, id, options)(this.fetch, this.basePath);
     }
 
     /**
