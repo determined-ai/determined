@@ -22,6 +22,7 @@ module.exports = {
           style: true,
         },
       ],
+      ['@babel/plugin-proposal-private-methods', { loose: true }],
     ],
   },
   eslint: { enable: false },

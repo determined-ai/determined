@@ -45,7 +45,7 @@ export const ClusterOverallStats: React.FC = () => {
 
   usePolling(fetchActiveRunning);
   const activeExperiments = useObservable(
-    experimentsService.experimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
+    experimentsService.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
   const activeTasks = useActiveTasks();
   const rbacEnabled = useFeature().isOn('rbac');

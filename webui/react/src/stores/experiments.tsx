@@ -14,7 +14,7 @@ type ExperimentsCache = {
   pagination: Readonly<V1Pagination>;
 };
 
-// this is singleton
+// This is singleton class
 export class ExperimentsService {
   static #isInternalConstructing = false;
   static #instance: ExperimentsService;
@@ -27,6 +27,7 @@ export class ExperimentsService {
     }
   }
 
+  // Get singleton instance
   public static getInstance(): ExperimentsService {
     if (!ExperimentsService.#instance) {
       ExperimentsService.#isInternalConstructing = true;
@@ -36,7 +37,21 @@ export class ExperimentsService {
     return ExperimentsService.#instance;
   }
 
-  public experimentsByParams(
+  // Get an experiment by experiment id
+  public getExperimentsByIds(experimentIds: number[]): Observable<Loadable<ExperimentItem[]>> {
+    return this.#experimentMap.select((map) => {
+      const expList: ExperimentItem[] = [];
+      for (const id of experimentIds) {
+        const exp = map.get(id);
+        if (exp) {
+          expList.push(exp);
+        }
+      }
+      return Loaded(expList);
+    });
+  }
+
+  public getExperimentsByParams(
     params: Readonly<GetExperimentsParams>,
   ): Observable<Loadable<ExperimentPagination>> {
     return this.#experimentsCache.select((map) => {
@@ -60,6 +75,7 @@ export class ExperimentsService {
     });
   }
 
+  // fetch experiments with params
   public fetchExperiments(
     params: Readonly<GetExperimentsParams>,
     canceler: AbortController,
@@ -67,25 +83,25 @@ export class ExperimentsService {
     return async () => {
       try {
         const response = await getExperiments(params, { signal: canceler.signal });
-        this.#updateexperimentsCache(response, params);
-        this.#updateExperimentMap(response);
+        this.#updateExperimentsCache(response, params);
+        this.#updateExperimentMap(response.experiments);
       } catch (e) {
         handleError(e);
       }
     };
   }
 
-  #updateExperimentMap(expPagination: Readonly<ExperimentPagination>) {
+  #updateExperimentMap(experimentItems: Readonly<ExperimentItem[]>) {
     this.#experimentMap.update((map) => {
       let newMap: Map<number, ExperimentItem> = Map<number, ExperimentItem>();
-      for (const exp of expPagination.experiments) {
+      for (const exp of experimentItems) {
         newMap = map.set(exp.id, exp);
       }
       return newMap;
     });
   }
 
-  #updateexperimentsCache(
+  #updateExperimentsCache(
     expPagination: Readonly<ExperimentPagination>,
     params: Readonly<GetExperimentsParams>,
   ) {
