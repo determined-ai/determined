@@ -767,8 +767,8 @@ func (m *Master) Run(ctx context.Context) error {
 
 	gzipConfig := middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			proxyService := regexp.MustCompile(`proxy|service`)
-			return proxyService.MatchString(c.Path())
+			proxyService := regexp.MustCompile(`(themes|static|determined)\/`)
+			return !proxyService.MatchString(c.Request().URL.Path)
 		},
 	}
 	m.echo.Use(middleware.GzipWithConfig(gzipConfig))
