@@ -90,6 +90,7 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   areRowsSelected?: boolean;
   columns: ColumnDef<RecordType>[];
   containerRef: MutableRefObject<HTMLElement | null>;
+  defaultColumns?: string[];
   interactiveColumns?: boolean;
   numOfPinned?: number;
   settings: InteractiveTableSettings;
@@ -387,6 +388,7 @@ const InteractiveTable: InteractiveTable = ({
   updateSettings,
   ContextMenu,
   areRowsSelected,
+  defaultColumns,
   ...props
 }) => {
   const columnDefs = useMemo(
@@ -608,6 +610,15 @@ const InteractiveTable: InteractiveTable = ({
     if (!settings) return;
 
     const columns = settingsColumns ?? [];
+
+    if (defaultColumns) {
+      const strgSettingstColumns = columns.toString();
+
+      for (const column of defaultColumns) {
+        if (!strgSettingstColumns.includes(column)) columns.push(column);
+      }
+    }
+
     const newColumns = columns.reduce<ColumnsType<UnknownRecord>>((acc, columnName, index) => {
       if (!columnDefs[columnName]) return acc;
 
@@ -632,7 +643,7 @@ const InteractiveTable: InteractiveTable = ({
     }
 
     return newColumns;
-  }, [settings, widthData, columnDefs, onHeaderCell, settingsColumns]);
+  }, [settings, widthData, columnDefs, onHeaderCell, defaultColumns, settingsColumns]);
 
   const components = {
     body: {
