@@ -14,7 +14,7 @@ RestartSec=1
 Restart=always
 TimeoutStartSec=0
 CacheDirectory=determined
-ExecStart=/usr/local/bin/determined-master
+ExecStart=/usr/bin/determined-master
 
 [Install]
 WantedBy=multi-user.target

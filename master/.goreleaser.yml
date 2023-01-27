@@ -108,7 +108,6 @@ nfpms:
     formats:
       - deb
       - rpm
-    bindir: /usr/local/bin
     contents:
       - src: "packaging/master.yaml"
         dst: "/etc/determined/master.yaml"
