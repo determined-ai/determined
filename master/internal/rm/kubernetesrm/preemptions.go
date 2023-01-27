@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/set"
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,19 +21,19 @@ type startPreemptionListener struct{}
 
 type preemptionListener struct {
 	clientSet   *k8sClient.Clientset
-	namespace   string
 	podsHandler *actor.Ref
+	namespaces  set.Set[string]
 }
 
 func newPreemptionListener(
 	clientSet *k8sClient.Clientset,
-	namespace string,
 	podsHandler *actor.Ref,
+	namespaces set.Set[string],
 ) *preemptionListener {
 	return &preemptionListener{
 		clientSet:   clientSet,
-		namespace:   namespace,
 		podsHandler: podsHandler,
+		namespaces:  namespaces,
 	}
 }
 
@@ -56,7 +57,7 @@ func (p *preemptionListener) Receive(ctx *actor.Context) error {
 
 func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	// check if there are pods to preempt on startup
-	pods, err := p.clientSet.CoreV1().Pods(p.namespace).List(
+	pods, err := p.clientSet.CoreV1().Pods(metaV1.NamespaceAll).List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf(
@@ -67,12 +68,16 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 	}
 
 	for _, pod := range pods.Items {
+		if !p.namespaces.Contains(pod.Namespace) {
+			continue
+		}
+
 		ctx.Tell(p.podsHandler, PreemptTaskPod{PodName: pod.Name})
 	}
 
 	rw, err := watchtools.NewRetryWatcher(pods.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return p.clientSet.CoreV1().Pods(p.namespace).Watch(
+			return p.clientSet.CoreV1().Pods(metaV1.NamespaceAll).Watch(
 				context.TODO(), metaV1.ListOptions{LabelSelector: determinedPreemptionLabel})
 		},
 	})
@@ -94,6 +99,10 @@ func (p *preemptionListener) startPreemptionListener(ctx *actor.Context) {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Pod: %+v", e, e)
 			continue
 		}
+		if !p.namespaces.Contains(pod.Namespace) {
+			continue
+		}
+
 		ctx.Tell(p.podsHandler, PreemptTaskPod{PodName: pod.Name})
 	}
 

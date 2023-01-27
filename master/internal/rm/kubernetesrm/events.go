@@ -3,17 +3,16 @@ package kubernetesrm
 import (
 	"context"
 
+	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
+	k8sClient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	watchtools "k8s.io/client-go/tools/watch"
 
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
-
-	k8sV1 "k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sClient "k8s.io/client-go/kubernetes"
-
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // Messages that are sent to the event listener.
@@ -30,19 +29,19 @@ type (
 
 type eventListener struct {
 	clientSet   *k8sClient.Clientset
-	namespace   string
 	podsHandler *actor.Ref
+	namespaces  set.Set[string]
 }
 
 func newEventListener(
 	clientSet *k8sClient.Clientset,
-	namespace string,
 	podsHandler *actor.Ref,
+	namespaces set.Set[string],
 ) *eventListener {
 	return &eventListener{
 		clientSet:   clientSet,
-		namespace:   namespace,
 		podsHandler: podsHandler,
+		namespaces:  namespaces,
 	}
 }
 
@@ -65,7 +64,7 @@ func (e *eventListener) Receive(ctx *actor.Context) error {
 }
 
 func (e *eventListener) startEventListener(ctx *actor.Context) {
-	events, err := e.clientSet.CoreV1().Events(e.namespace).List(
+	events, err := e.clientSet.CoreV1().Events(metaV1.NamespaceAll).List(
 		context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		ctx.Log().WithError(err).Warnf("error retrieving internal resource version")
@@ -75,7 +74,7 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 
 	rw, err := watchtools.NewRetryWatcher(events.ResourceVersion, &cache.ListWatch{
 		WatchFunc: func(options metaV1.ListOptions) (watch.Interface, error) {
-			return e.clientSet.CoreV1().Events(e.namespace).Watch(
+			return e.clientSet.CoreV1().Events(metaV1.NamespaceAll).Watch(
 				context.TODO(), metaV1.ListOptions{})
 		},
 	})
@@ -97,6 +96,11 @@ func (e *eventListener) startEventListener(ctx *actor.Context) {
 			ctx.Log().Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
 			continue
 		}
+
+		if !e.namespaces.Contains(newEvent.Namespace) {
+			continue
+		}
+
 		ctx.Tell(e.podsHandler, podEventUpdate{event: newEvent})
 	}
 

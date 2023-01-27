@@ -346,6 +346,7 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
 	ctx.Log().Infof("requesting to delete kubernetes resources")
 	ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
 		handler:       ctx.Self(),
+		namespace:     p.namespace,
 		podName:       p.podName,
 		configMapName: p.configMapName,
 	})

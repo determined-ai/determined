@@ -85,7 +85,10 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(
+		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
+		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
 		k8sRequestQueue,
@@ -113,7 +116,10 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(
+		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
+		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
 		k8sRequestQueue,
@@ -142,7 +148,10 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(
+		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
+		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
 		k8sRequestQueue,
@@ -179,7 +188,10 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(
+		map[string]typedV1.PodInterface{metaV1.NamespaceAll: podInterface},
+		map[string]typedV1.ConfigMapInterface{metaV1.NamespaceAll: configMapInterface},
+	)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
 		k8sRequestQueue,
