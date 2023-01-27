@@ -123,7 +123,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const fetchUsers = useEnsureUsersFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
-  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler); // We already fetch "users" at App lvl, so, this might be enough.
+  const fetchWorkspaces = useEnsureWorkspacesFetched(canceler);
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
@@ -305,7 +305,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        searchable
         values={settings.state}
         onFilter={handleStateFilterApply}
         onReset={handleStateFilterReset}
