@@ -2,17 +2,14 @@
  Examples
 ##########
 
-Get started quickly by using one of the Determined AI examples.
+Get started quickly by using one of the Determined AI example machine learning models that has been
+converted to Determine's APIs. Visit the ``examples/`` subdirectory of the `Determined GitHub repo
+<https://github.com/determined-ai/determined/tree/master/examples>`__ or download the link below.
 
-This page contains download links to example machine learning models that have been ported to
-Determined's APIs. You'll find the files in the ``examples/`` subdirectory of the `Determined GitHub
-repo <https://github.com/determined-ai/determined/tree/master/examples>`__.
-
-Each example consists of a model definition, along with one or more experiment configuration files.
-To run one of these examples, download the appropriate ``.tgz`` file, extract it, ``cd`` into the
-directory, and use ``det experiment create`` to create a new experiment, passing in the appropriate
-configuration file. For example, here is how to train the ``mnist_pytorch`` example with a fixed set
-of hyperparameters:
+Each example includes a model definition and one or more experiment configuration files. To run an
+example, download the appropriate ``.tgz`` file, extract it, ``cd`` into the directory, and use
+``det experiment create`` to create a new experiment, passing in the appropriate configuration file.
+For example, here is how to train the ``mnist_pytorch`` example with a fixed set of hyperparameters:
 
 .. code::
 
