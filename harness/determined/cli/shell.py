@@ -1,5 +1,7 @@
+import base64
 import contextlib
 import getpass
+import json
 import logging
 import os
 import shutil
@@ -16,44 +18,51 @@ from termcolor import colored
 
 from determined import cli
 from determined.cli import command, task
-from determined.common import api
-from determined.common.api import authentication, certs
+from determined.common import api, context
+from determined.common.api import authentication, bindings, certs
 from determined.common.check import check_eq
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 @authentication.required
 def start_shell(args: Namespace) -> None:
-    data = {}
+    data = ""
     if args.passphrase:
-        data["passphrase"] = getpass.getpass("Enter new passphrase: ")
+        passphrase = getpass.getpass("Enter new passphrase: ")
+        data = base64.b64encode(json.dumps({"passphrase": passphrase}).encode("utf-8")).decode(
+            "utf-8"
+        )
+
     config = command.parse_config(args.config_file, None, args.config, args.volume)
     workspace_id = cli.workspace.get_workspace_id_from_args(args)
+    files = context.read_v1_context(args.context, args.include)
 
-    resp = command.launch_command(
-        args.master,
-        "api/v1/shells",
-        config,
-        args.template,
-        context_path=args.context,
-        includes=args.include,
+    body = bindings.v1LaunchShellRequest(
+        config=config,
         data=data,
-        workspace_id=workspace_id,
-    )["shell"]
+        files=files,
+        templateName=args.template,
+        workspaceId=workspace_id,
+    )
+    resp = bindings.post_LaunchShell(cli.setup_session(args), body=body)
+    shell_id = resp.shell.id
 
     if args.detach:
-        print(resp["id"])
+        print(shell_id)
         return
 
+    if resp.warnings:
+        cli.print_warnings(resp.warnings)
+
     ready = False
-    with api.ws(args.master, f"shells/{resp['id']}/events") as ws:
+    with api.ws(args.master, f"shells/{shell_id}/events") as ws:
         for msg in ws:
             if msg["service_ready_event"]:
                 ready = True
                 break
             command.render_event_stream(msg)
     if ready:
-        shell = api.get(args.master, f"api/v1/shells/{resp['id']}").json()["shell"]
+        shell = api.get(args.master, f"api/v1/shells/{shell_id}").json()["shell"]
         check_eq(shell["state"], "STATE_RUNNING", "Shell must be in a running state")
         _open_shell(
             args.master,

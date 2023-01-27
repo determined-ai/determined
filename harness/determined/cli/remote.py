@@ -5,15 +5,14 @@ from typing import Any, List
 
 from determined import cli
 from determined.cli import command, task
-from determined.common import api
-from determined.common.api import authentication
+from determined.common import api, context
+from determined.common.api import authentication, bindings
 from determined.common.declarative_argparse import Arg, Cmd, Group
 
 
 @authentication.required
 def run_command(args: Namespace) -> None:
-    config = command.parse_config(args.config_file, args.entrypoint, args.config, args.volume)
-    workspace_id = cli.workspace.get_workspace_id_from_args(args)
+    """
     resp = command.launch_command(
         args.master,
         "api/v1/commands",
@@ -22,14 +21,30 @@ def run_command(args: Namespace) -> None:
         context_path=args.context,
         includes=args.include,
         workspace_id=workspace_id,
-    )["command"]
+    )
+    """
+
+    config = command.parse_config(args.config_file, args.entrypoint, args.config, args.volume)
+    workspace_id = cli.workspace.get_workspace_id_from_args(args)
+    files = context.read_v1_context(args.context, args.include)
+    body = bindings.v1LaunchCommandRequest(
+        config=config,
+        files=files,
+        templateName=args.template,
+        workspaceId=workspace_id,
+    )
+    resp = bindings.post_LaunchCommand(cli.setup_session(args), body=body)
+    command_id = resp.command.id
 
     if args.detach:
-        print(resp["id"])
+        print(command_id)
         return
 
-    logs = api.task_logs(cli.setup_session(args), resp["id"], follow=True)
-    api.pprint_task_logs(resp["id"], logs)
+    if resp.warnings:
+        cli.print_warnings(resp.warnings)
+
+    logs = api.task_logs(cli.setup_session(args), command_id, follow=True)
+    api.pprint_task_logs(command_id, logs)
 
 
 # fmt: off
