@@ -65,8 +65,8 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
   const [sourceProjectId, setSourceProjectId] = useState<number | undefined>();
   const [experimentIds, setExperimentIds] = useState<number[]>();
   const { canMoveExperimentsTo } = usePermissions();
-  const loadableWorspaces = useWorkspaces({ archived: false });
-  const workspaces = Loadable.map(loadableWorspaces, (ws) =>
+  const loadableWorkspaces = useWorkspaces({ archived: false });
+  const workspaces = Loadable.map(loadableWorkspaces, (ws) =>
     ws.filter((w) => canMoveExperimentsTo({ destination: { id: w.id } })),
   );
   const projects = useWorkspaceProjects(workspaceId);
