@@ -7,8 +7,9 @@ import Section from 'components/Section';
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
+import { getUnitForMetricName } from '../utils';
 
-const ThroughputMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {
+const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const throughputMetrics = useFetchProfilerMetrics(
     trial.id,
     trial.state,
@@ -18,10 +19,7 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, tri
     undefined,
   );
 
-  const options = useMemo(
-    () => getOptionsForMetrics('samples_per_second', throughputMetrics.names),
-    [getOptionsForMetrics, throughputMetrics.names],
-  );
+  const yLabel = useMemo(() => getUnitForMetricName('samples_per_second'), []);
 
   return (
     <Section bodyBorder bodyNoPadding title="Throughput">
@@ -29,7 +27,7 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, tri
         series={throughputMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
-        yLabel={options.axes?.[1].label ?? ''}
+        yLabel={yLabel}
       />
     </Section>
   );

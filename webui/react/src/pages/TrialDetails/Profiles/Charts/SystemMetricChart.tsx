@@ -10,6 +10,7 @@ import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from '../useFetchProfilerSeries';
+import { getUnitForMetricName } from '../utils';
 
 import SystemMetricFilter from './SystemMetricChartFilters';
 
@@ -40,7 +41,7 @@ const config: SettingsConfig<Settings> = {
   storagePath: 'profiler-filters',
 };
 
-const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {
+const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const { settings, updateSettings } = useSettings<Settings>(config);
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
@@ -54,10 +55,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
     settings.gpuUuid,
   );
 
-  const options = useMemo(
-    () => getOptionsForMetrics(settings.name ?? '', systemMetrics.names),
-    [getOptionsForMetrics, settings.name, systemMetrics.names],
-  );
+  const yLabel = useMemo(() => getUnitForMetricName(settings.name ?? ''), [settings.name]);
 
   useEffect(() => {
     if (!systemSeries || (settings.agentId && settings.name)) return;
@@ -95,7 +93,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }
         series={systemMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
-        yLabel={options.axes?.[1].label ?? ''}
+        yLabel={yLabel}
       />
     </Section>
   );

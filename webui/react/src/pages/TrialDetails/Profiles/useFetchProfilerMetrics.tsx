@@ -10,12 +10,6 @@ import { RunState } from 'types';
 
 import { MetricsAggregateInterface, MetricType, ProfilerMetricsResponse } from './types';
 
-const BUCKET_SIZE = 0.1; // in seconds
-const BUCKET_WIDTH = 1000 * BUCKET_SIZE; // seconds -> millisecondss
-const PADDING_WINDOW = 5; // in seconds
-const PADDING_BUCKETS = PADDING_WINDOW / BUCKET_SIZE;
-const INIT_BUCKETS = PADDING_BUCKETS + 1; // plus the one for the initial timestamp
-
 const DEFAULT_DATA: MetricsAggregateInterface = {
   data: [],
   isEmpty: true,
@@ -64,14 +58,9 @@ export const useFetchProfilerMetrics = (
             const initialTimestamp = prev.initialTimestamp ?? parseTime(newTimestamps[0]);
             const seriesMap: Map<string, Serie> = new Map();
             const serieData = prev.data;
-            const timestamps: number[] = [];
             const labelName: string = newData.labels.gpuUuid || newData.labels.name;
 
-            if (serieData.length === 0) {
-              for (let i = 0; i < INIT_BUCKETS; i++) {
-                timestamps.push((i - PADDING_BUCKETS) * BUCKET_WIDTH + initialTimestamp);
-              }
-            } else {
+            if (serieData.length >= 0) {
               for (let i = 0; i < serieData.length; i++) {
                 seriesMap.set(names[i], serieData[i]);
               }
@@ -81,18 +70,6 @@ export const useFetchProfilerMetrics = (
               const s_new: Serie = { data: { Time: [] }, name: labelName };
               seriesMap.set(labelName, s_new);
               names.push(labelName);
-            }
-
-            const prevMaxTimestamp = timestamps[timestamps.length - 1] ?? Number.MAX_SAFE_INTEGER;
-            const newMaxTimestamp = parseTime(newTimestamps[newTimestamps.length - 1]);
-            if (prevMaxTimestamp < newMaxTimestamp) {
-              for (
-                let ts = prevMaxTimestamp + BUCKET_WIDTH;
-                ts <= newMaxTimestamp;
-                ts += BUCKET_WIDTH
-              ) {
-                timestamps.push(ts);
-              }
             }
 
             for (let i = 0; i < newData.values.length; i++) {

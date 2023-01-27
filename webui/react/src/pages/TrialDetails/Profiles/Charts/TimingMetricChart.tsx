@@ -7,14 +7,12 @@ import Section from 'components/Section';
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
+import { getUnitForMetricName } from '../utils';
 
-export const TimingMetricChart: React.FC<ChartProps> = ({ trial, getOptionsForMetrics }) => {
+export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const timingMetrics = useFetchProfilerMetrics(trial.id, trial.state, MetricType.Timing);
 
-  const options = useMemo(
-    () => getOptionsForMetrics('seconds', timingMetrics.names),
-    [getOptionsForMetrics, timingMetrics.names],
-  );
+  const yLabel = useMemo(() => getUnitForMetricName('seconds'), []);
 
   return (
     <Section bodyBorder bodyNoPadding title="Timing Metrics">
@@ -22,7 +20,7 @@ export const TimingMetricChart: React.FC<ChartProps> = ({ trial, getOptionsForMe
         series={timingMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
-        yLabel={options.axes?.[1].label ?? ''}
+        yLabel={yLabel}
       />
     </Section>
   );
