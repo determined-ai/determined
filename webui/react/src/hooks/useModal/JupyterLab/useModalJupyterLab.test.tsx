@@ -10,8 +10,7 @@ import { AuthProvider, useAuth } from 'stores/auth';
 import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
-import { ResourcePool, WorkspaceState } from 'types';
-import { Loadable } from 'utils/loadable';
+import { WorkspaceState } from 'types';
 
 import useModalJupyterLab from './useModalJupyterLab';
 
