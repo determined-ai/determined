@@ -106,7 +106,7 @@ const UPlotChart: React.FC<Props> = ({
   useEffect(() => {
     if (data !== undefined && chartType === 'Line')
       syncService.updateDataBounds(data as AlignedData);
-  }, [syncService, data]);
+  }, [syncService, chartType, data]);
 
   const extendedOptions = useMemo(() => {
     const extended: Partial<uPlot.Options> = uPlot.assign(
