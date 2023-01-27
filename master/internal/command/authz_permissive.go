@@ -3,6 +3,8 @@ package command
 import (
 	"context"
 
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -57,28 +59,33 @@ func (a *NSCAuthZPermissive) AccessibleScopes(
 	return (&NSCAuthZBasic{}).AccessibleScopes(ctx, curUser, requestedScope)
 }
 
-// AccessibleScopesTB returns the set of scopes that the user should be limited to.
-func (a *NSCAuthZPermissive) AccessibleScopesTB(
+// FilterTensorboards returns the tensorboards the user has access to.
+func (a *NSCAuthZPermissive) FilterTensorboards(
 	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
-) (model.AccessScopeSet, error) {
-	_, _ = (&NSCAuthZRBAC{}).AccessibleScopesTB(ctx, curUser, requestedScope)
-	return (&NSCAuthZBasic{}).AccessibleScopesTB(ctx, curUser, requestedScope)
+	tensorboards []*tensorboardv1.Tensorboard,
+) ([]*tensorboardv1.Tensorboard, error) {
+	_, _ = (&NSCAuthZRBAC{}).FilterTensorboards(ctx, curUser, requestedScope, tensorboards)
+	return (&NSCAuthZBasic{}).FilterTensorboards(ctx, curUser, requestedScope, tensorboards)
 }
 
 // CanGetTensorboard always returns true and nil error.
 func (a *NSCAuthZPermissive) CanGetTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+	experimentIDs []int32, trialIDs []int32,
 ) (canGetTensorboards bool, serverError error) {
-	_, _ = (&NSCAuthZRBAC{}).CanGetTensorboard(ctx, curUser, workspaceID)
-	return (&NSCAuthZBasic{}).CanGetTensorboard(ctx, curUser, workspaceID)
+	_, _ = (&NSCAuthZRBAC{}).CanGetTensorboard(ctx, curUser, workspaceID, experimentIDs, trialIDs)
+	return (&NSCAuthZBasic{}).CanGetTensorboard(ctx, curUser, workspaceID, experimentIDs, trialIDs)
 }
 
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZPermissive) CanTerminateTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+	experimentIDs []int32, trialIDs []int32,
 ) error {
-	_ = (&NSCAuthZRBAC{}).CanTerminateTensorboard(ctx, curUser, workspaceID)
-	return (&NSCAuthZBasic{}).CanTerminateTensorboard(ctx, curUser, workspaceID)
+	_ = (&NSCAuthZRBAC{}).CanTerminateTensorboard(ctx, curUser, workspaceID, experimentIDs,
+		trialIDs)
+	return (&NSCAuthZBasic{}).CanTerminateTensorboard(ctx, curUser, workspaceID, experimentIDs,
+		trialIDs)
 }
 
 func init() {

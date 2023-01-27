@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 // NSCAuthZRBAC is the RBAC implementation of the NSCAuthZ interface.
@@ -49,25 +50,29 @@ func (a *NSCAuthZRBAC) AccessibleScopes(
 	return (&NSCAuthZBasic{}).AccessibleScopes(ctx, curUser, requestedScope)
 }
 
-// AccessibleScopesTB returns the set of scopes that the user should be limited to.
-func (a *NSCAuthZRBAC) AccessibleScopesTB(
+// FilterTensorboards returns the tensorboards the user has access to.
+func (a *NSCAuthZRBAC) FilterTensorboards(
 	ctx context.Context, curUser model.User, requestedScope model.AccessScopeID,
-) (model.AccessScopeSet, error) {
-	return (&NSCAuthZBasic{}).AccessibleScopesTB(ctx, curUser, requestedScope)
+	tensorboards []*tensorboardv1.Tensorboard,
+) ([]*tensorboardv1.Tensorboard, error) {
+	return (&NSCAuthZBasic{}).FilterTensorboards(ctx, curUser, requestedScope, tensorboards)
 }
 
 // CanGetTensorboard always returns true and nil error.
 func (a *NSCAuthZRBAC) CanGetTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+	experimentIDs []int32, trialIDs []int32,
 ) (canGetTensorboards bool, serverError error) {
-	return (&NSCAuthZBasic{}).CanGetTensorboard(ctx, curUser, workspaceID)
+	return (&NSCAuthZBasic{}).CanGetTensorboard(ctx, curUser, workspaceID, experimentIDs, trialIDs)
 }
 
 // CanTerminateTensorboard always returns nil.
 func (a *NSCAuthZRBAC) CanTerminateTensorboard(
 	ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+	experimentIDs []int32, trialIDs []int32,
 ) error {
-	return (&NSCAuthZBasic{}).CanTerminateTensorboard(ctx, curUser, workspaceID)
+	return (&NSCAuthZBasic{}).CanTerminateTensorboard(ctx, curUser, workspaceID, experimentIDs,
+		trialIDs)
 }
 
 func init() {
