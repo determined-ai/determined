@@ -10,7 +10,7 @@ import { GetExperimentsParams } from 'services/types';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
-import { ExperimentsService } from 'stores/experiments';
+import experimentStore from 'stores/experiments';
 import { useActiveTasks, useFetchActiveTasks } from 'stores/tasks';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
@@ -28,10 +28,9 @@ export const ClusterOverallStats: React.FC = () => {
   const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
   const agents = useObservable(useClusterStore().agents);
   const clusterOverview = useObservable(useClusterStore().clusterOverview);
-  const experimentsService = ExperimentsService.getInstance();
 
   const [canceler] = useState(new AbortController());
-  const fetchActiveExperiments = experimentsService.fetchExperiments(
+  const fetchActiveExperiments = experimentStore.fetchExperiments(
     ACTIVE_EXPERIMENTS_PARAMS,
     canceler,
   );
@@ -43,7 +42,7 @@ export const ClusterOverallStats: React.FC = () => {
 
   usePolling(fetchActiveRunning);
   const activeExperiments = useObservable(
-    experimentsService.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
+    experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
   const activeTasks = useActiveTasks();
   const rbacEnabled = useFeature().isOn('rbac');

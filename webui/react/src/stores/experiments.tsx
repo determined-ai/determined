@@ -14,35 +14,18 @@ type ExperimentsCache = {
   pagination: Readonly<V1Pagination>;
 };
 
-// This is singleton class
+// TODO: use js private intead of ts private for methods
 export class ExperimentsService {
-  static #isInternalConstructing = false;
-  static #instance: ExperimentsService;
   #experimentsCache: WritableObservable<Map<string, ExperimentsCache>> = observable(Map());
   #experimentMap: WritableObservable<Map<number, ExperimentItem>> = observable(Map());
-
-  private constructor() {
-    if (!ExperimentsService.#isInternalConstructing) {
-      throw new TypeError('ExperimentsService is not constructable');
-    }
-  }
-
-  // Get singleton instance
-  public static getInstance(): ExperimentsService {
-    if (!ExperimentsService.#instance) {
-      ExperimentsService.#isInternalConstructing = true;
-      ExperimentsService.#instance = new ExperimentsService();
-      ExperimentsService.#isInternalConstructing = false;
-    }
-    return ExperimentsService.#instance;
-  }
 
   // Get an experiment by experiment id
   public getExperimentsByIds(experimentIds: number[]): Observable<Loadable<ExperimentItem[]>> {
     return this.#experimentMap.select((map) => {
-      const expList: ExperimentItem[] = experimentIds
-        .map((id) => map.get(id))
-        .flatMap((exp) => (exp ? [exp] : []));
+      const expList: ExperimentItem[] = experimentIds.flatMap((id) => {
+        const exp = map.get(id);
+        return exp ? [exp] : [];
+      });
       return Loaded(expList);
     });
   }
@@ -56,9 +39,10 @@ export class ExperimentsService {
         return NotLoaded;
       }
       const expMap = this.#experimentMap.get();
-      const experiments: ExperimentItem[] = cache.experimentIds
-        .map((id) => expMap.get(id))
-        .flatMap((exp) => (exp ? [exp] : []));
+      const experiments: ExperimentItem[] = cache.experimentIds.flatMap((id) => {
+        const exp = expMap.get(id);
+        return exp ? [exp] : [];
+      });
       const expPagination: ExperimentPagination = {
         experiments: experiments,
         pagination: cache.pagination,
@@ -75,15 +59,15 @@ export class ExperimentsService {
     return async () => {
       try {
         const response = await getExperiments(params, { signal: canceler.signal });
-        this.#updateExperimentsCache(response, params);
-        this.#updateExperimentMap(response.experiments);
+        this.updateExperimentsCache(response, params);
+        this.updateExperimentMap(response.experiments);
       } catch (e) {
         handleError(e);
       }
     };
   }
 
-  #updateExperimentMap(experimentItems: Readonly<ExperimentItem[]>) {
+  private updateExperimentMap(experimentItems: Readonly<ExperimentItem[]>) {
     this.#experimentMap.update((map) => {
       const newMap: Map<number, ExperimentItem> = map.withMutations((mutMap) => {
         for (const exp of experimentItems) {
@@ -94,7 +78,7 @@ export class ExperimentsService {
     });
   }
 
-  #updateExperimentsCache(
+  private updateExperimentsCache(
     expPagination: Readonly<ExperimentPagination>,
     params: Readonly<GetExperimentsParams>,
   ) {
@@ -106,3 +90,7 @@ export class ExperimentsService {
     });
   }
 }
+
+const experimentStore = new ExperimentsService();
+
+export default experimentStore;
