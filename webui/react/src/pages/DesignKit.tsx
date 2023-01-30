@@ -11,6 +11,7 @@ import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Checkbox from 'components/kit/Checkbox';
+import Empty from 'components/kit/Empty';
 import Form from 'components/kit/Form';
 import IconicButton from 'components/kit/IconicButton';
 import Input from 'components/kit/Input';
@@ -50,6 +51,7 @@ const ComponentTitles = {
   Checkboxes: 'Checkboxes',
   DataCards: 'DataCards',
   Dropdowns: 'Comboboxes & Dropdowns',
+  Empty: 'Empty',
   Facepile: 'Facepile',
   Form: 'Form',
   Input: 'Input',
@@ -1263,6 +1265,26 @@ const TooltipsSection: React.FC = () => {
   );
 };
 
+const EmptySection: React.FC = () => {
+  return (
+    <ComponentSection id="Empty" title="Empty">
+      <Card>
+        <p>
+          An <code>{'<Empty>'}</code> component indicates that no content is available for a page.
+          It may display an icon and a description explaining why this state is displayed.
+        </p>
+      </Card>
+      <Card title="Usage">
+        <Empty
+          description={<strong>Empty description</strong>}
+          icon="warning-large"
+          title="Empty title"
+        />
+      </Card>
+    </ComponentSection>
+  );
+};
+
 const Components = {
   ActionBar: <ActionBarSection />,
   Breadcrumbs: <BreadcrumbsSection />,
@@ -1271,6 +1293,7 @@ const Components = {
   Checkboxes: <CheckboxesSection />,
   DataCards: <DataCardsSection />,
   Dropdowns: <DropdownsSection />,
+  Empty: <EmptySection />,
   Facepile: <FacepileSection />,
   Form: <FormSection />,
   Input: <InputSection />,

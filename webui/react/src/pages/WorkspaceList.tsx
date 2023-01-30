@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
+import Empty from 'components/kit/Empty';
 import Link from 'components/Link';
 import Page from 'components/Page';
 import SelectFilter from 'components/SelectFilter';
@@ -25,7 +26,6 @@ import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
-import Icon from 'shared/components/Icon';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
@@ -375,15 +375,11 @@ const WorkspaceList: React.FC = () => {
         {workspaces.length !== 0 ? (
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
-          <div className={css.emptyBase}>
-            <div className={css.icon}>
-              <Icon name="workspaces" size="mega" />
-            </div>
-            <h4>No Workspaces</h4>
-            <p className={css.description}>
-              Create a workspace to keep track of related projects and experiments.
-            </p>
-          </div>
+          <Empty
+            description="Create a workspace to keep track of related projects and experiments."
+            icon="workspaces"
+            title="No Workspaces"
+          />
         ) : (
           <Message title="No workspaces matching the current filters" type={MessageType.Empty} />
         )}
