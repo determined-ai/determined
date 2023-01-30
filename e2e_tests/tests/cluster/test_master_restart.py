@@ -207,9 +207,7 @@ def test_master_restart_error_missing_docker_container(
 
 
 @pytest.mark.managed_devcluster
-def test_master_restart_kill_works_experiment(
-    restartable_managed_cluster: ManagedCluster,
-) -> None:
+def test_master_restart_kill_works_experiment(restartable_managed_cluster: ManagedCluster) -> None:
     _test_master_restart_kill_works(restartable_managed_cluster)
 
 
