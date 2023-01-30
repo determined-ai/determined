@@ -51,8 +51,9 @@ const SystemMetricFilter: React.FC<Props> = ({ settings, systemSeries, updateSet
 
   if (!settings || !updateSettings) return null;
 
-  const validAgentIds =
-    (settings.name && systemSeries && Object.keys(systemSeries[settings.name])) || [];
+  const validAgentIds = settings.name && systemSeries
+    ? Object.keys(systemSeries[settings.name])
+    : [];
 
   return (
     <>
