@@ -266,7 +266,10 @@ The master supports the following configuration settings:
          Determined master.
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
-         in terms of ``slots``. Defaults to ``cuda``.
+         in terms of ``slots``. Defaults to ``cuda`` for partitions where GPUs are detected 
+         automatically, else ``cpu``. If GPUs cannot be detected automatically, for
+         example when operating with gres_supported:false,  then this result may be 
+         overridden using ``partition_overrides``.
 
          -  ``slot_type: cuda``: One NVIDIA GPU will be requested per compute slot. Any partitions
             with GPUs will be represented as a resource pool with slot type ``cuda`` which can be
