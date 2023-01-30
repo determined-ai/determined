@@ -20,7 +20,7 @@ import { useObservable } from 'utils/observable';
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
 const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
-  limit: -2,
+  limit: -2, // according to API swagger doc, [limit] -2 - returns pagination info but no experiments.
   states: activeRunStates,
 };
 
