@@ -4,8 +4,6 @@
 
 These security features apply only to Determined Enterprise Edition.
 
-This section covers the following security topics:
-
 +-------------------+----------------------------------------------------------------------------+
 | Security Feature  | Documentation                                                              |
 +===================+============================================================================+

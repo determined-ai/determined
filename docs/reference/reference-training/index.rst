@@ -2,15 +2,15 @@
  Training Reference
 ####################
 
-This page includes links to the reference documentation for the Determined training APIs and the
-experiment configuration file.
+The Training Reference provides links to the reference documentation for the Determined training
+APIs and the experiment configuration file:
 
 ***************
  Training APIs
 ***************
 
 +-------------------------------------------------+-----------------------------------------------+
-| Topic                                           | Documentation Content                         |
+| Title                                           | Description                                   |
 +=================================================+===============================================+
 | :doc:`training/api-core-reference`              | Core API reference documentation.             |
 +-------------------------------------------------+-----------------------------------------------+
@@ -30,7 +30,7 @@ experiment configuration file.
 *******************************
 
 +------------------------------------+------------------------------------------------------------+
-| Topic                              | Documentation Content                                      |
+| Title                              | Description                                                |
 +====================================+============================================================+
 | :doc:`experiment-config-reference` | The experiment configuration reference describes available |
 |                                    | parameters for specifying experiment behavior.             |

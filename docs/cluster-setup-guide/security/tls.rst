@@ -4,6 +4,10 @@
  Transport Layer Security
 ##########################
 
+.. attention::
+
+   Transport Layer Security applies only to Determined Enterprise Edition.
+
 **Transport Layer Security** (TLS) is a protocol for secure network communication. TLS prevents the
 data being transmitted from being modified or read while it is in transit and allows clients to
 verify the identity of the server (in this case, the Determined master). Determined can be
