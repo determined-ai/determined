@@ -183,7 +183,7 @@ dockers:
       - "build"
       - "static"
     ids:
-      - determined-master
+      - determined-ee-master
       - determined-gotmpl
   # ppc64
   - goos: linux
@@ -200,7 +200,7 @@ dockers:
       - "build"
       - "static"
     ids:
-      - determined-master
+      - determined-ee-master
       - determined-gotmpl
 
 docker_manifests:
