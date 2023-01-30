@@ -921,6 +921,13 @@ commands:
             - run: make -C master check
             - run: make -C agent check
 
+  make-package:
+    steps:
+      - run:
+          no_output_timeout: 30m
+          command: make package
+
+
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
@@ -1019,7 +1026,7 @@ jobs:
           version: 20.10.18
       - pre-package-and-push-system:
           check: false
-      - run: make package
+      - make-package
       - run: mkdir -p build/
       - run: docker tag determinedai/determined-master:${CIRCLE_SHA1}-amd64 determinedai/determined-master:${CIRCLE_SHA1}
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -1051,7 +1058,7 @@ jobs:
           password: ${DOCKER_PASS}
       - pre-package-and-push-system:
           check: false
-      - run: make package
+      - make-package
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
       - run:
@@ -1092,7 +1099,7 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      - run: make package
+      - make-package
       - run: make -C master publish
       - run: make -C agent publish
       - run: make -C model_hub build-docker
