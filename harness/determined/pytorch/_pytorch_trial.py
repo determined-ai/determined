@@ -1,3 +1,4 @@
+import collections.abc
 import contextlib
 import enum
 import json
@@ -29,7 +30,7 @@ except ImportError:  # pragma: no cover
 
 
 class TrainUnit:
-    def __init__(self, value: int):
+    def __init__(self, value: Union[int, collections.abc.Container]):
         self.value = value
 
     @staticmethod
@@ -667,8 +668,11 @@ class _PyTorchTrialController:
 
             # Batch complete: check if any training periods have been reached and exit if any
             for step in train_steps:
-                if isinstance(step.unit, Batch) and step.unit._divides(batch_idx + 1):
-                    step.limit_reached = True
+                if isinstance(step.unit, Batch):
+                    if isinstance(step.unit.value, int) and step.unit._divides(batch_idx + 1):
+                        step.limit_reached = True
+                    if isinstance(step.unit.value, list) and batch_idx + 1 in step.unit.value:
+                        step.limit_reached = True
 
                 # Convert records to batches
                 if isinstance(step.unit, Record):
