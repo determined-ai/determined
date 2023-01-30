@@ -73,26 +73,6 @@ def make_interactive_task_url(
     return task_web_url
 
 
-def add_token_to_headers(
-    headers: Dict[str, str],
-    auth: Optional[authentication.Authentication],
-) -> Dict[str, str]:
-    # Try to get user token first since it will include the user token that is used
-    # for queries in some restful APIs.
-    user_token = ""
-    if auth is not None:
-        user_token = auth.get_session_token()
-
-    if user_token:
-        return {**headers, "Authorization": "Bearer {}".format(user_token)}
-
-    allocation_token = authentication.get_allocation_token()
-    if allocation_token:
-        return {**headers, "Grpc-Metadata-x-allocation-token": "Bearer {}".format(allocation_token)}
-
-    return headers
-
-
 def do_request(
     method: str,
     host: str,
@@ -108,22 +88,33 @@ def do_request(
     timeout: Optional[Union[Tuple, float]] = None,
     max_retries: Optional[urllib3.util.retry.Retry] = None,
 ) -> requests.Response:
-    # If no explicit Authentication object was provided, use the cli's singleton Authentication.
-    if auth is None:
-        auth = authentication.cli_auth
-    if cert is None:
-        cert = certs.cli_cert
-
     if headers is None:
-        h = {}  # type: Dict[str, str]
+        h: Dict[str, str] = {}
     else:
         h = headers
 
+    if cert is None:
+        cert = certs.cli_cert
+
+    # set the token and username based on a perset precedence order.
+    username = ""
+    if auth is not None:
+        if authenticated:
+            h["Authorization"] = "Bearer {}".format(auth.get_session_token())
+        username = auth.get_session_user()
+    elif h.get("Authorization") is not None:
+        pass
+    elif authentication.cli_auth is not None:
+        if authenticated:
+            h["Authorization"] = "Bearer {}".format(authentication.cli_auth.get_session_token())
+        username = authentication.cli_auth.get_session_user()
+    elif h.get("Grpc-Metadata-x-allocation-token") is None:
+        allocation_token = authentication.get_allocation_token()
+        if allocation_token:
+            h["Grpc-Metadata-x-allocation-token"] = "Bearer {}".format(allocation_token)
+
     if params is None:
         params = {}
-
-    if authenticated:
-        h = add_token_to_headers(h, auth)
 
     # Allow the json json to come pre-encoded, if we need custom encoding.
     if json is not None and data is not None:
@@ -164,14 +155,8 @@ def do_request(
             return ""
 
     if r.status_code == 403:
-        username = ""
-        if auth is not None:
-            username = auth.get_session_user()
         raise errors.ForbiddenException(username=username, message=_get_error_str(r))
     if r.status_code == 401:
-        username = ""
-        if auth is not None:
-            username = auth.get_session_user()
         raise errors.UnauthenticatedException(username=username)
     elif r.status_code == 404:
         raise errors.NotFoundException(r)
