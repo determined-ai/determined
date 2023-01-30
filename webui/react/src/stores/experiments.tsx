@@ -40,13 +40,9 @@ export class ExperimentsService {
   // Get an experiment by experiment id
   public getExperimentsByIds(experimentIds: number[]): Observable<Loadable<ExperimentItem[]>> {
     return this.#experimentMap.select((map) => {
-      const expList: ExperimentItem[] = [];
-      for (const id of experimentIds) {
-        const exp = map.get(id);
-        if (exp) {
-          expList.push(exp);
-        }
-      }
+      const expList: ExperimentItem[] = experimentIds
+        .map((id) => map.get(id))
+        .flatMap((exp) => (exp ? [exp] : []));
       return Loaded(expList);
     });
   }
@@ -59,14 +55,10 @@ export class ExperimentsService {
       if (!cache) {
         return NotLoaded;
       }
-      const experiments: ExperimentItem[] = [];
       const expMap = this.#experimentMap.get();
-      for (const id of cache.experimentIds) {
-        const expItem = expMap.get(id);
-        if (expItem) {
-          experiments.push(expItem);
-        }
-      }
+      const experiments: ExperimentItem[] = cache.experimentIds
+        .map((id) => expMap.get(id))
+        .flatMap((exp) => (exp ? [exp] : []));
       const expPagination: ExperimentPagination = {
         experiments: experiments,
         pagination: cache.pagination,
@@ -93,10 +85,11 @@ export class ExperimentsService {
 
   #updateExperimentMap(experimentItems: Readonly<ExperimentItem[]>) {
     this.#experimentMap.update((map) => {
-      let newMap: Map<number, ExperimentItem> = Map<number, ExperimentItem>();
-      for (const exp of experimentItems) {
-        newMap = map.set(exp.id, exp);
-      }
+      const newMap: Map<number, ExperimentItem> = map.withMutations((mutMap) => {
+        for (const exp of experimentItems) {
+          mutMap.set(exp.id, exp);
+        }
+      });
       return newMap;
     });
   }
