@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import Link from 'components/Link';
@@ -7,13 +7,12 @@ import ResourcePoolDetails from 'components/ResourcePoolDetails';
 import Section from 'components/Section';
 import { paths } from 'routes/utils';
 import { V1ResourcePoolType } from 'services/api-ts-sdk';
-import usePolling from 'shared/hooks/usePolling';
 import { percent } from 'shared/utils/number';
-import { useEnsureAgentsFetched } from 'stores/agents';
-import { useFetchResourcePools, useResourcePools } from 'stores/resourcePools';
+import { useClusterStore } from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { Agent, ClusterOverview as Overview, ResourcePool, ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { ClusterOverallBar } from '../Cluster/ClusterOverallBar';
 import { ClusterOverallStats } from '../Cluster/ClusterOverallStats';
@@ -85,24 +84,11 @@ export const clusterStatusText = (
 };
 
 const ClusterOverview: React.FC = () => {
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
 
   const [rpDetail, setRpDetail] = useState<ResourcePool>();
 
-  const [canceler] = useState(new AbortController());
-
-  const fetchAgents = useEnsureAgentsFetched(canceler);
-  const fetchResourcePools = useFetchResourcePools(canceler);
-
-  usePolling(fetchResourcePools, { interval: 10000 });
-
   const hideModal = useCallback(() => setRpDetail(undefined), []);
-
-  useEffect(() => {
-    fetchAgents();
-    return () => canceler.abort();
-  }, [canceler, fetchAgents]);
 
   return (
     <>
