@@ -158,7 +158,7 @@ def update_stack(
     template_body: str,
     boto3_session: boto3.session.Session,
     deployment_type: str,
-    custom_tags: Optional[List[Tuple[str, str]]],
+    extra_tags: Optional[List[Tuple[str, str]]],
     parameters: Optional[List] = None,
     update_terminate_agents: bool = True,
 ) -> None:
@@ -189,9 +189,9 @@ def update_stack(
             "Value": deployment_type,
         },
     ]
-    if custom_tags:
-        for ct in custom_tags:
-            tags.append({"Key": ct[0], "Value": ct[1]})
+    if extra_tags:
+        for et in extra_tags:
+            tags.append({"Key": et[0], "Value": et[1]})
 
     try:
         cfn.update_stack(
@@ -223,7 +223,7 @@ def create_stack(
     template_body: str,
     boto3_session: boto3.session.Session,
     deployment_type: str,
-    custom_tags: Optional[List[Tuple[str, str]]],
+    extra_tags: Optional[List[Tuple[str, str]]],
     parameters: Optional[List] = None,
 ) -> None:
     print(
@@ -246,9 +246,9 @@ def create_stack(
             "Value": deployment_type,
         },
     ]
-    if custom_tags:
-        for ct in custom_tags:
-            tags.append({"Key": ct[0], "Value": ct[1]})
+    if extra_tags:
+        for et in extra_tags:
+            tags.append({"Key": et[0], "Value": et[1]})
 
     cfn.create_stack(
         StackName=stack_name,
@@ -332,7 +332,7 @@ def deploy_stack(
     boto3_session: boto3.session.Session,
     no_prompt: bool,
     deployment_type: str,
-    custom_tags: Optional[List[Tuple[str, str]]],
+    extra_tags: Optional[List[Tuple[str, str]]],
     parameters: Optional[List] = None,
     update_terminate_agents: bool = True,
 ) -> None:
@@ -374,7 +374,7 @@ def deploy_stack(
             template_body,
             boto3_session,
             deployment_type,
-            custom_tags,
+            extra_tags,
             parameters,
             update_terminate_agents=update_terminate_agents,
         )
@@ -382,7 +382,7 @@ def deploy_stack(
         print("False - Creating Stack")
 
         create_stack(
-            stack_name, template_body, boto3_session, deployment_type, custom_tags, parameters
+            stack_name, template_body, boto3_session, deployment_type, extra_tags, parameters
         )
 
 

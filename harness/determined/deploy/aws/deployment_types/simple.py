@@ -25,7 +25,7 @@ class Simple(base.DeterminedDeployment):
             keypair=self.parameters[constants.cloudformation.KEYPAIR],
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
-            custom_tags=self.parameters[constants.cloudformation.CUSTOM_TAGS],
+            extra_tags=self.parameters[constants.cloudformation.EXTRA_TAGS],
             no_prompt=no_prompt,
             deployment_type=self.deployment_type,
             update_terminate_agents=update_terminate_agents,
