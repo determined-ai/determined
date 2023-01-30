@@ -31,19 +31,34 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
   }, [metadata]);
 
   const onValuesChange = useCallback(
-    (_changedValues: unknown, values: { metadata: Metadata[] }) => {
-      const newMetadata = values.metadata.reduce((acc, row) => {
-        if (row.value === undefined) {
-          row.value = '';
-        }
-        if (row?.key) acc[row.key] = row.value;
-        return acc;
-      }, {} as Metadata);
+    (changedValues: { metadata: Metadata[] }, values: { metadata: Metadata[] }) => {
+      if (changedValues.metadata.length !== values.metadata.length) {
+        // this callback is triggered when removing a row, and using the values parameter generates a console error
+        // because it tries to use an empty entry from the array.
+        const newMetadata = changedValues.metadata.reduce((acc, row) => {
+          if (row.value === undefined) {
+            row.value = '';
+          }
+          if (row?.key) acc[row.key] = row.value;
+          return acc;
+        }, {} as Metadata);
 
-      updateMetadata?.(newMetadata);
+        updateMetadata?.(newMetadata);
+      } else {
+        const newMetadata = values.metadata.reduce((acc, row) => {
+          if (row.value === undefined) {
+            row.value = '';
+          }
+          if (row?.key) acc[row.key] = row.value;
+          return acc;
+        }, {} as Metadata);
+
+        updateMetadata?.(newMetadata);
+      }
     },
     [updateMetadata],
   );
+  console.log(metadata);
 
   return (
     <Form initialValues={{ metadata: metadataList }} onValuesChange={onValuesChange}>
