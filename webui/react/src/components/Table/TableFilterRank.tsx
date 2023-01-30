@@ -1,8 +1,9 @@
-import { InputNumber, Select } from 'antd';
+import { Select } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from 'components/kit/Button';
+import InputNumber from 'components/kit/InputNumber';
 
 import css from './TableFilterRank.module.scss';
 
@@ -81,7 +82,9 @@ const TableFilterRange: React.FC<Props> = ({
           min={0}
           precision={0}
           value={rank}
-          onChange={(newRank) => setRank(newRank ?? undefined)}
+          onChange={(newRank) => {
+            setRank(newRank ? (newRank as number) : undefined);
+          }}
         />
       </div>
       <div className={css.footer}>

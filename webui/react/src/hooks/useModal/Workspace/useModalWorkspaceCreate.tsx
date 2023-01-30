@@ -1,8 +1,11 @@
-import { Divider, Form, Input, InputNumber, Switch } from 'antd';
+import { Divider, Switch } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
+import InputNumber from 'components/kit/InputNumber';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getWorkspace, patchWorkspace } from 'services/api';

@@ -1,8 +1,9 @@
-import { Form, message, Select } from 'antd';
+import { message, Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import GroupAvatar from 'components/GroupAvatar';
+import Form from 'components/kit/Form';
 import UserBadge from 'components/UserBadge';
 import { assignRolesToGroup, assignRolesToUser } from 'services/api';
 import { V1Group, V1Role } from 'services/api-ts-sdk';

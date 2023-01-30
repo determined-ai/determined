@@ -1,8 +1,9 @@
 import { ProjectOutlined } from '@ant-design/icons';
-import { Input, Modal, Tree } from 'antd';
+import { Modal, Tree } from 'antd';
 import type { DefaultOptionType } from 'rc-tree-select/lib/TreeSelect';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Input from 'components/kit/Input';
 import Link from 'components/Link';
 import { paths } from 'routes/utils';
 import { getWorkspaceProjects, getWorkspaces } from 'services/api';

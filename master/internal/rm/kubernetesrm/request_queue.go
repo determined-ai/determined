@@ -26,6 +26,7 @@ type (
 
 	deleteKubernetesResources struct {
 		handler       *actor.Ref
+		namespace     string
 		podName       string
 		configMapName string
 	}
@@ -94,8 +95,8 @@ type queuedResourceRequest struct {
 //  requestProcessingWorkers notify the requestQueue that they are available to receive work
 //  by sending a `workerAvailable` message.
 type requestQueue struct {
-	podInterface       typedV1.PodInterface
-	configMapInterface typedV1.ConfigMapInterface
+	podInterfaces       map[string]typedV1.PodInterface
+	configMapInterfaces map[string]typedV1.ConfigMapInterface
 
 	queue                    []*queuedResourceRequest
 	pendingResourceCreations map[*actor.Ref]*queuedResourceRequest
@@ -106,12 +107,12 @@ type requestQueue struct {
 }
 
 func newRequestQueue(
-	podInterface typedV1.PodInterface,
-	configMapInterface typedV1.ConfigMapInterface,
+	podInterfaces map[string]typedV1.PodInterface,
+	configMapInterfaces map[string]typedV1.ConfigMapInterface,
 ) *requestQueue {
 	return &requestQueue{
-		podInterface:       podInterface,
-		configMapInterface: configMapInterface,
+		podInterfaces:       podInterfaces,
+		configMapInterfaces: configMapInterfaces,
 
 		queue:                    make([]*queuedResourceRequest, 0),
 		pendingResourceCreations: make(map[*actor.Ref]*queuedResourceRequest),
@@ -129,8 +130,8 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 			newWorker, ok := ctx.ActorOf(
 				fmt.Sprintf("kubernetes-worker-%d", i),
 				&requestProcessingWorker{
-					podInterface:       r.podInterface,
-					configMapInterface: r.configMapInterface,
+					podInterfaces:       r.podInterfaces,
+					configMapInterfaces: r.configMapInterfaces,
 				},
 			)
 			if !ok {

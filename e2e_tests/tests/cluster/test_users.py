@@ -55,7 +55,7 @@ def login_admin() -> None:
 
 @contextlib.contextmanager
 def logged_in_user(credentials: authentication.Credentials) -> Generator:
-    log_in_user(credentials)
+    api_utils.configure_token_store(credentials)
     yield
     log_out_user()
 
@@ -85,11 +85,6 @@ def log_in_user_cli(credentials: authentication.Credentials, expectedStatus: int
     child.wait()
     child.close()
     assert child.exitstatus == expectedStatus
-
-
-def log_in_user(credentials: authentication.Credentials) -> None:
-    """@deprecated. use api_utils.configure_token_store directly"""
-    return api_utils.configure_token_store(credentials)
 
 
 def change_user_password(
@@ -215,7 +210,7 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     assert change_user_password(constants.DEFAULT_DETERMINED_USER, password) == 0
 
     # Log in as new user.
-    log_in_user(creds)
+    api_utils.configure_token_store(creds)
     # Now we should be able to list experiments.
     child = det_spawn(["e", "list"])
     child.read()
@@ -234,10 +229,12 @@ def test_logout(clean_auth: None, login_admin: None) -> None:
     assert child.status != 0
 
     # Log in as determined.
-    log_in_user(authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password))
+    api_utils.configure_token_store(
+        authentication.Credentials(constants.DEFAULT_DETERMINED_USER, password)
+    )
 
     # Log back in as new user.
-    log_in_user(creds)
+    api_utils.configure_token_store(creds)
 
     # Now log out as determined.
     log_out_user(constants.DEFAULT_DETERMINED_USER)
@@ -260,13 +257,13 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     creds = api_utils.create_test_user(True)
 
     # Make sure we can log in as the user.
-    log_in_user(creds)
+    api_utils.configure_token_store(creds)
 
     # Log out.
     log_out_user()
 
     # login admin again.
-    log_in_user(ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
 
     # Deactivate user.
     activate_deactivate_user(False, creds.username)
@@ -278,10 +275,10 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     activate_deactivate_user(True, creds.username)
 
     # Now log in again. It should have a non-zero exit status.
-    log_in_user(creds)
+    api_utils.configure_token_store(creds)
 
     # SDK testing for activating and deactivating.
-    log_in_user(ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
     user.deactivate()
@@ -290,7 +287,7 @@ def test_activate_deactivate(clean_auth: None, login_admin: None) -> None:
     assert user.active is True
 
     # Now log in again.
-    log_in_user(creds)
+    api_utils.configure_token_store(creds)
 
 
 @pytest.mark.e2e_cpu
@@ -300,23 +297,23 @@ def test_change_password(clean_auth: None, login_admin: None) -> None:
     creds = api_utils.create_test_user(False)
 
     # Attempt to log in.
-    log_in_user(creds)
+    api_utils.configure_token_store(creds)
 
     # Log out.
     log_out_user()
 
     # login admin
-    log_in_user(ADMIN_CREDENTIALS)
+    api_utils.configure_token_store(ADMIN_CREDENTIALS)
 
     new_password = get_random_string()
     assert change_user_password(creds.username, new_password) == 0
-    log_in_user(authentication.Credentials(creds.username, new_password))
+    api_utils.configure_token_store(authentication.Credentials(creds.username, new_password))
 
     new_password_sdk = get_random_string()
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=creds.username)
     user.change_password(new_password=new_password_sdk)
-    log_in_user(authentication.Credentials(creds.username, new_password_sdk))
+    api_utils.configure_token_store(authentication.Credentials(creds.username, new_password_sdk))
 
 
 @pytest.mark.e2e_cpu
@@ -328,14 +325,14 @@ def test_change_username(clean_auth: None, login_admin: None) -> None:
     det_obj = Determined(master=conf.make_master_url())
     user = det_obj.get_user_by_name(user_name=new_username)
     assert user.username == new_username
-    log_in_user(authentication.Credentials(new_username, ""))
+    api_utils.configure_token_store(authentication.Credentials(new_username, ""))
 
     # Test SDK
     new_username = "rename-user-$64"
     user.rename(new_username)
     user = det_obj.get_user_by_name(user_name=new_username)
     assert user.username == new_username
-    log_in_user(authentication.Credentials(new_username, ""))
+    api_utils.configure_token_store(authentication.Credentials(new_username, ""))
 
 
 @pytest.mark.e2e_cpu
@@ -539,7 +536,7 @@ def test_non_admin_user_link_with_agent_user(clean_auth: None, login_admin: None
 @pytest.mark.e2e_cpu
 def test_non_admin_commands(clean_auth: None, login_admin: None) -> None:
     creds = api_utils.create_test_user()
-    log_in_user(creds)
+    api_utils.configure_token_store(creds)
     command = [
         "det",
         "-m",

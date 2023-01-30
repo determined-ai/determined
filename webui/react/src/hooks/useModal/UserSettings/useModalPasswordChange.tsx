@@ -1,7 +1,8 @@
-import { Form, Input, message } from 'antd';
-import { FormInstance } from 'antd/lib/form/hooks/useForm';
+import { message } from 'antd';
 import React, { useCallback } from 'react';
 
+import Form, { FormInstance } from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { login, setUserPassword } from 'services/api';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorType } from 'shared/utils/error';

@@ -57,6 +57,7 @@ type NSCAuthZ interface {
 	// POST /api/v1/tensorboards/:tb_id/kill
 	CanTerminateTensorboard(
 		ctx context.Context, curUser model.User, workspaceID model.AccessScopeID,
+		experimentIDs []int32, trialIDs []int32,
 	) error
 }
 

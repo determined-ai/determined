@@ -13,7 +13,8 @@ export type TaskColumnName =
   | 'name'
   | 'type'
   | 'resourcePool'
-  | 'user';
+  | 'user'
+  | 'workspace';
 
 export const DEFAULT_COLUMNS: TaskColumnName[] = [
   'id',
@@ -23,6 +24,7 @@ export const DEFAULT_COLUMNS: TaskColumnName[] = [
   'state',
   'resourcePool',
   'user',
+  'workspace',
 ];
 
 export const DEFAULT_COLUMN_WIDTHS: Record<TaskColumnName, number> = {
@@ -34,6 +36,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<TaskColumnName, number> = {
   state: 106,
   type: 85,
   user: 85,
+  workspace: 140,
 };
 
 export const ALL_SORTKEY = [
@@ -44,6 +47,7 @@ export const ALL_SORTKEY = [
   'state',
   'type',
   'user',
+  'workspace',
 ] as const;
 
 type SORTKEYTuple = typeof ALL_SORTKEY;
@@ -62,6 +66,7 @@ export interface Settings extends InteractiveTableSettings {
   state?: CommandState[];
   type?: CommandType[];
   user?: string[];
+  workspace?: string[];
 }
 
 const config = (id: string): SettingsConfig<Settings> => {
@@ -83,6 +88,7 @@ const config = (id: string): SettingsConfig<Settings> => {
             literal('type'),
             literal('resourcePool'),
             literal('user'),
+            literal('workspace'),
           ]),
         ),
       },
@@ -118,6 +124,7 @@ const config = (id: string): SettingsConfig<Settings> => {
           literal('state'),
           literal('type'),
           literal('user'),
+          literal('workspace'),
         ]),
       },
       state: {
@@ -166,6 +173,11 @@ const config = (id: string): SettingsConfig<Settings> => {
       user: {
         defaultValue: undefined,
         storageKey: 'user',
+        type: union([undefinedType, array(string)]),
+      },
+      workspace: {
+        defaultValue: [],
+        storageKey: 'workspace',
         type: union([undefinedType, array(string)]),
       },
     },

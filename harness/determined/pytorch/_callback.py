@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 class PyTorchCallback:
     """
     Abstract base class used to define a callback that should execute during
-    the lifetime of a PyTorchTrial.
+    the lifetime of a PyTorchTrial or DeepSpeedTrial.
 
     .. warning::
         If you are defining a stateful callback (e.g., it mutates a ``self``
@@ -13,11 +13,10 @@ class PyTorchCallback:
         over checkpoints.
 
     .. warning::
-        If distributed training is enabled, every GPU will execute a copy of this callback
-        (except for :meth:`on_validation_end`, :meth:`on_validation_step_end` and
-        :meth:`on_checkpoint_write_end`). To configure a callback implementation to execute on a
-        subset of GPUs, please condition your implementation on
-        ``trial.context.distributed.get_rank()``.
+        If distributed training is enabled, every GPU will execute a copy of this callback (except
+        for :meth:`on_checkpoint_write_end` during PyTorchTrial training, which is only called on
+        the chief). To configure a callback implementation to execute on a subset of GPUs, please
+        condition your implementation on ``trial.context.distributed.get_rank()``.
     """
 
     def on_trial_startup(self, first_batch_idx: int, checkpoint_uuid: Optional[str]) -> None:
@@ -92,7 +91,8 @@ class PyTorchCallback:
         Deprecated. Please use :meth:`on_checkpoint_write_end` instead.
 
         .. warning::
-            This callback only executes on the chief GPU when doing distributed training.
+            This callback only executes on the chief GPU when doing distributed training with
+            PyTorchTrial.
         """
         # TODO(DET-7912): remove this once it has been deprecated long enough.
         pass
@@ -102,7 +102,8 @@ class PyTorchCallback:
         Run after every checkpoint finishes writing to checkpoint_dir.
 
         .. warning::
-            This callback only executes on the chief GPU when doing distributed training.
+            This callback only executes on the chief GPU when doing distributed training with
+            PyTorchTrial.
         """
         pass
 
@@ -148,8 +149,8 @@ class PyTorchCallback:
     ) -> None:
         """
         Run on end of a training workload. Workloads can contain varying numbers of batches. In the
-        current implementation of PyTorchTrial, the maximum number of batches in a workload is equal
-        to the ``scheduling_unit`` field defined in the experiment config.
+        current implementation of PyTorchTrial and DeepSpeedTrial, the maximum number of batches in
+        a workload is equal to the ``scheduling_unit`` field defined in the experiment config.
         """
         pass
 

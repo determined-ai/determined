@@ -3,16 +3,20 @@ import React, { useMemo } from 'react';
 import Section from 'components/Section';
 import SlotAllocationBar from 'components/SlotAllocationBar';
 import Message, { MessageType } from 'shared/components/Message';
-import { initClusterOverview, useAgents, useClusterOverview } from 'stores/agents';
+import { initClusterOverview, useClusterStore } from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 export const ClusterOverallBar: React.FC = () => {
-  const overview = Loadable.getOrElse(initClusterOverview, useClusterOverview());
+  const overview = Loadable.getOrElse(
+    initClusterOverview,
+    useObservable(useClusterStore().clusterOverview),
+  );
   // TODO: handle loading state
-  const agents = Loadable.getOrElse([], useAgents());
+  const agents = Loadable.getOrElse([], useObservable(useClusterStore().agents));
 
   const cudaSlotStates = useMemo(() => {
     return getSlotContainerStates(agents || [], ResourceType.CUDA);

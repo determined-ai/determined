@@ -187,6 +187,15 @@ const matchesUser = <T extends Type.AnyTask | Type.ExperimentItem>(
   return users.findIndex((user) => task.userId === parseInt(user)) !== -1;
 };
 
+const matchesWorkspace = <T extends Type.AnyTask | Type.ExperimentItem>(
+  task: T,
+  workspaces?: string[],
+): boolean => {
+  if (!Array.isArray(workspaces) || workspaces.length === 0 || workspaces[0] === Type.ALL_VALUE)
+    return true;
+  return workspaces.findIndex((workspace) => task.workspaceId === parseInt(workspace)) !== -1;
+};
+
 export const filterTasks = <
   T extends Type.CommandType | Type.TaskType = Type.TaskType,
   A extends Type.CommandTask | Type.AnyTask = Type.AnyTask,
@@ -203,6 +212,7 @@ export const filterTasks = <
       return (
         (!Array.isArray(filters.types) || filters.types.includes(type as T)) &&
         matchesUser<A>(task, filters.users) &&
+        matchesWorkspace<A>(task, filters.workspaces) &&
         matchesState<A>(task, filters.states || []) &&
         matchesSearch<A>(task, search) &&
         (!isExperiment || !(task as Type.ExperimentTask).archived)

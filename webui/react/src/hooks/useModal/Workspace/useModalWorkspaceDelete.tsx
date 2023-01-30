@@ -1,7 +1,8 @@
-import { Form, Input } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
+import Form from 'components/kit/Form';
+import Input from 'components/kit/Input';
 import { paths } from 'routes/utils';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';

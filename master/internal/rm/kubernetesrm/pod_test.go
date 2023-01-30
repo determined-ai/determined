@@ -707,6 +707,7 @@ func TestKillTaskPod(t *testing.T) {
 		handler:       ref,
 		podName:       newPod.podName,
 		configMapName: newPod.configMapName,
+		namespace:     "test_namespace",
 	},
 	)
 

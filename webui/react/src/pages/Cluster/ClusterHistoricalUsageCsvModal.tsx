@@ -1,7 +1,8 @@
-import { DatePicker, Form, Modal } from 'antd';
+import { DatePicker, Modal } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import React from 'react';
 
+import Form from 'components/kit/Form';
 import { handlePath, serverAddress } from 'routes/utils';
 
 interface Props {

@@ -37,6 +37,16 @@
     margin-right: 8px;
   }
 }
+.workspaceFilterItem {
+  align-items: center;
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+
+  .workspaceFilterName {
+    margin-left: 5px;
+  }
+}
 .sourceLinks {
   label {
     font-size: 12px;

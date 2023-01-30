@@ -122,9 +122,6 @@ data:
       fluent:
         {{- toYaml .Values.fluent | nindent 8}}
       {{- end }}
-      {{- if .Values._reattachResources }}
-      _reattach_resources: {{ .Values._reattachResources }}
-      {{- end }}
 
       default_aux_resource_pool: {{.Values.defaultAuxResourcePool}}
       default_compute_resource_pool: {{.Values.defaultComputeResourcePool}}

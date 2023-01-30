@@ -3,6 +3,7 @@ import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { ConditionalWrapper } from 'components/ConditionalWrapper';
+import DynamicIcon from 'components/DynamicIcon';
 import ExperimentIcons from 'components/ExperimentIcons';
 import HumanReadableNumber from 'components/HumanReadableNumber';
 import Tooltip from 'components/kit/Tooltip';
@@ -151,6 +152,30 @@ export const taskNameRenderer: TaskRenderer = (id, record) => (
     </ConditionalWrapper>
   </div>
 );
+
+export const taskWorkspaceRenderer = (
+  record: CommandTask,
+  workspaces: Workspace[],
+): React.ReactNode => {
+  const workspace = workspaces.find((u) => u.id === record.workspaceId);
+  const workspaceId = record.workspaceId;
+  const isUncategorized = workspaceId === 1;
+
+  return (
+    <Tooltip placement="top" title={workspace?.name}>
+      <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
+        <Link
+          path={
+            isUncategorized
+              ? paths.projectDetails(workspaceId)
+              : paths.workspaceDetails(workspaceId)
+          }>
+          <DynamicIcon name={workspace?.name} size={24} />
+        </Link>
+      </div>
+    </Tooltip>
+  );
+};
 
 /* Experiment Table Column Renderers */
 

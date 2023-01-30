@@ -1,10 +1,9 @@
-import { Input } from 'antd';
-import type { InputRef } from 'antd';
 import { FilterDropdownProps } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList, ListChildComponentProps } from 'react-window';
 
 import Button from 'components/kit/Button';
+import Input, { InputRef } from 'components/kit/Input';
 import Icon from 'shared/components/Icon/Icon';
 import usePrevious from 'shared/hooks/usePrevious';
 
