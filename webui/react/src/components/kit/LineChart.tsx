@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeGrid } from 'react-window';
-import { AlignedData } from 'uplot';
+import uPlot, { AlignedData } from 'uplot';
 
 import { XAxisDomain, XAxisFilter } from 'components/kit/LineChart/XAxisFilter';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
@@ -55,7 +55,9 @@ interface Props {
   title?: string;
   xAxis?: XAxisDomain;
   xLabel?: string;
+  xTickValues?: uPlot.Axis.Values;
   yLabel?: string;
+  yTickValues?: uPlot.Axis.Values;
 }
 
 export const LineChart: React.FC<Props> = ({
@@ -70,6 +72,8 @@ export const LineChart: React.FC<Props> = ({
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
+  xTickValues = undefined,
+  yTickValues = undefined,
 }: Props) => {
   const isMetricPair: boolean = useMemo(() => {
     const mTypes = series.map((s) => s.metricType);
@@ -164,14 +168,17 @@ export const LineChart: React.FC<Props> = ({
           scale: 'x',
           side: 2,
           ticks: { show: false },
+          values: xTickValues,
         },
         {
           font: '12px "Objektiv Mk3", Arial, Helvetica, sans-serif',
           grid: { stroke: '#E3E3E3', width: 1 },
           label: yLabel,
+          labelGap: 8,
           scale: 'y',
           side: 3,
           ticks: { show: false },
+          values: yTickValues,
         },
       ],
       cursor: {
@@ -204,16 +211,18 @@ export const LineChart: React.FC<Props> = ({
       ],
     };
   }, [
-    series,
     seriesColors,
-    seriesNames,
-    height,
-    scale,
-    xAxis,
-    xLabel,
-    yLabel,
     onSeriesClick,
     onSeriesFocus,
+    xLabel,
+    xTickValues,
+    yLabel,
+    yTickValues,
+    height,
+    xAxis,
+    scale,
+    series,
+    seriesNames,
   ]);
 
   return (

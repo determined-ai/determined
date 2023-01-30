@@ -7,7 +7,7 @@ import Section from 'components/Section';
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
-import { getUnitForMetricName } from '../utils';
+import { getScientificNotationTickValues, getTimeTickValues, getUnitForMetricName } from '../utils';
 
 const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const throughputMetrics = useFetchProfilerMetrics(
@@ -27,7 +27,9 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
         series={throughputMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
+        xTickValues={getTimeTickValues}
         yLabel={yLabel}
+        yTickValues={getScientificNotationTickValues}
       />
     </Section>
   );

@@ -1,3 +1,6 @@
+import dayjs from 'dayjs';
+import uPlot from 'uplot';
+
 export const getUnitForMetricName = (metricName: string): string => {
   if (metricName === 'cpu_util_simple') return '%';
   if (metricName === 'disk_throughput_read') return 'bytes/second';
@@ -10,4 +13,15 @@ export const getUnitForMetricName = (metricName: string): string => {
   if (metricName === 'gpu_free_memory') return 'Bytes';
   if (metricName === 'disk_iops') return 'Bytes/s';
   return metricName;
+};
+
+export const getTimeTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
+  return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss'));
+};
+
+export const getScientificNotationTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
+  return rawValue.map((val) => {
+    if (val === 0) return val;
+    return val > 9_999 || val < 0.0001 ? val.toExponential(2) : val;
+  });
 };

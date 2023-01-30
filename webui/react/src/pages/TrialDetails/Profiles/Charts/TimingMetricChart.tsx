@@ -7,7 +7,7 @@ import Section from 'components/Section';
 import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
-import { getUnitForMetricName } from '../utils';
+import { getScientificNotationTickValues, getTimeTickValues, getUnitForMetricName } from '../utils';
 
 export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const timingMetrics = useFetchProfilerMetrics(trial.id, trial.state, MetricType.Timing);
@@ -20,7 +20,9 @@ export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
         series={timingMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
+        xTickValues={getTimeTickValues}
         yLabel={yLabel}
+        yTickValues={getScientificNotationTickValues}
       />
     </Section>
   );

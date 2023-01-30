@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import type { Serie } from 'components/kit/LineChart';
+import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import { terminalRunStates } from 'constants/states';
 import { detApi } from 'services/apiConfig';
 import { readStream } from 'services/utils';
@@ -67,7 +68,7 @@ export const useFetchProfilerMetrics = (
             }
 
             if (!seriesMap.has(labelName)) {
-              const s_new: Serie = { data: { Time: [] }, name: labelName };
+              const s_new: Serie = { data: { [XAxisDomain.Time]: [] }, name: labelName };
               seriesMap.set(labelName, s_new);
               names.push(labelName);
             }
@@ -78,7 +79,7 @@ export const useFetchProfilerMetrics = (
 
               const timeSerie = seriesMap.get(labelName);
               if (timeSerie) {
-                timeSerie.data['Time']?.push([timestamp, value]);
+                timeSerie.data[XAxisDomain.Time]?.push([timestamp, value]);
                 seriesMap.set(labelName, timeSerie);
               }
             }

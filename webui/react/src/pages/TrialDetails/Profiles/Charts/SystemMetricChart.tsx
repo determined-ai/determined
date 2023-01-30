@@ -10,7 +10,7 @@ import { ChartProps } from '../types';
 import { MetricType } from '../types';
 import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from '../useFetchProfilerSeries';
-import { getUnitForMetricName } from '../utils';
+import { getScientificNotationTickValues, getTimeTickValues, getUnitForMetricName } from '../utils';
 
 import SystemMetricFilter from './SystemMetricChartFilters';
 
@@ -93,7 +93,9 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
         series={systemMetrics.data}
         xAxis={XAxisDomain.Time}
         xLabel="Time"
+        xTickValues={getTimeTickValues}
         yLabel={yLabel}
+        yTickValues={getScientificNotationTickValues}
       />
     </Section>
   );
