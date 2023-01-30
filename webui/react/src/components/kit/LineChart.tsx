@@ -72,8 +72,8 @@ export const LineChart: React.FC<Props> = ({
   xAxis = XAxisDomain.Batches,
   xLabel,
   yLabel,
-  xTickValues = undefined,
-  yTickValues = undefined,
+  xTickValues,
+  yTickValues,
 }: Props) => {
   const isMetricPair: boolean = useMemo(() => {
     const mTypes = series.map((s) => s.metricType);

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
@@ -12,7 +12,7 @@ import { getScientificNotationTickValues, getTimeTickValues, getUnitForMetricNam
 export const TimingMetricChart: React.FC<ChartProps> = ({ trial }) => {
   const timingMetrics = useFetchProfilerMetrics(trial.id, trial.state, MetricType.Timing);
 
-  const yLabel = useMemo(() => getUnitForMetricName('seconds'), []);
+  const yLabel = getUnitForMetricName('seconds');
 
   return (
     <Section bodyBorder bodyNoPadding title="Timing Metrics">

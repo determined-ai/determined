@@ -1,5 +1,5 @@
 import { string, undefined as undefinedType, union } from 'io-ts';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
@@ -55,7 +55,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
     settings.gpuUuid,
   );
 
-  const yLabel = useMemo(() => getUnitForMetricName(settings.name ?? ''), [settings.name]);
+  const yLabel = getUnitForMetricName(settings.name ?? '');
 
   useEffect(() => {
     if (!systemSeries || (settings.agentId && settings.name)) return;

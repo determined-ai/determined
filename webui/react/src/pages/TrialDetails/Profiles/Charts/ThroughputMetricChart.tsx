@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { LineChart } from 'components/kit/LineChart';
 import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
@@ -19,7 +19,7 @@ const ThroughputMetricChart: React.FC<ChartProps> = ({ trial }) => {
     undefined,
   );
 
-  const yLabel = useMemo(() => getUnitForMetricName('samples_per_second'), []);
+  const yLabel = getUnitForMetricName('samples_per_second');
 
   return (
     <Section bodyBorder bodyNoPadding title="Throughput">
