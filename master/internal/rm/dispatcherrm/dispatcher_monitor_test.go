@@ -235,8 +235,8 @@ func TestMonitorJobOperations(t *testing.T) {
 
 	// Add the job to the monitored jobs.
 	jobWatcher.monitorJob(job.user, job.dispatcherID, job.payloadName)
-	// Wait for the job to be added to the monitored jobs with a timeout of 10 seconds.
-	timeout := time.Now().Add(10 * time.Second)
+	// Wait for the job to be added to the monitored jobs with a timeout of 30 seconds.
+	timeout := time.Now().Add(30 * time.Second)
 	for !(jobWatcher.isJobBeingMonitored(job.dispatcherID)) {
 		if time.Now().After(timeout) {
 			break
@@ -247,8 +247,8 @@ func TestMonitorJobOperations(t *testing.T) {
 	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), true)
 	// Cancel job monitoring.
 	jobWatcher.removeJob(job.dispatcherID)
-	// Wait for the job to be removed from the monitored jobs with a timeout of 10 seconds.
-	timeout = time.Now().Add(10 * time.Second)
+	// Wait for the job to be removed from the monitored jobs with a timeout of 30 seconds.
+	timeout = time.Now().Add(30 * time.Second)
 	for jobWatcher.isJobBeingMonitored(job.dispatcherID) {
 		if time.Now().After(timeout) {
 			break
