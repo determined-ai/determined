@@ -36,6 +36,7 @@ TUNNEL=1
 DEVLAUNCHER=
 USERNAME=$USER
 DEBUGLEVEL=debug
+SKIP_DEVCLUSTER_STAGE=0
 # Variables that can be set before invoking the script (to change the default)
 DEFAULTIMAGE=${DEFAULTIMAGE-}
 
@@ -81,6 +82,10 @@ while [[ $# -gt 0 ]]; do
             DEFAULTIMAGE=$2
             shift 2
             ;;
+        -s)
+            SKIP_DEVCLUSTER_STAGE=1
+            shift
+            ;;
         -h | --help)
             echo "Usage: $0 [-anxtpedi] [-c {image}] [-u {username}]  {cluster}"
             echo "  -h     This help message & documentation."
@@ -94,6 +99,8 @@ while [[ $# -gt 0 ]]; do
             echo "  -c     Use the specified {image} as the default image.  Useful with -d and for enroot."
             echo "  -u     Use provided {username} to lookup the per-user port number."
             echo "  -a     Attempt to retrieve the .launcher.token - you must have sudo root on the cluster."
+            echo "  -s     Do not launch the devcluster. The devcluster will need to be launched and managed separately. "
+            echo "         For example, e2e_slurm_restart tests manage their own instance of devcluster."
             echo
             echo "Documentation:"
             head -n $HELPEND $0 | tail -n $((HELPEND - 1))
@@ -461,8 +468,10 @@ echo "Configuration Used:"
 printenv | grep OPT_
 echo
 
-# Terminate our tunnels on exit
-trap "kill 0" EXIT
+# Terminate our tunnels on exit, only when SKIP_DEVCLUSTER_STAGE flag is not set
+if [ $SKIP_DEVCLUSTER_STAGE -eq 0 ]; then
+    trap "kill 0" EXIT
+fi
 if [[ -n $INTUNNEL || -n $TUNNEL ]]; then
     # Terminate any tunnels (non-interactive sshd proceses for the user)
     ssh $OPT_MASTERHOST pkill -u '$USER' -x -f '"^sshd: $USER[ ]*$"'
@@ -482,4 +491,8 @@ TEMPYAML=/tmp/devcluster-$CLUSTER.yaml
 rm -f $TEMPYAML
 envsubst <tools/devcluster-slurm.yaml >$TEMPYAML
 echo "INFO: Generated devcluster file: $TEMPYAML"
-devcluster -c $TEMPYAML --oneshot
+if [ $SKIP_DEVCLUSTER_STAGE -eq 0 ]; then
+    devcluster -c $TEMPYAML --oneshot
+else
+    echo "INFO: Skipped devcluster stage. Any tunnels created will be alive until terminated manually."
+fi

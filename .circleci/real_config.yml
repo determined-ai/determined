@@ -594,6 +594,7 @@ commands:
             # Remove prior test results
             rm -f "<<parameters.junit-path>>"
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
+            IS_CIRCLECI_JOB=1 \
             pytest --capture=tee-sys -vv \
             -m '<<parameters.mark>>' \
             --durations=0 \
@@ -2083,6 +2084,9 @@ jobs:
       database_password:
         type: string
         default: launcher
+      extra-pytest-flags:
+        type: string
+        default: ""
     # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
     machine: true
     resource_class: <<parameters.runner_class>>
@@ -2104,7 +2108,9 @@ jobs:
       - run:
           name: Recreate Fresh Database
           command: |
-            sudo systemctl stop determined-master
+            if systemctl is-active --quiet determined-master; then
+              sudo systemctl stop determined-master
+            fi
             PGPASSWORD=<<parameters.database_password>> dropdb --host=localhost --port=5432 --username=<<parameters.database_username>> --if-exists determined
             PGPASSWORD=<<parameters.database_password>> createdb --host=localhost --port=5432 --username=<<parameters.database_username>> determined
 
@@ -2170,7 +2176,7 @@ jobs:
           mark: <<parameters.mark>>
           master-host: localhost
           managed-devcluster: false
-          extra-pytest-flags: ""
+          extra-pytest-flags: <<parameters.extra-pytest-flags>>
 
       - store_test_results:
           path: /tmp/test-results/
