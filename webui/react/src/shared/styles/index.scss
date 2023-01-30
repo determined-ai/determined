@@ -53,6 +53,7 @@ code.block {
 }
 .u-wrap {
   overflow-x: visible;
+  overflow-y: hidden;
 }
 
 /* diamond cursor for most charts, see closestPointPlugin.module.scss for charts with that plugin (LearningCurve) */
