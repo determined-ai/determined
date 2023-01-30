@@ -25,8 +25,3 @@ export interface UPlotScatterProps {
   options: Partial<uPlot.Options>;
   tooltipLabels: (string | null)[];
 }
-
-export interface UPlotPoint {
-  idx: number;
-  seriesIdx: number;
-}
