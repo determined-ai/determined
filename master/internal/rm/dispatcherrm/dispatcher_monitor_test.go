@@ -239,21 +239,24 @@ func TestMonitorJobOperations(t *testing.T) {
 	timeout := time.Now().Add(30 * time.Second)
 	for !(jobWatcher.isJobBeingMonitored(job.dispatcherID)) {
 		if time.Now().After(timeout) {
-			break
+			assert.Assert(t, false, "Failed to monitor the job within the timeout limit.")
 		}
 	}
 	// Check if the job is being monitored.
 	jobWatcher.checkJob(job.dispatcherID)
-	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), true)
+	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), true,
+		"Failed to monitor the job.")
 	// Cancel job monitoring.
 	jobWatcher.removeJob(job.dispatcherID)
 	// Wait for the job to be removed from the monitored jobs with a timeout of 30 seconds.
 	timeout = time.Now().Add(30 * time.Second)
 	for jobWatcher.isJobBeingMonitored(job.dispatcherID) {
 		if time.Now().After(timeout) {
-			break
+			assert.Assert(t, false,
+				"Failed to remove the job from the monitoring queue within the timeout limit.")
 		}
 	}
 	// Check that job is not being monitored.
-	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), false)
+	assert.Equal(t, jobWatcher.isJobBeingMonitored(job.dispatcherID), false,
+		"Failed to remove the job from the monitoring queue.")
 }
