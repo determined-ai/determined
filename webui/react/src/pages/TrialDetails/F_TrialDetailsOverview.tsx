@@ -62,7 +62,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
 
       out.push({
         series,
-        xLabel: 'Batch',
+        title: trainingMetric.name.replace(TRAIN_PREFIX, '').replace(VAL_PREFIX, ''),
       });
     });
     return out;
