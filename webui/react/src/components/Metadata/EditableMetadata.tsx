@@ -58,7 +58,6 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
     },
     [updateMetadata],
   );
-  console.log(metadata);
 
   return (
     <Form initialValues={{ metadata: metadataList }} onValuesChange={onValuesChange}>
