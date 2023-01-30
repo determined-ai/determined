@@ -1,5 +1,5 @@
-import { Divider } from 'antd';
 import type { TabsProps } from 'antd';
+import { Divider } from 'antd';
 import React, { Fragment, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -19,13 +19,13 @@ import { ValueOf } from 'shared/types';
 import { clone } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { camelCaseToSentence, floatToPercent } from 'shared/utils/string';
-import { useAgents } from 'stores/agents';
-import { useResourcePools } from 'stores/resourcePools';
+import { useClusterStore } from 'stores/cluster';
 import { ShirtSize } from 'themes';
 import { JobState, ResourceState } from 'types';
 import { getSlotContainerStates } from 'utils/cluster';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { maxPoolSlotCapacity } from './Clusters/ClustersOverview';
 import ClustersQueuedChart from './Clusters/ClustersQueuedChart';
@@ -50,9 +50,8 @@ export const DEFAULT_POOL_TAB_KEY = TabType.Active;
 
 const ResourcepoolDetailInner: React.FC = () => {
   const { poolname, tab } = useParams<Params>();
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
-  const agents = Loadable.getOrElse([], useAgents());
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
+  const agents = Loadable.getOrElse([], useObservable(useClusterStore().agents));
 
   const pool = useMemo(() => {
     return resourcePools.find((pool) => pool.name === poolname);

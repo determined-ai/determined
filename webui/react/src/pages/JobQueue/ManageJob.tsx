@@ -9,11 +9,12 @@ import { getJobQ, updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import { ErrorType } from 'shared/utils/error';
 import { floatToPercent, truncate } from 'shared/utils/string';
-import { useResourcePools } from 'stores/resourcePools';
+import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
 import { Job, JobType, RPStats } from 'types';
 import handleError from 'utils/error';
 import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import css from './ManageJob.module.scss';
 const { Option } = Select;
@@ -83,8 +84,8 @@ const ManageJob: React.FC<Props> = ({
 }) => {
   const formRef = useRef<FormInstance<FormValues>>(null);
   const isOrderedQ = orderedSchedulers.has(schedulerType);
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
+  useRefetchClusterData();
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
 
   const details = useMemo(() => {

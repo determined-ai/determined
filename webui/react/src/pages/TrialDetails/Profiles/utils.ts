@@ -22,12 +22,14 @@ export const getUnitForMetricName = (metricName: string): string => {
 };
 
 export const getTimeTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
-  return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss'));
+  return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss.SSS').slice(0, -2));
 };
 
 export const getScientificNotationTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
   return rawValue.map((val) => {
     if (val === 0) return val;
-    return val > 9_999 || val < 0.0001 ? val.toExponential(2) : val;
+    return val > 9_999 || val < -9_999 || (0 < val && val < 0.0001) || (-0.0001 < val && val < 0)
+      ? val.toExponential(2)
+      : val;
   });
 };

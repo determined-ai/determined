@@ -167,6 +167,7 @@ export const LineChart: React.FC<Props> = ({
           label: xLabel,
           scale: 'x',
           side: 2,
+          space: 120,
           ticks: { show: false },
           values: xTickValues,
         },

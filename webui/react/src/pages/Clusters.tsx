@@ -8,13 +8,12 @@ import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'shared/types';
-import { useAgents, useClusterOverview } from 'stores/agents';
-import { useResourcePools } from 'stores/resourcePools';
-import { Loadable } from 'utils/loadable';
+import { useClusterStore, useRefetchClusterData } from 'stores/cluster';
+import { useObservable } from 'utils/observable';
 
 import ClusterHistoricalUsage from './Cluster/ClusterHistoricalUsage';
 import ClusterLogs from './ClusterLogs';
-import ClustersOverview, { clusterStatusText } from './Clusters/ClustersOverview';
+import ClustersOverview from './Clusters/ClustersOverview';
 
 const TabType = {
   HistoricalUsage: 'historical-usage',
@@ -38,17 +37,9 @@ const Clusters: React.FC = () => {
   const navigate = useNavigate();
 
   const [tabKey, setTabKey] = useState<TabType>(tab || DEFAULT_TAB_KEY);
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
-  const overview = useClusterOverview();
-  const agents = useAgents();
 
-  const cluster = useMemo(() => {
-    return Loadable.match(Loadable.all([agents, overview]), {
-      Loaded: ([agents, overview]) => clusterStatusText(overview, resourcePools, agents),
-      NotLoaded: () => undefined, // TODO show spinner when this is loading
-    });
-  }, [overview, resourcePools, agents]);
+  useRefetchClusterData();
+  const clusterStatus = useObservable(useClusterStore().clusterStatus);
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -93,7 +84,7 @@ const Clusters: React.FC = () => {
   }, [canAdministrateUsers, rbacEnabled]);
 
   return (
-    <Page id="cluster" title={`Cluster ${cluster ? `- ${cluster}` : ''}`}>
+    <Page id="cluster" title={`Cluster ${clusterStatus ? `- ${clusterStatus}` : ''}`}>
       <Pivot defaultActiveKey={tabKey} items={tabItems} onChange={handleTabChange} />
     </Page>
   );

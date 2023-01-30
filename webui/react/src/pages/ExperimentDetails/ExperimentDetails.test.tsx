@@ -14,8 +14,8 @@ import {
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
+import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
-import { ResourcePoolsProvider } from 'stores/resourcePools';
 import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
@@ -76,13 +76,13 @@ const setup = () => {
           <UsersProvider>
             <AuthProvider>
               <UserRolesProvider>
-                <ResourcePoolsProvider>
+                <ClusterProvider>
                   <ProjectsProvider>
                     <HistoryRouter history={history}>
                       <ExperimentDetails />
                     </HistoryRouter>
                   </ProjectsProvider>
-                </ResourcePoolsProvider>
+                </ClusterProvider>
               </UserRolesProvider>
             </AuthProvider>
           </UsersProvider>
