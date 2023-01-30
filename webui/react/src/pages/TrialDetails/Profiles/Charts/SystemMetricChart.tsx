@@ -18,7 +18,7 @@ export interface Settings {
   name?: string;
 }
 
-const config: SettingsConfig<Settings> = {
+const config = (trialId: number): SettingsConfig<Settings> => ({
   settings: {
     agentId: {
       defaultValue: undefined,
@@ -36,11 +36,11 @@ const config: SettingsConfig<Settings> = {
       type: union([undefinedType, string]),
     },
   },
-  storagePath: 'profiler-filters',
-};
+  storagePath: `profiler-filters-${trialId}`,
+});
 
 const SystemMetricChart: React.FC<ChartProps> = ({ getOptionsForMetrics, trial }) => {
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(config(trial.id));
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
 
