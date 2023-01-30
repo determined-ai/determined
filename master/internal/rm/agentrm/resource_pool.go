@@ -487,7 +487,7 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		reschedule = false
 		var totalSlots int
 		switch {
-		case rp.config.Provider == nil:
+		case rp.config.Provider == nil || rp.config.Provider.HPC != nil:
 			if rp.agentStatesCache == nil {
 				rp.agentStatesCache = rp.fetchAgentStates(ctx)
 			}
@@ -513,9 +513,13 @@ func (rp *resourcePool) Receive(ctx *actor.Context) error {
 		})
 
 	case sproto.HasAgentWithLabel:
-		// We could maybe count agent labels in add agent and remove agent
-		// to save this fetchAgentStates but this is simpler for now.
 		reschedule = false
+		// Avoid giving warning for when we will provision instances.
+		if msg.Label == "" && rp.config.Provider != nil {
+			ctx.Respond(true)
+			return nil
+		}
+
 		if rp.agentStatesCache == nil {
 			rp.agentStatesCache = rp.fetchAgentStates(ctx)
 		}
