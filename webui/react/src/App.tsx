@@ -16,7 +16,6 @@ import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
-import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
@@ -60,7 +59,6 @@ const AppView: React.FC = () => {
     if (isServerReachable) checkAuth();
   }, [checkAuth, isServerReachable]);
 
-  useTheme();
   useKeyTracker();
   usePageVisibility();
   useRouteTracker();
