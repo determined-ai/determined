@@ -1,4 +1,3 @@
-import { useObservable } from 'micro-observables';
 import React, { ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
@@ -10,13 +9,13 @@ import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';
 import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { useAgents, useClusterOverview } from 'stores/agents';
+import { useClusterStore } from 'stores/cluster';
 import { ExperimentsService } from 'stores/experiments';
-import { useResourcePools } from 'stores/resourcePools';
 import { useActiveTasks, useFetchActiveTasks } from 'stores/tasks';
 import { ShirtSize } from 'themes';
 import { ResourceType } from 'types';
 import { Loadable } from 'utils/loadable';
+import { useObservable } from 'utils/observable';
 
 import { maxClusterSlotCapacity } from '../Clusters/ClustersOverview';
 
@@ -26,10 +25,9 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
 };
 
 export const ClusterOverallStats: React.FC = () => {
-  const loadableResourcePools = useResourcePools();
-  const resourcePools = Loadable.getOrElse([], loadableResourcePools); // TODO show spinner when this is loading
-  const overview = useClusterOverview();
-  const agents = useAgents();
+  const resourcePools = Loadable.getOrElse([], useObservable(useClusterStore().resourcePools)); // TODO show spinner when this is loading
+  const agents = useObservable(useClusterStore().agents);
+  const clusterOverview = useObservable(useClusterStore().clusterOverview);
   const experimentsService = ExperimentsService.getInstance();
 
   const [canceler] = useState(new AbortController());
@@ -76,7 +74,7 @@ export const ClusterOverallStats: React.FC = () => {
           })}
         </OverviewStats>
         {[ResourceType.CUDA, ResourceType.ROCM, ResourceType.CPU].map((resType) =>
-          Loadable.match(Loadable.all([overview, maxTotalSlots]), {
+          Loadable.match(Loadable.all([clusterOverview, maxTotalSlots]), {
             Loaded: ([overview, maxTotalSlots]) =>
               maxTotalSlots[resType] > 0 ? (
                 <OverviewStats key={resType} title={`${resType} Slots Allocated`}>

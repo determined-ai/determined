@@ -22,7 +22,7 @@ import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
-import { StoreContext } from 'stores';
+import { StoreProvider } from 'stores';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
@@ -151,11 +151,11 @@ const AppView: React.FC = () => {
 const App: React.FC = () => {
   return (
     <HelmetProvider>
-      <StoreContext>
+      <StoreProvider>
         <DndProvider backend={HTML5Backend}>
           <AppView />
         </DndProvider>
-      </StoreContext>
+      </StoreProvider>
     </HelmetProvider>
   );
 };
