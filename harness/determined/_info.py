@@ -360,7 +360,7 @@ class ClusterInfo:
         return self._rendezvous_info.container_addrs
 
     @property
-    def container_slots(self) -> List[int]:
+    def container_slot_counts(self) -> List[int]:
         """A list of slots for all containers in the allocation, ordered by rank."""
         if self.task_type != "TRIAL":
             # Presently, only trials are allowed to use the rendezvous API.

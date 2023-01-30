@@ -118,8 +118,11 @@ def do_rendezvous_slurm(
             },
         ),
     )
-    addrs = [d["rendezvous_ip"] for d in sorted(resp.data, key=lambda d: int(d["rank"]))]
-    slots = [d["slots"] for d in sorted(resp.data, key=lambda d: int(d["rank"]))]
+
+    by_rank = sorted(resp.data, key=lambda d: int(d["rank"]))
+    addrs = [d["rendezvous_ip"] for d in by_rank]
+    slots = [d["slots"] for d in by_rank]
+
     return det.RendezvousInfo(
         container_addrs=addrs,
         container_rank=rank,

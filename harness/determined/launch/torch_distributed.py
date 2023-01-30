@@ -75,8 +75,6 @@ def main(override_args: List[str], script: List[str]) -> int:
     info = det.get_cluster_info()
     assert info is not None, "must be run on-cluster"
 
-    assert len(set(info.container_slots)) == 1, "pytorch dtrain doesn't support lopsided jobs"
-
     os.environ["USE_TORCH_DISTRIBUTED"] = "True"
 
     chief_ip = info.container_addrs[0]

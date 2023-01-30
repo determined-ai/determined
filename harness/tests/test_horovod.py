@@ -11,7 +11,7 @@ def test_create_run_command(
     debug: bool, auto_tune: bool, tensor_fusion_threshold: int, tensor_fusion_cycle_time: int
 ) -> None:
     ip_addresses = ["localhost", "128.140.2.4"]
-    num_proc_per_machine = [8, 8]
+    host_slot_counts = [8, 8]
     optimizations = {
         "auto_tune_tensor_fusion": auto_tune,
         "tensor_fusion_threshold": tensor_fusion_threshold,
@@ -57,7 +57,7 @@ def test_create_run_command(
     expected_horovod_run_cmd.append("--")
 
     created_horovod_run_cmd = horovod.create_run_command(
-        num_proc_per_machine=num_proc_per_machine,
+        host_slot_counts=host_slot_counts,
         ip_addresses=ip_addresses,
         inter_node_network_interface=None,
         optimizations=optimizations,
@@ -69,12 +69,6 @@ def test_create_run_command(
 
 
 def test_create_hostlist_arg() -> None:
-    ip_addresses = ["localhost", "128.140.2.4"]
-    num_proc_per_machine = [8, 8]
-    expected_horovod_hostlist_arg = (
-        f"{ip_addresses[0]}:{num_proc_per_machine},{ip_addresses[1]}:{num_proc_per_machine}"
+    assert "localhost:8,128.140.2.4" == horovod.create_hostlist_arg(
+        host_slot_counts=["localhost", "128.140.2.4"], ip_addresses=[8, 8]
     )
-    created_horovod_hostlist_arg = horovod.create_hostlist_arg(
-        num_proc_per_machine=num_proc_per_machine, ip_addresses=ip_addresses
-    )
-    assert expected_horovod_hostlist_arg == created_horovod_hostlist_arg
