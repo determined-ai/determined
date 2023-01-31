@@ -195,13 +195,6 @@ func (a *apiServer) LaunchTensorboard(
 		err = errors.New("must set experiment or trial ids")
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
-	if err != nil {
-		return nil, err
-	}
-	if len(exps) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "no experiments found")
-	}
 
 	spec, launchWarnings, err := a.getCommandLaunchParams(ctx, &protoCommandParams{
 		TemplateName: req.TemplateName,
@@ -219,6 +212,14 @@ func (a *apiServer) LaunchTensorboard(
 	}
 	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
+	}
+	
+	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
+	if err != nil {
+		return nil, err
+	}
+	if len(exps) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "no experiments found")
 	}
 
 	spec.WatchProxyIdleTimeout = true
