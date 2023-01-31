@@ -38,7 +38,7 @@ const SpinnerComponent = ({ spinning, handleButtonClick }: Props) => {
   );
 };
 
-const setup = (spinning: boolean) => {
+const setup = async (spinning: boolean) => {
   const handleButtonClick = jest.fn();
   const { container } = render(
     // apply css-in-js styles without the :when selector
@@ -46,12 +46,13 @@ const setup = (spinning: boolean) => {
       <SpinnerComponent handleButtonClick={handleButtonClick} spinning={spinning} />,
     </StyleProvider>,
   );
+  await new Promise((resolve) => setTimeout(resolve, 10));
   return { container, handleButtonClick };
 };
 
 describe('Spinner', () => {
   it('blocks inner content while spinning', async () => {
-    const { handleButtonClick } = setup(true);
+    const { handleButtonClick } = await setup(true);
     const button = await screen.findByTestId('inside-button');
     let error = null;
     try {
@@ -66,24 +67,24 @@ describe('Spinner', () => {
   });
 
   it('doesnt block inner content when not spinning', async () => {
-    const { handleButtonClick } = setup(false);
+    const { handleButtonClick } = await setup(false);
     const button = screen.getByTestId('inside-button');
     await user.click(button);
     expect(handleButtonClick).toHaveBeenCalledTimes(1);
   });
 
   it('displays tip text when spinning', async () => {
-    setup(true);
+    await setup(true);
     expect(await screen.findByText(spinnerTextContent)).toBeInTheDocument();
   });
 
-  it('doesnt display tip text when not spinning', () => {
-    setup(false);
+  it('doesnt display tip text when not spinning', async () => {
+    await setup(false);
     expect(screen.queryByText(spinnerTextContent)).not.toBeInTheDocument();
   });
 
   it('goes away when spinning is updated to false', async () => {
-    const { container } = setup(true);
+    const { container } = await setup(true);
 
     await waitFor(() => {
       expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
@@ -95,7 +96,7 @@ describe('Spinner', () => {
   });
 
   it('appears when spinning is updated to false', async () => {
-    const { container } = setup(false);
+    const { container } = await setup(false);
     expect(container.getElementsByClassName('ant-spin-spinning')?.[0]).toBeFalsy();
     await user.click(screen.getByTestId('toogle-button'));
     await waitFor(() => {

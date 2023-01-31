@@ -99,14 +99,16 @@ const AppView: React.FC = () => {
           .
         </div>
       );
-      notification.warning({
-        btn,
-        description,
-        duration: 0,
-        key: 'version-mismatch',
-        message,
-        placement: 'bottomRight',
-      });
+      setTimeout(() => {
+        notification.warning({
+          btn,
+          description,
+          duration: 0,
+          key: 'version-mismatch',
+          message,
+          placement: 'bottomRight',
+        });
+      }, 10);
     }
   }, [info]);
 
@@ -154,15 +156,13 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <StoreProvider>
-        <DndProvider backend={HTML5Backend}>
-          <ThemeProvider>
-            <AntdApp>
-              <DndProvider backend={HTML5Backend}>
-                <AppView />
-              </DndProvider>
-            </AntdApp>
-          </ThemeProvider>
-        </DndProvider>
+        <ThemeProvider>
+          <AntdApp>
+            <DndProvider backend={HTML5Backend}>
+              <AppView />
+            </DndProvider>
+          </AntdApp>
+        </ThemeProvider>
       </StoreProvider>
     </HelmetProvider>
   );
