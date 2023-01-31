@@ -3,46 +3,46 @@ Description:  This template deploys a VPC, with a public and private subnet. It 
 Mappings:
   RegionMap:
     ap-northeast-1:
-      Master: ami-09b18720cb71042df
-      Agent: ami-0e869a96e81e4c106
-      Bastion: ami-09b18720cb71042df
+      Master: ami-0c7cb70d3eb61492b
+      Agent: ami-0e387df6db01a140b
+      Bastion: ami-0c7cb70d3eb61492b
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
-    #   Master: ami-07d16c043aa8e5153
-    #   Agent: ami-03bd3b100feb865bb
-    #   Bastion: ami-07d16c043aa8e5153
+    #   Master: ami-003bb1772f36a39a3
+    #   Agent: ami-0cea9daadddfb0276
+    #   Bastion: ami-003bb1772f36a39a3
     # ap-southeast-1:
-    #   Master: ami-00e912d13fbb4f225
-    #   Agent: ami-0f3517aae74b1acae
-    #   Bastion: ami-00e912d13fbb4f225
+    #   Master: ami-09f03fa5572692399
+    #   Agent: ami-04d3b81fec4bbe023
+    #   Bastion: ami-09f03fa5572692399
     # ap-southeast-2:
-    #   Master: ami-055166f8a8041fbf1
-    #   Agent: ami-09ff97700ee2396b5
-    #   Bastion: ami-055166f8a8041fbf1
+    #   Master: ami-06139e5e22cc2f7b1
+    #   Agent: ami-03680305ff2d7da4b
+    #   Bastion: ami-06139e5e22cc2f7b1
     eu-central-1:
-      Master: ami-06148e0e81e5187c8
-      Agent: ami-03f98ed935d6413bb
-      Bastion: ami-06148e0e81e5187c8
+      Master: ami-0b81e95bb0a06ea8c
+      Agent: ami-0898ed19e82fdfe14
+      Bastion: ami-0b81e95bb0a06ea8c
     eu-west-1:
-      Master: ami-0fd8802f94ed1c969
-      Agent: ami-0486dbd675e5d21fc
-      Bastion: ami-0fd8802f94ed1c969
+      Master: ami-029cfca952b331b52
+      Agent: ami-048baab314687956f
+      Bastion: ami-029cfca952b331b52
     # eu-west-2:
-    #   Master: ami-04842bc62789b682e
-    #   Agent: ami-0ba5e33f4b5a82550
-    #   Bastion: ami-04842bc62789b682e
+    #   Master: ami-035469b606478d63d
+    #   Agent: ami-01ac7a466ba9e2873
+    #   Bastion: ami-035469b606478d63d
     us-east-1:
-      Master: ami-0149b2da6ceec4bb0
-      Agent: ami-02aa57541c622dde4
-      Bastion: ami-0149b2da6ceec4bb0
+      Master: ami-0b93ce03dcbcb10f6
+      Agent: ami-01fbeae9dcfb2d0da
+      Bastion: ami-0b93ce03dcbcb10f6
     us-east-2:
-      Master: ami-0d5bf08bc8017c83b
-      Agent: ami-06b2144e6efc0145e
-      Bastion: ami-0d5bf08bc8017c83b
+      Master: ami-0cbea92f2377277a4
+      Agent: ami-072cdb88d5e50a1b1
+      Bastion: ami-0cbea92f2377277a4
     us-west-2:
-      Master: ami-0c09c7eb16d3e8e70
-      Agent: ami-0a3fcac423fda2fd1
-      Bastion: ami-0c09c7eb16d3e8e70
+      Master: ami-0d31d7c9fc9503726
+      Agent: ami-089c1a26ab9201661
+      Bastion: ami-0d31d7c9fc9503726
 
 Parameters:
   VpcCIDR:
