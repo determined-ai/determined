@@ -4,7 +4,9 @@
  OpenID Connect Integration
 ############################
 
-OpenID Connect Integration applies to Determined Enterprise Edition.
+.. attention::
+
+   OpenID Connect Integration applies only to Determined Enterprise Edition.
 
 Determined EE provides an OpenID Connect (OIDC) integration allowing users to use single sign-on
 (SSO) with their organization's identity provider (IdP). OIDC is an extension of OAuth 2.0 which

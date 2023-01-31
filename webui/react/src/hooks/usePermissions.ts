@@ -1,8 +1,9 @@
+import { useObservable } from 'micro-observables';
 import { useMemo } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
-import { useUserAssignments, useUserRoles } from 'stores/userRoles';
+import { UserRolesService } from 'stores/userRoles';
 import { useCurrentUser } from 'stores/users';
 import {
   DetailedUser,
@@ -90,12 +91,17 @@ const usePermissions = (): PermissionsHook => {
     Loaded: (cUser) => cUser,
     NotLoaded: () => undefined,
   });
-  const loadableUserAssignments = useUserAssignments();
+
+  // Loadables keep track of loading status
+  // userAssignments and userRoles should always be an array -- empty arrays until loading is complete.
+  const loadableUserAssignments = useObservable<Loadable<UserAssignment[]>>(
+    UserRolesService.getUserAssignments(),
+  );
   const userAssignments = Loadable.match(loadableUserAssignments, {
     Loaded: (uAssignments) => uAssignments,
     NotLoaded: () => [],
   });
-  const loadableUserRoles = useUserRoles();
+  const loadableUserRoles = useObservable<Loadable<UserRole[]>>(UserRolesService.getUserRoles());
   const userRoles = Loadable.match(loadableUserRoles, {
     Loaded: (uRoles) => uRoles,
     NotLoaded: () => [],

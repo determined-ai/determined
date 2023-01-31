@@ -17,7 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/command"
-	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -501,7 +500,7 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 	imageID := ""
 	instanceType := na
 	slotsPerAgent := k.config.MaxSlotsPerPod
-	slotType := device.ZeroSlot
+
 	accelerator := ""
 	schedulerType := resourcepoolv1.SchedulerType_SCHEDULER_TYPE_KUBERNETES
 
@@ -509,6 +508,7 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 		Name:                         pool.PoolName,
 		Description:                  pool.Description,
 		Type:                         poolType,
+		SlotType:                     k.config.SlotType.Proto(),
 		DefaultAuxPool:               k.config.DefaultAuxResourcePool == poolName,
 		DefaultComputePool:           k.config.DefaultComputeResourcePool == poolName,
 		Preemptible:                  preemptible,
@@ -520,7 +520,6 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 		ImageId:                      imageID,
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
-		SlotType:                     slotType.Proto(),
 		Accelerator:                  accelerator,
 	}
 
@@ -534,9 +533,6 @@ func (k *kubernetesResourceManager) createResourcePoolSummary(
 	resp.SlotsUsed = int32(resourceSummary.numActiveSlots)
 	resp.AuxContainerCapacity = int32(resourceSummary.maxNumAuxContainers)
 	resp.AuxContainersRunning = int32(resourceSummary.numActiveAuxContainers)
-	if pool.Provider == nil && resp.NumAgents > 0 {
-		resp.SlotType = resourceSummary.slotType.Proto()
-	}
 
 	return resp, nil
 }
