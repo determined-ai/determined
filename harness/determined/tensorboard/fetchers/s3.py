@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 import urllib.parse
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Callable, Dict, Generator, List, Tuple
 
 from .base import Fetcher
 
@@ -45,7 +45,7 @@ class S3Fetcher(Fetcher):
         if page_count > 1:
             logger.info(f"Fetched {page_count} number of list_objects_v2 pages")
 
-    def fetch_new(self) -> int:
+    def fetch_new(self, new_file_callback: Callable = lambda: None) -> int:
         """Fetches changes files found in storage paths to local disk."""
         new_files = []
 
@@ -70,5 +70,6 @@ class S3Fetcher(Fetcher):
                 self.client.download_fileobj(self.bucket_name, filepath, local_file)
 
             logger.debug(f"Downloaded file to local: {local_path}")
+            new_file_callback()
 
         return len(new_files)
