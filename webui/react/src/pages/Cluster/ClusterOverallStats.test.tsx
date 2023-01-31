@@ -5,7 +5,6 @@ import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider } from 'stores/auth';
 import { ClusterProvider } from 'stores/cluster';
 import { TasksProvider } from 'stores/tasks';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
@@ -22,13 +21,11 @@ const setup = () => {
     <UIProvider>
       <AuthProvider>
         <UsersProvider>
-          <UserRolesProvider>
-            <TasksProvider>
-              <ClusterProvider>
-                <ClusterOverallStats />
-              </ClusterProvider>
-            </TasksProvider>
-          </UserRolesProvider>
+          <TasksProvider>
+            <ClusterProvider>
+              <ClusterOverallStats />
+            </ClusterProvider>
+          </TasksProvider>
         </UsersProvider>
       </AuthProvider>
     </UIProvider>,

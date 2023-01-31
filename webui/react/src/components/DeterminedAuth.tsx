@@ -14,7 +14,7 @@ import useUI from 'shared/contexts/stores/UI';
 import { ErrorType } from 'shared/utils/error';
 import { StorageManager } from 'shared/utils/storage';
 import { useAuth } from 'stores/auth';
-import { useEnsureUserRolesAndAssignmentsFetched } from 'stores/userRoles';
+import { UserRolesService } from 'stores/userRoles';
 import { useUpdateCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 
@@ -36,11 +36,11 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const { actions: uiActions } = useUI();
   const updateCurrentUser = useUpdateCurrentUser();
   const { setAuth } = useAuth();
-  const fetchMyRoles = useEnsureUserRolesAndAssignmentsFetched(canceler);
   const rbacEnabled = useFeature().isOn('rbac');
   const [isBadCredentials, setIsBadCredentials] = useState<boolean>(false);
   const [canSubmit, setCanSubmit] = useState<boolean>(!!storage.get(STORAGE_KEY_LAST_USERNAME));
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const fetchMyRoles = UserRolesService.fetchUserAssignmentsAndRoles(canceler);
 
   const onFinish = useCallback(
     async (creds: FromValues): Promise<void> => {
@@ -59,6 +59,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         setAuth({ isAuthenticated: true, token });
         updateCurrentUser(user.id);
         if (rbacEnabled) {
+          // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
           await fetchMyRoles();
         }
         storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);

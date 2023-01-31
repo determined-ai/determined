@@ -186,7 +186,11 @@ export const useUpdateCurrentUser = (): ((id: number) => void) => {
   const { updateCurrentUser } = context;
   const callback = useCallback(
     (id: number) => {
-      updateCurrentUser(() => Loaded(id));
+      if (id <= 0) {
+        updateCurrentUser(() => NotLoaded);
+      } else {
+        updateCurrentUser(() => Loaded(id));
+      }
     },
     [updateCurrentUser],
   );
