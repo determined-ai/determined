@@ -32,11 +32,11 @@ class RendezvousInfo:
         self,
         container_addrs: List[str],
         container_rank: int,
-        container_slots: List[int],
+        container_slot_counts: List[int],
     ):
         self.container_addrs = container_addrs
         self.container_rank = container_rank
-        self.container_slots = container_slots
+        self.container_slot_counts = container_slot_counts
 
     def _to_file(self, path: str = DEFAULT_RENDEZVOUS_INFO_PATH) -> None:
         """
@@ -367,7 +367,7 @@ class ClusterInfo:
             # But also, only trials are scheduled across multiple nodes, so we can cheat here.
             return [len(self.slot_ids)]
         assert self._rendezvous_info is not None
-        return self._rendezvous_info.container_slots
+        return self._rendezvous_info.container_slot_counts
 
     @property
     def container_rank(self) -> int:

@@ -239,7 +239,7 @@ def main(script: List[str]) -> int:
     with filelock.FileLock(lock):
         master_address = create_hostlist_file(
             hostfile_path=hostfile_path,
-            host_slot_counts=info.container_slots,
+            host_slot_counts=info.container_slot_counts,
             ip_addresses=info.container_addrs,
         )
 

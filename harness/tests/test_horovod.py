@@ -69,6 +69,6 @@ def test_create_run_command(
 
 
 def test_create_hostlist_arg() -> None:
-    assert "localhost:8,128.140.2.4" == horovod.create_hostlist_arg(
-        host_slot_counts=["localhost", "128.140.2.4"], ip_addresses=[8, 8]
+    assert "localhost:8,128.140.2.4:8" == horovod.create_hostlist_arg(
+        ip_addresses=["localhost", "128.140.2.4"], host_slot_counts=[8, 8]
     )

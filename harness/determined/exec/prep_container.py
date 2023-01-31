@@ -74,7 +74,7 @@ def do_rendezvous_rm_provided(
     return det.RendezvousInfo(
         container_addrs=list(resp.rendezvousInfo.addresses),
         container_rank=resp.rendezvousInfo.rank,
-        container_slots=list(resp.rendezvousInfo.slots),
+        container_slot_counts=list(resp.rendezvousInfo.slots),
     )
 
 
@@ -126,7 +126,7 @@ def do_rendezvous_slurm(
     return det.RendezvousInfo(
         container_addrs=addrs,
         container_rank=rank,
-        container_slots=slots,
+        container_slot_counts=slots,
     )
 
 
