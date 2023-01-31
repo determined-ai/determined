@@ -271,7 +271,8 @@ const WorkspaceDetails: React.FC = () => {
           workspace={workspace}
         />
       }
-      id="workspaceDetails">
+      id="workspaceDetails"
+      key={workspaceId}>
       <Pivot
         activeKey={tabKey}
         destroyInactiveTabPane
