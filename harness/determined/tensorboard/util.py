@@ -53,7 +53,6 @@ def get_rank_aware_path(path: pathlib.Path, rank: int) -> pathlib.Path:
             while num_parts > 0:
                 path = path.with_suffix("")
                 num_parts -= 1
-            path = path.with_name(f"{path.name}#{rank}")
-            path = path.with_suffix(ext)
+            path = path.with_name(f"{path.name}#{rank}{ext}")
             return path
     return path
