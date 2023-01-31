@@ -64,12 +64,12 @@ def activate_experiment(experiment_id: int) -> None:
 
 
 def cancel_experiment(experiment_id: int) -> None:
-    bindings.post_CancelExperiment(api_utils.determined_test_session(), id=experiment_id)
+    bindings.post_CancelExperiment(api_utils.determined_test_session_t(), id=experiment_id)
     wait_for_experiment_state(experiment_id, experimentv1State.STATE_CANCELED)
 
 
 def cancel_trial(trial_id: int) -> None:
-    bindings.post_KillTrial(api_utils.determined_test_session(), id=trial_id)
+    bindings.post_KillTrial(api_utils.determined_test_session_t(), id=trial_id)
     wait_for_trial_state(trial_id, experimentv1State.STATE_CANCELED)
 
 
@@ -82,7 +82,7 @@ def wait_for_experiment_by_name_is_active(
     for seconds_waited in range(max_wait_secs):
         try:
             response = bindings.get_GetExperiments(
-                api_utils.determined_test_session(), name=experiment_name
+                api_utils.determined_test_session_t(), name=experiment_name
             ).experiments
             if len(response) == 0:
                 time.sleep(1)
@@ -146,7 +146,6 @@ def wait_for_experiment_state(
     log_every: int = 60,
 ) -> None:
     for seconds_waited in range(max_wait_secs):
-        api_utils.setup_cli_globals(authentication.Credentials("determined", ""))
         try:
             state = experiment_state(experiment_id)
         except api.errors.NotFoundException:
@@ -310,7 +309,7 @@ def experiment_has_completed_workload(experiment_id: int) -> bool:
 
 
 def experiment_first_trial(exp_id: int) -> int:
-    session = api_utils.determined_test_session()
+    session = api_utils.determined_test_session_t()
     trials = bindings.get_GetExperimentTrials(session, experimentId=exp_id).trials
 
     assert len(trials) > 0
@@ -320,18 +319,22 @@ def experiment_first_trial(exp_id: int) -> int:
 
 
 def experiment_config_json(experiment_id: int) -> Dict[str, Any]:
-    r = bindings.get_GetExperiment(api_utils.determined_test_session(), experimentId=experiment_id)
+    r = bindings.get_GetExperiment(
+        api_utils.determined_test_session_t(), experimentId=experiment_id
+    )
     assert r.experiment and r.experiment.config
     return r.experiment.config
 
 
 def experiment_state(experiment_id: int) -> experimentv1State:
-    r = bindings.get_GetExperiment(api_utils.determined_test_session(), experimentId=experiment_id)
+    r = bindings.get_GetExperiment(
+        api_utils.determined_test_session_t(), experimentId=experiment_id
+    )
     return r.experiment.state
 
 
 def trial_state(trial_id: int) -> experimentv1State:
-    r = bindings.get_GetTrial(api_utils.determined_test_session(), trialId=trial_id)
+    r = bindings.get_GetTrial(api_utils.determined_test_session_t(), trialId=trial_id)
     return r.trial.state
 
 
@@ -344,7 +347,7 @@ class TrialPlusWorkload:
 
 
 def experiment_trials(experiment_id: int) -> List[TrialPlusWorkload]:
-    sess = api_utils.determined_test_session()
+    sess = api_utils.determined_test_session_t()
     r1 = bindings.get_GetExperimentTrials(sess, experimentId=experiment_id)
     src_trials = r1.trials
     trials = []
@@ -410,7 +413,7 @@ def num_error_trials(experiment_id: int) -> int:
 def trial_logs(trial_id: int, follow: bool = False) -> List[str]:
     return [
         tl.message
-        for tl in api.trial_logs(api_utils.determined_test_session(), trial_id, follow=follow)
+        for tl in api.trial_logs(api_utils.determined_test_session_t(), trial_id, follow=follow)
     ]
 
 

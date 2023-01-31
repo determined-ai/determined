@@ -31,18 +31,15 @@ def determined_test_session(
     return api.Session(murl, credentials.username, auth, cert)
 
 
-def setup_cli_globals(credentials: authentication.Credentials) -> None:
-    """
-    avoid using this if you can.
-    It's a stopgap until we can update the tests to not rely on this.
-    """
-    murl = conf.make_master_url()
-    cert = certs.default_load(murl)
-    auth = authentication.Authentication(
-        murl, requested_user=credentials.username, password=credentials.password
-    )
-    certs.cli_cert = cert
-    authentication.cli_auth = auth
+def determined_test_session_t(
+    credentials: Optional[authentication.Credentials] = None,
+    admin: Optional[bool] = None,
+) -> api.Session:
+    """determined_test_session() that also sets cli globals."""
+    session = determined_test_session(credentials, admin)
+    certs.cli_cert = session._cert
+    authentication.cli_auth = session._auth
+    return session
 
 
 def create_test_user(
