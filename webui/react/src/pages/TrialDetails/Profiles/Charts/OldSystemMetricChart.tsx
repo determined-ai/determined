@@ -1,16 +1,14 @@
 import { string, undefined as undefinedType, union } from 'io-ts';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
-import { LineChart } from 'components/kit/LineChart';
-import { XAxisDomain } from 'components/kit/LineChart/XAxisFilter';
 import Section from 'components/Section';
+import UPlotChart from 'components/UPlot/UPlotChart';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 
-import { ChartProps } from '../types';
+import { OldChartProps } from '../types';
 import { MetricType } from '../types';
-import { useFetchProfilerMetrics } from '../useFetchProfilerMetrics';
 import { useFetchProfilerSeries } from '../useFetchProfilerSeries';
-import { getScientificNotationTickValues, getTimeTickValues, getUnitForMetricName } from '../utils';
+import { useOldFetchProfilerMetrics } from '../useOldFetchProfilerMetrics';
 
 import SystemMetricFilter from './SystemMetricChartFilters';
 
@@ -41,12 +39,12 @@ const config = (trialId: number): SettingsConfig<Settings> => ({
   storagePath: `profiler-filters-${trialId}`,
 });
 
-const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
+const SystemMetricChart: React.FC<OldChartProps> = ({ getOptionsForMetrics, trial }) => {
   const { settings, updateSettings } = useSettings<Settings>(config(trial.id));
 
   const systemSeries = useFetchProfilerSeries(trial.id)[MetricType.System];
 
-  const systemMetrics = useFetchProfilerMetrics(
+  const systemMetrics = useOldFetchProfilerMetrics(
     trial.id,
     trial.state,
     MetricType.System,
@@ -55,7 +53,10 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
     settings.gpuUuid,
   );
 
-  const yLabel = getUnitForMetricName(settings.name ?? '');
+  const options = useMemo(
+    () => getOptionsForMetrics(settings.name ?? '', systemMetrics.names),
+    [getOptionsForMetrics, settings.name, systemMetrics.names],
+  );
 
   useEffect(() => {
     if (!systemSeries || (settings.agentId && settings.name)) return;
@@ -89,14 +90,7 @@ const SystemMetricChart: React.FC<ChartProps> = ({ trial }) => {
         )
       }
       title="System Metrics">
-      <LineChart
-        series={systemMetrics.data}
-        xAxis={XAxisDomain.Time}
-        xLabel="Time"
-        xTickValues={getTimeTickValues}
-        yLabel={yLabel}
-        yTickValues={getScientificNotationTickValues}
-      />
+      <UPlotChart data={systemMetrics.data} options={options} />
     </Section>
   );
 };
