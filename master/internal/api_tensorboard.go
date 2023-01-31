@@ -213,7 +213,7 @@ func (a *apiServer) LaunchTensorboard(
 	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
 	}
-	
+
 	exps, err := a.getTensorBoardConfigsFromReq(ctx, a.m.db, req)
 	if err != nil {
 		return nil, err
