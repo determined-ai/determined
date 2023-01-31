@@ -146,6 +146,7 @@ def wait_for_experiment_state(
     log_every: int = 60,
 ) -> None:
     for seconds_waited in range(max_wait_secs):
+        api_utils.setup_cli_globals(authentication.Credentials("determined", ""))
         try:
             state = experiment_state(experiment_id)
         except api.errors.NotFoundException:

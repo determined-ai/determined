@@ -31,6 +31,30 @@ def determined_test_session(
     return api.Session(murl, credentials.username, auth, cert)
 
 
+def setup_cli_globals(credentials: authentication.Credentials) -> None:
+    murl = conf.make_master_url()
+    cert = certs.default_load(murl)
+    # if credentials is None:
+    #     # if admin:
+    #     #     credentials = test_users.ADMIN_CREDENTIALS
+    #     # else:
+    #     credentials = authentication.Credentials("determined", "")
+
+    auth = authentication.Authentication(
+        murl, requested_user=credentials.username, password=credentials.password
+    )
+    certs.cli_cert = cert
+    authentication.cli_auth = auth
+
+
+# def determined_test_session_transition() -> api.Session:
+#     """@deprecated: Use determined_test_session() instead."""
+#     session = determined_test_session()
+#     certs.cli_cert = session._cert
+#     authentication.cli_auth = session._auth
+#     return session
+
+
 def create_test_user(
     add_password: bool = False,
     session: Optional[api.Session] = None,
