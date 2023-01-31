@@ -24,11 +24,11 @@ def determined_test_session(
             credentials = authentication.Credentials("determined", "")
 
     murl = conf.make_master_url()
-    certs.cli_cert = certs.default_load(murl)
-    authentication.cli_auth = authentication.Authentication(
+    cert = certs.default_load(murl)
+    auth = authentication.Authentication(
         murl, requested_user=credentials.username, password=credentials.password
     )
-    return api.Session(murl, credentials.username, authentication.cli_auth, certs.cli_cert)
+    return api.Session(murl, credentials.username, auth, cert)
 
 
 def create_test_user(
