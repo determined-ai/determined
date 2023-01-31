@@ -227,7 +227,7 @@ export const LineChart: React.FC<Props> = ({
   ]);
 
   return (
-    <>
+    <div className="diamond-cursor">
       {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
         allowDownload
@@ -247,7 +247,7 @@ export const LineChart: React.FC<Props> = ({
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 };
 

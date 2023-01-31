@@ -66,7 +66,7 @@ export const useTheme = (): void => {
   const { ui, actions: uiActions } = useUI();
   const [systemMode, setSystemMode] = useState<Mode>(getSystemMode());
   const [isSettingsReady, setIsSettingsReady] = useState(false);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, isLoading: isSettingsLoading, updateSettings } = useSettings<Settings>(config);
 
   const handleSchemeChange = useCallback((event: MediaQueryListEvent) => {
     if (!event.matches) setSystemMode(getSystemMode());
@@ -110,7 +110,7 @@ export const useTheme = (): void => {
 
   // Update setting mode when mode changes.
   useLayoutEffect(() => {
-    if (!settings.mode) return;
+    if (isSettingsLoading) return;
 
     if (isSettingsReady) {
       // We have read from the settings, going forward any mode difference requires an update.
@@ -120,7 +120,7 @@ export const useTheme = (): void => {
       uiActions.setMode(settings.mode);
       setIsSettingsReady(true);
     }
-  }, [isSettingsReady, settings, uiActions, ui.mode, updateSettings]);
+  }, [isSettingsReady, settings, uiActions, ui.mode, isSettingsLoading, updateSettings]);
 };
 
 export default useTheme;

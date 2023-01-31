@@ -5,7 +5,7 @@
 This section includes reference documentation for the model hub APIs:
 
 +----------------------------------+-------------------------------------------------------------+
-| Topic                            | Documentation Content                                       |
+| Title                            | Description                                                 |
 +==================================+=============================================================+
 | :doc:`modelhub/mmdetection-api`  | The MMDetection API reference, which makes it easy to use   |
 |                                  | the popular `MMDetection library                            |

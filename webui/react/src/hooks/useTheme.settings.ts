@@ -8,7 +8,6 @@ export interface Settings {
 }
 
 export const config: SettingsConfig<Settings> = {
-  applicableRoutespace: 'settings/theme',
   settings: {
     mode: {
       defaultValue: Mode.System,

@@ -8,7 +8,6 @@ import { PostUserParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 
 import useModalCreateUser, {
@@ -51,11 +50,9 @@ const setup = async () => {
     <UIProvider>
       <UsersProvider>
         <AuthProvider>
-          <UserRolesProvider>
-            <HistoryRouter history={history}>
-              <Container />
-            </HistoryRouter>
-          </UserRolesProvider>
+          <HistoryRouter history={history}>
+            <Container />
+          </HistoryRouter>
         </AuthProvider>
       </UsersProvider>
     </UIProvider>,

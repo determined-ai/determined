@@ -2,11 +2,11 @@
  Cluster Deployment
 ####################
 
-This section includes user guides for how to deploy Determined in on-premise, cloud, and kubernetes
-environments:
+The Cluster Deployment user guides provide instructions on deploying Determined on premise, on
+cloud, and in kubernetes environments:
 
 +------------------------------------------+-----------------------------------------------------+
-| Topic                                    | Documentation Content                               |
+| Title                                    | Description                                         |
 +==========================================+=====================================================+
 | :doc:`sysadmin-deploy-on-prem/overview`  | How to deploy Determined on-premises.               |
 +------------------------------------------+-----------------------------------------------------+

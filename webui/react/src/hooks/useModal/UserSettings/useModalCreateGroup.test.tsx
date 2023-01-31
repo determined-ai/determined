@@ -7,7 +7,6 @@ import { V1GroupSearchResult } from 'services/api-ts-sdk';
 import { CreateGroupsParams, GetGroupParams } from 'services/types';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider } from 'stores/auth';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 import { DetailedUser } from 'types';
 
@@ -77,9 +76,7 @@ const setup = async (group?: V1GroupSearchResult) => {
     <UIProvider>
       <UsersProvider>
         <AuthProvider>
-          <UserRolesProvider>
-            <Container group={group} />
-          </UserRolesProvider>
+          <Container group={group} />
         </AuthProvider>
       </UsersProvider>
     </UIProvider>,

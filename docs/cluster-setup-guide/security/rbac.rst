@@ -4,7 +4,7 @@
  RBAC
 ######
 
-.. note::
+.. attention::
 
    RBAC feature applies only to Determined Enterprise Edition.
 
