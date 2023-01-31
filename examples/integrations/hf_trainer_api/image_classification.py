@@ -220,7 +220,7 @@ def parse_input_arguments(train_hps):
     return model_args, data_args, training_args
 
 
-def main(model_args, data_args, training_args):
+def main(det_callback, model_args, data_args, training_args):
     # Setup logging
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -254,10 +254,10 @@ def main(model_args, data_args, training_args):
                 f"Output directory ({training_args.output_dir}) already exists and is not empty. "
                 "Use --overwrite_output_dir to overcome."
             )
-        elif last_checkpoint is not None and training_args.resume_from_checkpoint is None:
+        elif last_checkpoint is not None:
             logger.info(
-                f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
-                "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
+                f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, "
+                "use `--overwrite_output_dir` to train from scratch."
             )
 
     # Initialize our dataset and prepare it for the 'image-classification' task.
@@ -306,9 +306,6 @@ def main(model_args, data_args, training_args):
     # predictions and label_ids field) and has to return a dictionary string to float.
     def compute_metrics(p):
         """Computes accuracy on a batch of predictions"""
-        x = metric.compute(predictions=np.argmax(p.predictions, axis=1), references=p.label_ids)
-        print("compute_metrics")
-        print(x)
         return metric.compute(predictions=np.argmax(p.predictions, axis=1), references=p.label_ids)
 
     config = AutoConfig.from_pretrained(
@@ -409,16 +406,6 @@ def main(model_args, data_args, training_args):
         data_collator=collate_fn,
     )
 
-    user_data = {
-        "finetuned_from": model_args.model_name_or_path,
-        "tasks": "image-classification",
-        "dataset": data_args.dataset_name,
-        "tags": ["image-classification", "vision"],
-    }
-
-    det_callback = DetCallback(
-        core_context, training_args, filter_metrics=["loss", "accuracy"], user_data=user_data
-    )
     trainer.add_callback(det_callback)
     trainer.add_callback(TensorBoardCallback(tb_writer=TorchWriter().writer))
 
@@ -468,4 +455,17 @@ if __name__ == "__main__":
         distributed = det.core.DistributedContext.from_torch_distributed()
 
     with det.core.init(distributed=distributed) as core_context:
-        main(model_args, data_args, training_args)
+
+        # Optional user-defined data that is saved in the Determined checkpoint.
+        user_data = {
+            "finetuned_from": model_args.model_name_or_path,
+            "tasks": "image-classification",
+            "dataset": data_args.dataset_name,
+            "tags": ["image-classification", "vision"],
+        }
+
+        det_callback = DetCallback(
+            core_context, training_args, filter_metrics=["loss", "accuracy"], user_data=user_data
+        )
+
+        main(det_callback, model_args, data_args, training_args)

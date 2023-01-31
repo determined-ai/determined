@@ -4,8 +4,11 @@ import os
 import typing
 
 from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
+from transformers.trainer_utils import get_last_checkpoint
 
 import determined as det
+
+logging.basicConfig(level=logging.INFO)
 
 
 class DetCallback(TrainerCallback):
@@ -129,23 +132,21 @@ class DetCallback(TrainerCallback):
         latest_checkpoint = info.latest_checkpoint
         if latest_checkpoint is not None:
 
+            if args.overwrite_output_dir is True:
+                logging.info(
+                    f"Skip downloading last checkpoint from Determined due "
+                    f"to overwrite_output_dir=True."
+                )
+                return
+
             # To resume DeepSpeed, each node requires ALL sharded model/optimizer states,
             # so we can skip using selector and just download all files.
             self.core_context.checkpoint.download(latest_checkpoint, args.output_dir)
 
-            # Use metadata to decide whether the current trial is forked/continued
-            # (trial_id != prev_trial_id) or unpaused (trial_id == prev_trial_id).
-            # Set checkpoint path for Trainer to load the last reported checkpoint.
-            metadata = self.core_context.checkpoint.get_metadata(latest_checkpoint)
-            prev_trial_id = metadata["trial_id"]
-            trial_id = info.trial.trial_id
-            if trial_id != prev_trial_id:
-                resume_step = 0
-            else:
-                resume_step = metadata["steps_completed"]
-
-            checkpoint_path = os.path.join(args.output_dir, f"checkpoint-{resume_step}")
+            checkpoint_path = get_last_checkpoint(args.output_dir)
             args.resume_from_checkpoint = checkpoint_path
+
+            logging.info(f"Latest checkpoint downloaded to {checkpoint_path}.")
 
     def on_step_end(
         self,
