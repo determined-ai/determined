@@ -81,6 +81,11 @@ export const LineChart: React.FC<Props> = ({
     );
   }, [series]);
 
+  const hasVisibleSeries: boolean = useMemo(
+    () => !!series.find((serie) => serie.data[xAxis].length > 0),
+    [series, xAxis],
+  );
+
   const seriesColors: string[] = useMemo(
     () =>
       series.map(
@@ -227,14 +232,18 @@ export const LineChart: React.FC<Props> = ({
       />
       {showLegend && (
         <div className={css.legendContainer}>
-          {series.map((s, idx) => (
-            <li className={css.legendItem} key={idx}>
-              <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
-                &mdash;
-              </span>
-              {seriesNames[idx]}
-            </li>
-          ))}
+          {hasVisibleSeries ? (
+            series.map((s, idx) => (
+              <li className={css.legendItem} key={idx}>
+                <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
+                  &mdash;
+                </span>
+                {seriesNames[idx]}
+              </li>
+            ))
+          ) : (
+            <li>&nbsp;</li>
+          )}
         </div>
       )}
     </>
