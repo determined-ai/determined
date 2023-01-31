@@ -34,6 +34,7 @@ func addExpInfo(
 	permission rbacv1.PermissionType,
 ) {
 	logFields["userID"] = curUser.ID
+	logFields["username"] = curUser.Username
 	logFields["permissionsRequired"] = []audit.PermissionWithSubject{
 		{
 			PermissionTypes: []rbacv1.PermissionType{permission},
