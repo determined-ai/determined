@@ -285,6 +285,11 @@ const NavigationSideBar: React.FC = () => {
                       <Icon name="search" size="tiny" />
                     </Button>
                   </WorkspaceQuickSearch>
+                  {canCreateWorkspace && (
+                    <Button type="text" onClick={handleCreateWorkspace}>
+                      <Icon name="add-small" size="tiny" />
+                    </Button>
+                  )}
                 </div>
               }
               icon="workspaces"

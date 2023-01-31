@@ -37,6 +37,9 @@
     overflow: hidden;
 
     .actionButtons {
+      display: none;
+    }
+    .navItemContainer:hover .actionButtons {
       align-items: center;
       display: flex;
     }
