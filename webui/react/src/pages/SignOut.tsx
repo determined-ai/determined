@@ -9,6 +9,7 @@ import { isAuthFailure } from 'shared/utils/service';
 import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo } from 'stores/determinedInfo';
 import { UserRolesService } from 'stores/userRoles';
+import { useUpdateCurrentUser } from 'stores/users';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 
@@ -18,11 +19,13 @@ const SignOut: React.FC = () => {
   const { resetAuth } = useAuth();
   const info = Loadable.getOrElse(initInfo, useDeterminedInfo());
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const updateCurrentUser = useUpdateCurrentUser();
 
   useEffect(() => {
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
       UserRolesService.resetUserAssignmentsAndRoles();
+      updateCurrentUser(-1);
       try {
         await logout({});
       } catch (e) {
@@ -46,7 +49,14 @@ const SignOut: React.FC = () => {
     };
 
     if (!isSigningOut) signOut();
-  }, [navigate, info.externalLogoutUri, location.state, isSigningOut, resetAuth]);
+  }, [
+    navigate,
+    info.externalLogoutUri,
+    location.state,
+    updateCurrentUser,
+    isSigningOut,
+    resetAuth,
+  ]);
 
   return null;
 };
