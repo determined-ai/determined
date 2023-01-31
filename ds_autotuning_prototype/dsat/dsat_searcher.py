@@ -3,7 +3,7 @@ import argparse
 import copy
 import logging
 import uuid
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Set, Union
 
 import determined as det
 from determined import searcher
@@ -15,44 +15,73 @@ class DSATSearchMethod(searcher.SearchMethod):
         self,
         submitted_config_dict: Dict[str, Any],
     ) -> None:
-        self.submitted_hps = submitted_config_dict["hyperparameters"]
-        self.autotuning_config = submitted_config_dict["hyperparameters"]["autotuning_config"]
-        self.running_trials = 0
+        self._submitted_hps = submitted_config_dict["hyperparameters"]
+        self._slots = submitted_config_dict["resources"]["slots_per_trial"]
+        self._autotuning_config = self._submitted_hps["autotuning_config"]
+        self._ds_config = self._submitted_hps["ds_config"]
+        self._running_trials = 0
+        self._base_hps_with_profiling = copy.deepcopy(self._submitted_hps)
+        utils.replace_dict_in_place(
+            self._base_hps_with_profiling["ds_config"],
+            {"flops_profiler": constants.FLOPS_PROFILER_CONFIG},
+        )
 
         self._model_profile_request_id = None
+        self._viable_zero_stages = {}
+        self._model_profiling_info_results_dict = dict()
+
         self._all_search_methods = {"random": self._random_search, "basic": self._basic_search}
-        self._search_method = self.autotuning_config["search_method"]
+        self._search_method = self._autotuning_config["search_method"]
         assert (
             self._search_method in self._all_search_methods
         ), f"search_method must be one of {list(self._all_search_methods)}"
 
-    def _basic_search(
-        self, base_hps_with_profiling: Dict[str, Any], model_profile_metrics: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
-        return 2 * [base_hps_with_profiling]
+    def _get_memory_required_per_gpu_per_stage(self):
+        # Modified from DS.
+        num_params = self.get_model_num_params()
+        fp16_enabled = self.fp16_enabled()
 
-    def _random_search(
-        self, base_hps_with_profiling: Dict[str, Any], model_profile_metrics: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        if not num_params:
+            return 0
+        # assume the model uses Adam optimizer
+        # ZeroStageEnum.disabled:
+        params_mem = num_params * (2 if fp16_enabled else 4)
+        gradients_mem = num_params * (2 if fp16_enabled else 4)
+        optimizer_mem = num_params * (16 if fp16_enabled else 8)
+
+        if zero_stage >= ZeroStageEnum.optimizer_states:
+            optimizer_mem = optimizer_mem / self._slots
+
+        if zero_stage >= ZeroStageEnum.gradients:
+            gradients_mem = gradients_mem / self._slots
+
+        if zero_stage >= ZeroStageEnum.weights:
+            params_mem = params_mem / self._slots
+
+        mem_per_gpu = (params_mem + gradients_mem + optimizer_mem) / self.mp_size()
+
+        return mem_per_gpu
+
+    def _get_viable_zero_stages(self) -> Set[int]:
+        gpu_mem_in_bytes = self._model_profiling_info_results_dict["gpu_mem_in_bytes"]
+        activation_mem_per_gpu_in_bytes = self._model_profiling_info_results_dict[
+            "activation_mem_per_gpu"
+        ]
+
+    def _basic_search(self) -> List[Dict[str, Any]]:
+        return 2 * [self._base_hps_with_profiling]
+
+    def _random_search(self) -> List[Dict[str, Any]]:
         pass
 
-    def _generated_hparam_list(
-        self, model_profile_metrics: Union[float, Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _generated_hparam_list(self) -> List[Dict[str, Any]]:
         """Generates a list of all hp dict combos which will be tested out."""
         # TODO: Add non-trivial logic.
-        base_hps_with_profiling = copy.deepcopy(self.submitted_hps)
-        utils.replace_dict_in_place(
-            base_hps_with_profiling["ds_config"],
-            {"flops_profiler": constants.FLOPS_PROFILER_CONFIG},
-        )
-        hparam_list = self._all_search_methods[self._search_method](
-            base_hps_with_profiling, model_profile_metrics
-        )
+        hparam_list = self._all_search_methods[self._search_method]()
         return hparam_list
 
     def initial_operations(self, _: searcher.SearcherState) -> List[searcher.Operation]:
-        model_profile_run_hps = copy.deepcopy(self.submitted_hps)
+        model_profile_run_hps = copy.deepcopy(self._submitted_hps)
         utils.replace_dict_in_place(
             model_profile_run_hps["ds_config"],
             constants.MODEL_INFO_PROFILING_DS_CONFIG,
@@ -70,8 +99,8 @@ class DSATSearchMethod(searcher.SearchMethod):
     def on_trial_created(
         self, _: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
-        self.running_trials += 1
-        print(f"Creating trial {request_id}, {self.running_trials} remaining")
+        self._running_trials += 1
+        print(f"Creating trial {request_id}, {self._running_trials} remaining")
         return []
 
     def on_validation_completed(
@@ -86,8 +115,9 @@ class DSATSearchMethod(searcher.SearchMethod):
         # Could refactor and put the model profiling run here, if desireable.
         print("REPORTED METRICS", metric)
         if request_id == self._model_profile_request_id:
-            model_profiling_info_results_dict = metric
-            for hp_dict in self._generated_hparam_list(model_profiling_info_results_dict):
+            self._model_profiling_info_results_dict = metric
+            self._viable_zero_stages = self._get_viable_zero_stages()
+            for hp_dict in self._generated_hparam_list():
                 print("GENERATED HPS", hp_dict)
                 create = searcher.Create(
                     request_id=uuid.uuid4(),
@@ -105,9 +135,9 @@ class DSATSearchMethod(searcher.SearchMethod):
     def on_trial_closed(
         self, _: searcher.SearcherState, request_id: uuid.UUID
     ) -> List[searcher.Operation]:
-        self.running_trials -= 1
-        print(f"Closing trial {request_id}, {self.running_trials} remaining")
-        if not self.running_trials:
+        self._running_trials -= 1
+        print(f"Closing trial {request_id}, {self._running_trials} remaining")
+        if not self._running_trials:
             return [searcher.Shutdown()]
         return []
 

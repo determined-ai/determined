@@ -2,7 +2,6 @@ DSAT_MAX_LENGTH_STEPS = 5
 WORKDIR_PATH = "/run/determined/workdir/"
 PROFILER_OUTPUT_FILE_PATH = WORKDIR_PATH + "flops_profiler_output.txt"
 AUTOTUNING_MODEL_PROFILE_OUTPUT_FILE_PATH = WORKDIR_PATH + "model_info_profiling_results.json"
-GPU_MEM_BYTES_FILE_PATH = WORKDIR_PATH + "gpu_mem_bytes.txt"
 
 FLOPS_PROFILER_CONFIG = {
     "enabled": True,

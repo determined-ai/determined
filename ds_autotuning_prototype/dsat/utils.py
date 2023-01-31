@@ -5,6 +5,7 @@ import re
 from typing import Any, Dict, Optional, Sequence, Union
 
 import determined as det
+import torch
 from dsat import constants
 from ruamel import yaml
 
@@ -63,12 +64,6 @@ def get_decimal_number_in_line(line: str) -> float:
     return num
 
 
-def get_gpu_mem_bytes(path: Union[str, pathlib.Path] = constants.GPU_MEM_BYTES_FILE_PATH) -> int:
-    with open(path, "r") as f:
-        gpu_mem_bytes = int(f.read())
-    return gpu_mem_bytes
-
-
 def dsat_forward(core_context, op, model_engine, *args, **kwargs):
     try:
         output = model_engine(*args, **kwargs)
@@ -77,7 +72,8 @@ def dsat_forward(core_context, op, model_engine, *args, **kwargs):
         try:
             # TODO: Need some sleep checks/retries to ensure the file was written? Timing issues?
             model_info_profiling_results_dict = get_model_profiling_info_results_dict()
-            print(model_info_profiling_results_dict)
+            gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
+            model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
             if is_chief:
                 op.report_completed(
                     model_info_profiling_results_dict
