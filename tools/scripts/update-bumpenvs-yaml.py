@@ -128,7 +128,7 @@ def get_all_builds(commit: str, dev: bool, cloud_images: bool) -> Dict[str, Buil
 
     assert (
         expected == found
-    ), "expected artifacts\n  {expected_list}\nbut found\n  {found_list}".format(
+    ), "expected jobs\n  {expected_list}\nbut found\n  {found_list}".format(
         expected_list="\n  ".join(sorted(expected)), found_list="\n  ".join(sorted(found))
     )
 
