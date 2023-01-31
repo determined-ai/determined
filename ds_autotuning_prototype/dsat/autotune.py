@@ -4,8 +4,9 @@ import copy
 import os
 from typing import Any, Dict
 
-from determined.experimental import client
 from dsat import constants, utils
+
+from determined.experimental import client
 
 
 def parse_args():
@@ -26,7 +27,7 @@ def run_autotuning(args: argparse.Namespace, config_dict: Dict[str, Any]):
     config_dict["searcher"]["name"] = "single"
     config_dict["searcher"]["max_length"] = constants.DSAT_MAX_LENGTH_STEPS
     config_dict["resources"] = {"slots_per_trial": 0}  # Will need to get original resources later.
-    config_dict["entrypoint"] = f"python3 -m dsat.dsat_searcher -c {args.config_path}"
+    config_dict["entrypoint"] = f"python3 -m dsat.run_dsat -c {args.config_path}"
 
     # TODO: Need to account for case where config isn't in model_dir, in which case
     # we need to pass its path to the `includes` arg of `create_experiment` (rather than config)
