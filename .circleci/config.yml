@@ -504,6 +504,9 @@ commands:
     parameters:
       cluster-id:
         type: string
+      extra-tags:
+        type: string
+        default: ""
       det-version:
         type: string
       keypair:
@@ -553,6 +556,17 @@ commands:
             - run:
                 name: Enable CORS
                 command: "echo --enable-cors >> /tmp/det-deploy-extra-args"
+      - when:
+          condition:
+            << parameters.extra-tags >>
+          steps:
+            - run:
+                name: Add extra tags
+                command: |
+                  echo "<< parameters.extra-tags >>" | \
+                  sed 's/ /-/g' | \
+                  sed -r 's/([^,=]*=[^,=]*),?/--add-tag \1 /g' >> \
+                    /tmp/det-deploy-extra-args
 
       - run:
           name: Configure TLS arguments
@@ -606,6 +620,9 @@ commands:
     parameters:
       cluster-id:
         type: string
+      extra-tags:
+        type: string
+        default: ""
       det-version:
         type: string
       compute-agent-instance-type:
@@ -631,6 +648,7 @@ commands:
           cluster-id: <<parameters.cluster-id>>
       - deploy-aws-cluster:
           cluster-id: ${CLUSTER_ID}
+          extra-tags: <<parameters.extra-tags>>
           det-version: <<parameters.det-version>>
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
@@ -1833,6 +1851,7 @@ jobs:
             - generate-tls-cert
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          extra-tags: test-mark=<<parameters.mark>>
           det-version: ${CIRCLE_SHA1}
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>
@@ -2066,6 +2085,7 @@ jobs:
           executor: <<pipeline.parameters.docker-image>>
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          extra-tags: test-mark=fs
           det-version: ${CIRCLE_SHA1}
           aux-agent-instance-type: <<parameters.aux-agent-instance-type>>
           compute-agent-instance-type: <<parameters.compute-agent-instance-type>>

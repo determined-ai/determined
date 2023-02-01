@@ -158,6 +158,7 @@ def update_stack(
     template_body: str,
     boto3_session: boto3.session.Session,
     deployment_type: str,
+    extra_tags: Optional[List[Tuple[str, str]]],
     parameters: Optional[List] = None,
     update_terminate_agents: bool = True,
 ) -> None:
@@ -179,32 +180,27 @@ def update_stack(
                 stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session
             )
 
+    if not parameters:
+        parameters = []
+
+    tags = [
+        {
+            "Key": constants.deployment_types.TYPE_TAG_KEY,
+            "Value": deployment_type,
+        },
+    ]
+    if extra_tags:
+        for et in extra_tags:
+            tags.append({"Key": et[0], "Value": et[1]})
+
     try:
-        if parameters:
-            cfn.update_stack(
-                StackName=stack_name,
-                TemplateBody=template_body,
-                Parameters=parameters,
-                Capabilities=["CAPABILITY_IAM"],
-                Tags=[
-                    {
-                        "Key": constants.deployment_types.TYPE_TAG_KEY,
-                        "Value": deployment_type,
-                    },
-                ],
-            )
-        else:
-            cfn.update_stack(
-                StackName=stack_name,
-                TemplateBody=template_body,
-                Capabilities=["CAPABILITY_IAM"],
-                Tags=[
-                    {
-                        "Key": constants.deployment_types.TYPE_TAG_KEY,
-                        "Value": deployment_type,
-                    },
-                ],
-            )
+        cfn.update_stack(
+            StackName=stack_name,
+            TemplateBody=template_body,
+            Parameters=parameters,
+            Capabilities=["CAPABILITY_IAM"],
+            Tags=tags,
+        )
     except ClientError as e:
         if e.response["Error"]["Message"] != "No updates are to be performed.":
             raise e
@@ -227,6 +223,7 @@ def create_stack(
     template_body: str,
     boto3_session: boto3.session.Session,
     deployment_type: str,
+    extra_tags: Optional[List[Tuple[str, str]]],
     parameters: Optional[List] = None,
 ) -> None:
     print(
@@ -236,39 +233,30 @@ def create_stack(
     cfn = boto3_session.client("cloudformation")
     create_waiter = cfn.get_waiter("stack_create_complete")
 
-    if parameters:
-        cfn.create_stack(
-            StackName=stack_name,
-            TemplateBody=template_body,
-            Parameters=parameters,
-            Capabilities=["CAPABILITY_IAM"],
-            Tags=[
-                {
-                    "Key": constants.defaults.STACK_TAG_KEY,
-                    "Value": constants.defaults.STACK_TAG_VALUE,
-                },
-                {
-                    "Key": constants.deployment_types.TYPE_TAG_KEY,
-                    "Value": deployment_type,
-                },
-            ],
-        )
-    else:
-        cfn.create_stack(
-            StackName=stack_name,
-            TemplateBody=template_body,
-            Capabilities=["CAPABILITY_IAM"],
-            Tags=[
-                {
-                    "Key": constants.defaults.STACK_TAG_KEY,
-                    "Value": constants.defaults.STACK_TAG_VALUE,
-                },
-                {
-                    "Key": constants.deployment_types.TYPE_TAG_KEY,
-                    "Value": deployment_type,
-                },
-            ],
-        )
+    if not parameters:
+        parameters = []
+
+    tags = [
+        {
+            "Key": constants.defaults.STACK_TAG_KEY,
+            "Value": constants.defaults.STACK_TAG_VALUE,
+        },
+        {
+            "Key": constants.deployment_types.TYPE_TAG_KEY,
+            "Value": deployment_type,
+        },
+    ]
+    if extra_tags:
+        for et in extra_tags:
+            tags.append({"Key": et[0], "Value": et[1]})
+
+    cfn.create_stack(
+        StackName=stack_name,
+        TemplateBody=template_body,
+        Parameters=parameters,
+        Capabilities=["CAPABILITY_IAM"],
+        Tags=tags,
+    )
 
     create_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10})
 
@@ -344,6 +332,7 @@ def deploy_stack(
     boto3_session: boto3.session.Session,
     no_prompt: bool,
     deployment_type: str,
+    extra_tags: Optional[List[Tuple[str, str]]],
     parameters: Optional[List] = None,
     update_terminate_agents: bool = True,
 ) -> None:
@@ -385,13 +374,16 @@ def deploy_stack(
             template_body,
             boto3_session,
             deployment_type,
+            extra_tags,
             parameters,
             update_terminate_agents=update_terminate_agents,
         )
     else:
         print("False - Creating Stack")
 
-        create_stack(stack_name, template_body, boto3_session, deployment_type, parameters)
+        create_stack(
+            stack_name, template_body, boto3_session, deployment_type, extra_tags, parameters
+        )
 
 
 # EC2
