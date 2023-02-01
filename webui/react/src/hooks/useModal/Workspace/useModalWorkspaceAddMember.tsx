@@ -1,4 +1,4 @@
-import { message, Select } from 'antd';
+import { Select } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -10,6 +10,7 @@ import { V1Group, V1Role } from 'services/api-ts-sdk';
 import useModal, { ModalHooks } from 'shared/hooks/useModal/useModal';
 import { DetError, ErrorLevel, ErrorType } from 'shared/utils/error';
 import { User, UserOrGroup } from 'types';
+import { message } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getIdFromUserOrGroup, getName, isUser, UserNameFields } from 'utils/user';
 

@@ -1,5 +1,4 @@
 import { Table } from 'antd';
-import { SpinProps } from 'antd/es/spin';
 import { TableProps } from 'antd/es/table';
 import {
   ColumnsType,
@@ -31,17 +30,10 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import Spinner from 'shared/components/Spinner/Spinner';
-import { Primitive, UnknownRecord } from 'shared/types';
+import { Primitive } from 'shared/types';
 import { isEqual } from 'shared/utils/data';
 
 import css from './InteractiveTable.module.scss';
-
-/*
- * This indicates that the cell contents are rightClickable
- * and we should disable custom context menu on cell context hover
- */
-export const onRightClickableCell = (): React.HTMLAttributes<HTMLElement> =>
-  ({ isCellRightClickable: true } as React.HTMLAttributes<HTMLElement>);
 
 export interface InteractiveTableSettings {
   /**
@@ -75,10 +67,11 @@ export interface ContextMenuProps<RecordType> {
   record: RecordType;
 }
 
-export interface ColumnDef<RecordType> extends ColumnType<RecordType> {
+export interface ColumnDef<RecordType> extends Omit<ColumnType<RecordType>, 'onCell'> {
   dataIndex: string;
   defaultWidth: number;
   isFiltered?: (s: unknown) => boolean;
+  onCell?: (record: RecordType, index?: number) => CellProps;
 }
 export type ColumnDefs<ColumnName extends string, RecordType> = Record<
   ColumnName,
@@ -96,10 +89,6 @@ interface InteractiveTableProps<RecordType> extends TableProps<RecordType> {
   settings: InteractiveTableSettings;
   updateSettings: UpdateSettings;
 }
-
-/* eslint-disable-next-line @typescript-eslint/ban-types */
-type InteractiveTable = <T extends object>(props: InteractiveTableProps<T>) => JSX.Element;
-type Row = <T extends object>(props: RowProps<T>) => JSX.Element;
 
 type DragState = 'draggingRight' | 'draggingLeft' | 'notDragging';
 interface RowProps<RecordType> {
@@ -133,15 +122,15 @@ interface HeaderCellProps {
 
 interface CellProps {
   children?: React.ReactNode;
-  className: string;
+  className?: string;
   isCellRightClickable?: boolean;
 }
 
-interface RightClickableCellProps {
-  onContextMenu: (e: React.MouseEvent) => void;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-}
+/*
+ * This indicates that the cell contents are rightClickable
+ * and we should disable custom context menu on cell context hover
+ */
+export const onRightClickableCell = (): CellProps => ({ isCellRightClickable: true });
 
 const RightClickableRowContext = createContext({});
 
@@ -167,7 +156,7 @@ const Cell = ({ children, className, isCellRightClickable, ...props }: CellProps
   );
 };
 
-const Row: Row = ({
+const Row = <T extends object>({
   className,
   children,
   record,
@@ -176,22 +165,13 @@ const Row: Row = ({
   index,
   numOfPinned,
   ...props
-}) => {
+}: RowProps<T>): JSX.Element => {
   const classes = [className, css.row];
 
-  const [rowHovered, setRowHovered] = useState(false);
-  const [rightClickableCellHovered, setRightClickableCellHovered] = useState(false);
-  const [contextMenuOpened, setContextMenuOpened] = useState(false);
   const isPinned = Array.from(Array(numOfPinned).keys()).includes(index);
 
-  const rightClickableCellProps: RightClickableCellProps = {
+  const rightClickableCellProps = {
     onContextMenu: (e: React.MouseEvent) => e.stopPropagation(),
-    onMouseEnter: () => {
-      if (!rightClickableCellHovered) setRightClickableCellHovered(true);
-    },
-    onMouseLeave: () => {
-      if (rightClickableCellHovered) setRightClickableCellHovered(false);
-    },
   };
 
   if (areRowsSelected) {
@@ -202,28 +182,19 @@ const Row: Row = ({
     );
   }
 
-  const rowContextMenuTriggerableOrOpen =
-    (rowHovered && !rightClickableCellHovered) || contextMenuOpened;
-
-  if (rowContextMenuTriggerableOrOpen) {
-    classes.push('ant-table-row-selected');
-  }
-
   if (isPinned && numOfPinned === index + 1) {
     classes.push(css.lastPinnedRow);
   }
 
   return record && ContextMenu ? (
     <RightClickableRowContext.Provider value={{ ...rightClickableCellProps }}>
-      <ContextMenu record={record} onVisibleChange={setContextMenuOpened}>
+      <ContextMenu
+        record={record}
+        onVisibleChange={() => {
+          /* noop */
+        }}>
         <tr
           className={classes.join(' ')}
-          onMouseEnter={() => {
-            if (!rowHovered) setRowHovered(true);
-          }}
-          onMouseLeave={() => {
-            if (rowHovered) setRowHovered(false);
-          }}
           {...props}
           style={isPinned ? { position: 'sticky', top: 60 * index, zIndex: 10 } : undefined}>
           {children}
@@ -376,7 +347,7 @@ const HeaderCell = ({
   return tableCell;
 };
 
-const InteractiveTable: InteractiveTable = ({
+const InteractiveTable = <T extends object>({
   loading,
   scroll,
   dataSource,
@@ -390,14 +361,11 @@ const InteractiveTable: InteractiveTable = ({
   areRowsSelected,
   defaultColumns,
   ...props
-}) => {
-  const columnDefs = useMemo(
-    () =>
-      columns
-        ?.map((col) => ({ [col.dataIndex as string]: col }))
-        .reduce((a, b) => ({ ...a, ...b })),
+}: InteractiveTableProps<T>): JSX.Element => {
+  const columnDefs: ColumnDefs<string, T> = useMemo(
+    () => columns.reduce((memo, column) => ({ ...memo, [column.dataIndex]: column }), {}),
     [columns],
-  ) as ColumnDefs<string, UnknownRecord>;
+  );
   const { width: pageWidth } = useResize(containerRef);
   const tableRef = useRef<HTMLDivElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
@@ -450,14 +418,14 @@ const InteractiveTable: InteractiveTable = ({
     return { dragState };
   });
 
-  const spinning = !!(loading as SpinProps)?.spinning || loading === true;
+  // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+  const spinning = loading === true || (loading && loading.spinning);
 
   const handleChange = useCallback(
     (
       tablePagination: TablePaginationConfig,
-      tableFilters: Record<string, FilterValue | null>,
-      // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-      tableSorter: SorterResult<any> | SorterResult<any>[],
+      _tableFilters: Record<string, FilterValue | null>,
+      tableSorter: SorterResult<T> | SorterResult<T>[],
     ): void => {
       if (Array.isArray(tableSorter)) return;
 
@@ -466,7 +434,7 @@ const InteractiveTable: InteractiveTable = ({
         tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
 
-      const { columnKey, order } = tableSorter as SorterResult<unknown>;
+      const { columnKey, order } = tableSorter;
       if (columnKey && settingsColumns.find((col) => columnDefs[col]?.key === columnKey)) {
         newSettings.sortDesc = order === 'descend';
         newSettings.sortKey = columnKey;
@@ -571,8 +539,7 @@ const InteractiveTable: InteractiveTable = ({
   }, [updateSettings, widthData]);
 
   const onHeaderCell = useCallback(
-    // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-    (index: number, columnDef: any) => {
+    (index: number, columnDef: ColumnDef<T>) => {
       return () => {
         const filterActive = !!columnDef?.isFiltered?.(settings);
         return {
@@ -619,7 +586,7 @@ const InteractiveTable: InteractiveTable = ({
       }
     }
 
-    const newColumns = columns.reduce<ColumnsType<UnknownRecord>>((acc, columnName, index) => {
+    const newColumns = columns.reduce<ColumnsType<T>>((acc, columnName, index) => {
       if (!columnDefs[columnName]) return acc;
 
       const column = columnDefs[columnName];
@@ -684,9 +651,7 @@ const InteractiveTable: InteractiveTable = ({
         ) : (
           <Table
             bordered
-            /* next one is just so ant doesnt complain */
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            columns={renderColumns as ColumnsType<any>}
+            columns={renderColumns}
             components={components}
             dataSource={dataSource}
             scroll={scroll}

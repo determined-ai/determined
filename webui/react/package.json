@@ -7,7 +7,6 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "setup": "node scripts/setupThemes.js",
     "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "craco start",
     "build": "craco build",
@@ -34,7 +33,7 @@
     "@determined-ai/hermes-parallel-coordinates": "^0.6.1",
     "ansi_up": "^5.1.0",
     "ansi-to-html": "^0.7.1",
-    "antd": "^4.24.4",
+    "antd": "^5.1.7",
     "dayjs": "^1.10.7",
     "debug": "^4.3.4",
     "dompurify": "^2.4.0",
@@ -110,10 +109,7 @@
     "@types/webpack": "^5.28.0",
     "@typescript-eslint/eslint-plugin": "^5.48.0",
     "@typescript-eslint/parser": "^5.48.0",
-    "antd-dayjs-webpack-plugin": "^1.0.1",
-    "babel-plugin-import": "^1.13.5",
     "browserslist": "^4.21.4",
-    "craco-less": "^1.20.0",
     "craco-sass-resources-loader": "^1.1.0",
     "csp-html-webpack-plugin": "^5.1.0",
     "eslint": "^7.32.0",

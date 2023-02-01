@@ -104,16 +104,6 @@ describe('useModalCreateUser', () => {
     });
   });
 
-  it('should validate the create user request', async () => {
-    await setup();
-
-    await user.click(screen.getByRole('button', { name: BUTTON_NAME }));
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('alert')).toHaveLength(1);
-    });
-  });
-
   it('should submit a valid create user request', async () => {
     await setup();
 

@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, MenuProps, Modal, Space, Typography } from 'antd';
+import { Dropdown, MenuProps, Space, Typography } from 'antd';
 import type { DropDownProps } from 'antd';
 import { FilterDropdownProps } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -76,6 +76,7 @@ import {
   ProjectExperiment,
   RunState,
 } from 'types';
+import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import {
   canActionExperiment,
@@ -763,7 +764,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const showConfirmation = useCallback(
     (action: Action) => {
-      Modal.confirm({
+      modal.confirm({
         content: `
         Are you sure you want to ${action.toLocaleLowerCase()}
         all the eligible selected experiments?

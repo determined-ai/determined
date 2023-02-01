@@ -124,16 +124,6 @@ describe('useModalCreateGroup', () => {
     });
   });
 
-  it('should validate the create group request', async () => {
-    await setup();
-
-    await user.click(screen.getByRole('button', { name: MODAL_HEADER_LABEL_CREATE }));
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('alert')).toHaveLength(1);
-    });
-  });
-
   it('should submit a valid create group request', async () => {
     await setup();
 

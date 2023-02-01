@@ -1,5 +1,4 @@
-import { readFileSync } from 'fs';
-
+import { StyleProvider } from '@ant-design/cssinjs';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useEffect, useState } from 'react';
@@ -39,26 +38,21 @@ const SpinnerComponent = ({ spinning, handleButtonClick }: Props) => {
   );
 };
 
-const setup = (spinning: boolean) => {
+const setup = async (spinning: boolean) => {
   const handleButtonClick = jest.fn();
   const { container } = render(
-    <SpinnerComponent handleButtonClick={handleButtonClick} spinning={spinning} />,
+    // apply css-in-js styles without the :when selector
+    <StyleProvider container={document.body} hashPriority="high">
+      <SpinnerComponent handleButtonClick={handleButtonClick} spinning={spinning} />,
+    </StyleProvider>,
   );
+  await new Promise((resolve) => setTimeout(resolve, 10));
   return { container, handleButtonClick };
 };
 
 describe('Spinner', () => {
-  beforeAll(() => {
-    // load Antd StyleSheet
-    // Same code is defined in setupTests.ts
-    const antdStyleSheet = readFileSync('node_modules/antd/dist/antd.css').toString();
-    const style = document.createElement('style');
-    style.innerHTML = antdStyleSheet;
-    document.body.appendChild(style);
-  });
-
   it('blocks inner content while spinning', async () => {
-    const { handleButtonClick } = setup(true);
+    const { handleButtonClick } = await setup(true);
     const button = await screen.findByTestId('inside-button');
     let error = null;
     try {
@@ -66,29 +60,31 @@ describe('Spinner', () => {
     } catch (e) {
       error = e;
     }
+    const spin = document.body.querySelector('.ant-spin');
+    expect(spin).toHaveStyle({ position: 'absolute' });
     expect(error).not.toBeNull();
     expect(handleButtonClick).toHaveBeenCalledTimes(0);
   });
 
   it('doesnt block inner content when not spinning', async () => {
-    const { handleButtonClick } = setup(false);
+    const { handleButtonClick } = await setup(false);
     const button = screen.getByTestId('inside-button');
     await user.click(button);
     expect(handleButtonClick).toHaveBeenCalledTimes(1);
   });
 
   it('displays tip text when spinning', async () => {
-    setup(true);
+    await setup(true);
     expect(await screen.findByText(spinnerTextContent)).toBeInTheDocument();
   });
 
-  it('doesnt display tip text when not spinning', () => {
-    setup(false);
+  it('doesnt display tip text when not spinning', async () => {
+    await setup(false);
     expect(screen.queryByText(spinnerTextContent)).not.toBeInTheDocument();
   });
 
   it('goes away when spinning is updated to false', async () => {
-    const { container } = setup(true);
+    const { container } = await setup(true);
 
     await waitFor(() => {
       expect(container.getElementsByClassName('ant-spin-spinning')[0]).toBeInTheDocument();
@@ -100,7 +96,7 @@ describe('Spinner', () => {
   });
 
   it('appears when spinning is updated to false', async () => {
-    const { container } = setup(false);
+    const { container } = await setup(false);
     expect(container.getElementsByClassName('ant-spin-spinning')?.[0]).toBeFalsy();
     await user.click(screen.getByTestId('toogle-button'));
     await waitFor(() => {
