@@ -362,8 +362,8 @@ const canDeleteModelVersion = (
   return (
     rbacAllPermission ||
     (rbacEnabled
-      ? !!user && (user.isAdmin || user.id === modelVersion?.userId)
-      : permitted.has(V1PermissionType.EDITMODELREGISTRY))
+      ? permitted.has(V1PermissionType.EDITMODELREGISTRY)
+      : !!user && (user.isAdmin || user.id === modelVersion?.userId))
   );
 };
 
