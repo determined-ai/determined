@@ -9,6 +9,7 @@ import torch.nn as nn
 import determined as det
 from determined import profiler, pytorch, util
 from determined.horovod import hvd
+from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 # Apex is included only for GPU trials.
 try:
@@ -125,6 +126,8 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         self._average_aggregated_gradients_default = True
 
         self._stop_requested = False
+
+        self.tbd_writer = TorchWriter(self.get_tensorboard_path())
 
     def get_global_batch_size(self) -> int:
         """
@@ -908,6 +911,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
 
+<<<<<<< HEAD
     def get_trial_seed(self) -> int:
         if self._trial_seed is None:
             raise det.errors.InternalException("Trial seed not set.")
@@ -939,6 +943,21 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
         Get the path where files for consumption by TensorBoard should be written
         """
         return self._core.train.get_tensorboard_path()
+
+    @contextlib.contextmanager
+    def get_tensorboard_writer(self):
+        """
+        Yield tensorboard writer to the user.
+        To be used via the `with` statement, eg:
+
+        with context.get_tensorboard_writer() as writer:
+            writer.add_scalar(value, idx)
+            writer.add_images(images, idx)
+        """
+        try:
+            yield self.tbd_writer
+        finally:
+            self.tbd_writer.reset()
 
     class _PyTorchDistributedDataParallel(
         torch.nn.parallel.DistributedDataParallel  # type: ignore
