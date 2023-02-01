@@ -12,7 +12,7 @@ import distutils.version  # isort:skip  # noqa: F401
 from torch.utils.tensorboard import SummaryWriter  # isort:skip
 
 
-class TorchWriter(tensorboard.MetricWriter):
+class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
     """
     TorchWriter uses PyTorch file writers and summary operations to write
     out tfevent files containing scalar batch metrics. It creates
@@ -35,14 +35,14 @@ class TorchWriter(tensorboard.MetricWriter):
                 self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, log_dir=tensorboard.get_base_path({})) -> None:
 
-        self.writer: Any = SummaryWriter(log_dir=tensorboard.get_base_path({}))  # type: ignore
+        super().__init__(log_dir=log_dir)
 
-    def add_scalar(self, name: str, value: Union[int, float, np.number], step: int) -> None:
-        self.writer.add_scalar(name, value, step)
+        # Point to self for compatability with old functionality
+        # Since there are still references to logger.writer.add_scalar() in callback methods
+        self.writer = self
 
     def reset(self) -> None:
         # flush AND close the writer so that the next attempt to write will create a new file
-        self.writer.close()
+        self.close()
