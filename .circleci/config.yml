@@ -1400,6 +1400,16 @@ jobs:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
       - run: make -C agent test-intg
+      - run: make -C agent test-intg
+      - run: make -C agent test-intg
+      - run: make -C agent test-intg
+      - run: make -C agent test-intg
+
+      - run: make -C agent test-intg
+      - run: make -C agent test-intg
+      - run: make -C agent test-intg
+      - run: make -C agent test-intg
+      - run: make -C agent test-intg
       - persist_to_workspace:
           root: .
           paths:
