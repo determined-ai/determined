@@ -8,39 +8,40 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
-
-	"github.com/determined-ai/determined/master/internal/config"
-
-	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/set"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/sproto"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/api"
-	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/logger"
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
-	"github.com/determined-ai/determined/master/pkg/tasks"
+	"gopkg.in/inf.v0"
 
 	k8sV1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 
+	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/api"
+	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/set"
+	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+
 	// Used to load all auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
+
+const ResourceTypeNvidia = "nvidia.com/gpu"
 
 type podMetadata struct {
 	podName     string
@@ -59,7 +60,7 @@ type podMetadata struct {
 type pods struct {
 	cluster                  *actor.Ref
 	namespace                string
-	poolNamespaces           set.Set[string]
+	namespaceToPoolName      map[string]string
 	masterServiceName        string
 	leaveKubernetesResources bool
 	scheduler                string
@@ -92,6 +93,7 @@ type pods struct {
 
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
+	quotaInterfaces     map[string]typedV1.ResourceQuotaInterface
 }
 
 // PodsInfo contains information for pods.
@@ -122,7 +124,7 @@ func Initialize(
 	e *echo.Echo,
 	c *actor.Ref,
 	namespace string,
-	poolNamespaces set.Set[string],
+	namespaceToPoolName map[string]string,
 	masterServiceName string,
 	masterTLSConfig model.TLSClientConfig,
 	loggingConfig model.LoggingConfig,
@@ -143,7 +145,7 @@ func Initialize(
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                      c,
 		namespace:                    namespace,
-		poolNamespaces:               poolNamespaces,
+		namespaceToPoolName:          namespaceToPoolName,
 		masterServiceName:            masterServiceName,
 		masterTLSConfig:              masterTLSConfig,
 		scheduler:                    scheduler,
@@ -166,6 +168,7 @@ func Initialize(
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
+		quotaInterfaces:              make(map[string]typedV1.ResourceQuotaInterface),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 	s.Ask(podsActor, actor.Ping{}).Get()
@@ -329,12 +332,14 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
 	}
 
-	for ns := range p.poolNamespaces {
+	for ns := range p.namespaceToPoolName {
+		p.quotaInterfaces[ns] = p.clientSet.CoreV1().ResourceQuotas(ns)
 		p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
 		p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
 	}
 	for _, ns := range []string{metaV1.NamespaceAll, p.namespace} {
-		if !p.poolNamespaces.Contains(ns) {
+		if _, ok := p.namespaceToPoolName[ns]; !ok {
+			p.quotaInterfaces[ns] = p.clientSet.CoreV1().ResourceQuotas(ns)
 			p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
 			p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
 		}
@@ -393,7 +398,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	}
 	existingConfigMaps := make(map[string]bool)
 	for _, cm := range configMaps.Items {
-		if !p.poolNamespaces.Contains(cm.Namespace) {
+		if _, ok := p.namespaceToPoolName[cm.Namespace]; !ok {
 			continue
 		}
 		existingConfigMaps[cm.Name] = true
@@ -404,7 +409,7 @@ func (p *pods) reattachAllocationPods(ctx *actor.Context, msg reattachAllocation
 	var ports [][]int
 	var resourcePool string
 	for _, pod := range pods.Items {
-		if !p.poolNamespaces.Contains(pod.Namespace) {
+		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
 		}
 
@@ -594,7 +599,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	toKillPods := &k8sV1.PodList{}
 	savedPodNames := make(map[string]bool)
 	for _, pod := range pods.Items {
-		if !p.poolNamespaces.Contains(pod.Namespace) {
+		if _, ok := p.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
 		}
 
@@ -637,7 +642,7 @@ func (p *pods) deleteDoomedKubernetesResources(ctx *actor.Context) error {
 	}
 	toKillConfigMaps := &k8sV1.ConfigMapList{}
 	for _, cm := range configMaps.Items {
-		if !p.poolNamespaces.Contains(cm.Namespace) {
+		if _, ok := p.namespaceToPoolName[cm.Namespace]; !ok {
 			continue
 		}
 
@@ -667,12 +672,14 @@ func (p *pods) startNodeInformer(ctx *actor.Context) {
 
 func (p *pods) startEventListener(ctx *actor.Context) {
 	p.eventListener, _ = ctx.ActorOf(
-		"event-listener", newEventListener(p.clientSet, ctx.Self(), p.poolNamespaces))
+		"event-listener", newEventListener(p.clientSet, ctx.Self(),
+			set.FromKeys(p.namespaceToPoolName)))
 }
 
 func (p *pods) startPreemptionListener(ctx *actor.Context) {
 	p.preemptionListener, _ = ctx.ActorOf(
-		"preemption-listener", newPreemptionListener(p.clientSet, ctx.Self(), p.poolNamespaces))
+		"preemption-listener", newPreemptionListener(p.clientSet, ctx.Self(),
+			set.FromKeys(p.namespaceToPoolName)))
 }
 
 func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
@@ -901,6 +908,105 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 // It will map currently running Determined pods to the slots on these Nodes, marking all other
 // slots as Free, even if they are being used by other k8 pods.
 func (p *pods) summarize(ctx *actor.Context) map[string]model.AgentSummary {
+	namespaceToQuota := make(map[string]k8sV1.ResourceQuota)
+
+	// Look up quotas for our resource pools' namespaces
+	for namespace := range p.namespaceToPoolName {
+		quotaList, err := p.quotaInterfaces[namespace].List(context.TODO(), metaV1.ListOptions{})
+		if k8serrors.IsNotFound(err) {
+			ctx.Log().WithError(err).
+				WithField("namespace", namespace).
+				Error("quota for namespace not found")
+			continue
+		} else if err != nil {
+			panic(err.Error())
+		} else if quotaList == nil || len(quotaList.Items) != 1 {
+			// TOOD: figure out how to handle multiple quotas per namespace?
+			continue
+		}
+
+		namespaceToQuota[namespace] = quotaList.Items[0]
+	}
+
+	// If there's only one resource pool configured and it doesn't have a quota, summarize using the
+	// whole cluster.
+	if len(p.namespaceToPoolName) == 1 {
+		var namespaceOfPool string
+		for namespace := range p.namespaceToPoolName {
+			namespaceOfPool = namespace
+		}
+
+		// If there's no quota for our only resource pool's namespace
+		if _, ok := namespaceToQuota[namespaceOfPool]; !ok {
+			return p.summarizeCluster(ctx)
+		}
+	}
+
+	containers := p.containersPerResourcePool()
+	summaries := make(map[string]model.AgentSummary, len(p.namespaceToPoolName))
+	for namespace, poolName := range p.namespaceToPoolName {
+		quota, quotaExists := namespaceToQuota[namespace]
+		numContainers := containers[poolName]
+
+		var (
+			registeredTime time.Time
+			slots          map[string]model.SlotSummary
+		)
+		if quotaExists {
+			slots = make(map[string]model.SlotSummary)
+			registeredTime = quota.CreationTimestamp.Time
+
+			for resourceName, qty := range quota.Spec.Hard {
+				var deviceType device.Type
+				switch resourceName {
+				case k8sV1.ResourceCPU:
+					deviceType = device.CPU
+				case ResourceTypeNvidia:
+					deviceType = device.CUDA
+				default:
+					// We only care about CPU and GPU quotas for the slots summary
+					continue
+				}
+
+				// Each CPU and GPU in the quota will be counted as a slot here
+				one, decQty := inf.NewDec(1, 0), qty.AsDec()
+				for i := inf.NewDec(0, 0); i.Cmp(decQty) < 0; i.Add(i, one) {
+					id := fmt.Sprintf("%s/%s/%s", poolName, string(deviceType), i.String())
+
+					var container *cproto.Container
+					// Create a number of pseudo-containers in the summary equal to the number of
+					// running containers
+					if decNumContainers := inf.NewDec(int64(numContainers),
+						0); i.Cmp(decNumContainers) < 0 {
+						container = &cproto.Container{
+							ID:    cproto.ID(id),
+							State: "RUNNING",
+						}
+					}
+
+					slots[id] = model.SlotSummary{
+						ID:        id,
+						Device:    device.Device{Type: deviceType},
+						Enabled:   true,
+						Container: container,
+					}
+				}
+			}
+		}
+
+		summaries[poolName] = model.AgentSummary{
+			ID:             poolName,
+			RegisteredTime: registeredTime,
+			NumContainers:  numContainers,
+			ResourcePool:   poolName,
+			Slots:          slots,
+		}
+	}
+
+	return summaries
+}
+
+func (p *pods) summarizeCluster(ctx *actor.Context) map[string]model.AgentSummary {
 	podHandlers := make([]*actor.Ref, 0, len(p.podNameToPodHandler))
 	for _, podHandler := range p.podNameToPodHandler {
 		podHandlers = append(podHandlers, podHandler)
@@ -1048,7 +1154,7 @@ func (p *pods) getNonDetSlots(deviceType device.Type) (map[string][]string, map[
 			if deviceType == device.CPU {
 				reqs += p.getCPUReqs(c)
 			} else if deviceType == device.CUDA {
-				reqs += c.Resources.Requests.Name("nvidia.com/gpu", resource.DecimalSI).Value()
+				reqs += c.Resources.Requests.Name(ResourceTypeNvidia, resource.DecimalSI).Value()
 			}
 		}
 		if reqs > 0 {
@@ -1063,4 +1169,12 @@ func (p *pods) getCPUReqs(c k8sV1.Container) int64 {
 	requested := float32(c.Resources.Requests.Cpu().MilliValue()) /
 		(1000. * p.slotResourceRequests.CPU)
 	return int64(requested)
+}
+
+func (p *pods) containersPerResourcePool() map[string]int {
+	counts := make(map[string]int, len(p.namespaceToPoolName))
+	for _, pool := range p.podNameToResourcePool {
+		counts[pool] = counts[pool] + 1
+	}
+	return counts
 }
