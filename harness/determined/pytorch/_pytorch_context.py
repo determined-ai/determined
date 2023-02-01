@@ -9,7 +9,7 @@ import determined as det
 from determined import profiler, pytorch, util
 from determined.horovod import hvd
 from determined.tensorboard import get_base_path
-from determined.tensorboard.metric_writers.pytorch import TorchWriter
+from determined.pytorch import TorchWriter
 
 # Apex is included only for GPU trials.
 try:
