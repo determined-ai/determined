@@ -151,8 +151,7 @@ func (a *apiServer) KillTensorboard(
 	}
 
 	err = command.AuthZProvider.Get().CanTerminateTensorboard(
-		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId),
-		getResponse.Tensorboard.ExperimentIds, getResponse.Tensorboard.TrialIds)
+		ctx, *curUser, model.AccessScopeID(getResponse.Tensorboard.WorkspaceId))
 	if err != nil {
 		return nil, err
 	}
