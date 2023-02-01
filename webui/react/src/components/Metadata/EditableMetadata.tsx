@@ -32,28 +32,24 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
 
   const onValuesChange = useCallback(
     (changedValues: { metadata: Metadata[] }, values: { metadata: Metadata[] }) => {
-      if (changedValues.metadata.length !== values.metadata.length) {
+      const mapAndUpdate = (metadata: Metadata[]) => {
+        const newMetadata = metadata.reduce((acc, row) => {
+          if (row.value === undefined) {
+            row.value = '';
+          }
+          if (row?.key) acc[row.key] = row.value;
+          return acc;
+        }, {} as Metadata);
+
+        updateMetadata?.(newMetadata);
+      };
+
+      if (changedValues.metadata.length < values.metadata.length) {
         // this callback is triggered when removing a row, and using the values parameter generates a console error
         // because it tries to use an empty entry from the array.
-        const newMetadata = changedValues.metadata.reduce((acc, row) => {
-          if (row.value === undefined) {
-            row.value = '';
-          }
-          if (row?.key) acc[row.key] = row.value;
-          return acc;
-        }, {} as Metadata);
-
-        updateMetadata?.(newMetadata);
+        mapAndUpdate(changedValues.metadata);
       } else {
-        const newMetadata = values.metadata.reduce((acc, row) => {
-          if (row.value === undefined) {
-            row.value = '';
-          }
-          if (row?.key) acc[row.key] = row.value;
-          return acc;
-        }, {} as Metadata);
-
-        updateMetadata?.(newMetadata);
+        mapAndUpdate(values.metadata)
       }
     },
     [updateMetadata],
