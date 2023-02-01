@@ -36,6 +36,7 @@ interface ProjectPermissionsArgs {
 interface RbacOptsProps {
   rbacAllPermission: boolean;
   rbacEnabled: boolean;
+  rbacModel: boolean;
   rbacReadPermission: boolean;
   user?: DetailedUser;
   userAssignments?: UserAssignment[];
@@ -83,9 +84,10 @@ interface PermissionsHook {
 }
 
 const usePermissions = (): PermissionsHook => {
-  const rbacEnabled = useFeature().isOn('rbac');
-  const rbacAllPermission = useFeature().isOn('mock_permissions_all');
-  const rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission;
+  const rbacEnabled = useFeature().isOn('rbac'),
+    rbacAllPermission = useFeature().isOn('mock_permissions_all'),
+    rbacReadPermission = useFeature().isOn('mock_permissions_read') || rbacAllPermission,
+    rbacModel = useFeature().isOn('model_rbac');
 
   const loadableCurrentUser = useCurrentUser();
   const user = Loadable.match(loadableCurrentUser, {
@@ -112,12 +114,21 @@ const usePermissions = (): PermissionsHook => {
     () => ({
       rbacAllPermission,
       rbacEnabled,
+      rbacModel,
       rbacReadPermission,
       user,
       userAssignments,
       userRoles,
     }),
-    [rbacAllPermission, rbacEnabled, rbacReadPermission, user, userAssignments, userRoles],
+    [
+      rbacAllPermission,
+      rbacEnabled,
+      rbacModel,
+      rbacReadPermission,
+      user,
+      userAssignments,
+      userRoles,
+    ],
   );
 
   const permissions = useMemo(
@@ -351,24 +362,29 @@ const canDeleteModel = ({ rbacAllPermission, user }: RbacOptsProps, model: Model
 };
 
 const canDeleteModelVersion = (
-  { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
+  { rbacAllPermission, rbacEnabled, rbacModel, user, userAssignments, userRoles }: RbacOptsProps,
   modelVersion: ModelVersion,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
   return (
     rbacAllPermission ||
-    (rbacEnabled
+    (rbacEnabled && rbacModel
       ? permitted.has(V1PermissionType.EDITMODELREGISTRY)
       : !!user && (user.isAdmin || user.id === modelVersion?.userId))
   );
 };
 
 const canModifyModelVersion = (
-  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  { rbacAllPermission, rbacEnabled, rbacModel, userAssignments, userRoles }: RbacOptsProps,
   modelVersion: ModelVersion,
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
-  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.EDITMODELREGISTRY);
+  return (
+    !rbacEnabled ||
+    rbacAllPermission ||
+    !rbacModel ||
+    permitted.has(V1PermissionType.EDITMODELREGISTRY)
+  );
 };
 
 // Project actions
