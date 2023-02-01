@@ -1,6 +1,8 @@
 import abc
 import logging
 import pathlib
+import queue
+import threading
 import time
 from typing import Callable, List
 
@@ -95,3 +97,27 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
         writer = pytorch.TorchWriter()
 
     return tensorboard.BatchMetricWriter(writer)
+
+
+class _TensorboardUploadThread(threading.Thread):
+    def __init__(self, upload_function: Callable, work_queue: queue.Queue) -> None:
+        self._upload_function = upload_function
+        self._work_queue = work_queue
+
+        super().__init__()
+
+    def run(self):
+        while True:
+            file_paths = self._work_queue.get(block=True)
+
+            # None is the sentinel value
+            # to signal this thread to exit
+            if file_paths is None:
+                return
+
+            # Try-catch is used to avoid exception from
+            # one failed sync attempt to cause the thread to exit.
+            try:
+                self._upload_function(file_paths)
+            except Exception as e:
+                logging.warning(f"Sync of Tensorboard files failed with error: {e}")
