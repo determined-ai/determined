@@ -117,12 +117,11 @@ def test_upload_thread_exception_case() -> None:
     #    a thread exits with exception.
     import threading
 
-    threads_with_exception = []
+    threads_with_exception = set()
 
     def custom_excepthook(args):
         thread_name = args.thread.ident
-        print(thread_name)
-        threads_with_exception.append(thread_name)
+        threads_with_exception.add(thread_name)
 
     threading.excepthook = custom_excepthook
 
