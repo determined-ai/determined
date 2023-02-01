@@ -5178,7 +5178,7 @@ export interface V1Model {
      * @type {number}
      * @memberof V1Model
      */
-    workspaceId?: number;
+    workspaceId: number;
     /**
      * Id of the user who created this model.
      * @type {number}
