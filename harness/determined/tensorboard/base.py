@@ -100,7 +100,9 @@ def get_metric_writer() -> tensorboard.BatchMetricWriter:
 
 
 class _TensorboardUploadThread(threading.Thread):
-    def __init__(self, upload_function: Callable, work_queue: queue.Queue) -> None:
+    def __init__(
+        self, upload_function: Callable[[List[pathlib.Path]], None], work_queue: queue.Queue
+    ) -> None:
         self._upload_function = upload_function
         self._work_queue = work_queue
 
@@ -108,10 +110,11 @@ class _TensorboardUploadThread(threading.Thread):
 
     def run(self):
         while True:
-            file_paths = self._work_queue.get(block=True)
+            # The thread will wait until self._work_queue is not empty
+            file_paths = self._work_queue.get(block=True, timeout=None)
 
             # None is the sentinel value
-            # to signal this thread to exit
+            # to signal the thread to exit
             if file_paths is None:
                 return
 

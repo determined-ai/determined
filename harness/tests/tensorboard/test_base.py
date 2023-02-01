@@ -1,6 +1,9 @@
+import queue
 import pathlib
 
 import pytest
+
+from unittest import mock
 
 from determined import tensorboard
 from tests.tensorboard import test_util
@@ -90,3 +93,18 @@ def test_illegal_type() -> None:
         tensorboard.build(
             env.det_cluster_id, env.det_experiment_id, env.det_trial_id, checkpoint_config
         )
+
+
+def test_upload_thread() -> None:
+    upload_function = mock.Mock()
+    work_queue = queue.Queue(maxsize=10)
+    upload_thread = tensorboard.base._TensorboardUploadThread(upload_function, work_queue)
+
+    upload_thread.start()
+    work_queue.put(["test_file_path_1", "test_file_path_2"])
+    work_queue.put(["test_file_path_3"])
+    # Pass in sentinel value to exit thread
+    work_queue.put(None)
+    upload_thread.join()
+
+    assert upload_function.call_count == 2
