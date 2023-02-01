@@ -490,16 +490,17 @@ func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch, metricSeriesTime, metr
 	for rows.Next() {
 		var batches uint
 		var value float64
-		var epoch uint
+		var epoch *uint
 		var endTime time.Time
 		err := rows.Scan(&batches, &value, &endTime, &epoch)
 		if err != nil {
-			// Could be a bad metric name, sparse metric, nested type, etc.
 			continue
 		}
 		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
 		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
-		metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(epoch), Y: value})
+		if epoch != nil {
+			metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(*epoch), Y: value})
+		}
 		if endTime.After(maxEndTime) {
 			maxEndTime = endTime
 		}
@@ -534,10 +535,6 @@ ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	defer rows.Close()
 	metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime = scanMetricsSeries(
 		rows, metricSeriesBatch, metricSeriesTime, metricSeriesEpoch)
-	fmt.Println("!!!!!!!")
-	fmt.Println(metricSeriesEpoch)
-	fmt.Println("---")
-	fmt.Println(metricSeriesBatch)
 	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime, nil
 }
 

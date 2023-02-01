@@ -271,7 +271,7 @@ export type ChartsProps = Props[];
  * @typedef GroupProps {object}
  * Config for a grid of LineCharts.
  * @param {ChartsProps} chartsProps - Provide series to plot on each chart, and any chart-specific config.
- * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time.
+ * @param {XAxisDomain[]} [xAxisOptions] - A list of possible x-axes to select in a dropdown; examples: Batches, Time, Epoch.
  */
 interface GroupProps {
   chartsProps: ChartsProps;

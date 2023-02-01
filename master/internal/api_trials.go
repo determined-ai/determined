@@ -679,7 +679,7 @@ func (a *apiServer) appendToMetricsEpoch(metrics []*apiv1.SummarizedMetric,
 			Epoch: int32(in.X),
 			Value: in.Y,
 		}
-		m.Epoch = append(m.Epoch, &out)
+		m.Epochs = append(m.Epochs, &out)
 	}
 	if len(m.Time) > 0 {
 		return append(metrics, m)

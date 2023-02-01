@@ -628,6 +628,10 @@ const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricConta
       time: pt.time,
       value: pt.value,
     })),
+    epochs: m.epochs?.map((pt) => ({
+      epoch: pt.epoch,
+      value: pt.value,
+    })),
     type:
       m.type === Sdk.V1MetricType.TRAINING
         ? types.MetricType.Training

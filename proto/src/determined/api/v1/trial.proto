@@ -31,7 +31,7 @@ message SummarizedMetric {
   repeated DataPointTime time = 4;
   // A possibly down-sampled series of metric readings through the progress of
   // the trial in epoch.
-  repeated DataPointEpoch epoch = 5;
+  repeated DataPointEpoch epochs = 5;
   // Type of metrics (training, validation, or unset).
   MetricType type = 3;
 }
