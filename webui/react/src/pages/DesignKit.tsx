@@ -3,7 +3,6 @@ import { Card as AntDCard, Space } from 'antd';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import Grid, { GridMode } from 'components/Grid';
 import Breadcrumb from 'components/kit/Breadcrumb';
 import Button from 'components/kit/Button';
 import Card from 'components/kit/Card';
@@ -38,7 +37,7 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { ShirtSize } from 'themes';
+import { generateTestExperimentData } from 'storybook/shared/generateTestData';
 import { BrandingType, MetricType, ResourcePool, User } from 'types';
 
 import css from './DesignKit.module.scss';
@@ -1018,15 +1017,16 @@ const CardsSection: React.FC = () => {
       </AntDCard>
       <AntDCard title="Usage">
         <strong>Card default</strong>
-        <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
-          <Card
-            actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}
-            footer="Footer text"
-            title="Card with overflow">
-            Content
-          </Card>
-          <Card title="Card without overflow">Content</Card>
-        </Grid>
+        <Space size="large">
+          <div>
+            <p>Card with actions</p>
+            <Card actionMenu={{ items: [{ key: 'test', label: 'Test' }] }} />
+          </div>
+          <div>
+            <p>Card without actions</p>
+            <Card />
+          </div>
+        </Space>
         <strong>Considerations</strong>
         <ul>
           <li>Ensure links are tab-able.</li>
@@ -1037,7 +1037,7 @@ const CardsSection: React.FC = () => {
             additional clicks.
           </li>
         </ul>
-        <strong>DataCard variations</strong>
+        <strong>Card variations</strong>
         <ul>
           <li>
             Resource pool card (<code>{'<ResourcePoolCard>'}</code>)

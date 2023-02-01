@@ -3,10 +3,10 @@
   --transition-delay: 0.05s;
   background-color: var(--theme-surface);
   border: solid var(--theme-stroke-width) var(--theme-ix-border);
-  border-radius: var(--theme-border-radius);
+  border-radius: var(--theme-border-radius-weak);
   box-shadow: var(--theme-elevation-weak);
   color: var(--theme-surface-on);
-  padding: 8px 16px;
+  padding: 8px;
   transition: var(--transition-duration) background-color;
 
   .action {
