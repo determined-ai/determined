@@ -76,6 +76,7 @@ interface PermissionsHook {
   canUpdateRoles: (arg0: ProjectPermissionsArgs) => boolean;
   canViewExperimentArtifacts: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewGroups: boolean;
+  canViewModelRegistry: boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
   loading: boolean;
@@ -168,6 +169,7 @@ const usePermissions = (): PermissionsHook => {
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
       canViewGroups: canViewGroups(rbacOpts),
+      canViewModelRegistry: canViewModelRegistry(rbacOpts),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
@@ -228,6 +230,18 @@ const canAdministrateUsers = ({
 
 const canViewGroups = ({ rbacReadPermission, rbacEnabled, user }: RbacOptsProps): boolean => {
   return rbacReadPermission || (!!user && (rbacEnabled || user.isAdmin));
+};
+
+const canViewModelRegistry = ({
+  rbacReadPermission,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  // For OSS, everyone can view model registry
+  // For RBAC, users with rbacReadPermission or VIEWMODELREGISTRY permission can view model resgistry
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !rbacEnabled || rbacReadPermission || permitted.has(V1PermissionType.VIEWMODELREGISTRY);
 };
 
 const canModifyGroups = ({
