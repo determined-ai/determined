@@ -86,7 +86,7 @@ export const LineChart: React.FC<Props> = ({
   }, [series]);
 
   const hasPopulatedSeries: boolean = useMemo(
-    () => !!series.find((serie) => serie.data[xAxis].length > 0),
+    () => !!series.find((serie) => serie?.data[xAxis]?.length > 0),
     [series, xAxis],
   );
 
