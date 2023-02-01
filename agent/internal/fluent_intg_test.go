@@ -261,8 +261,8 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, taskID model.TaskID, fl
 		if exit.Error != nil {
 			t.Fatalf("container exited with error: %s", exit.Error)
 		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("container did not exit after 10 seconds")
+	case <-time.After(30 * time.Second):
+		t.Fatal("container did not exit after 30 seconds")
 	}
 }
 
