@@ -85,6 +85,11 @@ export const LineChart: React.FC<Props> = ({
     );
   }, [series]);
 
+  const hasPopulatedSeries: boolean = useMemo(
+    () => !!series.find((serie) => serie.data[xAxis].length > 0),
+    [series, xAxis],
+  );
+
   const seriesColors: string[] = useMemo(
     () =>
       series.map(
@@ -185,7 +190,7 @@ export const LineChart: React.FC<Props> = ({
       cursor: {
         drag: { x: true, y: false },
       },
-      height,
+      height: height - (series.find((s) => s.data[xAxis].length > 0) ? 0 : 20),
       legend: { show: false },
       plugins,
       scales: {
@@ -230,21 +235,25 @@ export const LineChart: React.FC<Props> = ({
     <div className="diamond-cursor">
       {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
-        allowDownload
+        allowDownload={hasPopulatedSeries}
         data={chartData}
         focusIndex={focusedSeries}
         options={chartOptions}
       />
       {showLegend && (
         <div className={css.legendContainer}>
-          {series.map((s, idx) => (
-            <li className={css.legendItem} key={idx}>
-              <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
-                &mdash;
-              </span>
-              {seriesNames[idx]}
-            </li>
-          ))}
+          {hasPopulatedSeries ? (
+            series.map((s, idx) => (
+              <li className={css.legendItem} key={idx}>
+                <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
+                  &mdash;
+                </span>
+                {seriesNames[idx]}
+              </li>
+            ))
+          ) : (
+            <li>&nbsp;</li>
+          )}
         </div>
       )}
     </div>
