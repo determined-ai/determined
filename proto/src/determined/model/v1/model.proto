@@ -77,7 +77,7 @@ message PatchModel {
   // The name of the workspace associated with this model.
   optional string workspace_name = 7;
   // The id of the workspace associated with this model.
-  optional string workspace_id = 8;
+  optional int32 workspace_id = 8;
 }
 
 // A version of a model containing a checkpoint. Users can label checkpoints as

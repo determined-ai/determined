@@ -5650,10 +5650,10 @@ export interface V1PatchModel {
     workspaceName?: string;
     /**
      * The id of the workspace associated with this model.
-     * @type {string}
+     * @type {number}
      * @memberof V1PatchModel
      */
-    workspaceId?: string;
+    workspaceId?: number;
 }
 
 /**
