@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:23.04
 MAINTAINER Determined AI <hello@determined.ai>
 
 RUN apt-get update -yq \
