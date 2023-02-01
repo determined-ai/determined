@@ -23,6 +23,7 @@ from determined.pytorch._metric_utils import (
     _reduce_metrics,
     _convert_metrics_to_numpy,
 )
+from determined.pytorch._metric_writer import TorchWriter
 from determined.pytorch._experimental import PyTorchExperimentalContext
 from determined.pytorch._pytorch_context import PyTorchTrialContext
 from determined.pytorch._pytorch_trial import PyTorchTrial, PyTorchTrialController
