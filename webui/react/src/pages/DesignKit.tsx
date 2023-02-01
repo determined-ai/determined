@@ -1276,7 +1276,11 @@ const EmptySection: React.FC = () => {
       </Card>
       <Card title="Usage">
         <Empty
-          description={<strong>Empty description</strong>}
+          description={
+            <>
+              Empty component description, with a <Link to="">link to more info</Link>
+            </>
+          }
           icon="warning-large"
           title="Empty title"
         />

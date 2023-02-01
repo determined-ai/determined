@@ -1,6 +1,9 @@
 .emptyBase {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
   margin-inline: auto;
-  margin-top: 150px;
   max-width: 350px;
   text-align: center;
 

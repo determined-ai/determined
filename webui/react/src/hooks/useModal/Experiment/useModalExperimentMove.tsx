@@ -1,9 +1,10 @@
-import { Empty, notification, Select, Typography } from 'antd';
+import { notification, Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
+import Empty from 'components/kit/Empty';
 import Link from 'components/Link';
 import SelectFilter from 'components/SelectFilter';
 import usePermissions from 'hooks/usePermissions';
@@ -160,14 +161,11 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
             </label>
             {workspaceId === undefined ? (
               <div className={css.emptyContainer}>
-                <Empty description="Select a workspace" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                <Empty description="Select a workspace" icon="error" />
               </div>
             ) : Loadable.quickMatch(projects, false, (ps) => ps.length === 0) ? (
               <div className={css.emptyContainer}>
-                <Empty
-                  description="Workspace contains no projects"
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
+                <Empty description="Workspace contains no projects" icon="error" />
               </div>
             ) : (
               <List

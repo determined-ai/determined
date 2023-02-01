@@ -1,7 +1,7 @@
-import { Empty } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlignedData } from 'uplot';
 
+import Empty from 'components/kit/Empty';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import ResponsiveFilters from 'components/ResponsiveFilters';
 import ScaleSelectFilter from 'components/ScaleSelectFilter';
@@ -141,7 +141,7 @@ const TrialChart: React.FC<Props> = ({
         {
           <Spinner className={css.spinner} conditionalRender spinning={!trialId}>
             {chartData[0].length === 0 ? (
-              <Empty description="No data to plot." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              <Empty description="No data to plot." icon="error" />
             ) : (
               <UPlotChart data={chartData} options={chartOptions} />
             )}
