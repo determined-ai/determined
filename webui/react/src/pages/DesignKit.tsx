@@ -1021,11 +1021,11 @@ const CardsSection: React.FC = () => {
         <Grid gap={ShirtSize.Medium} minItemWidth={180} mode={GridMode.AutoFill}>
           <Card
             actionMenu={{ items: [{ key: 'test', label: 'Test' }] }}
-            hint="Hint"
-            title="Last Runner State">
-            Validating
+            footer="Footer text"
+            title="Card with overflow">
+            Content
           </Card>
-          <Card title="Start time">7 mo ago</Card>
+          <Card title="Card without overflow">Content</Card>
         </Grid>
         <strong>Considerations</strong>
         <ul>

@@ -27,24 +27,24 @@ const Card: React.FC<CardProps> = ({ actionMenu, children, footer, onClick, titl
         </Dropdown>
       )}>
       <div className={css.base} tabIndex={onClick ? 0 : -1} onClick={onClick}>
-        {(!!title || !!actionMenu) && (
-          <div className={css.header}>
+        {actionMenu && (
+          <div className={css.action}>
+            <Dropdown menu={actionMenu} placement="bottomRight" trigger={['click']}>
+              <Button type="text" onClick={stopPropagation}>
+                <Icon name="overflow-horizontal" />
+              </Button>
+            </Dropdown>
+          </div>
+        )}
+        <section>
+          {title && (
             <Typography.Title className={css.title} ellipsis={{ rows: 1, tooltip: true }} level={5}>
               {title}
             </Typography.Title>
-            {!!actionMenu && (
-              <div className={css.action}>
-                <Dropdown menu={actionMenu} placement="bottomRight" trigger={['click']}>
-                  <Button type="text" onClick={stopPropagation}>
-                    <Icon name="overflow-horizontal" />
-                  </Button>
-                </Dropdown>
-              </div>
-            )}
-          </div>
-        )}
-        <div className={css.content}>{children}</div>
-        <div className={css.footer}>{footer}</div>
+          )}
+          {children && <div className={css.content}>{children}</div>}
+          {footer && <div className={css.footer}>{footer}</div>}
+        </section>
       </div>
     </ConditionalWrapper>
   );
