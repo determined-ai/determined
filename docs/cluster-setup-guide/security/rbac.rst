@@ -393,14 +393,14 @@ To list all existing cluster roles and the concrete permissions they include:
 ``Viewer``
 ==========
 
-``Viewer`` role allows a user to see workspaces, projects, experiments, as well as experiment
-metadata and artifacts within its scope.
+``Viewer`` role allows a user to see workspaces, projects, Notebooks, Tensorboards, Shells, Commands
+(NTSC), experiments, as well as experiment metadata and artifacts within its scope.
 
 ``Editor``
 ==========
 
 ``Editor`` role supersedes the ``Viewer`` role, and includes permissions to create, edit, or delete
-projects and experiments within its scope.
+projects, NTSC, and experiments within its scope.
 
 ``WorkspaceAdmin``
 ==================
@@ -485,30 +485,3 @@ all permissions, and can only be assigned globally.
    role assigned for their workspaces.
 
    Users will have no default access otherwise.
-
-*********
- Caveats
-*********
-
-.. _rbac-ntsc:
-
-RBAC Support for Notebooks, Tensorboards, Shells, and Commands
-==============================================================
-
-Currently, only experiments are organized within workspaces and projects. Other task types,
-notebooks, tensorboards, sheels, and commands (NTSC) are global entities. In the future, we plan to
-migrate NTSCs to workspaces to make them covered under RBAC model.
-
-When RBAC is enabled, as an interim measure, NTSC can only be accessed by the user who created the
-task, i.e. its owner, or by the users who have ``ADMINISTRATE_USER`` permission (i.e.
-``ClusterAdmin``).
-
-When RBAC is disabled, by default, every logged in user can access all NTSC on the cluster. We offer
-an option which restricts the access to NTSC only to the admins and the user who created the task,
-i.e. its owner. It can be enabled in the master config:
-
-.. code:: yaml
-
-   security:
-     authz:
-       _strict_ntsc_enabled: true
