@@ -19,6 +19,7 @@ import determined as det
 from determined import layers, pytorch, tensorboard, util, workload
 from determined.horovod import hvd
 from determined.util import has_param
+from determined.tensorboard import BatchMetricWriter
 
 # Apex is included only for GPU trials.
 try:
@@ -76,14 +77,7 @@ class PyTorchTrialController(det.TrialController):
                 self.use_horovod or self.use_torch
             ), "Must use horovod or torch for distributed training"
 
-    @classmethod
-    def create_metric_writer(
-        cls: Type["PyTorchTrialController"],
-    ) -> tensorboard.BatchMetricWriter:
-        from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
-        writer = TorchWriter()
-        return tensorboard.BatchMetricWriter(writer)
 
     @classmethod
     def pre_execute_hook(
@@ -125,6 +119,13 @@ class PyTorchTrialController(det.TrialController):
     @classmethod
     def supports_mixed_precision(cls: Type["PyTorchTrialController"]) -> bool:
         return True
+
+    def create_metric_writer(self
+    ) -> tensorboard.BatchMetricWriter:
+        """
+        The tensorboard writer is created in the PytorchTrialContext class
+        """
+        return BatchMetricWriter(self.context.tbd_writer)
 
     def _check_evaluate_implementation(self) -> None:
         """
