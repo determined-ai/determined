@@ -102,8 +102,8 @@ def test_upload_thread_normal_case() -> None:
     upload_thread = tensorboard.base._TensorboardUploadThread(upload_function, work_queue)
 
     upload_thread.start()
-    work_queue.put(["test_file_path_1", "test_file_path_2"])
-    work_queue.put(["test_file_path_3"])
+    work_queue.put([pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")])
+    work_queue.put([pathlib.Path("test_value/file3.json")])
     # Pass in sentinel value to exit thread
     work_queue.put(None)
     upload_thread.join()
@@ -136,7 +136,7 @@ def test_upload_thread_exception_case() -> None:
     # 4. start, run, and join the _TensorboardUploadThread instance
     upload_thread.start()
     thread_ident = upload_thread.ident
-    work_queue.put(["test_file_path_1", "test_file_path_2"])
+    work_queue.put([pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")])
     # Pass in sentinel value to exit thread
     work_queue.put(None)
     upload_thread.join()

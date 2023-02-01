@@ -108,7 +108,7 @@ class _TensorboardUploadThread(threading.Thread):
 
         super().__init__()
 
-    def run(self):
+    def run(self) -> None:
         while True:
             # The thread will wait until self._work_queue is not empty
             file_paths = self._work_queue.get(block=True, timeout=None)
