@@ -81,7 +81,7 @@ export const LineChart: React.FC<Props> = ({
     );
   }, [series]);
 
-  const hasVisibleSeries: boolean = useMemo(
+  const hasPopulatedSeries: boolean = useMemo(
     () => !!series.find((serie) => serie.data[xAxis].length > 0),
     [series, xAxis],
   );
@@ -225,14 +225,14 @@ export const LineChart: React.FC<Props> = ({
     <>
       {title && <h5 className={css.chartTitle}>{title}</h5>}
       <UPlotChart
-        allowDownload
+        allowDownload={hasPopulatedSeries}
         data={chartData}
         focusIndex={focusedSeries}
         options={chartOptions}
       />
       {showLegend && (
         <div className={css.legendContainer}>
-          {hasVisibleSeries ? (
+          {hasPopulatedSeries ? (
             series.map((s, idx) => (
               <li className={css.legendItem} key={idx}>
                 <span className={css.colorButton} style={{ color: seriesColors[idx] }}>
