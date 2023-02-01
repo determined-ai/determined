@@ -11,9 +11,9 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import experimentStore from 'stores/experiments';
-import { useActiveTasks, useFetchActiveTasks } from 'stores/tasks';
+import { ActiveTasksService } from 'stores/tasks';
 import { ShirtSize } from 'themes';
-import { ResourceType } from 'types';
+import { ResourceType, TaskCounts } from 'types';
 import { Loadable } from 'utils/loadable';
 import { useObservable } from 'utils/observable';
 
@@ -34,7 +34,9 @@ export const ClusterOverallStats: React.FC = () => {
     ACTIVE_EXPERIMENTS_PARAMS,
     canceler,
   );
-  const fetchActiveTasks = useFetchActiveTasks(canceler);
+  const fetchActiveTasks = ActiveTasksService.updateActiveTasks(canceler);
+  const activeTasks = useObservable<Loadable<TaskCounts>>(ActiveTasksService.getTaskCounts());
+
   const fetchActiveRunning = useCallback(async () => {
     await fetchActiveExperiments();
     await fetchActiveTasks();
@@ -44,7 +46,6 @@ export const ClusterOverallStats: React.FC = () => {
   const activeExperiments = useObservable(
     experimentStore.getExperimentsByParams(ACTIVE_EXPERIMENTS_PARAMS),
   );
-  const activeTasks = useActiveTasks();
   const rbacEnabled = useFeature().isOn('rbac');
 
   const auxContainers = useMemo(() => {
