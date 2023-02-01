@@ -3,13 +3,20 @@ import logging
 import pathlib
 import shutil
 
-import determined as det
 import torch
-from determined.experimental.client import create_experiment
 from dsat import constants, utils
+
+import determined as det
+from determined.experimental.client import create_experiment
 
 
 def main(core_context: det.core.Context) -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--prev_exit_code")
+    prev_exit_code = int(parser.parse_args().prev_exit_code)
+    if prev_exit_code:
+        print("EXITING DUE TO PREV EXIT CODE", prev_exit_code)
+        exit(prev_exit_code)
     is_chief = core_context.distributed.get_rank() == 0
     if is_chief:
         # Save the profile results as a checkpoint of the calling Trial (Ryan wouldn't approve).

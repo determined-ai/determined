@@ -2,14 +2,15 @@ import logging
 from typing import Any, Dict, Optional
 
 import deepspeed
-import determined as det
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from attrdict import AttrDict
-from determined.pytorch import DataLoader
 from dsat import utils
 from torch.utils.data import Dataset
+
+import determined as det
+from determined.pytorch import DataLoader
 
 
 class RandDataset(Dataset):
@@ -42,11 +43,13 @@ def main(
     core_context: det.core.Context,
     hparams: Dict[str, Any],
 ) -> None:
+    is_chief = core_context.distributed.rank == 0
     hparams = AttrDict(hparams)
+    if is_chief:
+        logging.info(f"HPs seen by trial: {hparams}")
     # Hack for clashing 'type' key. Need to change config parsing behavior so that
     # user scripts don't need to inject helper functions like this.
     ds_config = utils.lower_case_dict_key(hparams.ds_config, "TYPE")
-    print("SCRIPT DS_CONFIG", ds_config)
     dataset = RandDataset(hparams.num_records, hparams.dim)
     model = MinimalModel(hparams.dim, hparams.layers)
 
@@ -62,7 +65,6 @@ def main(
     device = model_engine.device
 
     steps_completed = 0
-    is_chief = core_context.distributed.rank == 0
     for op in core_context.searcher.operations():
         while steps_completed < op.length:
             for batch in train_loader:

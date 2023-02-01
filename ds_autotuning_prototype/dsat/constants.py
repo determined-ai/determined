@@ -7,26 +7,20 @@ FLOPS_PROFILER_CONFIG = {
     "enabled": True,
     "profile_step": DSAT_MAX_LENGTH_STEPS - 1,
     "module_depth": -1,
-    "top_modules": 10,
+    "top_modules": 10,  # TODO: Verify that this is a reasonable value. Also let user config this whole section.
     "detailed": True,
     "output_file": PROFILER_OUTPUT_FILE_PATH,
 }
 
-DSAT_SEARCHER_RESOURCES_CONFIG = {
-    "train_micro_batch_size_per_gpu": 1,
-    "zero_optimization": {
-        "stage": 0
-    },  # DS set the stage to 3; not sure why? See DEFAULT_MIN_MEM_CONFIG
-    "flops_profiler": FLOPS_PROFILER_CONFIG,
-}
+
 MODEL_INFO_PROFILING_DS_CONFIG = {
     "train_micro_batch_size_per_gpu": 1,
     "zero_optimization": {
         "stage": 0
-    },  # DS set the stage to 3; not sure why? See DEFAULT_MIN_MEM_CONFIG
+    },  # DS set the stage to 3; not sure why? See DEFAULT_MIN_MEM_CONFIG. Verify not crucial.
     "autotuning": {
         "enabled": True,
-        # The two fields below essentially use DS internals!
+        # The two fields below essentially use DS internals! Maybe fragile.
         "model_info_path": AUTOTUNING_MODEL_PROFILE_OUTPUT_FILE_PATH,
         "model_info": {"profile": True},
     },
@@ -38,4 +32,18 @@ SINGLE_SEARCHER_CONFIG = {
     "name": "single",
     "max_length": DSAT_MAX_LENGTH_STEPS,
     "metric": "placeholder",
+}
+
+# Using same defaults as DS. Written as a diff between successive stages for brevity.
+NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE = {
+    0: dict(),
+    1: {"reduce_bucket_size": [5e7, 5e8, 1e9], "allgather_bucket_size": [5e7, 5e8, 1e9]},
+    2: {
+        "overlap_comm": [True, False],
+        "reduce_scatter": [True, False],
+        "contiguous_gradients": [True, False],
+    },
+    3: {
+        "allgather_partitions": [True, False],
+    },
 }

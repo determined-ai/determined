@@ -23,12 +23,20 @@ def main(core_context: det.core.Context) -> None:
     args = get_parsed_args()
     submitted_config_dict = utils.get_config_dict_from_yaml_path(args.config_path)
     # Save profiling results w/ wrapper; probably remove eventually, but useful for sanity checking.
-    # Needs error handling if we keep this; currently reports success even if the Trial fails.
     submitted_config_dict["entrypoint"] += (
         "; python3 -m determined.launch.torch_distributed"
-        " python3 -m dsat.checkpoint_profiling_results_wrapper"
+        " python3 -m dsat.checkpoint_profiling_results_wrapper --prev_exit_code $?"
     )
-    search_method = dsat_search_method.DSATSearchMethod(submitted_config_dict)
+
+    all_search_method_classes = {"basic": dsat_search_method.DSATBasicSearchMethod}
+    search_method_name = submitted_config_dict["hyperparameters"]["autotuning_config"][
+        "search_method_name"
+    ]
+    assert (
+        search_method_name in all_search_method_classes
+    ), f"search_method must be one of {list(all_search_method_classes)}"
+
+    search_method = all_search_method_classes[search_method_name](submitted_config_dict)
     search_runner = searcher.RemoteSearchRunner(search_method, context=core_context)
 
     search_runner.run(submitted_config_dict, model_dir=".")

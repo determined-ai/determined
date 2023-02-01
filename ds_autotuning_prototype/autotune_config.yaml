@@ -4,6 +4,7 @@ project: minimal_testing
 max_restarts: 0
 resources:
   slots_per_trial: 2
+  max_slots: 8
 searcher:
   name: custom
   metric: samples/second
@@ -20,9 +21,17 @@ hyperparameters:
       TYPE: Adam
       params:
         lr: 1e-3
-    zero_optimization:
-      stage: 0
-      # Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead.
   autotuning_config: # Currently where search related configs are set. TODO: move to searcher field.
-    search_method: basic
+    search_method_name: basic
+    zero_stages:
+      - 0
+      - 1
+      - 2
+      - 3
+    num_trials:
+      - 1
+      - 2
+      - 2
+      - 2
+# Using torch_distributed's launcher for simplicity. TODO: Use DS launcher instead (?)
 entrypoint: python3 -m determined.launch.torch_distributed python3 minimal_script.py

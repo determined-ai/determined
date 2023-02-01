@@ -1,13 +1,17 @@
 import collections
 import json
+import os
 import pathlib
 import re
-from typing import Any, Dict, Optional, Sequence, Union
+import time
+from random import choice, uniform
+from typing import Any, Dict, List, Optional, Sequence, Union
+
+import torch
+from dsat import constants, utils
+from ruamel import yaml
 
 import determined as det
-import torch
-from dsat import constants
-from ruamel import yaml
 
 
 def get_config_dict_from_yaml_path(path: str) -> Dict[str, any]:
@@ -70,11 +74,10 @@ def dsat_forward(core_context, op, model_engine, *args, **kwargs):
     except SystemExit:
         is_chief = core_context.distributed.rank == 0
         try:
-            # TODO: Need some sleep checks/retries to ensure the file was written? Timing issues?
-            model_info_profiling_results_dict = get_model_profiling_info_results_dict()
-            gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
-            model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
             if is_chief:
+                model_info_profiling_results_dict = get_model_profiling_info_results_dict()
+                gpu_mem_in_bytes = torch.cuda.get_device_properties(0).total_memory
+                model_info_profiling_results_dict["gpu_mem_in_bytes"] = gpu_mem_in_bytes
                 op.report_completed(
                     model_info_profiling_results_dict
                 )  # TODO: Placeholder, will eventually pass entire results dict.
@@ -85,9 +88,25 @@ def dsat_forward(core_context, op, model_engine, *args, **kwargs):
     return output
 
 
+def wait_for_file_to_exist(
+    path: Union[str, pathlib.Path], check_limit: int = 3, sleep_time: int = 1
+):
+    # TODO: Clean up, verify needed.
+    attempt = 1
+    while attempt <= check_limit:
+        if not os.path.isfile(path):
+            time.sleep(sleep_time)
+            attempt += 1
+            if attempt > check_limit:
+                raise FileNotFoundError
+        else:
+            break
+
+
 def get_model_profiling_info_results_dict(
     path: Union[str, pathlib.Path] = constants.AUTOTUNING_MODEL_PROFILE_OUTPUT_FILE_PATH
 ):
+    wait_for_file_to_exist(path)
     with open(path, "r") as output:
         results_dict = json.load(output)
         return results_dict
@@ -96,6 +115,8 @@ def get_model_profiling_info_results_dict(
 def get_ds_profiler_results_dict(
     path: Union[str, pathlib.Path] = constants.PROFILER_OUTPUT_FILE_PATH
 ):
+    wait_for_file_to_exist(path)
+
     metrics_with_units = {"iter latency", "FLOPS per GPU", "params per gpu"}
     metrics_without_units = {
         "samples/second",
@@ -157,10 +178,61 @@ def dsat_metrics_converter(result: Union[float, Dict[str, Any]]):
     # TODO: Prevent clashes w/ other non-DSAT custom searchers.
     is_autotuning = searcher_config["name"] == "custom"
     if not is_autotuning:
-        print("REGULAR REPORT COMPLETED")
         return result
     else:
-        print("DSAT REPORT COMPLETED")
         # TODO: Need some sleep checks/retries to ensure the file was written? Timing issues?
         profiler_results_dict = get_ds_profiler_results_dict()
         return profiler_results_dict
+
+
+def get_zero_optim_keys_and_defaults_per_stage(
+    zero_stage: int,
+) -> Dict[str, List[Union[bool, float]]]:
+    defaults = constants.NEW_ZERO_OPTIM_KEYS_AND_DEFAULTS_PER_STAGE
+    assert zero_stage in defaults, f"Invalid zero_stage, must be one of {list(defaults)}"
+    keys_and_defaults = defaults[0]
+    for stage in range(1, zero_stage + 1):
+        keys_and_defaults = {**keys_and_defaults, **defaults[stage]}
+    return keys_and_defaults
+
+
+def get_random_zero_optim_dict_for_zero_stage(zero_stage: int) -> Dict[str, Union[bool, float]]:
+    keys_and_defaults = get_zero_optim_keys_and_defaults_per_stage(zero_stage)
+    zero_optim_dict = {key: choice(defaults) for key, defaults in keys_and_defaults.items()}
+    zero_optim_dict["stage"] = zero_stage
+    return zero_optim_dict
+
+
+# Taken from DS
+DEFAULT_TUNING_SPACE_ZERO_0 = {"zero_optimization": {"stage": 0}}
+
+DEFAULT_TUNING_SPACE_ZERO_1 = {
+    "zero_optimization": {
+        "stage": 1,
+        "reduce_bucket_size": [5e7, 5e8, 1e9],
+        "allgather_bucket_size": [5e7, 5e8, 1e9],
+    }
+}
+
+DEFAULT_TUNING_SPACE_ZERO_2 = {
+    "zero_optimization": {
+        "stage": 2,
+        "overlap_comm": [True, False],
+        "reduce_scatter": [False, True],
+        "reduce_bucket_size": [5e7, 5e8, 1e9],
+        "allgather_bucket_size": [5e7, 5e8, 1e9],
+        "contiguous_gradients": [False, True],
+    },
+}
+
+DEFAULT_TUNING_SPACE_ZERO_3 = {
+    "zero_optimization": {
+        "stage": 3,
+        "overlap_comm": [True, False],
+        "reduce_scatter": [False, True],
+        "reduce_bucket_size": [5e7, 5e8, 1e9],
+        "allgather_partitions": [True, False],
+        "allgather_bucket_size": [5e7, 5e8, 1e9],
+        "contiguous_gradients": [False, True],
+    },
+}
