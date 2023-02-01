@@ -393,14 +393,14 @@ To list all existing cluster roles and the concrete permissions they include:
 ``Viewer``
 ==========
 
-``Viewer`` role allows a user to see workspaces, projects, experiments, as well as experiment
-metadata and artifacts within its scope.
+``Viewer`` role allows a user to see workspaces, projects, Notebooks, Tensorboards, Shells, Commands
+(NTSC), experiments, as well as experiment metadata and artifacts within its scope.
 
 ``Editor``
 ==========
 
 ``Editor`` role supersedes the ``Viewer`` role, and includes permissions to create, edit, or delete
-projects and experiments within its scope.
+projects, NTSC, and experiments within its scope.
 
 ``WorkspaceAdmin``
 ==================
@@ -485,16 +485,3 @@ all permissions, and can only be assigned globally.
    role assigned for their workspaces.
 
    Users will have no default access otherwise.
-
-*********
- Caveats
-*********
-
-.. _rbac-ntsc:
-
-RBAC Support for Notebooks, Tensorboards, Shells, and Commands
-==============================================================
-
-Task types other than experiments such as notebooks, tensorboards, sheels, and commands (NTSC) are
-not protected under RBAC model. In the future, we plan to make NTSCs covered under RBAC model. As
-the result currently every logged in user can access all NTSC on the cluster.
