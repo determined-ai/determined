@@ -9,6 +9,7 @@ import determined as det
 from determined import profiler, pytorch, util
 from determined.horovod import hvd
 from determined.tensorboard import get_base_path
+from determined.tensorboard.metric_writers.pytorch import TorchWriter
 
 # Apex is included only for GPU trials.
 try:
@@ -101,6 +102,8 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         self._average_training_metrics = cast(
             bool, optimizations_config.get("average_training_metrics")
         )
+
+        self.tbd_writer = TorchWriter(self.get_tensorboard_path())
 
     def get_global_batch_size(self) -> int:
         """
@@ -799,6 +802,21 @@ class PyTorchTrialContext(det.TrialContext, pytorch._PyTorchReducerContext):
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
         return self._current_batch_idx
+
+    @contextlib.contextmanager
+    def get_tensorboard_writer(self):
+        """
+        Yield tensorboard writer to the user.
+        To be used via the `with` statement, eg:
+
+        with context.get_tensorboard_writer() as writer:
+            writer.add_scalar(value, idx)
+            writer.add_images(images, idx)
+        """
+        try:
+            yield self.tbd_writer
+        finally:
+            self.tbd_writer.reset()
 
     class _PyTorchDistributedDataParallel(
         torch.nn.parallel.DistributedDataParallel  # type: ignore
