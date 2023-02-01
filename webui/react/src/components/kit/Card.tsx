@@ -1,7 +1,6 @@
 import { Dropdown, MenuProps } from 'antd';
 import React from 'react';
 
-import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import Icon from 'shared/components/Icon';
 
 import Button from './Button';
@@ -27,34 +26,26 @@ const Card: React.FC<CardProps> = ({
   width = 184,
 }: CardProps) => {
   return (
-    <ConditionalWrapper
-      condition={!!actionMenu && !disabled}
-      wrapper={(children) => (
-        <Dropdown menu={actionMenu} placement="bottomLeft" trigger={['contextMenu']}>
-          {children}
-        </Dropdown>
-      )}>
-      <div
-        className={css.base}
-        style={{ minHeight: `${height}px`, width: `${width}px` }}
-        tabIndex={onClick ? 0 : -1}
-        onClick={onClick}>
-        {actionMenu && (
-          <div className={css.action}>
-            <Dropdown
-              disabled={disabled}
-              menu={actionMenu}
-              placement="bottomRight"
-              trigger={['click']}>
-              <Button disabled={disabled} type="text" onClick={stopPropagation}>
-                <Icon name="overflow-horizontal" />
-              </Button>
-            </Dropdown>
-          </div>
-        )}
-        <section>{children && <div className={css.content}>{children}</div>}</section>
-      </div>
-    </ConditionalWrapper>
+    <div
+      className={css.base}
+      style={{ minHeight: `${height}px`, width: `${width}px` }}
+      tabIndex={onClick ? 0 : -1}
+      onClick={onClick}>
+      {actionMenu && (
+        <div className={css.action}>
+          <Dropdown
+            disabled={disabled}
+            menu={actionMenu}
+            placement="bottomRight"
+            trigger={['click']}>
+            <Button disabled={disabled} type="text" onClick={stopPropagation}>
+              <Icon name="overflow-horizontal" />
+            </Button>
+          </Dropdown>
+        </div>
+      )}
+      <section>{children && <div className={css.content}>{children}</div>}</section>
+    </div>
   );
 };
 
