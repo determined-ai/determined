@@ -86,7 +86,7 @@ export const LineChart: React.FC<Props> = ({
   }, [series]);
 
   const hasPopulatedSeries: boolean = useMemo(
-    () => !!series.find((serie) => (serie?.data[xAxis]?.length || 0) > 0),
+    () => !!series.find((serie) => serie.data[xAxis]?.length),
     [series, xAxis],
   );
 
@@ -190,7 +190,7 @@ export const LineChart: React.FC<Props> = ({
       cursor: {
         drag: { x: true, y: false },
       },
-      height: height - (series.find((s) => s.data[xAxis].length > 0) ? 0 : 20),
+      height: height - (hasPopulatedSeries ? 0 : 20),
       legend: { show: false },
       plugins,
       scales: {
@@ -229,6 +229,7 @@ export const LineChart: React.FC<Props> = ({
     scale,
     series,
     seriesNames,
+    hasPopulatedSeries,
   ]);
 
   return (
