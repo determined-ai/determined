@@ -18,7 +18,7 @@ DATASETS_VERSION := 1.9.0
 TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
 # MMDetection Args
 MMCV_CUDA_VERSION := cu113 # Needs to match DEFAULT_GPU_IMAGE
-TORCH_VERSION := 1.10.0 # Needs to match DEFAULT_GPU_IMAGE
+TORCH_VERSION := 1.12.0 # Needs to match DEFAULT_GPU_IMAGE
 MMCV_VERSION := 1.4.5
 MMDETECTION_VERSION := 2.21.0
 MMDETECTION_ENVIRONMENT_ROOT := determinedai/model-hub-mmdetection
@@ -102,7 +102,7 @@ build-mmdetection-dev:
 	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.3"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have cuda version $(MMCV_CUDA_VERSION)."; \
 	  exit 1; \
-	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.10"* ]]; then \
+	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.12"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have pytorch version $(TORCH_VERSION)."; \
 	  exit 1; \
 	else \
@@ -150,7 +150,7 @@ build-mmdetection:
 	if [[ "$(DEFAULT_GPU_IMAGE)" != *"cuda-11.3"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have cuda version $(MMCV_CUDA_VERSION)."; \
 	  exit 1; \
-	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.10"* ]]; then \
+	elif [[ "$(DEFAULT_GPU_IMAGE)" != *"pytorch-1.12"* ]]; then \
 	  echo "Expected $(DEFAULT_GPU_IMAGE) to have pytorch version $(TORCH_VERSION)."; \
 	  exit 1; \
 	else \
