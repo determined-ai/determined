@@ -1302,7 +1302,7 @@ jobs:
           flags: "web"
           xtra_args: "-v"
       - store_test_results:
-          path: webui/react/coverage
+          path: webui/react/coverage/junit.xml
       - store_artifacts:
           path: webui/react/coverage/lcov-report
 
