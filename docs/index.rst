@@ -5,14 +5,14 @@
    quickstart-mdldev
    Tutorials <tutorials/index>
    Examples <example-solutions/examples>
-   Model Hub <model-hub-library/index>
+   Model Hub Library <model-hub-library/index>
    System Architecture <architecture/index>
 
 .. toctree::
    :caption: Model Developer Guide
    :hidden:
 
-   Introduction to Distributed Training <training/dtrain-introduction>
+   Distributed Training <training/dtrain-introduction>
    Prepare Container Environment <training/setup-guide/overview>
    Prepare Data <training/load-model-data>
    Training API Guides <training/apis-howto/overview>
@@ -86,7 +86,7 @@
 
 |
 
-Determined is an open source deep learning training platform that makes building models fast and
+Determined is an open-source deep learning training platform that makes building models fast and
 easy.
 
 With Determined you can:

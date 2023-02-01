@@ -1,4 +1,4 @@
-import { notification, Select, Typography } from 'antd';
+import { Select, Typography } from 'antd';
 import { ModalFuncProps } from 'antd/es/modal/Modal';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,6 +18,7 @@ import useModal, { ModalHooks as Hooks } from 'shared/hooks/useModal/useModal';
 import { useEnsureWorkspaceProjectsFetched, useWorkspaceProjects } from 'stores/projects';
 import { useEnsureWorkspacesFetched, useWorkspaces } from 'stores/workspaces';
 import { DetailedUser, Project } from 'types';
+import { notification } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './useModalExperimentMove.module.scss';
@@ -232,12 +233,12 @@ const useModalExperimentMove = ({ onClose }: Props): ModalHooks => {
         updateProjectSettings({ pinned: newPinned });
       }
     } else if (numFailures === experimentIds.length) {
-      notification.warn({
+      notification.warning({
         description: `Unable to move ${experimentText}`,
         message: 'Move Failure',
       });
     } else {
-      notification.warn({
+      notification.warning({
         description: (
           <div onClick={closeNotification}>
             <p>

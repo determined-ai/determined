@@ -64,6 +64,7 @@ import {
   CommandType,
   Workspace,
 } from 'types';
+import { modal } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
 import { commandStateSorter, filterTasks, isTaskKillable, taskFromCommandTask } from 'utils/task';
@@ -553,7 +554,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   }, [fetchAll, selectedTasks, updateSettings]);
 
   const showConfirmation = useCallback(() => {
-    Modal.confirm({
+    modal.confirm({
       content: `
         Are you sure you want to kill
         all the eligible selected tasks?

@@ -217,6 +217,7 @@ func (a *apiServer) LaunchTensorboard(
 	if req.WorkspaceId != 0 {
 		spec.Metadata.WorkspaceID = model.AccessScopeID(req.WorkspaceId)
 	}
+	spec.TaskType = model.TaskTypeTensorboard
 	if err = a.isNTSCPermittedToLaunch(ctx, spec); err != nil {
 		return nil, err
 	}

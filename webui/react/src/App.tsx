@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { App as AntdApp } from 'antd';
 import React, { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -9,6 +9,7 @@ import Link from 'components/Link';
 import Navigation from 'components/Navigation';
 import PageMessage from 'components/PageMessage';
 import Router from 'components/Router';
+import { ThemeProvider } from 'components/ThemeProvider';
 import useAuthCheck from 'hooks/useAuthCheck';
 import useKeyTracker from 'hooks/useKeyTracker';
 import usePageVisibility from 'hooks/usePageVisibility';
@@ -16,7 +17,6 @@ import useResize from 'hooks/useResize';
 import useRouteTracker from 'hooks/useRouteTracker';
 import { SettingsProvider } from 'hooks/useSettingsProvider';
 import useTelemetry from 'hooks/useTelemetry';
-import useTheme from 'hooks/useTheme';
 import Omnibar from 'omnibar/Omnibar';
 import appRoutes from 'routes';
 import { paths, serverAddress } from 'routes/utils';
@@ -27,13 +27,16 @@ import { useAuth } from 'stores/auth';
 import { initInfo, useDeterminedInfo, useEnsureInfoFetched } from 'stores/determinedInfo';
 import { useCurrentUser, useEnsureCurrentUserFetched, useFetchUsers } from 'stores/users';
 import { correctViewportHeight, refreshPage } from 'utils/browser';
+import { notification, useInitApi } from 'utils/dialogApi';
 import { Loadable } from 'utils/loadable';
 
 import css from './App.module.scss';
+import 'antd/dist/reset.css';
 
 const AppView: React.FC = () => {
+  useInitApi();
   const resize = useResize();
-  const auth = useAuth().auth;
+  const { auth } = useAuth();
   const isAuthenticated = Loadable.match(auth, {
     Loaded: (auth) => auth.isAuthenticated,
     NotLoaded: () => false,
@@ -60,7 +63,6 @@ const AppView: React.FC = () => {
     if (isServerReachable) checkAuth();
   }, [checkAuth, isServerReachable]);
 
-  useTheme();
   useKeyTracker();
   usePageVisibility();
   useRouteTracker();
@@ -97,14 +99,16 @@ const AppView: React.FC = () => {
           .
         </div>
       );
-      notification.warn({
-        btn,
-        description,
-        duration: 0,
-        key: 'version-mismatch',
-        message,
-        placement: 'bottomRight',
-      });
+      setTimeout(() => {
+        notification.warning({
+          btn,
+          description,
+          duration: 0,
+          key: 'version-mismatch',
+          message,
+          placement: 'bottomRight',
+        });
+      }, 10);
     }
   }, [info]);
 
@@ -152,9 +156,13 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <StoreProvider>
-        <DndProvider backend={HTML5Backend}>
-          <AppView />
-        </DndProvider>
+        <ThemeProvider>
+          <AntdApp>
+            <DndProvider backend={HTML5Backend}>
+              <AppView />
+            </DndProvider>
+          </AntdApp>
+        </ThemeProvider>
       </StoreProvider>
     </HelmetProvider>
   );

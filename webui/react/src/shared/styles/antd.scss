@@ -134,9 +134,14 @@ html {
     border-radius: var(--theme-border-radius-strong);
     box-shadow: var(--theme-elevation-strong);
   }
-  .ant-modal > .ant-modal-content > .ant-modal-header,
-  .ant-modal > .ant-modal-content > .ant-modal-body {
+  .ant-modal > .ant-modal-content > .ant-modal-header {
     padding: 16px;
+  }
+
+  /* fix for confirm modal content for modals with no icon props */
+
+  .ant-modal-confirm .ant-modal-confirm-title:first-child + .ant-modal-confirm-content {
+    max-width: unset;
   }
 
   /* Notification */
@@ -197,6 +202,9 @@ html {
       .ant-select-selection-search-input {
       margin-left: 0;
     }
+  }
+  .ant-select .ant-typography {
+    line-height: 30px;
   }
 
   /* Space */
@@ -405,4 +413,7 @@ html {
 
 .ant-tabs-tabpane {
   height: 100%;
+}
+.ant-typography {
+  font-size: unset;
 }

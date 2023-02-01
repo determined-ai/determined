@@ -13,11 +13,12 @@ Deploying Determined with Slurm/PBS has the following requirements.
 -  The login node, admin node, and compute nodes must be configured with Ubuntu 20.04 or later,
    CentOS 7 or later, or SLES 15 or later.
 
-      -  User and group configuration must be consistent across all nodes of the HPC cluster
-      -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
-      -  A cluster-wide file system with consistent path names across the HPC cluster
+   -  User and group configuration must be consistent across all nodes of the HPC cluster
+   -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
+   -  A cluster-wide file system with consistent path names across the HPC cluster
 
--  Slurm 20.02 or greater or PBS 2021.1.2 or greater.
+-  Slurm 20.02 or greater (for versions greater than 22.05.2 see :ref:`slurm-known-issues`) or PBS
+   2021.1.2 or greater.
 
 -  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
    greater.
@@ -161,29 +162,29 @@ to optimize how Determined interacts with PBS:
    The preemption order value is ``'SCR'``. The preemption methods are specified by the following
    letters:
 
-      ``S`` - Suspend the job.
-         This is not applicable for GPU jobs.
+   ``S`` - Suspend the job.
+      This is not applicable for GPU jobs.
 
-      ``C`` - Checkpoint the job.
-         This requires a custom checkpoint script is added to PBS.
+   ``C`` - Checkpoint the job.
+      This requires a custom checkpoint script is added to PBS.
 
-      ``R`` - Requeue the job.
-         Determined does not support the re-queueing of a task. Determined jobs specify the ``-r n``
-         option to PBS to prevent this case.
+   ``R`` - Requeue the job.
+      Determined does not support the re-queueing of a task. Determined jobs specify the ``-r n``
+      option to PBS to prevent this case.
 
-      ``D`` - Delete the job.
-         Determined jobs support this option without configuration.
+   ``D`` - Delete the job.
+      Determined jobs support this option without configuration.
 
-      Given those options, the simplest path to enable Determined job preemption is by including
-      ``D`` in the ``preemption_order``. You may include ``R`` in the ``preemption_order``, but it
-      is disabled for Determined jobs. You may include ``C`` to the ``preemption_order`` if you
-      additionally configure a checkpoint script. Refer to the PBS documentation for details. If you
-      choose to implement a checkpoint script, you may initiate a Determined checkpoint by sending a
-      ``SIGTERM`` signal to the Determined job. When a Determined job receives a ``SIGTERM``, it
-      begins a checkpoint and graceful shutdown. To prevent unnecessary loss of work, it is
-      recommended that you wait for at least one Determined ``scheduling_unit`` for the job to
-      complete after sending the ``SIGTERM``. If after that period of time the job has not
-      terminated, then send a ``SIGKILL`` to forcibly release all resources.
+   Given those options, the simplest path to enable Determined job preemption is by including ``D``
+   in the ``preemption_order``. You may include ``R`` in the ``preemption_order``, but it is
+   disabled for Determined jobs. You may include ``C`` to the ``preemption_order`` if you
+   additionally configure a checkpoint script. Refer to the PBS documentation for details. If you
+   choose to implement a checkpoint script, you may initiate a Determined checkpoint by sending a
+   ``SIGTERM`` signal to the Determined job. When a Determined job receives a ``SIGTERM``, it begins
+   a checkpoint and graceful shutdown. To prevent unnecessary loss of work, it is recommended that
+   you wait for at least one Determined ``scheduling_unit`` for the job to complete after sending
+   the ``SIGTERM``. If after that period of time the job has not terminated, then send a ``SIGKILL``
+   to forcibly release all resources.
 
 .. _singularity-config-requirements:
 
@@ -213,9 +214,9 @@ administrator should have completed most of the configuration for you, but there
 per-user configuration that is required. Before attempting to launch Determined jobs, verify that
 you can run simple PodMan containers on a compute node. For example:
 
-   .. code:: bash
+.. code:: bash
 
-      podman run hello-world
+   podman run hello-world
 
 If you are unable to do that successfully, then one or more of the following configuration changes
 may be required in your ``$HOME/.config/containers/storage.conf`` file:
@@ -241,18 +242,18 @@ Create or update ``$HOME/.config/containers/storage.conf`` as required to resolv
 The example ``storage.conf`` file below uses the file system ``/tmp``, but there may be a more
 appropriate file system on your HPC cluster that you should specify for this purpose.
 
-   .. code:: docker
+.. code:: docker
 
-      [storage]
-      driver = "overlay"
-      graphroot = "/tmp/$USER/storage"
-      runroot = "/tmp/$USER/run"
+   [storage]
+   driver = "overlay"
+   graphroot = "/tmp/$USER/storage"
+   runroot = "/tmp/$USER/run"
 
 Any changes to your ``storage.conf`` should be applied using the command:
 
-   .. code:: bash
+.. code:: bash
 
-      podman system migrate
+   podman system migrate
 
 .. _enroot-config-requirements:
 
@@ -264,47 +265,46 @@ Install and configure Enroot on all compute nodes of your cluster as per the `En
 instructions <https://github.com/NVIDIA/enroot/blob/master/doc/installation.md>`__ for your
 platform. There may be additional per-user configuration that is required.
 
-   #. Enroot utilizes the directory ``${ENROOT_RUNTIME_PATH}`` (with default value
-      ``${XDG_RUNTIME_DIR}/enroot``) for temporary files. Normally ``XDG_RUNTIME_DIR`` is provided
-      by the login process, but Slurm and PBS do not provide this variable when launching jobs on
-      compute nodes. When neither ENROOT_RUNTIME_PATH/XDG_RUNTIME_DIR is defined, Enroot attempts to
-      create the directory /run/enroot for this purpose. This typically fails with a permission
-      error for any non-root user. Select one of the following alternatives to ensure that
-      ``XDG_RUNTIME_DIR`` or ``ENROOT_RUNTIME_PATH`` is defined and points to a user-writable
-      directory when Slurm/PBS jobs are launched on the cluster.
+#. Enroot utilizes the directory ``${ENROOT_RUNTIME_PATH}`` (with default value
+   ``${XDG_RUNTIME_DIR}/enroot``) for temporary files. Normally ``XDG_RUNTIME_DIR`` is provided by
+   the login process, but Slurm and PBS do not provide this variable when launching jobs on compute
+   nodes. When neither ENROOT_RUNTIME_PATH/XDG_RUNTIME_DIR is defined, Enroot attempts to create the
+   directory /run/enroot for this purpose. This typically fails with a permission error for any
+   non-root user. Select one of the following alternatives to ensure that ``XDG_RUNTIME_DIR`` or
+   ``ENROOT_RUNTIME_PATH`` is defined and points to a user-writable directory when Slurm/PBS jobs
+   are launched on the cluster.
 
-         -  Have your HPC cluster administrator configure Slurm/PBS to provide ``XDG_RUNTIME_DIR``, or
-               change the default ``ENROOT_RUNTIME_PATH`` defined in ``/etc/enroot/enroot.conf`` on
-               each node in your HPC cluster.
+   -  Have your HPC cluster administrator configure Slurm/PBS to provide ``XDG_RUNTIME_DIR``, or
+         change the default ``ENROOT_RUNTIME_PATH`` defined in ``/etc/enroot/enroot.conf`` on each
+         node in your HPC cluster.
 
-         -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in
-            ``task_container_defaults.environment_variables`` in master.yaml.
+   -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in
+      ``task_container_defaults.environment_variables`` in master.yaml.
 
-               .. code:: yaml
+      .. code:: yaml
 
-                  task_container_defaults:
-                     environment_variables:
-                        - ENROOT_RUNTIME_PATH=/tmp/$(whoami)
+         task_container_defaults:
+            environment_variables:
+               - ENROOT_RUNTIME_PATH=/tmp/$(whoami)
 
-         -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment
-            configuration.
+   -  If using Slurm, provide an ``ENROOT_RUNTIME_PATH`` definition in your experiment
+      configuration.
 
-   #. Unlike Singularity or PodMan, you must manually download the docker image file to the local
-      file system (``enroot import``) and then each user must create an Enroot container using that
-      image (``enroot create``). When the HPC launcher generates the enroot command for a job, it
-      automatically applies the same transformation to the name that Enroot does on import (``/``
-      and ``:`` characters are replaced with ``+``) to enable docker mage references to match the
-      associated Enroot container. The following shell commands will download and then create an
-      Enroot container for the current user. If other users have read access to
-      ``/shared/enroot/images``, they need only perform the ``enroot create`` step to make the
-      container available for their use.
+#. Unlike Singularity or PodMan, you must manually download the docker image file to the local file
+   system (``enroot import``) and then each user must create an Enroot container using that image
+   (``enroot create``). When the HPC launcher generates the enroot command for a job, it
+   automatically applies the same transformation to the name that Enroot does on import (``/`` and
+   ``:`` characters are replaced with ``+``) to enable docker mage references to match the
+   associated Enroot container. The following shell commands will download and then create an Enroot
+   container for the current user. If other users have read access to ``/shared/enroot/images``,
+   they need only perform the ``enroot create`` step to make the container available for their use.
 
-         .. code:: bash
+   .. code:: bash
 
-            image=determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
-            cd /shared/enroot/images
-            enroot import docker://$image
-            enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh
+      image=determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+      cd /shared/enroot/images
+      enroot import docker://$image
+      enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh
 
-   #. The Enroot container storage directory for the user ``${ENROOT_CACHE_PATH}`` (which defaults
-      to ``$HOME/.local/share/enroot``) must be accessible on all compute nodes.
+#. The Enroot container storage directory for the user ``${ENROOT_CACHE_PATH}`` (which defaults to
+   ``$HOME/.local/share/enroot``) must be accessible on all compute nodes.

@@ -1,13 +1,35 @@
+import dayjs from 'dayjs';
+import uPlot from 'uplot';
+
+// key should be lowercase to match the metric name
+const MetricNameUnit = {
+  cpu_util_simple: '%',
+  disk_iops: 'Bytes/s',
+  disk_throughput_read: 'bytes/second',
+  disk_throughput_write: 'bytes/second',
+  free_memory: 'Gigabytes',
+  gpu_free_memory: 'Bytes',
+  gpu_util: '%',
+  net_throughput_recv: 'Gigabit/s',
+  net_throughput_sent: 'Gigabit/s',
+  samples_per_second: 'Samples/s',
+} as const;
+
 export const getUnitForMetricName = (metricName: string): string => {
-  if (metricName === 'cpu_util_simple') return '%';
-  if (metricName === 'disk_throughput_read') return 'bytes/second';
-  if (metricName === 'disk_throughput_write') return 'bytes/second';
-  if (metricName === 'free_memory') return 'Gigabytes';
-  if (metricName === 'gpu_util') return '%';
-  if (metricName === 'net_throughput_recv') return 'Gigabit/s';
-  if (metricName === 'net_throughput_sent') return 'Gigabit/s';
-  if (metricName === 'samples_per_second') return 'Samples/s';
-  if (metricName === 'gpu_free_memory') return 'Bytes';
-  if (metricName === 'disk_iops') return 'Bytes/s';
-  return metricName;
+  return metricName in MetricNameUnit
+    ? MetricNameUnit[metricName as keyof typeof MetricNameUnit]
+    : metricName;
+};
+
+export const getTimeTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
+  return rawValue.map((val) => dayjs.unix(val).format('hh:mm:ss.SSS').slice(0, -2));
+};
+
+export const getScientificNotationTickValues: uPlot.Axis['values'] = (_self, rawValue) => {
+  return rawValue.map((val) => {
+    if (val === 0) return val;
+    return val > 9_999 || val < -9_999 || (0 < val && val < 0.0001) || (-0.0001 < val && val < 0)
+      ? val.toExponential(2)
+      : val;
+  });
 };

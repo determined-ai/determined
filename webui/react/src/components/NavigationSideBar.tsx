@@ -252,7 +252,7 @@ const NavigationSideBar: React.FC = () => {
             <section className={css.launch}>
               <div className={css.launchBlock}>
                 <div className={css.launchButton}>
-                  <Button block type="ghost" onClick={() => openJupyterLabModal()}>
+                  <Button block ghost onClick={() => openJupyterLabModal()}>
                     Launch JupyterLab
                   </Button>
                 </div>

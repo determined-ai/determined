@@ -16,7 +16,6 @@ import history from 'shared/routes/history';
 import { AuthProvider } from 'stores/auth';
 import { ClusterProvider } from 'stores/cluster';
 import { ProjectsProvider } from 'stores/projects';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 import { WorkspacesProvider } from 'stores/workspaces';
 
@@ -75,15 +74,13 @@ const setup = () => {
         <WorkspacesProvider>
           <UsersProvider>
             <AuthProvider>
-              <UserRolesProvider>
-                <ClusterProvider>
-                  <ProjectsProvider>
-                    <HistoryRouter history={history}>
-                      <ExperimentDetails />
-                    </HistoryRouter>
-                  </ProjectsProvider>
-                </ClusterProvider>
-              </UserRolesProvider>
+              <ClusterProvider>
+                <ProjectsProvider>
+                  <HistoryRouter history={history}>
+                    <ExperimentDetails />
+                  </HistoryRouter>
+                </ProjectsProvider>
+              </ClusterProvider>
             </AuthProvider>
           </UsersProvider>
         </WorkspacesProvider>

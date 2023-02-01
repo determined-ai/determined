@@ -1,11 +1,9 @@
-###########
- Model Hub
-###########
-
-This section covers resources and operations you might need to set up your environment for training:
+###################
+ Model Hub Library
+###################
 
 +------------------------------+----------------------------------------------------------------+
-| Topic                        | Documentation Content                                          |
+| Title                        | Description                                                    |
 +==============================+================================================================+
 | :doc:`transformers/overview` | The Determined library serves as an alternative to the         |
 |                              | HuggingFace Trainer Class and provides access to the benefits  |

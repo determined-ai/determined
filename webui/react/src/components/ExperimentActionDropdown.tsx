@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Dropdown, Modal, notification } from 'antd';
+import { Dropdown } from 'antd';
 import type { DropdownProps } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React, { useCallback, useMemo } from 'react';
@@ -25,6 +25,7 @@ import Icon from 'shared/components/Icon/Icon';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { capitalize } from 'shared/utils/string';
 import { ExperimentAction as Action, ProjectExperiment } from 'types';
+import { modal, notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 import { getActionsForExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
@@ -115,7 +116,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
               pinSet.delete(id);
             } else {
               if (pinSet.size >= 5) {
-                notification.warn({
+                notification.warning({
                   description: 'Up to 5 pinned items',
                   message: 'Unable to pin this item',
                 });
@@ -128,7 +129,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           }
           case Action.Kill:
-            Modal.confirm({
+            modal.confirm({
               content: `
               Are you sure you want to kill
               experiment ${id}?
@@ -151,7 +152,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             if (onComplete) onComplete(action);
             break;
           case Action.Delete:
-            Modal.confirm({
+            modal.confirm({
               content: `
             Are you sure you want to delete
             experiment ${id}?

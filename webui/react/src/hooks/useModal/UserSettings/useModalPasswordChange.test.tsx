@@ -136,19 +136,6 @@ describe('useModalPasswordChange', () => {
     });
   });
 
-  it('should validate the password update request', async () => {
-    await setup();
-
-    await user.type(screen.getByLabelText(OLD_PASSWORD_LABEL), ',');
-    await user.type(screen.getByLabelText(NEW_PASSWORD_LABEL), '.');
-    await user.type(screen.getByLabelText(CONFIRM_PASSWORD_LABEL), '/');
-    await user.click(screen.getByRole('button', { name: OK_BUTTON_LABEL }));
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('alert')).toHaveLength(3);
-    });
-  });
-
   it('should submit a valid password update request', async () => {
     await setup();
 

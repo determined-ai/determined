@@ -378,7 +378,7 @@ const useModalExperimentCreate = ({ onClose }: Props = {}): ModalHooks => {
             <Icon name="fork" /> {titleLabel}
           </div>
         ),
-        width: isAdvancedMode ? (isFork ? 760 : 1000) : undefined,
+        width: isAdvancedMode ? (isFork ? 760 : 1000) : 500,
       };
 
       return props;

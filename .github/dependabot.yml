@@ -18,7 +18,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
 
   # Maintain dependencies for agent Docker
   - package-ecosystem: docker
@@ -27,7 +27,7 @@ updates:
       interval: daily
     # reviewers:
     #   - determined-ai/someteam
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
 
   # Maintain dependencies for leader Golang
   - package-ecosystem: gomod

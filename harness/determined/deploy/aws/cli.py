@@ -4,7 +4,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Callable, Dict, Type
+from typing import Callable, Dict, Tuple, Type
 
 import boto3
 from botocore.exceptions import NoCredentialsError
@@ -28,6 +28,26 @@ def validate_spot_max_price() -> Callable:
         return s
 
     return validate
+
+
+def parse_add_tag() -> Callable:
+    def parse(s: str) -> Tuple[str, str]:
+        try:
+            key, value = s.split("=", 1)
+        except ValueError:
+            raise argparse.ArgumentTypeError("key=value format requires both a key and a value")
+
+        if not key or not value:
+            raise argparse.ArgumentTypeError(
+                "both key and value must be defined in key=value format"
+            )
+
+        if key in ["deployment-type", "managed-by"]:
+            raise argparse.ArgumentTypeError("cannot us a reserved tag name: %s" % key)
+
+        return (key, value)
+
+    return parse
 
 
 def error_no_credentials() -> None:
@@ -171,6 +191,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.AUX_AGENT_INSTANCE_TYPE: args.aux_agent_instance_type,
         constants.cloudformation.COMPUTE_AGENT_INSTANCE_TYPE: args.compute_agent_instance_type,
         constants.cloudformation.CLUSTER_ID: args.cluster_id,
+        constants.cloudformation.EXTRA_TAGS: args.add_tag,
         constants.cloudformation.BOTO3_SESSION: boto3_session,
         constants.cloudformation.VERSION: args.det_version,
         constants.cloudformation.INBOUND_CIDR: args.inbound_cidr,
@@ -354,6 +375,13 @@ args_description = Cmd(
                     type=str,
                     default=None,
                     help="AWS region",
+                ),
+                Arg(
+                    "--add-tag",
+                    type=parse_add_tag(),
+                    action="append",
+                    default=None,
+                    help="Stack tag to in key=value format, declare repeatedly to add more flags",
                 ),
                 Arg("--profile", type=str, default=None, help="AWS profile"),
                 Arg(

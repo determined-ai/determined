@@ -4,9 +4,7 @@ import React from 'react';
 import { StoreProvider as UIProvider } from 'shared/contexts/stores/UI';
 import { AuthProvider } from 'stores/auth';
 import { ClusterProvider } from 'stores/cluster';
-import { ExperimentsProvider } from 'stores/experiments';
 import { TasksProvider } from 'stores/tasks';
-import { UserRolesProvider } from 'stores/userRoles';
 import { UsersProvider } from 'stores/users';
 
 import { ClusterOverallStats } from './ClusterOverallStats';
@@ -23,15 +21,11 @@ const setup = () => {
     <UIProvider>
       <AuthProvider>
         <UsersProvider>
-          <UserRolesProvider>
-            <ExperimentsProvider>
-              <TasksProvider>
-                <ClusterProvider>
-                  <ClusterOverallStats />
-                </ClusterProvider>
-              </TasksProvider>
-            </ExperimentsProvider>
-          </UserRolesProvider>
+          <TasksProvider>
+            <ClusterProvider>
+              <ClusterOverallStats />
+            </ClusterProvider>
+          </TasksProvider>
         </UsersProvider>
       </AuthProvider>
     </UIProvider>,

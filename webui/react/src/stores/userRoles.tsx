@@ -1,99 +1,35 @@
-import React, { createContext, PropsWithChildren, useCallback, useContext, useState } from 'react';
+import { observable, Observable, WritableObservable } from 'micro-observables';
 
 import { getPermissionsSummary } from 'services/api';
 import { UserAssignment, UserRole } from 'types';
-import handleError from 'utils/error';
 import { Loadable, Loaded, NotLoaded } from 'utils/loadable';
 
-type UserRolesAndAssignmentsContext = {
-  updateUserAssignments: (
-    fn: (r: Loadable<UserAssignment[]>) => Loadable<UserAssignment[]>,
-  ) => void;
-  updateUserRoles: (fn: (r: Loadable<UserRole[]>) => Loadable<UserRole[]>) => void;
-  userAssignments: Loadable<UserAssignment[]>;
-  userRoles: Loadable<UserRole[]>;
-};
+export class UserRolesService {
+  static #userAssignments: WritableObservable<Loadable<UserAssignment[]>> = observable(NotLoaded);
+  static #userRoles: WritableObservable<Loadable<UserRole[]>> = observable(NotLoaded);
 
-const UserRolesAndAssignmentsContext = createContext<UserRolesAndAssignmentsContext | null>(null);
-
-export const UserRolesProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [userRoles, setUserRoles] = useState<Loadable<UserRole[]>>(NotLoaded);
-  const [userAssignments, setUserAssignments] = useState<Loadable<UserAssignment[]>>(NotLoaded);
-  return (
-    <UserRolesAndAssignmentsContext.Provider
-      value={{
-        updateUserAssignments: setUserAssignments,
-        updateUserRoles: setUserRoles,
-        userAssignments: userAssignments,
-        userRoles: userRoles,
-      }}>
-      {children}
-    </UserRolesAndAssignmentsContext.Provider>
-  );
-};
-
-export const useFetchUserRolesAndAssignments = (
-  canceler: AbortController,
-): (() => Promise<void>) => {
-  const context = useContext(UserRolesAndAssignmentsContext);
-  if (context === null) {
-    throw new Error('Attempted to use useFetchUserRoles outside of UserRolesAndAssignmentsContext');
-  }
-  const { updateUserRoles, updateUserAssignments } = context;
-
-  return useCallback(async (): Promise<void> => {
-    try {
-      const { roles, assignments } = await getPermissionsSummary({ signal: canceler.signal });
-      updateUserRoles(() => Loaded(roles));
-      updateUserAssignments(() => Loaded(assignments));
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, updateUserRoles, updateUserAssignments]);
-};
-
-export const useEnsureUserRolesAndAssignmentsFetched = (
-  canceler: AbortController,
-): (() => Promise<void>) => {
-  const context = useContext(UserRolesAndAssignmentsContext);
-  if (context === null) {
-    throw new Error(
-      'Attempted to use useEnsureFetchUserRoles outside of UserRolesAndAssignments Context',
-    );
-  }
-  const { userRoles, updateUserRoles, userAssignments, updateUserAssignments } = context;
-
-  return useCallback(async (): Promise<void> => {
-    if (userRoles !== NotLoaded && userAssignments !== NotLoaded) return;
-    try {
-      const { roles, assignments } = await getPermissionsSummary({ signal: canceler.signal });
-      updateUserRoles(() => Loaded(roles));
-      updateUserAssignments(() => Loaded(assignments));
-    } catch (e) {
-      handleError(e);
-    }
-  }, [canceler, userRoles, updateUserRoles, userAssignments, updateUserAssignments]);
-};
-
-export const useUserRoles = (): Loadable<UserRole[]> => {
-  const context = useContext(UserRolesAndAssignmentsContext);
-  if (context === null) {
-    throw new Error('Attempted to use useUserRoles outside of UserRolesAndAssignments Context');
+  // On login, fetching my user's assignments and roles in one API call.
+  static fetchUserAssignmentsAndRoles(canceler: AbortController): () => Promise<void> {
+    return async () => {
+      const { assignments, roles } = await getPermissionsSummary({ signal: canceler.signal });
+      this.#userAssignments.set(Loaded(assignments));
+      this.#userRoles.set(Loaded(roles));
+    };
   }
 
-  const { userRoles } = context;
-
-  return userRoles;
-};
-
-export const useUserAssignments = (): Loadable<UserAssignment[]> => {
-  const context = useContext(UserRolesAndAssignmentsContext);
-  if (context === null) {
-    throw new Error(
-      'Attempted to use useUserAssignments outside of UserRolesAndAssignments Context',
-    );
+  // Return the userAssignments observable (receive with useObservable)
+  static getUserAssignments(): Observable<Loadable<UserAssignment[]>> {
+    return this.#userAssignments;
   }
-  const { userAssignments } = context;
 
-  return userAssignments;
-};
+  // Return the userRoles observable (receive with useObservable)
+  static getUserRoles(): Observable<Loadable<UserRole[]>> {
+    return this.#userRoles;
+  }
+
+  // On logout, clear old user roles and assignments until new user login.
+  static resetUserAssignmentsAndRoles(): void {
+    this.#userAssignments.set(NotLoaded);
+    this.#userRoles.set(NotLoaded);
+  }
+}
