@@ -63,6 +63,7 @@ interface PermissionsHook {
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
+  canModifyModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canModifyPermissions: boolean;
   canModifyProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canModifyUsers: boolean;
@@ -146,6 +147,8 @@ const usePermissions = (): PermissionsHook => {
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
         canModifyExperimentMetadata(rbacOpts, args.workspace),
       canModifyGroups: canModifyGroups(rbacOpts),
+      canModifyModelVersion: (args: ModelVersionPermissionsArgs) =>
+        canModifyModelVersion(rbacOpts, args.modelVersion),
       canModifyPermissions: canModifyPermissions(rbacOpts),
       canModifyProjects: (args: ProjectPermissionsArgs) =>
         canModifyWorkspaceProjects(rbacOpts, args.workspace, args.project),
@@ -348,11 +351,32 @@ const canDeleteModel = ({ rbacAllPermission, user }: RbacOptsProps, model: Model
 };
 
 const canDeleteModelVersion = (
-  { rbacAllPermission, user }: RbacOptsProps,
+  { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
   modelVersion?: ModelVersion,
 ): boolean => {
-  // const permitted = relevantPermissions(userAssignments, userRoles);
-  return rbacAllPermission || (!!user && (user.isAdmin || user.id === modelVersion?.userId));
+  const permitted = relevantPermissions(
+    userAssignments,
+    userRoles,
+    modelVersion?.model?.workspaceId,
+  );
+  return (
+    rbacAllPermission ||
+    (rbacEnabled
+      ? !!user && (user.isAdmin || user.id === modelVersion?.userId)
+      : permitted.has(V1PermissionType.EDITMODELREGISTRY))
+  );
+};
+
+const canModifyModelVersion = (
+  { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  modelVersion?: ModelVersion,
+): boolean => {
+  const permitted = relevantPermissions(
+    userAssignments,
+    userRoles,
+    modelVersion?.model?.workspaceId,
+  );
+  return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.EDITMODELREGISTRY);
 };
 
 // Project actions
