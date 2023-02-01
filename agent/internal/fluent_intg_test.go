@@ -72,6 +72,12 @@ func TestFluentPostgresLogging(t *testing.T) {
 }
 
 func TestFluentLoggingElastic(t *testing.T) {
+	for i := 0; i < 20; i++ {
+		t.Run(fmt.Sprintf("testFlunetLoggingElastic[%d]", i), testFluentLoggingElastic)
+	}
+}
+
+func testFluentLoggingElastic(t *testing.T) {
 	// GIVEN an elastic instance to accept logs
 	elastic, err := testutils.ResolveElastic()
 	assert.NilError(t, err, "unable to connect to master")
