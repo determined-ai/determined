@@ -6,15 +6,11 @@ import { readStream } from 'services/utils';
 import { alphaNumericSorter } from 'shared/utils/sort';
 import { Metric, MetricType } from 'types';
 
-export interface UseMetricsInterface {
-  errorHandler: () => void;
-  experimentId: number;
-}
-
-const useMetricNames = (experimentId: number, errorHandler: (e: unknown) => void): Metric[] => {
+const useMetricNames = (experimentId?: number, errorHandler?: (e: unknown) => void): Metric[] => {
   const [metrics, setMetrics] = useState<Metric[]>([]);
 
   useEffect(() => {
+    if (!experimentId) return;
     const canceler = new AbortController();
     const trainingMetricsMap: Record<string, boolean> = {};
     const validationMetricsMap: Record<string, boolean> = {};

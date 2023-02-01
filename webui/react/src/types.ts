@@ -518,9 +518,15 @@ export interface MetricDatapoint {
   value: number;
 }
 
+export interface MetricDatapointTime {
+  time: Date;
+  value: number;
+}
+
 export interface MetricContainer {
   data: MetricDatapoint[];
   name: string;
+  time?: MetricDatapointTime[];
   type: MetricType;
 }
 
