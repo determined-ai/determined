@@ -103,6 +103,11 @@ func TestFluentLoggingElastic(t *testing.T) {
 	logs, _, err := elastic.TaskLogs(taskID, 4, nil, apiv1.OrderBy_ORDER_BY_ASC, nil)
 	assert.NilError(t, err, "failed to retrieve task logs")
 	assert.Equal(t, len(logs), len(expected), "not enough logs received after one minute")
+
+	for i := 0; i < 4; i++ {
+		t.Logf("expected[%d] \n%+v actual[%d] \n%+v", i, expected[i], i, logs[i])
+	}
+
 	for i, l := range logs {
 		assertLogEquals(t, *l, expected[i])
 	}
@@ -253,7 +258,7 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, taskID model.TaskID, fl
 	assert.NilError(t, err, "error starting container")
 
 	exitChan, errChan := docker.ContainerWait(
-		context.Background(), cc.ID, container.WaitConditionNextExit)
+		context.Background(), cc.ID, container.WaitConditionNotRunning)
 	select {
 	case err = <-errChan:
 		assert.NilError(t, err, "container wait failed")
