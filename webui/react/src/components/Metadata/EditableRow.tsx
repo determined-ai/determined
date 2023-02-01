@@ -30,7 +30,7 @@ const EditableRow: React.FC<Props> = ({ name, onDelete, field }: Props) => {
 
     const funcs = {
       [MenuKey.DeleteMetadataRow]: () => {
-        if (onDelete) onDelete();
+        onDelete?.();
       },
     };
 

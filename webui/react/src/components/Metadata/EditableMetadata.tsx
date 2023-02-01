@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import InfoBox, { InfoRow } from 'components/InfoBox';
 import Button from 'components/kit/Button';
@@ -29,6 +29,7 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
     if (list.length === 0) list.push({ key: '', value: '' });
     return [rows, list];
   }, [metadata]);
+  const [isDelete, setIsDelete] = useState(false);
 
   const onValuesChange = useCallback(
     (changedValues: { metadata: Metadata[] }, values: { metadata: Metadata[] }) => {
@@ -44,15 +45,17 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
         updateMetadata?.(newMetadata);
       };
 
-      if (changedValues.metadata.length < values.metadata.length) {
+      if (isDelete) {
         // this callback is triggered when removing a row, and using the values parameter generates a console error
         // because it tries to use an empty entry from the array.
+        // checking changedValues isn't safe to use as check because editing each entry also triggers with only one index in the metadata array
         mapAndUpdate(changedValues.metadata);
+        setIsDelete(false);
       } else {
-        mapAndUpdate(values.metadata)
+        mapAndUpdate(values.metadata);
       }
     },
-    [updateMetadata],
+    [updateMetadata, isDelete],
   );
 
   return (
@@ -70,7 +73,14 @@ const EditableMetadata: React.FC<Props> = ({ metadata = {}, editing, updateMetad
                   <EditableRow
                     key={field.key}
                     name={field.name}
-                    onDelete={fields.length > 1 ? () => remove(field.name) : undefined}
+                    onDelete={
+                      fields.length > 1
+                        ? () => {
+                            remove(field.name);
+                            setIsDelete(true);
+                          }
+                        : undefined
+                    }
                   />
                 ))}
                 <Button type="link" onClick={() => add({ key: '', value: '' })}>
