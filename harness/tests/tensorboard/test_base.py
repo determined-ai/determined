@@ -3,6 +3,7 @@ import pathlib
 
 import pytest
 
+from typing import List
 from unittest import mock
 
 from determined import tensorboard
@@ -95,7 +96,7 @@ def test_illegal_type() -> None:
         )
 
 
-def test_upload_thread() -> None:
+def test_upload_thread_normal_case() -> None:
     upload_function = mock.Mock()
     work_queue = queue.Queue(maxsize=10)
     upload_thread = tensorboard.base._TensorboardUploadThread(upload_function, work_queue)
@@ -108,3 +109,39 @@ def test_upload_thread() -> None:
     upload_thread.join()
 
     assert upload_function.call_count == 2
+
+
+def test_upload_thread_exception_case() -> None:
+    # 1. Set up custom hook to capture threads fail
+    #    with exception. This hook is triggered when
+    #    a thread exits with exception.
+    import threading
+
+    threads_with_exception = []
+
+    def custom_excepthook(args):
+        thread_name = args.thread.ident
+        print(thread_name)
+        threads_with_exception.append(thread_name)
+
+    threading.excepthook = custom_excepthook
+
+    # 2. Define function that throws exception
+    def upload_function(paths: List[pathlib.Path]) -> None:
+        raise Exception("An exception is raised")
+
+    # 3. Set up a _TensorboardUploadThread instance
+    work_queue = queue.Queue(maxsize=10)
+    upload_thread = tensorboard.base._TensorboardUploadThread(upload_function, work_queue)
+
+    # 4. start, run, and join the _TensorboardUploadThread instance
+    upload_thread.start()
+    thread_ident = upload_thread.ident
+    work_queue.put(["test_file_path_1", "test_file_path_2"])
+    # Pass in sentinel value to exit thread
+    work_queue.put(None)
+    upload_thread.join()
+
+    # 5. Check that _TensorboardUploadThread instance did not
+    #    throw exception
+    assert thread_ident not in threads_with_exception
