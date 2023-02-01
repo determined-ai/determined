@@ -671,11 +671,27 @@ func (a *apiServer) appendToMetricsTime(metrics []*apiv1.SummarizedMetric,
 	return metrics
 }
 
+func (a *apiServer) appendToMetricsEpoch(metrics []*apiv1.SummarizedMetric,
+	m *apiv1.SummarizedMetric, metricSeries []lttb.Point,
+) []*apiv1.SummarizedMetric {
+	for _, in := range metricSeries {
+		out := apiv1.DataPointEpoch{
+			Epoch: int32(in.X),
+			Value: in.Y,
+		}
+		m.Epoch = append(m.Epoch, &out)
+	}
+	if len(m.Time) > 0 {
+		return append(metrics, m)
+	}
+	return metrics
+}
+
 func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 	metricType apiv1.MetricType, maxDatapoints int, startBatches int,
 	endBatches int, logScale bool, xAxis apiv1.XAxis,
 ) ([]*apiv1.SummarizedMetric, error) {
-	var metricSeriesBatch, metricSeriesTime []lttb.Point
+	var metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point
 	var startTime time.Time
 	var err error
 
@@ -689,7 +705,7 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricSeriesBatch, metricSeriesTime, _, err = a.m.db.TrainingMetricsSeries(
+			metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, _, err = a.m.db.TrainingMetricsSeries(
 				trialID, startTime, name, startBatches, endBatches)
 			metric.Type = apiv1.MetricType_METRIC_TYPE_TRAINING
 			if err != nil {
@@ -699,12 +715,14 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
 			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
+			metricSeriesEpoch = lttb.Downsample(metricSeriesEpoch, maxDatapoints, logScale)
+			metrics = a.appendToMetricsEpoch(metrics, &metric, metricSeriesBatch)
 		}
 		if (metricType == apiv1.MetricType_METRIC_TYPE_VALIDATION) ||
 			(metricType == apiv1.MetricType_METRIC_TYPE_UNSPECIFIED) {
 			var metric apiv1.SummarizedMetric
 			metric.Name = name
-			metricSeriesBatch, metricSeriesTime, _, err = a.m.db.ValidationMetricsSeries(
+			metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, _, err = a.m.db.ValidationMetricsSeries(
 				trialID, startTime, name, startBatches, endBatches)
 			metric.Type = apiv1.MetricType_METRIC_TYPE_VALIDATION
 			if err != nil {
@@ -714,6 +732,8 @@ func (a *apiServer) MultiTrialSample(trialID int32, metricNames []string,
 			metrics = a.appendToMetricsTime(metrics, &metric, metricSeriesTime)
 			metricSeriesBatch = lttb.Downsample(metricSeriesBatch, maxDatapoints, logScale)
 			metrics = a.appendToMetricsBatch(metrics, &metric, metricSeriesBatch)
+			metricSeriesEpoch = lttb.Downsample(metricSeriesEpoch, maxDatapoints, logScale)
+			metrics = a.appendToMetricsEpoch(metrics, &metric, metricSeriesBatch)
 		}
 	}
 	return metrics, nil

@@ -25,7 +25,7 @@ import css from './LineChart.module.scss';
 
 export interface Serie {
   color?: string;
-  data: Partial<Record<XAxisDomain, [number, number][]>>;
+  data: Partial<Record<XAxisDomain, [x: number, y: number][]>>;
   key?: number;
   metricType?: MetricType;
   name?: string;

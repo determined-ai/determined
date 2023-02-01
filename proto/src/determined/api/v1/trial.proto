@@ -29,6 +29,9 @@ message SummarizedMetric {
   // A possibly down-sampled series of metric readings through the progress of
   // the trial in wall time.
   repeated DataPointTime time = 4;
+  // A possibly down-sampled series of metric readings through the progress of
+  // the trial in epoch.
+  repeated DataPointEpoch epoch = 5;
   // Type of metrics (training, validation, or unset).
   MetricType type = 3;
 }
@@ -685,6 +688,8 @@ enum XAxis {
   X_AXIS_BATCH = 1;
   // x-axis in time.
   X_AXIS_TIME = 2;
+  // x-axis in epoch.
+  X_AXIS_EPOCH = 3;
 }
 
 // Get downsampled metrics from a trial.

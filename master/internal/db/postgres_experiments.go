@@ -483,39 +483,42 @@ func timeToFloat(t time.Time) float64 {
 	return float64(t.UnixNano()) / 1e9
 }
 
-func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch, metricSeriesTime []lttb.Point) (
-	[]lttb.Point, []lttb.Point, time.Time,
+func scanMetricsSeries(rows *sql.Rows, metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point) (
+	[]lttb.Point, []lttb.Point, []lttb.Point, time.Time,
 ) {
 	var maxEndTime time.Time
 	for rows.Next() {
 		var batches uint
 		var value float64
+		var epoch uint
 		var endTime time.Time
-		err := rows.Scan(&batches, &value, &endTime)
+		err := rows.Scan(&batches, &value, &endTime, &epoch)
 		if err != nil {
 			// Could be a bad metric name, sparse metric, nested type, etc.
 			continue
 		}
 		metricSeriesBatch = append(metricSeriesBatch, lttb.Point{X: float64(batches), Y: value})
 		metricSeriesTime = append(metricSeriesTime, lttb.Point{X: timeToFloat(endTime), Y: value})
+		metricSeriesEpoch = append(metricSeriesEpoch, lttb.Point{X: float64(epoch), Y: value})
 		if endTime.After(maxEndTime) {
 			maxEndTime = endTime
 		}
 	}
-	return metricSeriesBatch, metricSeriesTime, maxEndTime
+	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime
 }
 
 // TrainingMetricsSeries returns a time-series of the specified training metric in the specified
 // trial.
 func (db *PgDB) TrainingMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point,
+	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point,
 	maxEndTime time.Time, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
   total_batches AS batches,
   s.metrics->'avg_metrics'->$1 AS value,
-  s.end_time as end_time
+  s.end_time as end_time,
+  (s.metrics->'avg_metrics'->>'epoch')::int AS epoch
 FROM trials t
   INNER JOIN steps s ON t.id=s.trial_id
 WHERE t.id=$2
@@ -526,25 +529,30 @@ WHERE t.id=$2
   AND s.metrics->'avg_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return nil, nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	defer rows.Close()
-	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(
-		rows, metricSeriesBatch, metricSeriesTime)
-	return metricSeriesBatch, metricSeriesTime, maxEndTime, nil
+	metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime = scanMetricsSeries(
+		rows, metricSeriesBatch, metricSeriesTime, metricSeriesEpoch)
+	fmt.Println("!!!!!!!")
+	fmt.Println(metricSeriesEpoch)
+	fmt.Println("---")
+	fmt.Println(metricSeriesBatch)
+	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime, nil
 }
 
 // ValidationMetricsSeries returns a time-series of the specified validation metric in the specified
 // trial.
 func (db *PgDB) ValidationMetricsSeries(trialID int32, startTime time.Time, metricName string,
-	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime []lttb.Point,
+	startBatches int, endBatches int) (metricSeriesBatch, metricSeriesTime, metricSeriesEpoch []lttb.Point,
 	maxEndTime time.Time, err error,
 ) {
 	rows, err := db.sql.Query(`
 SELECT
   v.total_batches AS batches,
   (v.metrics->'validation_metrics'->>$1)::float8 AS value,
-  v.end_time as end_time
+  v.end_time as end_time,
+  (v.metrics->'avg_metrics'->>'epoch')::int AS epoch
 FROM trials t
 JOIN validations v ON t.id = v.trial_id
 WHERE t.id=$2
@@ -555,12 +563,12 @@ WHERE t.id=$2
   AND v.metrics->'validation_metrics'->$1 IS NOT NULL
 ORDER BY batches;`, metricName, trialID, startBatches, endBatches, startTime)
 	if err != nil {
-		return nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
+		return nil, nil, nil, maxEndTime, errors.Wrapf(err, "failed to get metrics to sample for experiment")
 	}
 	defer rows.Close()
-	metricSeriesBatch, metricSeriesTime, maxEndTime = scanMetricsSeries(
-		rows, metricSeriesBatch, metricSeriesTime)
-	return metricSeriesBatch, metricSeriesTime, maxEndTime, nil
+	metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime = scanMetricsSeries(
+		rows, metricSeriesBatch, metricSeriesTime, metricSeriesEpoch)
+	return metricSeriesBatch, metricSeriesTime, metricSeriesEpoch, maxEndTime, nil
 }
 
 type hpImportanceDataWrapper struct {
