@@ -195,4 +195,12 @@ func TestPermissionMatch(t *testing.T) {
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
+
+	t.Run("test GetWorkspacesWithPermission", func(t *testing.T) {
+		workspaceIDs := []int{1000000, 1000001, 1000002}
+		workspaces, err := GetNonGlobalWorkspacesWithPermission(ctx, userID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_NSC)
+		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, workspaceIDs, workspaces)
+	})
 }
