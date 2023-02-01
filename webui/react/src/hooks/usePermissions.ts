@@ -25,7 +25,7 @@ interface ModelPermissionsArgs {
 }
 
 interface ModelVersionPermissionsArgs {
-  modelVersion?: ModelVersion;
+  modelVersion: ModelVersion;
 }
 
 interface ProjectPermissionsArgs {
@@ -352,13 +352,9 @@ const canDeleteModel = ({ rbacAllPermission, user }: RbacOptsProps, model: Model
 
 const canDeleteModelVersion = (
   { rbacAllPermission, rbacEnabled, user, userAssignments, userRoles }: RbacOptsProps,
-  modelVersion?: ModelVersion,
+  modelVersion: ModelVersion,
 ): boolean => {
-  const permitted = relevantPermissions(
-    userAssignments,
-    userRoles,
-    modelVersion?.model?.workspaceId,
-  );
+  const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
   return (
     rbacAllPermission ||
     (rbacEnabled
@@ -369,13 +365,9 @@ const canDeleteModelVersion = (
 
 const canModifyModelVersion = (
   { rbacAllPermission, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
-  modelVersion?: ModelVersion,
+  modelVersion: ModelVersion,
 ): boolean => {
-  const permitted = relevantPermissions(
-    userAssignments,
-    userRoles,
-    modelVersion?.model?.workspaceId,
-  );
+  const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
   return !rbacEnabled || rbacAllPermission || permitted.has(V1PermissionType.EDITMODELREGISTRY);
 };
 
