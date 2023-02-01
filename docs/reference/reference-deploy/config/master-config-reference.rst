@@ -809,9 +809,6 @@ The master supports the following configuration settings:
                -  ``role_id``: Integer identifier of a role to be assigned. Defaults to ``2``, which
                   is the role id of ``WorkspaceAdmin`` role.
 
-         -  ``_strict_ntsc_enabled``: Whether to enable strict NTSC access enforcement. Defaults to
-            ``false``. See :ref:`RBAC docs <rbac-ntsc>` for further info.
-
 -  ``webhooks``: Specifies configuration settings related to webhooks.
 
    -  ``signing_key``: The key used to sign outgoing webhooks.
