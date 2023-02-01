@@ -72,7 +72,7 @@ func TestFluentPostgresLogging(t *testing.T) {
 }
 
 func TestFluentLoggingElastic(t *testing.T) {
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 25; i++ {
 		t.Run(fmt.Sprintf("testFlunetLoggingElastic[%d]", i), testFluentLoggingElastic)
 	}
 }
