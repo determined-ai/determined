@@ -20,6 +20,7 @@ interface Props {
   fetchProjects?: () => void;
   project: Project;
   workspaceArchived?: boolean;
+  showWorkspace?: boolean;
 }
 
 const ProjectCard: React.FC<Props> = ({
@@ -27,6 +28,7 @@ const ProjectCard: React.FC<Props> = ({
   curUser,
   fetchProjects,
   workspaceArchived,
+  showWorkspace,
 }: Props) => {
   const handleCardClick = useCallback(() => {
     routeToReactUrl(paths.projectDetails(project.id));
@@ -49,6 +51,7 @@ const ProjectCard: React.FC<Props> = ({
           <h6 className={css.name}>
             <Link inherit path={paths.projectDetails(project.id)}>
               <Typography.Paragraph ellipsis={{ rows: 1, tooltip: true }}>
+                {showWorkspace && project.workspaceId !== 1 ? `${project.workspaceName} / ` : ''}
                 {project.name}
               </Typography.Paragraph>
             </Link>
