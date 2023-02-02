@@ -11,7 +11,7 @@ import Spinner from 'shared/components/Spinner';
 import usePolling from 'shared/hooks/usePolling';
 import { useClusterStore } from 'stores/cluster';
 import experimentStore from 'stores/experiments';
-import { ActiveTasksStore } from 'stores/tasks';
+import { TasksStore } from 'stores/tasks';
 import { ShirtSize } from 'themes';
 import { ResourceType, TaskCounts } from 'types';
 import { Loadable } from 'utils/loadable';
@@ -34,13 +34,12 @@ export const ClusterOverallStats: React.FC = () => {
     ACTIVE_EXPERIMENTS_PARAMS,
     canceler,
   );
-  const fetchActiveTasks = ActiveTasksStore.updateActiveTasks(canceler);
-  const taskCountObservable = ActiveTasksStore.getTaskCounts();
+  const activeTasks = useObservable<Loadable<TaskCounts>>(TasksStore.getActiveTaskCounts());
 
   const fetchActiveRunning = useCallback(async () => {
     await fetchActiveExperiments();
-    await fetchActiveTasks();
-  }, [fetchActiveExperiments, fetchActiveTasks]);
+    TasksStore.fetchActiveTasks(canceler);
+  }, [fetchActiveExperiments, canceler]);
 
   usePolling(fetchActiveRunning);
   const activeExperiments = useObservable(
@@ -99,16 +98,28 @@ export const ClusterOverallStats: React.FC = () => {
               })}
             </OverviewStats>
             <OverviewStats title="Active JupyterLabs">
-              {useObservable(taskCountObservable.select(c => c.notebooks)) ?? 0}
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.notebooks ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
             </OverviewStats>
             <OverviewStats title="Active TensorBoards">
-              {useObservable(taskCountObservable.select(c => c.tensorboards))}
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.tensorboards ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
             </OverviewStats>
             <OverviewStats title="Active Shells">
-              {useObservable(taskCountObservable.select(c => c.shells))}
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.shells ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
             </OverviewStats>
             <OverviewStats title="Active Commands">
-              {useObservable(taskCountObservable.select(c => c.commands))}
+              {Loadable.match(activeTasks, {
+                Loaded: (activeTasks) => activeTasks.commands ?? 0,
+                NotLoaded: (): ReactNode => <Spinner />,
+              })}
             </OverviewStats>
           </>
         ) : null}
