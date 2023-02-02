@@ -61,8 +61,8 @@ def create_workspaces_with_users(
         yield workspaces, rid_to_creds
 
 
-@pytest.mark.e2e_cpu_rbac
-@pytest.mark.skipif(rbac_disabled(), reason="ee rbac is required for this test")
+@pytest.mark.e2e_cpu
+@pytest.mark.skipif(roles_not_implemented(), reason="ee is required for this test")
 def test_user_role_setup() -> None:
     perm_assigments = [
         [
