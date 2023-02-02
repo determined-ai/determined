@@ -40,8 +40,8 @@ export const tooltipsPlugin = (
         : uPlot.data[0][idx];
     html += `
       <div class="${css.valueX}">
-        ${header ? header + '<br />' : ''}
-        ${xSerie.label}: ${xValue}
+        ${header}
+        ${xSerie.label} ${xValue}
       </div>`;
 
     let minYDist = 1000;
@@ -92,7 +92,7 @@ export const tooltipsPlugin = (
         return (b.val || 0) - (a.val || 0);
       })
       .map((seriesValue) => {
-        if (seriesValue?.yDist === minYDist && seriesValues.length > 1) {
+        if (seriesValue?.yDist === minYDist) {
           return `<strong>${seriesValue?.html || ''}</strong>`;
         }
         return seriesValue?.html || '';

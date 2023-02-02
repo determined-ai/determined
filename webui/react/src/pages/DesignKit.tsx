@@ -4,7 +4,7 @@ import {
   Card,
   Space,
 } from 'antd';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import Grid, { GridMode } from 'components/Grid'; //TODO: Move to components/kit? Add section to DesignKit page?
@@ -295,6 +295,7 @@ const ChartsSection: React.FC = () => {
     name: 'Alt-Line',
   };
 
+  const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
   return (
     <ComponentSection id="Charts" title="Charts">
       <Card>
@@ -327,6 +328,8 @@ const ChartsSection: React.FC = () => {
               title: 'Sample2',
             },
           ]}
+          xAxis={xAxis}
+          onXAxisChange={setXAxis}
         />
       </Card>
     </ComponentSection>

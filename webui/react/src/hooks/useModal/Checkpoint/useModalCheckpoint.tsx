@@ -23,7 +23,7 @@ import { checkpointSize } from 'utils/workload';
 import css from './useModalCheckpoint.module.scss';
 
 export interface Props {
-  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint;
+  checkpoint: CheckpointWorkloadExtended | CoreApiGenericCheckpoint | undefined;
   children?: React.ReactNode;
   config: ExperimentConfig;
   onClose?: (reason?: ModalCloseReason) => void;
@@ -89,13 +89,13 @@ const useModalCheckpoint = ({
   const handleOk = useCallback(() => onClose?.(ModalCloseReason.Ok), [onClose]);
 
   const handleDelete = useCallback(() => {
-    if (!checkpoint.uuid) return;
+    if (!checkpoint?.uuid) return;
     readStream(detApi.Checkpoint.deleteCheckpoints({ checkpointUuids: [checkpoint.uuid] }));
   }, [checkpoint]);
 
   const deleteCPModalProps: ModalFuncProps = useMemo(() => {
     const content = `Are you sure you want to request checkpoint deletion for batch
-${checkpoint.totalBatches}. This action may complete or fail without further notification.`;
+${checkpoint?.totalBatches}. This action may complete or fail without further notification.`;
 
     return {
       content,
