@@ -19,8 +19,8 @@ interface Props {
   curUser?: DetailedUser;
   fetchProjects?: () => void;
   project: Project;
-  workspaceArchived?: boolean;
   showWorkspace?: boolean;
+  workspaceArchived?: boolean;
 }
 
 const ProjectCard: React.FC<Props> = ({

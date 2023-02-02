@@ -1,10 +1,10 @@
 import { Empty } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Button from 'components/kit/Button';
-import Breadcrumb from 'components/kit/Breadcrumb';
 import ExperimentIcons from 'components/ExperimentIcons';
 import Grid, { GridMode } from 'components/Grid';
+import Breadcrumb from 'components/kit/Breadcrumb';
+import Button from 'components/kit/Button';
 import Tooltip from 'components/kit/Tooltip';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -215,11 +215,11 @@ const Dashboard: React.FC = () => {
             mode={GridMode.ScrollableRow}>
             {projects.map((project) => (
               <ProjectCard
-                showWorkspace
                 curUser={currentUser}
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
+                showWorkspace
               />
             ))}
           </Grid>
