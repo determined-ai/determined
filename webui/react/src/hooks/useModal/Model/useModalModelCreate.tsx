@@ -1,5 +1,6 @@
-import { ModalFuncProps } from 'antd';
+import { Button, Dropdown, MenuProps, ModalFuncProps } from 'antd';
 import React, { useCallback, useEffect, useState } from 'react';
+import { DownOutlined } from '@ant-design/icons';
 
 import Form from 'components/kit/Form';
 import Input from 'components/kit/Input';
@@ -17,6 +18,11 @@ import { notification } from 'utils/dialogApi';
 import handleError from 'utils/error';
 
 import css from './useModalModelCreate.module.scss';
+// import { useDeterminedInfo, useUpdateDeterminedInfo } from 'stores/determinedInfo'; 
+import { Loadable } from 'utils/loadable';
+import { useWorkspaces } from 'stores/workspaces';
+import DynamicIcon from 'components/DynamicIcon';
+import { FixedSizeList } from 'react-window';
 
 const FORM_ID = 'create-model-form';
 
@@ -57,6 +63,16 @@ const DEFAULT_MODAL_STATE = {
 };
 
 const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
+  // const loadableInfo = Loadable.match(useDeterminedInfo(), { // TODO: uncomment this before merge!!!
+  //   Loaded: (info) => info,
+  //   NotLoaded: () => undefined,
+  // });
+  // const updateInfo = useUpdateDeterminedInfo(); // TODO: uncomment this before merge!!!
+  const loadableWorkspaces = useWorkspaces();
+  const workspaces = Loadable.match(loadableWorkspaces, {
+    Loaded: (ws) => ws,
+    NotLoaded: () => [],
+  });
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const prevModalState = usePrevious(modalState, undefined);
   const [form] = Form.useForm<FormInputs>();
@@ -157,6 +173,17 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
+  const workspaceItems: MenuProps['items'] = workspaces.map((ws) => ({
+    label: (
+      <div className={css.workspaceFilterItem}>
+        <DynamicIcon name={ws.name} size={24} />
+        <span className={css.workspaceFilterName}>{ws.name}</span>
+      </div>
+    ),
+    key: ws.id,
+    value: ws.id,
+  }));
+
   const getModalContent = useCallback(
     (state: ModalState): React.ReactNode => {
       const { tags, metadata, expandDetails } = state;
@@ -173,6 +200,31 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
               name="modelName"
               rules={[{ message: 'Model name is required ', required: true }]}>
               <Input onChange={handleNameChange} />
+            </Form.Item>
+            <Form.Item rules={[{ required: true, message: 'Please select a workspace!' }]} name="workspaces">
+              <Dropdown
+                arrow
+                // placement='bottomRight'
+                disabled={!workspaces.length}
+                className={css.workspaceButton}
+                overlayClassName={css.dropDownRoot}
+                getPopupContainer={(triggerNode) => triggerNode}
+                dropdownRender={(menu) =>
+                  React.cloneElement(menu as React.ReactElement, { style: { maxWidth: 'fit-content', maxHeight: '200px', overflowY: 'scroll' } })
+                }
+                menu={{
+                  items: workspaceItems,
+                  selectable: true,
+                }}
+                trigger={['click']}
+              >
+                <Button>
+                  <span className={css.workspaceButtonContainer}>
+                    Workspaces
+                    <DownOutlined />
+                  </span>
+                </Button>
+              </Dropdown>
             </Form.Item>
             <Form.Item label="Description (optional)" name="description">
               <Input.TextArea onChange={handleDescriptionChange} />

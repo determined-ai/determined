@@ -8,6 +8,30 @@
     cursor: pointer;
     margin: 0;
   }
+  .workspaceButton {
+    position: relative;
+    
+    .workspaceButtonContainer {
+      display: flex;
+      justify-content: space-between;
+      min-width: 110px;
+    }
+    .overlayClassName {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  }
+  .workspaceFilterItem {
+    align-items: center;
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+  
+    .workspaceFilterName {
+      margin-left: 5px;
+    }
+  }
   h2 {
     color: var(--theme-colors-monochrome-5);
     font-size: 14px;
