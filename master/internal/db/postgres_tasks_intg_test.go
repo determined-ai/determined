@@ -83,7 +83,6 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 		AllocationID: aID,
 		TaskID:       tID,
 		Slots:        8,
-		AgentLabel:   "something",
 		ResourcePool: "somethingelse",
 		StartTime:    ptrs.Ptr(time.Now().UTC().Truncate(time.Millisecond)),
 	}

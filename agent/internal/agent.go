@@ -164,7 +164,6 @@ func (a *Agent) run(ctx context.Context) error {
 	case socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
 		Version:              a.version,
 		Devices:              devices,
-		Label:                a.opts.Label,
 		ContainersReattached: reattached,
 	}}:
 	case <-ctx.Done():
@@ -352,7 +351,6 @@ func (a *Agent) reconnectFlow(
 	case socket.Outbox <- &aproto.MasterMessage{AgentStarted: &aproto.AgentStarted{
 		Version:              a.version,
 		Devices:              devices,
-		Label:                a.opts.Label,
 		ContainersReattached: reattached,
 	}}:
 	case <-ctx.Done():

@@ -90,7 +90,7 @@ func newRunCmd() *cobra.Command {
 
 	// Labels flags.
 	cmd.Flags().StringVar(&opts.Label, "label", "",
-		"Label attached to the agent for scheduling constraints")
+		"This field has been deprecated and will be ignored, use ``resource_pool`` instead.")
 
 	// ResourcePool flags.
 	cmd.Flags().StringVar(&opts.ResourcePool, "resource-pool", "",

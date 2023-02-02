@@ -37,7 +37,6 @@ def list_agents(args: argparse.Namespace) -> None:
                 ),
                 ("enabled", a.enabled),
                 ("draining", a.draining),
-                ("label", a.label),
                 ("addresses", ", ".join(a.addresses) if a.addresses is not None else ""),
             ]
         )
@@ -57,7 +56,6 @@ def list_agents(args: argparse.Namespace) -> None:
         "Resource Pool",
         "Enabled",
         "Draining",
-        "Label",
         "Addresses",
     ]
     values = [a.values() for a in agents]

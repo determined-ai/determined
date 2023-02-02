@@ -22,7 +22,7 @@ message Agent {
   map<string, Slot> slots = 3;
   // A map of container id to all containers assigned to this agent.
   map<string, determined.container.v1.Container> containers = 4;
-  // An optional label applied to the agent for scheduling restrictions.
+  // This field has been deprecated and will be empty.
   string label = 5;
   // The addresses of the agent.
   repeated string addresses = 7;

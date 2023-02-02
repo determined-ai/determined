@@ -87,11 +87,6 @@ The following configuration settings are supported:
       cluster is composed of agents with 2 slots each. The number of slots for TensorBoard is fixed
       at ``0`` and may not be changed.
 
-   -  ``agent_label``: If set, the task will *only* be scheduled on agents that have the given label
-      set. If this is not set (the default behavior), the task will only be scheduled on unlabeled
-      agents. An agent's label can be configured via the ``label`` field in the :ref:`agent
-      configuration <agent-config-reference>`.
-
    -  ``shm_size``: The size of ``/dev/shm`` for task containers. The value can be a number in bytes
       or a number with a suffix (e.g., ``128M`` for 128MiB or ``1.5G`` for 1.5GiB). Defaults to
       ``4294967296`` (4GiB). If set, this value overrides the value specified in the :ref:`master
@@ -111,6 +106,9 @@ The following configuration settings are supported:
       honored by resource managers of type ``agent`` but is ignored by resource managers of type
       ``kubernetes``. See :ref:`master configuration <master-config-reference>` for details about
       resource managers.
+
+   -  ``agent_label``: This field has been deprecated and will be ignored. Use ``resource_pool``
+      instead.
 
 -  ``bind_mounts``: Specifies a collection of directories that are bind-mounted into the Docker
    containers for execution. This can be used to allow commands to access additional data that is

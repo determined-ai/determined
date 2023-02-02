@@ -164,16 +164,6 @@ const ClusterHistoricalUsage: React.FC = () => {
             />
           )}
         </Section>
-        <Section bodyBorder loading={!chartSeries} title="Compute Hours by Agent Label">
-          {chartSeries && (
-            <ClusterHistoricalUsageChart
-              groupBy={chartSeries.groupedBy}
-              hoursByLabel={chartSeries.hoursByAgentLabel}
-              hoursTotal={chartSeries?.hoursTotal?.total}
-              time={chartSeries.time}
-            />
-          )}
-        </Section>
         {isCsvModalVisible && (
           <ClusterHistoricalUsageCsvModal
             afterDate={csvAfterDate}

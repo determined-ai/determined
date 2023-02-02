@@ -243,7 +243,6 @@ def cluster_up(
             master_port=port,
             agent_config_path=None,
             agent_name=agent_name,
-            agent_label=None,
             agent_resource_pool=None,
             image_repo_prefix=image_repo_prefix,
             version=version,
@@ -268,7 +267,6 @@ def agent_up(
     master_port: int,
     agent_config_path: Optional[Path],
     agent_name: str,
-    agent_label: Optional[str],
     agent_resource_pool: Optional[str],
     image_repo_prefix: Optional[str],
     version: Optional[str],
@@ -296,8 +294,6 @@ def agent_up(
             del environment["DET_MASTER_PORT"]
             master_port = agent_conf["master_port"]
 
-    if agent_label is not None:
-        environment["DET_LABEL"] = agent_label
     if agent_resource_pool is not None:
         environment["DET_RESOURCE_POOL"] = agent_resource_pool
     if image_repo_prefix is None:

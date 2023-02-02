@@ -210,7 +210,6 @@ type ResourcesConfigV0 struct {
 	RawWeight         *float64 `json:"weight"`
 	RawNativeParallel *bool    `json:"native_parallel,omitempty"`
 	RawShmSize        *int     `json:"shm_size"`
-	RawAgentLabel     *string  `json:"agent_label"`
 	RawResourcePool   *string  `json:"resource_pool"`
 	RawPriority       *int     `json:"priority"`
 

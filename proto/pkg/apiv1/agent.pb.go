@@ -88,8 +88,7 @@ type GetAgentsRequest struct {
 	Offset int32 `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
 	// Limit the number of agents. A value of 0 denotes no limit.
 	Limit int32 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
-	// Filter agents by their label. If no label is specified or is empty, all
-	// agents are returned.
+	// This field has been deprecated and will be ignored.
 	Label string `protobuf:"bytes,5,opt,name=label,proto3" json:"label,omitempty"`
 }
 

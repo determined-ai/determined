@@ -12,10 +12,6 @@ func slotsSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
 	return req.SlotsNeeded <= agent.numEmptySlots()
 }
 
-func labelSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
-	return req.AgentLabel == agent.Label
-}
-
 func maxZeroSlotContainersSatisfied(req *sproto.AllocateRequest, agent *agentState) bool {
 	if req.SlotsNeeded == 0 {
 		return agent.numEmptyZeroSlots() > 0

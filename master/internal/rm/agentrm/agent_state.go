@@ -45,7 +45,6 @@ type agentState struct {
 	// Handler is agent actor reference.
 	Handler          *actor.Ref
 	Devices          map[device.Device]*cproto.ID
-	Label            string
 	resourcePoolName string
 	enabled          bool
 	draining         bool
@@ -62,7 +61,6 @@ type agentState struct {
 func newAgentState(msg sproto.AddAgent, maxZeroSlotContainers int) *agentState {
 	return &agentState{
 		Handler:               msg.Agent,
-		Label:                 msg.Label,
 		Devices:               make(map[device.Device]*cproto.ID),
 		maxZeroSlotContainers: maxZeroSlotContainers,
 		enabled:               true,
@@ -197,7 +195,6 @@ func (a *agentState) deallocateContainer(id cproto.ID) {
 func (a *agentState) deepCopy() *agentState {
 	copiedAgent := &agentState{
 		Handler:               a.Handler,
-		Label:                 a.Label,
 		Devices:               maps.Clone(a.Devices),
 		maxZeroSlotContainers: a.maxZeroSlotContainers,
 		enabled:               a.enabled,
@@ -478,7 +475,6 @@ func (a *agentState) snapshot() *agentSnapshot {
 		AgentID:          a.agentID(),
 		UUID:             a.uuid.String(),
 		ResourcePoolName: a.resourcePoolName,
-		Label:            a.Label,
 		// TODO(ilia): we need to disambiguate user setting (which needs to be saved)
 		// vs current state.
 		UserEnabled:           a.enabled,
@@ -655,7 +651,6 @@ func newAgentStateFromSnapshot(as agentSnapshot) (*agentState, error) {
 	result := agentState{
 		maxZeroSlotContainers: as.MaxZeroSlotContainers,
 		resourcePoolName:      as.ResourcePoolName,
-		Label:                 as.Label,
 		uuid:                  parsedUUID,
 		enabled:               as.UserEnabled,
 		draining:              as.UserDraining,

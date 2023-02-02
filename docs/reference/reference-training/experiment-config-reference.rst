@@ -916,14 +916,6 @@ The ``resources`` section defines the resources that an experiment is allowed to
       of certain models, as described in the `PyTorch documentation
       <https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html#torch.nn.DataParallel>`__.
 
-.. _exp-config-agent_label:
-
-``agent_label``
-   If set, tasks launched for this experiment will *only* be scheduled on agents that have the given
-   label set. If this is not set (the default behavior), tasks launched for this experiment will
-   only be scheduled on unlabeled agents. An agent's label can be configured via the ``label`` field
-   in the agent configuration.
-
 ``max_slots``
    The maximum number of scheduler slots that this experiment is allowed to use at any one time. The
    slot limit of an active experiment can be changed using ``det experiment set max-slots <id>
@@ -965,6 +957,9 @@ The ``resources`` section defines the resources that an experiment is allowed to
    ``--device DEVICE`` command line argument to ``docker run``. ``devices`` is honored by resource
    managers of type ``agent`` but is ignored by resource managers of type ``kubernetes``. See
    :ref:`master configuration <master-config-reference>` for details about resource managers.
+
+``agent_label``
+   This field has been deprecated and will be ignored. Use ``resource_pool`` instead.
 
 .. _exp-bind-mounts:
 
