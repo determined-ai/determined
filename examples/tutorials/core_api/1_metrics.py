@@ -10,11 +10,14 @@ import time
 
 # NEW: import determined
 import determined as det
-
+from determined.core import XAxisOption
 
 def main(core_context, increment_by):
     x = 0
+    training_accuracy = validation_accuracy = 0
     for batch in range(100):
+        training_accuracy += 0.01
+        validation_accuracy = training_accuracy
         x += increment_by
         steps_completed = batch + 1
         time.sleep(0.1)
@@ -22,10 +25,10 @@ def main(core_context, increment_by):
         # NEW: report training metrics.
         if steps_completed % 10 == 0:
             core_context.train.report_training_metrics(
-                steps_completed=steps_completed, metrics={"x": x}
+                steps_completed=steps_completed, metrics={"training_accuracy": training_accuracy, XAxisOption.EPOCH.value: batch}
             )
     # NEW: report a "validation" metric at the end.
-    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
+    core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"validation_accuracy": validation_accuracy})
 
 
 if __name__ == "__main__":

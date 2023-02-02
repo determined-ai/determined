@@ -9,6 +9,7 @@ from determined.core._train import (
     TrainContext,
     DummyTrainContext,
     EarlyExitReason,
+    XAxisOption,
 )
 from determined.core._searcher import (
     DummySearcherContext,

@@ -618,7 +618,8 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
 };
 
 const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricContainer[] => {
-  return data.map((m) => ({
+  return data.map((m) => {
+    const metrics: types.MetricContainer = {
     data: m.data.map((pt) => ({
       batches: pt.batches,
       value: pt.value,
@@ -628,15 +629,20 @@ const decodeSummaryMetrics = (data: Sdk.V1SummarizedMetric[]): types.MetricConta
       time: pt.time,
       value: pt.value,
     })),
-    epochs: m.epochs?.map((pt) => ({
-      epoch: pt.epoch,
-      value: pt.value,
-    })),
     type:
       m.type === Sdk.V1MetricType.TRAINING
         ? types.MetricType.Training
         : types.MetricType.Validation,
-  }));
+  } 
+  if (m.epochs && m.epochs.length > 0){
+    metrics.epochs =  m.epochs.map((pt) => ({
+      epoch: pt.epoch,
+      value: pt.value,
+    }))
+  }
+  return metrics
+}
+  );
 };
 
 export const decodeTrialSummary = (data: Sdk.V1SummarizeTrialResponse): types.TrialSummary => {
