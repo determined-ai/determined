@@ -65,9 +65,9 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         return sync_paths
 
     @abc.abstractmethod
-    def sync(
+    def _sync_impl(
         self,
-        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        paths: List[pathlib.Path],
         mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
         rank: int = 0,
     ) -> None:
@@ -75,6 +75,15 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         Save the object to the backing persistent storage.
         """
         pass
+
+    def sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
+        paths = self.to_sync(selector)
+        self._sync_impl(paths, mangler, rank)
 
     @abc.abstractmethod
     def delete(self) -> None:

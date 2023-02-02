@@ -1,7 +1,7 @@
 import logging
 import os
 import pathlib
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from determined.common import util
 from determined.common.storage.s3 import normalize_prefix
@@ -45,13 +45,13 @@ class S3TensorboardManager(base.TensorboardManager):
         self.prefix = normalize_prefix(prefix)
 
     @util.preserve_random_state
-    def sync(
+    def _sync_impl(
         self,
-        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        paths: List[pathlib.Path],
         mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
         rank: int = 0,
     ) -> None:
-        for path in self.to_sync(selector):
+        for path in paths:
             relative_path = path.relative_to(self.base_path)
             mangled_relative_path = mangler(relative_path, rank)
             mangled_path = self.sync_path.joinpath(mangled_relative_path)

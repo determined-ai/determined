@@ -1,6 +1,7 @@
 import logging
 import pathlib
-from typing import Any, Callable, Optional
+
+from typing import Callable, List
 
 from determined.common import util
 from determined.tensorboard import base
@@ -31,13 +32,13 @@ class AzureTensorboardManager(base.TensorboardManager):
         self.container = container if not container.endswith("/") else container[:-1]
 
     @util.preserve_random_state
-    def sync(
+    def _sync_impl(
         self,
-        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        paths: List[pathlib.Path],
         mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
         rank: int = 0,
     ) -> None:
-        for path in self.to_sync(selector):
+        for path in paths:
             relative_path = path.relative_to(self.base_path)
             mangled_relative_path = mangler(relative_path, rank)
             mangled_path = self.sync_path.joinpath(mangled_relative_path)
