@@ -24,7 +24,7 @@ class TorchWriter(SummaryWriter, tensorboard.MetricWriter):
 
      .. code-block:: python
 
-        from determined.tensorboard.metric_writers.pytorch import TorchWriter
+        from determined.pytorch import TorchWriter
 
         class MyModel(PyTorchTrial):
             def __init__(self, context):
