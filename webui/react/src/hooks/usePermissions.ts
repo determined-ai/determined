@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import useFeature from 'hooks/useFeature';
 import { V1PermissionType } from 'services/api-ts-sdk/api';
-import { UserRolesService } from 'stores/userRoles';
+import { PermissionsStore } from 'stores/permissions';
 import { useCurrentUser } from 'stores/users';
 import {
   DetailedUser,
@@ -95,13 +95,13 @@ const usePermissions = (): PermissionsHook => {
   // Loadables keep track of loading status
   // userAssignments and userRoles should always be an array -- empty arrays until loading is complete.
   const loadableUserAssignments = useObservable<Loadable<UserAssignment[]>>(
-    UserRolesService.getUserAssignments(),
+    PermissionsStore.getMyAssignments(),
   );
   const userAssignments = Loadable.match(loadableUserAssignments, {
     Loaded: (uAssignments) => uAssignments,
     NotLoaded: () => [],
   });
-  const loadableUserRoles = useObservable<Loadable<UserRole[]>>(UserRolesService.getUserRoles());
+  const loadableUserRoles = useObservable<Loadable<UserRole[]>>(PermissionsStore.getMyRoles());
   const userRoles = Loadable.match(loadableUserRoles, {
     Loaded: (uRoles) => uRoles,
     NotLoaded: () => [],
