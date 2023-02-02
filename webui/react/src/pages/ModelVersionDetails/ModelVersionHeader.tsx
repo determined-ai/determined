@@ -63,6 +63,8 @@ const ModelVersionHeader: React.FC<Props> = ({
     openModelDownload(modelVersion);
   }, [modelVersion, openModelDownload]);
 
+  const { canDeleteModelVersion, canModifyModelVersion } = usePermissions();
+
   const infoRows: InfoRow[] = useMemo(() => {
     const user = users.find((user) => user.id === modelVersion.userId);
     return [
@@ -85,7 +87,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       {
         content: (
           <InlineEditor
-            disabled={modelVersion.model.archived}
+            disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             placeholder={modelVersion.model.archived ? 'Archived' : 'Add description...'}
             value={modelVersion.comment ?? ''}
             onSave={onSaveDescription}
@@ -96,7 +98,7 @@ const ModelVersionHeader: React.FC<Props> = ({
       {
         content: (
           <TagList
-            disabled={modelVersion.model.archived}
+            disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
             ghost={false}
             tags={modelVersion.labels ?? []}
             onChange={onUpdateTags}
@@ -105,9 +107,7 @@ const ModelVersionHeader: React.FC<Props> = ({
         label: 'Tags',
       },
     ] as InfoRow[];
-  }, [modelVersion, onSaveDescription, onUpdateTags, users]);
-
-  const { canDeleteModelVersion } = usePermissions();
+  }, [modelVersion, onSaveDescription, onUpdateTags, users, canModifyModelVersion]);
 
   const handleDelete = useCallback(() => {
     openModalVersionDelete(modelVersion);
@@ -213,7 +213,7 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
             <h1 className={css.versionName}>
               <InlineEditor
                 allowClear={false}
-                disabled={modelVersion.model.archived}
+                disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
                 placeholder="Add name..."
                 value={modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
                 onSave={onSaveName}

@@ -5178,7 +5178,7 @@ export interface V1Model {
      * @type {number}
      * @memberof V1Model
      */
-    workspaceId?: number;
+    workspaceId: number;
     /**
      * Id of the user who created this model.
      * @type {number}
@@ -5650,10 +5650,10 @@ export interface V1PatchModel {
     workspaceName?: string;
     /**
      * The id of the workspace associated with this model.
-     * @type {string}
+     * @type {number}
      * @memberof V1PatchModel
      */
-    workspaceId?: string;
+    workspaceId?: number;
 }
 
 /**

@@ -623,6 +623,7 @@ export interface ModelItem {
   notes?: string;
   numVersions: number;
   userId: number;
+  workspaceId: number;
 }
 
 export interface ModelVersion {

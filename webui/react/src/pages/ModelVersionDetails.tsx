@@ -11,6 +11,7 @@ import MetadataCard from 'components/Metadata/MetadataCard';
 import NotesCard from 'components/NotesCard';
 import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { getModelVersion, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
@@ -54,6 +55,8 @@ const ModelVersionDetails: React.FC = () => {
   const versionNum = versionNUM ?? '';
 
   const basePath = paths.modelVersionDetails(modelId, versionNum);
+
+  const { canModifyModelVersion } = usePermissions();
 
   const fetchModelVersion = useCallback(async () => {
     try {
@@ -276,7 +279,7 @@ const ModelVersionDetails: React.FC = () => {
               <InfoBox rows={validationMetrics} separator />
             </Card>
             <MetadataCard
-              disabled={modelVersion.model.archived}
+              disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               metadata={modelVersion.metadata}
               onSave={saveMetadata}
             />
@@ -289,7 +292,7 @@ const ModelVersionDetails: React.FC = () => {
         children: (
           <div className={css.base}>
             <NotesCard
-              disabled={modelVersion.model.archived}
+              disabled={modelVersion.model.archived || !canModifyModelVersion({ modelVersion })}
               notes={modelVersion.notes ?? ''}
               onSave={saveNotes}
             />
@@ -299,7 +302,14 @@ const ModelVersionDetails: React.FC = () => {
         label: 'Notes',
       },
     ];
-  }, [checkpointInfo, modelVersion, saveMetadata, saveNotes, validationMetrics]);
+  }, [
+    checkpointInfo,
+    modelVersion,
+    canModifyModelVersion,
+    saveMetadata,
+    saveNotes,
+    validationMetrics,
+  ]);
 
   if (!modelId) {
     return <Message title="Model name is empty" />;

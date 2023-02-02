@@ -42,10 +42,12 @@ const Navigation: React.FC<Props> = ({ children }) => {
     );
   }, [clusterOverview, info]);
 
-  const rbacEnabled = useFeature().isOn('rbac');
+  const rbacEnabled = useFeature().isOn('rbac'),
+    mockAllPermission = useFeature().isOn('mock_permissions_all'),
+    mockReadPermission = useFeature().isOn('mock_permissions_read');
   usePolling(
     () => {
-      if (rbacEnabled && currentUser !== NotLoaded) {
+      if (rbacEnabled && !mockAllPermission && !mockReadPermission && currentUser !== NotLoaded) {
         fetchMyRoles();
       }
     },

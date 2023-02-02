@@ -266,6 +266,7 @@ export const mapV1Model = (model: Sdk.V1Model): types.ModelItem => {
     notes: model.notes,
     numVersions: model.numVersions,
     userId: model.userId ?? 0,
+    workspaceId: model.workspaceId,
   };
 };
 
