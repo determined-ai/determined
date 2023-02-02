@@ -30,4 +30,3 @@ searcher:
   max_length:
     batches: 938 #60,000 training images with batch size 64
 entrypoint: python3 model_def_adaptive.py
-

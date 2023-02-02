@@ -7,9 +7,10 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 
-# NEW: imports 
+# NEW: imports
 import determined as det
 import pathlib
+
 
 class Net(nn.Module):
     def __init__(self):
@@ -36,6 +37,8 @@ class Net(nn.Module):
         output = F.log_softmax(x, dim=1)
         return output
 
+
+# NEW: modified function header to include core_context for metric reporting
 def train(args, model, device, train_loader, optimizer, epoch, core_context):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -46,22 +49,30 @@ def train(args, model, device, train_loader, optimizer, epoch, core_context):
         loss.backward()
         optimizer.step()
         if (batch_idx + 1) % args.log_interval == 0:
-            
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-            epoch, (batch_idx) * len(data), len(train_loader.dataset),
-            100. * (batch_idx) / len(train_loader), loss.item()))
-            
-            # NEW: report training metrics to Determined master via core context. 
+
+            print(
+                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+                    epoch,
+                    (batch_idx) * len(data),
+                    len(train_loader.dataset),
+                    100.0 * (batch_idx) / len(train_loader),
+                    loss.item(),
+                )
+            )
+
+            # NEW: report training metrics to Determined master via core context.
             # Index by (batch_idx + 1) * (epoch-1) * len(train_loader) to continuously plot loss on one graph for consecutive epochs.
-            core_context.train.report_training_metrics(steps_completed=(batch_idx + 1) + (epoch-1) * len(train_loader), \
-            metrics={"train_loss":loss.item()})
-      
+            core_context.train.report_training_metrics(
+                steps_completed=(batch_idx + 1) + (epoch - 1) * len(train_loader),
+                metrics={"train_loss": loss.item()},
+            )
+
             if args.dry_run:
                 break
 
 
-# NEW: modified function header
-def test(args, model, device, test_loader, epoch, core_context, len_trainset):
+# NEW: modified function header to include core_context for metric reporting and a steps_completed parameter to plot metrics
+def test(args, model, device, test_loader, epoch, core_context, steps_completed):
     model.eval()
     test_loss = 0
     correct = 0
@@ -69,48 +80,80 @@ def test(args, model, device, test_loader, epoch, core_context, len_trainset):
         for batch_idx, (data, target) in enumerate(test_loader):
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
+            test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
 
-            # NEW: report validation metrics to Determined master via core context. 
-            if (batch_idx + 1) % args.log_interval == 0:
-                core_context.train.report_validation_metrics(steps_completed= (epoch) * len_trainset, \
-                 metrics={"test_loss": (test_loss /len(test_loader.dataset))})
-            
     test_loss /= len(test_loader.dataset)
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+    print(
+        "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n".format(
+            test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
+        )
+    )
+
+    # NEW: report validation metrics to Determined master via core context.
+    core_context.train.report_validation_metrics(
+        steps_completed=steps_completed,
+        metrics={"test_loss": test_loss},
+    )
 
 
 def main(core_context):
     # Training settings
-    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                        help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                        help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=14, metavar='N',
-                        help='number of epochs to train (default: 14)')
-    parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
-                        help='learning rate (default: 1.0)')
-    parser.add_argument('--gamma', type=float, default=0.7, metavar='M',
-                        help='Learning rate step gamma (default: 0.7)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
-    parser.add_argument('--no-mps', action='store_true', default=True,
-                        help='disables macOS GPU training')
-    parser.add_argument('--dry-run', action='store_true', default=False,
-                        help='quickly check a single pass')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
-    parser.add_argument('--save-model', action='store_true', default=False,
-                        help='For Saving the current Model')
-  
+    parser = argparse.ArgumentParser(description="PyTorch MNIST Example")
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=64,
+        metavar="N",
+        help="input batch size for training (default: 64)",
+    )
+    parser.add_argument(
+        "--test-batch-size",
+        type=int,
+        default=1000,
+        metavar="N",
+        help="input batch size for testing (default: 1000)",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=14,
+        metavar="N",
+        help="number of epochs to train (default: 14)",
+    )
+    parser.add_argument(
+        "--lr", type=float, default=1.0, metavar="LR", help="learning rate (default: 1.0)"
+    )
+    parser.add_argument(
+        "--gamma",
+        type=float,
+        default=0.7,
+        metavar="M",
+        help="Learning rate step gamma (default: 0.7)",
+    )
+    parser.add_argument(
+        "--no-cuda", action="store_true", default=False, help="disables CUDA training"
+    )
+    parser.add_argument(
+        "--no-mps", action="store_true", default=True, help="disables macOS GPU training"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", default=False, help="quickly check a single pass"
+    )
+    parser.add_argument("--seed", type=int, default=1, metavar="S", help="random seed (default: 1)")
+    parser.add_argument(
+        "--log-interval",
+        type=int,
+        default=10,
+        metavar="N",
+        help="how many batches to wait before logging training status",
+    )
+    parser.add_argument(
+        "--save-model", action="store_true", default=False, help="For Saving the current Model"
+    )
+
     args = parser.parse_args()
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     use_mps = not args.no_mps and torch.backends.mps.is_available()
@@ -124,24 +167,19 @@ def main(core_context):
     else:
         device = torch.device("cpu")
 
-    train_kwargs = {'batch_size': args.batch_size}
-    test_kwargs = {'batch_size': args.test_batch_size}
+    train_kwargs = {"batch_size": args.batch_size}
+    test_kwargs = {"batch_size": args.test_batch_size}
     if use_cuda:
-        cuda_kwargs = {'num_workers': 1,
-                       'pin_memory': True,
-                       'shuffle': True}
+        cuda_kwargs = {"num_workers": 1, "pin_memory": True, "shuffle": True}
         train_kwargs.update(cuda_kwargs)
         test_kwargs.update(cuda_kwargs)
 
-    transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-        ])
-    dataset1 = datasets.MNIST('../data', train=True, download=True,
-                       transform=transform)
-    dataset2 = datasets.MNIST('../data', train=False,
-                       transform=transform)
-    train_loader = torch.utils.data.DataLoader(dataset1,**train_kwargs)
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+    )
+    dataset1 = datasets.MNIST("../data", train=True, download=True, transform=transform)
+    dataset2 = datasets.MNIST("../data", train=False, transform=transform)
+    train_loader = torch.utils.data.DataLoader(dataset1, **train_kwargs)
     test_loader = torch.utils.data.DataLoader(dataset2, **test_kwargs)
 
     model = Net().to(device)
@@ -150,19 +188,19 @@ def main(core_context):
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
 
-        # NEW: for calculating steps_completed when plotting metrics
-        len_trainset = len(train_loader)
+        # NEW: steps_completed for plotting test metrics
+        steps_completed = epoch * len(train_loader)
 
         # NEW: pass context to train and test functions as well
         train(args, model, device, train_loader, optimizer, epoch, core_context)
-        test(args, model, device, test_loader, epoch, core_context, len_trainset)
+        test(args, model, device, test_loader, epoch, core_context, steps_completed=steps_completed)
         scheduler.step()
 
     if args.save_model:
         torch.save(model.state_dict(), "mnist_cnn.pt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # NEW: establish context and pass to main function
     with det.core.init() as core_context:
