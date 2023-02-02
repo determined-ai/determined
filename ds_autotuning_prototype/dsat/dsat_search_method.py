@@ -2,9 +2,8 @@ import copy
 import logging
 import uuid
 from abc import abstractmethod
-from typing import Any, Dict, Generator, List, Optional, Set, Union
+from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
-from deepspeed import zero
 from dsat import constants, utils
 from torch import optim
 
@@ -15,6 +14,7 @@ from determined import searcher
 class DSATTrial:
     def __init__(self, hparams: Dict[str, Any], checkpoint: Optional[str] = None) -> None:
         self.hparams = hparams
+        self.ds_config = self.hparams["ds_config"]
         self.checkpoint = checkpoint
         self.request_id = uuid.uuid4()
         self.metric = None
@@ -24,7 +24,7 @@ class DSATTrial:
         try:
             zero_stage = int(self.hparams["ds_config"]["zero_optimization"]["stage"])
         except KeyError:
-            zero_stage = 0
+            zero_stage = 0  # The DS Default. TODO: add to constants.py
         return zero_stage
 
     def record_metric(self, metric: float) -> None:
@@ -213,7 +213,7 @@ class DSATBasicSearchMethod(DSATSearchMethodBase):
         # Make zero_stages iterable. Should probably have some asserts.
         if zero_stages == "all":
             zero_stages == range(4)
-        elif isinstance(zero_stages, int):
+        if isinstance(zero_stages, int):
             zero_stages == (zero_stages,)
 
         num_trials = self._autotuning_config["num_trials"]
@@ -243,5 +243,5 @@ class DSATBasicSearchMethod(DSATSearchMethodBase):
                         hparams["ds_config"], {"zero_optimization": zero_optim_config}
                     )
                     del hparams["autotuning_config"]  # Ugly cleanup for better Web UI visuals.
-                    print(hparams)
+                    logging.info(hparams)
                     yield hparams
