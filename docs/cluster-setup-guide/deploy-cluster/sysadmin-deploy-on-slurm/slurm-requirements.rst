@@ -8,10 +8,12 @@
  Basic Requirements
 ********************
 
-Deploying Determined with Slurm/PBS has the following requirements.
+Deploying the Determined HPC Launcher on Slurm/PBS has the following requirements.
 
--  The login node, admin node, and compute nodes must be configured with Ubuntu 20.04 or later,
-   CentOS 7 or later, or SLES 15 or later.
+-  The login node, admin node, and compute nodes must be configured with a Linux distro compatible
+   with any of the following minimum distro versions: Red Hat® Enterprise Linux® 8, SUSE Linux
+   Enterprise Server 15, CentOS 7, Rocky Linux 8, Ubuntu 20.04. Additional minimum distro version
+   dependencies may be required by your choice of Slurm/PBS version and container runtime.
 
    -  User and group configuration must be consistent across all nodes of the HPC cluster
    -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
