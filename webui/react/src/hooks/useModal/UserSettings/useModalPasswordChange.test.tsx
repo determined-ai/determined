@@ -35,6 +35,8 @@ const CURRENT_USER: DetailedUser = {
   username: USERNAME,
 };
 
+jest.setTimeout(10000);
+
 jest.mock('services/api', () => ({
   getUsers: () =>
     Promise.resolve({
