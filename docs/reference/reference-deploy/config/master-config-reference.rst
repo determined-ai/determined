@@ -267,7 +267,7 @@ The master supports the following configuration settings:
 
       -  ``slot_type``: The default slot type assumed when users request resources from Determined
          in terms of ``slots``. Available values are ``cuda``, ``rocm`` and ``cpu``, where 1
-         ``cuda`` or ``rocm`` slot is 1 GPU, otherwise CPU slots are requested. The number of CPUs
+         ``cuda`` or ``rocm`` slot is 1 GPU. Otherwise, CPU slots are requested. The number of CPUs
          allocated per node is 1, unless overridden by ``slots_per_node`` in the experiment
          configuration. Defaults per-partition to ``cuda`` if GPU resources are found within the
          partition, else ``cpu``. If GPUs cannot be detected automatically, for example when
