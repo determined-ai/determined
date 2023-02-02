@@ -124,6 +124,7 @@ def test_upload_thread_exception_case() -> None:
         thread_name = args.thread.ident
         threads_with_exception.add(thread_name)
 
+    original_excepthook = threading.excepthook
     threading.excepthook = custom_excepthook
 
     # 2. Define function that throws exception
@@ -134,14 +135,17 @@ def test_upload_thread_exception_case() -> None:
     upload_thread = tensorboard.base._TensorboardUploadThread(upload_function)
 
     # 4. start, run, and join the _TensorboardUploadThread instance
-    upload_thread.start()
-    thread_ident = upload_thread.ident
-    upload_thread.upload(
-        [pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")]
-    )
-    # Pass in sentinel value to exit thread
-    upload_thread.close()
-    upload_thread.join()
+    try:
+        upload_thread.start()
+        thread_ident = upload_thread.ident
+        upload_thread.upload(
+            [pathlib.Path("test_value/file1.json"), pathlib.Path("test_value/file2.json")]
+        )
+        # Pass in sentinel value to exit thread
+        upload_thread.close()
+        upload_thread.join()
+    finally:
+        threading.excepthook = original_excepthook
 
     # 5. Check that _TensorboardUploadThread instance did not
     #    throw exception
