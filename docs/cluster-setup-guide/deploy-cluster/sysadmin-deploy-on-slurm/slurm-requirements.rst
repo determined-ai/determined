@@ -10,14 +10,18 @@
 
 Deploying the Determined HPC Launcher on Slurm/PBS has the following requirements.
 
--  The login node, admin node, and compute nodes must be configured with a Linux distro compatible
-   with any of the following minimum distro versions: Red Hat® Enterprise Linux® 8, SUSE Linux
-   Enterprise Server 15, CentOS 7, Rocky Linux 8, Ubuntu 20.04. Additional minimum distro version
-   dependencies may be required by your choice of Slurm/PBS version and container runtime.
+-  The login node, admin node, and compute nodes must be installed and configured with one of the
+   following Linux distributions:
 
-   -  User and group configuration must be consistent across all nodes of the HPC cluster
-   -  All nodes must be able to resolve the hostnames of all other nodes in the HPC cluster
-   -  A cluster-wide file system with consistent path names across the HPC cluster
+   -  Red Hat® Enterprise Linux (RHEL) or CentOS 7.9
+   -  RHEL or Rocky Linux® 8.5, 8.6
+   -  RHEL 9
+   -  SUSE® Linux Enterprise Server (SLES) 12 SP3 , 15 SP3, 15 SP4
+   -  Ubuntu® 20.04, 22.04
+   -  Cray OS (COS) 2.3, 2.4
+
+   Note: More restrictive Linux distribution dependencies may be required by your choice of
+   Slurm/PBS version and container runtime (Singularity/Apptainer®, Podman, or NVIDIA® Enroot).
 
 -  Slurm 20.02 or greater (for versions greater than 22.05.2 see :ref:`slurm-known-issues`) or PBS
    2021.1.2 or greater.
@@ -25,7 +29,11 @@ Deploying the Determined HPC Launcher on Slurm/PBS has the following requirement
 -  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or PodMan 3.3.1 or
    greater.
 
--  A cluster-wide shared filesystem.
+-  A cluster-wide shared filesystem with consistent path names across the HPC cluster.
+
+-  User and group configuration must be consistent across all nodes.
+
+-  All nodes must be able to resolve the hostnames of all other nodes.
 
 -  To run jobs with GPUs, the Nvidia or AMD drivers must be installed on each compute node.
    Determined requires a version greater than or equal to 450.80 of the Nvidia drivers. The Nvidia
