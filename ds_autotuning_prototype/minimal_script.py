@@ -10,7 +10,6 @@ from dsat import utils
 from torch.utils.data import Dataset
 
 import determined as det
-from determined.pytorch import DataLoader
 
 
 class RandDataset(Dataset):
