@@ -6,6 +6,8 @@
   border-radius: var(--theme-border-radius-weak);
   box-shadow: var(--theme-elevation-weak);
   color: var(--theme-surface-on);
+  display: flex;
+  flex-direction: column;
   padding: 8px;
   transition: var(--transition-duration) background-color;
 
@@ -15,9 +17,17 @@
     opacity: 0;
     transition: var(--transition-duration) opacity;
   }
-  section {
+  .content {
     display: flex;
-    gap: 8px;
+    flex-direction: column;
+    flex-grow: 1;
+
+    & > * {
+      flex-grow: 1;
+    }
+  }
+  &.clickable {
+    cursor: pointer;
   }
   &:hover,
   &:focus {

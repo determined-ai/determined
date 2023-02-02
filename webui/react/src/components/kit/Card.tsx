@@ -25,26 +25,30 @@ const Card: React.FC<CardProps> = ({
   height = 184,
   width = 184,
 }: CardProps) => {
+  const classnames = [css.base];
+  if (onClick) classnames.push(css.clickable);
+  const actionsAvailable = actionMenu?.items?.length !== undefined && actionMenu.items.length > 0;
+
   return (
     <div
-      className={css.base}
+      className={classnames.join(' ')}
       style={{ minHeight: `${height}px`, width: `${width}px` }}
       tabIndex={onClick ? 0 : -1}
       onClick={onClick}>
       {actionMenu && (
         <div className={css.action}>
           <Dropdown
-            disabled={disabled}
+            disabled={disabled || !actionsAvailable}
             menu={actionMenu}
             placement="bottomRight"
             trigger={['click']}>
-            <Button disabled={disabled} type="text" onClick={stopPropagation}>
+            <Button type="text" onClick={stopPropagation}>
               <Icon name="overflow-horizontal" />
             </Button>
           </Dropdown>
         </div>
       )}
-      <section>{children && <div className={css.content}>{children}</div>}</section>
+      {children && <section className={css.content}>{children}</section>}
     </div>
   );
 };

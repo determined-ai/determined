@@ -1,76 +1,40 @@
 .base {
-  background-color: var(--theme-surface);
-  border: solid var(--theme-stroke-width) var(--theme-surface-border);
-  border-radius: var(--theme-border-radius-strong);
-  color: var(--theme-surface-on);
-  cursor: pointer;
-  display: grid;
-  font-size: 11px;
-  grid-template-columns: 50px auto 25px;
-  grid-template-rows: 40px auto 40px;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  justify-content: space-between;
+  margin-inline: 8px;
 
-  .nameRow {
-    align-items: center;
+  .footer {
     display: flex;
-    gap: 6px;
-    grid-column: 1/3;
-    height: min-content;
-    min-width: 0;
+    font-size: 11px;
+    justify-content: space-between;
 
-    .name {
-      color: var(--theme-surface-on-strong);
-      font-size: 14px;
-      margin: 0;
-      overflow: hidden;
-
-      & * {
-        margin: 0;
-      }
-    }
-  }
-  .action {
-    grid-column: 3/4;
-    grid-row: 1/2;
-    height: min-content;
-    justify-self: end;
-    visibility: hidden;
-    width: min-content;
-  }
-  .description {
-    grid-column: 1/4;
-    grid-row: 2/3;
-    margin: 0;
-    overflow: hidden;
-  }
-  .experiments {
-    align-items: flex-end;
-    align-self: end;
-    display: flex;
-    gap: 4px;
-    grid-column: 1/3;
-    grid-row: 3/4;
-
-    & > span {
+    .experiments {
+      align-items: flex-end;
+      align-self: end;
       display: flex;
       gap: 4px;
-    }
-  }
-  .lastExperiment {
-    margin-left: 6px;
-  }
-  .avatar {
-    grid-column: 3/4;
-    grid-row: 3/4;
-    place-self: end;
-  }
-  &:hover {
-    background-color: var(--theme-surface-weak);
 
-    .action {
-      background-color: var(--theme-surface);
-      border-radius: 4px;
-      visibility: visible;
+      & > span {
+        display: flex;
+        gap: 4px;
+      }
     }
+    .lastExperiment {
+      margin-left: 6px;
+    }
+    .archivedBadge {
+      background-color: var(--theme-status-inactive);
+      border-radius: var(--theme-border-radius);
+      color: var(--theme-status-warning-on);
+      opacity: 1;
+      padding: 2px 4px;
+    }
+  }
+  &.archived .name,
+  &.archived .experiments {
+    opacity: 55%;
   }
 }

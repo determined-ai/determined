@@ -26,6 +26,7 @@ import UserBadge from 'components/kit/UserBadge';
 import Logo from 'components/Logo';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
+import ProjectCard from 'components/ProjectCard';
 import ResourcePoolCard from 'components/ResourcePoolCard';
 import SelectFilter from 'components/SelectFilter';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
@@ -37,8 +38,11 @@ import { V1LogLevel } from 'services/api-ts-sdk';
 import { mapV1LogsResponse } from 'services/decoder';
 import useUI from 'shared/contexts/stores/UI';
 import { ValueOf } from 'shared/types';
-import { generateTestExperimentData } from 'storybook/shared/generateTestData';
-import { BrandingType, MetricType, ResourcePool, User } from 'types';
+import {
+  generateTestExperimentData,
+  generateTestProjectData,
+} from 'storybook/shared/generateTestData';
+import { BrandingType, MetricType, Project, ResourcePool, User } from 'types';
 
 import css from './DesignKit.module.scss';
 import { CheckpointsDict } from './TrialDetails/TrialDetailsOverview';
@@ -989,6 +993,7 @@ const PaginationSection: React.FC = () => {
 
 const CardsSection: React.FC = () => {
   const rps = resourcePools as unknown as ResourcePool[];
+  const project: Project = { ...generateTestProjectData(), lastExperimentStartedAt: new Date() };
 
   return (
     <ComponentSection id="Cards" title="Cards">
@@ -1039,6 +1044,19 @@ const CardsSection: React.FC = () => {
         </ul>
         <strong>Card variations</strong>
         <ul>
+          <li>
+            Project card (<code>{'<ProjectCard>'}</code>)
+          </li>
+          <Space size="large">
+            <ProjectCard project={project} />
+            <ProjectCard project={{ ...project, archived: true }} />
+            <ProjectCard
+              project={{
+                ...project,
+                name: 'Project with a very long name that spans many lines and eventually gets cut off at some point',
+              }}
+            />
+          </Space>
           <li>
             Resource pool card (<code>{'<ResourcePoolCard>'}</code>)
           </li>

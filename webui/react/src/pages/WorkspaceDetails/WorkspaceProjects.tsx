@@ -182,7 +182,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
 
     const actionRenderer: GenericRenderer<Project> = (_, record) => (
       <ProjectActionDropdown
-        curUser={user}
         project={record}
         workspaceArchived={workspace?.archived}
         onComplete={fetchProjects}
@@ -270,7 +269,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [fetchProjects, saveProjectDescription, user, workspace?.archived, users]);
+  }, [fetchProjects, saveProjectDescription, workspace?.archived, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {
@@ -320,7 +319,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       record: Project;
     }) => (
       <ProjectActionDropdown
-        curUser={user}
         project={record}
         trigger={['contextMenu']}
         workspaceArchived={workspace?.archived}
@@ -330,7 +328,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       </ProjectActionDropdown>
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, workspace?.archived],
+    [workspace?.archived],
   );
 
   const projectsList = useMemo(() => {
@@ -339,10 +337,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.Medium} minItemWidth={250} mode={GridMode.AutoFill}>
+          <Grid gap={ShirtSize.Medium} minItemWidth={184} mode={GridMode.AutoFill}>
             {projects.map((project) => (
               <ProjectCard
-                curUser={user}
                 fetchProjects={fetchProjects}
                 key={project.id}
                 project={project}
@@ -383,7 +380,6 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     settings,
     total,
     updateSettings,
-    user,
     workspace?.archived,
   ]);
 

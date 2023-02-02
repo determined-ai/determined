@@ -43,6 +43,46 @@ export const humanReadableNumber = (num: number, precision = DEFAULT_PRECISION):
   return content;
 };
 
+export const nearestCardinalNumber = (num: number): string => {
+  const suffixes = ['k', 'M', 'B', 'T'];
+
+  if (isNaN(num)) {
+    return 'NaN';
+  } else if (!Number.isFinite(num)) {
+    return `${num < 0 ? '-' : ''}Infinity`;
+  } else if (Math.abs(num) < 1000) {
+    return Math.round(num).toString();
+  }
+
+  let tempNum = Math.round(num);
+  let iters = 0;
+  while (Math.abs(tempNum) >= 1000) {
+    tempNum /= 1000;
+    iters++;
+  }
+
+  const suffix = [];
+  if (iters <= suffixes.length) {
+    suffix.push(suffixes[iters - 1]);
+  } else {
+    while (iters > suffixes.length) {
+      suffix.push(suffixes.at(-1));
+      iters -= suffixes.length;
+    }
+    if (iters > 0) {
+      suffix.unshift(suffixes[iters - 1]);
+    }
+  }
+
+  if (Math.abs(tempNum) < 10) {
+    return (
+      ((Math.sign(tempNum) * Math.floor(Math.sign(tempNum) * tempNum * 10)) / 10).toFixed(1) +
+      suffix.join('')
+    );
+  }
+  return Math.sign(tempNum) * Math.floor(Math.sign(tempNum) * tempNum) + suffix.join('');
+};
+
 export const isPercent = (data: unknown): boolean => {
   if (!isString(data)) return false;
   return PERCENT_REGEX.test(data);
