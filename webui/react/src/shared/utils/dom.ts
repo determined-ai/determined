@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const ansiConverter = require('ansi-to-html');
+import ansiConverter from 'ansi-to-html';
 const converter = new ansiConverter({ newline: true });
 
 export const ansiToHtml = (ansi: string): string => {
