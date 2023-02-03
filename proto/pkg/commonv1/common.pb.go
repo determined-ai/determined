@@ -161,7 +161,6 @@ type Int32FieldFilter struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// TODO(ilia): add `exact`.
 	// Less than.
 	Lt *int32 `protobuf:"varint,2,opt,name=lt,proto3,oneof" json:"lt,omitempty"`
 	// Less than or equal.
