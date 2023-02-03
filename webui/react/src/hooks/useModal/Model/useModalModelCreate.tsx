@@ -47,8 +47,8 @@ interface ModalState {
   modelDescription: string;
   modelName: string;
   tags: string[];
-  workspace: string;
   visible: boolean;
+  workspace: string;
 }
 
 interface ModalHooks extends Omit<Hooks, 'modalOpen'> {
@@ -171,12 +171,9 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
     setModalState((prev) => ({ ...prev, modelDescription: e.target.value }));
   }, []);
 
-  const onSelect = useCallback(
-    (info: SelectInfo) => {
-      setModalState((prev) => ({ ...prev, workspace: info.key }));
-    },
-    [],
-  );
+  const onSelect = useCallback((info: SelectInfo) => {
+    setModalState((prev) => ({ ...prev, workspace: info.key }));
+  }, []);
 
   const workspaceName = useMemo(() => {
     const name = workspaces.find((ws) => String(ws.id) === modalState.workspace)?.name || '';
@@ -289,7 +286,7 @@ const useModalModelCreate = ({ onClose }: Props = {}): ModalHooks => {
       canViewModelWorkspace,
       workspaceItems,
       workspaces,
-      modalState.workspace,
+      workspaceName,
       onSelect,
       handleDescriptionChange,
       handleMetadataChange,
