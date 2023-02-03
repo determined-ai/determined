@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
             className={css.grid}
             count={projects.length}
             gap={ShirtSize.Medium}
-            minItemWidth={250}
+            minItemWidth={184}
             mode={GridMode.ScrollableRow}>
             {projects.map((project) => (
               <ProjectCard

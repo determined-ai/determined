@@ -1,7 +1,6 @@
 import { Select, Space } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Grid, { GridMode } from 'components/Grid';
 import GridListRadioGroup, { GridListView } from 'components/GridListRadioGroup';
 import Button from 'components/kit/Button';
 import Input from 'components/kit/Input';
@@ -35,7 +34,6 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorLevel, ErrorType } from 'shared/utils/error';
 import { validateDetApiEnum } from 'shared/utils/service';
 import { useCurrentUser, useUsers } from 'stores/users';
-import { ShirtSize } from 'themes';
 import { Project, Workspace } from 'types';
 import handleError from 'utils/error';
 import { Loadable } from 'utils/loadable';
@@ -337,7 +335,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     switch (settings.view) {
       case GridListView.Grid:
         return (
-          <Grid gap={ShirtSize.Medium} minItemWidth={184} mode={GridMode.AutoFill}>
+          <Space size="middle" wrap>
             {projects.map((project) => (
               <ProjectCard
                 fetchProjects={fetchProjects}
@@ -346,7 +344,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 workspaceArchived={workspace?.archived}
               />
             ))}
-          </Grid>
+          </Space>
         );
       case GridListView.List:
         return (
