@@ -1,4 +1,3 @@
-import queue
 import pathlib
 
 import pytest
