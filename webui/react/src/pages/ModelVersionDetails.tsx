@@ -13,7 +13,7 @@ import Page from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { getModelVersion, patchModelVersion } from 'services/api';
+import { getModelVersion, getWorkspace, patchModelVersion } from 'services/api';
 import Message, { MessageType } from 'shared/components/Message';
 import Spinner from 'shared/components/Spinner/Spinner';
 import usePolling from 'shared/hooks/usePolling';
@@ -22,7 +22,7 @@ import { isEqual } from 'shared/utils/data';
 import { ErrorType } from 'shared/utils/error';
 import { isAborted, isNotFound } from 'shared/utils/service';
 import { humanReadableBytes } from 'shared/utils/string';
-import { Metadata, ModelVersion } from 'types';
+import { Metadata, ModelVersion, Workspace } from 'types';
 import handleError from 'utils/error';
 import { checkpointSize } from 'utils/workload';
 
@@ -38,6 +38,7 @@ type Params = {
   modelId: string;
   tab?: ValueOf<typeof TabType>;
   versionNum: string;
+  workspaceId?: string;
 };
 
 const TAB_KEYS = Object.values(TabType);
@@ -45,16 +46,25 @@ const DEFAULT_TAB_KEY = TabType.Model;
 
 const ModelVersionDetails: React.FC = () => {
   const [modelVersion, setModelVersion] = useState<ModelVersion>();
-  const { modelId: modelID, versionNum: versionNUM, tab } = useParams<Params>();
+  const [workspace, setWorkspace] = useState<Workspace | undefined>(undefined);
+  const {
+    modelId: modelID,
+    versionNum: versionNUM,
+    tab,
+    workspaceId: workspaceIdParam,
+  } = useParams<Params>();
+  const workspaceId = isNaN(Number(workspaceIdParam)) ? undefined : Number(workspaceIdParam);
   const [pageError, setPageError] = useState<Error>();
   const navigate = useNavigate();
   const location = useLocation();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
 
-  const modelId = modelID ?? '';
-  const versionNum = versionNUM ?? '';
+  const modelId = modelID ?? '0';
+  const versionNum = versionNUM ?? '0';
 
-  const basePath = paths.modelVersionDetails(modelId, versionNum);
+  const basePath = workspaceId
+    ? paths.modelVersionDetailsInWorkspace(Number(modelId), Number(versionNum), workspaceId)
+    : paths.modelVersionDetails(modelId, versionNum);
 
   const { canModifyModelVersion } = usePermissions();
 
@@ -74,6 +84,16 @@ const ModelVersionDetails: React.FC = () => {
       if (!pageError && !isAborted(e)) setPageError(e as Error);
     }
   }, [modelId, modelVersion, pageError, versionNum]);
+
+  const fetchWorkspace = useCallback(async () => {
+    if (!workspaceId) return;
+    try {
+      const response = await getWorkspace({ id: workspaceId });
+      setWorkspace(response);
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch workspace.' });
+    }
+  }, [workspaceId]);
 
   usePolling(fetchModelVersion);
 
@@ -95,6 +115,10 @@ const ModelVersionDetails: React.FC = () => {
         navigate(`${basePath}/${tabKey}`, { replace: true });
     }
   }, [basePath, navigate, tab, tabKey]);
+
+  useEffect(() => {
+    fetchWorkspace();
+  }, [fetchWorkspace]);
 
   const saveMetadata = useCallback(
     async (editedMetadata: Metadata) => {
@@ -330,6 +354,7 @@ const ModelVersionDetails: React.FC = () => {
       headerComponent={
         <ModelVersionHeader
           modelVersion={modelVersion}
+          workspace={workspace}
           onSaveDescription={saveDescription}
           onSaveName={saveName}
           onUpdateTags={saveVersionTags}

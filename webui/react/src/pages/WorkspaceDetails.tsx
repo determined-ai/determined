@@ -40,7 +40,7 @@ type Params = {
 
 export const WorkspaceDetailsTab = {
   Members: 'members',
-  ModelRegistry: 'modelRegistry',
+  ModelRegistry: 'models',
   Projects: 'projects',
   Tasks: 'tasks',
 } as const;

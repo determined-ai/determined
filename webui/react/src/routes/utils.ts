@@ -119,11 +119,21 @@ export const paths = {
   modelDetails: (modelName: string): string => {
     return `/models/${encodeURIComponent(modelName)}`;
   },
+  modelDetailsInWorkspace: (modelId: number, workspaceId: number): string => {
+    return `/workspaces/${workspaceId}/models/${modelId}`;
+  },
   modelList: (): string => {
     return '/models';
   },
   modelVersionDetails: (modelName: string, versionNum: number | string): string => {
     return `/models/${encodeURIComponent(modelName)}/versions/${versionNum}`;
+  },
+  modelVersionDetailsInWorkspace: (
+    modelId: number,
+    versionNum: number,
+    workspaceId: number,
+  ): string => {
+    return `/workspaces/${workspaceId}/models/${modelId}/versions/${versionNum}`;
   },
   projectDetails: (projectId: number | string): string => {
     return `/projects/${projectId}/experiments`;

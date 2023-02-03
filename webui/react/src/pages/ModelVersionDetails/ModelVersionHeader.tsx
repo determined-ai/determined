@@ -14,13 +14,14 @@ import Avatar from 'components/UserAvatar';
 import useModalModelDownload from 'hooks/useModal/Model/useModalModelDownload';
 import useModalModelVersionDelete from 'hooks/useModal/Model/useModalModelVersionDelete';
 import usePermissions from 'hooks/usePermissions';
+import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import CopyButton from 'shared/components/CopyButton';
 import Icon from 'shared/components/Icon/Icon';
 import { formatDatetime } from 'shared/utils/datetime';
 import { copyToClipboard } from 'shared/utils/dom';
 import { useUsers } from 'stores/users';
-import { ModelVersion } from 'types';
+import { ModelVersion, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
@@ -39,10 +40,12 @@ interface Props {
   onSaveDescription: (editedNotes: string) => Promise<void>;
   onSaveName: (editedName: string) => Promise<void>;
   onUpdateTags: (newTags: string[]) => Promise<void>;
+  workspace?: Workspace;
 }
 
 const ModelVersionHeader: React.FC<Props> = ({
   modelVersion,
+  workspace,
   onSaveDescription,
   onUpdateTags,
   onSaveName,
@@ -193,12 +196,28 @@ my_model.load_state_dict(ckpt['models_state_dict'][0])`;
               <LeftOutlined style={{ marginRight: 10 }} />
             </Link>
           </Breadcrumb.Item>
+          {workspace && (
+            <>
+              <Breadcrumb.Item>
+                <Link
+                  path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+                  {workspace.name}
+                </Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+            </>
+          )}
           <Breadcrumb.Item>
             <Link path={paths.modelList()}>Model Registry</Link>
           </Breadcrumb.Item>
           <Breadcrumb.Separator />
           <Breadcrumb.Item>
-            <Link path={paths.modelDetails(String(modelVersion.model.id))}>
+            <Link
+              path={
+                workspace
+                  ? paths.modelDetailsInWorkspace(modelVersion.model.id, workspace.id)
+                  : paths.modelDetails(String(modelVersion.model.id))
+              }>
               {modelVersion.model.name} ({modelVersion.model.id})
             </Link>
           </Breadcrumb.Item>

@@ -13,12 +13,13 @@ import TimeAgo from 'components/TimeAgo';
 import Avatar from 'components/UserAvatar';
 import useModalModelDelete from 'hooks/useModal/Model/useModalModelDelete';
 import usePermissions from 'hooks/usePermissions';
+import { WorkspaceDetailsTab } from 'pages/WorkspaceDetails';
 import { paths } from 'routes/utils';
 import Icon from 'shared/components/Icon/Icon';
 import { ValueOf } from 'shared/types';
 import { formatDatetime } from 'shared/utils/datetime';
 import { useUsers } from 'stores/users';
-import { ModelItem } from 'types';
+import { ModelItem, Workspace } from 'types';
 import { Loadable } from 'utils/loadable';
 import { getDisplayName } from 'utils/user';
 
@@ -30,10 +31,12 @@ interface Props {
   onSaveName: (editedName: string) => Promise<Error | void>;
   onSwitchArchive: () => void;
   onUpdateTags: (newTags: string[]) => Promise<void>;
+  workspace?: Workspace;
 }
 
 const ModelHeader: React.FC<Props> = ({
   model,
+  workspace,
   onSaveDescription,
   onSaveName,
   onSwitchArchive,
@@ -126,6 +129,17 @@ const ModelHeader: React.FC<Props> = ({
               <LeftOutlined className={css.leftIcon} />
             </Link>
           </Breadcrumb.Item>
+          {workspace && (
+            <>
+              <Breadcrumb.Item>
+                <Link
+                  path={paths.workspaceDetails(workspace.id, WorkspaceDetailsTab.ModelRegistry)}>
+                  {workspace.name}
+                </Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+            </>
+          )}
           <Breadcrumb.Item>
             <Link path={paths.modelList()}>Model Registry</Link>
           </Breadcrumb.Item>
