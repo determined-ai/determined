@@ -83,6 +83,9 @@ message GetModelsRequest {
 
   // Limit the models to this model id.
   int32 id = 10;
+
+  // Limit models to those where the current user can register versions.
+  optional bool editable = 14;
 }
 
 // Response to GetModelsRequest.

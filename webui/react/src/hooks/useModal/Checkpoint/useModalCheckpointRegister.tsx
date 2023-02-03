@@ -198,6 +198,7 @@ const useModalCheckpointRegister = ({ onClose }: Props = {}): ModalHooks => {
       const response = await getModels(
         {
           archived: false,
+          editable: true,
           orderBy: 'ORDER_BY_DESC',
           sortBy: validateDetApiEnum(
             V1GetModelsRequestSortBy,

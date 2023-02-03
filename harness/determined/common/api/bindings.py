@@ -13411,6 +13411,7 @@ def get_GetModels(
     *,
     archived: "typing.Optional[bool]" = None,
     description: "typing.Optional[str]" = None,
+    editable: "typing.Optional[bool]" = None,
     id: "typing.Optional[int]" = None,
     labels: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
@@ -13426,6 +13427,7 @@ def get_GetModels(
     _params = {
         "archived": str(archived).lower() if archived is not None else None,
         "description": description,
+        "editable": str(editable).lower() if editable is not None else None,
         "id": id,
         "labels": labels,
         "limit": limit,

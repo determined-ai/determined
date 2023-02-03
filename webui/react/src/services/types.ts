@@ -152,6 +152,7 @@ export interface GetExperimentFileFromTreeParams {
 export interface GetModelsParams extends PaginationParams {
   archived?: boolean;
   description?: string;
+  editable?: boolean;
   labels?: string[];
   name?: string;
   sortBy?:
