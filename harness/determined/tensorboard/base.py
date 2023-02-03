@@ -86,7 +86,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         rank: int = 0,
     ) -> None:
         paths = self.to_sync(selector)
-        if self.upload_thread is not None:
+        if self.upload_thread is not None and self.upload_thread.is_alive():
             self.upload_thread.upload(_UploadTask(paths=paths, mangler=mangler, rank=rank))
         else:
             self._sync_impl(paths, mangler, rank)
@@ -97,6 +97,11 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         Delete all objects from the backing persistent storage.
         """
         pass
+
+    def close(self) -> None:
+        if self.upload_thread is not None and self.upload_thread.is_alive():
+            self.upload_thread.close()
+            self.upload_thread.join()
 
 
 def get_metric_writer() -> tensorboard.BatchMetricWriter:
@@ -152,7 +157,6 @@ class _TensorboardUploadThread(threading.Thread):
                 logging.warning(f"Sync of Tensorboard files failed with error: {e}")
 
     def upload(self, task: _UploadTask) -> None:
-        print("uploaded")
         self._work_queue.put(task)
 
     def close(self) -> None:
