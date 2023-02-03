@@ -155,6 +155,9 @@ fulfilled and configured, install and configure the Determined master:
 #. If the compute nodes of your cluster do not have internet connectivity to download Docker images,
    see :ref:`slurm-image-config`.
 
+#. If internet connectivity requires use of a proxy, make sure the proxy variables are defined as
+   per :ref:`proxy-config-requirements`.
+
 #. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
    cluster. If logged in with a Determined administrator account, the following example creates a
    Determined user account that is linked to the current user's Linux account. For more details see
