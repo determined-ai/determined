@@ -237,11 +237,13 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 	}
 
 	getResp := &apiv1.GetModelsResponse{}
-	err := a.m.db.QueryProtof("get_models", []interface{}{"id"},
-		&getResp.Models, 0, "", "", "", "", modelName, "", 0)
-	if err != nil {
-		return err
-	}
+	db.Bun().NewSelect().
+		Model(&getResp.Models).
+		ModelTableExpr("models as m").
+		Column("m.id").
+		Where("m.name ILIKE ('%%' || ? || '%%')", modelName).
+		Scan(ctx)
+
 	if len(getResp.Models) > 0 {
 		return status.Errorf(codes.AlreadyExists, "avoid names equal to other models (case-insensitive)")
 	}
